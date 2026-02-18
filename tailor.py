@@ -1,20 +1,30 @@
-import requests
-import os
 import json
-from openai import OpenAI
-from dotenv import load_dotenv
+import os
+
+import requests
 from bs4 import BeautifulSoup
 from docx import Document
+from dotenv import load_dotenv
+from openai import OpenAI
+from playwright.sync_api import sync_playwright
+
 
 # ---------------------------
 # Utilities
 # ---------------------------
 
-def get_job_description(url):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, "html.parser")
-    return soup.get_text(separator="\n")
+def get_rendered_html(url):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
 
+        page.goto(url, timeout=60000)
+        page.wait_for_load_state("networkidle")
+
+        html = page.content()
+        browser.close()
+
+    return html
 
 def read_docx(file_path):
     doc = Document(file_path)
@@ -96,6 +106,49 @@ def extract_metadata_from_html(url):
         "job_title": job_title
     }
 
+
+def extract_job_data_from_html(html):
+    soup = BeautifulSoup(html, "html.parser")
+
+    script_tags = soup.find_all("script", type="application/ld+json")
+
+    for tag in script_tags:
+        try:
+            data = json.loads(tag.string)
+
+            # Sometimes JSON-LD is a list
+            if isinstance(data, list):
+                for item in data:
+                    if item.get("@type") == "JobPosting":
+                        return parse_jobposting(item)
+            elif data.get("@type") == "JobPosting":
+                return parse_jobposting(data)
+
+        except Exception:
+            continue
+
+    return {
+        "company": "Unknown",
+        "job_title": "Unknown",
+        "description": ""
+    }
+
+
+def parse_jobposting(data):
+    company = data.get("hiringOrganization", {}).get("name", "Unknown")
+    job_title = data.get("title", "Unknown")
+
+    description_html = data.get("description", "")
+    description_soup = BeautifulSoup(description_html, "html.parser")
+    description_text = description_soup.get_text(separator="\n")
+
+    return {
+        "company": company,
+        "job_title": job_title,
+        "description": description_text
+    }
+
+
 # ---------------------------
 # Step 2 — Tailor Resume + Cover
 # ---------------------------
@@ -155,7 +208,8 @@ if __name__ == "__main__":
     job_url = input("Enter job URL (or press enter to paste text): ").strip()
 
     if job_url:
-        job_text = get_job_description(job_url)
+        html = get_rendered_html(job_url)
+        job_data = extract_job_data_from_html(html)
     else:
         print("Paste job description (press Enter twice to finish):")
         lines = []
@@ -170,9 +224,10 @@ if __name__ == "__main__":
     cover_template = read_docx("templates/Leonid_Verman_Cover_Letter_Template.docx")
 
     print("Extracting company & role...")
-    metadata = extract_metadata_from_html(job_text)
-    company = metadata.get("company", "the company")
-    job_title = metadata.get("job_title", "the role")
+
+    company = job_data["company"]
+    job_title = job_data["job_title"]
+    job_text = job_data["description"]
 
     print(f"Detected Company: {company}")
     print(f"Detected Role: {job_title}")
