@@ -1,10 +1,12 @@
 import json
 import os
+from copy import deepcopy
 from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
 from docx import Document
+from docx.text.paragraph import Paragraph as DocxParagraph
 from dotenv import load_dotenv
 from openai import OpenAI
 from playwright.sync_api import sync_playwright
@@ -51,50 +53,216 @@ def replace_paragraph_text(paragraph, new_text):
     first_run.text = new_text
 
 
+def insert_paragraph_after(ref_para, text, style_source=None):
+    """
+    Clone style_source's XML (or ref_para's if style_source is None), set text,
+    insert the clone immediately after ref_para, and return it as a Paragraph.
+    """
+    clone_from = style_source if style_source is not None else ref_para
+    new_p = deepcopy(clone_from._p)
+    ref_para._p.addnext(new_p)
+    new_para = DocxParagraph(new_p, ref_para._p.getparent())
+    replace_paragraph_text(new_para, text)
+    return new_para
+
+
+def _apply_groups(para_list, text, doc):
+    """
+    Apply LLM text to a list of template paragraphs using blank-line grouping.
+    Groups are separated by empty paragraphs in the template and blank lines in text.
+    """
+    llm_groups = [[]]
+    for line in text.split("\n"):
+        if not line.strip():
+            llm_groups.append([])
+        else:
+            llm_groups[-1].append(line)
+
+    template_groups = [[]]
+    template_sep_paras = []
+    for para in para_list:
+        if not para.text.strip():
+            template_groups.append([])
+            template_sep_paras.append(para)
+        else:
+            template_groups[-1].append(para)
+
+    global_last_para = None
+
+    for i in range(max(len(template_groups), len(llm_groups))):
+        template_group = template_groups[i] if i < len(template_groups) else []
+        llm_group = llm_groups[i] if i < len(llm_groups) else []
+
+        group_last_para = None
+
+        for j, llm_line in enumerate(llm_group):
+            line_text = llm_line.strip()
+            if line_text.startswith("- "):
+                line_text = line_text[2:]
+
+            if j < len(template_group):
+                replace_paragraph_text(template_group[j], line_text)
+                group_last_para = template_group[j]
+            else:
+                anchor = group_last_para or global_last_para
+                if anchor is not None:
+                    group_last_para = insert_paragraph_after(anchor, line_text)
+                else:
+                    group_last_para = doc.add_paragraph(line_text)
+
+        for j in range(len(llm_group), len(template_group)):
+            replace_paragraph_text(template_group[j], "")
+
+        if group_last_para:
+            global_last_para = group_last_para
+        elif template_group:
+            global_last_para = template_group[-1]
+
+        if i < len(template_sep_paras):
+            global_last_para = template_sep_paras[i]
+
+
+# Section headers that terminate the Experience block in LLM output
+_SECTION_HEADERS = {'Education', 'Technical Skills', 'Skills', 'Certifications',
+                    'Projects', 'Publications', 'Volunteer', 'Awards', 'References'}
+
+
 def save_doc_from_template(template_path, output_path, new_text):
     """
     Modify a copy of the template document, replacing text while preserving formatting.
+
+    For the Experience section, entries are matched individually by their index so that
+    extra bullets added by the LLM are inserted with the correct List Paragraph style,
+    not cloned from whatever paragraph happens to follow in the template.
+
+    All other sections use blank-line grouping (same as the original algorithm).
     """
     doc = Document(template_path)
+    paras = doc.paragraphs
 
-    # Parse new text into lines
-    new_lines = [line for line in new_text.split("\n")]
+    def is_exp_entry_header(p):
+        """Experience entry headers use Normal style with bold text and contain '|'."""
+        return (p.style.name == 'Normal' and bool(p.text.strip())
+                and '|' in p.text
+                and any(r.bold for r in p.runs))
 
-    template_paras = list(doc.paragraphs)
-    new_line_idx = 0
+    # --- Find Experience section boundaries in the template ---
+    exp_h2_idx = None
+    post_exp_h2_idx = None
+    for i, p in enumerate(paras):
+        if p.style.name == 'Heading 2' and 'experience' in p.text.lower():
+            exp_h2_idx = i
+        elif exp_h2_idx is not None and p.style.name == 'Heading 2' and post_exp_h2_idx is None:
+            post_exp_h2_idx = i
+    if post_exp_h2_idx is None:
+        post_exp_h2_idx = len(paras)
 
-    for para in template_paras:
-        if new_line_idx >= len(new_lines):
-            # No more new lines - clear remaining paragraphs
-            replace_paragraph_text(para, "")
+    # --- Find Experience section boundaries in LLM text ---
+    llm_lines = new_text.split('\n')
+    llm_exp_idx = None
+    llm_post_exp_idx = None
+    for i, line in enumerate(llm_lines):
+        s = line.strip()
+        if s == 'Experience':
+            llm_exp_idx = i
+        elif llm_exp_idx is not None and s in _SECTION_HEADERS and llm_post_exp_idx is None:
+            llm_post_exp_idx = i
+    if llm_post_exp_idx is None:
+        llm_post_exp_idx = len(llm_lines)
+
+    # --- Fall back to the original full-document algorithm if sections not found ---
+    if exp_h2_idx is None or llm_exp_idx is None:
+        _apply_groups(paras, new_text, doc)
+        doc.save(output_path)
+        return
+
+    # --- Pre-experience section ---
+    _apply_groups(paras[:exp_h2_idx], '\n'.join(llm_lines[:llm_exp_idx]), doc)
+
+    # --- "Experience" heading ---
+    replace_paragraph_text(paras[exp_h2_idx], llm_lines[llm_exp_idx].strip())
+
+    # --- Parse template experience entries ---
+    # Each entry starts at a Normal+bold paragraph and ends just before the next one.
+    tmpl_entries = []
+    cur = None
+    for i in range(exp_h2_idx + 1, post_exp_h2_idx):
+        p = paras[i]
+        if is_exp_entry_header(p):
+            if cur is not None:
+                tmpl_entries.append(cur)
+            cur = [p]
+        elif cur is not None:
+            cur.append(p)  # date, bullets, and any blanks within the entry
+    if cur is not None:
+        tmpl_entries.append(cur)
+
+    # --- Parse LLM experience entries ---
+    def is_llm_exp_hdr(line):
+        s = line.strip()
+        return bool(s) and '|' in s and not s.startswith('-')
+
+    llm_entries = []
+    cur = None
+    for line in llm_lines[llm_exp_idx + 1:llm_post_exp_idx]:
+        s = line.strip()
+        if not s:
+            continue  # skip blank lines between entries
+        if is_llm_exp_hdr(line):
+            if cur is not None:
+                llm_entries.append(cur)
+            cur = [s]
+        elif cur is not None:
+            cur.append(s[2:] if s.startswith('- ') else s)
+    if cur is not None:
+        llm_entries.append(cur)
+
+    # --- Match and apply experience entries by index ---
+    for idx, tmpl_entry in enumerate(tmpl_entries):
+        if idx >= len(llm_entries):
+            for p in tmpl_entry:
+                replace_paragraph_text(p, '')
             continue
 
-        new_line = new_lines[new_line_idx]
+        llm_entry = llm_entries[idx]
 
-        # Handle bullet points - strip the "- " prefix if present
-        if new_line.strip().startswith("- "):
-            new_line = new_line.strip()[2:]
+        # Find a bullet paragraph to use as the style source for any new bullets
+        bullet_para = next((p for p in tmpl_entry if p.style.name == 'List Paragraph'), None)
 
-        replace_paragraph_text(para, new_line)
-        new_line_idx += 1
+        # Replace the experience header (keep its blue/bold formatting)
+        replace_paragraph_text(tmpl_entry[0], llm_entry[0])
+        last_para = tmpl_entry[0]
 
-    # If there are more new lines than template paragraphs, append them
-    # Use the style of the last paragraph as a fallback
-    last_style = template_paras[-1].style if template_paras else None
+        content_paras = tmpl_entry[1:]   # date + bullets in template
+        content_lines = llm_entry[1:]    # date + bullets from LLM
 
-    while new_line_idx < len(new_lines):
-        new_line = new_lines[new_line_idx]
+        # Some templates split a header across two paragraphs (e.g. a long company
+        # name wraps to a second Normal+bold line).  The LLM always emits a single
+        # header line, so clear those continuation paragraphs before mapping content.
+        skip = 0
+        for p in content_paras:
+            if p.style.name == 'Normal' and any(r.bold for r in p.runs):
+                replace_paragraph_text(p, '')
+                skip += 1
+            else:
+                break
+        content_paras = content_paras[skip:]
 
-        if new_line.strip().startswith("- "):
-            doc.add_paragraph(new_line.strip()[2:], style="List Bullet")
-        elif new_line.strip():
-            p = doc.add_paragraph(new_line)
-            if last_style:
-                p.style = last_style
-        else:
-            doc.add_paragraph("")
+        for j, text in enumerate(content_lines):
+            if j < len(content_paras):
+                replace_paragraph_text(content_paras[j], text)
+                last_para = content_paras[j]
+            else:
+                # Extra bullet: clone from bullet_para to get List Paragraph style
+                last_para = insert_paragraph_after(last_para, text,
+                                                   style_source=bullet_para)
 
-        new_line_idx += 1
+        # Clear leftover template paragraphs that the LLM didn't fill
+        for j in range(len(content_lines), len(content_paras)):
+            replace_paragraph_text(content_paras[j], '')
+
+    # --- Post-experience section ---
+    _apply_groups(paras[post_exp_h2_idx:], '\n'.join(llm_lines[llm_post_exp_idx:]), doc)
 
     doc.save(output_path)
 
