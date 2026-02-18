@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
@@ -252,6 +253,31 @@ Return JSON only:
 
 
 # ---------------------------
+# Debug Autosave
+# ---------------------------
+
+def save_debug_data(company, job_title, job_description, llm_response):
+    os.makedirs("tmp", exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    safe_company = "".join(c if c.isalnum() or c in "_-" else "_" for c in company).strip("_")
+    safe_title = "".join(c if c.isalnum() or c in "_-" else "_" for c in job_title).strip("_")
+    filename = f"tmp/{safe_company}-{safe_title}-{timestamp}.json"
+
+    data = {
+        "company": company,
+        "position": job_title,
+        "job_description": job_description,
+        "llm_response": llm_response,
+    }
+
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    print(f"Debug data saved to {filename}")
+
+
+# ---------------------------
 # Main
 # ---------------------------
 
@@ -286,6 +312,8 @@ if __name__ == "__main__":
 
     print("Tailoring documents...")
     result = tailor_documents(job_text, resume_template, cover_template, company, job_title)
+
+    save_debug_data(company, job_title, job_text, result)
 
     os.makedirs("output", exist_ok=True)
 
