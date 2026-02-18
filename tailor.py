@@ -31,20 +31,71 @@ def read_docx(file_path):
     return "\n".join([p.text for p in doc.paragraphs])
 
 
-def save_doc(filename, text):
-    doc = Document()
+def replace_paragraph_text(paragraph, new_text):
+    """
+    Replace text in a paragraph while preserving the formatting of the first run.
+    """
+    if not paragraph.runs:
+        paragraph.text = new_text
+        return
 
-    for line in text.split("\n"):
-        line = line.strip()
+    # Store first run's formatting by keeping the run object
+    first_run = paragraph.runs[0]
 
-        if line.startswith("- "):
-            doc.add_paragraph(line[2:], style="List Bullet")
-        elif line:
-            doc.add_paragraph(line)
+    # Clear text from all runs
+    for run in paragraph.runs:
+        run.text = ""
+
+    # Set new text on first run (preserves its formatting)
+    first_run.text = new_text
+
+
+def save_doc_from_template(template_path, output_path, new_text):
+    """
+    Modify a copy of the template document, replacing text while preserving formatting.
+    """
+    doc = Document(template_path)
+
+    # Parse new text into lines
+    new_lines = [line for line in new_text.split("\n")]
+
+    template_paras = list(doc.paragraphs)
+    new_line_idx = 0
+
+    for para in template_paras:
+        if new_line_idx >= len(new_lines):
+            # No more new lines - clear remaining paragraphs
+            replace_paragraph_text(para, "")
+            continue
+
+        new_line = new_lines[new_line_idx]
+
+        # Handle bullet points - strip the "- " prefix if present
+        if new_line.strip().startswith("- "):
+            new_line = new_line.strip()[2:]
+
+        replace_paragraph_text(para, new_line)
+        new_line_idx += 1
+
+    # If there are more new lines than template paragraphs, append them
+    # Use the style of the last paragraph as a fallback
+    last_style = template_paras[-1].style if template_paras else None
+
+    while new_line_idx < len(new_lines):
+        new_line = new_lines[new_line_idx]
+
+        if new_line.strip().startswith("- "):
+            doc.add_paragraph(new_line.strip()[2:], style="List Bullet")
+        elif new_line.strip():
+            p = doc.add_paragraph(new_line)
+            if last_style:
+                p.style = last_style
         else:
             doc.add_paragraph("")
 
-    doc.save(filename)
+        new_line_idx += 1
+
+    doc.save(output_path)
 
 
 # ---------------------------
@@ -238,7 +289,10 @@ if __name__ == "__main__":
 
     os.makedirs("output", exist_ok=True)
 
-    save_doc(f"output/{company}_Resume.docx", result["resume"])
-    save_doc(f"output/{company}_CoverLetter.docx", result["cover_letter"])
+    resume_template_path = "templates/Leonid_Verman_Resume_Template.docx"
+    cover_template_path = "templates/Leonid_Verman_Cover_Letter_Template.docx"
+
+    save_doc_from_template(resume_template_path, f"output/{company}_Resume.docx", result["resume"])
+    save_doc_from_template(cover_template_path, f"output/{company}_CoverLetter.docx", result["cover_letter"])
 
     print("Documents generated successfully.")
