@@ -1,0 +1,13 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Output files
+output/
+
+# Virtual environments
+venv/
+.env/
