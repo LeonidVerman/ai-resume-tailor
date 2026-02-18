@@ -11,6 +11,9 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from playwright.sync_api import sync_playwright
 
+# XML namespace shorthand
+_W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+
 
 # ---------------------------
 # Utilities
@@ -34,10 +37,27 @@ def read_docx(file_path):
     return "\n".join([p.text for p in doc.paragraphs])
 
 
+def _strip_section_break(para):
+    """Remove any section break (w:sectPr) embedded in a paragraph's w:pPr.
+
+    Templates sometimes carry a mid-document section break in a paragraph's
+    pPr (visible as an unwanted page break).  We always remove it when we
+    touch a paragraph so it doesn't bleed into the output.
+    """
+    pPr = para._p.find(f'{{{_W}}}pPr')
+    if pPr is not None:
+        sectPr = pPr.find(f'{{{_W}}}sectPr')
+        if sectPr is not None:
+            pPr.remove(sectPr)
+
+
 def replace_paragraph_text(paragraph, new_text):
     """
     Replace text in a paragraph while preserving the formatting of the first run.
+    Also strips any embedded section break so the paragraph never forces a page break.
     """
+    _strip_section_break(paragraph)
+
     if not paragraph.runs:
         paragraph.text = new_text
         return
@@ -51,6 +71,21 @@ def replace_paragraph_text(paragraph, new_text):
 
     # Set new text on first run (preserves its formatting)
     first_run.text = new_text
+
+
+def _clear_para(para):
+    """Clear a template paragraph that has no matching LLM content.
+
+    Beyond setting text to "", also removes list-numbering (w:numPr) and any
+    embedded section break so the empty paragraph doesn't render as a
+    visible bullet or trigger an unwanted page break.
+    """
+    replace_paragraph_text(para, '')
+    pPr = para._p.find(f'{{{_W}}}pPr')
+    if pPr is not None:
+        numPr = pPr.find(f'{{{_W}}}numPr')
+        if numPr is not None:
+            pPr.remove(numPr)
 
 
 def insert_paragraph_after(ref_para, text, style_source=None):
@@ -111,7 +146,7 @@ def _apply_groups(para_list, text, doc):
                     group_last_para = doc.add_paragraph(line_text)
 
         for j in range(len(llm_group), len(template_group)):
-            replace_paragraph_text(template_group[j], "")
+            _clear_para(template_group[j])
 
         if group_last_para:
             global_last_para = group_last_para
@@ -177,7 +212,18 @@ def save_doc_from_template(template_path, output_path, new_text):
         return
 
     # --- Pre-experience section ---
-    _apply_groups(paras[:exp_h2_idx], '\n'.join(llm_lines[:llm_exp_idx]), doc)
+    # Skip name + contact paragraphs (before the first Heading 2) entirely — they
+    # contain hyperlinks whose XML persists even after replace_paragraph_text, which
+    # causes email/LinkedIn to appear duplicated.  Only update the sections that
+    # follow (Professional Summary and onwards).
+    first_h2_idx = next((i for i, p in enumerate(paras)
+                         if p.style.name == 'Heading 2'), exp_h2_idx)
+    llm_first_h2_idx = next((i for i, line in enumerate(llm_lines)
+                              if line.strip() and
+                              line.strip() == paras[first_h2_idx].text.strip()),
+                             0)
+    _apply_groups(paras[first_h2_idx:exp_h2_idx],
+                  '\n'.join(llm_lines[llm_first_h2_idx:llm_exp_idx]), doc)
 
     # --- "Experience" heading ---
     replace_paragraph_text(paras[exp_h2_idx], llm_lines[llm_exp_idx].strip())
@@ -221,7 +267,7 @@ def save_doc_from_template(template_path, output_path, new_text):
     for idx, tmpl_entry in enumerate(tmpl_entries):
         if idx >= len(llm_entries):
             for p in tmpl_entry:
-                replace_paragraph_text(p, '')
+                _clear_para(p)
             continue
 
         llm_entry = llm_entries[idx]
@@ -242,7 +288,7 @@ def save_doc_from_template(template_path, output_path, new_text):
         skip = 0
         for p in content_paras:
             if p.style.name == 'Normal' and any(r.bold for r in p.runs):
-                replace_paragraph_text(p, '')
+                _clear_para(p)
                 skip += 1
             else:
                 break
@@ -259,7 +305,7 @@ def save_doc_from_template(template_path, output_path, new_text):
 
         # Clear leftover template paragraphs that the LLM didn't fill
         for j in range(len(content_lines), len(content_paras)):
-            replace_paragraph_text(content_paras[j], '')
+            _clear_para(content_paras[j])
 
     # --- Post-experience section ---
     _apply_groups(paras[post_exp_h2_idx:], '\n'.join(llm_lines[llm_post_exp_idx:]), doc)
