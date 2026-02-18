@@ -173,13 +173,14 @@ MASTER COVER LETTER:
 Instructions:
 
 1. Significantly tailor resume to match role.
-2. Reorder bullets by relevance.
-3. Strengthen impact statements.
-4. Remove or reduce irrelevant emphasis.
-5. Incorporate job keywords naturally.
-6. Do NOT invent new technologies or roles.
-7. Rewrite cover letter specifically for this company and role.
-8. Mention company name and job title explicitly in cover letter.
+2. Maintain original experience order (reverse chronological).
+3. Reorder bullet points within each role only.
+4. Strengthen impact statements.
+5. Remove or reduce irrelevant emphasis.
+6. Incorporate job keywords naturally.
+7. Do NOT invent new technologies or roles.
+8. Rewrite cover letter specifically for this company and role.
+9. Mention company name and job title explicitly in cover letter.
 
 Return JSON only:
 
