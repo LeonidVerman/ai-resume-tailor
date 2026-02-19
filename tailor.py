@@ -1,3 +1,4 @@
+import html as _html_lib
 import json
 import os
 from copy import deepcopy
@@ -10,6 +11,7 @@ from docx.text.paragraph import Paragraph as DocxParagraph
 from dotenv import load_dotenv
 from openai import OpenAI
 from playwright.sync_api import sync_playwright
+from xhtml2pdf import pisa
 
 # XML namespace shorthand
 _W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
@@ -313,6 +315,138 @@ def save_doc_from_template(template_path, output_path, new_text):
     doc.save(output_path)
 
 
+def _docx_to_html(docx_path):
+    """Convert a .docx to an HTML string, preserving template paragraph styles.
+
+    Maps the template's named styles to semantic HTML + CSS:
+      Title            → <h1>  (name line)
+      Heading 2        → <h2>  (section headers, blue)
+      Normal + bold    → <p class="exp-header">  (experience entry headers)
+      Body Text        → <p class="body-text">   (dates, contact)
+      List Paragraph   → <li>  (bullet points)
+      Normal           → <p>
+    Run-level bold/italic/color is also preserved.
+    """
+    _W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+    _REL_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+
+    doc = Document(docx_path)
+
+    def escape(t):
+        return _html_lib.escape(t, quote=False)
+
+    def run_html(run):
+        text = escape(run.text)
+        if not text:
+            return ''
+        try:
+            color = run.font.color.rgb
+            if color:
+                text = f'<span style="color:#{color}">{text}</span>'
+        except Exception:
+            pass
+        if run.bold:
+            text = f'<strong>{text}</strong>'
+        if run.italic:
+            text = f'<em>{text}</em>'
+        return text
+
+    def para_html(para):
+        # Gather text from direct runs + runs inside <w:hyperlink> elements
+        parts = []
+        for elem in para._p:
+            local = elem.tag.split('}')[-1] if '}' in elem.tag else elem.tag
+            if local == 'r':
+                from docx.text.run import Run as _Run
+                parts.append(run_html(_Run(elem, para)))
+            elif local == 'hyperlink':
+                link_text = ''
+                for child in elem:
+                    child_local = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+                    if child_local == 'r':
+                        from docx.text.run import Run as _Run
+                        link_text += escape(_Run(child, para).text)
+                if link_text:
+                    parts.append(f'<u>{link_text}</u>')
+
+        inner = ''.join(parts)
+        if not inner.strip():
+            return None  # skip blank paragraphs (handled as spacing)
+
+        style = para.style.name
+        is_bold = any(r.bold for r in para.runs)
+
+        if style in ('Title', 'Heading 1'):
+            return f'<h1>{inner}</h1>'
+        elif style == 'Heading 2':
+            return f'<h2>{inner}</h2>'
+        elif style == 'List Paragraph':
+            return f'<li>{inner}</li>'
+        elif style == 'Body Text':
+            return f'<p class="body-text">{inner}</p>'
+        elif style == 'Normal' and is_bold and '|' in para.text:
+            return f'<p class="exp-header">{inner}</p>'
+        else:
+            return f'<p>{inner}</p>'
+
+    lines = []
+    in_list = False
+    for para in doc.paragraphs:
+        is_list = para.style.name == 'List Paragraph'
+        if is_list and not in_list:
+            lines.append('<ul>')
+            in_list = True
+        elif not is_list and in_list:
+            lines.append('</ul>')
+            in_list = False
+
+        tag = para_html(para)
+        if tag is not None:
+            lines.append(tag)
+
+    if in_list:
+        lines.append('</ul>')
+
+    body = '\n'.join(lines)
+    return f"""<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<style>
+@page {{ margin: 1.8cm 2cm; }}
+body {{ font-family: Calibri, Arial, sans-serif; font-size: 10pt; margin: 0; color: #000; }}
+h1 {{ font-size: 20pt; font-weight: bold; margin: 0 0 2pt 0; }}
+h2 {{ font-size: 11pt; color: #2E74B5; border-bottom: 1pt solid #2E74B5;
+      margin: 10pt 0 3pt 0; font-weight: bold; padding-bottom: 1pt; }}
+p {{ margin: 1pt 0; line-height: 1.3; }}
+p.body-text {{ margin: 0; font-size: 9.5pt; }}
+p.exp-header {{ font-weight: bold; margin-top: 5pt; margin-bottom: 1pt; }}
+ul {{ margin: 2pt 0 2pt 16pt; padding: 0; list-style-type: disc; }}
+li {{ margin: 1pt 0; line-height: 1.3; }}
+</style>
+</head><body>
+{body}
+</body></html>"""
+
+
+def docx_to_pdf(docx_path):
+    """Convert a .docx to .pdf next to the source file.
+
+    Uses python-docx to read paragraph styles and xhtml2pdf to render PDF.
+    This avoids the need for OpenOffice/LibreOffice or Word COM automation.
+    """
+    docx_abs = os.path.abspath(docx_path)
+    pdf_dest = os.path.splitext(docx_abs)[0] + ".pdf"
+
+    html_str = _docx_to_html(docx_abs)
+    with open(pdf_dest, "wb") as f:
+        result = pisa.CreatePDF(html_str.encode("utf-8"), dest=f, encoding="utf-8")
+
+    if result.err:
+        raise RuntimeError(f"xhtml2pdf conversion failed with {result.err} error(s)")
+
+    print(f"PDF saved to {pdf_dest}")
+
+
 # ---------------------------
 # OpenAI Setup
 # ---------------------------
@@ -534,7 +668,13 @@ if __name__ == "__main__":
     resume_template_path = "templates/Leonid_Verman_Resume_Template.docx"
     cover_template_path = "templates/Leonid_Verman_Cover_Letter_Template.docx"
 
-    save_doc_from_template(resume_template_path, f"output/{company}_Resume.docx", result["resume"])
-    save_doc_from_template(cover_template_path, f"output/{company}_CoverLetter.docx", result["cover_letter"])
+    resume_docx = f"output/{company}_Resume.docx"
+    cover_docx = f"output/{company}_CoverLetter.docx"
+
+    save_doc_from_template(resume_template_path, resume_docx, result["resume"])
+    save_doc_from_template(cover_template_path, cover_docx, result["cover_letter"])
+
+    docx_to_pdf(resume_docx)
+    docx_to_pdf(cover_docx)
 
     print("Documents generated successfully.")
