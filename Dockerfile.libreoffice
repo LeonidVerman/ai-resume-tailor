@@ -1,0 +1,31 @@
+# Dockerfile for high-fidelity LibreOffice headless PDF conversion.
+#
+# Build (once):
+#   docker build -f Dockerfile.libreoffice -t ai-resume-tailor-lo .
+#
+# After building, tailor.py will auto-detect and prefer this image.
+# On Windows the host's Windows\Fonts directory is mounted at runtime so
+# that Calibri, Cambria and all other installed MS fonts are available.
+#
+# Without the custom image, tailor.py falls back to minidocks/libreoffice.
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        # LibreOffice Writer is sufficient for .docx → .pdf conversion
+        libreoffice-writer \
+        # fontconfig utilities (fc-cache) to refresh the font index at runtime
+        fontconfig \
+        # Carlito is metrically compatible with Calibri (same glyph widths,
+        # different name).  Caladea is metrically compatible with Cambria.
+        # LibreOffice automatically substitutes these for the MS fonts,
+        # preserving line breaks and pagination when MS fonts are unavailable.
+        fonts-crosextra-carlito \
+        fonts-crosextra-caladea \
+        # Liberation fonts cover the Arial / Times New Roman / Courier New
+        # fallback chain for other common MS font families.
+        fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /data

@@ -1,0 +1,14 @@
+Extract the following from this job description:
+
+1. Company name
+2. Job title
+
+Return JSON only:
+
+{
+  "company": "...",
+  "job_title": "..."
+}
+
+JOB DESCRIPTION:
+{job_text}

@@ -716,24 +716,150 @@ p.bullet-item {{ padding-left: 36pt; text-indent: -18pt; }}
 </body></html>"""
 
 
-def docx_to_pdf(docx_path):
-    """Convert a .docx to .pdf next to the source file.
+# Default Docker image for LibreOffice headless PDF conversion.
+# After building Dockerfile.libreoffice, tailor.py auto-detects that image.
+_DOCKER_IMAGE_DEFAULT = 'minidocks/libreoffice'
 
-    Uses python-docx to read paragraph styles and xhtml2pdf to render PDF.
-    This avoids the need for OpenOffice/LibreOffice or Word COM automation.
+
+def _docx_to_pdf_docker(docx_path, docker_image=_DOCKER_IMAGE_DEFAULT):
+    """Convert a .docx to .pdf using LibreOffice headless inside Docker.
+
+    On Windows the host's Windows\\Fonts directory is bind-mounted read-only
+    into the container so LibreOffice has access to Calibri, Cambria, and all
+    other installed MS fonts, producing output that closely matches Word's own
+    PDF export.
+
+    Parameters
+    ----------
+    docx_path : str
+        Path to the source .docx file.
+    docker_image : str
+        Docker image to run.  Defaults to ``minidocks/libreoffice`` (pulled
+        automatically on first use).  For best font support, build the
+        project's custom image and pass its name::
+
+            docker build -f Dockerfile.libreoffice -t ai-resume-tailor-lo .
+            docx_to_pdf(path, docker_image='ai-resume-tailor-lo')
+    """
+    import subprocess
+    import platform
+    import shlex
+
+    docx_abs  = os.path.abspath(docx_path)
+    docx_dir  = os.path.dirname(docx_abs)
+    docx_name = os.path.basename(docx_abs)
+    pdf_dest  = os.path.splitext(docx_abs)[0] + '.pdf'
+
+    # Docker Desktop on Windows accepts forward-slash paths in volume specs.
+    def _dp(p):
+        return p.replace('\\', '/')
+
+    volumes      = [f'{_dp(docx_dir)}:/data']
+    mount_fonts  = False
+
+    # Bind-mount the Windows Fonts folder so LibreOffice can use MS fonts.
+    if platform.system() == 'Windows':
+        fonts_dir = os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts')
+        if os.path.isdir(fonts_dir):
+            volumes.append(f'{_dp(fonts_dir)}:/usr/local/share/fonts/windows:ro')
+            mount_fonts = True
+
+    cmd = ['docker', 'run', '--rm']
+    for v in volumes:
+        cmd += ['--volume', v]
+    cmd.append(docker_image)
+
+    # When Windows fonts are mounted we refresh the fontconfig cache first
+    # so LibreOffice picks them up.  shlex.quote handles spaces in filenames.
+    quoted = shlex.quote(f'/data/{docx_name}')
+    if mount_fonts:
+        cmd += ['sh', '-c',
+                f'fc-cache -f 2>/dev/null || true && '
+                f'libreoffice --headless --convert-to pdf {quoted} --outdir /data']
+    else:
+        cmd += ['libreoffice', '--headless', '--convert-to', 'pdf',
+                f'/data/{docx_name}', '--outdir', '/data']
+
+    print(f"Converting via LibreOffice Docker ({docker_image}) …")
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+    except FileNotFoundError:
+        raise RuntimeError(
+            "Docker executable not found.  Install Docker Desktop, ensure it is "
+            "running, then retry — or use method='local' for the built-in converter."
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("LibreOffice Docker conversion timed out after 180 s.")
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or '(no output)').strip()
+        # Give a friendlier hint when the Docker daemon itself is not running.
+        if 'error during connect' in detail or 'Cannot connect to the Docker daemon' in detail:
+            raise RuntimeError(
+                "Docker daemon is not running.  Start Docker Desktop and retry "
+                "— or use method='local' for the built-in converter.\n\n"
+                f"Docker said:\n{detail}"
+            )
+        raise RuntimeError(
+            f"LibreOffice conversion failed (exit {result.returncode}):\n{detail}"
+        )
+
+    if not os.path.exists(pdf_dest):
+        raise RuntimeError(
+            f"Conversion appeared to succeed but PDF was not found at:\n{pdf_dest}"
+        )
+
+    print(f"PDF saved to {pdf_dest}")
+
+
+def _docx_to_pdf_local(docx_path):
+    """Convert a .docx to .pdf using xhtml2pdf (no external dependencies).
+
+    This is the fallback method when Docker is unavailable.  Output fidelity
+    is lower than the LibreOffice route — paragraph spacing and indentation
+    are approximated from the docx XML, and font rendering depends on which
+    system fonts are available to ReportLab.
     """
     docx_abs = os.path.abspath(docx_path)
-    pdf_dest = os.path.splitext(docx_abs)[0] + ".pdf"
+    pdf_dest = os.path.splitext(docx_abs)[0] + '.pdf'
 
     font_face_css = _register_fonts()
     html_str = _docx_to_html(docx_abs, font_face_css=font_face_css)
-    with open(pdf_dest, "wb") as f:
-        result = pisa.CreatePDF(html_str.encode("utf-8"), dest=f, encoding="utf-8")
+    with open(pdf_dest, 'wb') as f:
+        result = pisa.CreatePDF(html_str.encode('utf-8'), dest=f, encoding='utf-8')
 
     if result.err:
         raise RuntimeError(f"xhtml2pdf conversion failed with {result.err} error(s)")
 
     print(f"PDF saved to {pdf_dest}")
+
+
+def docx_to_pdf(docx_path, method='docker', docker_image=_DOCKER_IMAGE_DEFAULT):
+    """Convert a .docx to .pdf next to the source file.
+
+    Parameters
+    ----------
+    docx_path : str
+        Path to the source .docx file.
+    method : {'docker', 'local'}
+        ``'docker'`` (default) — high-fidelity conversion via LibreOffice
+        headless in Docker.  Requires Docker Desktop to be running.  On
+        first use, Docker pulls ``minidocks/libreoffice`` automatically.
+
+        ``'local'`` — built-in Python conversion via xhtml2pdf; no external
+        dependencies but formatting fidelity is lower.
+    docker_image : str
+        Docker image to use when *method* is ``'docker'``.  Defaults to
+        ``minidocks/libreoffice``.  After building the project's custom
+        image (``docker build -f Dockerfile.libreoffice -t ai-resume-tailor-lo .``),
+        pass ``docker_image='ai-resume-tailor-lo'`` for better font support.
+    """
+    if method == 'docker':
+        _docx_to_pdf_docker(docx_path, docker_image=docker_image)
+    elif method == 'local':
+        _docx_to_pdf_local(docx_path)
+    else:
+        raise ValueError(f"Unknown method {method!r}.  Use 'docker' or 'local'.")
 
 
 # ---------------------------
@@ -745,26 +871,39 @@ client = OpenAI()
 
 
 # ---------------------------
+# Prompt loader
+# ---------------------------
+
+def _load_prompt(name, **kwargs):
+    """Load prompts/<name>.txt and substitute {placeholder} values.
+
+    Only tokens of the form ``{word}`` whose name appears in *kwargs* are
+    replaced.  All other brace sequences (e.g. JSON examples in the prompt)
+    are left exactly as written, so prompt files can contain literal JSON
+    without any escaping.
+    """
+    import re
+    prompts_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'prompts')
+    path = os.path.join(prompts_dir, f'{name}.txt')
+    try:
+        with open(path, encoding='utf-8') as f:
+            template = f.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Prompt file not found: {path}\n"
+            "Create the file or check the prompts/ directory."
+        )
+    return re.sub(r'\{(\w+)\}',
+                  lambda m: str(kwargs[m.group(1)]) if m.group(1) in kwargs else m.group(0),
+                  template)
+
+
+# ---------------------------
 # Step 1 — Extract Company & Role
 # ---------------------------
 
 def extract_metadata_ai(job_text):
-    prompt = f"""
-Extract the following from this job description:
-
-1. Company name
-2. Job title
-
-Return JSON only:
-
-{{
-  "company": "...",
-  "job_title": "..."
-}}
-
-JOB DESCRIPTION:
-{job_text}
-"""
+    prompt = _load_prompt('extract_metadata', job_text=job_text)
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -843,41 +982,12 @@ def parse_jobposting(data):
 # ---------------------------
 
 def tailor_documents(job_text, resume_template, cover_template, company, job_title):
-
-    prompt = f"""
-You are a senior technical recruiter and resume strategist.
-
-Company: {company}
-Role: {job_title}
-
-JOB DESCRIPTION:
-{job_text}
-
-MASTER RESUME:
-{resume_template}
-
-MASTER COVER LETTER:
-{cover_template}
-
-Instructions:
-
-1. Significantly tailor resume to match role.
-2. Maintain original experience order (reverse chronological).
-3. Reorder bullet points within each role only.
-4. Strengthen impact statements.
-5. Remove or reduce irrelevant emphasis.
-6. Incorporate job keywords naturally.
-7. Do NOT invent new technologies or roles.
-8. Rewrite cover letter specifically for this company and role.
-9. Mention company name and job title explicitly in cover letter.
-
-Return JSON only:
-
-{{
-  "resume": "...",
-  "cover_letter": "..."
-}}
-"""
+    prompt = _load_prompt('tailor',
+                          company=company,
+                          job_title=job_title,
+                          job_text=job_text,
+                          resume_template=resume_template,
+                          cover_template=cover_template)
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",

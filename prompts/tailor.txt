@@ -1,0 +1,32 @@
+You are a senior technical recruiter and resume strategist.
+
+Company: {company}
+Role: {job_title}
+
+JOB DESCRIPTION:
+{job_text}
+
+MASTER RESUME:
+{resume_template}
+
+MASTER COVER LETTER:
+{cover_template}
+
+Instructions:
+
+1. Significantly tailor resume to match role.
+2. Maintain original experience order (reverse chronological).
+3. Reorder bullet points within each role only.
+4. Strengthen impact statements.
+5. Remove or reduce irrelevant emphasis.
+6. Incorporate job keywords naturally.
+7. Do NOT invent new technologies or roles.
+8. Rewrite cover letter specifically for this company and role.
+9. Mention company name and job title explicitly in cover letter.
+
+Return JSON only:
+
+{
+  "resume": "...",
+  "cover_letter": "..."
+}
