@@ -123,6 +123,56 @@ def _clear_para(para):
             pPr.remove(numPr)
 
 
+def _remove_para(para):
+    """Physically remove a paragraph from the document XML tree.
+
+    Use this instead of _clear_para when the paragraph should not exist at all
+    (e.g. an entire removed experience entry or a surplus content paragraph
+    within a matched entry).  Removing rather than blanking eliminates the
+    vertical space that blank paragraphs still occupy.
+    """
+    p = para._p
+    parent = p.getparent()
+    if parent is not None:
+        parent.remove(p)
+
+
+def _fix_pipe_separators_for_pdf(doc):
+    """Replace spaces adjacent to | separators with non-breaking spaces.
+
+    LibreOffice (used for DOCX→PDF conversion) may break a line at spaces
+    that appear next to | pipe separators in the contact-info area, e.g.
+    pushing a trailing | onto its own line after a long hyperlink URL.
+    Non-breaking spaces (U+00A0) prevent such breaks while being visually
+    indistinguishable from regular spaces.
+
+    Only paragraphs before the first Heading 2 are processed, since those
+    are the name / contact-info lines where pipe separators must not wrap.
+    """
+    NBSP = '\u00A0'
+    first_h2 = next(
+        (i for i, p in enumerate(doc.paragraphs) if p.style.name == 'Heading 2'),
+        len(doc.paragraphs),
+    )
+    for para in doc.paragraphs[:first_h2]:
+        for run in para.runs:
+            text = run.text
+            if not text:
+                continue
+            # Replace " | " separators with non-breaking equivalents.
+            new_text = text.replace(' | ', f'{NBSP}|{NBSP}')
+            # A run that starts with a space sits immediately after a hyperlink
+            # element — that space is a line-break opportunity for LibreOffice.
+            if new_text.startswith(' '):
+                new_text = NBSP + new_text[1:]
+            # A run that ends with a space sits immediately before a hyperlink
+            # element — same issue on the other side.
+            if new_text.endswith(' '):
+                new_text = new_text[:-1] + NBSP
+            if new_text != text:
+                run.text = new_text
+
+
 def insert_paragraph_after(ref_para, text, style_source=None):
     """
     Clone style_source's XML (or ref_para's if style_source is None), set text,
@@ -245,6 +295,7 @@ def save_doc_from_template(template_path, output_path, new_text):
     # --- Fall back to the original full-document algorithm if sections not found ---
     if exp_h2_idx is None or llm_exp_idx is None:
         _apply_groups(paras, new_text, doc)
+        _fix_pipe_separators_for_pdf(doc)
         doc.save(output_path)
         return
 
@@ -303,8 +354,11 @@ def save_doc_from_template(template_path, output_path, new_text):
     # --- Match and apply experience entries by index ---
     for idx, tmpl_entry in enumerate(tmpl_entries):
         if idx >= len(llm_entries):
+            # This template entry has no corresponding LLM entry — remove every
+            # paragraph so cleared-but-present empty paragraphs don't create a
+            # block of blank lines before the next section.
             for p in tmpl_entry:
-                _clear_para(p)
+                _remove_para(p)
             continue
 
         llm_entry = llm_entries[idx]
@@ -321,11 +375,11 @@ def save_doc_from_template(template_path, output_path, new_text):
 
         # Some templates split a header across two paragraphs (e.g. a long company
         # name wraps to a second Normal+bold line).  The LLM always emits a single
-        # header line, so clear those continuation paragraphs before mapping content.
+        # header line, so remove those continuation paragraphs entirely.
         skip = 0
         for p in content_paras:
             if p.style.name == 'Normal' and any(r.bold for r in p.runs):
-                _clear_para(p)
+                _remove_para(p)
                 skip += 1
             else:
                 break
@@ -340,13 +394,21 @@ def save_doc_from_template(template_path, output_path, new_text):
                 last_para = insert_paragraph_after(last_para, text,
                                                    style_source=bullet_para)
 
-        # Clear leftover template paragraphs that the LLM didn't fill
+        # Remove leftover template paragraphs that the LLM didn't fill.
+        # Blank paragraphs (separators between entries) are kept so vertical
+        # spacing between entries is preserved; content paragraphs (bullets,
+        # dates) that went unused are removed to avoid blank-line artefacts.
         for j in range(len(content_lines), len(content_paras)):
-            _clear_para(content_paras[j])
+            p = content_paras[j]
+            if p.text.strip():
+                _remove_para(p)
+            else:
+                _clear_para(p)
 
     # --- Post-experience section ---
     _apply_groups(paras[post_exp_h2_idx:], '\n'.join(llm_lines[llm_post_exp_idx:]), doc)
 
+    _fix_pipe_separators_for_pdf(doc)
     doc.save(output_path)
 
 
