@@ -137,41 +137,6 @@ def _remove_para(para):
         parent.remove(p)
 
 
-def _fix_pipe_separators_for_pdf(doc):
-    """Replace spaces adjacent to | separators with non-breaking spaces.
-
-    LibreOffice (used for DOCX→PDF conversion) may break a line at spaces
-    that appear next to | pipe separators in the contact-info area, e.g.
-    pushing a trailing | onto its own line after a long hyperlink URL.
-    Non-breaking spaces (U+00A0) prevent such breaks while being visually
-    indistinguishable from regular spaces.
-
-    Only paragraphs before the first Heading 2 are processed, since those
-    are the name / contact-info lines where pipe separators must not wrap.
-    """
-    NBSP = '\u00A0'
-    first_h2 = next(
-        (i for i, p in enumerate(doc.paragraphs) if p.style.name == 'Heading 2'),
-        len(doc.paragraphs),
-    )
-    for para in doc.paragraphs[:first_h2]:
-        for run in para.runs:
-            text = run.text
-            if not text:
-                continue
-            # Replace " | " separators with non-breaking equivalents.
-            new_text = text.replace(' | ', f'{NBSP}|{NBSP}')
-            # A run that starts with a space sits immediately after a hyperlink
-            # element — that space is a line-break opportunity for LibreOffice.
-            if new_text.startswith(' '):
-                new_text = NBSP + new_text[1:]
-            # A run that ends with a space sits immediately before a hyperlink
-            # element — same issue on the other side.
-            if new_text.endswith(' '):
-                new_text = new_text[:-1] + NBSP
-            if new_text != text:
-                run.text = new_text
-
 
 def insert_paragraph_after(ref_para, text, style_source=None):
     """
@@ -295,7 +260,6 @@ def save_doc_from_template(template_path, output_path, new_text):
     # --- Fall back to the original full-document algorithm if sections not found ---
     if exp_h2_idx is None or llm_exp_idx is None:
         _apply_groups(paras, new_text, doc)
-        _fix_pipe_separators_for_pdf(doc)
         doc.save(output_path)
         return
 
@@ -408,7 +372,6 @@ def save_doc_from_template(template_path, output_path, new_text):
     # --- Post-experience section ---
     _apply_groups(paras[post_exp_h2_idx:], '\n'.join(llm_lines[llm_post_exp_idx:]), doc)
 
-    _fix_pipe_separators_for_pdf(doc)
     doc.save(output_path)
 
 
