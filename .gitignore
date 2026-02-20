@@ -11,6 +11,9 @@ output/
 # Tmpe output files
 tmp/
 
+# Claude settings
+.claude/
+
 # Virtual environments
 venv/
 .env/
