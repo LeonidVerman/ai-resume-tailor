@@ -1,0 +1,207 @@
+CANDIDATE_PROFILE_CONTEXT (LLM-Optimized)
+1. Professional Summary
+
+Senior backend engineer and engineering leader (15+ years experience) specializing in high-performance, fault-tolerant distributed systems in fintech and crypto domains. Experience scaling systems to 1M+ users and building infrastructure under regulatory constraints. Combines deep backend architecture expertise with recent hands-on work training and evaluating cutting-edge LLM systems.
+
+2. Core Technical Strengths
+Backend & Systems
+
+High-throughput, low-latency backend architecture
+
+Distributed systems design
+
+Horizontal scaling strategies
+
+Stateless service design
+
+Event-driven architecture
+
+Production incident management
+
+Resilience and failure-mode analysis
+
+Real-time APIs (REST, WebSockets)
+
+Databases & Caching
+
+MySQL, PostgreSQL
+
+Read replicas for traffic isolation
+
+Caching layers (Redis)
+
+Session stores (distributed)
+
+Awareness of DB bottlenecks and sharding tradeoffs
+
+Infrastructure
+
+AWS
+
+Docker
+
+Kubernetes
+
+CI/CD practices
+
+Observability mindset
+
+Messaging & Async
+
+Message queues for async system communication
+
+Idempotent request design
+
+Retry-safe architecture
+
+3. Fintech / Crypto Experience
+
+Helped build cryptocurrency exchange for Japanese market
+
+Scaled from small team (4 engineers) to system supporting 1M+ users
+
+Exchange became top-5 in Japan, at times #1 by trading volume
+
+Built trading backend with horizontal scaling
+
+Used DB read replicas to reduce load on primary DB
+
+Implemented multiple caching layers
+
+Designed async communication between system components
+
+Worked under regulatory constraints (Japan)
+
+Balanced performance with compliance
+
+4. Authentication / Authorization Experience
+
+Designed token-based authentication system
+
+Encrypted, signed session tokens
+
+Redis-backed distributed session validation
+
+Extracted account ID and authorization context from tokens
+
+Enforced strict account isolation
+
+Implemented RBAC-style access control at API level
+
+Designed for high throughput and low latency
+
+Handled account migration between servers without breaking auth
+
+Stateless service architecture
+
+Centralized revocation via Redis
+
+Idempotent authorization checks
+
+Not direct OAuth2/OIDC/SAML implementation, but architecture aligned with JWT-style principles:
+
+Cryptographic integrity
+
+Expiry enforcement
+
+Stateless identity propagation
+
+Centralized revocation
+
+5. Scalability & Reliability Patterns
+
+Horizontal scaling of trading servers
+
+Traffic isolation using read replicas
+
+Multi-layer caching
+
+Async messaging for decoupling
+
+Centralized session state
+
+Safe rebalancing of accounts between nodes
+
+Fail-closed mindset for risk systems
+
+Pushed back on risky refactors threatening production stability
+
+6. Leadership & Engineering Culture
+
+Led teams up to 15–20 engineers
+
+Hands-on technical leader
+
+Mentorship and code review
+
+Advocates clear task definitions
+
+Emphasizes accountability and ownership
+
+Prefers reliability over “exciting but unstable” technology
+
+Encourages guardrails for AI-assisted development
+
+Data-driven decisions
+
+Strong collaboration with product and stakeholders
+
+7. AI / LLM Experience
+
+Currently works training and evaluating cutting-edge AI models
+
+Creates ambiguous senior-level software engineering tasks for model training
+
+Evaluates reasoning quality and solution robustness
+
+Understands strengths and weaknesses of LLM systems
+
+Familiar with RAG concepts and vector databases
+
+Believes AI should assist engineers, not replace accountability
+
+Interested in pragmatic AI integration into production systems
+
+8. Engineering Philosophy
+
+Systems thinking
+
+Outcome-oriented
+
+Security-conscious
+
+Scalability-first mindset
+
+Performance-aware
+
+Risk-aware in regulated environments
+
+Strong ownership mentality
+
+Builder mindset and scale-up experience
+
+9. Role Fit Themes (for Tailoring)
+
+This candidate aligns especially well with roles involving:
+
+Fintech
+
+Crypto / blockchain infrastructure
+
+Payments
+
+High-throughput APIs
+
+Low-latency systems
+
+Risk & margin platforms
+
+Real-time systems
+
+Distributed backend architecture
+
+AI infrastructure / LLM integration
+
+Staff / Principal backend roles
+
+Systems-heavy startups
