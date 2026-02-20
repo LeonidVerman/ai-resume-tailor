@@ -319,18 +319,42 @@ def _docx_to_html(docx_path):
     """Convert a .docx to an HTML string, preserving template paragraph styles.
 
     Maps the template's named styles to semantic HTML + CSS:
-      Title            → <h1>  (name line)
-      Heading 2        → <h2>  (section headers, blue)
-      Normal + bold    → <p class="exp-header">  (experience entry headers)
-      Body Text        → <p class="body-text">   (dates, contact)
-      List Paragraph   → <li>  (bullet points)
-      Normal           → <p>
-    Run-level bold/italic/color is also preserved.
+      Title / Heading 1  → <h1>  (name line, centered)
+      Heading 2          → <h2>  (section headers)
+      Normal + bold      → <p class="exp-header">  (experience entry headers)
+      Body Text          → <p class="body-text">   (dates, contact)
+      List Paragraph     → <li>  (bullet points)
+      Normal             → <p>
+    Run-level bold/italic/color/size is preserved.
+    Paragraph alignment (center/right/justify) is read from the paragraph or
+    its style and applied as an inline text-align style.
+    Font sizes and page margins are read directly from the document.
     """
-    _W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
-    _REL_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
 
     doc = Document(docx_path)
+
+    # --- Read page margins from document (EMU → cm) ---
+    section = doc.sections[0]
+    _emu_cm = 2.54 / 914400
+    margin_top    = (section.top_margin    or 0) * _emu_cm
+    margin_bottom = (section.bottom_margin or 0) * _emu_cm
+    margin_left   = (section.left_margin   or 0) * _emu_cm
+    margin_right  = (section.right_margin  or 0) * _emu_cm
+
+    # --- Read style-level font sizes (EMU → pt) ---
+    def _style_pt(style_name, fallback):
+        try:
+            fs = doc.styles[style_name].font.size
+            if fs:
+                return round(fs / 12700, 1)
+        except Exception:
+            pass
+        return fallback
+
+    h1_pt   = _style_pt('Heading 1', 26)
+    h2_pt   = _style_pt('Heading 2', 14)
+    body_pt = _style_pt('Normal',    11)
 
     def escape(t):
         return _html_lib.escape(t, quote=False)
@@ -339,17 +363,45 @@ def _docx_to_html(docx_path):
         text = escape(run.text)
         if not text:
             return ''
+        # Collect inline styles for a single span
+        inline = {}
         try:
             color = run.font.color.rgb
             if color:
-                text = f'<span style="color:#{color}">{text}</span>'
+                inline['color'] = f'#{color}'
         except Exception:
             pass
+        try:
+            if run.font.size:
+                rpt = round(run.font.size / 12700, 1)
+                if rpt != body_pt:
+                    inline['font-size'] = f'{rpt}pt'
+        except Exception:
+            pass
+        if inline:
+            style_str = '; '.join(f'{k}:{v}' for k, v in inline.items())
+            text = f'<span style="{style_str}">{text}</span>'
         if run.bold:
             text = f'<strong>{text}</strong>'
         if run.italic:
             text = f'<em>{text}</em>'
         return text
+
+    def _align_attr(para):
+        """Return an HTML attribute string like ' style="text-align:center"', or ''."""
+        align = para.alignment
+        if align is None:
+            try:
+                align = para.style.paragraph_format.alignment
+            except Exception:
+                pass
+        mapping = {
+            WD_ALIGN_PARAGRAPH.CENTER:  'center',
+            WD_ALIGN_PARAGRAPH.RIGHT:   'right',
+            WD_ALIGN_PARAGRAPH.JUSTIFY: 'justify',
+        }
+        css = mapping.get(align)
+        return f' style="text-align:{css}"' if css else ''
 
     def para_html(para):
         # Gather text from direct runs + runs inside <w:hyperlink> elements
@@ -375,19 +427,20 @@ def _docx_to_html(docx_path):
 
         style = para.style.name
         is_bold = any(r.bold for r in para.runs)
+        align = _align_attr(para)
 
         if style in ('Title', 'Heading 1'):
-            return f'<h1>{inner}</h1>'
+            return f'<h1{align}>{inner}</h1>'
         elif style == 'Heading 2':
-            return f'<h2>{inner}</h2>'
+            return f'<h2{align}>{inner}</h2>'
         elif style == 'List Paragraph':
             return f'<li>{inner}</li>'
         elif style == 'Body Text':
-            return f'<p class="body-text">{inner}</p>'
+            return f'<p class="body-text"{align}>{inner}</p>'
         elif style == 'Normal' and is_bold and '|' in para.text:
-            return f'<p class="exp-header">{inner}</p>'
+            return f'<p class="exp-header"{align}>{inner}</p>'
         else:
-            return f'<p>{inner}</p>'
+            return f'<p{align}>{inner}</p>'
 
     lines = []
     in_list = False
@@ -412,13 +465,12 @@ def _docx_to_html(docx_path):
 <html><head>
 <meta charset="utf-8">
 <style>
-@page {{ margin: 1.8cm 2cm; }}
-body {{ font-family: Calibri, Arial, sans-serif; font-size: 10pt; margin: 0; color: #000; }}
-h1 {{ font-size: 20pt; font-weight: bold; margin: 0 0 2pt 0; }}
-h2 {{ font-size: 11pt; color: #2E74B5; border-bottom: 1pt solid #2E74B5;
-      margin: 10pt 0 3pt 0; font-weight: bold; padding-bottom: 1pt; }}
+@page {{ margin: {margin_top:.2f}cm {margin_right:.2f}cm {margin_bottom:.2f}cm {margin_left:.2f}cm; }}
+body {{ font-family: Calibri, Arial, sans-serif; font-size: {body_pt}pt; margin: 0; color: #000; }}
+h1 {{ font-size: {h1_pt}pt; font-weight: bold; text-align: center; margin: 0 0 2pt 0; }}
+h2 {{ font-size: {h2_pt}pt; font-weight: bold; margin: 10pt 0 3pt 0; }}
 p {{ margin: 1pt 0; line-height: 1.3; }}
-p.body-text {{ margin: 0; font-size: 9.5pt; }}
+p.body-text {{ margin: 0; }}
 p.exp-header {{ font-weight: bold; margin-top: 5pt; margin-bottom: 1pt; }}
 ul {{ margin: 2pt 0 2pt 16pt; padding: 0; list-style-type: disc; }}
 li {{ margin: 1pt 0; line-height: 1.3; }}
