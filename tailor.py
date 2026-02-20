@@ -315,7 +315,213 @@ def save_doc_from_template(template_path, output_path, new_text):
     doc.save(output_path)
 
 
-def _docx_to_html(docx_path):
+def _register_fonts():
+    """Patch xhtml2pdf for Windows font loading and return @font-face CSS.
+
+    On Windows, xhtml2pdf has two bugs that prevent loading local TTF fonts:
+      1. LocalProtocolURI.extract_data does not handle file:///C:/... paths.
+      2. BaseFile.get_named_tmp_file uses NamedTemporaryFile, which holds an
+         exclusive lock on Windows so ReportLab cannot re-open it by name.
+
+    This function patches both issues and returns a CSS string containing
+    @font-face declarations for every Calibri/Cambria variant found in the
+    Windows Fonts directory.  On non-Windows or when fonts are absent it
+    returns an empty string so the caller can fall back gracefully.
+    """
+    import sys, tempfile
+    from pathlib import Path
+    from urllib.parse import urlparse
+
+    fonts_dir = os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts')
+    if not os.path.isdir(fonts_dir):
+        return ''
+
+    # ── Patch 1: LocalProtocolURI.extract_data ──────────────────────────────
+    # self.path is the full URI ("file:///C:/..."), not just the path component.
+    # The original code checks self.path.startswith("/") which is always False
+    # for file:// URIs, so it always returns None on Windows.
+    try:
+        import xhtml2pdf.files as _xf
+
+        def _win_lp_extract_data(self):
+            parsed = urlparse(self.path or '')
+            if parsed.scheme == 'file':
+                p = parsed.path          # '/C:/Windows/...' on Windows
+                if p.startswith('/') and len(p) >= 3 and p[2] == ':':
+                    p = p[1:]            # strip leading slash → 'C:/Windows/...'
+                fpath = Path(p)
+                if fpath.is_file():
+                    self.uri = fpath
+                    self.suffix = fpath.suffix
+                    with open(fpath, 'rb') as fh:
+                        return fh.read()
+            return None
+
+        _xf.LocalProtocolURI.extract_data = _win_lp_extract_data
+
+        # ── Patch 2: BaseFile.get_named_tmp_file ────────────────────────────
+        # NamedTemporaryFile on Windows holds an exclusive lock; use mkstemp
+        # and close the fd before returning so ReportLab can open the file.
+        def _win_get_named_tmp_file(self):
+            data = self.get_data()
+            fd, name = tempfile.mkstemp(suffix=self.suffix or '.tmp')
+            try:
+                if data:
+                    os.write(fd, data)
+            finally:
+                os.close(fd)        # close fd so other processes can read
+
+            class _TmpProxy:
+                def __init__(self, path): self.name = path
+                def close(self):
+                    try: os.unlink(self.name)
+                    except OSError: pass
+                def __del__(self): self.close()
+
+            proxy = _TmpProxy(name)
+            _xf.files_tmp.append(proxy)
+            if self.path is None:
+                self.path = name
+            return proxy
+
+        _xf.BaseFile.get_named_tmp_file = _win_get_named_tmp_file
+
+    except Exception:
+        return ''   # xhtml2pdf unavailable or patching failed – no custom fonts
+
+    # ── Build @font-face CSS for available font files ───────────────────────
+    # Use forward slashes in the URL so urlparse handles the drive letter.
+    fdir = fonts_dir.replace('\\', '/')
+
+    # (filename, font-weight, font-style)
+    font_specs = [
+        ('Calibri', [
+            ('calibri.ttf',  'normal', 'normal'),
+            ('calibrib.ttf', 'bold',   'normal'),
+            ('calibrii.ttf', 'normal', 'italic'),
+            ('calibriz.ttf', 'bold',   'italic'),
+        ]),
+        ('Cambria', [
+            ('cambria.ttc',  'normal', 'normal'),
+            ('cambriab.ttf', 'bold',   'normal'),
+            ('cambriai.ttf', 'normal', 'italic'),
+            ('cambriaz.ttf', 'bold',   'italic'),
+        ]),
+    ]
+
+    css_lines = []
+    for family, variants in font_specs:
+        for fname, weight, style in variants:
+            fpath = os.path.join(fonts_dir, fname)
+            if os.path.exists(fpath):
+                url = f'file:///{fdir}/{fname}'
+                css_lines.append(
+                    f'@font-face {{ font-family: {family}; '
+                    f'src: url("{url}"); '
+                    f'font-weight: {weight}; font-style: {style}; }}'
+                )
+
+    return '\n'.join(css_lines)
+
+
+def _para_ind(para):
+    """Read effective paragraph indentation (paragraph XML then style chain), in points.
+
+    Returns (left_pt, right_pt, first_pt) where first_pt is negative for a
+    hanging indent and positive for a first-line indent.  All values default
+    to 0.0 when not found anywhere in the style chain.
+    """
+    def _tw(ind_el, a):
+        v = ind_el.get(f'{{{_W}}}{a}')
+        try: return int(v) / 20.0
+        except (TypeError, ValueError): return 0.0
+
+    def _read(pPr_el):
+        """Return (left, right, first) if a w:ind element exists, else None."""
+        if pPr_el is None:
+            return None
+        ind = pPr_el.find(f'{{{_W}}}ind')
+        if ind is None:
+            return None   # no ind element → keep searching style chain
+        left    = _tw(ind, 'left')
+        right   = _tw(ind, 'right')
+        hanging = _tw(ind, 'hanging')
+        first   = _tw(ind, 'firstLine')
+        if hanging > 0:
+            first = -hanging
+        # An explicit w:ind element always wins, even when all values are zero
+        # (paragraph overriding style indentation back to zero is intentional).
+        return (left, right, first)
+
+    r = _read(para._p.find(f'{{{_W}}}pPr'))
+    if r is not None:
+        return r
+    style = para.style
+    while style is not None:
+        try:
+            r = _read(style.element.find(f'{{{_W}}}pPr'))
+            if r is not None:
+                return r
+        except Exception:
+            pass
+        style = getattr(style, 'base_style', None)
+    return (0.0, 0.0, 0.0)
+
+
+def _para_spacing(para):
+    """Read effective paragraph spacing (paragraph XML then style chain).
+
+    Returns (before_pt, after_pt, line_height) where before_pt / after_pt are
+    floats in points (or None when absent) and line_height is either a float
+    multiplier (e.g. 1.15) or a CSS string like '14.0pt' (or None when absent).
+    Values are filled from paragraph XML first, then style chain for any that
+    remain None.
+    """
+    before = [None]
+    after  = [None]
+    lh     = [None]
+
+    def _apply(pPr_el):
+        if pPr_el is None:
+            return
+        sp = pPr_el.find(f'{{{_W}}}spacing')
+        if sp is None:
+            return
+        def _tw(a):
+            v = sp.get(f'{{{_W}}}{a}')
+            try: return int(v) / 20.0
+            except (TypeError, ValueError): return None
+        if before[0] is None: before[0] = _tw('before')
+        if after[0]  is None: after[0]  = _tw('after')
+        if lh[0] is None:
+            lv_s = sp.get(f'{{{_W}}}line')
+            lr_s = sp.get(f'{{{_W}}}lineRule')
+            if lv_s:
+                try:
+                    lv = int(lv_s)
+                    if lr_s in (None, 'auto'):
+                        # auto: lv is in 1/240ths of a single-spaced line
+                        lh[0] = round(lv / 240.0, 3)
+                    elif lr_s == 'exact':
+                        # exact: lv is in twips → convert to pt
+                        lh[0] = f'{lv / 20.0:.1f}pt'
+                    # atLeast: minimum constraint, not an exact target —
+                    # let the renderer use natural line height instead.
+                except (TypeError, ValueError):
+                    pass
+
+    _apply(para._p.find(f'{{{_W}}}pPr'))
+    style = para.style
+    while style is not None and (before[0] is None or after[0] is None or lh[0] is None):
+        try:
+            _apply(style.element.find(f'{{{_W}}}pPr'))
+        except Exception:
+            pass
+        style = getattr(style, 'base_style', None)
+    return (before[0], after[0], lh[0])
+
+
+def _docx_to_html(docx_path, font_face_css=''):
     """Convert a .docx to an HTML string, preserving template paragraph styles.
 
     Maps the template's named styles to semantic HTML + CSS:
@@ -323,11 +529,12 @@ def _docx_to_html(docx_path):
       Heading 2          → <h2>  (section headers)
       Normal + bold      → <p class="exp-header">  (experience entry headers)
       Body Text          → <p class="body-text">   (dates, contact)
-      List Paragraph     → <li>  (bullet points)
+      List Paragraph     → <p class="bullet-item"> (bullet points)
       Normal             → <p>
     Run-level bold/italic/color/size is preserved.
-    Paragraph alignment (center/right/justify) is read from the paragraph or
-    its style and applied as an inline text-align style.
+    Paragraph alignment, indentation, and spacing are read from the paragraph
+    XML (falling back to the style chain) and applied as inline styles so the
+    output closely matches the source document's layout.
     Font sizes and page margins are read directly from the document.
     """
     from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -378,6 +585,12 @@ def _docx_to_html(docx_path):
                     inline['font-size'] = f'{rpt}pt'
         except Exception:
             pass
+        try:
+            fn = run.font.name
+            if fn:
+                inline['font-family'] = fn
+        except Exception:
+            pass
         if inline:
             style_str = '; '.join(f'{k}:{v}' for k, v in inline.items())
             text = f'<span style="{style_str}">{text}</span>'
@@ -387,21 +600,11 @@ def _docx_to_html(docx_path):
             text = f'<em>{text}</em>'
         return text
 
-    def _align_attr(para):
-        """Return an HTML attribute string like ' style="text-align:center"', or ''."""
-        align = para.alignment
-        if align is None:
-            try:
-                align = para.style.paragraph_format.alignment
-            except Exception:
-                pass
-        mapping = {
-            WD_ALIGN_PARAGRAPH.CENTER:  'center',
-            WD_ALIGN_PARAGRAPH.RIGHT:   'right',
-            WD_ALIGN_PARAGRAPH.JUSTIFY: 'justify',
-        }
-        css = mapping.get(align)
-        return f' style="text-align:{css}"' if css else ''
+    _ALIGN_MAP = {
+        WD_ALIGN_PARAGRAPH.CENTER:  'center',
+        WD_ALIGN_PARAGRAPH.RIGHT:   'right',
+        WD_ALIGN_PARAGRAPH.JUSTIFY: 'justify',
+    }
 
     def para_html(para):
         # Gather text from direct runs + runs inside <w:hyperlink> elements
@@ -422,58 +625,91 @@ def _docx_to_html(docx_path):
                     parts.append(f'<u>{link_text}</u>')
 
         inner = ''.join(parts)
-        if not inner.strip():
-            return None  # skip blank paragraphs (handled as spacing)
-
-        style = para.style.name
+        style_name = para.style.name
         is_bold = any(r.bold for r in para.runs)
-        align = _align_attr(para)
 
-        if style in ('Title', 'Heading 1'):
-            return f'<h1{align}>{inner}</h1>'
-        elif style == 'Heading 2':
-            return f'<h2{align}>{inner}</h2>'
-        elif style == 'List Paragraph':
-            return f'<li>{inner}</li>'
-        elif style == 'Body Text':
-            return f'<p class="body-text"{align}>{inner}</p>'
-        elif style == 'Normal' and is_bold and '|' in para.text:
-            return f'<p class="exp-header"{align}>{inner}</p>'
+        # Per-paragraph indentation and spacing read from XML / style chain
+        left_pt, right_pt, first_pt = _para_ind(para)
+        before_pt, after_pt, line_h  = _para_spacing(para)
+
+        # Alignment: paragraph level first, then style fallback
+        align = para.alignment
+        if align is None:
+            try:
+                align = para.style.paragraph_format.alignment
+            except Exception:
+                pass
+
+        def _style_attr(use_padding=False):
+            """Build a style="..." attribute string from per-para layout values."""
+            css = {}
+            a = _ALIGN_MAP.get(align)
+            if a:
+                css['text-align'] = a
+            if use_padding:
+                # Hanging indent for bullets: padding-left holds the full block
+                # indent; text-indent pulls the first line (bullet char) left.
+                pl = left_pt if left_pt > 0.5 else 36.0
+                ti = first_pt if first_pt else -18.0
+                css['padding-left'] = f'{pl:.1f}pt'
+                css['text-indent']  = f'{ti:.1f}pt'
+            else:
+                if left_pt > 0.5:
+                    css['margin-left'] = f'{left_pt:.1f}pt'
+                if right_pt > 0.5:
+                    css['margin-right'] = f'{right_pt:.1f}pt'
+                if first_pt:
+                    css['text-indent'] = f'{first_pt:.1f}pt'
+            if before_pt is not None:
+                css['margin-top'] = f'{before_pt:.1f}pt'
+            if after_pt is not None:
+                css['margin-bottom'] = f'{after_pt:.1f}pt'
+            if line_h is not None:
+                css['line-height'] = (str(line_h) if isinstance(line_h, str)
+                                      else f'{line_h:.3f}')
+            return (' style="' + '; '.join(f'{k}:{v}' for k, v in css.items()) + '"'
+                    if css else '')
+
+        if not inner.strip():
+            # Blank paragraph: render as a line-height spacer so vertical
+            # spacing matches the source document rather than being discarded.
+            return f'<p class="spacer"{_style_attr()}>&nbsp;</p>'
+
+        if style_name in ('Title', 'Heading 1'):
+            return f'<h1{_style_attr()}>{inner}</h1>'
+        elif style_name == 'Heading 2':
+            return f'<h2{_style_attr()}>{inner}</h2>'
+        elif style_name == 'List Paragraph':
+            # Explicit bullet glyph so it comes from the body font (Cambria).
+            return f'<p class="bullet-item"{_style_attr(use_padding=True)}>&#x2022;&#x00A0;{inner}</p>'
+        elif style_name == 'Body Text':
+            return f'<p class="body-text"{_style_attr()}>{inner}</p>'
+        elif style_name == 'Normal' and is_bold and '|' in para.text:
+            return f'<p class="exp-header"{_style_attr()}>{inner}</p>'
         else:
-            return f'<p{align}>{inner}</p>'
+            return f'<p{_style_attr()}>{inner}</p>'
 
     lines = []
-    in_list = False
     for para in doc.paragraphs:
-        is_list = para.style.name == 'List Paragraph'
-        if is_list and not in_list:
-            lines.append('<ul>')
-            in_list = True
-        elif not is_list and in_list:
-            lines.append('</ul>')
-            in_list = False
-
         tag = para_html(para)
         if tag is not None:
             lines.append(tag)
 
-    if in_list:
-        lines.append('</ul>')
-
     body = '\n'.join(lines)
+    font_face_block = (font_face_css + '\n') if font_face_css else ''
     return f"""<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8">
 <style>
-@page {{ margin: {margin_top:.2f}cm {margin_right:.2f}cm {margin_bottom:.2f}cm {margin_left:.2f}cm; }}
-body {{ font-family: Calibri, Arial, sans-serif; font-size: {body_pt}pt; margin: 0; color: #000; }}
-h1 {{ font-size: {h1_pt}pt; font-weight: bold; text-align: center; margin: 0 0 2pt 0; }}
-h2 {{ font-size: {h2_pt}pt; font-weight: bold; margin: 10pt 0 3pt 0; }}
-p {{ margin: 1pt 0; line-height: 1.3; }}
-p.body-text {{ margin: 0; }}
-p.exp-header {{ font-weight: bold; margin-top: 5pt; margin-bottom: 1pt; }}
-ul {{ margin: 2pt 0 2pt 16pt; padding: 0; list-style-type: disc; }}
-li {{ margin: 1pt 0; line-height: 1.3; }}
+{font_face_block}@page {{ margin: {margin_top:.2f}cm {margin_right:.2f}cm {margin_bottom:.2f}cm {margin_left:.2f}cm; }}
+body {{ font-family: Cambria, Georgia, serif; font-size: {body_pt}pt; margin: 0; color: #000; }}
+h1 {{ font-family: Calibri, Arial, sans-serif; font-size: {h1_pt}pt; font-weight: bold; text-align: center; margin: 0; }}
+h2 {{ font-family: Calibri, Arial, sans-serif; font-size: {h2_pt}pt; font-weight: bold; margin: 0; }}
+p {{ margin: 0; line-height: 1.15; }}
+p.spacer {{ line-height: 1.0; }}
+p.body-text {{ }}
+p.exp-header {{ font-family: Calibri, Arial, sans-serif; font-weight: bold; }}
+p.bullet-item {{ padding-left: 36pt; text-indent: -18pt; }}
 </style>
 </head><body>
 {body}
@@ -489,7 +725,8 @@ def docx_to_pdf(docx_path):
     docx_abs = os.path.abspath(docx_path)
     pdf_dest = os.path.splitext(docx_abs)[0] + ".pdf"
 
-    html_str = _docx_to_html(docx_abs)
+    font_face_css = _register_fonts()
+    html_str = _docx_to_html(docx_abs, font_face_css=font_face_css)
     with open(pdf_dest, "wb") as f:
         result = pisa.CreatePDF(html_str.encode("utf-8"), dest=f, encoding="utf-8")
 
