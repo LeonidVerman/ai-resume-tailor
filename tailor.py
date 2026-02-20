@@ -61,12 +61,37 @@ def _strip_section_break(para):
             pPr.remove(sectPr)
 
 
+def _strip_pPr_rPr_color(para):
+    """Remove a stale color override from the paragraph's pPr/rPr element.
+
+    Word stores character properties for the paragraph mark in pPr/rPr.
+    Any run that has no explicit color inherits this value, so a leftover
+    color here (e.g. blue 4E80BC from a template experience-header slot)
+    causes newly written bullet text to render in that colour instead of
+    the document default.  Removing it lets runs fall back to their own
+    colour or the style default (black).
+    """
+    pPr = para._p.find(f'{{{_W}}}pPr')
+    if pPr is None:
+        return
+    rPr = pPr.find(f'{{{_W}}}rPr')
+    if rPr is None:
+        return
+    color = rPr.find(f'{{{_W}}}color')
+    if color is not None:
+        rPr.remove(color)
+    if len(rPr) == 0:          # rPr is now empty — remove it too
+        pPr.remove(rPr)
+
+
 def replace_paragraph_text(paragraph, new_text):
     """
     Replace text in a paragraph while preserving the formatting of the first run.
-    Also strips any embedded section break so the paragraph never forces a page break.
+    Also strips any embedded section break so the paragraph never forces a page break,
+    and clears any stale paragraph-level color so new text renders in the correct colour.
     """
     _strip_section_break(paragraph)
+    _strip_pPr_rPr_color(paragraph)
 
     if not paragraph.runs:
         paragraph.text = new_text
@@ -102,6 +127,8 @@ def insert_paragraph_after(ref_para, text, style_source=None):
     """
     Clone style_source's XML (or ref_para's if style_source is None), set text,
     insert the clone immediately after ref_para, and return it as a Paragraph.
+    Stale paragraph-level colour is stripped from the clone before text is set
+    (replace_paragraph_text handles that automatically).
     """
     clone_from = style_source if style_source is not None else ref_para
     new_p = deepcopy(clone_from._p)
