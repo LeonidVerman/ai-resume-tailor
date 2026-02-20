@@ -14,15 +14,28 @@ MASTER COVER LETTER:
 
 Instructions:
 
-1. Significantly tailor resume to match role.
-2. Maintain original experience order (reverse chronological).
-3. Reorder bullet points within each role only.
-4. Strengthen impact statements.
-5. Remove or reduce irrelevant emphasis.
-6. Incorporate job keywords naturally.
-7. Do NOT invent new technologies or roles.
-8. Rewrite cover letter specifically for this company and role.
-9. Mention company name and job title explicitly in cover letter.
+1. Strategically reposition the candidate for this specific role.
+2. Maintain reverse chronological experience order.
+3. You may reorder bullet points within roles.
+4. You may rewrite, merge, or split bullet points for clarity and impact.
+5. Emphasize leadership, domain relevance, and system-level contributions aligned to the job.
+6. Reduce emphasis on experience not directly relevant to the role.
+7. Reorganize the Technical Skills section to prioritize skills most aligned with the job description.
+8. You may rename skill categories to better reflect role alignment.
+9. Do NOT invent technologies, tools, or roles not present in the master resume.
+10. Strengthen metrics and impact framing where possible.
+11. Optimize for recruiter readability and alignment with the job's language.
+12. Cover letter must explicitly connect candidate background to company mission and role responsibilities.
+
+Internally analyze:
+- Core technical themes
+- Leadership expectations
+- Domain alignment
+- Business impact emphasis
+
+Then tailor resume accordingly.
+
+Before generating output, identify the 5 most critical competency themes from the job description and ensure they are clearly reflected in both Experience and Technical Skills sections.
 
 Return JSON only:
 
