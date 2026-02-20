@@ -39,6 +39,14 @@ def read_docx(file_path):
     return "\n".join([p.text for p in doc.paragraphs])
 
 
+def _confirm_overwrite(path):
+    """Return True if *path* does not exist or the user confirms overwriting it."""
+    if not os.path.exists(path):
+        return True
+    answer = input(f"File already exists: {path}\nOverwrite? [y/N] ").strip().lower()
+    return answer in ('y', 'yes')
+
+
 def _strip_section_break(para):
     """Remove any section break (w:sectPr) embedded in a paragraph's w:pPr.
 
@@ -1070,10 +1078,18 @@ if __name__ == "__main__":
     resume_docx = f"output/{company}_Resume.docx"
     cover_docx = f"output/{company}_CoverLetter.docx"
 
-    save_doc_from_template(resume_template_path, resume_docx, result["resume"])
-    save_doc_from_template(cover_template_path, cover_docx, result["cover_letter"])
+    if _confirm_overwrite(resume_docx):
+        save_doc_from_template(resume_template_path, resume_docx, result["resume"])
 
-    docx_to_pdf(resume_docx)
-    docx_to_pdf(cover_docx)
+    if _confirm_overwrite(cover_docx):
+        save_doc_from_template(cover_template_path, cover_docx, result["cover_letter"])
+
+    resume_pdf = os.path.splitext(resume_docx)[0] + ".pdf"
+    if _confirm_overwrite(resume_pdf):
+        docx_to_pdf(resume_docx)
+
+    cover_pdf = os.path.splitext(cover_docx)[0] + ".pdf"
+    if _confirm_overwrite(cover_pdf):
+        docx_to_pdf(cover_docx)
 
     print("Documents generated successfully.")
