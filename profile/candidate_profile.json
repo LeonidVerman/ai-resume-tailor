@@ -2,8 +2,8 @@
   "candidate_profile_version": "1.0",
   "candidate": {
     "name": "Leonid Verman",
-    "headline": "Senior backend engineer & engineering leader (10–15+ yrs), high-performance distributed systems (fintech/crypto), AI model training & evaluation contractor",
-    "summary": "Senior backend engineer and engineering leader with 10–15+ years focused on high-performance, fault-tolerant distributed systems in fintech and crypto. Scaled production systems to 1M+ users under regulatory constraints. Hands-on technical leader (teams up to 15–20). Currently supports world-leading AI labs by training and evaluating cutting-edge LLMs on ambiguous senior-level software engineering tasks."
+    "headline": "Senior backend engineer & engineering leader (10-15+ yrs), high-performance distributed systems (fintech/crypto), AI model training & evaluation contractor",
+    "summary": "Senior backend engineer and engineering leader with 10-15+ years focused on high-performance, fault-tolerant distributed systems in fintech and crypto. Scaled production systems to 1M+ users under regulatory constraints. Hands-on technical leader (teams up to 15-20). Currently supports world-leading AI labs by training and evaluating cutting-edge LLMs on ambiguous senior-level software engineering tasks."
   },
   "domains": {
     "primary": ["fintech", "crypto_exchange", "blockchain"],
@@ -20,7 +20,7 @@
       ],
       "team_context": [
         "Initial team size: 4 engineers",
-        "Later led teams up to 15–20 engineers"
+        "Later led teams up to 15-20 engineers"
       ],
       "architecture_patterns": [
         "Horizontal scaling of trading servers",
