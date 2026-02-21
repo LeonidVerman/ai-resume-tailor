@@ -1404,14 +1404,14 @@ def tailor_documents(job_text, resume_template, cover_template, company, job_tit
         response_format={"type": "json_object"}
     )
 
-    return json.loads(response.choices[0].message.content)
+    return json.loads(response.choices[0].message.content), messages
 
 
 # ---------------------------
 # Debug Autosave
 # ---------------------------
 
-def save_debug_data(company, job_title, job_description, llm_response):
+def save_debug_data(company, job_title, job_description, llm_response, llm_request=None):
     os.makedirs("tmp", exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -1423,6 +1423,7 @@ def save_debug_data(company, job_title, job_description, llm_response):
         "company": company,
         "position": job_title,
         "job_description": job_description,
+        "llm_request": llm_request,
         "llm_response": llm_response,
     }
 
@@ -1474,9 +1475,9 @@ if __name__ == "__main__":
     print(f"Detected Role: {job_title}")
 
     print("Tailoring documents...")
-    result = tailor_documents(job_text, resume_template, cover_template, company, job_title)
+    result, llm_request = tailor_documents(job_text, resume_template, cover_template, company, job_title)
 
-    save_debug_data(company, job_title, job_text, result)
+    save_debug_data(company, job_title, job_text, result, llm_request)
 
     os.makedirs("output", exist_ok=True)
 
