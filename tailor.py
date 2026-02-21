@@ -936,6 +936,28 @@ client = OpenAI()
 # Prompt loader
 # ---------------------------
 
+def _read_text_file(path):
+    """Read a text file, trying encodings from most to least strict.
+
+    Encoding priority:
+      1. utf-8-sig  — UTF-8 with or without BOM (the common cross-platform case)
+      2. cp1252     — Windows-1252 (Windows default; covers 0x80-0x9F like en-dash 0x96)
+      3. latin-1    — ISO-8859-1; every byte is valid, so this never raises
+
+    This means a Windows-saved file with smart quotes or dashes (cp1252)
+    is read correctly rather than crashing with UnicodeDecodeError.
+    """
+    for encoding in ('utf-8-sig', 'cp1252', 'latin-1'):
+        try:
+            with open(path, encoding=encoding) as f:
+                return f.read()
+        except UnicodeDecodeError:
+            continue
+    # Should never be reached (latin-1 accepts all bytes), but be safe
+    with open(path, encoding='utf-8', errors='replace') as f:
+        return f.read()
+
+
 def _load_prompt(name, **kwargs):
     """Load prompts/<name>.txt and substitute {placeholder} values.
 
@@ -948,8 +970,7 @@ def _load_prompt(name, **kwargs):
     prompts_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'prompts')
     path = os.path.join(prompts_dir, f'{name}.txt')
     try:
-        with open(path, encoding='utf-8') as f:
-            template = f.read()
+        template = _read_text_file(path)
     except FileNotFoundError:
         raise FileNotFoundError(
             f"Prompt file not found: {path}\n"
@@ -970,8 +991,7 @@ def _load_candidate_profile():
         os.path.dirname(os.path.abspath(__file__)), 'profile', 'candidate_profile.json'
     )
     try:
-        with open(profile_path, encoding='utf-8') as f:
-            return f.read()
+        return _read_text_file(profile_path)
     except FileNotFoundError:
         return ''
 
@@ -1464,8 +1484,7 @@ if __name__ == "__main__":
     else:
         desc_path = args.position_desc
         try:
-            with open(desc_path, encoding="utf-8") as f:
-                job_text = f.read()
+            job_text = _read_text_file(desc_path)
         except OSError as e:
             parser.error(f"Cannot read position description file: {e}")
         print("Extracting company & role from position description...")
