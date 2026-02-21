@@ -31,6 +31,10 @@ Instructions:
 10. Do NOT invent technologies, tools, employers, titles, or responsibilities that are not supported by either the MASTER RESUME or the CANDIDATE PROFILE.
 11. Strengthen metrics and impact framing where possible, but do not fabricate numbers.
 12. Cover letter must explicitly connect candidate background to company mission and role responsibilities, and must mention {company} and {job_title}.
+13. Maintain reverse chronological order.
+14. Bullet integrity rule: Each bullet must reflect one coherent initiative. Do not merge unrelated achievements into one bullet.
+15. No invented causality: Do not add "resulting in/leading to/enabling" unless the causal link is explicitly stated in the master resume/profile.
+16. Evidence constraint: Every rewritten bullet must be directly traceable to a specific source bullet (no new claims, no new causal links).
 
 Before generating output:
 - Identify the 5 most critical competency themes from the job description.
