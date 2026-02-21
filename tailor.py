@@ -1438,34 +1438,42 @@ def save_debug_data(company, job_title, job_description, llm_response, llm_reque
 # ---------------------------
 
 if __name__ == "__main__":
+    import argparse
 
-    job_url = input("Enter job URL (or press enter to paste text): ").strip()
+    parser = argparse.ArgumentParser(
+        description="Tailor a resume and cover letter to a specific job posting."
+    )
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument(
+        "-pu", "--position-url",
+        metavar="URL",
+        help="Job board URL to scrape the position from.",
+    )
+    source.add_argument(
+        "-pd", "--position-desc",
+        metavar="FILE",
+        help="Path to a text file containing the position description.",
+    )
+    args = parser.parse_args()
 
-    if job_url:
+    if args.position_url:
         try:
-            job_data = scrape_job_url(job_url)
+            job_data = scrape_job_url(args.position_url)
         except RuntimeError as e:
-            print(f"\nError: {e}")
-            print("Falling back to manual text input.")
-            job_url = None   # fall through to the paste branch below
-
-    if not job_url:
-        print("Paste job description (press Enter twice to finish):")
-        lines = []
-        while True:
-            line = input()
-            if not line:
-                break
-            lines.append(line)
-        job_text = "\n".join(lines)
-        print("Extracting company & role from pasted text...")
+            parser.error(str(e))
+    else:
+        desc_path = args.position_desc
+        try:
+            with open(desc_path, encoding="utf-8") as f:
+                job_text = f.read()
+        except OSError as e:
+            parser.error(f"Cannot read position description file: {e}")
+        print("Extracting company & role from position description...")
         job_data = extract_metadata_ai(job_text)
-        job_data['description'] = job_text
+        job_data["description"] = job_text
 
     resume_template = read_docx("templates/Leonid_Verman_Resume_Template.docx")
     cover_template = read_docx("templates/Leonid_Verman_Cover_Letter_Template.docx")
-
-    print("Extracting company & role...")
 
     company = job_data["company"]
     job_title = job_data["job_title"]
