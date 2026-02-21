@@ -1464,18 +1464,21 @@ if __name__ == "__main__":
     resume_docx = f"output/{company}_Resume.docx"
     cover_docx = f"output/{company}_CoverLetter.docx"
 
-    if _confirm_overwrite(resume_docx):
+    if "resume" not in result:
+        print("Warning: LLM response did not include a resume. Skipping resume generation.")
+    elif _confirm_overwrite(resume_docx):
         save_doc_from_template(resume_template_path, resume_docx, result["resume"])
+        resume_pdf = os.path.splitext(resume_docx)[0] + ".pdf"
+        if _confirm_overwrite(resume_pdf):
+            docx_to_pdf(resume_docx)
 
-    if _confirm_overwrite(cover_docx):
+    if "cover_letter" not in result:
+        print("Warning: LLM response did not include a cover letter (likely hit the output "
+              "token limit). Re-run to retry, or paste a shorter job description.")
+    elif _confirm_overwrite(cover_docx):
         save_doc_from_template(cover_template_path, cover_docx, result["cover_letter"])
-
-    resume_pdf = os.path.splitext(resume_docx)[0] + ".pdf"
-    if _confirm_overwrite(resume_pdf):
-        docx_to_pdf(resume_docx)
-
-    cover_pdf = os.path.splitext(cover_docx)[0] + ".pdf"
-    if _confirm_overwrite(cover_pdf):
-        docx_to_pdf(cover_docx)
+        cover_pdf = os.path.splitext(cover_docx)[0] + ".pdf"
+        if _confirm_overwrite(cover_pdf):
+            docx_to_pdf(cover_docx)
 
     print("Documents generated successfully.")
