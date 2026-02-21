@@ -1461,8 +1461,9 @@ if __name__ == "__main__":
     resume_template_path = "templates/Leonid_Verman_Resume_Template.docx"
     cover_template_path = "templates/Leonid_Verman_Cover_Letter_Template.docx"
 
-    resume_docx = f"output/{company}_Resume.docx"
-    cover_docx = f"output/{company}_CoverLetter.docx"
+    safe_company = "".join(c if c.isalnum() or c in "_-" else "_" for c in company).strip("_")
+    resume_docx = "output/" + os.path.basename(resume_template_path).replace("Template", safe_company)
+    cover_docx  = "output/" + os.path.basename(cover_template_path).replace("Template", safe_company)
 
     if "resume" not in result:
         print("Warning: LLM response did not include a resume. Skipping resume generation.")
