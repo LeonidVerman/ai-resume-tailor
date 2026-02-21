@@ -960,6 +960,22 @@ def _load_prompt(name, **kwargs):
                   template)
 
 
+def _load_candidate_profile():
+    """Load profile/candidate_profile.json and return its contents as a string.
+
+    Returns an empty string if the file is absent so callers degrade
+    gracefully rather than crashing.
+    """
+    profile_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'profile', 'candidate_profile.json'
+    )
+    try:
+        with open(profile_path, encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return ''
+
+
 # ---------------------------
 # Step 1 — Extract Company & Role
 # ---------------------------
@@ -1375,9 +1391,15 @@ def tailor_documents(job_text, resume_template, cover_template, company, job_tit
                           resume_template=resume_template,
                           cover_template=cover_template)
 
+    messages = []
+    profile = _load_candidate_profile()
+    if profile:
+        messages.append({"role": "user", "content": profile})
+    messages.append({"role": "user", "content": prompt})
+
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
+        messages=messages,
         temperature=0.3,
         response_format={"type": "json_object"}
     )
