@@ -35,6 +35,18 @@ Instructions:
 14. Bullet integrity rule: Each bullet must reflect one coherent initiative. Do not merge unrelated achievements into one bullet.
 15. No invented causality: Do not add "resulting in/leading to/enabling" unless the causal link is explicitly stated in the master resume/profile.
 16. Evidence constraint: Every rewritten bullet must be directly traceable to a specific source bullet (no new claims, no new causal links).
+17. Every rewritten bullet must be directly traceable to content from the MASTER RESUME or CANDIDATE PROFILE.
+18. Do not introduce new scope (e.g., "enterprise SaaS platforms", "AI-powered functionality", "ROI impact") unless explicitly supported by source material.
+19. Do not echo or paraphrase job description responsibilities unless the candidate demonstrably performed them.
+20. If the job description includes competencies not clearly supported, emphasize adjacent transferable experience without implying direct execution.
+21. For management/leadership roles, elevate scope and authority only where supported by:
+- Team size
+- Architectural ownership
+- Hiring involvement
+- Risk management
+- Production accountability
+22. Each bullet must reflect one coherent initiative. Do not merge unrelated achievements.
+23. Do not create artificial cause-and-effect relationships.
 
 Before generating output:
 - Identify the 5 most critical competency themes from the job description.
