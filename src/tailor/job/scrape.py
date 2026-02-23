@@ -125,6 +125,6 @@ def scrape_job_url(url) -> JobData:
     return JobData(
         company=data.get("company", "Unknown"),
         job_title=data.get("job_title", "Unknown"),
-        description=data.get("description", ""),
+        description=data.get("description", "").strip(),
         source_url=url,
     )

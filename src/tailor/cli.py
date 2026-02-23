@@ -13,9 +13,9 @@ from tailor.llm import extract_metadata_ai, tailor_documents
 from tailor.prompts import _read_text_file
 
 
-def _confirm_overwrite(path):
-    """Return True if *path* does not exist or the user confirms overwriting it."""
-    if not os.path.exists(path):
+def _confirm_overwrite(path, force=False):
+    """Return True if *path* does not exist, force is set, or the user confirms."""
+    if not os.path.exists(path) or force:
         return True
     answer = input(f"File already exists: {path}\nOverwrite? [y/N] ").strip().lower()
     return answer in ("y", "yes")
@@ -35,6 +35,11 @@ def main():
         "-pd", "--position-desc",
         metavar="FILE",
         help="Path to a text file containing the position description.",
+    )
+    parser.add_argument(
+        "-f", "--force",
+        action="store_true",
+        help="Overwrite existing output files without prompting.",
     )
     args = parser.parse_args()
 
@@ -71,7 +76,6 @@ def main():
     save_debug_data(
         job.company,
         job.job_title,
-        job.description,
         {"resume": result.resume, "cover_letter": result.cover_letter},
         llm_request,
     )
@@ -92,10 +96,10 @@ def main():
 
     if result.resume is None:
         print("Warning: LLM response did not include a resume. Skipping resume generation.")
-    elif _confirm_overwrite(resume_docx):
+    elif _confirm_overwrite(resume_docx, args.force):
         save_doc_from_template(RESUME_TEMPLATE, resume_docx, result.resume)
         resume_pdf = os.path.splitext(resume_docx)[0] + ".pdf"
-        if _confirm_overwrite(resume_pdf):
+        if _confirm_overwrite(resume_pdf, args.force):
             docx_to_pdf(resume_docx)
 
     if result.cover_letter is None:
@@ -103,10 +107,10 @@ def main():
             "Warning: LLM response did not include a cover letter (likely hit the output "
             "token limit). Re-run to retry, or paste a shorter job description."
         )
-    elif _confirm_overwrite(cover_docx):
+    elif _confirm_overwrite(cover_docx, args.force):
         save_doc_from_template(COVER_TEMPLATE, cover_docx, result.cover_letter)
         cover_pdf = os.path.splitext(cover_docx)[0] + ".pdf"
-        if _confirm_overwrite(cover_pdf):
+        if _confirm_overwrite(cover_pdf, args.force):
             docx_to_pdf(cover_docx)
 
     print("Documents generated successfully.")

@@ -5,7 +5,7 @@ from datetime import datetime
 from tailor.config import TMP_DIR
 
 
-def save_debug_data(company, job_title, job_description, llm_response, llm_request=None):
+def save_debug_data(company, job_title, llm_response, llm_request=None):
     os.makedirs(TMP_DIR, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -16,7 +16,6 @@ def save_debug_data(company, job_title, job_description, llm_response, llm_reque
     data = {
         "company": company,
         "position": job_title,
-        "job_description": job_description,
         "llm_request": llm_request,
         "llm_response": llm_response,
     }
