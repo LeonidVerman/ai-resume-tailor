@@ -140,12 +140,11 @@ def diff_resume_experience(master_text: str, tailored_text: str) -> dict:
 
         bullet_diff = _diff_bullets(master_bullets, tailored_bullets)
         if bullet_diff["added"] or bullet_diff["removed"] or bullet_diff["changed"]:
-            roles_diff.append({
-                "name": tailored_name,
-                "added":   bullet_diff["added"],
-                "removed": bullet_diff["removed"],
-                "changed": bullet_diff["changed"],
-            })
+            entry = {"name": tailored_name}
+            for key in ("added", "removed", "changed"):
+                if bullet_diff[key]:
+                    entry[key] = bullet_diff[key]
+            roles_diff.append(entry)
 
     return {
         "experience": {
