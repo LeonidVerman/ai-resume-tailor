@@ -4,12 +4,35 @@ Fills a .docx template with LLM-generated text while preserving all
 paragraph formatting (fonts, colours, indentation, list styles, etc.).
 """
 
+import re
 from copy import deepcopy
 
 from docx import Document
 from docx.text.paragraph import Paragraph as DocxParagraph
 
 from tailor.docx import _W
+
+# ---------------------------------------------------------------------------
+# XML sanitization
+# ---------------------------------------------------------------------------
+
+# Characters invalid in XML 1.0: 0x00-0x08, 0x0B-0x0C, 0x0E-0x1F, 0xFFFE, 0xFFFF.
+# \x09 (tab), \x0A (newline), \x0D (CR) are the only valid control chars.
+_INVALID_XML_RE = re.compile(r"[\x00-\x08\x0B\x0C\x0E-\x1F\uFFFE\uFFFF]")
+
+# \x13 (DC3/XOFF) is sometimes emitted by the LLM as a stand-in for an en-dash.
+_CHAR_SUBSTITUTIONS: dict[str, str] = {
+    "\x13": "\u2013",  # en-dash
+    "\x96": "\u2013",  # en-dash (cp1252 byte 0x96)
+    "\x97": "\u2014",  # em-dash (cp1252 byte 0x97)
+}
+
+
+def _sanitize_xml_text(text: str) -> str:
+    """Replace known problem chars and strip any remaining invalid XML 1.0 chars."""
+    for bad, good in _CHAR_SUBSTITUTIONS.items():
+        text = text.replace(bad, good)
+    return _INVALID_XML_RE.sub("", text)
 
 # Section headers that terminate the Experience block in LLM output
 _SECTION_HEADERS = {
@@ -237,6 +260,7 @@ def save_doc_from_template(template_path, output_path, new_text):
 
     All other sections use blank-line grouping (same as the original algorithm).
     """
+    new_text = _sanitize_xml_text(new_text)
     doc = Document(template_path)
     paras = doc.paragraphs
 

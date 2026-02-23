@@ -90,8 +90,33 @@ def _build_must_keep_metrics(plan: dict) -> list[str]:
     metrics: set[str] = set(_BASELINE_METRICS)
     for role_entry in plan.get("resume_strategy", {}).get("experience", []):
         for m in role_entry.get("keep_metrics", []):
-            metrics.add(m)
+            metrics.add(_normalize_plan_metric(m))
     return sorted(metrics)
+
+
+# Regex to extract the core numeric metric token from a longer phrase.
+# Matches: #N, top-N, NM+, N%, Nx  (case-insensitive).
+_METRIC_CORE_RE = re.compile(
+    r"(?:#\d+|top-\d+|\d+[kKmMgGbB]\+|\d+[kKmMgGbB]%?|\d+\+?%)",
+    re.IGNORECASE,
+)
+
+
+def _normalize_plan_metric(s: str) -> str:
+    """Reduce a long plan keep_metric phrase to its core token.
+
+    'N% some description'        -> 'N%'
+    'NM+ some description'       -> 'NM+'
+    '1M+ clients'                -> '1M+'
+    'top-5 in Japan'             -> 'top-5'
+    Short tokens (<= 10 chars)   -> returned unchanged.
+    """
+    if len(s) <= 10:
+        return s
+    m = _METRIC_CORE_RE.search(s)
+    if m:
+        return m.group()
+    return s
 
 
 def _build_must_surface_mechanisms(plan: dict, profile: dict) -> list[str]:
@@ -111,11 +136,18 @@ def _build_must_surface_mechanisms(plan: dict, profile: dict) -> list[str]:
             readable = pattern.replace("_", " ")
             items.append(readable)
 
-    # Tertiary: plan evidence_map safe_translation strings
+    # Tertiary: plan evidence_map safe_translation strings.
+    # The LLM sometimes returns safe_translation as a plain string instead of
+    # a list; handle both to avoid iterating over individual characters.
     for entry in plan.get("evidence_map", []):
-        for translation in entry.get("safe_translation", []):
-            if isinstance(translation, str):
-                items.append(translation)
+        raw = entry.get("safe_translation", [])
+        if isinstance(raw, str):
+            if raw:
+                items.append(raw)
+        elif isinstance(raw, list):
+            for translation in raw:
+                if isinstance(translation, str) and translation:
+                    items.append(translation)
 
     return _dedup_preserve_order(items)
 

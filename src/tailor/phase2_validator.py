@@ -239,7 +239,8 @@ def _parse_roles(resume: str) -> list[tuple[str, list[str]]]:
     """Parse resume into [(role_header, [bullet_texts])] for the Experience section.
 
     Role headers: lines containing '|' that do not start with '-' or '•'.
-    Bullets: lines starting with '- ' or '• '.
+    Bullets: lines starting with '- ' or '• ', OR plain-text content lines
+    (the LLM sometimes omits the dash prefix).  Date-only lines are skipped.
     """
     lines = resume.split("\n")
 
@@ -275,11 +276,22 @@ def _parse_roles(resume: str) -> list[tuple[str, list[str]]]:
                 current_bullets.append(s[2:].strip())
             elif s.startswith("• "):
                 current_bullets.append(s[2:].strip())
+            elif not _is_date_line(s):
+                # Plain-text content line — LLM omitted the bullet marker.
+                current_bullets.append(s)
 
     if current_header is not None:
         roles.append((current_header, current_bullets))
 
     return roles
+
+
+_YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
+
+
+def _is_date_line(s: str) -> bool:
+    """Return True if the line looks like a date/tenure line (e.g. 'Nov 2025 - Present')."""
+    return bool(_YEAR_RE.search(s)) and "|" not in s and len(s) < 60
 
 
 def _get_top_roles_text(roles: list[tuple[str, list[str]]], top_n: int) -> list[str]:
