@@ -10,12 +10,79 @@ _SIMILARITY_THRESHOLD = 0.45
 # Matches a 4-digit year (1900-2099) — used to identify date lines.
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
-_SECTION_HEADERS = {
-    "Education", "Technical Skills", "Skills", "Certifications",
+_ALL_SECTION_HEADERS = {
+    "Experience", "Education", "Technical Skills", "Skills", "Certifications",
     "Projects", "Publications", "Volunteer", "Awards", "References",
     "Professional Summary", "Summary",
 }
 
+# Alternate header names accepted for the same logical section.
+_SECTION_ALIASES: dict[str, tuple[str, ...]] = {
+    "Professional Summary": ("Professional Summary", "Summary"),
+    "Technical Skills":     ("Technical Skills", "Skills"),
+}
+
+
+# ---------------------------------------------------------------------------
+# Generic section extraction
+# ---------------------------------------------------------------------------
+
+def _extract_section(text: str, *headers: str) -> str | None:
+    """Extract and normalize the content of the first matching section header.
+
+    Returns None if no matching header is found or the section is empty.
+    """
+    lines = text.split("\n")
+    start: int | None = None
+    end = len(lines)
+    found_header: str | None = None
+
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if start is None and s in headers:
+            start = i + 1
+            found_header = s
+        elif start is not None and s in _ALL_SECTION_HEADERS and s != found_header:
+            end = i
+            break
+
+    if start is None:
+        return None
+
+    normalized = [line.strip() for line in lines[start:end]]
+    while normalized and not normalized[0]:
+        normalized.pop(0)
+    while normalized and not normalized[-1]:
+        normalized.pop()
+
+    content = "\n".join(normalized)
+    return content if content else None
+
+
+# ---------------------------------------------------------------------------
+# Simple (before/after) section diff
+# ---------------------------------------------------------------------------
+
+def _diff_simple_section(name: str, master_text: str, tailored_text: str) -> dict | None:
+    """Return {"name", "before", "after"} if the section differs, else None."""
+    headers = _SECTION_ALIASES.get(name, (name,))
+    master   = _extract_section(master_text,   *headers)
+    tailored = _extract_section(tailored_text, *headers)
+
+    if master == tailored:   # covers both-None and identical content
+        return None
+
+    result: dict = {"name": name}
+    if master   is not None:
+        result["before"] = master
+    if tailored is not None:
+        result["after"] = tailored
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Experience section — per-role bullet diff
+# ---------------------------------------------------------------------------
 
 def _is_date_line(line: str) -> bool:
     s = line.strip()
@@ -23,7 +90,7 @@ def _is_date_line(line: str) -> bool:
 
 
 def _parse_experience(text: str, bullets_have_dash: bool) -> list[tuple[str, list[str]]]:
-    """Parse the Experience section into [(role_header, [bullets])].
+    """Parse Experience section into [(role_header, [bullets])].
 
     Args:
         text: Plain-text resume (from read_docx or LLM output).
@@ -32,13 +99,13 @@ def _parse_experience(text: str, bullets_have_dash: bool) -> list[tuple[str, lis
     """
     lines = text.split("\n")
 
-    exp_start = None
+    exp_start: int | None = None
     exp_end = len(lines)
     for i, line in enumerate(lines):
         s = line.strip()
         if s == "Experience":
             exp_start = i
-        elif exp_start is not None and s in _SECTION_HEADERS:
+        elif exp_start is not None and s in _ALL_SECTION_HEADERS and s != "Experience":
             exp_end = i
             break
 
@@ -53,9 +120,7 @@ def _parse_experience(text: str, bullets_have_dash: bool) -> list[tuple[str, lis
         s = line.strip()
         if not s:
             continue
-
         if "|" in s and not s.startswith("-") and not s.startswith("•"):
-            # Role header
             if current_role is not None:
                 roles.append((current_role, current_bullets))
             current_role = s
@@ -66,15 +131,12 @@ def _parse_experience(text: str, bullets_have_dash: bool) -> list[tuple[str, lis
                     current_bullets.append(s[2:].strip())
                 elif s.startswith("• "):
                     current_bullets.append(s[2:].strip())
-                # date lines and other non-bullet lines are skipped
             else:
-                # Master format: skip date-like lines; everything else is a bullet
                 if not _is_date_line(s):
                     current_bullets.append(s)
 
     if current_role is not None:
         roles.append((current_role, current_bullets))
-
     return roles
 
 
@@ -88,7 +150,7 @@ def _diff_bullets(master: list[str], tailored: list[str]) -> dict:
     matched_t: set[int] = set()
     changed: list[dict] = []
 
-    # Pass 1: exact matches — kept as-is, excluded from diff
+    # Pass 1: exact matches — excluded from diff
     for i, mb in enumerate(master):
         for j, tb in enumerate(tailored):
             if j in matched_t:
@@ -98,7 +160,7 @@ def _diff_bullets(master: list[str], tailored: list[str]) -> dict:
                 matched_t.add(j)
                 break
 
-    # Pass 2: near-matches above threshold → "changed"
+    # Pass 2: near-matches → "changed"
     pairs: list[tuple[float, int, int]] = []
     for i, mb in enumerate(master):
         if i in matched_m:
@@ -119,16 +181,11 @@ def _diff_bullets(master: list[str], tailored: list[str]) -> dict:
 
     removed = [master[i]   for i in range(len(master))   if i not in matched_m]
     added   = [tailored[j] for j in range(len(tailored)) if j not in matched_t]
-
     return {"added": added, "removed": removed, "changed": changed}
 
 
-def diff_resume_experience(master_text: str, tailored_text: str) -> dict:
-    """Return a structured diff of the Experience section.
-
-    Roles are matched by position (same order is assumed).
-    Only roles with at least one difference are included.
-    """
+def _diff_experience_section(master_text: str, tailored_text: str) -> dict | None:
+    """Return Experience section diff, or None if no differences."""
     master_roles   = _parse_experience(master_text,   bullets_have_dash=False)
     tailored_roles = _parse_experience(tailored_text, bullets_have_dash=True)
 
@@ -137,18 +194,42 @@ def diff_resume_experience(master_text: str, tailored_text: str) -> dict:
         if idx >= len(tailored_roles):
             break
         tailored_name, tailored_bullets = tailored_roles[idx]
-
         bullet_diff = _diff_bullets(master_bullets, tailored_bullets)
         if bullet_diff["added"] or bullet_diff["removed"] or bullet_diff["changed"]:
-            entry = {"name": tailored_name}
+            entry: dict = {"name": tailored_name}
             for key in ("added", "removed", "changed"):
                 if bullet_diff[key]:
                     entry[key] = bullet_diff[key]
             roles_diff.append(entry)
 
-    return {
-        "experience": {
-            "name": "Experience",
-            "roles": roles_diff,
-        }
-    }
+    if not roles_diff:
+        return None
+    return {"name": "Experience", "roles": roles_diff}
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+def diff_resume(master_text: str, tailored_text: str) -> list[dict]:
+    """Return an array of changed resume sections.
+
+    Each element is one of:
+      {"name": "Professional Summary", "before": "...", "after": "..."}
+      {"name": "Experience", "roles": [...per-role bullet diffs...]}
+      {"name": "Technical Skills",     "before": "...", "after": "..."}
+
+    Sections with no differences are omitted entirely.
+    """
+    sections: list[dict] = []
+
+    for fn in (
+        lambda: _diff_simple_section("Professional Summary", master_text, tailored_text),
+        lambda: _diff_experience_section(master_text, tailored_text),
+        lambda: _diff_simple_section("Technical Skills", master_text, tailored_text),
+    ):
+        result = fn()
+        if result:
+            sections.append(result)
+
+    return sections

@@ -5,7 +5,7 @@ import os
 
 from tailor.config import COVER_TEMPLATE, OUTPUT_DIR, RESUME_TEMPLATE
 from tailor.debug import save_debug_data
-from tailor.diff import diff_resume_experience
+from tailor.diff import diff_resume
 from tailor.docx.pdf import docx_to_pdf
 from tailor.docx.template_fill import read_docx, save_doc_from_template
 from tailor.job import JobData
@@ -76,7 +76,9 @@ def main():
 
     diff = {}
     if result.resume:
-        diff["resume"] = diff_resume_experience(resume_template, result.resume)
+        sections = diff_resume(resume_template, result.resume)
+        if sections:
+            diff["resume"] = sections
 
     save_debug_data(
         job.company,
