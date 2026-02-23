@@ -194,11 +194,12 @@ def _run_two_phase(
         plan, job, resume_template, cover_template
     )
 
-    phase2_debug = {
-        "llm_request": p2_messages,
-        "llm_response_raw": p2_meta.get("raw_response"),
-        "model": p2_meta.get("model"),
-        "usage": p2_meta.get("usage"),
-    }
+    # p2_meta already contains writer_packet, attempts[], final_validation_ok
+    phase2_debug = p2_meta
+
+    if not p2_meta.get("final_validation_ok", True):
+        n = len(p2_meta.get("attempts", []))
+        print(f"Warning: Phase 2 validation failed after {n} attempt(s). "
+              "Best-effort output used. See debug file for details.")
 
     return result, p2_messages, phase1_debug, phase2_debug

@@ -190,7 +190,8 @@ class TestPlanTailoring:
 # ---------------------------------------------------------------------------
 
 class TestTailorDocumentsWithPlan:
-    def test_plan_passed_as_first_user_message(self):
+    def test_writer_packet_is_first_user_message_and_plan_is_second(self):
+        """Phase 2 writer: WRITER_PACKET is first user message, TAILORING_PLAN is second."""
         from tailor.job import JobData
         from tailor.llm import tailor_documents_with_plan
 
@@ -213,10 +214,11 @@ class TestTailorDocumentsWithPlan:
             job = JobData(company="Acme", job_title="Senior Engineer", description="desc")
             result, messages, meta = tailor_documents_with_plan(plan, job, "resume", "cover")
 
-        # First user message must be the plan
         user_messages = [m for m in captured_messages if m["role"] == "user"]
-        assert "TAILORING_PLAN" in user_messages[0]["content"]
-        assert '"role_level"' in user_messages[0]["content"]
+        # WRITER_PACKET is first, TAILORING_PLAN is second
+        assert "WRITER_PACKET" in user_messages[0]["content"]
+        assert "TAILORING_PLAN" in user_messages[1]["content"]
+        assert '"role_level"' in user_messages[1]["content"]
 
     def test_plan_metric_preserved_in_output(self):
         """If the plan keep_metrics contains '1M+ users', the output should contain it."""

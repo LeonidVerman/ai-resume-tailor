@@ -17,7 +17,9 @@ from tailor.config import (
     PHASE2_TEMPERATURE,
 )
 from tailor.job import JobData
+from tailor.phase2_validator import validate_phase2_output
 from tailor.prompts import _load_candidate_profile, _load_prompt, _load_prompt_optional
+from tailor.writer_packet import build_writer_packet
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +69,7 @@ def validate_plan(data: Any) -> dict:
     Checks performed:
     - All required top-level keys are present.
     - role_level is a known value.
-    - jd_top_themes has 4–7 entries.
+    - jd_top_themes has 4-7 entries.
     - Each evidence quote is <= 25 words.
     """
     if not isinstance(data, dict):
@@ -86,7 +88,8 @@ def validate_plan(data: Any) -> dict:
     themes = data.get("jd_top_themes", [])
     if not isinstance(themes, list) or not (4 <= len(themes) <= 7):
         raise PlanValidationError(
-            f"jd_top_themes must be a list of 4–7 items, got {len(themes) if isinstance(themes, list) else type(themes).__name__}"
+            f"jd_top_themes must be a list of 4-7 items, got "
+            f"{len(themes) if isinstance(themes, list) else type(themes).__name__}"
         )
 
     for entry in data.get("evidence_map", []):
@@ -164,14 +167,7 @@ def plan_tailoring(
     raw_content = response.choices[0].message.content
     plan_data = json.loads(raw_content)
 
-    usage = {}
-    if response.usage:
-        usage = {
-            "prompt_tokens": response.usage.prompt_tokens,
-            "completion_tokens": response.usage.completion_tokens,
-            "total_tokens": response.usage.total_tokens,
-        }
-
+    usage = _extract_usage(response)
     debug_meta = {
         "model": PHASE1_MODEL,
         "usage": usage,
@@ -182,18 +178,36 @@ def plan_tailoring(
 
 
 # ---------------------------------------------------------------------------
-# Phase 2 — tailor_documents_with_plan
+# Phase 2 — tailor_documents_with_plan  (writer + validator + repair)
 # ---------------------------------------------------------------------------
 
 _PLAN_OBEY_RULES = """
 TAILORING_PLAN COMPLIANCE
-You will be given a TAILORING_PLAN JSON as the first user message.
+You will be given a TAILORING_PLAN JSON as a user message.
 Follow it exactly: apply its resume_strategy and cover_letter_strategy.
 If the plan conflicts with MASTER_RESUME or CANDIDATE_PROFILE, prefer the
-source documents and adjust the plan guidance safely — never invent facts
+source documents and adjust the plan guidance safely -- never invent facts
 to satisfy the plan.
 Do not add skills, technologies, or claims listed in risk_checks.do_not_invent.
 Preserve every metric listed in each role's keep_metrics.
+""".strip()
+
+_WRITER_PACKET_RULES = """
+WRITER_PACKET COMPLIANCE
+You will be given a WRITER_PACKET JSON as the first user message.
+It encodes hard constraints derived from the plan and source documents.
+You MUST follow all of these:
+- must_keep_metrics: every item MUST appear verbatim in the resume output.
+- must_surface_mechanisms: at least 4 MUST appear explicitly in the top 2
+  roles. Use concrete names such as "read replicas", "horizontal scaling",
+  "multi-layer caching", "async messaging", "stateless services", etc.
+  Do NOT write "improved scalability" without naming the mechanism.
+- must_include_skills: every item MUST be present in the Technical Skills
+  section if it exists in the allowed pool.
+- do_not_add_terms: NEVER add these to the output.
+- unsafe_jd_nouns: NEVER use these unless the exact term is present in
+  MASTER_RESUME or CANDIDATE_PROFILE.
+- density_targets: the top 2 roles MUST each have 4-6 bullets.
 """.strip()
 
 
@@ -203,38 +217,27 @@ def tailor_documents_with_plan(
     resume_template: str,
     cover_template: str,
 ) -> tuple[TailorResult, list, dict]:
-    """Phase 2: generate tailored resume + cover letter following the plan.
+    """Phase 2: generate + validate + optionally repair tailored documents.
 
-    Parameters
-    ----------
-    plan:
-        Validated TailoringPlan dict from Phase 1.
-    job:
-        Structured job data.
-    resume_template:
-        Plain-text content of the resume template.
-    cover_template:
-        Plain-text content of the cover letter template.
+    Flow
+    ----
+    1. Build WriterPacket from plan + sources.
+    2. Run Phase 2 writer LLM call.
+    3. Validate output with Phase2Validator.
+    4. If validation fails: run one repair pass using phase2_repair.txt.
+    5. Return best-effort result plus full debug_meta.
 
     Returns
     -------
     result:
         TailorResult with resume and cover_letter text.
-    messages:
-        Full message list sent to Phase 2 LLM.
+    first_attempt_messages:
+        Message list from the first (writer) LLM call.
     debug_meta:
-        Dict with ``model``, ``usage``, ``raw_response``.
+        Dict containing writer_packet, attempts (per-call details),
+        final_validation_ok, model, usage.
     """
-    base_instructions = "\n\n".join(
-        part for part in (
-            _load_prompt("tailor").strip(),
-            _load_prompt_optional("tailor_candidate").strip(),
-            _load_prompt_optional("tailor_role").strip(),
-            _PLAN_OBEY_RULES,
-        )
-        if part
-    )
-    profile = _load_candidate_profile()
+    profile_str = _load_candidate_profile()
 
     d = date.today()
     current_date = f"{d.strftime('%B')} {d.day}, {d.year}"
@@ -245,13 +248,116 @@ def tailor_documents_with_plan(
         current_date=current_date,
     )
 
+    writer_packet = build_writer_packet(
+        plan, profile_str, resume_template, job.description
+    )
+
+    # --- Attempt 1: normal writer ---
+    result, attempt1_messages, attempt1_meta = _run_phase2_writer(
+        writer_packet, plan, job, resume_template, cover_template,
+        profile_str, task, current_date,
+    )
+
+    validation1 = validate_phase2_output(
+        writer_packet,
+        result.resume or "",
+        result.cover_letter or "",
+        current_date,
+    )
+
+    attempts = [
+        {
+            "llm_request": attempt1_messages,
+            "llm_response_raw": attempt1_meta["raw_response"],
+            "validation_report": validation1,
+            "model": attempt1_meta["model"],
+            "usage": attempt1_meta["usage"],
+        }
+    ]
+
+    final_result = result
+    final_validation = validation1
+
+    # --- Attempt 2: repair pass (only if first attempt failed) ---
+    if not validation1["ok"]:
+        repair_result, repair_messages, repair_meta = _run_phase2_repair(
+            writer_packet, plan, job, resume_template, cover_template,
+            profile_str, task, current_date, validation1, result,
+        )
+        validation2 = validate_phase2_output(
+            writer_packet,
+            repair_result.resume or "",
+            repair_result.cover_letter or "",
+            current_date,
+        )
+        attempts.append(
+            {
+                "llm_request": repair_messages,
+                "llm_response_raw": repair_meta["raw_response"],
+                "validation_report": validation2,
+                "model": repair_meta["model"],
+                "usage": repair_meta["usage"],
+            }
+        )
+        final_result = repair_result
+        final_validation = validation2
+
+    if not final_validation["ok"]:
+        logger.warning(
+            "Phase 2 validation still failing after repair: %s",
+            final_validation["errors"],
+        )
+
+    debug_meta: dict = {
+        "model": PHASE2_MODEL,
+        "usage": attempts[-1]["usage"],
+        "raw_response": attempts[-1]["llm_response_raw"],
+        "writer_packet": writer_packet,
+        "attempts": attempts,
+        "final_validation_ok": final_validation["ok"],
+    }
+
+    return final_result, attempt1_messages, debug_meta
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 internal helpers
+# ---------------------------------------------------------------------------
+
+def _build_phase2_developer_instructions() -> str:
+    return "\n\n".join(
+        part for part in (
+            _load_prompt("tailor").strip(),
+            _load_prompt_optional("tailor_candidate").strip(),
+            _load_prompt_optional("tailor_role").strip(),
+            _PLAN_OBEY_RULES,
+            _WRITER_PACKET_RULES,
+        )
+        if part
+    )
+
+
+def _run_phase2_writer(
+    writer_packet: dict,
+    plan: dict,
+    job: JobData,
+    resume_template: str,
+    cover_template: str,
+    profile_str: str,
+    task: str,
+    current_date: str,
+) -> tuple[TailorResult, list, dict]:
+    """Execute a normal Phase 2 writer LLM call."""
+    developer_instructions = _build_phase2_developer_instructions()
+
     messages: list = [
-        {"role": "developer", "content": base_instructions},
-        # Plan first — anchors execution
+        {"role": "developer", "content": developer_instructions},
+        # WriterPacket first — sets hard constraints before anything else
+        {"role": "user", "content": f"WRITER_PACKET:\n{json.dumps(writer_packet, indent=2)}"},
         {"role": "user", "content": f"TAILORING_PLAN:\n{json.dumps(plan, indent=2)}"},
     ]
-    if profile:
-        messages.append({"role": "user", "content": f"CANDIDATE_PROFILE:\n{profile}"})
+    if profile_str:
+        messages.append({"role": "user", "content": f"CANDIDATE_PROFILE:\n{profile_str}"})
     messages.append({"role": "user", "content": f"JOB_DESCRIPTION:\n{job.description}"})
     messages.append({"role": "user", "content": f"MASTER_RESUME:\n{resume_template}"})
     messages.append({"role": "user", "content": f"MASTER_COVER_LETTER:\n{cover_template}"})
@@ -266,28 +372,70 @@ def tailor_documents_with_plan(
         response_format={"type": "json_object"},
     )
 
+    return _parse_phase2_response(response, PHASE2_MODEL)
+
+
+def _run_phase2_repair(
+    writer_packet: dict,
+    plan: dict,
+    job: JobData,
+    resume_template: str,
+    cover_template: str,
+    profile_str: str,
+    task: str,
+    current_date: str,
+    validation_report: dict,
+    draft: TailorResult,
+) -> tuple[TailorResult, list, dict]:
+    """Execute a repair pass using the phase2_repair.txt prompt."""
+    repair_instructions = _load_prompt("phase2_repair")
+
+    draft_payload = json.dumps(
+        {"resume": draft.resume or "", "cover_letter": draft.cover_letter or ""},
+        indent=2,
+    )
+
+    messages: list = [
+        {"role": "developer", "content": repair_instructions},
+        {"role": "user", "content": f"VALIDATION_REPORT:\n{json.dumps(validation_report, indent=2)}"},
+        {"role": "user", "content": f"WRITER_PACKET:\n{json.dumps(writer_packet, indent=2)}"},
+        {"role": "user", "content": f"DRAFT_OUTPUT:\n{draft_payload}"},
+        {"role": "user", "content": f"TAILORING_PLAN:\n{json.dumps(plan, indent=2)}"},
+    ]
+    if profile_str:
+        messages.append({"role": "user", "content": f"CANDIDATE_PROFILE:\n{profile_str}"})
+    messages.append({"role": "user", "content": f"JOB_DESCRIPTION:\n{job.description}"})
+    messages.append({"role": "user", "content": f"MASTER_RESUME:\n{resume_template}"})
+    messages.append({"role": "user", "content": f"MASTER_COVER_LETTER:\n{cover_template}"})
+    messages.append({"role": "user", "content": task})
+    messages.append({"role": "user", "content": f"CURRENT_DATE:\n{current_date}"})
+
+    response = get_client().chat.completions.create(
+        model=PHASE2_MODEL,
+        messages=messages,
+        temperature=PHASE2_TEMPERATURE,
+        max_tokens=PHASE2_MAX_TOKENS,
+        response_format={"type": "json_object"},
+    )
+
+    return _parse_phase2_response(response, PHASE2_MODEL)
+
+
+def _parse_phase2_response(response: Any, model: str) -> tuple[TailorResult, list, dict]:
     raw_content = response.choices[0].message.content
     raw = json.loads(raw_content)
     result = TailorResult(
         resume=raw.get("resume"),
         cover_letter=raw.get("cover_letter"),
     )
-
-    usage = {}
-    if response.usage:
-        usage = {
-            "prompt_tokens": response.usage.prompt_tokens,
-            "completion_tokens": response.usage.completion_tokens,
-            "total_tokens": response.usage.total_tokens,
-        }
-
-    debug_meta = {
-        "model": PHASE2_MODEL,
+    usage = _extract_usage(response)
+    meta = {
+        "model": model,
         "usage": usage,
         "raw_response": raw_content,
     }
-
-    return result, messages, debug_meta
+    # messages not available here; callers own their message lists
+    return result, [], meta
 
 
 # ---------------------------------------------------------------------------
@@ -367,3 +515,17 @@ def extract_metadata_ai(job_text: str) -> dict:
     )
 
     return json.loads(response.choices[0].message.content)
+
+
+# ---------------------------------------------------------------------------
+# Shared utilities
+# ---------------------------------------------------------------------------
+
+def _extract_usage(response: Any) -> dict:
+    if response.usage:
+        return {
+            "prompt_tokens": response.usage.prompt_tokens,
+            "completion_tokens": response.usage.completion_tokens,
+            "total_tokens": response.usage.total_tokens,
+        }
+    return {}
