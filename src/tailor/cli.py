@@ -5,6 +5,7 @@ import os
 
 from tailor.config import COVER_TEMPLATE, OUTPUT_DIR, RESUME_TEMPLATE
 from tailor.debug import save_debug_data
+from tailor.diff import diff_resume_experience
 from tailor.docx.pdf import docx_to_pdf
 from tailor.docx.template_fill import read_docx, save_doc_from_template
 from tailor.job import JobData
@@ -73,11 +74,16 @@ def main():
     print("Tailoring documents...")
     result, llm_request = tailor_documents(job, resume_template, cover_template)
 
+    diff = {}
+    if result.resume:
+        diff["resume"] = diff_resume_experience(resume_template, result.resume)
+
     save_debug_data(
         job.company,
         job.job_title,
         {"resume": result.resume, "cover_letter": result.cover_letter},
         llm_request,
+        diff=diff or None,
     )
 
     # --- Write output files ---
