@@ -1,0 +1,7 @@
+TASK:
+Tailor BOTH documents for:
+- Company: {company}
+- Role: {job_title}
+
+Produce a tailored resume and a tailored cover letter following the rules from the developer message.
+Return JSON only.

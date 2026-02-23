@@ -62,20 +62,19 @@ def tailor_documents(
     messages:
         The full message list sent to the LLM (useful for debug logging).
     """
-    prompt = _load_prompt(
-        "tailor",
-        company=job.company,
-        job_title=job.job_title,
-        job_text=job.description,
-        resume_template=resume_template,
-        cover_template=cover_template,
-    )
-
-    messages: list = []
+    developer_instructions = _load_prompt("tailor")
     profile = _load_candidate_profile()
+
+    messages: list = [
+        {"role": "developer", "content": developer_instructions},
+    ]
     if profile:
-        messages.append({"role": "user", "content": profile})
-    messages.append({"role": "user", "content": prompt})
+        messages.append({"role": "user", "content": f"CANDIDATE_PROFILE:\n{profile}"})
+    messages.append({"role": "user", "content": f"JOB_DESCRIPTION:\n{job.description}"})
+    messages.append({"role": "user", "content": f"MASTER_RESUME:\n{resume_template}"})
+    messages.append({"role": "user", "content": f"MASTER_COVER_LETTER:\n{cover_template}"})
+    task = _load_prompt("tailor_task", company=job.company, job_title=job.job_title)
+    messages.append({"role": "user", "content": task})
 
     response = get_client().chat.completions.create(
         model="gpt-4o-mini",
