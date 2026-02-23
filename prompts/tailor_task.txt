@@ -4,4 +4,5 @@ Tailor BOTH documents for:
 - Role: {job_title}
 
 Produce a tailored resume and a tailored cover letter following the rules from the developer message.
+Use CURRENT_DATE: {current_date}
 Return JSON only.

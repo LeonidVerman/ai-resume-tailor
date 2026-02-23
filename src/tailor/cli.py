@@ -7,7 +7,7 @@ from tailor.config import COVER_TEMPLATE, OUTPUT_DIR, RESUME_TEMPLATE
 from tailor.debug import save_debug_data
 from tailor.diff import diff_resume
 from tailor.docx.pdf import docx_to_pdf
-from tailor.docx.template_fill import read_docx, save_doc_from_template
+from tailor.docx.template_fill import normalize_cover_letter, read_docx, save_doc_from_template
 from tailor.job import JobData
 from tailor.job.scrape import scrape_job_url
 from tailor.llm import extract_metadata_ai, tailor_documents
@@ -116,7 +116,7 @@ def main():
             "token limit). Re-run to retry, or paste a shorter job description."
         )
     elif _confirm_overwrite(cover_docx, args.force):
-        save_doc_from_template(COVER_TEMPLATE, cover_docx, result.cover_letter)
+        save_doc_from_template(COVER_TEMPLATE, cover_docx, normalize_cover_letter(result.cover_letter))
         cover_pdf = os.path.splitext(cover_docx)[0] + ".pdf"
         if _confirm_overwrite(cover_pdf, args.force):
             docx_to_pdf(cover_docx)

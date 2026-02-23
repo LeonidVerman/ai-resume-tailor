@@ -2,6 +2,7 @@
 
 import json
 from dataclasses import dataclass
+from datetime import date
 
 from openai import OpenAI
 
@@ -80,7 +81,14 @@ def tailor_documents(
     messages.append({"role": "user", "content": f"JOB_DESCRIPTION:\n{job.description}"})
     messages.append({"role": "user", "content": f"MASTER_RESUME:\n{resume_template}"})
     messages.append({"role": "user", "content": f"MASTER_COVER_LETTER:\n{cover_template}"})
-    task = _load_prompt("tailor_task", company=job.company, job_title=job.job_title)
+    d = date.today()
+    current_date = f"{d.strftime('%B')} {d.day}, {d.year}"
+    task = _load_prompt(
+        "tailor_task",
+        company=job.company,
+        job_title=job.job_title,
+        current_date=current_date,
+    )
     messages.append({"role": "user", "content": task})
 
     response = get_client().chat.completions.create(

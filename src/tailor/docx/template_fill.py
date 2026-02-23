@@ -185,6 +185,41 @@ def _apply_groups(para_list, text, doc):
 
 
 # ---------------------------------------------------------------------------
+# Cover-letter normalisation
+# ---------------------------------------------------------------------------
+
+def normalize_cover_letter(text: str) -> str:
+    """Strip spurious blank lines from LLM cover letter output.
+
+    The cover letter template has exactly one blank-line separator — the one
+    immediately before "Sincerely,".  The LLM often outputs blank lines
+    between every paragraph, which confuses _apply_groups (it expects the same
+    number of blank-line groups as the template).  This function collapses all
+    blank lines so the result has the same two-group structure:
+
+        <all body lines — no internal blank lines>
+        <blank line>
+        Sincerely,
+        <name>
+    """
+    lines = text.split("\n")
+
+    sincerely_idx = next(
+        (i for i, l in enumerate(lines) if l.strip().lower().startswith("sincerely")),
+        None,
+    )
+
+    if sincerely_idx is None:
+        # No closing found — just remove blank lines and return as-is.
+        return "\n".join(l for l in lines if l.strip())
+
+    body_lines   = [l for l in lines[:sincerely_idx] if l.strip()]
+    closing_lines = [l for l in lines[sincerely_idx:] if l.strip()]
+
+    return "\n".join(body_lines) + "\n\n" + "\n".join(closing_lines)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
