@@ -33,4 +33,4 @@ Domain translation:
   - “AI tools adoption” -> “AI-assisted development productivity enablement”
 
 Contractor clarity:
-- Always label the AI-labs work as “Independent Contractor” (avoid implying employee status).C:\Development\ai-resume-tailor\prompts\tailor_candidate.txt
+- Always label the AI-labs work as “Independent Contractor” (avoid implying employee status).
