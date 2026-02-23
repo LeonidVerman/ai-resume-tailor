@@ -1,46 +1,92 @@
-[CANDIDATE_LAYER_LEONID v1.2]
+[CANDIDATE_LAYER_LEONID v1.4]
 
 Candidate positioning anchors:
-- 15+ years backend engineering and engineering leadership.
-- High-performance, fault-tolerant distributed systems (fintech/crypto).
-- Scaled systems to 1M+ users under regulatory constraints.
-- Led teams up to ~15–20 engineers.
-- Experience includes VP / Director title.
-- Current AI-lab work must be labeled "Independent Contractor".
+
+15+ years backend engineering and engineering leadership.
+
+High-performance, fault-tolerant distributed systems (fintech/crypto).
+
+Scaled systems to 1M+ users under regulatory constraints.
+
+Led teams up to 15-20 engineers.
+
+Experience includes VP / Director title.
+
+Current AI-lab work must be labeled "Independent Contractor".
 
 Leadership Reframing Permission:
-- For Director/VP/Head roles, you MAY elevate achievements to signal:
-  - platform ownership
-  - delivery accountability
-  - risk management mindset
-  - engineering standards and culture
-  - operational excellence
-- This must not introduce new facts.
+
+For Director/VP/Head roles, you MAY elevate achievements to signal:
+
+platform ownership
+
+delivery accountability
+
+risk management mindset
+
+engineering standards and culture
+
+operational excellence
+
+This must not introduce new facts.
 
 Organizational Framing:
-- When supported (mentoring, test coverage, code review, AI adoption),
-  elevate into organizational practices or standards rather than isolated improvements.
+
+When supported (mentoring, test coverage, code review, AI adoption),
+elevate into organizational practices or standards rather than isolated improvements.
 
 Delivery Accountability:
-- Emphasize ownership of outcomes (reliability, scalability, productivity) over participation.
+
+Emphasize ownership of outcomes (reliability, scalability, productivity) over participation.
 
 Leadership Density:
-- In latest leadership role(s), ~40–50% of bullets should reflect leadership outcomes when supported.
+
+In latest leadership role(s), approximately 40-50 percent of bullets should reflect leadership outcomes when supported.
 
 Strategic Summary Requirement (Director roles):
-- Include:
-  - leadership scope
-  - platform scale (1M+ users)
-  - regulated/mission-critical context (if supported)
-  - strategic alignment (without inflating scope)
+
+Include:
+
+leadership scope
+
+platform scale (1M+ users)
+
+regulated or mission-critical context (if supported)
+
+strategic alignment (without inflating scope)
+
+Senior IC Positioning Adjustment:
+
+For Senior/Staff roles:
+
+De-emphasize executive framing but do NOT erase seniority credibility.
+
+Preserve strong scale and quality signals even when shifting toward technical density.
+
+Surface deep technical contributions (architecture patterns, performance engineering, distributed systems mechanisms).
+
+Highlight scalability, caching, async messaging, replicas, and stateless validation patterns when relevant.
+
+Allow prior leadership titles to remain visible for credibility, but ensure technical depth dominates.
+
+Framework and Extensibility Emphasis:
+
+When applicable, interpret reusable middleware, integration wrappers, replication systems, or decoupled components as extensibility or framework-level contributions when factually supported.
+
+Emphasize architectural intent such as reuse, decoupling, and modularity.
 
 Executive Positioning Refinement:
-- Avoid overly IC-coded descriptors such as "hands-on leader".
-- Prefer language signaling strategic accountability when supported.
+
+Avoid overly IC-coded descriptors such as "hands-on leader" for Director roles.
+
+For Senior roles, allow technical depth to dominate over strategic abstraction.
 
 Domain Translation:
-- Translate fintech/crypto into platform/reliability language where appropriate.
-- Do NOT claim SaaS domain expertise unless supported.
+
+Translate fintech/crypto experience into distributed systems, reliability, and scalability language when appropriate.
+
+Do NOT claim SaaS domain expertise unless supported.
 
 Contractor Clarity:
-- Always clearly label AI-lab work as Independent Contractor.
+
+Always clearly label AI-lab work as Independent Contractor.
