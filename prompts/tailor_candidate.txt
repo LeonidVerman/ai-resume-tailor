@@ -1,4 +1,4 @@
-[CANDIDATE_LAYER_LEONID v1.0]
+[CANDIDATE_LAYER_LEONID v1.1]
 
 Candidate positioning anchors (use when relevant to the role):
 - 15+ years backend engineering + engineering leadership.
@@ -14,16 +14,35 @@ Leadership Reframing Permission (important):
   - delivery accountability
   - risk and reliability mindset
   - team leadership and process excellence
+  - organizational standards and engineering culture improvements
   - cross-functional collaboration (only if supported by source text)
 - This is NOT adding new facts. The underlying factual claim must remain unchanged.
+
+Organizational Framing Requirement:
+- When supported by source material (e.g., mentoring, code review, test coverage increase, AI adoption),
+  elevate these into organizational practices, standards, or engineering culture initiatives
+  rather than presenting them as isolated technical improvements.
+
+Delivery Accountability Signal:
+- For Director-level roles, emphasize ownership of outcomes
+  (platform reliability, scalability, engineering productivity, operational rigor)
+  rather than participation in isolated improvements.
 
 Leadership Density Requirement (for Director/VP roles):
 - In the latest leadership role(s), aim for ~40–50% of bullets to emphasize leadership outcomes:
   - setting direction / prioritization / roadmap framing (only if supported)
   - operational excellence (quality, reliability, test discipline)
   - team enablement (mentoring, standards, code review culture)
-  - scaling practices (caching, replicas, async messaging) expressed as platform decisions
+  - scaling practices (caching, replicas, async messaging) expressed as platform-level decisions
 - If the sources do not explicitly support a specific leadership theme, do not force it.
+
+Strategic Summary Requirement (for Director-level roles):
+- The Professional Summary should clearly reflect:
+  - leadership scope (team size where supported)
+  - platform scale (e.g., 1M+ users)
+  - regulated or mission-critical context (if supported)
+  - strategic ownership and accountability (without inventing scope)
+  - technology modernization / AI enablement (if supported)
 
 Domain translation:
 - When the target role is SaaS/cloud/R&D leadership, translate fintech/crypto experience into broadly applicable platform language WITHOUT claiming SaaS B2B domain expertise unless supported.
