@@ -3,14 +3,21 @@
 import argparse
 import os
 
-from tailor.config import COVER_TEMPLATE, OUTPUT_DIR, RESUME_TEMPLATE
+from tailor.config import COVER_TEMPLATE, ENABLE_TWO_PHASE, OUTPUT_DIR, RESUME_TEMPLATE
 from tailor.debug import save_debug_data
 from tailor.diff import diff_resume
 from tailor.docx.pdf import docx_to_pdf
 from tailor.docx.template_fill import normalize_cover_letter, read_docx, save_doc_from_template
 from tailor.job import JobData
 from tailor.job.scrape import scrape_job_url
-from tailor.llm import extract_metadata_ai, tailor_documents
+from tailor.llm import (
+    PlanValidationError,
+    extract_metadata_ai,
+    plan_tailoring,
+    tailor_documents,
+    tailor_documents_with_plan,
+    validate_plan,
+)
 from tailor.prompts import _read_text_file
 
 
@@ -70,9 +77,16 @@ def main():
     resume_template = read_docx(RESUME_TEMPLATE)
     cover_template  = read_docx(COVER_TEMPLATE)
 
-    # --- Tailor documents ---
-    print("Tailoring documents...")
-    result, llm_request = tailor_documents(job, resume_template, cover_template)
+    # --- Tailor documents (two-phase or single-pass) ---
+    if ENABLE_TWO_PHASE:
+        result, llm_request, phase1_debug, phase2_debug = _run_two_phase(
+            job, resume_template, cover_template
+        )
+    else:
+        print("Tailoring documents (single-pass)...")
+        result, llm_request = tailor_documents(job, resume_template, cover_template)
+        phase1_debug = None
+        phase2_debug = None
 
     diff = {}
     if result.resume:
@@ -86,6 +100,8 @@ def main():
         {"resume": result.resume, "cover_letter": result.cover_letter},
         llm_request,
         diff=diff or None,
+        phase1=phase1_debug,
+        phase2=phase2_debug,
     )
 
     # --- Write output files ---
@@ -122,3 +138,67 @@ def main():
             docx_to_pdf(cover_docx)
 
     print("Documents generated successfully.")
+
+
+def _run_two_phase(
+    job: JobData,
+    resume_template: str,
+    cover_template: str,
+):
+    """Run Phase 1 (plan) then Phase 2 (write).  Falls back to single-pass on
+    Phase 1 failure after one retry.
+
+    Returns
+    -------
+    result, llm_request, phase1_debug, phase2_debug
+    """
+    print("Phase 1: generating tailoring plan...")
+    plan = None
+    p1_messages = None
+    p1_meta = None
+    validation_errors: list[str] = []
+
+    for attempt in range(1, 3):  # up to 2 attempts
+        try:
+            raw_plan, p1_messages, p1_meta = plan_tailoring(job, resume_template, cover_template)
+            plan = validate_plan(raw_plan)
+            break
+        except PlanValidationError as exc:
+            msg = f"Phase 1 validation error (attempt {attempt}): {exc}"
+            print(f"Warning: {msg}")
+            validation_errors.append(msg)
+            plan = None
+        except Exception as exc:
+            msg = f"Phase 1 failed (attempt {attempt}): {exc}"
+            print(f"Warning: {msg}")
+            validation_errors.append(msg)
+            plan = None
+
+    phase1_debug = {
+        "llm_request": p1_messages,
+        "llm_response_raw": p1_meta.get("raw_response") if p1_meta else None,
+        "plan_json": plan,
+        "model": p1_meta.get("model") if p1_meta else None,
+        "usage": p1_meta.get("usage") if p1_meta else None,
+        "validation_errors": validation_errors,
+    }
+
+    if plan is None:
+        # Fall back to single-pass
+        print("Warning: Phase 1 failed after retries. Falling back to single-pass tailoring.")
+        result, llm_request = tailor_documents(job, resume_template, cover_template)
+        return result, llm_request, phase1_debug, None
+
+    print("Phase 2: writing tailored documents...")
+    result, p2_messages, p2_meta = tailor_documents_with_plan(
+        plan, job, resume_template, cover_template
+    )
+
+    phase2_debug = {
+        "llm_request": p2_messages,
+        "llm_response_raw": p2_meta.get("raw_response"),
+        "model": p2_meta.get("model"),
+        "usage": p2_meta.get("usage"),
+    }
+
+    return result, p2_messages, phase1_debug, phase2_debug

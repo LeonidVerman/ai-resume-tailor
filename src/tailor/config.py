@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -17,3 +18,15 @@ RESUME_TEMPLATE = str(TEMPLATES_DIR / "Leonid_Verman_Resume_Template.docx")
 COVER_TEMPLATE = str(TEMPLATES_DIR / "Leonid_Verman_Cover_Letter_Template.docx")
 
 DOCKER_IMAGE_DEFAULT = "minidocks/libreoffice"
+
+# --- Two-phase tailoring configuration ---
+ENABLE_TWO_PHASE: bool = os.environ.get("ENABLE_TWO_PHASE", "true").lower() not in ("0", "false", "no")
+
+PHASE1_MODEL: str = os.environ.get("PHASE1_MODEL", "gpt-4o-mini")
+PHASE2_MODEL: str = os.environ.get("PHASE2_MODEL", "gpt-4o-mini")
+
+PHASE1_TEMPERATURE: float = float(os.environ.get("PHASE1_TEMPERATURE", "0.1"))
+PHASE2_TEMPERATURE: float = float(os.environ.get("PHASE2_TEMPERATURE", "0.3"))
+
+PHASE1_MAX_TOKENS: int = int(os.environ.get("PHASE1_MAX_TOKENS", "4000"))
+PHASE2_MAX_TOKENS: int = int(os.environ.get("PHASE2_MAX_TOKENS", "8000"))
