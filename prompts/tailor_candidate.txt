@@ -1,6 +1,8 @@
-[CANDIDATE_LAYER_LEONID v1.4]
+[CANDIDATE_LAYER_LEONID v2.0]
 
-Candidate positioning anchors:
+------------------------------------------------------------
+CORE POSITIONING ANCHORS
+------------------------------------------------------------
 
 15+ years backend engineering and engineering leadership.
 
@@ -14,79 +16,125 @@ Experience includes VP / Director title.
 
 Current AI-lab work must be labeled "Independent Contractor".
 
-Leadership Reframing Permission:
+------------------------------------------------------------
+ARCHITECTURAL STRENGTH AREAS (PRIORITIZE)
+------------------------------------------------------------
 
-For Director/VP/Head roles, you MAY elevate achievements to signal:
+You MUST surface these when relevant:
 
-platform ownership
+- Horizontal scaling of trading servers
+- Database read replicas for read-heavy endpoints
+- Multi-layer caching strategies
+- Asynchronous messaging for decoupling
+- Distributed session validation via Redis
+- Stateless service design
+- Idempotent processing patterns
+- Transactional cache introduction (25% throughput gain)
 
-delivery accountability
+These are primary differentiation signals.
 
-risk management mindset
+------------------------------------------------------------
+SAFE DOMAIN TRANSLATION
+------------------------------------------------------------
 
-engineering standards and culture
+Fintech / crypto trading experience may be translated into:
 
-operational excellence
+- High-throughput distributed backend systems
+- Reliability under regulatory constraints
+- Performance-sensitive API design
+- Distributed consistency and latency optimization
 
-This must not introduce new facts.
+Do NOT translate into:
 
-Organizational Framing:
+- SaaS asset management domain expertise
+- Networking protocol expertise
+- Vendor-specific integration claims
 
-When supported (mentoring, test coverage, code review, AI adoption),
-elevate into organizational practices or standards rather than isolated improvements.
+------------------------------------------------------------
+EXTENSIBILITY AND INTEGRATION POSITIONING
+------------------------------------------------------------
 
-Delivery Accountability:
+You MAY interpret:
 
-Emphasize ownership of outcomes (reliability, scalability, productivity) over participation.
+- Reusable enterprise Java services
+- Middleware components
+- Cached JDBC wrapper
+- Replication systems
+- Async decoupling
 
-Leadership Density:
+As:
 
-In latest leadership role(s), approximately 40-50 percent of bullets should reflect leadership outcomes when supported.
+- Integration abstraction layers
+- Modular architecture
+- Extensible backend components
 
-Strategic Summary Requirement (Director roles):
+BUT:
 
-Include:
+You may NOT claim:
 
-leadership scope
+- Built low-code framework
+- Built model-driven integration platform
+- Implemented asset discovery systems
 
-platform scale (1M+ users)
+Unless explicitly supported in sources.
 
-regulated or mission-critical context (if supported)
+------------------------------------------------------------
+LEADERSHIP POSITIONING
+------------------------------------------------------------
 
-strategic alignment (without inflating scope)
+For Senior IC roles:
 
-Senior IC Positioning Adjustment:
+- Technical depth must dominate.
+- Leadership remains visible but secondary.
+- Preserve scale and quality metrics.
+- Avoid excessive executive abstraction.
 
-For Senior/Staff roles:
+For Director roles:
 
-De-emphasize executive framing but do NOT erase seniority credibility.
+- Elevate platform ownership.
+- Elevate standards and governance.
+- Emphasize risk management mindset.
+- Preserve architectural credibility.
 
-Preserve strong scale and quality signals even when shifting toward technical density.
+------------------------------------------------------------
+AI WORK POSITIONING
+------------------------------------------------------------
 
-Surface deep technical contributions (architecture patterns, performance engineering, distributed systems mechanisms).
+AI-lab work must:
 
-Highlight scalability, caching, async messaging, replicas, and stateless validation patterns when relevant.
+- Be labeled Independent Contractor.
+- Emphasize ambiguity handling.
+- Emphasize engineering problem formulation.
+- Emphasize productivity enhancement.
+- Avoid implying product ownership.
 
-Allow prior leadership titles to remain visible for credibility, but ensure technical depth dominates.
+------------------------------------------------------------
+PROHIBITED INFLATIONS
+------------------------------------------------------------
 
-Framework and Extensibility Emphasis:
+Do NOT claim:
 
-When applicable, interpret reusable middleware, integration wrappers, replication systems, or decoupled components as extensibility or framework-level contributions when factually supported.
+- Direct low-code framework design
+- Asset management SaaS domain expertise
+- Networking protocol implementation
+- Vendor controller integrations
+- Kafka unless explicitly present in MASTER_RESUME
+- JSON Schema / YANG unless explicitly supported
 
-Emphasize architectural intent such as reuse, decoupling, and modularity.
+------------------------------------------------------------
+FINAL REMINDER
+------------------------------------------------------------
 
-Executive Positioning Refinement:
+Leonid’s differentiation is:
 
-Avoid overly IC-coded descriptors such as "hands-on leader" for Director roles.
+Distributed architecture depth + scale + regulatory reliability.
 
-For Senior roles, allow technical depth to dominate over strategic abstraction.
+Not:
 
-Domain Translation:
+Generic SaaS buzzwords.
 
-Translate fintech/crypto experience into distributed systems, reliability, and scalability language when appropriate.
+Always favor:
 
-Do NOT claim SaaS domain expertise unless supported.
-
-Contractor Clarity:
-
-Always clearly label AI-lab work as Independent Contractor.
+Concrete mechanism over abstract phrasing.
+Architecture over adjectives.
+Metrics over claims.
