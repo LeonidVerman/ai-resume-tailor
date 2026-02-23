@@ -1,140 +1,159 @@
-[CANDIDATE_LAYER_LEONID v2.0]
+[CANDIDATE_LAYER_LEONID v3.0]
 
-------------------------------------------------------------
 CORE POSITIONING ANCHORS
-------------------------------------------------------------
 
 15+ years backend engineering and engineering leadership.
 
-High-performance, fault-tolerant distributed systems (fintech/crypto).
+High-performance, fault-tolerant distributed systems in fintech and crypto.
 
-Scaled systems to 1M+ users under regulatory constraints.
+Scaled production systems to 1M+ users under regulatory constraints.
 
 Led teams up to 15-20 engineers.
 
-Experience includes VP / Director title.
+Experience includes VP and Director title.
 
-Current AI-lab work must be labeled "Independent Contractor".
+AI lab work must always be labeled Independent Contractor.
 
-------------------------------------------------------------
-ARCHITECTURAL STRENGTH AREAS (PRIORITIZE)
-------------------------------------------------------------
+ARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)
 
-You MUST surface these when relevant:
+These mechanisms MUST appear explicitly when relevant:
 
-- Horizontal scaling of trading servers
-- Database read replicas for read-heavy endpoints
-- Multi-layer caching strategies
-- Asynchronous messaging for decoupling
-- Distributed session validation via Redis
-- Stateless service design
-- Idempotent processing patterns
-- Transactional cache introduction (25% throughput gain)
+Horizontal scaling of trading servers
 
-These are primary differentiation signals.
+Database read replicas for read-heavy endpoints
 
-------------------------------------------------------------
+Multi-layer caching to reduce database pressure
+
+Asynchronous messaging for decoupled services
+
+Distributed session validation via Redis
+
+Stateless service design
+
+Idempotent processing and retry-safe patterns
+
+Transactional cache yielding 25 percent throughput improvement
+
+These are core differentiation signals.
+They must not remain implicit.
+
+DISTRIBUTED SYSTEM DEPTH
+
+When describing major roles:
+
+Emphasize scaling mechanics.
+
+Emphasize reliability under regulatory constraints.
+
+Emphasize production tradeoffs.
+
+Emphasize performance under load.
+
+Avoid generic phrases like:
+
+robust system
+
+scalable platform
+
+Use mechanism-level detail instead.
+
 SAFE DOMAIN TRANSLATION
-------------------------------------------------------------
 
-Fintech / crypto trading experience may be translated into:
+Fintech and crypto experience may be expressed as:
 
-- High-throughput distributed backend systems
-- Reliability under regulatory constraints
-- Performance-sensitive API design
-- Distributed consistency and latency optimization
+High-throughput distributed backend systems
+
+Low-latency trading and transaction pipelines
+
+Reliability in mission-critical regulated systems
+
+Distributed consistency and latency optimization
 
 Do NOT translate into:
 
-- SaaS asset management domain expertise
-- Networking protocol expertise
-- Vendor-specific integration claims
+Network asset discovery domain expertise
 
-------------------------------------------------------------
+SaaS asset management specialization
+
+Networking protocol implementation
+
+Vendor integration claims
+
 EXTENSIBILITY AND INTEGRATION POSITIONING
-------------------------------------------------------------
 
-You MAY interpret:
+Supported reinterpretations:
 
-- Reusable enterprise Java services
-- Middleware components
-- Cached JDBC wrapper
-- Replication systems
-- Async decoupling
+Reusable enterprise Java services -> modular backend components
 
-As:
+xTier middleware -> extensibility-oriented service layer
 
-- Integration abstraction layers
-- Modular architecture
-- Extensible backend components
+Cached JDBC wrapper -> integration abstraction boundary
 
-BUT:
+Replication systems -> ingestion and persistence coordination
 
-You may NOT claim:
+Async messaging -> decoupled integration architecture
 
-- Built low-code framework
-- Built model-driven integration platform
-- Implemented asset discovery systems
+Prohibited claims unless explicitly supported:
 
-Unless explicitly supported in sources.
+Built low-code framework
 
-------------------------------------------------------------
-LEADERSHIP POSITIONING
-------------------------------------------------------------
+Built model-driven integration platform
+
+Implemented asset discovery infrastructure
+
+Implemented networking controllers
+
+LEADERSHIP BALANCE FOR SENIOR ROLE
 
 For Senior IC roles:
 
-- Technical depth must dominate.
-- Leadership remains visible but secondary.
-- Preserve scale and quality metrics.
-- Avoid excessive executive abstraction.
+Technical execution dominates.
 
-For Director roles:
+Leadership remains visible but secondary.
 
-- Elevate platform ownership.
-- Elevate standards and governance.
-- Emphasize risk management mindset.
-- Preserve architectural credibility.
+Architecture depth outweighs management narrative.
 
-------------------------------------------------------------
+Metrics and system mechanics take priority.
+
 AI WORK POSITIONING
-------------------------------------------------------------
 
 AI-lab work must:
 
-- Be labeled Independent Contractor.
-- Emphasize ambiguity handling.
-- Emphasize engineering problem formulation.
-- Emphasize productivity enhancement.
-- Avoid implying product ownership.
+Be labeled Independent Contractor.
 
-------------------------------------------------------------
-PROHIBITED INFLATIONS
-------------------------------------------------------------
+Emphasize ambiguity handling.
+
+Emphasize engineering problem formulation.
+
+Emphasize productivity enhancement.
+
+Avoid product ownership claims.
+
+PROHIBITED INFLATION
 
 Do NOT claim:
 
-- Direct low-code framework design
-- Asset management SaaS domain expertise
-- Networking protocol implementation
-- Vendor controller integrations
-- Kafka unless explicitly present in MASTER_RESUME
-- JSON Schema / YANG unless explicitly supported
+Networking protocols such as SNMP, BGP, OSPF
 
-------------------------------------------------------------
+Vendor integrations such as ServiceNow, Cisco
+
+Asset management SaaS domain expertise
+
+JSON Schema or YANG unless explicitly present
+
+Any unsupported low-code framework
+
+Any unsupported ETL framework
+
 FINAL REMINDER
-------------------------------------------------------------
 
 Leonid’s differentiation is:
 
-Distributed architecture depth + scale + regulatory reliability.
-
-Not:
-
-Generic SaaS buzzwords.
+Deep distributed architecture experience + production scale + regulatory reliability.
 
 Always favor:
 
-Concrete mechanism over abstract phrasing.
+Concrete mechanism over abstraction.
 Architecture over adjectives.
-Metrics over claims.
+Metrics over generic claims.
+Density over fluff.
