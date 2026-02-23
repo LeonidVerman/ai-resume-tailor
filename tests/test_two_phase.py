@@ -16,7 +16,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def _minimal_plan() -> dict:
-    """Return a minimal valid TailoringPlan."""
+    """Return a minimal valid TailoringPlan (v2.1)."""
     return {
         "role_level": "senior",
         "jd_top_themes": [
@@ -32,11 +32,42 @@ def _minimal_plan() -> dict:
                         "location": "Acme Corp",
                         "quote": "Scaled platform to 1M+ users across distributed services",
                         "allowed_claims": ["scaled to 1M+ users"],
-                    }
+                    },
+                    {
+                        "source": "candidate_profile",
+                        "location": "experience_highlights",
+                        "quote": "Built horizontally scaled microservices handling 1M+ concurrent users",
+                        "allowed_claims": ["horizontal scaling"],
+                    },
+                    {
+                        "source": "master_resume",
+                        "location": "Acme Corp",
+                        "quote": "Implemented multi-layer caching reducing latency by 25%",
+                        "allowed_claims": ["caching", "25% latency reduction"],
+                    },
                 ],
                 "gaps": [],
                 "safe_translation": [],
-            }
+            },
+            {
+                "theme": "Theme 1",
+                "evidence": [
+                    {
+                        "source": "master_resume",
+                        "location": "Acme Corp",
+                        "quote": "Designed async messaging pipeline for order processing",
+                        "allowed_claims": ["async messaging"],
+                    },
+                    {
+                        "source": "master_resume",
+                        "location": "Acme Corp",
+                        "quote": "Led distributed team of 6 engineers across 3 regions",
+                        "allowed_claims": ["distributed team leadership"],
+                    },
+                ],
+                "gaps": [],
+                "safe_translation": [],
+            },
         ],
         "resume_strategy": {
             "summary": {"include_points": ["focus"], "avoid_points": []},
@@ -48,7 +79,15 @@ def _minimal_plan() -> dict:
                     "bullets_to_emphasize": [],
                     "bullets_to_compress": [],
                     "bullets_to_reframe": [],
-                }
+                },
+                {
+                    "role_name": "Engineer | Beta Corp",
+                    "priority": "medium",
+                    "keep_metrics": [],
+                    "bullets_to_emphasize": [],
+                    "bullets_to_compress": [],
+                    "bullets_to_reframe": [],
+                },
             ],
             "skills": {
                 "reorder_categories": [],
@@ -67,6 +106,41 @@ def _minimal_plan() -> dict:
             "likely_hallucination_traps": ["networking protocols"],
             "claims_requiring_strict_grounding": ["compliance statements"],
         },
+        "theme_priority": {
+            "primary": ["Theme 0"],
+            "secondary": ["Theme 1", "Theme 2"],
+            "supporting": ["Theme 3", "Theme 4"],
+        },
+        "role_repositioning_intent": [
+            {
+                "role_name": "Senior Engineer | Acme Corp",
+                "intent": "Reframe as distributed systems architect with platform scalability focus.",
+            },
+            {
+                "role_name": "Engineer | Beta Corp",
+                "intent": "Emphasize backend service design and async messaging experience.",
+            },
+        ],
+        "domain_de_emphasis": {
+            "enabled": False,
+            "downweight_terms": [],
+            "preferred_replacement_frame": "",
+        },
+        "evidence_saturation_rules": {
+            "primary_theme_min_evidence": 3,
+            "secondary_theme_min_evidence": 2,
+            "supporting_theme_min_evidence": 1,
+        },
+        "bullet_allocation_plan": [
+            {
+                "role_name": "Senior Engineer | Acme Corp",
+                "theme_to_min_bullets": {"Theme 0": 2, "Theme 1": 1},
+            },
+            {
+                "role_name": "Engineer | Beta Corp",
+                "theme_to_min_bullets": {"Theme 1": 2, "Theme 2": 1},
+            },
+        ],
     }
 
 

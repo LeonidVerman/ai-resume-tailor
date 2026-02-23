@@ -16,6 +16,7 @@ from tailor.config import (
     PHASE2_MODEL,
     PHASE2_TEMPERATURE,
 )
+from tailor.plan_validator import validate_plan_extended
 from tailor.job import JobData
 from tailor.phase2_validator import validate_phase2_output
 from tailor.prompts import _load_candidate_profile, _load_prompt, _load_prompt_optional
@@ -30,7 +31,7 @@ _VALID_ROLE_LEVELS = {"director", "senior", "mid", "junior"}
 _VALID_PRIORITIES = {"high", "medium", "low"}
 _VALID_EVIDENCE_SOURCES = {"candidate_profile", "master_resume"}
 
-# Required top-level keys for a TailoringPlan
+# Required top-level keys for a TailoringPlan (v2.1)
 _PLAN_REQUIRED_KEYS = {
     "role_level",
     "jd_top_themes",
@@ -38,6 +39,11 @@ _PLAN_REQUIRED_KEYS = {
     "resume_strategy",
     "cover_letter_strategy",
     "risk_checks",
+    "theme_priority",
+    "role_repositioning_intent",
+    "domain_de_emphasis",
+    "evidence_saturation_rules",
+    "bullet_allocation_plan",
 }
 
 
@@ -155,6 +161,74 @@ def plan_tailoring(
     messages.append({"role": "user", "content": f"MASTER_COVER_LETTER:\n{cover_template}"})
     messages.append({"role": "user", "content": task})
     messages.append({"role": "user", "content": f"CURRENT_DATE:\n{current_date}"})
+
+    response = get_client().chat.completions.create(
+        model=PHASE1_MODEL,
+        messages=messages,
+        temperature=PHASE1_TEMPERATURE,
+        max_tokens=PHASE1_MAX_TOKENS,
+        response_format={"type": "json_object"},
+    )
+
+    raw_content = response.choices[0].message.content
+    plan_data = json.loads(raw_content)
+
+    usage = _extract_usage(response)
+    debug_meta = {
+        "model": PHASE1_MODEL,
+        "usage": usage,
+        "raw_response": raw_content,
+    }
+
+    return plan_data, messages, debug_meta
+
+
+def plan_repair_tailoring(
+    invalid_plan: dict,
+    validation_errors: list[str],
+    job: JobData,
+    resume_template: str,
+    cover_template: str,
+) -> tuple[dict, list, dict]:
+    """Phase 1 repair: ask the LLM to fix a plan that failed extended validation.
+
+    Parameters
+    ----------
+    invalid_plan:
+        The plan dict that failed ``validate_plan_extended``.
+    validation_errors:
+        The error strings returned by ``validate_plan_extended``.
+    job, resume_template, cover_template:
+        Same sources used in the original ``plan_tailoring`` call.
+
+    Returns
+    -------
+    plan:
+        Raw (unvalidated) plan dict from the repair LLM call.
+    messages:
+        Full message list sent to the repair LLM.
+    debug_meta:
+        Dict with ``model``, ``usage``, ``raw_response``.
+    """
+    repair_instructions = _load_prompt("tailor_plan_repair")
+    profile = _load_candidate_profile()
+
+    messages: list = [
+        {"role": "developer", "content": repair_instructions},
+        {
+            "role": "user",
+            "content": f"VALIDATION_ERRORS:\n{json.dumps(validation_errors, indent=2)}",
+        },
+        {
+            "role": "user",
+            "content": f"INVALID_PLAN:\n{json.dumps(invalid_plan, indent=2)}",
+        },
+    ]
+    if profile:
+        messages.append({"role": "user", "content": f"CANDIDATE_PROFILE:\n{profile}"})
+    messages.append({"role": "user", "content": f"JOB_DESCRIPTION:\n{job.description}"})
+    messages.append({"role": "user", "content": f"MASTER_RESUME:\n{resume_template}"})
+    messages.append({"role": "user", "content": f"MASTER_COVER_LETTER:\n{cover_template}"})
 
     response = get_client().chat.completions.create(
         model=PHASE1_MODEL,

@@ -42,6 +42,15 @@ HARD RULES
    - At least 1 reframe must address architectural reinterpretation.
    - At least 1 reframe must address integration or extensibility if JD includes it.
    - At least 1 reframe must address distributed systems or scalability if JD includes it.
+7) theme_priority tier counts (mandatory):
+   - primary: 1-2 themes (highest hiring weight)
+   - secondary: 2-3 themes
+   - supporting: remaining themes
+   - Every theme in jd_top_themes MUST appear in exactly one tier.
+8) evidence_saturation_rules minimums must be respected:
+   - primary themes: >= 3 evidence items each
+   - secondary themes: >= 2 evidence items each
+   - supporting themes: >= 1 evidence item each
 
 If these minimums are not satisfied, the plan is incomplete.
 
@@ -67,7 +76,31 @@ OUTPUT FORMAT (STRICT JSON ONLY)
   "evidence_map": [...],
   "resume_strategy": {...},
   "cover_letter_strategy": {...},
-  "risk_checks": {...}
+  "risk_checks": {...},
+  "theme_priority": {
+    "primary": ["<theme name>"],
+    "secondary": ["<theme name>", "<theme name>"],
+    "supporting": ["<theme name>"]
+  },
+  "role_repositioning_intent": [
+    { "role_name": "<exact role_name from resume_strategy.experience>", "intent": "<1-2 sentence strategic repositioning goal>" }
+  ],
+  "domain_de_emphasis": {
+    "enabled": true,
+    "downweight_terms": ["<term>"],
+    "preferred_replacement_frame": "<alternative framing>"
+  },
+  "evidence_saturation_rules": {
+    "primary_theme_min_evidence": 3,
+    "secondary_theme_min_evidence": 2,
+    "supporting_theme_min_evidence": 1
+  },
+  "bullet_allocation_plan": [
+    {
+      "role_name": "<exact role_name from resume_strategy.experience>",
+      "theme_to_min_bullets": { "<theme name>": 2, "<theme name>": 1 }
+    }
+  ]
 }
 
 Do NOT include explanations.
@@ -203,6 +236,68 @@ G) risk_checks
   - domain-specific protocols
   - regulatory claims
   - vendor names
+
+------------------------------------------------------------
+
+H) theme_priority
+
+Assign every theme from jd_top_themes to exactly one tier:
+
+- primary (1-2 themes): the single biggest hiring drivers.
+  These themes dominate the resume summary and top-role bullets.
+- secondary (2-3 themes): important but not make-or-break.
+  Should appear in top-role bullets and cover letter body.
+- supporting (remaining): contextual signals.
+  May appear in later roles or skills section.
+
+Use theme names exactly as written in jd_top_themes.
+
+------------------------------------------------------------
+
+I) role_repositioning_intent
+
+For each role in resume_strategy.experience (at minimum the top 2):
+- State the strategic repositioning goal in 1-2 sentences.
+- Focus on how the role should be reframed to align with primary/secondary themes.
+- Use role_name exactly as written in resume_strategy.experience.
+
+------------------------------------------------------------
+
+J) domain_de_emphasis
+
+If the candidate's background includes a domain that is NOT relevant to this role
+(e.g. fintech applying to networking, or gaming applying to healthcare):
+- Set enabled: true
+- List downweight_terms: specific vocabulary to avoid or minimize
+- Set preferred_replacement_frame: the neutral/architectural framing to use instead
+
+If no de-emphasis is warranted, set enabled: false (downweight_terms and
+preferred_replacement_frame may be omitted or empty).
+
+------------------------------------------------------------
+
+K) evidence_saturation_rules
+
+Set the minimum evidence count per theme tier.
+Recommended defaults:
+- primary_theme_min_evidence: 3
+- secondary_theme_min_evidence: 2
+- supporting_theme_min_evidence: 1
+
+Adjust upward if the JD is especially deep on a particular theme.
+These values are enforced by the automated validator.
+
+------------------------------------------------------------
+
+L) bullet_allocation_plan
+
+For the top 2 roles (by priority in resume_strategy.experience):
+- Map each primary and secondary theme to a minimum bullet count.
+- Use theme names exactly as written in jd_top_themes.
+- Use role_name exactly as written in resume_strategy.experience.
+
+Each top role MUST have at least 2 themes in theme_to_min_bullets.
+The sum of min bullets should not exceed density_targets.bullets_per_top_role_max (6).
 
 ------------------------------------------------------------
 

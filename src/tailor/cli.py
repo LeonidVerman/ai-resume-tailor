@@ -3,7 +3,7 @@
 import argparse
 import os
 
-from tailor.config import COVER_TEMPLATE, ENABLE_TWO_PHASE, OUTPUT_DIR, RESUME_TEMPLATE
+from tailor.config import COVER_TEMPLATE, ENABLE_PLAN_REPAIR, ENABLE_TWO_PHASE, OUTPUT_DIR, RESUME_TEMPLATE
 from tailor.debug import save_debug_data
 from tailor.diff import diff_resume
 from tailor.docx.pdf import docx_to_pdf
@@ -13,11 +13,13 @@ from tailor.job.scrape import scrape_job_url
 from tailor.llm import (
     PlanValidationError,
     extract_metadata_ai,
+    plan_repair_tailoring,
     plan_tailoring,
     tailor_documents,
     tailor_documents_with_plan,
     validate_plan,
 )
+from tailor.plan_validator import validate_plan_extended
 from tailor.prompts import _read_text_file
 
 
@@ -157,11 +159,35 @@ def _run_two_phase(
     p1_messages = None
     p1_meta = None
     validation_errors: list[str] = []
+    last_raw_plan: dict | None = None
 
     for attempt in range(1, 3):  # up to 2 attempts
         try:
-            raw_plan, p1_messages, p1_meta = plan_tailoring(job, resume_template, cover_template)
+            if attempt == 1:
+                raw_plan, p1_messages, p1_meta = plan_tailoring(
+                    job, resume_template, cover_template
+                )
+            else:
+                # Attempt 2: use plan repair if enabled and we have a previous plan
+                if ENABLE_PLAN_REPAIR and last_raw_plan is not None:
+                    raw_plan, p1_messages, p1_meta = plan_repair_tailoring(
+                        last_raw_plan, validation_errors, job, resume_template, cover_template
+                    )
+                else:
+                    raw_plan, p1_messages, p1_meta = plan_tailoring(
+                        job, resume_template, cover_template
+                    )
+
+            last_raw_plan = raw_plan
             plan = validate_plan(raw_plan)
+
+            # Extended v2.1 checks
+            extended_errors = validate_plan_extended(raw_plan)
+            if extended_errors:
+                raise PlanValidationError(
+                    f"v2.1 extended validation failed: {'; '.join(extended_errors)}"
+                )
+
             break
         except PlanValidationError as exc:
             msg = f"Phase 1 validation error (attempt {attempt}): {exc}"
