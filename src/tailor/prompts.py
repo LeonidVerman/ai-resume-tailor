@@ -48,6 +48,14 @@ def _load_prompt(name, **kwargs):
     )
 
 
+def _load_prompt_optional(name, **kwargs):
+    """Like _load_prompt but returns '' if the file is missing or empty."""
+    try:
+        return _load_prompt(name, **kwargs)
+    except FileNotFoundError:
+        return ""
+
+
 def _load_candidate_profile():
     """Load profile/candidate_profile.json and return its contents as a string.
 

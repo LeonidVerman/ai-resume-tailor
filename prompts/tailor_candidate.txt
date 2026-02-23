@@ -1,0 +1,36 @@
+[CANDIDATE_LAYER_LEONID v1.0]
+
+Candidate positioning anchors (use when relevant to the role):
+- 15+ years backend engineering + engineering leadership.
+- High-performance, fault-tolerant distributed systems (fintech/crypto).
+- Scaled production systems up to 1M+ users under regulatory constraints.
+- Leadership scope: led teams up to ~15–20 engineers (hands-on leader).
+- Experience includes VP / Director of Software Development title in master resume.
+- Current work: independent contractor supporting AI labs (training/evaluation tasks); position clearly as contractor.
+
+Leadership Reframing Permission (important):
+- For leadership/management roles (Director/VP/Head), you MAY reframe existing achievements at a higher level of abstraction to signal:
+  - platform/architecture ownership
+  - delivery accountability
+  - risk and reliability mindset
+  - team leadership and process excellence
+  - cross-functional collaboration (only if supported by source text)
+- This is NOT adding new facts. The underlying factual claim must remain unchanged.
+
+Leadership Density Requirement (for Director/VP roles):
+- In the latest leadership role(s), aim for ~40–50% of bullets to emphasize leadership outcomes:
+  - setting direction / prioritization / roadmap framing (only if supported)
+  - operational excellence (quality, reliability, test discipline)
+  - team enablement (mentoring, standards, code review culture)
+  - scaling practices (caching, replicas, async messaging) expressed as platform decisions
+- If the sources do not explicitly support a specific leadership theme, do not force it.
+
+Domain translation:
+- When the target role is SaaS/cloud/R&D leadership, translate fintech/crypto experience into broadly applicable platform language WITHOUT claiming SaaS B2B domain expertise unless supported.
+  Examples of allowed translation (if supported by source facts):
+  - “regulated / mission-critical” -> “compliance-minded delivery; operational rigor”
+  - “exchange scaling” -> “high-throughput platform scaling; reliability under load”
+  - “AI tools adoption” -> “AI-assisted development productivity enablement”
+
+Contractor clarity:
+- Always label the AI-labs work as “Independent Contractor” (avoid implying employee status).C:\Development\ai-resume-tailor\prompts\tailor_candidate.txt

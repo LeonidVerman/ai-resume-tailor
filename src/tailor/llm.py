@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from openai import OpenAI
 
 from tailor.job import JobData
-from tailor.prompts import _load_candidate_profile, _load_prompt
+from tailor.prompts import _load_candidate_profile, _load_prompt, _load_prompt_optional
 
 _client: OpenAI | None = None
 
@@ -62,7 +62,14 @@ def tailor_documents(
     messages:
         The full message list sent to the LLM (useful for debug logging).
     """
-    developer_instructions = _load_prompt("tailor")
+    developer_instructions = "\n\n".join(
+        part for part in (
+            _load_prompt("tailor").strip(),
+            _load_prompt_optional("tailor_candidate").strip(),
+            _load_prompt_optional("tailor_role").strip(),
+        )
+        if part
+    )
     profile = _load_candidate_profile()
 
     messages: list = [
