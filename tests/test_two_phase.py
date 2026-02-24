@@ -106,41 +106,6 @@ def _minimal_plan() -> dict:
             "likely_hallucination_traps": ["networking protocols"],
             "claims_requiring_strict_grounding": ["compliance statements"],
         },
-        "theme_priority": {
-            "primary": ["Theme 0"],
-            "secondary": ["Theme 1", "Theme 2"],
-            "supporting": ["Theme 3", "Theme 4"],
-        },
-        "role_repositioning_intent": [
-            {
-                "role_name": "Senior Engineer | Acme Corp",
-                "intent": "Reframe as distributed systems architect with platform scalability focus.",
-            },
-            {
-                "role_name": "Engineer | Beta Corp",
-                "intent": "Emphasize backend service design and async messaging experience.",
-            },
-        ],
-        "domain_de_emphasis": {
-            "enabled": False,
-            "downweight_terms": [],
-            "preferred_replacement_frame": "",
-        },
-        "evidence_saturation_rules": {
-            "primary_theme_min_evidence": 3,
-            "secondary_theme_min_evidence": 2,
-            "supporting_theme_min_evidence": 1,
-        },
-        "bullet_allocation_plan": [
-            {
-                "role_name": "Senior Engineer | Acme Corp",
-                "theme_to_min_bullets": {"Theme 0": 2, "Theme 1": 1},
-            },
-            {
-                "role_name": "Engineer | Beta Corp",
-                "theme_to_min_bullets": {"Theme 1": 2, "Theme 2": 1},
-            },
-        ],
     }
 
 

@@ -31,7 +31,7 @@ _VALID_ROLE_LEVELS = {"director", "senior", "mid", "junior"}
 _VALID_PRIORITIES = {"high", "medium", "low"}
 _VALID_EVIDENCE_SOURCES = {"candidate_profile", "master_resume"}
 
-# Required top-level keys for a TailoringPlan (v2.1) — single source of truth.
+# Required top-level keys for a TailoringPlan — single source of truth.
 _PLAN_REQUIRED_KEYS = frozenset({
     "role_level",
     "jd_top_themes",
@@ -39,11 +39,6 @@ _PLAN_REQUIRED_KEYS = frozenset({
     "resume_strategy",
     "cover_letter_strategy",
     "risk_checks",
-    "theme_priority",
-    "role_repositioning_intent",
-    "domain_de_emphasis",
-    "evidence_saturation_rules",
-    "bullet_allocation_plan",
 })
 
 
