@@ -175,6 +175,18 @@ class PlanValidationError(ValueError):
     """Raised when Phase 1 JSON does not match the required schema."""
 
 
+class PlanParseError(Exception):
+    """Raised when a Phase 1 LLM response cannot be parsed as JSON.
+
+    Carries the raw response text so the caller can pass it to the repair
+    prompt as RAW_TEXT (repair cannot work with an empty INVALID_PLAN).
+    """
+
+    def __init__(self, original_exc: json.JSONDecodeError, raw_content: str) -> None:
+        super().__init__(str(original_exc))
+        self.raw_content = raw_content
+
+
 def validate_plan(data: Any) -> dict:
     """Validate and return the plan dict, raising PlanValidationError on failure.
 
@@ -280,14 +292,17 @@ def plan_tailoring(
     )
 
     raw_content = response.choices[0].message.content
-    plan_data = json.loads(raw_content)
-
     usage = _extract_usage(response)
     debug_meta = {
         "model": PHASE1_MODEL,
         "usage": usage,
         "raw_response": raw_content,
+        "prompt_used": "PLAN",
     }
+    try:
+        plan_data = json.loads(raw_content)
+    except json.JSONDecodeError as exc:
+        raise PlanParseError(exc, raw_content) from exc
 
     return plan_data, messages, debug_meta
 
@@ -299,6 +314,7 @@ def plan_repair_tailoring(
     job: JobData,
     resume_template: str,
     cover_template: str,
+    raw_text: str | None = None,
 ) -> tuple[dict, list, dict]:
     """Phase 1 repair: rebuild a plan that failed schema or deep validation.
 
@@ -340,6 +356,8 @@ def plan_repair_tailoring(
             "content": f"INVALID_PLAN:\n{json.dumps(invalid_plan, indent=2)}",
         },
     ]
+    if raw_text:
+        messages.append({"role": "user", "content": f"RAW_TEXT:\n{raw_text}"})
     if profile:
         messages.append({"role": "user", "content": f"CANDIDATE_PROFILE:\n{profile}"})
     messages.append({"role": "user", "content": f"JOB_DESCRIPTION:\n{job.description}"})
@@ -355,14 +373,17 @@ def plan_repair_tailoring(
     )
 
     raw_content = response.choices[0].message.content
-    plan_data = json.loads(raw_content)
-
     usage = _extract_usage(response)
     debug_meta = {
         "model": PHASE1_MODEL,
         "usage": usage,
         "raw_response": raw_content,
+        "prompt_used": "REPAIR",
     }
+    try:
+        plan_data = json.loads(raw_content)
+    except json.JSONDecodeError as exc:
+        raise PlanParseError(exc, raw_content) from exc
 
     return plan_data, messages, debug_meta
 

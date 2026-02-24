@@ -12,6 +12,7 @@ from tailor.docx.template_fill import normalize_cover_letter, read_docx, save_do
 from tailor.job import JobData
 from tailor.job.scrape import scrape_job_url
 from tailor.llm import (
+    PlanParseError,
     PlanValidationError,
     _run_schema_gate,
     extract_metadata_ai,
@@ -172,7 +173,8 @@ def _run_two_phase(
     p1_meta = None
 
     # State passed to the repair attempt.
-    prev_raw_plan: dict = {}   # last successfully parsed plan dict (empty if JSON failed)
+    prev_raw_plan: dict = {}        # last successfully parsed plan dict (empty if JSON failed)
+    prev_raw_text: str | None = None  # raw LLM text when JSON parse failed
     schema_errors: list[str] = []
     validation_errors: list[str] = []
 
@@ -181,34 +183,58 @@ def _run_two_phase(
 
         # ------------------------------------------------------------------
         # Step 0: call the LLM
-        # Attempt 1: ALWAYS tailor_plan.txt
-        # Attempt 2: ALWAYS tailor_plan_repair.txt (or skip if disabled)
+        # Attempt 1: ALWAYS tailor_plan.txt (PLAN prompt)
+        # Attempt 2: tailor_plan_repair.txt (REPAIR prompt) when we have
+        #            a broken plan or raw text to repair — otherwise rerun
+        #            tailor_plan.txt (guardrail: repair cannot help with
+        #            an empty INVALID_PLAN and no RAW_TEXT).
         # ------------------------------------------------------------------
         if is_repair and not ENABLE_PLAN_REPAIR:
             break  # repair disabled; don't try a second time
 
         try:
             if not is_repair:
+                logger.info("Phase 1 attempt %d: prompt=PLAN", attempt)
                 raw_plan, p1_messages, p1_meta = plan_tailoring(
                     job, resume_template, cover_template
                 )
             else:
-                raw_plan, p1_messages, p1_meta = plan_repair_tailoring(
-                    prev_raw_plan, schema_errors, validation_errors,
-                    job, resume_template, cover_template,
-                )
-        except json.JSONDecodeError as exc:
+                can_repair = bool(prev_raw_plan) or bool(prev_raw_text)
+                if can_repair:
+                    logger.info("Phase 1 attempt %d: prompt=REPAIR", attempt)
+                    raw_plan, p1_messages, p1_meta = plan_repair_tailoring(
+                        prev_raw_plan, schema_errors, validation_errors,
+                        job, resume_template, cover_template,
+                        raw_text=prev_raw_text,
+                    )
+                else:
+                    # Guardrail: repair with empty INVALID_PLAN and no RAW_TEXT
+                    # would produce a partial plan — rerun planner instead.
+                    logger.info(
+                        "Phase 1 attempt %d: prompt=PLAN "
+                        "(repair guardrail: INVALID_PLAN={} and no RAW_TEXT)",
+                        attempt,
+                    )
+                    raw_plan, p1_messages, p1_meta = plan_tailoring(
+                        job, resume_template, cover_template
+                    )
+        except PlanParseError as exc:
             schema_errors = [f"invalid_json: {exc}"]
             validation_errors = []
             prev_raw_plan = {}
+            prev_raw_text = exc.raw_content
             print(f"Warning: Phase 1 attempt {attempt} returned invalid JSON.")
             continue
         except Exception as exc:
             schema_errors = [f"api_error: {exc}"]
             validation_errors = []
             prev_raw_plan = {}
+            prev_raw_text = None
             print(f"Warning: Phase 1 attempt {attempt} failed: {exc}")
             continue
+
+        # JSON parse succeeded — clear stale raw_text (we have a proper dict now)
+        prev_raw_text = None
 
         # ------------------------------------------------------------------
         # Step A: schema gate (types + required keys)
@@ -266,6 +292,7 @@ def _run_two_phase(
         "usage": p1_meta.get("usage") if p1_meta else None,
         "schema_errors": schema_errors,
         "validation_errors": validation_errors,
+        "prompt_used": p1_meta.get("prompt_used") if p1_meta else None,
     }
 
     if plan is None:
