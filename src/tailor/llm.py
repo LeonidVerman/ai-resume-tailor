@@ -145,6 +145,16 @@ def _run_schema_gate(data: Any) -> list[str]:
                                 f"missing key {k!r}"
                             )
 
+    # resume_strategy.experience must be a list (deep validators iterate it)
+    rs = data.get("resume_strategy")
+    if isinstance(rs, dict):
+        exp = rs.get("experience")
+        if exp is not None and not isinstance(exp, list):
+            errors.append(
+                f"schema_invalid: resume_strategy.experience must be a list, "
+                f"got {type(exp).__name__}"
+            )
+
     return errors[:15]  # cap to avoid flooding repair context
 
 

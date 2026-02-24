@@ -120,6 +120,8 @@ def validate_plan_extended(plan: dict) -> list[str]:
         errors.append("role_repositioning_intent must be a list")
     else:
         experience = plan.get("resume_strategy", {}).get("experience", [])
+        if not isinstance(experience, list):
+            experience = []
         top_2_roles = [
             _normalize_role_name(e.get("role_name", ""))
             for e in experience[:2]
@@ -166,6 +168,8 @@ def validate_plan_extended(plan: dict) -> list[str]:
         errors.append("bullet_allocation_plan must be a list")
     else:
         experience = plan.get("resume_strategy", {}).get("experience", [])
+        if not isinstance(experience, list):
+            experience = []
         top_2_roles = [
             _normalize_role_name(e.get("role_name", ""))
             for e in experience[:2]

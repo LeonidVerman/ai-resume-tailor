@@ -1,102 +1,117 @@
-[PLANNER_REPAIR_LAYER v2.4]
+[PLANNER_REPAIR_LAYER v2.6]
 
 You are repairing a TailoringPlan that failed validation.
 
 You will receive:
-- SCHEMA_ERRORS   (structural problems: missing keys, wrong types)
-- VALIDATION_ERRORS (content problems: insufficient evidence, missing role intent, etc.)
-- INVALID_PLAN    (the plan that failed; may be empty or malformed)
+- SCHEMA_ERRORS
+- VALIDATION_ERRORS
+- INVALID_PLAN
 - CANDIDATE_PROFILE
 - JOB_DESCRIPTION
 - MASTER_RESUME
+- MASTER_COVER_LETTER
+- TASK
+- CURRENT_DATE
 
 GOAL
 
-Produce a complete, valid v2.1 TailoringPlan JSON that fixes all listed errors.
+Produce a complete, valid v2.1 TailoringPlan JSON that fixes all errors.
 
-IMPORTANT: INVALID_PLAN may be empty, malformed, or use an old schema.
-Do NOT attempt to patch it field by field.
-Instead, treat it as a DRAFT that may have useful content,
-but rebuild the full plan from scratch if SCHEMA_ERRORS are present.
+If SCHEMA_ERRORS are present, rebuild the entire plan from scratch.
 
 ------------------------------------------------------------
-REPAIR CONTRACT
+STRICT TYPE CORRECTION RULES
 ------------------------------------------------------------
 
-1) The output MUST always be a complete v2.1 TailoringPlan.
-   Never return a partial plan or just the corrected fields.
+If any of the following fields are objects instead of arrays,
+you MUST convert them to arrays:
 
-2) Fix every error listed in SCHEMA_ERRORS and VALIDATION_ERRORS.
+- jd_top_themes
+- evidence_map
+- evidence_map[].evidence
+- resume_strategy.experience
+- role_repositioning_intent
+- bullet_allocation_plan
+- theme_priority.primary
+- theme_priority.secondary
+- theme_priority.supporting
 
-3) Do NOT invent facts.
-   All claims must be traceable to MASTER_RESUME or CANDIDATE_PROFILE.
-
-4) Evidence quotes must be <= 25 words.
-
-5) role_level must be exactly one of: junior, mid, senior, director.
-   Do NOT output a job title.
-
-------------------------------------------------------------
-SCHEMA ERRORS (structural fix required)
-------------------------------------------------------------
-
-If SCHEMA_ERRORS is non-empty:
-- The plan is structurally broken.
-- Rebuild the entire plan from CANDIDATE_PROFILE, JOB_DESCRIPTION, and MASTER_RESUME.
-- Do not rely on INVALID_PLAN for structure.
+Even if only one element exists, it MUST be wrapped in an array.
 
 ------------------------------------------------------------
-EVIDENCE SATURATION FIX
+ABSOLUTE RULES
 ------------------------------------------------------------
 
-If VALIDATION_ERRORS indicate insufficient evidence for a theme:
-
-Option A: Add additional distinct evidence items from:
-  - architecture_patterns
-  - scalability_reliability_patterns
-  - technical_skills
-  - MASTER_RESUME bullets
-
-Option B: If sufficient evidence does not exist:
-  - Demote the theme to a lower tier.
-  - Promote a theme that CAN meet the minimum.
-  - Update theme_priority accordingly.
-
-You MUST NOT keep a theme in primary or secondary
-if it cannot meet its minimum evidence count.
+1) Do NOT invent facts.
+2) Evidence quotes <= 25 words.
+3) role_level must be one of: junior, mid, senior, director.
+4) Return full JSON only.
 
 ------------------------------------------------------------
-UNSUPPORTED JD THEME FIX
+SCHEMA REQUIREMENTS
 ------------------------------------------------------------
 
-If a theme is based on unsupported JD-only concepts
-(example: low-code/no-code frameworks):
+A) jd_top_themes must be array of objects:
+- theme
+- why_important
+- keywords (array)
 
-You MUST:
-- Remove it as primary or secondary.
-- Translate to a supported adjacent theme if possible.
-- Move original JD wording into gaps.
-- Rebuild evidence accordingly.
+B) evidence_map must be array of objects:
+- theme
+- evidence (array of objects)
+- gaps (array)
+- safe_translation (array)
+
+Each evidence object:
+- source
+- location
+- quote
+- allowed_claims (array)
+
+Evidence must not be strings.
+
+C) resume_strategy.experience must be array of objects.
+
+D) theme_priority must contain:
+- primary (array)
+- secondary (array)
+- supporting (array)
+
+E) evidence_saturation_rules must contain:
+- primary_theme_min_evidence: 3
+- secondary_theme_min_evidence: 2
+- supporting_theme_min_evidence: 1
+
+F) role_repositioning_intent must include all high-priority roles.
+
+G) bullet_allocation_plan must include top 2 roles with at least 2 themes each.
 
 ------------------------------------------------------------
-ROLE INTENT FIX
+VALIDATION FIX RULES
 ------------------------------------------------------------
 
-If role_repositioning_intent is missing entries:
-- Add entries for all high-priority roles.
-- Role names must exactly match experience.role_name.
+If insufficient evidence:
+- Add distinct evidence items.
+OR
+- Demote the theme and promote one that meets minimums.
+
+If unsupported JD-only theme:
+- Translate to supported adjacent theme.
+- Move original term to gaps.
 
 ------------------------------------------------------------
 FINAL CHECK
 ------------------------------------------------------------
 
 Before returning JSON:
-- All required v2.1 keys are present.
-- role_level is exactly one of: junior, mid, senior, director.
-- All themes satisfy evidence minimum.
-- Every theme appears in exactly one tier.
-- All high-priority roles have repositioning intent.
-- No unsupported JD-only theme remains primary or secondary.
+
+- All required fields present.
+- All array fields are arrays.
+- No object replaces an array.
+- Evidence entries are objects.
+- Evidence saturation satisfied.
+- role_repositioning_intent covers high-priority roles.
+- bullet_allocation_plan covers top 2 roles.
 
 Return JSON only.
 No explanations.
