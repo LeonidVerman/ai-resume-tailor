@@ -2,7 +2,9 @@
 
 Checks that the resume and cover letter produced by the LLM satisfy the
 constraints encoded in the WriterPacket.  All matching is done via simple
-substring / token heuristics — no NLP.
+substring / keyword heuristics — no NLP.
+
+Density enforcement is priority-based (high / medium / low), not chronological.
 """
 
 from __future__ import annotations
@@ -10,72 +12,39 @@ from __future__ import annotations
 import re
 
 # ---------------------------------------------------------------------------
-# Mechanism synonym table
-# key: short canonical anchor  ->  acceptable variants (all lowercase)
+# Mechanism keyword set — a bullet counts as containing a mechanism if it
+# includes at least one of these strings (case-insensitive substring match).
 # ---------------------------------------------------------------------------
-_MECHANISM_SYNONYMS: dict[str, list[str]] = {
-    "horizontal scaling": [
-        "horizontal scaling",
-        "horizontally scaled",
-        "horizontal scale-out",
-        "horizontally scaling",
-        "horizontal scalability",
-    ],
-    "read replicas": [
-        "read replica",
-        "read replicas",
-        "replica routing",
-        "database read replica",
-        "read-replica",
-        "replicas for read",
-    ],
-    "caching": [
-        "caching layer",
-        "caching layers",
-        "multi-layer caching",
-        "multiple caching",
-        "transactional cache",
-        "tiered caching",
-        "cache pressure",
-        "redis cache",
-        "in-memory cache",
-        "multi-layer cache",
-    ],
-    "async messaging": [
-        "async messaging",
-        "asynchronous messaging",
-        "message queue",
-        "message-driven",
-        "event-driven",
-        "async message",
-        "decoupled via queue",
-        "queue-based",
-        "message broker",
-        "async queue",
-    ],
-    "redis": [
-        "redis session",
-        "session validation via redis",
-        "distributed session validation",
-        "redis-backed session",
-        "redis",
-        "session via redis",
-    ],
-    "stateless": [
-        "stateless service",
-        "stateless services",
-        "stateless design",
-        "stateless",
-        "stateless architecture",
-    ],
-    "idempotent": [
-        "idempotent processing",
-        "idempotent",
-        "retry-safe",
-        "idempotency",
-        "idempotent design",
-    ],
-}
+_MECHANISM_KEYWORDS: frozenset[str] = frozenset({
+    # Architectural patterns
+    "horizontal scaling",
+    "horizontally scaled",
+    "caching",
+    "read replica",
+    "async messaging",
+    "asynchronous messaging",
+    "message queue",
+    "message broker",
+    "event-driven",
+    "replication",
+    "transactional cache",
+    "ci/cd",
+    "containerization",
+    "containerized",
+    "database optimization",
+    "api integration",
+    "fault tolerance",
+    "distributed system",
+    # Concrete infrastructure / tools
+    "kafka",
+    "redis",
+    "aws",
+    "docker",
+    "kubernetes",
+    "rest api",
+    "restful",
+    "websocket",
+})
 
 # ---------------------------------------------------------------------------
 # Metric variant table
@@ -98,12 +67,6 @@ _RESUME_SECTION_HEADERS: frozenset[str] = frozenset(
     }
 )
 
-# Stop-words for token-based mechanism matching.
-_STOP_WORDS: frozenset[str] = frozenset(
-    {"for", "the", "and", "via", "with", "of", "to", "in", "by", "a", "an",
-     "get", "db", "from", "on", "at", "as", "its", "our"}
-)
-
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -119,21 +82,26 @@ def validate_phase2_output(
 
     Returns a ValidationReport dict with keys: ok, errors, warnings, stats.
     ``ok`` is True only when there are no errors.
+
+    Bullet density and mechanism density are enforced per-role based on the
+    priority field in writer_packet.role_priorities, NOT by chronological order.
     """
     errors: list[str] = []
     warnings: list[str] = []
 
+    role_priorities: dict[str, str] = writer_packet.get("role_priorities", {})
+    role_source_counts: dict[str, int] = writer_packet.get("role_source_bullet_counts", {})
     density = writer_packet.get("density_targets", {})
-    top_n: int = density.get("top_roles", 2)
-    bullet_min: int = density.get("bullets_per_top_role_min", 4)
-    bullet_max: int = density.get("bullets_per_top_role_max", 6)
-    mechanisms_min: int = density.get("mechanisms_in_top_roles_min", 4)
+    bullet_min_map: dict[str, int] = density.get(
+        "bullet_min_by_priority", {"high": 4, "medium": 3, "low": 1}
+    )
+    mechanism_min_map: dict[str, int] = density.get(
+        "mechanism_min_by_priority", {"high": 2, "medium": 1, "low": 0}
+    )
 
     # Parse resume structure once
     roles = _parse_roles(resume)
     skills_text = _extract_skills_section(resume)
-    top_roles_text = _get_top_roles_text(roles, top_n)
-    combined_top = "\n".join(top_roles_text)
 
     # --- 1. Metrics preservation ---
     metrics_found: list[str] = []
@@ -146,53 +114,52 @@ def validate_phase2_output(
     if missing_metrics:
         errors.append(f"Missing required metrics: {', '.join(missing_metrics)}")
 
-    # --- 2. Architecture materialisation ---
-    mechanisms_found: list[str] = []
-    missing_mechanisms: list[str] = []
-    for mechanism in writer_packet.get("must_surface_mechanisms", []):
-        if _mechanism_found(mechanism, combined_top):
-            mechanisms_found.append(mechanism)
-        else:
-            missing_mechanisms.append(mechanism)
+    # --- 2. Priority-based bullet density + mechanism density ---
+    role_bullet_counts: dict[str, int] = {}
+    role_mechanism_counts: dict[str, int] = {}
 
-    if len(mechanisms_found) < mechanisms_min:
-        errors.append(
-            f"Insufficient mechanisms in top {top_n} roles: "
-            f"found {len(mechanisms_found)}, required {mechanisms_min}. "
-            f"Missing examples: {', '.join(missing_mechanisms[:3]) or 'none listed'}"
-        )
+    prev_priority: str | None = None
+    for role_header, bullets in roles:
+        priority = _match_role_priority(role_header, role_priorities) or "low"
+        bullet_count = len(bullets)
+        role_bullet_counts[role_header] = bullet_count
 
-    # Each top role must have >= 2 mechanisms
-    for i, role_text in enumerate(top_roles_text):
-        role_header = roles[i][0] if i < len(roles) else f"Role {i+1}"
-        role_mech_count = sum(
-            1
-            for m in writer_packet.get("must_surface_mechanisms", [])
-            if _mechanism_found(m, role_text)
-        )
-        if role_mech_count < 2:
+        # Thin-role safeguard: downgrade minimum by 1 if source has < 2 bullets.
+        source_count = _find_source_bullet_count(role_header, role_source_counts)
+        min_bullets = bullet_min_map.get(priority, 1)
+        if source_count < 2:
+            min_bullets = max(1, min_bullets - 1)
+
+        if bullet_count < min_bullets:
             errors.append(
-                f"Top role {i+1} ({role_header!r}) has only {role_mech_count} "
-                f"mechanism(s); at least 2 required"
+                f"Role {role_header!r} ({priority} priority) has {bullet_count} "
+                f"bullet(s); minimum is {min_bullets}"
             )
-
-    # --- 3. Bullet density ---
-    top_role_bullet_counts: dict[str, int] = {}
-    for i, (role_header, bullets) in enumerate(roles[:top_n]):
-        count = len(bullets)
-        top_role_bullet_counts[role_header] = count
-        if count < bullet_min:
-            errors.append(
-                f"Top role {i+1} ({role_header!r}) has {count} bullet(s); "
-                f"minimum is {bullet_min}"
-            )
-        elif count > bullet_max:
+        elif bullet_count > 6 and priority in ("high", "medium"):
             warnings.append(
-                f"Top role {i+1} ({role_header!r}) has {count} bullet(s); "
-                f"maximum is {bullet_max}"
+                f"Role {role_header!r} has {bullet_count} bullets; "
+                f"consider trimming to 6"
             )
 
-    # --- 4. Required skills retention ---
+        # Mechanism count check
+        mech_required = mechanism_min_map.get(priority, 0)
+        mech_count = sum(1 for b in bullets if _bullet_has_mechanism(b))
+        role_mechanism_counts[role_header] = mech_count
+        if mech_required > 0 and mech_count < mech_required:
+            errors.append(
+                f"Role {role_header!r} ({priority} priority) has {mech_count} "
+                f"mechanism(s) in bullets; minimum is {mech_required}"
+            )
+
+        # Advisory: high-priority role appearing after a medium-priority role.
+        if prev_priority == "medium" and priority == "high":
+            warnings.append(
+                f"Advisory: high-priority role {role_header!r} appears after a "
+                f"medium-priority role; verify planner intent"
+            )
+        prev_priority = priority
+
+    # --- 3. Required skills retention ---
     missing_required_skills: list[str] = []
     for skill in writer_packet.get("must_include_skills", []):
         if skill.lower() not in skills_text.lower():
@@ -200,7 +167,7 @@ def validate_phase2_output(
     if missing_required_skills:
         errors.append(f"Missing required skills: {', '.join(missing_required_skills)}")
 
-    # --- 5. Unsafe JD nouns ---
+    # --- 4. Unsafe JD nouns ---
     allowed_pool_lower = {s.lower() for s in writer_packet.get("allowed_skill_pool", [])}
     unsafe_terms_found: list[str] = []
     for term in writer_packet.get("unsafe_jd_nouns", []):
@@ -212,7 +179,7 @@ def validate_phase2_output(
             f"Unsafe JD nouns found in resume: {', '.join(unsafe_terms_found)}"
         )
 
-    # --- 6. Date correctness ---
+    # --- 5. Date correctness ---
     if current_date and current_date not in cover_letter:
         errors.append(f"Cover letter does not contain CURRENT_DATE: {current_date!r}")
 
@@ -222,11 +189,10 @@ def validate_phase2_output(
         "warnings": warnings,
         "stats": {
             "metrics_found": metrics_found,
-            "mechanisms_found": mechanisms_found,
-            "missing_mechanisms": missing_mechanisms,
             "missing_required_skills": missing_required_skills,
             "unsafe_terms_found": unsafe_terms_found,
-            "top_role_bullet_counts": top_role_bullet_counts,
+            "role_bullet_counts": role_bullet_counts,
+            "role_mechanism_counts": role_mechanism_counts,
         },
     }
 
@@ -294,13 +260,6 @@ def _is_date_line(s: str) -> bool:
     return bool(_YEAR_RE.search(s)) and "|" not in s and len(s) < 60
 
 
-def _get_top_roles_text(roles: list[tuple[str, list[str]]], top_n: int) -> list[str]:
-    result: list[str] = []
-    for header, bullets in roles[:top_n]:
-        result.append(header + "\n" + "\n".join(bullets))
-    return result
-
-
 def _extract_skills_section(resume: str) -> str:
     """Return the raw text of the Technical Skills (or Skills) section."""
     lines = resume.split("\n")
@@ -325,44 +284,47 @@ def _extract_skills_section(resume: str) -> str:
 def _metric_found(metric: str, text: str) -> bool:
     """Return True if the metric or any of its known variants appears in text."""
     text_lower = text.lower()
-    # Direct match
     if metric.lower() in text_lower:
         return True
-    # Variant table
     for variants in _METRIC_VARIANTS.values():
         if metric.lower() in (v.lower() for v in variants):
             return any(v.lower() in text_lower for v in variants)
     return False
 
 
-def _mechanism_found(mechanism: str, text: str) -> bool:
-    """Return True if the mechanism (or a synonym) appears in text.
-
-    Strategy:
-    1. Direct substring match of the full mechanism string.
-    2. Synonym table lookup by finding a matching canonical key.
-    3. Token fallback: majority of meaningful tokens present.
-    """
+def _bullet_has_mechanism(text: str) -> bool:
+    """Return True if bullet text contains any mechanism keyword."""
     text_lower = text.lower()
-    mechanism_lower = mechanism.lower()
+    return any(kw in text_lower for kw in _MECHANISM_KEYWORDS)
 
-    # 1. Direct
-    if mechanism_lower in text_lower:
-        return True
 
-    # 2. Synonym table — find which canonical key this mechanism belongs to
-    for canonical, variants in _MECHANISM_SYNONYMS.items():
-        if canonical in mechanism_lower or any(v in mechanism_lower for v in variants):
-            if any(v in text_lower for v in variants):
-                return True
-            break
+def _match_role_priority(
+    role_header: str,
+    role_priorities: dict[str, str],
+) -> str | None:
+    """Fuzzy-match a resume role header to a priority from the plan.
 
-    # 3. Token fallback
-    tokens = [
-        w for w in re.split(r"\W+", mechanism_lower)
-        if w and w not in _STOP_WORDS and len(w) > 3
-    ]
-    if not tokens:
-        return False
-    matched = sum(1 for t in tokens if t in text_lower)
-    return matched >= max(1, round(len(tokens) * 0.6))
+    Plan role names are often a prefix of resume headers (which append dates).
+    Returns the priority string or None if no match found.
+    """
+    header_lower = role_header.lower()
+    for plan_name, priority in role_priorities.items():
+        if plan_name.lower() in header_lower:
+            return priority
+    return None
+
+
+def _find_source_bullet_count(
+    role_header: str,
+    role_source_counts: dict[str, int],
+) -> int:
+    """Return source bullet count for a resume role header.
+
+    Returns 99 (high) if the role is not found, so no thin-role downgrade is
+    applied when the source count is unknown.
+    """
+    header_lower = role_header.lower()
+    for plan_name, count in role_source_counts.items():
+        if plan_name.lower() in header_lower:
+            return count
+    return 99

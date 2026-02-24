@@ -167,7 +167,6 @@ class TestWriterPacket:
             _master_resume_with_kafka(),
             "We need distributed systems experience.",
         )
-        # promote_skills has Docker from the plan, Kafka should NOT be there
         must_skills = [s.lower() for s in packet["must_include_skills"]]
         assert "kafka" not in must_skills
 
@@ -212,15 +211,34 @@ class TestWriterPacket:
         assert "integration" in reframes[0]["safe_reframe_intent"].lower() or \
                "extensib" in reframes[0]["safe_reframe_intent"].lower()
 
-    def test_density_targets_defaults(self):
-        """density_targets has expected default values."""
+    def test_density_targets_priority_based(self):
+        """density_targets uses priority-based bullet and mechanism minimums."""
         plan = _minimal_plan()
         packet = build_writer_packet(plan, "{}", "", "job desc")
         dt = packet["density_targets"]
-        assert dt["top_roles"] == 2
-        assert dt["bullets_per_top_role_min"] == 4
-        assert dt["bullets_per_top_role_max"] == 6
-        assert dt["mechanisms_in_top_roles_min"] == 4
+        assert dt["bullet_min_by_priority"]["high"] == 4
+        assert dt["bullet_min_by_priority"]["medium"] == 3
+        assert dt["bullet_min_by_priority"]["low"] == 1
+        assert dt["mechanism_min_by_priority"]["high"] == 2
+        assert dt["mechanism_min_by_priority"]["medium"] == 1
+        assert dt["mechanism_min_by_priority"]["low"] == 0
+
+    def test_role_priorities_in_packet(self):
+        """role_priorities maps each planned role name to its priority."""
+        plan = _minimal_plan()
+        packet = build_writer_packet(plan, "{}", "", "job desc")
+        assert "role_priorities" in packet
+        assert packet["role_priorities"]["Senior Engineer | Acme Corp"] == "high"
+
+    def test_role_source_bullet_counts_populated(self):
+        """role_source_bullet_counts counts bullets per role from master resume."""
+        plan = _minimal_plan()
+        packet = build_writer_packet(
+            plan, "{}", _master_resume_with_kafka(), "job desc"
+        )
+        counts = packet["role_source_bullet_counts"]
+        assert "Senior Engineer | Acme Corp" in counts
+        assert counts["Senior Engineer | Acme Corp"] == 4
 
     def test_hardcoded_unsafe_nouns_present(self):
         """unsafe_jd_nouns always includes hard-coded dangerous terms."""
@@ -251,11 +269,14 @@ class TestPhase2Validator:
             "allowed_skill_pool": ["Docker", "Kubernetes", "Python", "Redis"],
             "do_not_add_terms": ["BGP", "OSPF"],
             "unsafe_jd_nouns": ["SNMP", "BGP", "low-code"],
+            "role_priorities": {
+                "Senior Engineer | Acme Corp": "high",
+                "Engineer | Beta Corp": "medium",
+            },
+            "role_source_bullet_counts": {},
             "density_targets": {
-                "top_roles": 2,
-                "bullets_per_top_role_min": 4,
-                "bullets_per_top_role_max": 6,
-                "mechanisms_in_top_roles_min": 4,
+                "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+                "mechanism_min_by_priority": {"high": 2, "medium": 1, "low": 0},
             },
         }
         base.update(overrides)
@@ -336,7 +357,6 @@ class TestPhase2Validator:
         packet = self._make_packet(must_keep_metrics=["1M+"])
         resume = self._make_resume().replace("1M+", "over 1 million")
         report = validate_phase2_output(packet, resume, self._make_cover(), _today())
-        # Only metric check should pass; other checks may vary
         assert "1M+" not in " ".join(report["errors"]), report["errors"]
 
     # --- Unsafe terms ---
@@ -402,15 +422,10 @@ class TestPhase2Validator:
     # --- Mechanism density ---
 
     def test_insufficient_mechanisms_is_error(self):
+        """Roles without enough mechanism keywords trigger mechanism errors."""
         packet = self._make_packet(
-            must_surface_mechanisms=["horizontal scaling", "read replicas",
-                                     "multi-layer caching", "async messaging"],
-            density_targets={
-                "top_roles": 2,
-                "bullets_per_top_role_min": 4,
-                "bullets_per_top_role_max": 6,
-                "mechanisms_in_top_roles_min": 4,
-            },
+            must_keep_metrics=[],
+            must_include_skills=[],
         )
         bare_resume = (
             "Experience\n"
@@ -430,33 +445,26 @@ class TestPhase2Validator:
         mechanism_errors = [e for e in report["errors"] if "mechanism" in e.lower()]
         assert mechanism_errors, f"Expected mechanism errors, got: {report['errors']}"
 
-    def test_mechanism_synonym_match(self):
-        """Synonym variants in resume text should satisfy must_surface_mechanisms."""
-        # Supply 2 mechanisms so the per-role >=2 check also passes; both via synonyms.
+    def test_mechanism_keyword_match(self):
+        """Explicit mechanism keywords in bullet text satisfy the mechanism requirement."""
         packet = self._make_packet(
-            must_keep_metrics=[],  # skip metric check — not the focus of this test
+            must_keep_metrics=[],
             must_include_skills=[],
-            must_surface_mechanisms=[
-                "Database read replicas for read-heavy GET endpoints",
-                "Horizontal scaling of trading servers",
-            ],
-            density_targets={
-                "top_roles": 1,
-                "bullets_per_top_role_min": 1,
-                "bullets_per_top_role_max": 10,
-                "mechanisms_in_top_roles_min": 2,
-            },
+            role_priorities={"Senior Engineer | Acme Corp": "high"},
+            role_source_bullet_counts={},
         )
         resume = (
             "Experience\n"
             "Senior Engineer | Acme Corp | 2020 - Present\n"
             "- Used read replicas to isolate read traffic from writes\n"
-            "- Applied horizontal scaling of the trading platform to handle peak load\n\n"
+            "- Applied horizontal scaling of the trading platform to handle peak load\n"
+            "- Deployed containerized services using Docker\n"
+            "- Implemented caching layer to reduce database pressure\n\n"
             "Technical Skills\nDocker, Kubernetes\n"
         )
         report = validate_phase2_output(packet, resume, self._make_cover(), _today())
         mechanism_errors = [e for e in report["errors"] if "mechanism" in e.lower()]
-        assert not mechanism_errors, f"synonym match should pass: {report['errors']}"
+        assert not mechanism_errors, f"keyword mechanism match should pass: {report['errors']}"
 
     # --- Bullet density ---
 
@@ -474,6 +482,59 @@ class TestPhase2Validator:
         density_errors = [e for e in report["errors"] if "bullet" in e.lower()]
         assert density_errors, f"Expected density errors, got: {report['errors']}"
 
+    def test_priority_based_enforcement_high_needs_more_than_medium(self):
+        """High-priority role requires more bullets than medium-priority role."""
+        # Resume with 3 bullets per role:
+        # high needs 4 → error; medium needs 3 → passes.
+        three_bullet_resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2020 - Present\n"
+            "- Implemented horizontal scaling for 1M+ user platform, reducing latency by 25%\n"
+            "- Built caching layer with read replicas to isolate DB load\n"
+            "- Used async messaging and Docker for service decoupling\n\n"
+            "Engineer | Beta Corp | 2017 - 2020\n"
+            "- Designed distributed system with read replicas\n"
+            "- Implemented async messaging patterns\n"
+            "- Used Redis for caching\n\n"
+            "Technical Skills\nDocker, Kubernetes\n"
+        )
+        packet = self._make_packet()
+        report = validate_phase2_output(packet, three_bullet_resume, self._make_cover(), _today())
+        # High role should fail bullet check (3 < 4)
+        high_bullet_errors = [
+            e for e in report["errors"]
+            if "bullet" in e.lower() and "Acme Corp" in e
+        ]
+        assert high_bullet_errors, f"Expected high-role bullet error: {report['errors']}"
+        # Medium role should NOT have a bullet error (3 >= 3)
+        medium_bullet_errors = [
+            e for e in report["errors"]
+            if "bullet" in e.lower() and "Beta Corp" in e
+        ]
+        assert not medium_bullet_errors, f"Medium role should pass: {report['errors']}"
+
+    def test_thin_role_safeguard_relaxes_bullet_minimum(self):
+        """Role with <2 source bullets gets minimum bullet count reduced by 1."""
+        packet = self._make_packet(
+            must_keep_metrics=[],
+            must_include_skills=[],
+            role_priorities={"Short Role | Corp": "medium"},
+            role_source_bullet_counts={"Short Role | Corp": 1},  # thin source
+        )
+        resume = (
+            "Experience\n"
+            "Short Role | Corp | 2024 - Present\n"
+            "- Implemented async messaging pipeline for order processing\n"
+            "- Built read replicas to reduce database load\n\n"
+            "Technical Skills\nDocker, Kubernetes\n"
+        )
+        report = validate_phase2_output(packet, resume, self._make_cover(), _today())
+        # Medium normally needs 3 bullets; thin safeguard reduces to 2. 2 >= 2 -> passes.
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        assert not bullet_errors, f"Thin-role safeguard should relax minimum: {report['errors']}"
+
+    # --- Stats ---
+
     def test_stats_populated(self):
         """ValidationReport stats keys should all be present."""
         packet = self._make_packet()
@@ -482,8 +543,7 @@ class TestPhase2Validator:
         )
         stats = report["stats"]
         assert "metrics_found" in stats
-        assert "mechanisms_found" in stats
-        assert "missing_mechanisms" in stats
         assert "missing_required_skills" in stats
         assert "unsafe_terms_found" in stats
-        assert "top_role_bullet_counts" in stats
+        assert "role_bullet_counts" in stats
+        assert "role_mechanism_counts" in stats

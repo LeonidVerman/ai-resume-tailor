@@ -63,6 +63,8 @@ def build_writer_packet(
     do_not_add_terms = _build_do_not_add_terms(plan)
     unsafe_jd_nouns = _build_unsafe_jd_nouns(plan)
     integration_reframes = _build_integration_reframes(plan)
+    role_priorities = _build_role_priorities(plan)
+    role_source_bullet_counts = _build_role_source_bullet_counts(plan, master_resume_str)
 
     return {
         "role_level": plan.get("role_level", "senior"),
@@ -73,11 +75,11 @@ def build_writer_packet(
         "do_not_add_terms": do_not_add_terms,
         "unsafe_jd_nouns": unsafe_jd_nouns,
         "integration_extensibility_reframes": integration_reframes,
+        "role_priorities": role_priorities,
+        "role_source_bullet_counts": role_source_bullet_counts,
         "density_targets": {
-            "top_roles": 2,
-            "bullets_per_top_role_min": 4,
-            "bullets_per_top_role_max": 6,
-            "mechanisms_in_top_roles_min": 4,
+            "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+            "mechanism_min_by_priority": {"high": 2, "medium": 1, "low": 0},
         },
     }
 
@@ -195,6 +197,69 @@ def _build_unsafe_jd_nouns(plan: dict) -> list[str]:
     terms.extend(risk.get("likely_hallucination_traps", []))
     terms.extend(risk.get("do_not_invent", []))
     return _dedup_case_insensitive(terms)
+
+
+def _build_role_priorities(plan: dict) -> dict[str, str]:
+    """Return {role_name: priority} from resume_strategy.experience."""
+    result: dict[str, str] = {}
+    for role_entry in plan.get("resume_strategy", {}).get("experience", []):
+        name = role_entry.get("role_name", "")
+        priority = role_entry.get("priority", "low")
+        if name and isinstance(priority, str):
+            result[name] = priority
+    return result
+
+
+def _count_master_resume_bullets(resume_text: str) -> dict[str, int]:
+    """Return {role_header: explicit_bullet_count} from the master resume."""
+    lines = resume_text.split("\n")
+    exp_start: int | None = None
+    exp_end = len(lines)
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if s == "Experience":
+            exp_start = i + 1
+        elif exp_start is not None and s in _RESUME_SECTION_HEADERS and s != "Experience":
+            exp_end = i
+            break
+    if exp_start is None:
+        return {}
+
+    counts: dict[str, int] = {}
+    current_header: str | None = None
+    current_count = 0
+    for line in lines[exp_start:exp_end]:
+        s = line.strip()
+        if not s:
+            continue
+        if "|" in s and not s.startswith("-") and not s.startswith("•"):
+            if current_header is not None:
+                counts[current_header] = current_count
+            current_header = s
+            current_count = 0
+        elif current_header is not None and (s.startswith("- ") or s.startswith("• ")):
+            current_count += 1
+    if current_header is not None:
+        counts[current_header] = current_count
+    return counts
+
+
+def _build_role_source_bullet_counts(plan: dict, master_resume_str: str) -> dict[str, int]:
+    """Return {plan_role_name: bullet_count_in_master_resume} via fuzzy header match."""
+    source_counts = _count_master_resume_bullets(master_resume_str)
+    result: dict[str, int] = {}
+    for role_entry in plan.get("resume_strategy", {}).get("experience", []):
+        name = role_entry.get("role_name", "")
+        if not name:
+            continue
+        name_lower = name.lower()
+        matched_count = 0
+        for header, count in source_counts.items():
+            if name_lower in header.lower():
+                matched_count = count
+                break
+        result[name] = matched_count
+    return result
 
 
 def _build_integration_reframes(plan: dict) -> list[dict]:
