@@ -202,7 +202,10 @@ def _run_two_phase(
                     job, resume_template, cover_template
                 )
             else:
-                can_repair = bool(prev_raw_plan) or bool(prev_raw_text)
+                # Repair is only useful when attempt 1 returned a valid-but-schema-invalid
+                # JSON object.  A truncated/broken JSON string (prev_raw_text only) cannot
+                # be meaningfully fixed by the repair model — rerun the planner instead.
+                can_repair = bool(prev_raw_plan)
                 if can_repair:
                     logger.info("Phase 1 attempt %d: prompt=REPAIR", attempt)
                     raw_plan, p1_messages, p1_meta = plan_repair_tailoring(
