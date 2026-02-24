@@ -20,6 +20,22 @@ _INTEGRATION_KEYWORDS: frozenset[str] = frozenset(
     }
 )
 
+# JD keywords that suggest production engineering delivery focus.
+# Used to compute jd_is_delivery_oriented in the writer packet.
+_DELIVERY_JD_KEYWORDS: frozenset[str] = frozenset({
+    "microservices", "microservice",
+    "api", "apis", "rest api",
+    "cloud", "cloud-native",
+    "production", "production-grade",
+    "deployment", "deploy",
+    "kubernetes", "k8s",
+    "docker",
+    "scalability", "scalable",
+    "distributed system",
+    "backend",
+    "platform",
+})
+
 # Nouns that are dangerous to include unless explicitly present in sources.
 _HARDCODED_UNSAFE_NOUNS: list[str] = [
     "low-code", "no-code", "asset discovery", "SNMP", "BGP", "OSPF",
@@ -64,7 +80,10 @@ def build_writer_packet(
     unsafe_jd_nouns = _build_unsafe_jd_nouns(plan)
     integration_reframes = _build_integration_reframes(plan)
     role_priorities = _build_role_priorities(plan)
-    role_source_bullet_counts = _build_role_source_bullet_counts(plan, master_resume_str)
+    role_stats = _parse_master_resume_role_stats(master_resume_str)
+    role_source_bullet_counts = _build_role_source_bullet_counts(plan, role_stats)
+    role_source_char_counts = _build_role_source_char_counts(plan, role_stats)
+    jd_is_delivery_oriented = _compute_jd_is_delivery_oriented(plan)
 
     return {
         "role_level": plan.get("role_level", "senior"),
@@ -77,6 +96,8 @@ def build_writer_packet(
         "integration_extensibility_reframes": integration_reframes,
         "role_priorities": role_priorities,
         "role_source_bullet_counts": role_source_bullet_counts,
+        "role_source_char_counts": role_source_char_counts,
+        "jd_is_delivery_oriented": jd_is_delivery_oriented,
         "density_targets": {
             "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
             "mechanism_min_by_priority": {"high": 2, "medium": 1, "low": 0},
@@ -210,8 +231,13 @@ def _build_role_priorities(plan: dict) -> dict[str, str]:
     return result
 
 
-def _count_master_resume_bullets(resume_text: str) -> dict[str, int]:
-    """Return {role_header: explicit_bullet_count} from the master resume."""
+def _parse_master_resume_role_stats(resume_text: str) -> dict[str, dict]:
+    """Return {role_header: {"bullet_count": int, "char_count": int}} from master resume.
+
+    Parses the Experience section only.  char_count is the total length of all
+    non-empty lines belonging to that role (including bullet text and any other
+    content lines, excluding the header itself).
+    """
     lines = resume_text.split("\n")
     exp_start: int | None = None
     exp_end = len(lines)
@@ -225,28 +251,37 @@ def _count_master_resume_bullets(resume_text: str) -> dict[str, int]:
     if exp_start is None:
         return {}
 
-    counts: dict[str, int] = {}
+    stats: dict[str, dict] = {}
     current_header: str | None = None
-    current_count = 0
+    current_bullets = 0
+    current_chars = 0
     for line in lines[exp_start:exp_end]:
         s = line.strip()
         if not s:
             continue
         if "|" in s and not s.startswith("-") and not s.startswith("•"):
             if current_header is not None:
-                counts[current_header] = current_count
+                stats[current_header] = {
+                    "bullet_count": current_bullets,
+                    "char_count": current_chars,
+                }
             current_header = s
-            current_count = 0
-        elif current_header is not None and (s.startswith("- ") or s.startswith("• ")):
-            current_count += 1
+            current_bullets = 0
+            current_chars = 0
+        elif current_header is not None:
+            if s.startswith("- ") or s.startswith("• "):
+                current_bullets += 1
+            current_chars += len(s)
     if current_header is not None:
-        counts[current_header] = current_count
-    return counts
+        stats[current_header] = {
+            "bullet_count": current_bullets,
+            "char_count": current_chars,
+        }
+    return stats
 
 
-def _build_role_source_bullet_counts(plan: dict, master_resume_str: str) -> dict[str, int]:
+def _build_role_source_bullet_counts(plan: dict, role_stats: dict) -> dict[str, int]:
     """Return {plan_role_name: bullet_count_in_master_resume} via fuzzy header match."""
-    source_counts = _count_master_resume_bullets(master_resume_str)
     result: dict[str, int] = {}
     for role_entry in plan.get("resume_strategy", {}).get("experience", []):
         name = role_entry.get("role_name", "")
@@ -254,9 +289,26 @@ def _build_role_source_bullet_counts(plan: dict, master_resume_str: str) -> dict
             continue
         name_lower = name.lower()
         matched_count = 0
-        for header, count in source_counts.items():
+        for header, stats in role_stats.items():
             if name_lower in header.lower():
-                matched_count = count
+                matched_count = stats.get("bullet_count", 0)
+                break
+        result[name] = matched_count
+    return result
+
+
+def _build_role_source_char_counts(plan: dict, role_stats: dict) -> dict[str, int]:
+    """Return {plan_role_name: total_char_count_in_master_resume} via fuzzy header match."""
+    result: dict[str, int] = {}
+    for role_entry in plan.get("resume_strategy", {}).get("experience", []):
+        name = role_entry.get("role_name", "")
+        if not name:
+            continue
+        name_lower = name.lower()
+        matched_count = 0
+        for header, stats in role_stats.items():
+            if name_lower in header.lower():
+                matched_count = stats.get("char_count", 0)
                 break
         result[name] = matched_count
     return result
@@ -275,6 +327,15 @@ def _build_integration_reframes(plan: dict) -> list[dict]:
                     }
                 )
     return reframes
+
+
+def _compute_jd_is_delivery_oriented(plan: dict) -> bool:
+    """Return True if any jd_top_themes keyword matches a delivery-oriented term."""
+    for theme in plan.get("jd_top_themes", []):
+        for kw in theme.get("keywords", []):
+            if isinstance(kw, str) and kw.lower() in _DELIVERY_JD_KEYWORDS:
+                return True
+    return False
 
 
 # ---------------------------------------------------------------------------

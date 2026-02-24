@@ -5,6 +5,10 @@ constraints encoded in the WriterPacket.  All matching is done via simple
 substring / keyword heuristics — no NLP.
 
 Density enforcement is priority-based (high / medium / low), not chronological.
+Thin or non-repositioning roles (e.g. independent contractor, AI evaluator,
+roles with very little source material) receive a relaxed "thin_override"
+enforcement tier.  The first two non-thin roles are guaranteed at least
+high-priority density enforcement regardless of plan priority assignment.
 """
 
 from __future__ import annotations
@@ -47,6 +51,36 @@ _MECHANISM_KEYWORDS: frozenset[str] = frozenset({
 })
 
 # ---------------------------------------------------------------------------
+# Thin / non-repositioning role detection
+# ---------------------------------------------------------------------------
+
+# Role name substrings that indicate a thin or non-repositioning role.
+# Keep this list configurable — add / remove patterns as needed.
+_THIN_ROLE_NAME_PATTERNS: frozenset[str] = frozenset({
+    "independent contractor",
+    "contractor",
+    "freelance",
+    "consultant",
+    "mercor",
+    "ai lab",
+    "model evaluation",
+    "train and evaluate",
+    "ai evaluator",
+    "evaluation",
+})
+
+# Source-content thresholds for thinness detection.
+_THIN_ROLE_SOURCE_BULLET_THRESHOLD: int = 2    # < N bullets in master resume
+_THIN_ROLE_SOURCE_CHAR_THRESHOLD: int = 150    # < M chars of content in master resume
+
+# Density minimums applied when a role is classified as thin_override.
+_THIN_OVERRIDE_BULLET_MIN: int = 2
+_THIN_OVERRIDE_MECHANISM_MIN: int = 0
+
+# Number of top non-thin roles guaranteed high-priority density enforcement.
+_TOP_REPOSITIONING_ROLES_COUNT: int = 2
+
+# ---------------------------------------------------------------------------
 # Metric variant table
 # key: canonical metric string -> acceptable alternatives (all lowercase)
 # ---------------------------------------------------------------------------
@@ -83,14 +117,19 @@ def validate_phase2_output(
     Returns a ValidationReport dict with keys: ok, errors, warnings, stats.
     ``ok`` is True only when there are no errors.
 
-    Bullet density and mechanism density are enforced per-role based on the
-    priority field in writer_packet.role_priorities, NOT by chronological order.
+    Density is enforced per effective priority:
+    - thin_override: 2 bullets / 0 mechanisms (relaxed for thin/non-repositioning roles)
+    - high / medium / low: per density_targets in writer_packet
+    The first _TOP_REPOSITIONING_ROLES_COUNT non-thin roles are promoted to
+    at least high priority for density enforcement.
     """
     errors: list[str] = []
     warnings: list[str] = []
 
     role_priorities: dict[str, str] = writer_packet.get("role_priorities", {})
     role_source_counts: dict[str, int] = writer_packet.get("role_source_bullet_counts", {})
+    role_source_char_counts: dict[str, int] = writer_packet.get("role_source_char_counts", {})
+    jd_is_delivery_oriented: bool = writer_packet.get("jd_is_delivery_oriented", False)
     density = writer_packet.get("density_targets", {})
     bullet_min_map: dict[str, int] = density.get(
         "bullet_min_by_priority", {"high": 4, "medium": 3, "low": 1}
@@ -103,7 +142,13 @@ def validate_phase2_output(
     roles = _parse_roles(resume)
     skills_text = _extract_skills_section(resume)
 
-    # --- 1. Metrics preservation ---
+    # Compute effective priorities with thin-role override + top-K promotion
+    effective_priorities = _compute_effective_priorities(
+        roles, role_priorities, role_source_counts, role_source_char_counts,
+        jd_is_delivery_oriented,
+    )
+
+    # --- 1. Metrics preservation (unchanged) ---
     metrics_found: list[str] = []
     missing_metrics: list[str] = []
     for metric in writer_packet.get("must_keep_metrics", []):
@@ -118,48 +163,57 @@ def validate_phase2_output(
     role_bullet_counts: dict[str, int] = {}
     role_mechanism_counts: dict[str, int] = {}
 
-    prev_priority: str | None = None
+    prev_display_priority: str | None = None
     for role_header, bullets in roles:
-        priority = _match_role_priority(role_header, role_priorities) or "low"
+        effective_priority, thin_reason = effective_priorities.get(role_header, ("low", ""))
+
+        # Warn when thin override is applied
+        if effective_priority == "thin_override":
+            plan_priority = _match_role_priority(role_header, role_priorities) or "low"
+            warnings.append(
+                f"Role {role_header!r} treated as thin override for density checks "
+                f"(plan priority: {plan_priority}; reason: {thin_reason})"
+            )
+
         bullet_count = len(bullets)
         role_bullet_counts[role_header] = bullet_count
 
-        # Thin-role safeguard: downgrade minimum by 1 if source has < 2 bullets.
-        source_count = _find_source_bullet_count(role_header, role_source_counts)
-        min_bullets = bullet_min_map.get(priority, 1)
-        if source_count < 2:
-            min_bullets = max(1, min_bullets - 1)
+        if effective_priority == "thin_override":
+            min_bullets = _THIN_OVERRIDE_BULLET_MIN
+            mech_required = _THIN_OVERRIDE_MECHANISM_MIN
+        else:
+            min_bullets = bullet_min_map.get(effective_priority, 1)
+            mech_required = mechanism_min_map.get(effective_priority, 0)
 
         if bullet_count < min_bullets:
             errors.append(
-                f"Role {role_header!r} ({priority} priority) has {bullet_count} "
+                f"Role {role_header!r} ({effective_priority} priority) has {bullet_count} "
                 f"bullet(s); minimum is {min_bullets}"
             )
-        elif bullet_count > 6 and priority in ("high", "medium"):
+        elif bullet_count > 6 and effective_priority == "high":
             warnings.append(
                 f"Role {role_header!r} has {bullet_count} bullets; "
                 f"consider trimming to 6"
             )
 
-        # Mechanism count check
-        mech_required = mechanism_min_map.get(priority, 0)
         mech_count = sum(1 for b in bullets if _bullet_has_mechanism(b))
         role_mechanism_counts[role_header] = mech_count
         if mech_required > 0 and mech_count < mech_required:
             errors.append(
-                f"Role {role_header!r} ({priority} priority) has {mech_count} "
+                f"Role {role_header!r} ({effective_priority} priority) has {mech_count} "
                 f"mechanism(s) in bullets; minimum is {mech_required}"
             )
 
         # Advisory: high-priority role appearing after a medium-priority role.
-        if prev_priority == "medium" and priority == "high":
+        display_priority = "thin" if effective_priority == "thin_override" else effective_priority
+        if prev_display_priority == "medium" and display_priority == "high":
             warnings.append(
                 f"Advisory: high-priority role {role_header!r} appears after a "
                 f"medium-priority role; verify planner intent"
             )
-        prev_priority = priority
+        prev_display_priority = display_priority
 
-    # --- 3. Required skills retention ---
+    # --- 3. Required skills retention (unchanged) ---
     missing_required_skills: list[str] = []
     for skill in writer_packet.get("must_include_skills", []):
         if skill.lower() not in skills_text.lower():
@@ -167,7 +221,7 @@ def validate_phase2_output(
     if missing_required_skills:
         errors.append(f"Missing required skills: {', '.join(missing_required_skills)}")
 
-    # --- 4. Unsafe JD nouns ---
+    # --- 4. Unsafe JD nouns (unchanged) ---
     allowed_pool_lower = {s.lower() for s in writer_packet.get("allowed_skill_pool", [])}
     unsafe_terms_found: list[str] = []
     for term in writer_packet.get("unsafe_jd_nouns", []):
@@ -179,7 +233,7 @@ def validate_phase2_output(
             f"Unsafe JD nouns found in resume: {', '.join(unsafe_terms_found)}"
         )
 
-    # --- 5. Date correctness ---
+    # --- 5. Date correctness (unchanged) ---
     if current_date and current_date not in cover_letter:
         errors.append(f"Cover letter does not contain CURRENT_DATE: {current_date!r}")
 
@@ -198,6 +252,96 @@ def validate_phase2_output(
 
 
 # ---------------------------------------------------------------------------
+# Thin / non-repositioning role helpers
+# ---------------------------------------------------------------------------
+
+def _is_thin_or_non_repositioning_role(
+    role_name: str,
+    source_bullet_count: int,
+    source_char_count: int,
+    jd_is_delivery_oriented: bool,
+) -> tuple[bool, str]:
+    """Return (is_thin, reason) for a role.
+
+    Checks (in order):
+    A) Role name contains a known thin/non-repositioning pattern.
+    B) Source content is thin (few bullets, or very short total text).
+    C) Optional — JD is delivery-oriented while role name is evaluation/training.
+    """
+    name_lower = role_name.lower()
+
+    # A) Name heuristics
+    for pattern in _THIN_ROLE_NAME_PATTERNS:
+        if pattern in name_lower:
+            return True, f"name matches pattern '{pattern}'"
+
+    # B) Content thinness (only when source data is actually known)
+    if source_bullet_count < _THIN_ROLE_SOURCE_BULLET_THRESHOLD and source_bullet_count < 99:
+        return True, (
+            f"only {source_bullet_count} source bullet(s) "
+            f"(threshold: {_THIN_ROLE_SOURCE_BULLET_THRESHOLD})"
+        )
+    if 0 < source_char_count < _THIN_ROLE_SOURCE_CHAR_THRESHOLD:
+        return True, (
+            f"only {source_char_count} source chars "
+            f"(threshold: {_THIN_ROLE_SOURCE_CHAR_THRESHOLD})"
+        )
+
+    # C) JD mismatch: delivery-oriented JD + evaluation/training role name
+    if jd_is_delivery_oriented:
+        eval_patterns = {
+            "evaluation", "evaluator", "training", "train", "label", "annotation",
+        }
+        if any(kw in name_lower for kw in eval_patterns):
+            return True, "evaluation/training role in delivery-oriented JD"
+
+    return False, ""
+
+
+def _compute_effective_priorities(
+    roles: list[tuple[str, list[str]]],
+    role_priorities: dict[str, str],
+    role_source_counts: dict[str, int],
+    role_source_char_counts: dict[str, int],
+    jd_is_delivery_oriented: bool,
+) -> dict[str, tuple[str, str]]:
+    """Return {role_header: (effective_priority, thin_reason)} for all roles.
+
+    - Thin roles receive "thin_override".
+    - The first _TOP_REPOSITIONING_ROLES_COUNT non-thin roles are promoted to
+      at least "high" priority for density enforcement.
+    - Remaining non-thin roles keep their plan priority.
+    """
+    # First pass: classify each role
+    thin_flags: dict[str, tuple[bool, str]] = {}
+    for role_header, _ in roles:
+        source_count = _find_source_bullet_count(role_header, role_source_counts)
+        source_chars = _find_source_char_count(role_header, role_source_char_counts)
+        is_thin, reason = _is_thin_or_non_repositioning_role(
+            role_header, source_count, source_chars, jd_is_delivery_oriented,
+        )
+        thin_flags[role_header] = (is_thin, reason)
+
+    # Identify first K non-thin roles for high-priority promotion
+    non_thin_headers = [h for h, _ in roles if not thin_flags[h][0]]
+    top_repositioning: set[str] = set(non_thin_headers[:_TOP_REPOSITIONING_ROLES_COUNT])
+
+    # Second pass: assign effective priority
+    result: dict[str, tuple[str, str]] = {}
+    for role_header, _ in roles:
+        is_thin, reason = thin_flags[role_header]
+        if is_thin:
+            result[role_header] = ("thin_override", reason)
+        elif role_header in top_repositioning:
+            result[role_header] = ("high", "")
+        else:
+            plan_priority = _match_role_priority(role_header, role_priorities) or "low"
+            result[role_header] = (plan_priority, "")
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Resume parsing helpers
 # ---------------------------------------------------------------------------
 
@@ -210,7 +354,6 @@ def _parse_roles(resume: str) -> list[tuple[str, list[str]]]:
     """
     lines = resume.split("\n")
 
-    # Locate Experience section
     exp_start: int | None = None
     exp_end = len(lines)
     for i, line in enumerate(lines):
@@ -243,7 +386,6 @@ def _parse_roles(resume: str) -> list[tuple[str, list[str]]]:
             elif s.startswith("• "):
                 current_bullets.append(s[2:].strip())
             elif not _is_date_line(s):
-                # Plain-text content line — LLM omitted the bullet marker.
                 current_bullets.append(s)
 
     if current_header is not None:
@@ -302,11 +444,7 @@ def _match_role_priority(
     role_header: str,
     role_priorities: dict[str, str],
 ) -> str | None:
-    """Fuzzy-match a resume role header to a priority from the plan.
-
-    Plan role names are often a prefix of resume headers (which append dates).
-    Returns the priority string or None if no match found.
-    """
+    """Fuzzy-match a resume role header to a priority from the plan."""
     header_lower = role_header.lower()
     for plan_name, priority in role_priorities.items():
         if plan_name.lower() in header_lower:
@@ -318,13 +456,21 @@ def _find_source_bullet_count(
     role_header: str,
     role_source_counts: dict[str, int],
 ) -> int:
-    """Return source bullet count for a resume role header.
-
-    Returns 99 (high) if the role is not found, so no thin-role downgrade is
-    applied when the source count is unknown.
-    """
+    """Return source bullet count; 99 if unknown (prevents false thin detection)."""
     header_lower = role_header.lower()
     for plan_name, count in role_source_counts.items():
         if plan_name.lower() in header_lower:
             return count
     return 99
+
+
+def _find_source_char_count(
+    role_header: str,
+    role_source_char_counts: dict[str, int],
+) -> int:
+    """Return source char count; 99999 if unknown (prevents false thin detection)."""
+    header_lower = role_header.lower()
+    for plan_name, count in role_source_char_counts.items():
+        if plan_name.lower() in header_lower:
+            return count
+    return 99999

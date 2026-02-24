@@ -274,6 +274,8 @@ class TestPhase2Validator:
                 "Engineer | Beta Corp": "medium",
             },
             "role_source_bullet_counts": {},
+            "role_source_char_counts": {},
+            "jd_is_delivery_oriented": False,
             "density_targets": {
                 "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
                 "mechanism_min_by_priority": {"high": 2, "medium": 1, "low": 0},
@@ -482,36 +484,49 @@ class TestPhase2Validator:
         density_errors = [e for e in report["errors"] if "bullet" in e.lower()]
         assert density_errors, f"Expected density errors, got: {report['errors']}"
 
-    def test_priority_based_enforcement_high_needs_more_than_medium(self):
-        """High-priority role requires more bullets than medium-priority role."""
-        # Resume with 3 bullets per role:
-        # high needs 4 → error; medium needs 3 → passes.
-        three_bullet_resume = (
+    def test_top_k_roles_promoted_to_high(self):
+        """First 2 non-thin roles are promoted to 'high' effective priority.
+
+        A 3-role resume: Acme (plan=high), Beta (plan=medium), Gamma (plan=low).
+        Top-K promotion upgrades both Acme and Beta to effective 'high'.
+        Gamma is 3rd non-thin — keeps plan priority 'low'.
+        With 3 bullets each: Acme/Beta fail (3 < 4), Gamma passes (3 >= 1).
+        """
+        packet = self._make_packet(
+            must_keep_metrics=[],
+            must_include_skills=[],
+            role_priorities={
+                "Senior Engineer | Acme Corp": "high",
+                "Engineer | Beta Corp": "medium",
+                "Dev | Gamma Corp": "low",
+            },
+            role_source_bullet_counts={},
+            role_source_char_counts={},
+        )
+        three_role_resume = (
             "Experience\n"
             "Senior Engineer | Acme Corp | 2020 - Present\n"
-            "- Implemented horizontal scaling for 1M+ user platform, reducing latency by 25%\n"
+            "- Implemented horizontal scaling for the platform\n"
             "- Built caching layer with read replicas to isolate DB load\n"
-            "- Used async messaging and Docker for service decoupling\n\n"
+            "- Used async messaging for service decoupling\n\n"
             "Engineer | Beta Corp | 2017 - 2020\n"
             "- Designed distributed system with read replicas\n"
             "- Implemented async messaging patterns\n"
             "- Used Redis for caching\n\n"
+            "Dev | Gamma Corp | 2015 - 2017\n"
+            "- Wrote backend code\n"
+            "- Fixed production bugs\n"
+            "- Deployed new features\n\n"
             "Technical Skills\nDocker, Kubernetes\n"
         )
-        packet = self._make_packet()
-        report = validate_phase2_output(packet, three_bullet_resume, self._make_cover(), _today())
-        # High role should fail bullet check (3 < 4)
-        high_bullet_errors = [
-            e for e in report["errors"]
-            if "bullet" in e.lower() and "Acme Corp" in e
-        ]
-        assert high_bullet_errors, f"Expected high-role bullet error: {report['errors']}"
-        # Medium role should NOT have a bullet error (3 >= 3)
-        medium_bullet_errors = [
-            e for e in report["errors"]
-            if "bullet" in e.lower() and "Beta Corp" in e
-        ]
-        assert not medium_bullet_errors, f"Medium role should pass: {report['errors']}"
+        report = validate_phase2_output(packet, three_role_resume, self._make_cover(), _today())
+        # Acme and Beta both promoted to effective high → 3 < 4 → errors
+        acme_errors = [e for e in report["errors"] if "bullet" in e.lower() and "Acme Corp" in e]
+        beta_errors = [e for e in report["errors"] if "bullet" in e.lower() and "Beta Corp" in e]
+        gamma_errors = [e for e in report["errors"] if "bullet" in e.lower() and "Gamma Corp" in e]
+        assert acme_errors, f"Expected Acme Corp bullet error (promoted to high): {report['errors']}"
+        assert beta_errors, f"Expected Beta Corp bullet error (promoted to high): {report['errors']}"
+        assert not gamma_errors, f"Gamma Corp (low, 3rd non-thin) should pass: {report['errors']}"
 
     def test_thin_role_safeguard_relaxes_bullet_minimum(self):
         """Role with <2 source bullets gets minimum bullet count reduced by 1."""
@@ -547,3 +562,169 @@ class TestPhase2Validator:
         assert "unsafe_terms_found" in stats
         assert "role_bullet_counts" in stats
         assert "role_mechanism_counts" in stats
+
+
+# ---------------------------------------------------------------------------
+# Thin / non-repositioning role override tests
+# ---------------------------------------------------------------------------
+
+class TestThinRoleOverride:
+    """Tests for thin-role detection and effective priority override."""
+
+    def _packet_for_thin(self, role_name: str, source_bullets: int = 0,
+                         source_chars: int = 0, jd_delivery: bool = False) -> dict:
+        return {
+            "must_keep_metrics": [],
+            "must_surface_mechanisms": [],
+            "must_include_skills": [],
+            "allowed_skill_pool": [],
+            "do_not_add_terms": [],
+            "unsafe_jd_nouns": [],
+            "role_priorities": {role_name: "high"},
+            "role_source_bullet_counts": {role_name: source_bullets},
+            "role_source_char_counts": {role_name: source_chars},
+            "jd_is_delivery_oriented": jd_delivery,
+            "density_targets": {
+                "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+                "mechanism_min_by_priority": {"high": 2, "medium": 1, "low": 0},
+            },
+        }
+
+    def _cover(self) -> str:
+        d = date.today()
+        date_str = f"{d.strftime('%B')} {d.day}, {d.year}"
+        return f"{date_str}\n\nDear Hiring Manager,\n\nI am a strong fit."
+
+    def test_mercor_name_triggers_thin_override(self):
+        """Role name containing 'mercor' is classified as thin regardless of content."""
+        role_name = "AI Evaluator | Mercor"
+        packet = self._packet_for_thin(role_name, source_bullets=5, source_chars=300)
+        # 1 bullet — passes thin_override (min=2 would still fail, but 2 should pass)
+        resume = (
+            "Experience\n"
+            f"{role_name} | 2024 - Present\n"
+            "- Evaluated model outputs\n"
+            "- Provided quality feedback\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(packet, resume, self._cover(), _today())
+        # Should emit a warning (not error) about thin override
+        thin_warnings = [w for w in report["warnings"] if "thin override" in w.lower()]
+        assert thin_warnings, f"Expected thin override warning: {report['warnings']}"
+        # With 2 bullets and thin_override min=2, no bullet errors
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        assert not bullet_errors, f"Thin override should allow 2 bullets: {report['errors']}"
+
+    def test_thin_content_triggers_without_name_match(self):
+        """Role with 1 source bullet triggers thin_override even without a name pattern."""
+        role_name = "Software Engineer | Some Corp"
+        packet = self._packet_for_thin(role_name, source_bullets=1, source_chars=300)
+        resume = (
+            "Experience\n"
+            f"{role_name} | 2024 - Present\n"
+            "- Built backend services\n"
+            "- Wrote unit tests\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(packet, resume, self._cover(), _today())
+        thin_warnings = [w for w in report["warnings"] if "thin override" in w.lower()]
+        assert thin_warnings, f"Expected thin override warning for thin content: {report['warnings']}"
+
+    def test_mercor_passes_with_two_bullets_zero_mechanisms(self):
+        """Thin-override role passes with exactly 2 bullets and 0 mechanism keywords."""
+        role_name = "AI Model Evaluator | Mercor"
+        packet = self._packet_for_thin(role_name, source_bullets=5, source_chars=300)
+        resume = (
+            "Experience\n"
+            f"{role_name} | 2024 - Present\n"
+            "- Reviewed AI-generated responses for accuracy\n"
+            "- Documented evaluation findings and submitted reports\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(packet, resume, self._cover(), _today())
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        mechanism_errors = [e for e in report["errors"] if "mechanism" in e.lower()]
+        assert not bullet_errors, f"2 bullets should satisfy thin_override min=2: {report['errors']}"
+        assert not mechanism_errors, f"0 mechanisms required for thin_override: {report['errors']}"
+
+    def test_non_thin_roles_after_thin_still_require_high_density(self):
+        """First 2 non-thin roles after a thin role still get high-priority enforcement."""
+        packet = {
+            "must_keep_metrics": [],
+            "must_surface_mechanisms": [],
+            "must_include_skills": [],
+            "allowed_skill_pool": [],
+            "do_not_add_terms": [],
+            "unsafe_jd_nouns": [],
+            "role_priorities": {
+                "AI Evaluator | Mercor": "high",      # thin role
+                "Senior Engineer | Acme Corp": "high",  # non-thin #1
+                "Engineer | Beta Corp": "medium",       # non-thin #2, promoted to high
+            },
+            "role_source_bullet_counts": {},
+            "role_source_char_counts": {},
+            "jd_is_delivery_oriented": False,
+            "density_targets": {
+                "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+                "mechanism_min_by_priority": {"high": 2, "medium": 1, "low": 0},
+            },
+        }
+        resume = (
+            "Experience\n"
+            "AI Evaluator | Mercor | 2024 - Present\n"
+            "- Evaluated AI model outputs\n"
+            "- Submitted feedback reports\n\n"
+            "Senior Engineer | Acme Corp | 2022 - 2024\n"
+            "- Built backend platform\n"
+            "- Wrote unit tests\n"
+            "- Deployed services\n\n"
+            "Engineer | Beta Corp | 2019 - 2022\n"
+            "- Developed features\n"
+            "- Fixed bugs\n"
+            "- Reviewed code\n\n"
+            "Technical Skills\nPython\n"
+        )
+        d = date.today()
+        cover = f"{d.strftime('%B')} {d.day}, {d.year}\n\nDear Hiring Manager,\n\nI am a fit."
+        report = validate_phase2_output(packet, resume, cover, _today())
+        # Mercor is thin — passes with 2 bullets (no bullet error)
+        mercor_bullet_errors = [e for e in report["errors"] if "Mercor" in e and "bullet" in e.lower()]
+        assert not mercor_bullet_errors, f"Thin Mercor should pass: {report['errors']}"
+        # Acme Corp is non-thin #1 → promoted to high → 3 bullets < 4 → error
+        acme_errors = [e for e in report["errors"] if "Acme Corp" in e and "bullet" in e.lower()]
+        assert acme_errors, f"Acme Corp (non-thin, high) should require 4 bullets: {report['errors']}"
+        # Beta Corp is non-thin #2 → promoted to high → 3 bullets < 4 → error
+        beta_errors = [e for e in report["errors"] if "Beta Corp" in e and "bullet" in e.lower()]
+        assert beta_errors, f"Beta Corp (promoted to high) should require 4 bullets: {report['errors']}"
+
+
+# ---------------------------------------------------------------------------
+# Additional WriterPacket tests for new fields
+# ---------------------------------------------------------------------------
+
+class TestWriterPacketNewFields:
+
+    def test_role_source_char_counts_populated(self):
+        """role_source_char_counts has a positive count for roles with content in master resume."""
+        plan = _minimal_plan()
+        packet = build_writer_packet(
+            plan, "{}", _master_resume_with_kafka(), "job desc"
+        )
+        counts = packet["role_source_char_counts"]
+        assert "Senior Engineer | Acme Corp" in counts
+        assert counts["Senior Engineer | Acme Corp"] > 0
+
+    def test_jd_is_delivery_oriented_true_when_keywords_present(self):
+        """jd_is_delivery_oriented=True when JD themes contain delivery keywords."""
+        plan = _minimal_plan(extra_jd_keywords=["microservices", "kubernetes"])
+        packet = build_writer_packet(plan, "{}", "", "job desc")
+        assert packet["jd_is_delivery_oriented"] is True
+
+    def test_jd_is_delivery_oriented_false_when_no_keywords(self):
+        """jd_is_delivery_oriented=False when JD has no delivery-oriented keywords."""
+        plan = _minimal_plan()  # base keywords: distributed systems, scalability, etc.
+        # Remove delivery keywords — use a plan with only neutral keywords
+        for theme in plan["jd_top_themes"]:
+            theme["keywords"] = ["data analysis", "reporting", "documentation"]
+        packet = build_writer_packet(plan, "{}", "", "job desc")
+        assert packet["jd_is_delivery_oriented"] is False
