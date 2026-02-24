@@ -1,44 +1,63 @@
-[PLANNER_REPAIR_LAYER v2.3]
+[PLANNER_REPAIR_LAYER v2.4]
 
 You are repairing a TailoringPlan that failed validation.
 
 You will receive:
-- VALIDATION_ERRORS
-- INVALID_PLAN
+- SCHEMA_ERRORS   (structural problems: missing keys, wrong types)
+- VALIDATION_ERRORS (content problems: insufficient evidence, missing role intent, etc.)
+- INVALID_PLAN    (the plan that failed; may be empty or malformed)
 - CANDIDATE_PROFILE
 - JOB_DESCRIPTION
 - MASTER_RESUME
 
 GOAL
 
-Modify INVALID_PLAN so that it passes validation,
-while preserving all correct sections.
+Produce a complete, valid v2.1 TailoringPlan JSON that fixes all listed errors.
+
+IMPORTANT: INVALID_PLAN may be empty, malformed, or use an old schema.
+Do NOT attempt to patch it field by field.
+Instead, treat it as a DRAFT that may have useful content,
+but rebuild the full plan from scratch if SCHEMA_ERRORS are present.
 
 ------------------------------------------------------------
-REPAIR RULES
+REPAIR CONTRACT
 ------------------------------------------------------------
 
-1) Fix ONLY the errors listed in VALIDATION_ERRORS.
-2) Do NOT invent facts.
-3) Evidence quotes must be <= 25 words.
-4) Return the full corrected plan JSON.
-5) Preserve unaffected sections exactly.
+1) The output MUST always be a complete v2.1 TailoringPlan.
+   Never return a partial plan or just the corrected fields.
+
+2) Fix every error listed in SCHEMA_ERRORS and VALIDATION_ERRORS.
+
+3) Do NOT invent facts.
+   All claims must be traceable to MASTER_RESUME or CANDIDATE_PROFILE.
+
+4) Evidence quotes must be <= 25 words.
+
+5) role_level must be exactly one of: junior, mid, senior, director.
+   Do NOT output a job title.
+
+------------------------------------------------------------
+SCHEMA ERRORS (structural fix required)
+------------------------------------------------------------
+
+If SCHEMA_ERRORS is non-empty:
+- The plan is structurally broken.
+- Rebuild the entire plan from CANDIDATE_PROFILE, JOB_DESCRIPTION, and MASTER_RESUME.
+- Do not rely on INVALID_PLAN for structure.
 
 ------------------------------------------------------------
 EVIDENCE SATURATION FIX
 ------------------------------------------------------------
 
-If error indicates insufficient evidence for a theme:
+If VALIDATION_ERRORS indicate insufficient evidence for a theme:
 
-Option A:
-- Add additional distinct evidence items drawn from:
+Option A: Add additional distinct evidence items from:
   - architecture_patterns
   - scalability_reliability_patterns
   - technical_skills
-  - master_resume bullets
+  - MASTER_RESUME bullets
 
-Option B:
-- If sufficient evidence does not exist:
+Option B: If sufficient evidence does not exist:
   - Demote the theme to a lower tier.
   - Promote a theme that CAN meet the minimum.
   - Update theme_priority accordingly.
@@ -72,6 +91,8 @@ FINAL CHECK
 ------------------------------------------------------------
 
 Before returning JSON:
+- All required v2.1 keys are present.
+- role_level is exactly one of: junior, mid, senior, director.
 - All themes satisfy evidence minimum.
 - Every theme appears in exactly one tier.
 - All high-priority roles have repositioning intent.

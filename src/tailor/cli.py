@@ -1,6 +1,7 @@
 """Command-line interface for AI Resume Tailor."""
 
 import argparse
+import json
 import os
 
 from tailor.config import COVER_TEMPLATE, ENABLE_PLAN_REPAIR, ENABLE_TWO_PHASE, OUTPUT_DIR, RESUME_TEMPLATE
@@ -12,6 +13,7 @@ from tailor.job import JobData
 from tailor.job.scrape import scrape_job_url
 from tailor.llm import (
     PlanValidationError,
+    _run_schema_gate,
     extract_metadata_ai,
     plan_repair_tailoring,
     plan_tailoring,
@@ -148,7 +150,17 @@ def _run_two_phase(
     cover_template: str,
 ):
     """Run Phase 1 (plan) then Phase 2 (write).  Falls back to single-pass on
-    Phase 1 failure after one retry.
+    Phase 1 failure after both attempts.
+
+    Attempt 1: ALWAYS calls plan_tailoring (tailor_plan.txt).
+    Attempt 2: ALWAYS calls plan_repair_tailoring (tailor_plan_repair.txt),
+               passing the last parsed plan + both error lists.
+
+    Validation order per attempt:
+      A) JSON parse  — caught as json.JSONDecodeError
+      B) Schema gate — _run_schema_gate (types + required keys)
+      C) v1 content  — validate_plan (theme count, quote length, role_level)
+      D) v2.1 deep   — validate_plan_extended
 
     Returns
     -------
@@ -158,47 +170,93 @@ def _run_two_phase(
     plan = None
     p1_messages = None
     p1_meta = None
-    validation_errors: list[str] = []
-    last_raw_plan: dict | None = None
 
-    for attempt in range(1, 3):  # up to 2 attempts
+    # State passed to the repair attempt.
+    prev_raw_plan: dict = {}   # last successfully parsed plan dict (empty if JSON failed)
+    schema_errors: list[str] = []
+    validation_errors: list[str] = []
+
+    for attempt in range(1, 3):
+        is_repair = attempt > 1
+
+        # ------------------------------------------------------------------
+        # Step 0: call the LLM
+        # Attempt 1: ALWAYS tailor_plan.txt
+        # Attempt 2: ALWAYS tailor_plan_repair.txt (or skip if disabled)
+        # ------------------------------------------------------------------
+        if is_repair and not ENABLE_PLAN_REPAIR:
+            break  # repair disabled; don't try a second time
+
         try:
-            if attempt == 1:
+            if not is_repair:
                 raw_plan, p1_messages, p1_meta = plan_tailoring(
                     job, resume_template, cover_template
                 )
             else:
-                # Attempt 2: use plan repair if enabled and we have a previous plan
-                if ENABLE_PLAN_REPAIR and last_raw_plan is not None:
-                    raw_plan, p1_messages, p1_meta = plan_repair_tailoring(
-                        last_raw_plan, validation_errors, job, resume_template, cover_template
-                    )
-                else:
-                    raw_plan, p1_messages, p1_meta = plan_tailoring(
-                        job, resume_template, cover_template
-                    )
-
-            last_raw_plan = raw_plan
-            plan = validate_plan(raw_plan)
-
-            # Extended v2.1 checks
-            extended_errors = validate_plan_extended(raw_plan)
-            if extended_errors:
-                raise PlanValidationError(
-                    f"v2.1 extended validation failed: {'; '.join(extended_errors)}"
+                raw_plan, p1_messages, p1_meta = plan_repair_tailoring(
+                    prev_raw_plan, schema_errors, validation_errors,
+                    job, resume_template, cover_template,
                 )
-
-            break
-        except PlanValidationError as exc:
-            msg = f"Phase 1 validation error (attempt {attempt}): {exc}"
-            print(f"Warning: {msg}")
-            validation_errors.append(msg)
-            plan = None
+        except json.JSONDecodeError as exc:
+            schema_errors = [f"invalid_json: {exc}"]
+            validation_errors = []
+            prev_raw_plan = {}
+            print(f"Warning: Phase 1 attempt {attempt} returned invalid JSON.")
+            continue
         except Exception as exc:
-            msg = f"Phase 1 failed (attempt {attempt}): {exc}"
-            print(f"Warning: {msg}")
-            validation_errors.append(msg)
-            plan = None
+            schema_errors = [f"api_error: {exc}"]
+            validation_errors = []
+            prev_raw_plan = {}
+            print(f"Warning: Phase 1 attempt {attempt} failed: {exc}")
+            continue
+
+        # ------------------------------------------------------------------
+        # Step A: schema gate (types + required keys)
+        # If this fails, deep validation would crash — skip straight to repair.
+        # ------------------------------------------------------------------
+        gate_errors = _run_schema_gate(raw_plan)
+        if gate_errors:
+            schema_errors = gate_errors
+            validation_errors = []
+            prev_raw_plan = raw_plan
+            summary = gate_errors[0] + (
+                f" (+{len(gate_errors) - 1} more)" if len(gate_errors) > 1 else ""
+            )
+            print(f"Warning: Phase 1 attempt {attempt} schema invalid: {summary}")
+            continue
+
+        # ------------------------------------------------------------------
+        # Step B: v1 content checks (theme count, quote length)
+        #         validate_plan also coerces role_level in place.
+        # ------------------------------------------------------------------
+        try:
+            validate_plan(raw_plan)
+        except PlanValidationError as exc:
+            schema_errors = []
+            validation_errors = [str(exc)]
+            prev_raw_plan = raw_plan
+            print(f"Warning: Phase 1 attempt {attempt} v1 validation error: {exc}")
+            continue
+
+        # ------------------------------------------------------------------
+        # Step C: v2.1 deep checks (evidence saturation, role intent, etc.)
+        # ------------------------------------------------------------------
+        extended_errors = validate_plan_extended(raw_plan)
+        if extended_errors:
+            schema_errors = []
+            validation_errors = extended_errors
+            prev_raw_plan = raw_plan
+            print(
+                f"Warning: Phase 1 attempt {attempt} extended validation: "
+                f"{len(extended_errors)} error(s)."
+            )
+            continue
+
+        # ------------------------------------------------------------------
+        # All checks passed.
+        # ------------------------------------------------------------------
+        plan = raw_plan
+        break
 
     phase1_debug = {
         "llm_request": p1_messages,
@@ -206,6 +264,7 @@ def _run_two_phase(
         "plan_json": plan,
         "model": p1_meta.get("model") if p1_meta else None,
         "usage": p1_meta.get("usage") if p1_meta else None,
+        "schema_errors": schema_errors,
         "validation_errors": validation_errors,
     }
 

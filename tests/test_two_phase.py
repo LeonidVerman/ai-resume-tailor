@@ -173,12 +173,28 @@ class TestValidatePlan:
         with pytest.raises(PlanValidationError, match="missing required keys"):
             validate_plan(plan)
 
-    def test_bad_role_level_raises(self):
-        from tailor.llm import PlanValidationError, validate_plan
+    def test_unrecognised_role_level_coerced_to_junior(self):
+        """Unknown role_level strings are coerced to 'junior' rather than raising."""
+        from tailor.llm import validate_plan
         plan = _minimal_plan()
         plan["role_level"] = "wizard"
-        with pytest.raises(PlanValidationError, match="role_level"):
-            validate_plan(plan)
+        result = validate_plan(plan)
+        assert result["role_level"] == "junior"
+
+    def test_job_title_role_level_coerced(self):
+        """Job-title strings like 'Senior Software Engineer' are coerced to 'senior'."""
+        from tailor.llm import validate_plan
+        plan = _minimal_plan()
+        plan["role_level"] = "Senior Software Engineer"
+        result = validate_plan(plan)
+        assert result["role_level"] == "senior"
+
+    def test_vp_role_level_coerced_to_director(self):
+        from tailor.llm import validate_plan
+        plan = _minimal_plan()
+        plan["role_level"] = "VP of Engineering"
+        result = validate_plan(plan)
+        assert result["role_level"] == "director"
 
     def test_too_few_themes_raises(self):
         from tailor.llm import PlanValidationError, validate_plan

@@ -31,8 +31,8 @@ _VALID_ROLE_LEVELS = {"director", "senior", "mid", "junior"}
 _VALID_PRIORITIES = {"high", "medium", "low"}
 _VALID_EVIDENCE_SOURCES = {"candidate_profile", "master_resume"}
 
-# Required top-level keys for a TailoringPlan (v2.1)
-_PLAN_REQUIRED_KEYS = {
+# Required top-level keys for a TailoringPlan (v2.1) — single source of truth.
+_PLAN_REQUIRED_KEYS = frozenset({
     "role_level",
     "jd_top_themes",
     "evidence_map",
@@ -44,7 +44,108 @@ _PLAN_REQUIRED_KEYS = {
     "domain_de_emphasis",
     "evidence_saturation_rules",
     "bullet_allocation_plan",
-}
+})
+
+
+# ---------------------------------------------------------------------------
+# Schema gate + role_level coercion (run BEFORE deep validation)
+# ---------------------------------------------------------------------------
+
+def _coerce_role_level(raw: str) -> str:
+    """Map any role_level string to a valid enum value.
+
+    Handles cases where the LLM returns a job title instead of the enum
+    (e.g. "Senior Software Engineer" → "senior").
+    Falls back to "junior" for anything unrecognised.
+    """
+    s = raw.lower()
+    if "director" in s or "vp" in s:
+        return "director"
+    if "senior" in s or "staff" in s:
+        return "senior"
+    if "mid" in s or "intermediate" in s:
+        return "mid"
+    return "junior"
+
+
+def _run_schema_gate(data: Any) -> list[str]:
+    """Structural schema gate: required-key and type checks only.
+
+    Returns a list of error strings; empty list means the schema is valid.
+    Never raises.  Must be called before any deep validation to prevent
+    crashes caused by missing or wrongly-typed fields.
+
+    Errors are capped at 15 to avoid flooding the repair-prompt context.
+    """
+    if not isinstance(data, dict):
+        return [f"schema_invalid: expected JSON object, got {type(data).__name__}"]
+
+    errors: list[str] = []
+
+    # All required keys must be present before sub-structure checks.
+    missing = _PLAN_REQUIRED_KEYS - data.keys()
+    if missing:
+        errors.append(f"schema_invalid: missing keys: {sorted(missing)}")
+        return errors  # sub-checks on absent keys would be misleading
+
+    # role_level: must be a string (value is normalised by _coerce_role_level)
+    if not isinstance(data["role_level"], str):
+        errors.append(
+            f"schema_invalid: role_level must be a string, "
+            f"got {type(data['role_level']).__name__}"
+        )
+
+    # jd_top_themes: list of objects each with required keys
+    jdt = data["jd_top_themes"]
+    if not isinstance(jdt, list):
+        errors.append(
+            f"schema_invalid: jd_top_themes must be a list, got {type(jdt).__name__}"
+        )
+    else:
+        for i, item in enumerate(jdt):
+            if not isinstance(item, dict):
+                errors.append(f"schema_invalid: jd_top_themes[{i}] must be an object")
+            else:
+                for k in ("theme", "why_important", "keywords"):
+                    if k not in item:
+                        errors.append(
+                            f"schema_invalid: jd_top_themes[{i}] missing key {k!r}"
+                        )
+
+    # evidence_map: list of objects, each with an evidence list of objects
+    em = data["evidence_map"]
+    if not isinstance(em, list):
+        errors.append(
+            f"schema_invalid: evidence_map must be a list, got {type(em).__name__}"
+        )
+    else:
+        for i, entry in enumerate(em):
+            if not isinstance(entry, dict):
+                errors.append(f"schema_invalid: evidence_map[{i}] must be an object")
+                continue
+            evs = entry.get("evidence")
+            if evs is None:
+                errors.append(f"schema_invalid: evidence_map[{i}] missing key 'evidence'")
+                continue
+            if not isinstance(evs, list):
+                errors.append(
+                    f"schema_invalid: evidence_map[{i}].evidence must be a list"
+                )
+                continue
+            for j, ev in enumerate(evs):
+                if not isinstance(ev, dict):
+                    errors.append(
+                        f"schema_invalid: evidence_map[{i}].evidence[{j}] must be an object"
+                    )
+                else:
+                    for k in ("source", "location", "quote", "allowed_claims"):
+                        if k not in ev:
+                            errors.append(
+                                f"schema_invalid: evidence_map[{i}].evidence[{j}] "
+                                f"missing key {k!r}"
+                            )
+
+    return errors[:15]  # cap to avoid flooding repair context
 
 
 def get_client() -> OpenAI:
@@ -85,6 +186,9 @@ def validate_plan(data: Any) -> dict:
     if missing:
         raise PlanValidationError(f"Plan missing required keys: {missing}")
 
+    # Coerce role_level in place; maps job-title strings to the valid enum.
+    if isinstance(data.get("role_level"), str):
+        data["role_level"] = _coerce_role_level(data["role_level"])
     role_level = data.get("role_level")
     if role_level not in _VALID_ROLE_LEVELS:
         raise PlanValidationError(
@@ -185,19 +289,22 @@ def plan_tailoring(
 
 def plan_repair_tailoring(
     invalid_plan: dict,
+    schema_errors: list[str],
     validation_errors: list[str],
     job: JobData,
     resume_template: str,
     cover_template: str,
 ) -> tuple[dict, list, dict]:
-    """Phase 1 repair: ask the LLM to fix a plan that failed extended validation.
+    """Phase 1 repair: rebuild a plan that failed schema or deep validation.
 
     Parameters
     ----------
     invalid_plan:
-        The plan dict that failed ``validate_plan_extended``.
+        The last parsed plan dict (may be ``{}`` if JSON parsing failed).
+    schema_errors:
+        Structural errors from ``_run_schema_gate`` (type mismatches, missing keys).
     validation_errors:
-        The error strings returned by ``validate_plan_extended``.
+        Deep validation errors from ``validate_plan`` / ``validate_plan_extended``.
     job, resume_template, cover_template:
         Same sources used in the original ``plan_tailoring`` call.
 
@@ -215,6 +322,10 @@ def plan_repair_tailoring(
 
     messages: list = [
         {"role": "developer", "content": repair_instructions},
+        {
+            "role": "user",
+            "content": f"SCHEMA_ERRORS:\n{json.dumps(schema_errors, indent=2)}",
+        },
         {
             "role": "user",
             "content": f"VALIDATION_ERRORS:\n{json.dumps(validation_errors, indent=2)}",
