@@ -2,7 +2,10 @@
 
 import argparse
 import json
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 from tailor.config import COVER_TEMPLATE, ENABLE_PLAN_REPAIR, ENABLE_TWO_PHASE, OUTPUT_DIR, RESUME_TEMPLATE
 from tailor.debug import save_debug_data
