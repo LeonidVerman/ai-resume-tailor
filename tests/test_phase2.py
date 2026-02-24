@@ -728,3 +728,133 @@ class TestWriterPacketNewFields:
             theme["keywords"] = ["data analysis", "reporting", "documentation"]
         packet = build_writer_packet(plan, "{}", "", "job desc")
         assert packet["jd_is_delivery_oriented"] is False
+
+
+# ---------------------------------------------------------------------------
+# Very-old-role bullet relaxation tests
+# ---------------------------------------------------------------------------
+
+class TestVeryOldRoleRelaxation:
+    """Tests for the thin_override + very-old-role (> VERY_OLD_ROLE_YEARS) relaxation."""
+
+    # Fixed reference date: 2026-02-24 (matches project memory today).
+    _NOW = date(2026, 2, 24)
+
+    def _packet(self, role_name: str, plan_priority: str = "high") -> dict:
+        return {
+            "must_keep_metrics": [],
+            "must_surface_mechanisms": [],
+            "must_include_skills": [],
+            "allowed_skill_pool": [],
+            "do_not_add_terms": [],
+            "unsafe_jd_nouns": [],
+            "role_priorities": {role_name: plan_priority},
+            "role_source_bullet_counts": {},
+            "role_source_char_counts": {},
+            "jd_is_delivery_oriented": False,
+            "density_targets": {
+                "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+                "mechanism_min_by_priority": {"high": 2, "medium": 1, "low": 0},
+            },
+        }
+
+    def _cover(self) -> str:
+        d = self._NOW
+        return f"{d.strftime('%B')} {d.day}, {d.year}\n\nDear Hiring Manager,\n\nI am a fit."
+
+    def _resume_one_bullet(self, header: str) -> str:
+        return (
+            "Experience\n"
+            f"{header}\n"
+            "- Maintained legacy system components\n\n"
+            "Technical Skills\nPython\n"
+        )
+
+    # --- Test 1: thin_override + end_year=2008, now=2026 → relaxed to min=1 ---
+
+    def test_very_old_thin_override_allows_one_bullet(self):
+        """thin_override role ending 2008 (18 years ago) accepts 1 bullet (very old)."""
+        role_name = "AI Evaluator | Some Corp"
+        header = f"{role_name} | 2004 - 2008"
+        packet = self._packet(role_name)
+        report = validate_phase2_output(
+            packet, self._resume_one_bullet(header), self._cover(),
+            f"{self._NOW.strftime('%B')} {self._NOW.day}, {self._NOW.year}",
+            now=self._NOW,
+        )
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        assert not bullet_errors, (
+            f"Very-old thin_override (2008) should pass with 1 bullet: {report['errors']}"
+        )
+
+    # --- Test 2: thin_override + end_year=2015, now=2026 → NOT very old (11 years) ---
+
+    def test_recent_thin_override_keeps_min_two_bullets(self):
+        """thin_override role ending 2015 (11 years ago) still requires 2 bullets."""
+        role_name = "AI Evaluator | Some Corp"
+        header = f"{role_name} | 2013 - 2015"
+        packet = self._packet(role_name)
+        report = validate_phase2_output(
+            packet, self._resume_one_bullet(header), self._cover(),
+            f"{self._NOW.strftime('%B')} {self._NOW.day}, {self._NOW.year}",
+            now=self._NOW,
+        )
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        assert bullet_errors, (
+            f"thin_override ending 2015 should still need 2 bullets: {report['errors']}"
+        )
+        assert any("minimum is 2" in e for e in bullet_errors), bullet_errors
+
+    # --- Test 3: thin_override + no date in header → unknown → min=2 ---
+
+    def test_thin_override_unknown_date_keeps_min_two_bullets(self):
+        """thin_override with no parseable date applies the default min=2."""
+        role_name = "AI Evaluator | Some Corp"
+        header = role_name  # no date range
+        packet = self._packet(role_name)
+        report = validate_phase2_output(
+            packet, self._resume_one_bullet(header), self._cover(),
+            f"{self._NOW.strftime('%B')} {self._NOW.day}, {self._NOW.year}",
+            now=self._NOW,
+        )
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        assert bullet_errors, (
+            f"thin_override with unknown date should need 2 bullets: {report['errors']}"
+        )
+
+    # --- Test 4: high priority + end_year=2008 → no relaxation (still high rules) ---
+
+    def test_high_priority_very_old_role_not_relaxed(self):
+        """Very-old-role relaxation only applies to thin_override, not high-priority roles."""
+        role_name = "Senior Engineer | Acme Corp"
+        header = f"{role_name} | 2004 - 2008"
+        packet = self._packet(role_name, plan_priority="high")
+        # Non-thin role → top-K promoted to "high" effective priority (4 bullets required)
+        report = validate_phase2_output(
+            packet, self._resume_one_bullet(header), self._cover(),
+            f"{self._NOW.strftime('%B')} {self._NOW.day}, {self._NOW.year}",
+            now=self._NOW,
+        )
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        assert bullet_errors, (
+            f"High-priority very-old role should still require 4 bullets: {report['errors']}"
+        )
+        assert any("minimum is 4" in e for e in bullet_errors), bullet_errors
+
+    # --- Test 5: thin_override + Present → not old → min=2 ---
+
+    def test_thin_override_present_role_not_relaxed(self):
+        """Ongoing thin_override role (Present) is not very old; requires 2 bullets."""
+        role_name = "AI Evaluator | Mercor"
+        header = f"{role_name} | 2024 - Present"
+        packet = self._packet(role_name)
+        report = validate_phase2_output(
+            packet, self._resume_one_bullet(header), self._cover(),
+            f"{self._NOW.strftime('%B')} {self._NOW.day}, {self._NOW.year}",
+            now=self._NOW,
+        )
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        assert bullet_errors, (
+            f"Ongoing thin_override role should require 2 bullets: {report['errors']}"
+        )
+        assert any("minimum is 2" in e for e in bullet_errors), bullet_errors

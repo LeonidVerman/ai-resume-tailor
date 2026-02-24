@@ -14,6 +14,7 @@ high-priority density enforcement regardless of plan priority assignment.
 from __future__ import annotations
 
 import re
+from datetime import date
 
 # ---------------------------------------------------------------------------
 # Mechanism keyword set — a bullet counts as containing a mechanism if it
@@ -80,6 +81,16 @@ _THIN_OVERRIDE_MECHANISM_MIN: int = 0
 # Number of top non-thin roles guaranteed high-priority density enforcement.
 _TOP_REPOSITIONING_ROLES_COUNT: int = 2
 
+# Very-old-role relaxation: thin_override roles that ended this many years ago
+# (or more) require only 1 bullet instead of _THIN_OVERRIDE_BULLET_MIN.
+VERY_OLD_ROLE_YEARS: int = 15
+
+# Regexes for parsing end dates out of role header strings.
+# Matches "Present" or "Current" (case-insensitive).
+_PRESENT_RE: re.Pattern[str] = re.compile(r"\b(present|current)\b", re.IGNORECASE)
+# Matches any 4-digit year in the 1900s or 2000s.
+_YEAR_4_RE: re.Pattern[str] = re.compile(r"\b((?:19|20)\d{2})\b")
+
 # ---------------------------------------------------------------------------
 # Metric variant table
 # key: canonical metric string -> acceptable alternatives (all lowercase)
@@ -111,6 +122,7 @@ def validate_phase2_output(
     resume: str,
     cover_letter: str,
     current_date: str,
+    now: date | None = None,
 ) -> dict:
     """Check Phase 2 output against WriterPacket constraints.
 
@@ -119,10 +131,20 @@ def validate_phase2_output(
 
     Density is enforced per effective priority:
     - thin_override: 2 bullets / 0 mechanisms (relaxed for thin/non-repositioning roles)
+      Exception: thin_override roles that ended > VERY_OLD_ROLE_YEARS ago require only
+      1 bullet (very-old-role relaxation).
     - high / medium / low: per density_targets in writer_packet
     The first _TOP_REPOSITIONING_ROLES_COUNT non-thin roles are promoted to
     at least high priority for density enforcement.
+
+    Parameters
+    ----------
+    now:
+        Reference date for very-old-role detection.  Defaults to today.
     """
+    if now is None:
+        now = date.today()
+
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -179,7 +201,11 @@ def validate_phase2_output(
         role_bullet_counts[role_header] = bullet_count
 
         if effective_priority == "thin_override":
-            min_bullets = _THIN_OVERRIDE_BULLET_MIN
+            # Very old thin roles (ended > VERY_OLD_ROLE_YEARS ago) need only 1 bullet.
+            if _is_very_old_role(role_header, now):
+                min_bullets = 1
+            else:
+                min_bullets = _THIN_OVERRIDE_BULLET_MIN
             mech_required = _THIN_OVERRIDE_MECHANISM_MIN
         else:
             min_bullets = bullet_min_map.get(effective_priority, 1)
@@ -474,3 +500,44 @@ def _find_source_char_count(
         if plan_name.lower() in header_lower:
             return count
     return 99999
+
+
+# ---------------------------------------------------------------------------
+# Very-old-role helpers
+# ---------------------------------------------------------------------------
+
+def _parse_role_end_year(role_header: str) -> int | None:
+    """Extract end year from a role header date range.
+
+    Handles formats such as:
+    - "Senior Engineer | Acme Corp | 2017 - 2020"
+    - "QA Engineer | ZAO Comita | 2004 - 2009"
+    - "Engineer | Beta Corp | Nov 2009 – Jan 2011"
+    - "Engineer | Corp | 2020 - Present"
+
+    Returns None when the role is ongoing (Present/Current) or when no
+    parseable date range is found.  Uses the last ``|``-delimited segment
+    as the date field, then collects all 4-digit years; the last year is
+    treated as the end year.
+    """
+    # Focus on the trailing date segment (after the last pipe).
+    segments = role_header.split("|")
+    date_part = segments[-1].strip() if len(segments) >= 2 else role_header
+
+    # Ongoing roles — no end year.
+    if _PRESENT_RE.search(date_part):
+        return None
+
+    years = [int(m.group()) for m in _YEAR_4_RE.finditer(date_part)]
+    if not years:
+        return None
+
+    return years[-1]  # last year in the range is the end year
+
+
+def _is_very_old_role(role_header: str, now: date) -> bool:
+    """Return True if the role ended more than VERY_OLD_ROLE_YEARS years ago."""
+    end_year = _parse_role_end_year(role_header)
+    if end_year is None:
+        return False
+    return (now.year - end_year) > VERY_OLD_ROLE_YEARS
