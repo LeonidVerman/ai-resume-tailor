@@ -1,4 +1,4 @@
-[PLANNER_REPAIR_LAYER v2.6]
+[PLANNER_REPAIR_LAYER v2.7]
 
 You are repairing a TailoringPlan that failed validation.
 
@@ -87,17 +87,59 @@ F) role_repositioning_intent must include all high-priority roles.
 G) bullet_allocation_plan must include top 2 roles with at least 2 themes each.
 
 ------------------------------------------------------------
+THEME DEFENSIBILITY REPAIR (CRITICAL)
+------------------------------------------------------------
+
+If VALIDATION_ERRORS include any indication that evidence is weakly aligned,
+or if a theme is JD-domain-specific but not supported by sources:
+
+1) Do NOT try to "pad" evidence with unrelated quotes.
+2) Remove or translate the theme to a defensible adjacent theme.
+3) Put the original JD phrasing into gaps.
+4) Use safe_translation to explain the mapping.
+5) Rebuild evidence_map with directly aligned evidence objects.
+
+Examples of invalid evidence mapping:
+- Trading/crypto evidence does not prove asset management.
+- Scalability metrics do not prove networking protocol expertise.
+
+------------------------------------------------------------
+SUPPORTED THEME TRANSLATION RULE (MANDATORY)
+------------------------------------------------------------
+
+If a JD theme is not defensible, translate it using:
+
+1) "Cloud integration and asset management" or "asset discovery"
+   -> "Backend integration architecture and extensibility patterns"
+
+2) "Networking protocols and technologies"
+   -> "High-throughput distributed systems and reliability under load"
+
+3) "Low-code/no-code frameworks"
+   -> "Reusable backend components and integration enablement"
+   (Do not claim low-code/no-code)
+
+Record original JD term in gaps.
+
+------------------------------------------------------------
 VALIDATION FIX RULES
 ------------------------------------------------------------
 
-If insufficient evidence:
-- Add distinct evidence items.
-OR
-- Demote the theme and promote one that meets minimums.
+If insufficient evidence for a theme:
+- Add distinct evidence items that directly align, OR
+- Demote/translate the theme so it becomes defensible and evidence-minimum can be met.
 
 If unsupported JD-only theme:
 - Translate to supported adjacent theme.
 - Move original term to gaps.
+- Rebuild evidence accordingly.
+
+If role_repositioning_intent missing entries:
+- Add entries for all high-priority roles (exact role_name match).
+
+If bullet_allocation_plan missing/weak:
+- Ensure top 2 roles included
+- Ensure each has at least 2 themes
 
 ------------------------------------------------------------
 FINAL CHECK
@@ -107,9 +149,9 @@ Before returning JSON:
 
 - All required fields present.
 - All array fields are arrays.
-- No object replaces an array.
 - Evidence entries are objects.
 - Evidence saturation satisfied.
+- Evidence aligns directly with theme (no semantic leaps).
 - role_repositioning_intent covers high-priority roles.
 - bullet_allocation_plan covers top 2 roles.
 
