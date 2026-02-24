@@ -735,7 +735,12 @@ class TestWriterPacketNewFields:
 # ---------------------------------------------------------------------------
 
 class TestVeryOldRoleRelaxation:
-    """Tests for the thin_override + very-old-role (> VERY_OLD_ROLE_YEARS) relaxation."""
+    """Tests for very-old-role (> VERY_OLD_ROLE_YEARS) bullet relaxation.
+
+    Very-old-role relaxation applies to ALL effective priorities (thin_override,
+    high, medium, low).  Any role whose end year is more than VERY_OLD_ROLE_YEARS
+    years ago is relaxed to min_bullets=1 and mech_required=0.
+    """
 
     # Fixed reference date: 2026-02-24 (matches project memory today).
     _NOW = date(2026, 2, 24)
@@ -822,24 +827,23 @@ class TestVeryOldRoleRelaxation:
             f"thin_override with unknown date should need 2 bullets: {report['errors']}"
         )
 
-    # --- Test 4: high priority + end_year=2008 → no relaxation (still high rules) ---
+    # --- Test 4: high priority + end_year=2008 → relaxed to 1 bullet (very old) ---
 
-    def test_high_priority_very_old_role_not_relaxed(self):
-        """Very-old-role relaxation only applies to thin_override, not high-priority roles."""
+    def test_high_priority_very_old_role_relaxed_to_one_bullet(self):
+        """Very-old-role relaxation applies to high-priority roles too."""
         role_name = "Senior Engineer | Acme Corp"
         header = f"{role_name} | 2004 - 2008"
         packet = self._packet(role_name, plan_priority="high")
-        # Non-thin role → top-K promoted to "high" effective priority (4 bullets required)
+        # Non-thin role → top-K would give high priority, but very-old overrides to 1 bullet.
         report = validate_phase2_output(
             packet, self._resume_one_bullet(header), self._cover(),
             f"{self._NOW.strftime('%B')} {self._NOW.day}, {self._NOW.year}",
             now=self._NOW,
         )
         bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
-        assert bullet_errors, (
-            f"High-priority very-old role should still require 4 bullets: {report['errors']}"
+        assert not bullet_errors, (
+            f"High-priority very-old role should be relaxed to 1 bullet: {report['errors']}"
         )
-        assert any("minimum is 4" in e for e in bullet_errors), bullet_errors
 
     # --- Test 5: thin_override + Present → not old → min=2 ---
 
@@ -858,3 +862,27 @@ class TestVeryOldRoleRelaxation:
             f"Ongoing thin_override role should require 2 bullets: {report['errors']}"
         )
         assert any("minimum is 2" in e for e in bullet_errors), bullet_errors
+
+    # --- Test 6: date on SEPARATE line (Borland scenario) → still detected as very old ---
+
+    def test_very_old_role_date_on_separate_line(self):
+        """When the LLM puts the date on a separate line, the role is still detected as very old."""
+        role_name = "Software Engineer | Borland Software AG"
+        # Header has no date; date appears on the next line (dropped by _parse_roles).
+        resume = (
+            "Experience\n"
+            f"{role_name}\n"
+            "2004 - 2008\n"           # separate date line
+            "- Maintained legacy components\n\n"
+            "Technical Skills\nC++\n"
+        )
+        packet = self._packet(role_name, plan_priority="low")
+        report = validate_phase2_output(
+            packet, resume, self._cover(),
+            f"{self._NOW.strftime('%B')} {self._NOW.day}, {self._NOW.year}",
+            now=self._NOW,
+        )
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        assert not bullet_errors, (
+            f"thin role with separate date line (2008) should pass with 1 bullet: {report['errors']}"
+        )

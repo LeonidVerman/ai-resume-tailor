@@ -131,11 +131,13 @@ def validate_phase2_output(
 
     Density is enforced per effective priority:
     - thin_override: 2 bullets / 0 mechanisms (relaxed for thin/non-repositioning roles)
-      Exception: thin_override roles that ended > VERY_OLD_ROLE_YEARS ago require only
-      1 bullet (very-old-role relaxation).
     - high / medium / low: per density_targets in writer_packet
     The first _TOP_REPOSITIONING_ROLES_COUNT non-thin roles are promoted to
     at least high priority for density enforcement.
+
+    Very-old-role relaxation (applies to ALL effective priorities):
+    Roles that ended more than VERY_OLD_ROLE_YEARS years ago are relaxed to
+    min_bullets=1 and mech_required=0, regardless of their effective priority.
 
     Parameters
     ----------
@@ -163,6 +165,7 @@ def validate_phase2_output(
     # Parse resume structure once
     roles = _parse_roles(resume)
     skills_text = _extract_skills_section(resume)
+    role_date_lines = _parse_role_date_lines(resume)
 
     # Compute effective priorities with thin-role override + top-K promotion
     effective_priorities = _compute_effective_priorities(
@@ -200,12 +203,21 @@ def validate_phase2_output(
         bullet_count = len(bullets)
         role_bullet_counts[role_header] = bullet_count
 
-        if effective_priority == "thin_override":
-            # Very old thin roles (ended > VERY_OLD_ROLE_YEARS ago) need only 1 bullet.
-            if _is_very_old_role(role_header, now):
-                min_bullets = 1
-            else:
-                min_bullets = _THIN_OVERRIDE_BULLET_MIN
+        date_hint = role_date_lines.get(role_header, "")
+        very_old = _is_very_old_role(role_header, now, date_hint=date_hint)
+
+        if very_old:
+            # Very old roles (ended > VERY_OLD_ROLE_YEARS ago) need only 1 bullet,
+            # regardless of their effective priority (thin or otherwise).
+            min_bullets = 1
+            mech_required = 0
+            if effective_priority != "thin_override":
+                warnings.append(
+                    f"Role {role_header!r} ({effective_priority} priority) is very old "
+                    f"(>={VERY_OLD_ROLE_YEARS}y ago); relaxed to min 1 bullet"
+                )
+        elif effective_priority == "thin_override":
+            min_bullets = _THIN_OVERRIDE_BULLET_MIN
             mech_required = _THIN_OVERRIDE_MECHANISM_MIN
         else:
             min_bullets = bullet_min_map.get(effective_priority, 1)
@@ -428,6 +440,49 @@ def _is_date_line(s: str) -> bool:
     return bool(_YEAR_RE.search(s)) and "|" not in s and len(s) < 60
 
 
+def _parse_role_date_lines(resume: str) -> dict[str, str]:
+    """Return {role_header: date_line_text} for the Experience section.
+
+    When the LLM puts the date range on a separate line (rather than inline
+    in the header), ``_parse_roles`` silently drops it.  This function
+    captures that dropped line so very-old-role detection can still use it.
+
+    For roles that already carry the date inline in the header, the returned
+    value is an empty string (the header itself is sufficient).
+    """
+    lines = resume.split("\n")
+    exp_start: int | None = None
+    exp_end = len(lines)
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if s == "Experience":
+            exp_start = i + 1
+        elif exp_start is not None and s in _RESUME_SECTION_HEADERS and s != "Experience":
+            exp_end = i
+            break
+    if exp_start is None:
+        return {}
+
+    result: dict[str, str] = {}
+    current_header: str | None = None
+    awaiting_date: bool = False
+
+    for line in lines[exp_start:exp_end]:
+        s = line.strip()
+        if not s:
+            continue
+        if "|" in s and not s.startswith("-") and not s.startswith("•"):
+            current_header = s
+            result[current_header] = ""
+            awaiting_date = True  # look for a date on the very next non-empty line
+        elif current_header is not None and awaiting_date:
+            if _is_date_line(s):
+                result[current_header] = s
+            awaiting_date = False  # whether or not the line was a date, stop looking
+
+    return result
+
+
 def _extract_skills_section(resume: str) -> str:
     """Return the raw text of the Technical Skills (or Skills) section."""
     lines = resume.split("\n")
@@ -506,38 +561,41 @@ def _find_source_char_count(
 # Very-old-role helpers
 # ---------------------------------------------------------------------------
 
-def _parse_role_end_year(role_header: str) -> int | None:
-    """Extract end year from a role header date range.
+def _parse_role_end_year(role_header: str, date_hint: str = "") -> int | None:
+    """Extract end year from a role header date range (or a separate date hint line).
 
     Handles formats such as:
-    - "Senior Engineer | Acme Corp | 2017 - 2020"
+    - "Senior Engineer | Acme Corp | 2017 - 2020"       (date inline in header)
     - "QA Engineer | ZAO Comita | 2004 - 2009"
     - "Engineer | Beta Corp | Nov 2009 – Jan 2011"
     - "Engineer | Corp | 2020 - Present"
+    - header="Software Engineer | Borland", date_hint="2004 - 2008"  (date on separate line)
 
     Returns None when the role is ongoing (Present/Current) or when no
-    parseable date range is found.  Uses the last ``|``-delimited segment
-    as the date field, then collects all 4-digit years; the last year is
-    treated as the end year.
+    parseable date range is found in either the header or the hint.
+    The last 4-digit year found is treated as the end year.
     """
-    # Focus on the trailing date segment (after the last pipe).
+    # Check both the trailing header segment and the separate date hint.
     segments = role_header.split("|")
     date_part = segments[-1].strip() if len(segments) >= 2 else role_header
 
-    # Ongoing roles — no end year.
-    if _PRESENT_RE.search(date_part):
+    # If "Present" / "Current" appears in either source, treat as ongoing.
+    if _PRESENT_RE.search(date_part) or (date_hint and _PRESENT_RE.search(date_hint)):
         return None
 
+    # Collect years from the header date segment first, then fall back to hint.
     years = [int(m.group()) for m in _YEAR_4_RE.finditer(date_part)]
+    if not years and date_hint:
+        years = [int(m.group()) for m in _YEAR_4_RE.finditer(date_hint)]
     if not years:
         return None
 
     return years[-1]  # last year in the range is the end year
 
 
-def _is_very_old_role(role_header: str, now: date) -> bool:
+def _is_very_old_role(role_header: str, now: date, date_hint: str = "") -> bool:
     """Return True if the role ended more than VERY_OLD_ROLE_YEARS years ago."""
-    end_year = _parse_role_end_year(role_header)
+    end_year = _parse_role_end_year(role_header, date_hint=date_hint)
     if end_year is None:
         return False
     return (now.year - end_year) > VERY_OLD_ROLE_YEARS
