@@ -353,7 +353,7 @@ class TestTailorDocumentsWithPlan:
 
         assert isinstance(result, TailorResult)
         assert result.resume == "resume"
-        assert result.cover_letter == "cover"
+        assert "cover" in result.cover_letter  # postprocessor may prepend current_date
         assert meta["usage"]["total_tokens"] == 300
 
 
