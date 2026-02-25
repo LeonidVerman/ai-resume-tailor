@@ -156,8 +156,8 @@ def _run_two_phase(
     """Run Phase 1 (plan) then Phase 2 (write).  Falls back to single-pass on
     Phase 1 failure after both attempts.
 
-    Attempt 1: ALWAYS calls plan_tailoring (tailor_plan.txt).
-    Attempt 2: ALWAYS calls plan_repair_tailoring (tailor_plan_repair.txt),
+    Attempt 1: ALWAYS calls plan_tailoring (phase1.txt).
+    Attempt 2: ALWAYS calls plan_repair_tailoring (phase1_repair.txt),
                passing the last parsed plan + both error lists.
 
     Validation order per attempt:
@@ -186,10 +186,10 @@ def _run_two_phase(
 
         # ------------------------------------------------------------------
         # Step 0: call the LLM
-        # Attempt 1: ALWAYS tailor_plan.txt (PLAN prompt)
-        # Attempt 2: tailor_plan_repair.txt (REPAIR prompt) when we have
+        # Attempt 1: ALWAYS phase1.txt (PLAN prompt)
+        # Attempt 2: phase1_repair.txt (REPAIR prompt) when we have
         #            a broken plan or raw text to repair — otherwise rerun
-        #            tailor_plan.txt (guardrail: repair cannot help with
+        #            phase1.txt (guardrail: repair cannot help with
         #            an empty INVALID_PLAN and no RAW_TEXT).
         # ------------------------------------------------------------------
         if is_repair and not ENABLE_PLAN_REPAIR:

@@ -260,13 +260,13 @@ def plan_tailoring(
     debug_meta:
         Dict with ``model``, ``usage`` (token counts), ``raw_response``.
     """
-    planner_instructions = _load_prompt("tailor_plan")
+    planner_instructions = _load_prompt("phase1")
     profile = _load_candidate_profile()
 
     d = date.today()
     current_date = f"{d.strftime('%B')} {d.day}, {d.year}"
     task = _load_prompt(
-        "tailor_task",
+        "task",
         company=job.company,
         job_title=job.job_title,
         current_date=current_date,
@@ -338,7 +338,7 @@ def plan_repair_tailoring(
     debug_meta:
         Dict with ``model``, ``usage``, ``raw_response``.
     """
-    repair_instructions = _load_prompt("tailor_plan_repair")
+    repair_instructions = _load_prompt("phase1_repair")
     profile = _load_candidate_profile()
 
     messages: list = [
@@ -453,7 +453,7 @@ def tailor_documents_with_plan(
     d = date.today()
     current_date = f"{d.strftime('%B')} {d.day}, {d.year}"
     task = _load_prompt(
-        "tailor_task",
+        "task",
         company=job.company,
         job_title=job.job_title,
         current_date=current_date,
@@ -539,7 +539,7 @@ def tailor_documents_with_plan(
 def _build_phase2_developer_instructions() -> tuple[str, str]:
     """Build developer instructions for the Phase 2 writer.
 
-    Prefers ``tailor_phase2.txt`` — a self-contained plan-aware writer prompt
+    Prefers ``phase2.txt`` — a self-contained plan-aware writer prompt
     that already embeds plan/packet compliance rules.  Falls back to the
     legacy assembly (``tailor.txt`` + inline constants) when the file is absent.
 
@@ -548,11 +548,11 @@ def _build_phase2_developer_instructions() -> tuple[str, str]:
     instructions:
         Full developer instruction block ready to use as the first message.
     prompt_name:
-        ``"tailor_phase2"`` or ``"tailor"`` — recorded in debug_meta.
+        ``"phase2"`` or ``"tailor"`` — recorded in debug_meta.
     """
-    phase2_base = _load_prompt_optional("tailor_phase2").strip()
+    phase2_base = _load_prompt_optional("phase2").strip()
     if phase2_base:
-        prompt_name = "tailor_phase2"
+        prompt_name = "phase2"
         parts: list[str] = [phase2_base]
     else:
         prompt_name = "tailor"
@@ -564,8 +564,8 @@ def _build_phase2_developer_instructions() -> tuple[str, str]:
 
     # Optional per-candidate / per-role overlays (always appended when present)
     parts += [
-        _load_prompt_optional("tailor_candidate").strip(),
-        _load_prompt_optional("tailor_role").strip(),
+        _load_prompt_optional("candidate").strip(),
+        _load_prompt_optional("role").strip(),
     ]
 
     return "\n\n".join(p for p in parts if p), prompt_name
@@ -695,8 +695,8 @@ def tailor_documents(
     developer_instructions = "\n\n".join(
         part for part in (
             _load_prompt("tailor").strip(),
-            _load_prompt_optional("tailor_candidate").strip(),
-            _load_prompt_optional("tailor_role").strip(),
+            _load_prompt_optional("candidate").strip(),
+            _load_prompt_optional("role").strip(),
         )
         if part
     )
@@ -713,7 +713,7 @@ def tailor_documents(
     d = date.today()
     current_date = f"{d.strftime('%B')} {d.day}, {d.year}"
     task = _load_prompt(
-        "tailor_task",
+        "task",
         company=job.company,
         job_title=job.job_title,
         current_date=current_date,

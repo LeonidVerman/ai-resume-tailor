@@ -375,11 +375,11 @@ class TestPhase2PromptSelection:
                 captured_dev.append(dev["content"])
             return mock_response
 
-        # _load_prompt_optional returns "[tailor_phase2]" when the file is "present",
+        # _load_prompt_optional returns "[phase2]" when the file is "present",
         # or "" (absent) to force fallback to the legacy tailor prompt.
         def fake_load_optional(name, **kw):
-            if name == "tailor_phase2":
-                return "[tailor_phase2]" if phase2_present else ""
+            if name == "phase2":
+                return "[phase2]" if phase2_present else ""
             return ""
 
         with (
@@ -394,18 +394,18 @@ class TestPhase2PromptSelection:
 
         return captured_dev, meta
 
-    def test_tailor_phase2_selected_when_file_present(self):
-        """tailor_phase2 is used (and recorded in meta) when the file exists."""
+    def test_phase2_selected_when_file_present(self):
+        """phase2 is used (and recorded in meta) when the file exists."""
         captured_dev, meta = self._run_with_phase2_prompt(phase2_present=True)
 
-        assert meta.get("phase2_prompt_name") == "tailor_phase2", meta
+        assert meta.get("phase2_prompt_name") == "phase2", meta
         assert captured_dev, "No developer message captured"
-        assert "[tailor_phase2]" in captured_dev[0], (
-            f"Expected '[tailor_phase2]' in developer instructions, got: {captured_dev[0][:200]}"
+        assert "[phase2]" in captured_dev[0], (
+            f"Expected '[phase2]' in developer instructions, got: {captured_dev[0][:200]}"
         )
 
     def test_tailor_fallback_when_phase2_file_absent(self):
-        """When tailor_phase2.txt is absent, falls back to tailor and records that in meta."""
+        """When phase2.txt is absent, falls back to tailor and records that in meta."""
         captured_dev, meta = self._run_with_phase2_prompt(phase2_present=False)
 
         assert meta.get("phase2_prompt_name") == "tailor", meta
@@ -414,10 +414,10 @@ class TestPhase2PromptSelection:
             f"Expected '[tailor]' in developer instructions, got: {captured_dev[0][:200]}"
         )
 
-    def test_tailor_phase2_prompt_file_has_version_header(self):
-        """The tailor_phase2.txt file on disk starts with the expected version header."""
+    def test_phase2_prompt_file_has_version_header(self):
+        """The phase2.txt file on disk starts with the expected version header."""
         from tailor.prompts import _load_prompt
-        content = _load_prompt("tailor_phase2")
+        content = _load_prompt("phase2")
         assert "[TAILOR_PHASE2_WRITER v1.0]" in content, (
-            "tailor_phase2.txt must contain '[TAILOR_PHASE2_WRITER v1.0]'"
+            "phase2.txt must contain '[TAILOR_PHASE2_WRITER v1.0]'"
         )
