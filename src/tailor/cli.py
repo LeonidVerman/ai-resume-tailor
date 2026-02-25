@@ -4,6 +4,7 @@ import argparse
 import json
 import logging
 import os
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -153,8 +154,8 @@ def _run_two_phase(
     resume_template: str,
     cover_template: str,
 ):
-    """Run Phase 1 (plan) then Phase 2 (write).  Falls back to single-pass on
-    Phase 1 failure after both attempts.
+    """Run Phase 1 (plan) then Phase 2 (write).  Exits with an error if
+    Phase 1 fails after both attempts.
 
     Attempt 1: ALWAYS calls plan_tailoring (phase1.txt).
     Attempt 2: ALWAYS calls plan_repair_tailoring (phase1_repair.txt),
@@ -302,10 +303,8 @@ def _run_two_phase(
     }
 
     if plan is None:
-        # Fall back to single-pass
-        print("Warning: Phase 1 failed after retries. Falling back to single-pass tailoring.")
-        result, llm_request = tailor_documents(job, resume_template, cover_template)
-        return result, llm_request, phase1_debug, None
+        print("Error: Phase 1 failed after all attempts. Cannot produce tailored documents.")
+        sys.exit(1)
 
     print("Phase 2: writing tailored documents...")
     result, p2_messages, p2_meta = tailor_documents_with_plan(
