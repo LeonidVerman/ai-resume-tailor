@@ -829,12 +829,7 @@ def _build_llm_request_record(
     max_tokens: int | None = None,
     response_format: dict | None = None,
 ) -> dict:
-    """Package all OpenAI call parameters into a structured debug record.
-
-    When response_format uses ``json_schema`` mode the full schema body is
-    omitted from the record (it lives in schemas/phase1_output.json); only
-    the name and strict flag are kept so the log stays readable.
-    """
+    """Package all OpenAI call parameters into a structured debug record."""
     record: dict = {
         "model": model,
         "temperature": temperature,
@@ -843,9 +838,5 @@ def _build_llm_request_record(
     if max_tokens is not None:
         record["max_tokens"] = max_tokens
     if response_format is not None:
-        rf = dict(response_format)
-        if rf.get("type") == "json_schema" and "json_schema" in rf:
-            js = rf["json_schema"]
-            rf["json_schema"] = {k: v for k, v in js.items() if k != "schema"}
-        record["response_format"] = rf
+        record["response_format"] = response_format
     return record
