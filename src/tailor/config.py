@@ -9,6 +9,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 PROMPTS_DIR = BASE_DIR / "prompts"
+SCHEMAS_DIR = BASE_DIR / "schemas"
 PROFILE_DIR = BASE_DIR / "profile"
 TEMPLATES_DIR = BASE_DIR / "templates"
 OUTPUT_DIR = BASE_DIR / "output"

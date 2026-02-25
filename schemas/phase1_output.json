@@ -1,0 +1,140 @@
+{
+  "type": "object",
+  "required": [
+    "role_level",
+    "jd_top_themes",
+    "evidence_map",
+    "resume_strategy",
+    "cover_letter_strategy",
+    "risk_checks"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "role_level": {
+      "type": "string",
+      "enum": ["director", "senior", "mid", "junior"]
+    },
+    "jd_top_themes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["theme", "why_important", "keywords"],
+        "additionalProperties": false,
+        "properties": {
+          "theme":          { "type": "string" },
+          "why_important":  { "type": "string" },
+          "keywords":       { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "evidence_map": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["theme", "evidence", "gaps", "safe_translation"],
+        "additionalProperties": false,
+        "properties": {
+          "theme": { "type": "string" },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["source", "location", "quote", "allowed_claims"],
+              "additionalProperties": false,
+              "properties": {
+                "source":         { "type": "string", "enum": ["candidate_profile", "master_resume"] },
+                "location":       { "type": "string" },
+                "quote":          { "type": "string" },
+                "allowed_claims": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          },
+          "gaps":             { "type": "array", "items": { "type": "string" } },
+          "safe_translation": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "resume_strategy": {
+      "type": "object",
+      "required": ["summary", "experience", "skills"],
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "type": "object",
+          "required": ["include_points", "avoid_points"],
+          "additionalProperties": false,
+          "properties": {
+            "include_points": { "type": "array", "items": { "type": "string" } },
+            "avoid_points":   { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "experience": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "role_name",
+              "priority",
+              "keep_metrics",
+              "bullets_to_emphasize",
+              "bullets_to_compress",
+              "bullets_to_reframe"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "role_name":             { "type": "string" },
+              "priority":              { "type": "string", "enum": ["high", "medium", "low"] },
+              "keep_metrics":          { "type": "array", "items": { "type": "string" } },
+              "bullets_to_emphasize":  { "type": "array", "items": { "type": "string" } },
+              "bullets_to_compress":   { "type": "array", "items": { "type": "string" } },
+              "bullets_to_reframe": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["before", "after_intent", "constraints"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "before":       { "type": "string" },
+                    "after_intent": { "type": "string" },
+                    "constraints":  { "type": "array", "items": { "type": "string" } }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "skills": {
+          "type": "object",
+          "required": ["reorder_categories", "promote_skills", "demote_skills", "do_not_add_skills"],
+          "additionalProperties": false,
+          "properties": {
+            "reorder_categories":  { "type": "array", "items": { "type": "string" } },
+            "promote_skills":      { "type": "array", "items": { "type": "string" } },
+            "demote_skills":       { "type": "array", "items": { "type": "string" } },
+            "do_not_add_skills":   { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "cover_letter_strategy": {
+      "type": "object",
+      "required": ["company_and_role_mentions", "bullet_overlaps_to_reference", "structure"],
+      "additionalProperties": false,
+      "properties": {
+        "company_and_role_mentions":    { "type": "array", "items": { "type": "string" } },
+        "bullet_overlaps_to_reference": { "type": "array", "items": { "type": "string" } },
+        "structure":                    { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "risk_checks": {
+      "type": "object",
+      "required": ["do_not_invent", "likely_hallucination_traps", "claims_requiring_strict_grounding"],
+      "additionalProperties": false,
+      "properties": {
+        "do_not_invent":                     { "type": "array", "items": { "type": "string" } },
+        "likely_hallucination_traps":        { "type": "array", "items": { "type": "string" } },
+        "claims_requiring_strict_grounding": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

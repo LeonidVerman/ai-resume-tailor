@@ -15,6 +15,7 @@ from tailor.config import (
     PHASE2_MAX_TOKENS,
     PHASE2_MODEL,
     PHASE2_TEMPERATURE,
+    SCHEMAS_DIR,
 )
 from tailor.plan_validator import validate_plan_extended
 from tailor.job import JobData
@@ -30,6 +31,23 @@ _client: OpenAI | None = None
 _VALID_ROLE_LEVELS = {"director", "senior", "mid", "junior"}
 _VALID_PRIORITIES = {"high", "medium", "low"}
 _VALID_EVIDENCE_SOURCES = {"candidate_profile", "master_resume"}
+
+# ---------------------------------------------------------------------------
+# Phase 1 output schema (loaded once from schemas/phase1_output.json)
+# ---------------------------------------------------------------------------
+
+_PHASE1_OUTPUT_SCHEMA: dict | None = None
+
+
+def _get_phase1_schema() -> dict:
+    """Return the Phase 1 output JSON Schema, loading it from disk on first call."""
+    global _PHASE1_OUTPUT_SCHEMA
+    if _PHASE1_OUTPUT_SCHEMA is None:
+        schema_path = SCHEMAS_DIR / "phase1_output.json"
+        with open(schema_path, encoding="utf-8") as f:
+            _PHASE1_OUTPUT_SCHEMA = json.load(f)
+    return _PHASE1_OUTPUT_SCHEMA
+
 
 # Required top-level keys for a TailoringPlan — single source of truth.
 _PLAN_REQUIRED_KEYS = frozenset({
@@ -288,7 +306,14 @@ def plan_tailoring(
         messages=messages,
         temperature=PHASE1_TEMPERATURE,
         max_tokens=PHASE1_MAX_TOKENS,
-        response_format={"type": "json_object"},
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "tailoring_plan",
+                "schema": _get_phase1_schema(),
+                "strict": True,
+            },
+        },
     )
 
     raw_content = response.choices[0].message.content
@@ -369,7 +394,14 @@ def plan_repair_tailoring(
         messages=messages,
         temperature=PHASE1_TEMPERATURE,
         max_tokens=PHASE1_MAX_TOKENS,
-        response_format={"type": "json_object"},
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "tailoring_plan",
+                "schema": _get_phase1_schema(),
+                "strict": True,
+            },
+        },
     )
 
     raw_content = response.choices[0].message.content
