@@ -626,16 +626,17 @@ def _run_phase2_repair(
     """Execute a repair pass using the phase2_repair.txt prompt."""
     repair_instructions = _load_prompt("phase2_repair")
 
-    draft_payload = json.dumps(
+    original_output = json.dumps(
         {"resume": draft.resume or "", "cover_letter": draft.cover_letter or ""},
         indent=2,
     )
+    # Pass only the errors list — matching exactly what phase2_repair.txt expects.
+    validation_errors = validation_report.get("errors", [])
 
     messages: list = [
         {"role": "developer", "content": repair_instructions},
-        {"role": "user", "content": f"VALIDATION_REPORT:\n{json.dumps(validation_report, indent=2)}"},
-        {"role": "user", "content": f"WRITER_PACKET:\n{json.dumps(writer_packet, indent=2)}"},
-        {"role": "user", "content": f"DRAFT_OUTPUT:\n{draft_payload}"},
+        {"role": "user", "content": f"VALIDATION_ERRORS:\n{json.dumps(validation_errors, indent=2)}"},
+        {"role": "user", "content": f"ORIGINAL_OUTPUT_JSON:\n{original_output}"},
         {"role": "user", "content": f"TAILORING_PLAN:\n{json.dumps(plan, indent=2)}"},
     ]
     if profile_str:
