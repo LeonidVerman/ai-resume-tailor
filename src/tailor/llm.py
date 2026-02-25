@@ -12,6 +12,7 @@ from tailor.config import (
     PHASE1_MAX_TOKENS,
     PHASE1_MODEL,
     PHASE1_TEMPERATURE,
+    PHASE2_MAX_REPAIR_ATTEMPTS,
     PHASE2_MAX_TOKENS,
     PHASE2_MODEL,
     PHASE2_TEMPERATURE,
@@ -526,16 +527,18 @@ def tailor_documents_with_plan(
         }
     ]
 
-    final_result = result
-    final_validation = validation1
+    # --- Repair passes: each iteration feeds the previous output as its draft ---
+    current_result = result
+    current_validation = validation1
 
-    # --- Attempt 2: repair pass (only if first attempt failed) ---
-    if not validation1["ok"]:
+    for _repair_idx in range(PHASE2_MAX_REPAIR_ATTEMPTS):
+        if current_validation["ok"]:
+            break
         repair_result, repair_messages, repair_meta = _run_phase2_repair(
             writer_packet, plan, job, resume_template, cover_template,
-            profile_str, task, current_date, validation1, result,
+            profile_str, task, current_date, current_validation, current_result,
         )
-        validation2 = validate_phase2_output(
+        repair_validation = validate_phase2_output(
             writer_packet,
             repair_result.resume or "",
             repair_result.cover_letter or "",
@@ -545,13 +548,16 @@ def tailor_documents_with_plan(
             {
                 "llm_request": repair_messages,
                 "llm_response_raw": repair_meta["raw_response"],
-                "validation_report": validation2,
+                "validation_report": repair_validation,
                 "model": repair_meta["model"],
                 "usage": repair_meta["usage"],
             }
         )
-        final_result = repair_result
-        final_validation = validation2
+        current_result = repair_result
+        current_validation = repair_validation
+
+    final_result = current_result
+    final_validation = current_validation
 
     if not final_validation["ok"]:
         logger.warning(
@@ -670,7 +676,7 @@ def _run_phase2_repair(
     """Execute a repair pass using the phase2_repair.txt prompt."""
     repair_instructions = _load_prompt("phase2_repair")
 
-    original_output = json.dumps(
+    working_output = json.dumps(
         {"resume": draft.resume or "", "cover_letter": draft.cover_letter or ""},
         indent=2,
     )
@@ -681,7 +687,7 @@ def _run_phase2_repair(
         {"role": "developer", "content": repair_instructions},
         {"role": "user", "content": f"VALIDATION_ERRORS:\n{json.dumps(validation_errors, indent=2)}"},
         {"role": "user", "content": f"WRITER_PACKET:\n{json.dumps(writer_packet, indent=2)}"},
-        {"role": "user", "content": f"ORIGINAL_OUTPUT_JSON:\n{original_output}"},
+        {"role": "user", "content": f"WORKING_OUTPUT_JSON:\n{working_output}"},
         {"role": "user", "content": f"TAILORING_PLAN:\n{json.dumps(plan, indent=2)}"},
     ]
     if profile_str:

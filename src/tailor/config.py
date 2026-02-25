@@ -32,3 +32,4 @@ PHASE2_TEMPERATURE: float = float(os.environ.get("PHASE2_TEMPERATURE", "0.3"))
 
 PHASE1_MAX_TOKENS: int = int(os.environ.get("PHASE1_MAX_TOKENS", "4000"))
 PHASE2_MAX_TOKENS: int = int(os.environ.get("PHASE2_MAX_TOKENS", "8000"))
+PHASE2_MAX_REPAIR_ATTEMPTS: int = int(os.environ.get("PHASE2_MAX_REPAIR_ATTEMPTS", "2"))
