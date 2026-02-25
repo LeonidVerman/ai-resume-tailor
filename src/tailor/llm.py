@@ -636,6 +636,7 @@ def _run_phase2_repair(
     messages: list = [
         {"role": "developer", "content": repair_instructions},
         {"role": "user", "content": f"VALIDATION_ERRORS:\n{json.dumps(validation_errors, indent=2)}"},
+        {"role": "user", "content": f"WRITER_PACKET:\n{json.dumps(writer_packet, indent=2)}"},
         {"role": "user", "content": f"ORIGINAL_OUTPUT_JSON:\n{original_output}"},
         {"role": "user", "content": f"TAILORING_PLAN:\n{json.dumps(plan, indent=2)}"},
     ]
