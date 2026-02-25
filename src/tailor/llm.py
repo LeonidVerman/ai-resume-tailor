@@ -11,10 +11,12 @@ from openai import OpenAI
 from tailor.config import (
     PHASE1_MAX_TOKENS,
     PHASE1_MODEL,
+    PHASE1_REPAIR_TEMPERATURE,
     PHASE1_TEMPERATURE,
     PHASE2_MAX_REPAIR_ATTEMPTS,
     PHASE2_MAX_TOKENS,
     PHASE2_MODEL,
+    PHASE2_REPAIR_TEMPERATURE,
     PHASE2_TEMPERATURE,
     SCHEMAS_DIR,
 )
@@ -405,7 +407,7 @@ def plan_repair_tailoring(
     response = get_client().chat.completions.create(
         model=PHASE1_MODEL,
         messages=messages,
-        temperature=PHASE1_TEMPERATURE,
+        temperature=PHASE1_REPAIR_TEMPERATURE,
         max_tokens=PHASE1_MAX_TOKENS,
         response_format=response_format,
     )
@@ -424,7 +426,7 @@ def plan_repair_tailoring(
         raise PlanParseError(exc, raw_content) from exc
 
     llm_request = _build_llm_request_record(
-        messages, PHASE1_MODEL, PHASE1_TEMPERATURE, PHASE1_MAX_TOKENS, response_format,
+        messages, PHASE1_MODEL, PHASE1_REPAIR_TEMPERATURE, PHASE1_MAX_TOKENS, response_format,
     )
     return plan_data, llm_request, debug_meta
 
@@ -702,14 +704,14 @@ def _run_phase2_repair(
     response = get_client().chat.completions.create(
         model=PHASE2_MODEL,
         messages=messages,
-        temperature=PHASE2_TEMPERATURE,
+        temperature=PHASE2_REPAIR_TEMPERATURE,
         max_tokens=PHASE2_MAX_TOKENS,
         response_format=response_format,
     )
 
     result, _, meta = _parse_phase2_response(response, PHASE2_MODEL)
     llm_request = _build_llm_request_record(
-        messages, PHASE2_MODEL, PHASE2_TEMPERATURE, PHASE2_MAX_TOKENS, response_format,
+        messages, PHASE2_MODEL, PHASE2_REPAIR_TEMPERATURE, PHASE2_MAX_TOKENS, response_format,
     )
     return result, llm_request, meta
 
