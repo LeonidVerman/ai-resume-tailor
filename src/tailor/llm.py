@@ -688,7 +688,8 @@ def _run_phase2_repair(
         response_format={"type": "json_object"},
     )
 
-    return _parse_phase2_response(response, PHASE2_MODEL)
+    result, _, meta = _parse_phase2_response(response, PHASE2_MODEL)
+    return result, messages, meta
 
 
 def _parse_phase2_response(response: Any, model: str) -> tuple[TailorResult, list, dict]:
