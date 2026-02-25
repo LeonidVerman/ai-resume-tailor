@@ -350,3 +350,74 @@ class TestTailorDocumentsWithPlan:
         assert result.resume == "resume"
         assert result.cover_letter == "cover"
         assert meta["usage"]["total_tokens"] == 300
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 — prompt selection
+# ---------------------------------------------------------------------------
+
+class TestPhase2PromptSelection:
+    """Phase 2 selects the correct developer prompt based on file availability."""
+
+    def _run_with_phase2_prompt(self, phase2_present: bool) -> tuple:
+        """Helper: run tailor_documents_with_plan and capture developer message + meta."""
+        from tailor.job import JobData
+        from tailor.llm import tailor_documents_with_plan
+
+        plan = _minimal_plan()
+        output = {"resume": "resume text", "cover_letter": "cover text"}
+        mock_response = _make_openai_response(json.dumps(output))
+        captured_dev: list[str] = []
+
+        def fake_create(**kwargs):
+            dev = next((m for m in kwargs["messages"] if m["role"] == "developer"), None)
+            if dev:
+                captured_dev.append(dev["content"])
+            return mock_response
+
+        # _load_prompt_optional returns "[tailor_phase2]" when the file is "present",
+        # or "" (absent) to force fallback to the legacy tailor prompt.
+        def fake_load_optional(name, **kw):
+            if name == "tailor_phase2":
+                return "[tailor_phase2]" if phase2_present else ""
+            return ""
+
+        with (
+            patch("tailor.llm.get_client") as mock_get_client,
+            patch("tailor.llm._load_prompt", side_effect=lambda name, **kw: f"[{name}]"),
+            patch("tailor.llm._load_prompt_optional", side_effect=fake_load_optional),
+            patch("tailor.llm._load_candidate_profile", return_value=""),
+        ):
+            mock_get_client.return_value.chat.completions.create.side_effect = fake_create
+            job = JobData(company="Acme", job_title="SE", description="desc")
+            _, _, meta = tailor_documents_with_plan(plan, job, "resume", "cover")
+
+        return captured_dev, meta
+
+    def test_tailor_phase2_selected_when_file_present(self):
+        """tailor_phase2 is used (and recorded in meta) when the file exists."""
+        captured_dev, meta = self._run_with_phase2_prompt(phase2_present=True)
+
+        assert meta.get("phase2_prompt_name") == "tailor_phase2", meta
+        assert captured_dev, "No developer message captured"
+        assert "[tailor_phase2]" in captured_dev[0], (
+            f"Expected '[tailor_phase2]' in developer instructions, got: {captured_dev[0][:200]}"
+        )
+
+    def test_tailor_fallback_when_phase2_file_absent(self):
+        """When tailor_phase2.txt is absent, falls back to tailor and records that in meta."""
+        captured_dev, meta = self._run_with_phase2_prompt(phase2_present=False)
+
+        assert meta.get("phase2_prompt_name") == "tailor", meta
+        assert captured_dev, "No developer message captured"
+        assert "[tailor]" in captured_dev[0], (
+            f"Expected '[tailor]' in developer instructions, got: {captured_dev[0][:200]}"
+        )
+
+    def test_tailor_phase2_prompt_file_has_version_header(self):
+        """The tailor_phase2.txt file on disk starts with the expected version header."""
+        from tailor.prompts import _load_prompt
+        content = _load_prompt("tailor_phase2")
+        assert "[TAILOR_PHASE2_WRITER v1.0]" in content, (
+            "tailor_phase2.txt must contain '[TAILOR_PHASE2_WRITER v1.0]'"
+        )

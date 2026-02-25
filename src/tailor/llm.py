@@ -526,6 +526,7 @@ def tailor_documents_with_plan(
         "writer_packet": writer_packet,
         "attempts": attempts,
         "final_validation_ok": final_validation["ok"],
+        "phase2_prompt_name": attempt1_meta.get("phase2_prompt_name", "tailor"),
     }
 
     return final_result, attempt1_messages, debug_meta
@@ -535,17 +536,39 @@ def tailor_documents_with_plan(
 # Phase 2 internal helpers
 # ---------------------------------------------------------------------------
 
-def _build_phase2_developer_instructions() -> str:
-    return "\n\n".join(
-        part for part in (
+def _build_phase2_developer_instructions() -> tuple[str, str]:
+    """Build developer instructions for the Phase 2 writer.
+
+    Prefers ``tailor_phase2.txt`` — a self-contained plan-aware writer prompt
+    that already embeds plan/packet compliance rules.  Falls back to the
+    legacy assembly (``tailor.txt`` + inline constants) when the file is absent.
+
+    Returns
+    -------
+    instructions:
+        Full developer instruction block ready to use as the first message.
+    prompt_name:
+        ``"tailor_phase2"`` or ``"tailor"`` — recorded in debug_meta.
+    """
+    phase2_base = _load_prompt_optional("tailor_phase2").strip()
+    if phase2_base:
+        prompt_name = "tailor_phase2"
+        parts: list[str] = [phase2_base]
+    else:
+        prompt_name = "tailor"
+        parts = [
             _load_prompt("tailor").strip(),
-            _load_prompt_optional("tailor_candidate").strip(),
-            _load_prompt_optional("tailor_role").strip(),
             _PLAN_OBEY_RULES,
             _WRITER_PACKET_RULES,
-        )
-        if part
-    )
+        ]
+
+    # Optional per-candidate / per-role overlays (always appended when present)
+    parts += [
+        _load_prompt_optional("tailor_candidate").strip(),
+        _load_prompt_optional("tailor_role").strip(),
+    ]
+
+    return "\n\n".join(p for p in parts if p), prompt_name
 
 
 def _run_phase2_writer(
@@ -559,7 +582,7 @@ def _run_phase2_writer(
     current_date: str,
 ) -> tuple[TailorResult, list, dict]:
     """Execute a normal Phase 2 writer LLM call."""
-    developer_instructions = _build_phase2_developer_instructions()
+    developer_instructions, prompt_name = _build_phase2_developer_instructions()
 
     messages: list = [
         {"role": "developer", "content": developer_instructions},
@@ -583,7 +606,9 @@ def _run_phase2_writer(
         response_format={"type": "json_object"},
     )
 
-    return _parse_phase2_response(response, PHASE2_MODEL)
+    result, _, meta = _parse_phase2_response(response, PHASE2_MODEL)
+    meta["phase2_prompt_name"] = prompt_name
+    return result, messages, meta
 
 
 def _run_phase2_repair(
