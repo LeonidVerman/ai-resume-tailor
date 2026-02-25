@@ -301,19 +301,20 @@ def plan_tailoring(
     messages.append({"role": "user", "content": task})
     messages.append({"role": "user", "content": f"CURRENT_DATE:\n{current_date}"})
 
+    response_format = {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "tailoring_plan",
+            "schema": _get_phase1_schema(),
+            "strict": True,
+        },
+    }
     response = get_client().chat.completions.create(
         model=PHASE1_MODEL,
         messages=messages,
         temperature=PHASE1_TEMPERATURE,
         max_tokens=PHASE1_MAX_TOKENS,
-        response_format={
-            "type": "json_schema",
-            "json_schema": {
-                "name": "tailoring_plan",
-                "schema": _get_phase1_schema(),
-                "strict": True,
-            },
-        },
+        response_format=response_format,
     )
 
     raw_content = response.choices[0].message.content
@@ -329,7 +330,10 @@ def plan_tailoring(
     except json.JSONDecodeError as exc:
         raise PlanParseError(exc, raw_content) from exc
 
-    return plan_data, messages, debug_meta
+    llm_request = _build_llm_request_record(
+        messages, PHASE1_MODEL, PHASE1_TEMPERATURE, PHASE1_MAX_TOKENS, response_format,
+    )
+    return plan_data, llm_request, debug_meta
 
 
 def plan_repair_tailoring(
@@ -389,19 +393,20 @@ def plan_repair_tailoring(
     messages.append({"role": "user", "content": f"MASTER_RESUME:\n{resume_template}"})
     messages.append({"role": "user", "content": f"MASTER_COVER_LETTER:\n{cover_template}"})
 
+    response_format = {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "tailoring_plan",
+            "schema": _get_phase1_schema(),
+            "strict": True,
+        },
+    }
     response = get_client().chat.completions.create(
         model=PHASE1_MODEL,
         messages=messages,
         temperature=PHASE1_TEMPERATURE,
         max_tokens=PHASE1_MAX_TOKENS,
-        response_format={
-            "type": "json_schema",
-            "json_schema": {
-                "name": "tailoring_plan",
-                "schema": _get_phase1_schema(),
-                "strict": True,
-            },
-        },
+        response_format=response_format,
     )
 
     raw_content = response.choices[0].message.content
@@ -417,7 +422,10 @@ def plan_repair_tailoring(
     except json.JSONDecodeError as exc:
         raise PlanParseError(exc, raw_content) from exc
 
-    return plan_data, messages, debug_meta
+    llm_request = _build_llm_request_record(
+        messages, PHASE1_MODEL, PHASE1_TEMPERATURE, PHASE1_MAX_TOKENS, response_format,
+    )
+    return plan_data, llm_request, debug_meta
 
 
 # ---------------------------------------------------------------------------
@@ -630,17 +638,21 @@ def _run_phase2_writer(
     messages.append({"role": "user", "content": task})
     messages.append({"role": "user", "content": f"CURRENT_DATE:\n{current_date}"})
 
+    response_format = {"type": "json_object"}
     response = get_client().chat.completions.create(
         model=PHASE2_MODEL,
         messages=messages,
         temperature=PHASE2_TEMPERATURE,
         max_tokens=PHASE2_MAX_TOKENS,
-        response_format={"type": "json_object"},
+        response_format=response_format,
     )
 
     result, _, meta = _parse_phase2_response(response, PHASE2_MODEL)
     meta["phase2_prompt_name"] = prompt_name
-    return result, messages, meta
+    llm_request = _build_llm_request_record(
+        messages, PHASE2_MODEL, PHASE2_TEMPERATURE, PHASE2_MAX_TOKENS, response_format,
+    )
+    return result, llm_request, meta
 
 
 def _run_phase2_repair(
@@ -680,16 +692,20 @@ def _run_phase2_repair(
     messages.append({"role": "user", "content": task})
     messages.append({"role": "user", "content": f"CURRENT_DATE:\n{current_date}"})
 
+    response_format = {"type": "json_object"}
     response = get_client().chat.completions.create(
         model=PHASE2_MODEL,
         messages=messages,
         temperature=PHASE2_TEMPERATURE,
         max_tokens=PHASE2_MAX_TOKENS,
-        response_format={"type": "json_object"},
+        response_format=response_format,
     )
 
     result, _, meta = _parse_phase2_response(response, PHASE2_MODEL)
-    return result, messages, meta
+    llm_request = _build_llm_request_record(
+        messages, PHASE2_MODEL, PHASE2_TEMPERATURE, PHASE2_MAX_TOKENS, response_format,
+    )
+    return result, llm_request, meta
 
 
 def _parse_phase2_response(response: Any, model: str) -> tuple[TailorResult, list, dict]:
@@ -755,11 +771,12 @@ def tailor_documents(
     )
     messages.append({"role": "user", "content": task})
 
+    response_format = {"type": "json_object"}
     response = get_client().chat.completions.create(
         model=PHASE2_MODEL,
         messages=messages,
         temperature=PHASE2_TEMPERATURE,
-        response_format={"type": "json_object"},
+        response_format=response_format,
     )
 
     raw = json.loads(response.choices[0].message.content)
@@ -767,7 +784,10 @@ def tailor_documents(
         resume=raw.get("resume"),
         cover_letter=raw.get("cover_letter"),
     )
-    return result, messages
+    llm_request = _build_llm_request_record(
+        messages, PHASE2_MODEL, PHASE2_TEMPERATURE, response_format=response_format,
+    )
+    return result, llm_request
 
 
 # ---------------------------------------------------------------------------
@@ -800,3 +820,32 @@ def _extract_usage(response: Any) -> dict:
             "total_tokens": response.usage.total_tokens,
         }
     return {}
+
+
+def _build_llm_request_record(
+    messages: list,
+    model: str,
+    temperature: float,
+    max_tokens: int | None = None,
+    response_format: dict | None = None,
+) -> dict:
+    """Package all OpenAI call parameters into a structured debug record.
+
+    When response_format uses ``json_schema`` mode the full schema body is
+    omitted from the record (it lives in schemas/phase1_output.json); only
+    the name and strict flag are kept so the log stays readable.
+    """
+    record: dict = {
+        "model": model,
+        "temperature": temperature,
+        "messages": messages,
+    }
+    if max_tokens is not None:
+        record["max_tokens"] = max_tokens
+    if response_format is not None:
+        rf = dict(response_format)
+        if rf.get("type") == "json_schema" and "json_schema" in rf:
+            js = rf["json_schema"]
+            rf["json_schema"] = {k: v for k, v in js.items() if k != "schema"}
+        record["response_format"] = rf
+    return record

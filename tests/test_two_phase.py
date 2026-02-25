@@ -11,6 +11,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from tailor.config import PHASE1_MODEL
+
 # ---------------------------------------------------------------------------
 # Helpers to build minimal valid fixtures
 # ---------------------------------------------------------------------------
@@ -208,8 +210,11 @@ class TestPlanTailoring:
         assert len(returned_plan["jd_top_themes"]) == 5
         assert meta["model"] is not None
         assert meta["usage"]["total_tokens"] == 300
-        # developer message must be present
-        assert messages[0]["role"] == "developer"
+        # developer message must be present and API params recorded
+        assert messages["messages"][0]["role"] == "developer"
+        assert messages["model"] == PHASE1_MODEL
+        assert "temperature" in messages
+        assert messages.get("response_format", {}).get("type") == "json_schema"
 
     def test_current_date_injected(self):
         from tailor.job import JobData
