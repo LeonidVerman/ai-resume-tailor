@@ -24,7 +24,7 @@ DOCKER_IMAGE_DEFAULT = "minidocks/libreoffice"
 ENABLE_TWO_PHASE: bool = os.environ.get("ENABLE_TWO_PHASE", "true").lower() not in ("0", "false", "no")
 ENABLE_PLAN_REPAIR: bool = os.environ.get("ENABLE_PLAN_REPAIR", "true").lower() not in ("0", "false", "no")
 
-PHASE1_MODEL: str = os.environ.get("PHASE1_MODEL", "gpt-4.1")
+PHASE1_MODEL: str = os.environ.get("PHASE1_MODEL", "gpt-4.1-mini")
 PHASE2_MODEL: str = os.environ.get("PHASE2_MODEL", "gpt-4o-mini")
 
 PHASE1_TEMPERATURE: float = float(os.environ.get("PHASE1_TEMPERATURE", "0.1"))
