@@ -599,7 +599,7 @@ class TestThinRoleOverride:
         """Role name containing 'mercor' is classified as thin regardless of content."""
         role_name = "AI Evaluator | Mercor"
         packet = self._packet_for_thin(role_name, source_bullets=5, source_chars=300)
-        # 1 bullet — passes thin_override (min=2 would still fail, but 2 should pass)
+        # 1 bullet — passes thin_override (min=1)
         resume = (
             "Experience\n"
             f"{role_name} | 2024 - Present\n"
@@ -611,7 +611,7 @@ class TestThinRoleOverride:
         # Should emit a warning (not error) about thin override
         thin_warnings = [w for w in report["warnings"] if "thin override" in w.lower()]
         assert thin_warnings, f"Expected thin override warning: {report['warnings']}"
-        # With 2 bullets and thin_override min=2, no bullet errors
+        # With 2 bullets and thin_override min=1, no bullet errors
         bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
         assert not bullet_errors, f"Thin override should allow 2 bullets: {report['errors']}"
 
@@ -644,7 +644,7 @@ class TestThinRoleOverride:
         report = validate_phase2_output(packet, resume, self._cover(), _today())
         bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
         mechanism_errors = [e for e in report["errors"] if "mechanism" in e.lower()]
-        assert not bullet_errors, f"2 bullets should satisfy thin_override min=2: {report['errors']}"
+        assert not bullet_errors, f"2 bullets should satisfy thin_override min=1: {report['errors']}"
         assert not mechanism_errors, f"0 mechanisms required for thin_override: {report['errors']}"
 
     def test_non_thin_roles_after_thin_still_require_high_density(self):
@@ -794,8 +794,8 @@ class TestVeryOldRoleRelaxation:
 
     # --- Test 2: thin_override + end_year=2015, now=2026 → NOT very old (11 years) ---
 
-    def test_recent_thin_override_keeps_min_two_bullets(self):
-        """thin_override role ending 2015 (11 years ago) still requires 2 bullets."""
+    def test_recent_thin_override_allows_one_bullet(self):
+        """thin_override role ending 2015 (11 years ago) passes with 1 bullet (min=1)."""
         role_name = "AI Evaluator | Some Corp"
         header = f"{role_name} | 2013 - 2015"
         packet = self._packet(role_name)
@@ -805,15 +805,14 @@ class TestVeryOldRoleRelaxation:
             now=self._NOW,
         )
         bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
-        assert bullet_errors, (
-            f"thin_override ending 2015 should still need 2 bullets: {report['errors']}"
+        assert not bullet_errors, (
+            f"thin_override ending 2015 should pass with 1 bullet (min=1): {report['errors']}"
         )
-        assert any("minimum is 2" in e for e in bullet_errors), bullet_errors
 
     # --- Test 3: thin_override + no date in header → unknown → min=2 ---
 
-    def test_thin_override_unknown_date_keeps_min_two_bullets(self):
-        """thin_override with no parseable date applies the default min=2."""
+    def test_thin_override_unknown_date_allows_one_bullet(self):
+        """thin_override with no parseable date uses the default min=1."""
         role_name = "AI Evaluator | Some Corp"
         header = role_name  # no date range
         packet = self._packet(role_name)
@@ -823,8 +822,8 @@ class TestVeryOldRoleRelaxation:
             now=self._NOW,
         )
         bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
-        assert bullet_errors, (
-            f"thin_override with unknown date should need 2 bullets: {report['errors']}"
+        assert not bullet_errors, (
+            f"thin_override with unknown date should pass with 1 bullet (min=1): {report['errors']}"
         )
 
     # --- Test 4: high priority + end_year=2008 → relaxed to 1 bullet (very old) ---
@@ -847,8 +846,8 @@ class TestVeryOldRoleRelaxation:
 
     # --- Test 5: thin_override + Present → not old → min=2 ---
 
-    def test_thin_override_present_role_not_relaxed(self):
-        """Ongoing thin_override role (Present) is not very old; requires 2 bullets."""
+    def test_thin_override_present_role_allows_one_bullet(self):
+        """Ongoing thin_override role (Present) passes with 1 bullet (min=1)."""
         role_name = "AI Evaluator | Mercor"
         header = f"{role_name} | 2024 - Present"
         packet = self._packet(role_name)
@@ -858,10 +857,9 @@ class TestVeryOldRoleRelaxation:
             now=self._NOW,
         )
         bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
-        assert bullet_errors, (
-            f"Ongoing thin_override role should require 2 bullets: {report['errors']}"
+        assert not bullet_errors, (
+            f"Ongoing thin_override role should pass with 1 bullet (min=1): {report['errors']}"
         )
-        assert any("minimum is 2" in e for e in bullet_errors), bullet_errors
 
     # --- Test 6: date on SEPARATE line (Borland scenario) → still detected as very old ---
 

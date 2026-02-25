@@ -75,7 +75,7 @@ _THIN_ROLE_SOURCE_BULLET_THRESHOLD: int = 2    # < N bullets in master resume
 _THIN_ROLE_SOURCE_CHAR_THRESHOLD: int = 150    # < M chars of content in master resume
 
 # Density minimums applied when a role is classified as thin_override.
-_THIN_OVERRIDE_BULLET_MIN: int = 2
+_THIN_OVERRIDE_BULLET_MIN: int = 1
 _THIN_OVERRIDE_MECHANISM_MIN: int = 0
 
 # Number of top non-thin roles guaranteed high-priority density enforcement.
@@ -130,7 +130,7 @@ def validate_phase2_output(
     ``ok`` is True only when there are no errors.
 
     Density is enforced per effective priority:
-    - thin_override: 2 bullets / 0 mechanisms (relaxed for thin/non-repositioning roles)
+    - thin_override: 1 bullet / 0 mechanisms (relaxed for thin/non-repositioning roles)
     - high / medium / low: per density_targets in writer_packet
     The first _TOP_REPOSITIONING_ROLES_COUNT non-thin roles are promoted to
     at least high priority for density enforcement.
