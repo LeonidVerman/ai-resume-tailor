@@ -265,6 +265,48 @@ class TestWriterPacket:
         assert "Senior Engineer | Acme Corp" in counts
         assert counts["Senior Engineer | Acme Corp"] == 4
 
+    def test_unmarked_bullets_counted_as_fallback(self):
+        """Roles with plain sentences (no - or •) use the fallback bullet counter."""
+        resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2022 - Present\n"
+            "Nov 2022 – Present\n"
+            "Scaled the platform to handle 1M+ concurrent users.\n"
+            "Reduced p99 latency by 25% via multi-layer caching.\n"
+            "Led migration of three legacy services to microservices.\n"
+        )
+        plan = _minimal_plan()
+        packet = build_writer_packet(plan, "{}", resume, "job desc")
+        counts = packet["role_source_bullet_counts"]
+        # Three content lines, one date line → fallback should yield 3
+        assert counts.get("Senior Engineer | Acme Corp", 0) == 3
+
+    def test_explicit_bullets_not_displaced_by_fallback(self):
+        """Explicit - bullets are counted normally; fallback is not applied."""
+        # _master_resume_with_kafka uses explicit bullets — count must stay at 4
+        plan = _minimal_plan()
+        packet = build_writer_packet(
+            plan, "{}", _master_resume_with_kafka(), "job desc"
+        )
+        counts = packet["role_source_bullet_counts"]
+        assert counts["Senior Engineer | Acme Corp"] == 4
+
+    def test_role_name_pipe_spacing_normalized_for_matching(self):
+        """Plan role names with different spacing around | still match resume headers."""
+        resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2022 - Present\n"
+            "- Built distributed systems\n"
+            "- Improved reliability via read replicas\n"
+        )
+        # Plan uses no spaces around pipe
+        plan = _minimal_plan()
+        # Override role name in the plan to use collapsed spacing
+        plan["resume_strategy"]["experience"][0]["role_name"] = "Senior Engineer|Acme Corp"
+        packet = build_writer_packet(plan, "{}", resume, "job desc")
+        counts = packet["role_source_bullet_counts"]
+        assert counts.get("Senior Engineer|Acme Corp", 0) == 2
+
     def test_hardcoded_unsafe_nouns_present(self):
         """unsafe_jd_nouns always includes hard-coded dangerous terms."""
         plan = _minimal_plan()

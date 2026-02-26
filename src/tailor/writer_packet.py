@@ -51,6 +51,14 @@ _RESUME_SECTION_HEADERS: frozenset[str] = frozenset(
     }
 )
 
+# Regex for date-range lines in master resumes.
+# Matches: "Nov 2024 – Sep 2025", "Jan 2001 – Sep 2003", "Aug 1999 – Present"
+# Uses both en dash (–) and ASCII hyphen (-).
+_DATE_LINE_RE: re.Pattern = re.compile(
+    r"^[A-Za-z]{3}\s+\d{4}\s+[–\-]\s+(Present|[A-Za-z]{3}\s+\d{4})$",
+    re.IGNORECASE,
+)
+
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -247,12 +255,26 @@ def _build_role_priorities(plan: dict) -> dict[str, str]:
     return result
 
 
+def _is_resume_date_line(s: str) -> bool:
+    """Return True if the stripped line is a date-range line (e.g. 'Nov 2024 – Sep 2025')."""
+    return bool(_DATE_LINE_RE.match(s))
+
+
 def _parse_master_resume_role_stats(resume_text: str) -> dict[str, dict]:
     """Return {role_header: {"bullet_count": int, "char_count": int}} from master resume.
 
-    Parses the Experience section only.  char_count is the total length of all
-    non-empty lines belonging to that role (including bullet text and any other
-    content lines, excluding the header itself).
+    Parses the Experience section only.  Two counting modes are used:
+
+    Explicit bullet mode (primary):
+        Count lines starting with ``-`` or ``•``.
+
+    Fallback unmarked-bullet mode:
+        When a role block has zero explicit bullets but has content lines,
+        count each non-empty content line that is not a date-range line.
+        This handles resumes that use plain sentences without bullet markers.
+
+    char_count is the total character length of all non-empty content lines
+    (excluding the role header itself), regardless of counting mode.
     """
     lines = resume_text.split("\n")
     exp_start: int | None = None
@@ -269,31 +291,52 @@ def _parse_master_resume_role_stats(resume_text: str) -> dict[str, dict]:
 
     stats: dict[str, dict] = {}
     current_header: str | None = None
-    current_bullets = 0
-    current_chars = 0
+    current_content_lines: list[str] = []
+
+    def _commit() -> None:
+        if current_header is None:
+            return
+        explicit = sum(
+            1 for s in current_content_lines
+            if s.startswith("- ") or s.startswith("• ")
+        )
+        if explicit > 0:
+            bullet_count = explicit
+        else:
+            # Fallback: every non-date content line counts as a bullet
+            bullet_count = sum(
+                1 for s in current_content_lines
+                if not _is_resume_date_line(s)
+            )
+        stats[current_header] = {
+            "bullet_count": bullet_count,
+            "char_count": sum(len(s) for s in current_content_lines),
+        }
+
     for line in lines[exp_start:exp_end]:
         s = line.strip()
         if not s:
             continue
         if "|" in s and not s.startswith("-") and not s.startswith("•"):
-            if current_header is not None:
-                stats[current_header] = {
-                    "bullet_count": current_bullets,
-                    "char_count": current_chars,
-                }
+            _commit()
             current_header = s
-            current_bullets = 0
-            current_chars = 0
+            current_content_lines = []
         elif current_header is not None:
-            if s.startswith("- ") or s.startswith("• "):
-                current_bullets += 1
-            current_chars += len(s)
-    if current_header is not None:
-        stats[current_header] = {
-            "bullet_count": current_bullets,
-            "char_count": current_chars,
-        }
+            current_content_lines.append(s)
+
+    _commit()
     return stats
+
+
+def _canonicalize_role_name(name: str) -> str:
+    """Normalize a role name for fuzzy matching.
+
+    Lowercases, collapses whitespace around ``|`` separators, and strips
+    leading/trailing whitespace.  Handles cases where the plan uses
+    ``"Company|Role"`` but the resume header has ``"Company | Role"``.
+    """
+    s = re.sub(r"\s*\|\s*", "|", name.lower())
+    return re.sub(r"\s+", " ", s).strip()
 
 
 def _build_role_source_bullet_counts(plan: dict, role_stats: dict) -> dict[str, int]:
@@ -303,10 +346,10 @@ def _build_role_source_bullet_counts(plan: dict, role_stats: dict) -> dict[str, 
         name = role_entry.get("role_name", "")
         if not name:
             continue
-        name_lower = name.lower()
+        name_canon = _canonicalize_role_name(name)
         matched_count = 0
         for header, stats in role_stats.items():
-            if name_lower in header.lower():
+            if name_canon in _canonicalize_role_name(header):
                 matched_count = stats.get("bullet_count", 0)
                 break
         result[name] = matched_count
@@ -320,10 +363,10 @@ def _build_role_source_char_counts(plan: dict, role_stats: dict) -> dict[str, in
         name = role_entry.get("role_name", "")
         if not name:
             continue
-        name_lower = name.lower()
+        name_canon = _canonicalize_role_name(name)
         matched_count = 0
         for header, stats in role_stats.items():
-            if name_lower in header.lower():
+            if name_canon in _canonicalize_role_name(header):
                 matched_count = stats.get("char_count", 0)
                 break
         result[name] = matched_count
