@@ -1,6 +1,0 @@
-Product: AI Resume Booster
-Version: 0.1.0.APLHA
-Date: 2025-02-25
-
-Description:
-  Initial version.
