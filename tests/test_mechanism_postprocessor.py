@@ -262,5 +262,73 @@ class TestMechanismPostprocessor(unittest.TestCase):
                 )
 
 
+class TestNormalizeViaPhrase(unittest.TestCase):
+    """Unit tests for _normalize_via_phrase helper."""
+
+    def setUp(self):
+        from tailor.mechanism_postprocessor import _normalize_via_phrase
+        self.nvp = _normalize_via_phrase
+
+    def test_title_case_common_word_lowercased(self):
+        self.assertEqual(
+            self.nvp("Horizontal scaling of trading servers"),
+            "horizontal scaling of trading servers",
+        )
+
+    def test_title_case_noun_lowercased(self):
+        self.assertEqual(
+            self.nvp("Database read replicas for read-heavy GET endpoints"),
+            "database read replicas for read-heavy GET endpoints",
+        )
+
+    def test_all_caps_acronym_preserved(self):
+        self.assertEqual(self.nvp("API rate limiting"), "API rate limiting")
+
+    def test_all_caps_acronym_sql_preserved(self):
+        self.assertEqual(self.nvp("SQL query optimisation"), "SQL query optimisation")
+
+    def test_camelcase_brand_preserved(self):
+        self.assertEqual(self.nvp("PostgreSQL replication"), "PostgreSQL replication")
+
+    def test_camelcase_brand_mongo_preserved(self):
+        self.assertEqual(self.nvp("MongoDB sharding"), "MongoDB sharding")
+
+    def test_already_lowercase_unchanged(self):
+        self.assertEqual(self.nvp("transactional cache"), "transactional cache")
+
+    def test_empty_string(self):
+        self.assertEqual(self.nvp(""), "")
+
+
+class TestInjectTrailingPunctuation(unittest.TestCase):
+    """Injection must strip trailing .,;: from bullet before appending via clause."""
+
+    def _inject(self, bullet: str, phrase: str) -> str:
+        from tailor.mechanism_postprocessor import _inject_phrases_into_role_lines
+        lines = [bullet]
+        _inject_phrases_into_role_lines(lines, 0, 1, [phrase])
+        return lines[0]
+
+    def test_trailing_period_stripped(self):
+        result = self._inject(
+            "- Improved reliability and regulatory compliance.",
+            "Database read replicas",
+        )
+        self.assertNotIn("compliance. via", result)
+        self.assertIn("compliance via database read replicas", result.lower())
+
+    def test_trailing_comma_stripped(self):
+        result = self._inject(
+            "- Delivered high-performance components,",
+            "Horizontal scaling",
+        )
+        self.assertNotIn("components, via", result)
+        self.assertIn("components via horizontal scaling", result.lower())
+
+    def test_no_trailing_punctuation_unchanged(self):
+        result = self._inject("- Improved system throughput", "Horizontal scaling")
+        self.assertIn("throughput via horizontal scaling", result.lower())
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -42,6 +42,23 @@ _MECHANISM_PREF_KEYWORDS: frozenset[str] = frozenset({
 })
 
 
+def _normalize_via_phrase(phrase: str) -> str:
+    """Lowercase the first character of a via-clause phrase when safe.
+
+    Preserves ALL-CAPS acronyms ("API", "SQL") and CamelCase proper nouns
+    ("PostgreSQL", "MongoDB") by checking for internal uppercase letters in the
+    first word.  Title-cased common words ("Horizontal", "Database") are
+    lowercased so the injection reads naturally mid-sentence.
+    """
+    if not phrase or len(phrase) < 2:
+        return phrase
+    first_word = phrase.split()[0]
+    has_internal_upper = any(c.isupper() for c in first_word[1:])
+    if phrase[0].isupper() and not has_internal_upper:
+        return phrase[0].lower() + phrase[1:]
+    return phrase
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -368,7 +385,8 @@ def _inject_phrases_into_role_lines(
         if target is None:
             continue  # no bullet lines in this role at all
 
-        lines[target] = lines[target].rstrip() + f" via {phrase}"
+        bullet = lines[target].rstrip().rstrip(".,;:")
+        lines[target] = bullet + f" via {_normalize_via_phrase(phrase)}"
         modified_indices.add(target)
 
     return lines
