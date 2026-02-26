@@ -26,6 +26,7 @@ from tailor.phase2_validator import (
     _compute_effective_priorities,
     _is_date_line,
     _parse_roles,
+    normalize_role_header,
 )
 
 logger = logging.getLogger(__name__)
@@ -266,7 +267,7 @@ def _find_experience_role_sections(
         if "|" in s and not s.startswith("-") and not s.startswith("•"):
             if current_header is not None:
                 result.append((current_header, current_header_line + 1, i))
-            current_header = s
+            current_header = normalize_role_header(s)
             current_header_line = i
 
     if current_header is not None:

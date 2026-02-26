@@ -13,8 +13,11 @@ high-priority density enforcement regardless of plan priority assignment.
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import date
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Mechanism keyword set — a bullet counts as containing a mechanism if it
@@ -163,9 +166,14 @@ def validate_phase2_output(
     )
 
     # Parse resume structure once
+    raw_headers = _extract_raw_role_headers(resume)
     roles = _parse_roles(resume)
     skills_text = _extract_skills_section(resume)
     role_date_lines = _parse_role_date_lines(resume)
+    role_parsing_debug = [
+        {"raw": h, "normalized": normalize_role_header(h)}
+        for h in raw_headers
+    ]
 
     # Compute effective priorities with thin-role override + top-K promotion
     effective_priorities = _compute_effective_priorities(
@@ -285,6 +293,7 @@ def validate_phase2_output(
             "unsafe_terms_found": unsafe_terms_found,
             "role_bullet_counts": role_bullet_counts,
             "role_mechanism_counts": role_mechanism_counts,
+            "role_parsing_debug": role_parsing_debug,
         },
     }
 
@@ -416,7 +425,7 @@ def _parse_roles(resume: str) -> list[tuple[str, list[str]]]:
         if "|" in s and not s.startswith("-") and not s.startswith("•"):
             if current_header is not None:
                 roles.append((current_header, current_bullets))
-            current_header = s
+            current_header = normalize_role_header(s)
             current_bullets = []
         elif current_header is not None:
             if s.startswith("- "):
@@ -472,7 +481,7 @@ def _parse_role_date_lines(resume: str) -> dict[str, str]:
         if not s:
             continue
         if "|" in s and not s.startswith("-") and not s.startswith("•"):
-            current_header = s
+            current_header = normalize_role_header(s)
             result[current_header] = ""
             awaiting_date = True  # look for a date on the very next non-empty line
         elif current_header is not None and awaiting_date:
@@ -481,6 +490,31 @@ def _parse_role_date_lines(resume: str) -> dict[str, str]:
             awaiting_date = False  # whether or not the line was a date, stop looking
 
     return result
+
+
+def _extract_raw_role_headers(resume: str) -> list[str]:
+    """Return raw (unnormalized) role headers from the Experience section.
+
+    Used only to build ``role_parsing_debug`` in the ValidationReport.
+    """
+    lines = resume.split("\n")
+    exp_start: int | None = None
+    exp_end = len(lines)
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if s == "Experience":
+            exp_start = i + 1
+        elif exp_start is not None and s in _RESUME_SECTION_HEADERS and s != "Experience":
+            exp_end = i
+            break
+    if exp_start is None:
+        return []
+    headers: list[str] = []
+    for line in lines[exp_start:exp_end]:
+        s = line.strip()
+        if "|" in s and not s.startswith("-") and not s.startswith("•"):
+            headers.append(s)
+    return headers
 
 
 def _extract_skills_section(resume: str) -> str:
@@ -504,6 +538,38 @@ def _extract_skills_section(resume: str) -> str:
 # Matching helpers
 # ---------------------------------------------------------------------------
 
+def normalize_role_header(header: str) -> str:
+    """Normalise a role header for consistent cross-module matching.
+
+    Steps
+    -----
+    1. Strip leading/trailing whitespace.
+    2. Normalise spaces around ``|`` separators (``"A|B"`` → ``"A | B"``).
+    3. If the last pipe-separated segment contains a trailing location suffix
+       (a comma that appears *after* the last ``|``), strip everything from
+       that comma onward.  E.g. ``"Dev | Corp, Vancouver"`` → ``"Dev | Corp"``.
+    4. Collapse any remaining multiple internal spaces.
+
+    This is a **pure normalisation** function — it does *not* lowercase the
+    result so that display strings remain readable.  Callers that need
+    case-insensitive comparison should apply ``.lower()`` themselves.
+    """
+    if not header:
+        return header
+    h = header.strip()
+    # Normalise pipe spacing
+    h = " | ".join([p.strip() for p in h.split("|")])
+    # Strip trailing location suffix after last pipe (if any)
+    if "|" in h:
+        last_pipe = h.rfind("|")
+        last_comma = h.rfind(",")
+        if last_comma > last_pipe:
+            h = h[:last_comma].strip()
+    # Collapse internal whitespace
+    h = " ".join(h.split())
+    return h
+
+
 def _metric_found(metric: str, text: str) -> bool:
     """Return True if the metric or any of its known variants appears in text."""
     text_lower = text.lower()
@@ -526,9 +592,9 @@ def _match_role_priority(
     role_priorities: dict[str, str],
 ) -> str | None:
     """Fuzzy-match a resume role header to a priority from the plan."""
-    header_lower = role_header.lower()
+    norm_header = normalize_role_header(role_header).lower()
     for plan_name, priority in role_priorities.items():
-        if plan_name.lower() in header_lower:
+        if normalize_role_header(plan_name).lower() in norm_header:
             return priority
     return None
 
@@ -538,9 +604,9 @@ def _find_source_bullet_count(
     role_source_counts: dict[str, int],
 ) -> int:
     """Return source bullet count; 99 if unknown (prevents false thin detection)."""
-    header_lower = role_header.lower()
+    norm_header = normalize_role_header(role_header).lower()
     for plan_name, count in role_source_counts.items():
-        if plan_name.lower() in header_lower:
+        if normalize_role_header(plan_name).lower() in norm_header:
             return count
     return 99
 
@@ -550,9 +616,9 @@ def _find_source_char_count(
     role_source_char_counts: dict[str, int],
 ) -> int:
     """Return source char count; 99999 if unknown (prevents false thin detection)."""
-    header_lower = role_header.lower()
+    norm_header = normalize_role_header(role_header).lower()
     for plan_name, count in role_source_char_counts.items():
-        if plan_name.lower() in header_lower:
+        if normalize_role_header(plan_name).lower() in norm_header:
             return count
     return 99999
 

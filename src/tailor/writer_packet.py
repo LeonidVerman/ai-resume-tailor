@@ -8,6 +8,8 @@ involved in its construction.
 import json
 import re
 
+from tailor.phase2_validator import normalize_role_header
+
 # Known high-value metrics that must always be preserved regardless of plan.
 _BASELINE_METRICS: list[str] = ["1M+", "25%", "20%", "top-5", "#1"]
 
@@ -319,7 +321,7 @@ def _parse_master_resume_role_stats(resume_text: str) -> dict[str, dict]:
             continue
         if "|" in s and not s.startswith("-") and not s.startswith("•"):
             _commit()
-            current_header = s
+            current_header = normalize_role_header(s)
             current_content_lines = []
         elif current_header is not None:
             current_content_lines.append(s)
@@ -346,10 +348,10 @@ def _build_role_source_bullet_counts(plan: dict, role_stats: dict) -> dict[str, 
         name = role_entry.get("role_name", "")
         if not name:
             continue
-        name_canon = _canonicalize_role_name(name)
+        name_norm = normalize_role_header(name).lower()
         matched_count = 0
         for header, stats in role_stats.items():
-            if name_canon in _canonicalize_role_name(header):
+            if name_norm in normalize_role_header(header).lower():
                 matched_count = stats.get("bullet_count", 0)
                 break
         result[name] = matched_count
@@ -363,10 +365,10 @@ def _build_role_source_char_counts(plan: dict, role_stats: dict) -> dict[str, in
         name = role_entry.get("role_name", "")
         if not name:
             continue
-        name_canon = _canonicalize_role_name(name)
+        name_norm = normalize_role_header(name).lower()
         matched_count = 0
         for header, stats in role_stats.items():
-            if name_canon in _canonicalize_role_name(header):
+            if name_norm in normalize_role_header(header).lower():
                 matched_count = stats.get("char_count", 0)
                 break
         result[name] = matched_count
