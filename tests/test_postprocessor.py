@@ -341,9 +341,11 @@ class TestPostprocessTokenCompliance:
         )
         assert out["cover_letter"].startswith(f"{_DATE}\n\n")
 
-    def test_support_check_blocks_unsupported_token(self):
+    def test_required_skill_injected_even_when_not_in_source_docs(self):
+        # A skill in must_include_skills is always trusted: Phase 1 already vetted
+        # it against source documents when building the WriterPacket.  The source-
+        # text check must not block required skills.
         resume = _resume(skills="Java")
-        # SNMP not in master/profile
         out = postprocess_token_compliance(
             {"resume": resume, "cover_letter": _cover()},
             _packet(skills=["SNMP"]),
@@ -351,7 +353,7 @@ class TestPostprocessTokenCompliance:
             master_resume_text="Java Python Redis",
             candidate_profile_text="",
         )
-        assert "SNMP" not in out["resume"]
+        assert "SNMP" in out["resume"]
 
     def test_no_duplicate_skill_already_present(self):
         resume = _resume(skills="Java, Kafka, Redis")

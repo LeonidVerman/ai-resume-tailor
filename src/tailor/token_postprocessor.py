@@ -179,9 +179,24 @@ def _is_supported(
     When no source texts are provided, the writer_packet is trusted (it was
     derived from source documents at plan-time and should only contain tokens
     that were verified as supported then).
+
+    Tokens that appear in ``must_include_skills`` or ``must_keep_metrics`` are
+    always treated as supported: Phase 1 already verified them against the
+    source documents when building the WriterPacket.
     """
     if not master_resume_text and not candidate_profile_text:
         return True  # trust writer_packet
+
+    # Phase 1 already verified every required skill / metric against the source
+    # documents — trust those lists unconditionally.
+    token_lower = token.lower()
+    token_canonical = _canonicalize(token)
+    for required in (
+        writer_packet.get("must_include_skills", [])
+        + writer_packet.get("must_keep_metrics", [])
+    ):
+        if token_lower == required.lower() or token_canonical == _canonicalize(required):
+            return True
 
     combined = master_resume_text + "\n" + candidate_profile_text
 

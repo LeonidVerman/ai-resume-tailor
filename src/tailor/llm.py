@@ -24,6 +24,7 @@ from tailor.plan_validator import validate_plan_extended
 from tailor.job import JobData
 from tailor.phase2_validator import validate_phase2_output
 from tailor.prompts import _load_candidate_profile, _load_prompt, _load_prompt_optional
+from tailor.mechanism_postprocessor import postprocess_mechanism_enforcement
 from tailor.token_postprocessor import postprocess_token_compliance
 from tailor.writer_packet import build_writer_packet
 
@@ -588,8 +589,32 @@ def tailor_documents_with_plan(
         "model": "postprocessor",
         "usage": {},
     })
-    final_result = pp_result
-    final_validation = pp_validation
+
+    # --- Mechanism enforcement postprocessor ---
+    mep_output = postprocess_mechanism_enforcement(
+        {"resume": pp_result.resume or "", "cover_letter": pp_result.cover_letter or ""},
+        writer_packet,
+        validation_report=pp_validation,
+    )
+    mep_result = TailorResult(
+        resume=mep_output["resume"],
+        cover_letter=mep_output["cover_letter"],
+    )
+    mep_validation = validate_phase2_output(
+        writer_packet,
+        mep_result.resume or "",
+        mep_result.cover_letter or "",
+        current_date,
+    )
+    attempts.append({
+        "llm_request": None,
+        "llm_response_raw": None,
+        "validation_report": mep_validation,
+        "model": "mechanism_postprocessor",
+        "usage": {},
+    })
+    final_result = mep_result
+    final_validation = mep_validation
 
     if not final_validation["ok"]:
         logger.warning(
@@ -597,9 +622,10 @@ def tailor_documents_with_plan(
             final_validation["errors"],
         )
 
-    # Usage / raw response come from the last LLM attempt (not the postprocessor).
+    # Usage / raw response come from the last LLM attempt (not postprocessors).
+    _postprocessor_models = {"postprocessor", "mechanism_postprocessor"}
     last_llm_attempt = next(
-        (a for a in reversed(attempts) if a.get("model") != "postprocessor"),
+        (a for a in reversed(attempts) if a.get("model") not in _postprocessor_models),
         attempts[0],
     )
     debug_meta: dict = {

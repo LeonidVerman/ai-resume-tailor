@@ -352,7 +352,7 @@ class TestTailorDocumentsWithPlan:
             result, messages, meta = tailor_documents_with_plan(plan, job, "resume", "cover")
 
         assert isinstance(result, TailorResult)
-        assert result.resume == "resume"
+        assert result.resume is not None and "resume" in result.resume  # postprocessors may augment
         assert "cover" in result.cover_letter  # postprocessor may prepend current_date
         assert meta["usage"]["total_tokens"] == 300
 
