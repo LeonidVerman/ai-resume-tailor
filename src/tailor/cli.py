@@ -58,6 +58,11 @@ def main():
         action="store_true",
         help="Overwrite existing output files without prompting.",
     )
+    parser.add_argument(
+        "-d", "--debug",
+        action="store_true",
+        help="Save debug log only; skip docx/pdf generation.",
+    )
     args = parser.parse_args()
 
     # --- Acquire job data ---
@@ -112,6 +117,10 @@ def main():
         phase1=phase1_debug,
         phase2=phase2_debug,
     )
+
+    if args.debug:
+        print("Debug mode: skipping docx/pdf generation.")
+        return
 
     # --- Write output files ---
     os.makedirs(OUTPUT_DIR, exist_ok=True)
