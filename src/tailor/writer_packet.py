@@ -73,11 +73,12 @@ def build_writer_packet(
     all_source_skills = _collect_source_skills(profile, master_resume_str)
 
     must_keep_metrics = _build_must_keep_metrics(plan)
-    must_surface_mechanisms = _build_must_surface_mechanisms(plan, profile)
+    # Build unsafe nouns first so must_surface_mechanisms can be filtered against them.
+    unsafe_jd_nouns = _build_unsafe_jd_nouns(plan)
+    must_surface_mechanisms = _build_must_surface_mechanisms(plan, profile, unsafe_jd_nouns)
     must_include_skills = _build_must_include_skills(plan, jd_keywords_lower, all_source_skills)
     allowed_skill_pool = _dedup_preserve_order(all_source_skills)
     do_not_add_terms = _build_do_not_add_terms(plan)
-    unsafe_jd_nouns = _build_unsafe_jd_nouns(plan)
     integration_reframes = _build_integration_reframes(plan)
     role_priorities = _build_role_priorities(plan)
     role_stats = _parse_master_resume_role_stats(master_resume_str)
@@ -142,8 +143,17 @@ def _normalize_plan_metric(s: str) -> str:
     return s
 
 
-def _build_must_surface_mechanisms(plan: dict, profile: dict) -> list[str]:
-    """Collect architecture mechanisms from profile + plan evidence."""
+def _build_must_surface_mechanisms(
+    plan: dict,
+    profile: dict,
+    unsafe_nouns: list[str] | None = None,
+) -> list[str]:
+    """Collect architecture mechanisms from profile + plan evidence.
+
+    Any entry that contains an unsafe JD noun as a substring (case-insensitive)
+    is dropped to prevent a self-contradictory WriterPacket where the writer is
+    simultaneously told "use this phrase verbatim" and "never use this term".
+    """
     items: list[str] = []
 
     # Primary source: candidate_profile architecture_patterns
@@ -172,7 +182,13 @@ def _build_must_surface_mechanisms(plan: dict, profile: dict) -> list[str]:
                 if isinstance(translation, str) and translation:
                     items.append(translation)
 
-    return _dedup_preserve_order(items)
+    deduped = _dedup_preserve_order(items)
+
+    if not unsafe_nouns:
+        return deduped
+
+    unsafe_lower = [n.lower() for n in unsafe_nouns if n]
+    return [m for m in deduped if not any(u in m.lower() for u in unsafe_lower)]
 
 
 def _build_must_include_skills(

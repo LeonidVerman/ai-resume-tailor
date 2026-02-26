@@ -202,6 +202,31 @@ class TestWriterPacket:
         assert any("horizontal scaling" in m for m in mechanisms_lower)
         assert any("read replica" in m for m in mechanisms_lower)
 
+    def test_mechanisms_with_unsafe_nouns_are_filtered(self):
+        """Mechanism phrases containing an unsafe JD noun are excluded from must_surface_mechanisms."""
+        import json as _json
+        # Profile with one clean pattern and one containing a hardcoded unsafe noun.
+        profile_str = _json.dumps({
+            "experience_highlights": [
+                {
+                    "area": "networking",
+                    "architecture_patterns": [
+                        "horizontal scaling of API servers",
+                        "SNMP-based asset discovery for network inventory",
+                    ],
+                }
+            ],
+            "scalability_reliability_patterns": [],
+        })
+        plan = _minimal_plan()
+        packet = build_writer_packet(plan, profile_str, "", "job desc")
+        mechanisms_lower = [m.lower() for m in packet["must_surface_mechanisms"]]
+        # Safe pattern kept
+        assert any("horizontal scaling" in m for m in mechanisms_lower)
+        # Pattern containing the unsafe noun must be dropped
+        assert not any("snmp" in m for m in mechanisms_lower)
+        assert not any("asset discovery" in m for m in mechanisms_lower)
+
     def test_integration_reframes_detected(self):
         """Bullets with integration/extensibility intent -> integration_extensibility_reframes."""
         plan = _minimal_plan()
