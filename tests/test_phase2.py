@@ -315,6 +315,33 @@ class TestWriterPacket:
         assert "low-code" in nouns_lower
         assert "snmp" in nouns_lower
 
+    def test_abbreviated_plan_role_name_still_matches_resume(self):
+        """Abbreviated plan title gets correct bullet count via pipe-part matching.
+
+        Real-world case: the DOCX has 'VP / Director / Lead Software Developer | Corp'
+        but Phase 1 abbreviated it to 'VP / Director | Corp'.  The old substring
+        check failed; _roles_match must resolve it correctly.
+        """
+        resume = (
+            "Experience\n"
+            "VP / Director of Software Development / Lead Software Developer"
+            " | CardinalChain Software Inc | 2019 - 2024\n"
+            "- Directed engineering for enterprise-scale crypto trading platforms\n"
+            "- Improved throughput by 25% via transactional cache\n"
+            "- Mentored and managed a team of developers\n\n"
+            "Technical Skills\nLanguages: Python\n"
+        )
+        plan = _minimal_plan()
+        plan["resume_strategy"]["experience"][0]["role_name"] = (
+            "VP / Director of Software Development | CardinalChain Software Inc"
+        )
+        packet = build_writer_packet(plan, "{}", resume, "job desc")
+        counts = packet["role_source_bullet_counts"]
+        abbreviated_key = "VP / Director of Software Development | CardinalChain Software Inc"
+        assert counts.get(abbreviated_key) == 3, (
+            f"Expected 3 bullets via pipe-part match; got {counts.get(abbreviated_key)}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Phase2Validator tests
@@ -950,4 +977,213 @@ class TestVeryOldRoleRelaxation:
         bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
         assert not bullet_errors, (
             f"thin role with separate date line (2008) should pass with 1 bullet: {report['errors']}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Role density shortfall allowance tests
+# ---------------------------------------------------------------------------
+
+class TestRoleDensityShortfallAllowance:
+    """Tests for role_density_shortfall_allowance field in WriterPacket.
+
+    The allowance field records how many new derived bullets the writer is
+    permitted to add per role when the master resume has fewer bullets than
+    the density minimum.  Allowance is capped at 1 and suppressed for thin
+    roles and roles with no plan evidence.
+    """
+
+    # Bullet text long enough so 2 bullets (≈180 chars) exceed the thin char
+    # threshold of 150, ensuring content-based thinness is not triggered.
+    _LONG_BULLET = (
+        "Implemented a scalable distributed caching layer that reduced database load significantly"
+    )
+
+    def _plan(self, role_name: str, priority: str, with_evidence: bool = True) -> dict:
+        """Minimal TailoringPlan for allowance testing."""
+        evidence_entry = {
+            "theme": "Theme 0",
+            "evidence": [
+                {
+                    "source": "master_resume",
+                    "location": "Corp",
+                    "quote": "Built scalable platform",
+                    "allowed_claims": ["built scalable platform"] if with_evidence else [],
+                }
+            ],
+            "gaps": [],
+            "safe_translation": [],
+        }
+        return {
+            "role_level": "senior",
+            "jd_top_themes": [
+                {"theme": f"Theme {i}", "why_important": "important", "keywords": ["distributed systems"]}
+                for i in range(5)
+            ],
+            "evidence_map": [evidence_entry],
+            "resume_strategy": {
+                "summary": {"include_points": [], "avoid_points": []},
+                "experience": [
+                    {
+                        "role_name": role_name,
+                        "priority": priority,
+                        "keep_metrics": [],
+                        "bullets_to_emphasize": [],
+                        "bullets_to_compress": [],
+                        "bullets_to_reframe": [],
+                    }
+                ],
+                "skills": {
+                    "reorder_categories": [],
+                    "promote_skills": [],
+                    "demote_skills": [],
+                    "do_not_add_skills": [],
+                },
+            },
+            "cover_letter_strategy": {
+                "company_and_role_mentions": [],
+                "bullet_overlaps_to_reference": [],
+                "structure": [],
+            },
+            "risk_checks": {
+                "do_not_invent": [],
+                "likely_hallucination_traps": [],
+                "claims_requiring_strict_grounding": [],
+            },
+        }
+
+    def _resume(self, role_header: str, bullet_count: int) -> str:
+        """Master resume with the given role and explicit bullet lines."""
+        bullets = "\n".join(f"- {self._LONG_BULLET}" for _ in range(bullet_count))
+        return (
+            "Experience\n"
+            f"{role_header}\n"
+            f"{bullets}\n\n"
+            "Technical Skills\n"
+            "Languages: Python\n"
+        )
+
+    def test_high_priority_shortfall_grants_allowance_one(self):
+        """High priority with 3 source bullets (min=4) → allowance=1."""
+        role = "Senior Engineer | Acme Corp | 2020 - Present"
+        packet = build_writer_packet(
+            self._plan(role, "high"), "{}", self._resume(role, 3), "job desc"
+        )
+        assert packet["role_density_shortfall_allowance"].get(role) == 1
+
+    def test_high_priority_no_shortfall_gives_zero(self):
+        """High priority with 5 source bullets (min=4) → allowance=0 (no shortfall)."""
+        role = "Senior Engineer | Acme Corp | 2020 - Present"
+        packet = build_writer_packet(
+            self._plan(role, "high"), "{}", self._resume(role, 5), "job desc"
+        )
+        assert packet["role_density_shortfall_allowance"].get(role) == 0
+
+    def test_medium_priority_shortfall_grants_allowance_one(self):
+        """Medium priority with 2 source bullets (min=3) → allowance=1."""
+        role = "Engineer | Beta Corp | 2017 - 2020"
+        packet = build_writer_packet(
+            self._plan(role, "medium"), "{}", self._resume(role, 2), "job desc"
+        )
+        assert packet["role_density_shortfall_allowance"].get(role) == 1
+
+    def test_low_priority_always_zero(self):
+        """Low priority roles always have allowance=0 regardless of bullet count."""
+        role = "Junior Dev | Foo Corp | 2015 - 2017"
+        packet = build_writer_packet(
+            self._plan(role, "low"), "{}", self._resume(role, 5), "job desc"
+        )
+        assert packet["role_density_shortfall_allowance"].get(role, 0) == 0
+
+    def test_thin_role_by_name_gets_zero_allowance(self):
+        """Thin role by name pattern ('mercor') overrides shortfall to allowance=0.
+
+        3 source bullets → would normally give shortfall=1 for high priority,
+        but thin_override classification (name contains 'mercor') forces 0.
+        """
+        role = "AI Evaluator | Mercor | 2023 - Present"
+        # 3 bullets: not thin by content (3 >= 2 count threshold, 270 chars > 150)
+        # but the name pattern triggers thin_override
+        packet = build_writer_packet(
+            self._plan(role, "high"), "{}", self._resume(role, 3), "job desc"
+        )
+        assert packet["role_density_shortfall_allowance"].get(role) == 0
+
+    def test_no_evidence_gives_zero_allowance(self):
+        """No allowed_claims in evidence_map → allowance=0 even with shortfall."""
+        role = "Senior Engineer | Acme Corp | 2020 - Present"
+        packet = build_writer_packet(
+            self._plan(role, "high", with_evidence=False),
+            "{}",
+            self._resume(role, 3),  # shortfall=1 but no evidence
+            "job desc",
+        )
+        assert packet["role_density_shortfall_allowance"].get(role) == 0
+
+    def test_large_shortfall_capped_at_one(self):
+        """Shortfall of 2 is still capped at allowance=1.
+
+        2 source bullets, high priority min=4 → shortfall=2.
+        2 bullets × ~90 chars = ~180 chars > 150 threshold → not thin by content.
+        allowance = min(2, 1) = 1.
+        """
+        role = "Senior Engineer | Acme Corp | 2020 - Present"
+        packet = build_writer_packet(
+            self._plan(role, "high"), "{}", self._resume(role, 2), "job desc"
+        )
+        assert packet["role_density_shortfall_allowance"].get(role) == 1
+
+    def test_packet_always_includes_allowance_field(self):
+        """WriterPacket always includes role_density_shortfall_allowance as a dict."""
+        plan = _minimal_plan()
+        packet = build_writer_packet(plan, "{}", _master_resume_with_kafka(), "job desc")
+        assert "role_density_shortfall_allowance" in packet
+        assert isinstance(packet["role_density_shortfall_allowance"], dict)
+
+
+# ---------------------------------------------------------------------------
+# _roles_match unit tests
+# ---------------------------------------------------------------------------
+
+class TestRolesMatch:
+    """Tests for _roles_match — the bidirectional pipe-part role name matcher."""
+
+    def setup_method(self):
+        from tailor.phase2_validator import _roles_match
+        self.match = _roles_match
+
+    def test_exact_match(self):
+        assert self.match("Senior Eng | Acme Corp", "Senior Eng | Acme Corp")
+
+    def test_plan_is_substring_of_resume_header(self):
+        """Plan without date matches resume header that includes a date."""
+        assert self.match(
+            "Senior Engineer | Acme Corp",
+            "Senior Engineer | Acme Corp | 2020 - Present",
+        )
+
+    def test_abbreviated_plan_title_matches_full_resume_title(self):
+        """Core bug fix: Phase 1 abbreviates multi-part title; pipe-part match resolves it."""
+        assert self.match(
+            "VP / Director of Software Development | CardinalChain Software Inc",
+            "VP / Director of Software Development / Lead Software Developer | CardinalChain Software Inc",
+        )
+
+    def test_reversed_direction_also_matches(self):
+        """Full name in plan, abbreviated in written resume — also resolves."""
+        assert self.match(
+            "VP / Director of Software Development / Lead Software Developer | CardinalChain Software Inc",
+            "VP / Director of Software Development | CardinalChain Software Inc",
+        )
+
+    def test_different_company_does_not_match(self):
+        assert not self.match(
+            "Senior Engineer | Acme Corp",
+            "Senior Engineer / Lead | Beta Corp",
+        )
+
+    def test_title_mismatch_does_not_match(self):
+        assert not self.match(
+            "QA Engineer | Corp",
+            "Senior Engineer / Lead | Corp",
         )

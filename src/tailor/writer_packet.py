@@ -8,7 +8,11 @@ involved in its construction.
 import json
 import re
 
-from tailor.phase2_validator import normalize_role_header
+from tailor.phase2_validator import (
+    normalize_role_header,
+    _is_thin_or_non_repositioning_role,
+    _roles_match,
+)
 
 # Known high-value metrics that must always be preserved regardless of plan.
 _BASELINE_METRICS: list[str] = ["1M+", "25%", "20%", "top-5", "#1"]
@@ -95,6 +99,9 @@ def build_writer_packet(
     role_source_bullet_counts = _build_role_source_bullet_counts(plan, role_stats)
     role_source_char_counts = _build_role_source_char_counts(plan, role_stats)
     jd_is_delivery_oriented = _compute_jd_is_delivery_oriented(plan)
+    role_density_shortfall_allowance = _build_role_density_shortfall_allowance(
+        plan, role_source_bullet_counts, role_source_char_counts, jd_is_delivery_oriented,
+    )
 
     return {
         "role_level": plan.get("role_level", "senior"),
@@ -113,6 +120,7 @@ def build_writer_packet(
             "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
             "mechanism_min_by_priority": {"high": 2, "medium": 1, "low": 0},
         },
+        "role_density_shortfall_allowance": role_density_shortfall_allowance,
     }
 
 
@@ -348,10 +356,9 @@ def _build_role_source_bullet_counts(plan: dict, role_stats: dict) -> dict[str, 
         name = role_entry.get("role_name", "")
         if not name:
             continue
-        name_norm = normalize_role_header(name).lower()
         matched_count = 0
         for header, stats in role_stats.items():
-            if name_norm in normalize_role_header(header).lower():
+            if _roles_match(name, header):
                 matched_count = stats.get("bullet_count", 0)
                 break
         result[name] = matched_count
@@ -365,10 +372,9 @@ def _build_role_source_char_counts(plan: dict, role_stats: dict) -> dict[str, in
         name = role_entry.get("role_name", "")
         if not name:
             continue
-        name_norm = normalize_role_header(name).lower()
         matched_count = 0
         for header, stats in role_stats.items():
-            if name_norm in normalize_role_header(header).lower():
+            if _roles_match(name, header):
                 matched_count = stats.get("char_count", 0)
                 break
         result[name] = matched_count
@@ -388,6 +394,75 @@ def _build_integration_reframes(plan: dict) -> list[dict]:
                     }
                 )
     return reframes
+
+
+def _plan_has_evidence(plan: dict) -> bool:
+    """Return True if the evidence_map has at least one non-empty allowed_claims list."""
+    for entry in plan.get("evidence_map", []):
+        for ev in entry.get("evidence", []):
+            claims = ev.get("allowed_claims", [])
+            if isinstance(claims, list) and claims:
+                return True
+    return False
+
+
+def _build_role_density_shortfall_allowance(
+    plan: dict,
+    role_source_bullet_counts: dict[str, int],
+    role_source_char_counts: dict[str, int],
+    jd_is_delivery_oriented: bool,
+) -> dict[str, int]:
+    """Compute per-role allowance for newly-created derived bullets to meet density.
+
+    Returns {role_name: allowance} where allowance is 0 or 1.
+
+    Rules
+    -----
+    - Only high and medium priority roles may receive a non-zero allowance.
+    - thin_override roles always receive allowance 0 to prevent bullet inflation.
+    - Roles with no allowed_claims anywhere in plan.evidence_map receive allowance 0.
+    - allowance = min(shortfall, 1) — capped at 1 per role.
+
+    Density minimums mirror density_targets in the WriterPacket:
+        high   -> 4 bullets minimum
+        medium -> 3 bullets minimum
+        low    -> no allowance
+    """
+    density_min_by_priority: dict[str, int] = {"high": 4, "medium": 3}
+    has_evidence = _plan_has_evidence(plan)
+
+    result: dict[str, int] = {}
+    for role_entry in plan.get("resume_strategy", {}).get("experience", []):
+        name = role_entry.get("role_name", "")
+        priority = role_entry.get("priority", "low")
+        if not name:
+            continue
+
+        if priority not in density_min_by_priority:
+            result[name] = 0
+            continue
+
+        source_count = role_source_bullet_counts.get(name, 0)
+        source_chars = role_source_char_counts.get(name, 0)
+
+        # thin_override: no allowance — thin roles must not be inflated
+        is_thin, _ = _is_thin_or_non_repositioning_role(
+            name, source_count, source_chars, jd_is_delivery_oriented,
+        )
+        if is_thin:
+            result[name] = 0
+            continue
+
+        # No evidence: no allowance — derived bullets require grounding
+        if not has_evidence:
+            result[name] = 0
+            continue
+
+        min_required = density_min_by_priority[priority]
+        shortfall = max(0, min_required - source_count)
+        result[name] = min(shortfall, 1)
+
+    return result
 
 
 def _compute_jd_is_delivery_oriented(plan: dict) -> bool:

@@ -570,6 +570,53 @@ def normalize_role_header(header: str) -> str:
     return h
 
 
+def _roles_match(name_a: str, name_b: str) -> bool:
+    """Return True if two role name strings refer to the same role.
+
+    Handles abbreviated vs. full multi-part job titles produced when the
+    Phase 1 planner truncates secondary / tertiary title components.
+
+    Example match::
+
+        "VP / Director of Software Development | CardinalChain Software Inc"
+        "VP / Director of Software Development / Lead Software Developer | CardinalChain Software Inc"
+
+    Algorithm
+    ---------
+    1. Direct substring test — covers the common case where one name is a
+       clean prefix/suffix of the other (e.g. plan name vs. name + date).
+    2. Pipe-part test — split on ``|`` and compare the first (title) and
+       last (company) segment independently in both directions.  This
+       handles compound titles that the LLM abbreviated.
+    """
+    a = normalize_role_header(name_a).lower()
+    b = normalize_role_header(name_b).lower()
+
+    # Case 1: direct substring match (original behaviour)
+    if a in b or b in a:
+        return True
+
+    # Case 2: pipe-part match for abbreviated multi-part titles
+    a_parts = [p.strip() for p in a.split("|")]
+    b_parts = [p.strip() for p in b.split("|")]
+
+    if len(a_parts) >= 2 and len(b_parts) >= 2:
+        title_match = a_parts[0] in b_parts[0] or b_parts[0] in a_parts[0]
+        if title_match:
+            # Company may not be the last segment when a date is appended
+            # (e.g. "Title | Company | 2020 - Present").  Check a's company
+            # against all non-title segments of b, and vice versa.
+            a_company = a_parts[-1]
+            company_match = (
+                any(a_company in bp or bp in a_company for bp in b_parts[1:])
+                or any(bp in a_parts[-1] or a_parts[-1] in bp for bp in b_parts[1:])
+            )
+            if company_match:
+                return True
+
+    return False
+
+
 def _metric_found(metric: str, text: str) -> bool:
     """Return True if the metric or any of its known variants appears in text."""
     text_lower = text.lower()
@@ -592,9 +639,8 @@ def _match_role_priority(
     role_priorities: dict[str, str],
 ) -> str | None:
     """Fuzzy-match a resume role header to a priority from the plan."""
-    norm_header = normalize_role_header(role_header).lower()
     for plan_name, priority in role_priorities.items():
-        if normalize_role_header(plan_name).lower() in norm_header:
+        if _roles_match(plan_name, role_header):
             return priority
     return None
 
@@ -604,9 +650,8 @@ def _find_source_bullet_count(
     role_source_counts: dict[str, int],
 ) -> int:
     """Return source bullet count; 99 if unknown (prevents false thin detection)."""
-    norm_header = normalize_role_header(role_header).lower()
     for plan_name, count in role_source_counts.items():
-        if normalize_role_header(plan_name).lower() in norm_header:
+        if _roles_match(plan_name, role_header):
             return count
     return 99
 
@@ -616,9 +661,8 @@ def _find_source_char_count(
     role_source_char_counts: dict[str, int],
 ) -> int:
     """Return source char count; 99999 if unknown (prevents false thin detection)."""
-    norm_header = normalize_role_header(role_header).lower()
     for plan_name, count in role_source_char_counts.items():
-        if normalize_role_header(plan_name).lower() in norm_header:
+        if _roles_match(plan_name, role_header):
             return count
     return 99999
 
