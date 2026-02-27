@@ -8,6 +8,7 @@ involved in its construction.
 import json
 import re
 
+from tailor.mechanism_taxonomy import build_mechanism_taxonomy
 from tailor.phase2_validator import (
     normalize_role_header,
     _is_thin_or_non_repositioning_role,
@@ -82,14 +83,15 @@ def build_writer_packet(
     Phase 2 writer LLM as an explicit constraints envelope.
     """
     profile = _parse_json_safe(candidate_profile_str)
+    role_level: str = plan.get("role_level", "senior")
 
     jd_keywords_lower = _collect_jd_keywords(plan)
     all_source_skills = _collect_source_skills(profile, master_resume_str)
 
     must_keep_metrics = _build_must_keep_metrics(plan)
-    # Build unsafe nouns first so must_surface_mechanisms can be filtered against them.
+    # Build unsafe nouns first so mechanism fields can be filtered against them.
     unsafe_jd_nouns = _build_unsafe_jd_nouns(plan)
-    must_surface_mechanisms = _build_must_surface_mechanisms(plan, profile, unsafe_jd_nouns)
+    mechanism_fields = _build_mechanism_fields(plan, profile, unsafe_jd_nouns)
     must_include_skills = _build_must_include_skills(plan, jd_keywords_lower, all_source_skills)
     allowed_skill_pool = _dedup_preserve_order(all_source_skills)
     do_not_add_terms = _build_do_not_add_terms(plan)
@@ -104,9 +106,16 @@ def build_writer_packet(
     )
 
     return {
-        "role_level": plan.get("role_level", "senior"),
+        "role_level": role_level,
         "must_keep_metrics": must_keep_metrics,
-        "must_surface_mechanisms": must_surface_mechanisms,
+        # Taxonomy fields (new in release N)
+        "must_surface_arch_mechanisms": mechanism_fields["must_surface_arch_mechanisms"],
+        "must_surface_strategic_signals": mechanism_fields["must_surface_strategic_signals"],
+        "must_surface_operational_signals": mechanism_fields["must_surface_operational_signals"],
+        "mechanism_dedup_map": mechanism_fields["mechanism_dedup_map"],
+        "role_weight_profile": _build_role_weight_profile(role_level),
+        # Legacy field (release N backward compat) = arch list
+        "must_surface_mechanisms": mechanism_fields["must_surface_mechanisms"],
         "must_include_skills": must_include_skills,
         "allowed_skill_pool": allowed_skill_pool,
         "do_not_add_terms": do_not_add_terms,
@@ -161,35 +170,25 @@ def _normalize_plan_metric(s: str) -> str:
     return s
 
 
-def _build_must_surface_mechanisms(
-    plan: dict,
-    profile: dict,
-    unsafe_nouns: list[str] | None = None,
-) -> list[str]:
-    """Collect architecture mechanisms from profile + plan evidence.
+def _collect_raw_mechanism_phrases(plan: dict, profile: dict) -> list[str]:
+    """Collect raw mechanism phrases from profile + plan evidence (pre-taxonomy).
 
-    Any entry that contains an unsafe JD noun as a substring (case-insensitive)
-    is dropped to prevent a self-contradictory WriterPacket where the writer is
-    simultaneously told "use this phrase verbatim" and "never use this term".
+    Sources (in priority order):
+    1. candidate_profile.experience_highlights[*].architecture_patterns
+    2. candidate_profile.scalability_reliability_patterns (underscore → space)
+    3. plan.evidence_map[*].safe_translation
     """
     items: list[str] = []
 
-    # Primary source: candidate_profile architecture_patterns
     for highlight in profile.get("experience_highlights", []):
         for pattern in highlight.get("architecture_patterns", []):
             if isinstance(pattern, str):
                 items.append(pattern)
 
-    # Secondary: scalability_reliability_patterns (normalized strings)
     for pattern in profile.get("scalability_reliability_patterns", []):
         if isinstance(pattern, str):
-            # Convert underscore-separated keys to readable phrases
-            readable = pattern.replace("_", " ")
-            items.append(readable)
+            items.append(pattern.replace("_", " "))
 
-    # Tertiary: plan evidence_map safe_translation strings.
-    # The LLM sometimes returns safe_translation as a plain string instead of
-    # a list; handle both to avoid iterating over individual characters.
     for entry in plan.get("evidence_map", []):
         raw = entry.get("safe_translation", [])
         if isinstance(raw, str):
@@ -200,13 +199,45 @@ def _build_must_surface_mechanisms(
                 if isinstance(translation, str) and translation:
                     items.append(translation)
 
-    deduped = _dedup_preserve_order(items)
+    return items
 
-    if not unsafe_nouns:
-        return deduped
 
-    unsafe_lower = [n.lower() for n in unsafe_nouns if n]
-    return [m for m in deduped if not any(u in m.lower() for u in unsafe_lower)]
+def _build_mechanism_fields(
+    plan: dict,
+    profile: dict,
+    unsafe_nouns: list[str] | None = None,
+) -> dict:
+    """Build all mechanism-related WriterPacket fields via the taxonomy.
+
+    Returns a dict with keys:
+        ``must_surface_arch_mechanisms``     — arch-only list (strict enforcement)
+        ``must_surface_strategic_signals``   — leadership/vision signals (soft)
+        ``must_surface_operational_signals`` — process/quality signals (soft)
+        ``mechanism_dedup_map``              — canonical → suppressed variants
+        ``must_surface_mechanisms``          — legacy alias = arch list (release N)
+    """
+    raw = _collect_raw_mechanism_phrases(plan, profile)
+    taxonomy = build_mechanism_taxonomy(raw, unsafe_nouns=unsafe_nouns)
+    return {
+        "must_surface_arch_mechanisms": taxonomy["arch"],
+        "must_surface_strategic_signals": taxonomy["strategic"],
+        "must_surface_operational_signals": taxonomy["operational"],
+        "mechanism_dedup_map": taxonomy["dedup_map"],
+        # Release-N backward compat: legacy field = arch list only
+        "must_surface_mechanisms": taxonomy["arch"],
+    }
+
+
+# Weight profiles per role_level (arch / strategic / operational weights).
+_WEIGHT_PROFILES: dict[str, dict] = {
+    "director": {"arch_weight": 0.4, "strategic_weight": 0.4, "operational_weight": 0.2},
+    "senior":   {"arch_weight": 0.7, "strategic_weight": 0.2, "operational_weight": 0.1},
+}
+_DEFAULT_WEIGHT_PROFILE: dict = {"arch_weight": 0.7, "strategic_weight": 0.2, "operational_weight": 0.1}
+
+
+def _build_role_weight_profile(role_level: str) -> dict:
+    return _WEIGHT_PROFILES.get(role_level.lower(), _DEFAULT_WEIGHT_PROFILE)
 
 
 def _build_must_include_skills(

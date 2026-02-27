@@ -153,10 +153,16 @@ def validate_phase2_output(
     errors: list[str] = []
     warnings: list[str] = []
 
+    role_level: str = writer_packet.get("role_level", "senior")
     role_priorities: dict[str, str] = writer_packet.get("role_priorities", {})
     role_source_counts: dict[str, int] = writer_packet.get("role_source_bullet_counts", {})
     role_source_char_counts: dict[str, int] = writer_packet.get("role_source_char_counts", {})
     jd_is_delivery_oriented: bool = writer_packet.get("jd_is_delivery_oriented", False)
+    # Prefer the typed arch list; fall back to legacy field for backward compat.
+    arch_mechanisms: list[str] = writer_packet.get(
+        "must_surface_arch_mechanisms",
+        writer_packet.get("must_surface_mechanisms", []),
+    )
     density = writer_packet.get("density_targets", {})
     bullet_min_map: dict[str, int] = density.get(
         "bullet_min_by_priority", {"high": 4, "medium": 3, "low": 1}
@@ -242,7 +248,7 @@ def validate_phase2_output(
                 f"consider trimming to 6"
             )
 
-        mech_count = sum(1 for b in bullets if _bullet_has_mechanism(b))
+        mech_count = sum(1 for b in bullets if _bullet_has_arch_mechanism(b, arch_mechanisms))
         role_mechanism_counts[role_header] = mech_count
         if mech_required > 0 and mech_count < mech_required:
             errors.append(
@@ -283,6 +289,30 @@ def validate_phase2_output(
     if current_date and current_date not in cover_letter:
         errors.append(f"Cover letter does not contain CURRENT_DATE: {current_date!r}")
 
+    # --- 6. Soft director checks (warnings only; upgrade to errors once stable) ---
+    strategic_signal_count: int = 0
+    operational_signal_count: int = 0
+    if role_level == "director":
+        strategic_signals: list[str] = writer_packet.get("must_surface_strategic_signals", [])
+        operational_signals: list[str] = writer_packet.get("must_surface_operational_signals", [])
+        strategic_signal_count = _count_signal_matches(resume, strategic_signals)
+        operational_signal_count = _count_signal_matches(resume, operational_signals)
+
+        min_strategic = 2
+        min_operational = 1
+        if strategic_signal_count < min_strategic:
+            warnings.append(
+                f"Director role: only {strategic_signal_count} strategic signal(s) detected "
+                f"in resume (recommended: {min_strategic}). "
+                f"Consider adding leadership/vision framing."
+            )
+        if operational_signal_count < min_operational:
+            warnings.append(
+                f"Director role: only {operational_signal_count} operational signal(s) detected "
+                f"in resume (recommended: {min_operational}). "
+                f"Consider adding process/quality/delivery framing."
+            )
+
     return {
         "ok": len(errors) == 0,
         "errors": errors,
@@ -294,6 +324,8 @@ def validate_phase2_output(
             "role_bullet_counts": role_bullet_counts,
             "role_mechanism_counts": role_mechanism_counts,
             "role_parsing_debug": role_parsing_debug,
+            "strategic_signal_count": strategic_signal_count,
+            "operational_signal_count": operational_signal_count,
         },
     }
 
@@ -632,6 +664,33 @@ def _bullet_has_mechanism(text: str) -> bool:
     """Return True if bullet text contains any mechanism keyword."""
     text_lower = text.lower()
     return any(kw in text_lower for kw in _MECHANISM_KEYWORDS)
+
+
+def _bullet_has_arch_mechanism(text: str, arch_mechanisms: list[str]) -> bool:
+    """Return True if bullet text contains an arch mechanism.
+
+    Primary check: verbatim substring match against the WriterPacket's
+    ``must_surface_arch_mechanisms`` list (case-insensitive).
+    Fallback: the general ``_MECHANISM_KEYWORDS`` set (backward compat when
+    the arch list is empty or missing).
+    """
+    text_lower = text.lower()
+    if arch_mechanisms:
+        if any(phrase.lower() in text_lower for phrase in arch_mechanisms):
+            return True
+    return any(kw in text_lower for kw in _MECHANISM_KEYWORDS)
+
+
+def _count_signal_matches(resume: str, signals: list[str]) -> int:
+    """Count how many distinct signals from the list appear in the resume.
+
+    Matching is case-insensitive substring.  Each unique phrase is counted
+    at most once regardless of how many times it appears.
+    """
+    if not signals:
+        return 0
+    text_lower = resume.lower()
+    return sum(1 for phrase in signals if phrase.lower() in text_lower)
 
 
 def _match_role_priority(

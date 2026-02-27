@@ -75,7 +75,8 @@ def postprocess_mechanism_enforcement(
     output_json:
         Phase 2 output with keys ``resume`` and ``cover_letter``.
     writer_packet:
-        WriterPacket dict.  Keys used: ``must_surface_mechanisms``,
+        WriterPacket dict.  Keys used: ``must_surface_arch_mechanisms``
+        (falls back to ``must_surface_mechanisms`` for backward compat),
         ``density_targets``, ``role_priorities``, ``role_source_bullet_counts``,
         ``role_source_char_counts``, ``jd_is_delivery_oriented``.
     validation_report:
@@ -92,7 +93,12 @@ def postprocess_mechanism_enforcement(
     resume = output_json.get("resume") or ""
     cover_letter = output_json.get("cover_letter") or ""
 
-    must_surface: list[str] = writer_packet.get("must_surface_mechanisms", [])
+    # Prefer the typed arch list; fall back to legacy field for backward compat.
+    # Strategic/operational signals are NOT injected mechanically (spec §1.8).
+    must_surface: list[str] = writer_packet.get(
+        "must_surface_arch_mechanisms",
+        writer_packet.get("must_surface_mechanisms", []),
+    )
     if not must_surface:
         return {"resume": resume, "cover_letter": cover_letter}
 

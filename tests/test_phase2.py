@@ -1187,3 +1187,311 @@ class TestRolesMatch:
             "QA Engineer | Corp",
             "Senior Engineer / Lead | Corp",
         )
+
+
+# ---------------------------------------------------------------------------
+# WriterPacket taxonomy fields
+# ---------------------------------------------------------------------------
+
+class TestWriterPacketTaxonomyFields:
+    """WriterPacket must include all taxonomy fields (§1.1)."""
+
+    def _packet(self):
+        plan = _minimal_plan()
+        return build_writer_packet(plan, "{}", _master_resume_with_kafka(), "job desc")
+
+    def test_must_surface_arch_mechanisms_present(self):
+        pkt = self._packet()
+        assert "must_surface_arch_mechanisms" in pkt
+        assert isinstance(pkt["must_surface_arch_mechanisms"], list)
+
+    def test_must_surface_strategic_signals_present(self):
+        pkt = self._packet()
+        assert "must_surface_strategic_signals" in pkt
+        assert isinstance(pkt["must_surface_strategic_signals"], list)
+
+    def test_must_surface_operational_signals_present(self):
+        pkt = self._packet()
+        assert "must_surface_operational_signals" in pkt
+        assert isinstance(pkt["must_surface_operational_signals"], list)
+
+    def test_mechanism_dedup_map_present(self):
+        pkt = self._packet()
+        assert "mechanism_dedup_map" in pkt
+        assert isinstance(pkt["mechanism_dedup_map"], dict)
+
+    def test_role_weight_profile_present(self):
+        pkt = self._packet()
+        assert "role_weight_profile" in pkt
+        rwp = pkt["role_weight_profile"]
+        assert "arch_weight" in rwp
+        assert "strategic_weight" in rwp
+        assert "operational_weight" in rwp
+
+    def test_legacy_must_surface_mechanisms_still_present(self):
+        """Backward compat: legacy field still in packet (release N)."""
+        pkt = self._packet()
+        assert "must_surface_mechanisms" in pkt
+
+    def test_legacy_field_equals_arch_list(self):
+        """Legacy must_surface_mechanisms == must_surface_arch_mechanisms (release N)."""
+        pkt = self._packet()
+        assert pkt["must_surface_mechanisms"] == pkt["must_surface_arch_mechanisms"]
+
+    def test_arch_mechanisms_contain_only_arch_phrases(self):
+        """Capability statements must not leak into arch list."""
+        profile = {
+            "experience_highlights": [
+                {
+                    "architecture_patterns": [
+                        "horizontal scaling of trading servers",
+                        "Experienced in building distributed systems",  # should be rejected
+                        "Redis caching layer",
+                    ]
+                }
+            ],
+            "scalability_reliability_patterns": [],
+        }
+        import json as _json
+        plan = _minimal_plan()
+        pkt = build_writer_packet(plan, _json.dumps(profile), "", "job desc")
+        arch = pkt["must_surface_arch_mechanisms"]
+        for phrase in arch:
+            assert "experienced in" not in phrase.lower(), (
+                f"Capability statement leaked into arch list: {phrase!r}"
+            )
+
+    def test_safe_translations_classified_into_arch(self):
+        """safe_translation arch phrases end up in must_surface_arch_mechanisms."""
+        plan = _minimal_plan()
+        # The fixture plan has safe_translation=["high-throughput distributed platform scaling"]
+        # which contains "distributed" → ARCH
+        pkt = build_writer_packet(plan, "{}", "", "job desc")
+        arch = pkt["must_surface_arch_mechanisms"]
+        assert any("distributed" in p.lower() for p in arch), (
+            f"Expected arch phrase with 'distributed' from safe_translation; got: {arch}"
+        )
+
+
+class TestWriterPacketWeightProfile:
+    """role_weight_profile varies by role_level (§1.5)."""
+
+    def _packet_for_level(self, role_level: str) -> dict:
+        plan = _minimal_plan()
+        plan["role_level"] = role_level
+        return build_writer_packet(plan, "{}", "", "job desc")
+
+    def test_director_weight_profile(self):
+        pkt = self._packet_for_level("director")
+        rwp = pkt["role_weight_profile"]
+        assert rwp["arch_weight"] == 0.4
+        assert rwp["strategic_weight"] == 0.4
+        assert rwp["operational_weight"] == 0.2
+
+    def test_senior_weight_profile(self):
+        pkt = self._packet_for_level("senior")
+        rwp = pkt["role_weight_profile"]
+        assert rwp["arch_weight"] == 0.7
+        assert rwp["strategic_weight"] == 0.2
+        assert rwp["operational_weight"] == 0.1
+
+    def test_unknown_level_uses_default(self):
+        pkt = self._packet_for_level("staff")
+        rwp = pkt["role_weight_profile"]
+        assert rwp["arch_weight"] == 0.7  # default
+
+
+# ---------------------------------------------------------------------------
+# Validator: director soft signal checks
+# ---------------------------------------------------------------------------
+
+def _make_director_packet(
+    strategic_signals: list[str] | None = None,
+    operational_signals: list[str] | None = None,
+) -> dict:
+    return {
+        "role_level": "director",
+        "must_keep_metrics": [],
+        "must_surface_arch_mechanisms": [],
+        "must_surface_mechanisms": [],
+        "must_surface_strategic_signals": strategic_signals or [],
+        "must_surface_operational_signals": operational_signals or [],
+        "must_include_skills": [],
+        "allowed_skill_pool": [],
+        "do_not_add_terms": [],
+        "unsafe_jd_nouns": [],
+        "role_priorities": {"CTO | Acme Corp": "high"},
+        "role_source_bullet_counts": {"CTO | Acme Corp": 10},
+        "role_source_char_counts": {"CTO | Acme Corp": 1000},
+        "jd_is_delivery_oriented": False,
+        "density_targets": {
+            "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+            "mechanism_min_by_priority": {"high": 2, "medium": 1, "low": 0},
+        },
+    }
+
+
+def _director_resume_with_signals(strategic_count: int, operational_count: int) -> str:
+    """Build a resume that contains the specified number of each signal type."""
+    strategic_phrases = [
+        "Led technical vision for enterprise platform",
+        "Drove cross-functional alignment on roadmap",
+        "Spearheaded product development strategy",
+    ]
+    operational_phrases = [
+        "Established code review standards across teams",
+        "Improved observability via structured metrics",
+    ]
+    bullets = []
+    for phrase in strategic_phrases[:strategic_count]:
+        bullets.append(f"- {phrase}")
+    for phrase in operational_phrases[:operational_count]:
+        bullets.append(f"- {phrase}")
+    # Pad to 4 bullets to satisfy high-priority density minimum
+    while len(bullets) < 4:
+        bullets.append("- Managed engineering deliverables on schedule")
+    bullet_text = "\n".join(bullets)
+    d = date.today()
+    cover = f"{d.strftime('%B')} {d.day}, {d.year}\n\nDear Hiring Manager,\n\nI am a fit."
+    return (
+        "Experience\n"
+        "CTO | Acme Corp | 2020 - Present\n"
+        f"{bullet_text}\n\n"
+        "Technical Skills\nPython\n"
+    ), cover
+
+
+class TestValidatorDirectorSoftChecks:
+    """Soft director signal checks produce warnings (not errors) (§1.6)."""
+
+    def _validate(self, pkt, strategic_count, operational_count):
+        resume, cover = _director_resume_with_signals(strategic_count, operational_count)
+        return validate_phase2_output(pkt, resume, cover, _today())
+
+    def test_director_with_enough_signals_no_warnings(self):
+        """Director resume with 2+ strategic and 1+ operational → no signal warnings."""
+        pkt = _make_director_packet(
+            strategic_signals=["Led technical vision for enterprise platform",
+                                "Drove cross-functional alignment on roadmap"],
+            operational_signals=["Established code review standards across teams"],
+        )
+        report = self._validate(pkt, strategic_count=2, operational_count=1)
+        signal_warnings = [w for w in report["warnings"] if "signal" in w.lower()]
+        assert not signal_warnings, f"Unexpected signal warnings: {signal_warnings}"
+
+    def test_director_missing_strategic_signals_emits_warning(self):
+        """Director resume with 0 strategic signals → warning (not error)."""
+        pkt = _make_director_packet(
+            strategic_signals=["Led technical vision for enterprise platform",
+                                "Drove cross-functional alignment on roadmap"],
+            operational_signals=["Established code review standards across teams"],
+        )
+        report = self._validate(pkt, strategic_count=0, operational_count=1)
+        signal_warnings = [w for w in report["warnings"] if "strategic" in w.lower()]
+        assert signal_warnings, f"Expected strategic signal warning; got: {report['warnings']}"
+        # Must be a warning, not an error
+        signal_errors = [e for e in report["errors"] if "strategic" in e.lower()]
+        assert not signal_errors, f"Strategic check must be warning, not error: {report['errors']}"
+
+    def test_director_missing_operational_signals_emits_warning(self):
+        """Director resume with 0 operational signals → warning (not error)."""
+        pkt = _make_director_packet(
+            strategic_signals=["Led technical vision for enterprise platform",
+                                "Drove cross-functional alignment on roadmap"],
+            operational_signals=["Established code review standards across teams"],
+        )
+        report = self._validate(pkt, strategic_count=2, operational_count=0)
+        signal_warnings = [w for w in report["warnings"] if "operational" in w.lower()]
+        assert signal_warnings, f"Expected operational signal warning; got: {report['warnings']}"
+        signal_errors = [e for e in report["errors"] if "operational" in e.lower()]
+        assert not signal_errors, f"Operational check must be warning, not error: {report['errors']}"
+
+    def test_non_director_no_signal_checks(self):
+        """Senior role_level does not emit strategic/operational signal warnings."""
+        pkt = _make_director_packet(
+            strategic_signals=["Led technical vision"],
+            operational_signals=["code review culture"],
+        )
+        pkt["role_level"] = "senior"
+        report = self._validate(pkt, strategic_count=0, operational_count=0)
+        signal_warnings = [w for w in report["warnings"] if "signal" in w.lower()]
+        assert not signal_warnings, f"Senior role should not have signal warnings: {signal_warnings}"
+
+    def test_stats_include_signal_counts(self):
+        """stats dict includes strategic_signal_count and operational_signal_count."""
+        pkt = _make_director_packet(
+            strategic_signals=["Led technical vision for enterprise platform"],
+            operational_signals=["Established code review standards across teams"],
+        )
+        report = self._validate(pkt, strategic_count=1, operational_count=1)
+        assert "strategic_signal_count" in report["stats"]
+        assert "operational_signal_count" in report["stats"]
+
+
+# ---------------------------------------------------------------------------
+# Validator: mechanism density uses arch list
+# ---------------------------------------------------------------------------
+
+class TestValidatorArchMechanismDensity:
+    """Mechanism density counts use must_surface_arch_mechanisms (§1.6)."""
+
+    def _make_packet(self, arch_mechanisms: list[str]) -> dict:
+        return {
+            "role_level": "senior",
+            "must_keep_metrics": [],
+            "must_surface_arch_mechanisms": arch_mechanisms,
+            "must_surface_mechanisms": arch_mechanisms,  # legacy compat
+            "must_surface_strategic_signals": [],
+            "must_surface_operational_signals": [],
+            "must_include_skills": [],
+            "allowed_skill_pool": [],
+            "do_not_add_terms": [],
+            "unsafe_jd_nouns": [],
+            "role_priorities": {"Senior Engineer | Acme Corp": "high"},
+            "role_source_bullet_counts": {"Senior Engineer | Acme Corp": 10},
+            "role_source_char_counts": {"Senior Engineer | Acme Corp": 1000},
+            "jd_is_delivery_oriented": False,
+            "density_targets": {
+                "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+                "mechanism_min_by_priority": {"high": 2, "medium": 1, "low": 0},
+            },
+        }
+
+    def _cover(self) -> str:
+        d = date.today()
+        return f"{d.strftime('%B')} {d.day}, {d.year}\n\nDear Hiring Manager,\n\nI am a fit."
+
+    def test_arch_phrase_in_bullet_counted_as_mechanism(self):
+        """A bullet containing an arch phrase from the list counts toward mechanism density."""
+        arch = ["database read replicas"]
+        pkt = self._make_packet(arch)
+        resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2022 - Present\n"
+            "- Improved read performance via database read replicas\n"
+            "- Scaled backend services via horizontal scaling\n"
+            "- Delivered new feature ahead of schedule\n"
+            "- Mentored junior engineers\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        mech_errors = [e for e in report["errors"] if "mechanism" in e.lower()]
+        assert not mech_errors, f"Bullet with arch phrase should count: {report['errors']}"
+
+    def test_non_arch_phrase_not_sufficient_when_arch_list_provided(self):
+        """A bullet with a generic keyword but not in arch list still counts via fallback."""
+        arch = ["specific custom mechanism phrase"]
+        pkt = self._make_packet(arch)
+        resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2022 - Present\n"
+            "- Improved throughput via Redis caching\n"   # Redis in _MECHANISM_KEYWORDS fallback
+            "- Scaled services via Kafka messaging\n"
+            "- Delivered features on time\n"
+            "- Led code reviews\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        # Fallback keyword check should still find Redis/Kafka as mechanisms
+        mech_errors = [e for e in report["errors"] if "mechanism" in e.lower()]
+        assert not mech_errors, f"Fallback keyword check should pass: {report['errors']}"
