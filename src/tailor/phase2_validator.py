@@ -20,8 +20,12 @@ from datetime import date
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Mechanism keyword set — a bullet counts as containing a mechanism if it
-# includes at least one of these strings (case-insensitive substring match).
+# Mechanism keyword set — LEGACY FALLBACK only.
+#
+# Used by _bullet_has_arch_mechanism() when must_surface_arch_mechanisms is
+# absent (e.g. old WriterPackets or unit tests that don't populate the field).
+# Do NOT add bare tool names here: "aws", "docker", "kubernetes" etc. inflate
+# mechanism counts and mask real deficits in role blocks.
 # ---------------------------------------------------------------------------
 _MECHANISM_KEYWORDS: frozenset[str] = frozenset({
     # Architectural patterns
@@ -43,15 +47,9 @@ _MECHANISM_KEYWORDS: frozenset[str] = frozenset({
     "api integration",
     "fault tolerance",
     "distributed system",
-    # Concrete infrastructure / tools
+    # Specific infrastructure keywords (kept — meaningful enough as architecture signals)
     "kafka",
     "redis",
-    "aws",
-    "docker",
-    "kubernetes",
-    "rest api",
-    "restful",
-    "websocket",
 })
 
 # ---------------------------------------------------------------------------

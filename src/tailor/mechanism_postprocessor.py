@@ -22,6 +22,7 @@ import logging
 
 from tailor.phase2_validator import (
     _RESUME_SECTION_HEADERS,
+    _bullet_has_arch_mechanism,
     _bullet_has_mechanism,
     _compute_effective_priorities,
     _is_date_line,
@@ -134,7 +135,7 @@ def postprocess_mechanism_enforcement(
     else:
         for role_header, bullets in roles:
             role_mechanism_counts[role_header] = sum(
-                1 for b in bullets if _bullet_has_mechanism(b)
+                1 for b in bullets if _bullet_has_arch_mechanism(b, must_surface)
             )
 
     # 4. Compute deficits; skip thin_override roles
@@ -207,7 +208,7 @@ def postprocess_mechanism_enforcement(
     # 8. Post-check safety net: re-parse and do a second pass for any remaining deficits
     roles2 = _parse_roles(new_resume)
     role_mechanism_counts2: dict[str, int] = {
-        rh: sum(1 for b in bullets if _bullet_has_mechanism(b))
+        rh: sum(1 for b in bullets if _bullet_has_arch_mechanism(b, must_surface))
         for rh, bullets in roles2
     }
 
