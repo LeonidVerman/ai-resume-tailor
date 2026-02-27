@@ -18,6 +18,11 @@ from tailor.phase2_validator import (
 # Known high-value metrics that must always be preserved regardless of plan.
 _BASELINE_METRICS: list[str] = ["1M+", "25%", "20%", "top-5", "#1"]
 
+# Mirror of phase2_validator._TOP_REPOSITIONING_ROLES_COUNT.
+# Duplicated here intentionally (lowest-risk path); refactor to shared
+# constants module separately if desired.
+_TOP_REPOSITIONING_ROLES_COUNT: int = 2
+
 # Keywords that indicate an integration or extensibility reframe.
 _INTEGRATION_KEYWORDS: frozenset[str] = frozenset(
     {
@@ -447,49 +452,77 @@ def _build_role_density_shortfall_allowance(
 
     Returns {role_name: allowance} where allowance is 0 or 1.
 
-    Rules
-    -----
-    - Only high and medium priority roles may receive a non-zero allowance.
-    - thin_override roles always receive allowance 0 to prevent bullet inflation.
-    - Roles with no allowed_claims anywhere in plan.evidence_map receive allowance 0.
-    - allowance = min(shortfall, 1) — capped at 1 per role.
+    Allowance is computed using **effective priority** (thin override + top-K
+    promotion), matching the logic the validator uses at check time.  This
+    prevents allowance being computed "too low" for roles that the validator
+    will promote to high priority.
 
-    Density minimums mirror density_targets in the WriterPacket:
-        high   -> 4 bullets minimum
-        medium -> 3 bullets minimum
-        low    -> no allowance
+    Effective priority rules (applied in plan order):
+    - thin_override  — any role that _is_thin_or_non_repositioning_role() flags
+    - high           — the first _TOP_REPOSITIONING_ROLES_COUNT non-thin roles
+    - plan priority  — all remaining non-thin roles
+
+    Allowance rules:
+    - effective_priority not in {"high", "medium"} → 0
+    - thin_override → 0  (no inflation of thin roles)
+    - no evidence in plan → 0  (derived bullets require grounding)
+    - otherwise: min(max(0, min_required - source_count), 1)
+
+    Density minimums:
+        high   → 4 bullets
+        medium → 3 bullets
     """
     density_min_by_priority: dict[str, int] = {"high": 4, "medium": 3}
     has_evidence = _plan_has_evidence(plan)
+    experience: list[dict] = plan.get("resume_strategy", {}).get("experience", [])
 
-    result: dict[str, int] = {}
-    for role_entry in plan.get("resume_strategy", {}).get("experience", []):
+    # --- Pass 1: classify each role as thin or not (in plan order) ---
+    thin_flags: dict[str, bool] = {}
+    for role_entry in experience:
         name = role_entry.get("role_name", "")
-        priority = role_entry.get("priority", "low")
         if not name:
             continue
-
-        if priority not in density_min_by_priority:
-            result[name] = 0
-            continue
-
         source_count = role_source_bullet_counts.get(name, 0)
         source_chars = role_source_char_counts.get(name, 0)
-
-        # thin_override: no allowance — thin roles must not be inflated
         is_thin, _ = _is_thin_or_non_repositioning_role(
             name, source_count, source_chars, jd_is_delivery_oriented,
         )
+        thin_flags[name] = is_thin
+
+    # --- Identify first K non-thin roles → promoted to at least high ---
+    non_thin_names = [
+        role_entry.get("role_name", "")
+        for role_entry in experience
+        if role_entry.get("role_name", "") and not thin_flags.get(role_entry["role_name"], False)
+    ]
+    top_repositioning: set[str] = set(non_thin_names[:_TOP_REPOSITIONING_ROLES_COUNT])
+
+    # --- Pass 2: compute allowance using effective priority ---
+    result: dict[str, int] = {}
+    for role_entry in experience:
+        name = role_entry.get("role_name", "")
+        if not name:
+            continue
+
+        is_thin = thin_flags.get(name, False)
         if is_thin:
             result[name] = 0
             continue
 
-        # No evidence: no allowance — derived bullets require grounding
+        # Effective priority: top-K roles promoted to high
+        plan_priority = role_entry.get("priority", "low")
+        effective_priority = "high" if name in top_repositioning else plan_priority
+
+        if effective_priority not in density_min_by_priority:
+            result[name] = 0
+            continue
+
         if not has_evidence:
             result[name] = 0
             continue
 
-        min_required = density_min_by_priority[priority]
+        source_count = role_source_bullet_counts.get(name, 0)
+        min_required = density_min_by_priority[effective_priority]
         shortfall = max(0, min_required - source_count)
         result[name] = min(shortfall, 1)
 

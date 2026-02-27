@@ -1140,6 +1140,116 @@ class TestRoleDensityShortfallAllowance:
         assert "role_density_shortfall_allowance" in packet
         assert isinstance(packet["role_density_shortfall_allowance"], dict)
 
+    # --- Effective-priority promotion tests ---
+
+    def _plan_multi_role(self, roles: list[tuple[str, str]], with_evidence: bool = True) -> dict:
+        """Plan with multiple experience entries: [(role_name, priority), ...]."""
+        evidence_entry = {
+            "theme": "Theme 0",
+            "evidence": [
+                {
+                    "source": "master_resume",
+                    "location": "Corp",
+                    "quote": "Built scalable platform",
+                    "allowed_claims": ["built scalable platform"] if with_evidence else [],
+                }
+            ],
+            "gaps": [],
+            "safe_translation": [],
+        }
+        return {
+            "role_level": "senior",
+            "jd_top_themes": [
+                {"theme": f"Theme {i}", "why_important": "x", "keywords": ["distributed systems"]}
+                for i in range(3)
+            ],
+            "evidence_map": [evidence_entry],
+            "resume_strategy": {
+                "summary": {"include_points": [], "avoid_points": []},
+                "experience": [
+                    {
+                        "role_name": name,
+                        "priority": priority,
+                        "keep_metrics": [],
+                        "bullets_to_emphasize": [],
+                        "bullets_to_compress": [],
+                        "bullets_to_reframe": [],
+                    }
+                    for name, priority in roles
+                ],
+                "skills": {
+                    "reorder_categories": [],
+                    "promote_skills": [],
+                    "demote_skills": [],
+                    "do_not_add_skills": [],
+                },
+            },
+            "cover_letter_strategy": {"company_and_role_mentions": [], "bullet_overlaps_to_reference": [], "structure": []},
+            "risk_checks": {"do_not_invent": [], "likely_hallucination_traps": [], "claims_requiring_strict_grounding": []},
+        }
+
+    def _resume_multi(self, role_bullets: list[tuple[str, int]]) -> str:
+        """Master resume with multiple roles: [(role_header, bullet_count), ...]."""
+        parts = ["Experience"]
+        for header, n in role_bullets:
+            parts.append(header)
+            for _ in range(n):
+                parts.append(f"- {self._LONG_BULLET}")
+            parts.append("")
+        parts.append("Technical Skills\nLanguages: Python")
+        return "\n".join(parts)
+
+    def test_top_k_promotion_raises_allowance_for_low_plan_priority(self):
+        """Top-2 non-thin roles get effective high priority even if plan says low.
+
+        Plan order: R1(low), R2(low), R3(high).
+        Source bullets: R1=1, R2=1, R3=4.
+        R1 and R2 are non-thin (1 bullet each BUT chars exceed 150 threshold)
+        and are the first 2 non-thin roles → promoted to effective high.
+        shortfall vs min=4 is 3, capped at allowance=1.
+        """
+        # Use long bullets so char count exceeds 150 (not thin by content)
+        r1 = "Engineer | Alpha Corp | 2022 - Present"
+        r2 = "Engineer | Beta Corp | 2020 - 2022"
+        r3 = "Senior Engineer | Gamma Corp | 2018 - 2020"
+        plan = self._plan_multi_role([(r1, "low"), (r2, "low"), (r3, "high")])
+        # R1 and R2 each have 2 bullets (~180 chars) — over the thin char threshold
+        resume = self._resume_multi([(r1, 2), (r2, 2), (r3, 4)])
+        packet = build_writer_packet(plan, "{}", resume, "job desc")
+        allowance = packet["role_density_shortfall_allowance"]
+        assert allowance.get(r1) == 1, f"R1 promoted to high → allowance=1; got {allowance}"
+        assert allowance.get(r2) == 1, f"R2 promoted to high → allowance=1; got {allowance}"
+        assert allowance.get(r3) == 0, f"R3 has 4 bullets (no shortfall) → allowance=0; got {allowance}"
+
+    def test_thin_role_in_top_k_position_blocks_allowance(self):
+        """Thin role occupying a top-K position does not receive allowance.
+
+        R1 is the first role but has 1 source bullet → thin_override.
+        R2 and R3 become the first 2 non-thin roles.
+        """
+        r1_thin = "AI Evaluator | Mercor | 2023 - Present"   # name triggers thin
+        r2 = "Engineer | Beta Corp | 2020 - 2022"
+        r3 = "Senior Engineer | Gamma Corp | 2018 - 2020"
+        plan = self._plan_multi_role([(r1_thin, "high"), (r2, "low"), (r3, "low")])
+        resume = self._resume_multi([(r1_thin, 3), (r2, 2), (r3, 2)])
+        packet = build_writer_packet(plan, "{}", resume, "job desc")
+        allowance = packet["role_density_shortfall_allowance"]
+        assert allowance.get(r1_thin) == 0, f"Thin role → always 0; got {allowance}"
+        # R2 and R3 are first 2 non-thin → promoted to high → shortfall=2 → allowance=1
+        assert allowance.get(r2) == 1, f"R2 promoted non-thin → allowance=1; got {allowance}"
+        assert allowance.get(r3) == 1, f"R3 promoted non-thin → allowance=1; got {allowance}"
+
+    def test_no_evidence_blocks_all_allowances_including_promoted(self):
+        """Empty allowed_claims in evidence_map → allowance=0 for all roles."""
+        r1 = "Engineer | Alpha Corp | 2022 - Present"
+        r2 = "Engineer | Beta Corp | 2020 - 2022"
+        plan = self._plan_multi_role([(r1, "low"), (r2, "low")], with_evidence=False)
+        resume = self._resume_multi([(r1, 2), (r2, 2)])
+        packet = build_writer_packet(plan, "{}", resume, "job desc")
+        allowance = packet["role_density_shortfall_allowance"]
+        assert allowance.get(r1) == 0, f"No evidence → allowance=0; got {allowance}"
+        assert allowance.get(r2) == 0, f"No evidence → allowance=0; got {allowance}"
+
 
 # ---------------------------------------------------------------------------
 # _roles_match unit tests
