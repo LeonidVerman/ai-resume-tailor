@@ -172,6 +172,7 @@ If WRITER_PACKET lists unsafe_jd_nouns:
 - Do not include them verbatim.
 - Replace with neutral supported alternatives.
 - Never fabricate domain-specific terminology.
+- Do a final scan: none of the strings in unsafe_jd_nouns may appear verbatim; replace using safe_translation.
 
 ------------------------------------------------------------------
 THIN ROLES

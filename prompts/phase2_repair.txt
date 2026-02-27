@@ -115,6 +115,7 @@ If VALIDATION_ERRORS indicate missing strategic/operational signals:
 5) UNSAFE JD NOUNS
 If unsafe terms appear:
 - Remove or replace with neutral supported phrasing.
+- Do a final scan: none of the strings in unsafe_jd_nouns may appear verbatim; replace using safe_translation.
 
 6) MISSING REQUIRED SKILLS (secondary)
 Only handle if still present in VALIDATION_ERRORS.
