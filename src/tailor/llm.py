@@ -24,8 +24,6 @@ from tailor.plan_validator import validate_plan_extended
 from tailor.job import JobData
 from tailor.phase2_validator import validate_phase2_output
 from tailor.prompts import _load_candidate_profile, _load_prompt, _load_prompt_optional
-from tailor.mechanism_postprocessor import postprocess_mechanism_enforcement
-from tailor.token_postprocessor import postprocess_token_compliance
 from tailor.writer_packet import build_writer_packet
 
 logger = logging.getLogger(__name__)
@@ -563,75 +561,17 @@ def tailor_documents_with_plan(
     final_result = current_result
     final_validation = current_validation
 
-    # --- Deterministic post-processor: token compliance safety net ---
-    # Runs once after all LLM attempts.  Injects remaining missing required
-    # tokens (skills, metrics, date) without involving the LLM.
-    pp_output = postprocess_token_compliance(
-        {"resume": final_result.resume or "", "cover_letter": final_result.cover_letter or ""},
-        writer_packet, current_date,
-        master_resume_text=resume_template,
-        candidate_profile_text=profile_str,
-    )
-    pp_result = TailorResult(
-        resume=pp_output["resume"],
-        cover_letter=pp_output["cover_letter"],
-    )
-    pp_validation = validate_phase2_output(
-        writer_packet,
-        pp_result.resume or "",
-        pp_result.cover_letter or "",
-        current_date,
-    )
-    attempts.append({
-        "llm_request": None,
-        "llm_response_raw": None,
-        "validation_report": pp_validation,
-        "model": "postprocessor",
-        "usage": {},
-    })
-
-    # --- Mechanism enforcement postprocessor ---
-    mep_output = postprocess_mechanism_enforcement(
-        {"resume": pp_result.resume or "", "cover_letter": pp_result.cover_letter or ""},
-        writer_packet,
-        validation_report=pp_validation,
-    )
-    mep_result = TailorResult(
-        resume=mep_output["resume"],
-        cover_letter=mep_output["cover_letter"],
-    )
-    mep_validation = validate_phase2_output(
-        writer_packet,
-        mep_result.resume or "",
-        mep_result.cover_letter or "",
-        current_date,
-    )
-    attempts.append({
-        "llm_request": None,
-        "llm_response_raw": None,
-        "validation_report": mep_validation,
-        "model": "mechanism_postprocessor",
-        "usage": {},
-    })
-    final_result = mep_result
-    final_validation = mep_validation
-
     if not final_validation["ok"]:
         logger.warning(
-            "Phase 2 validation still failing after post-processing: %s",
+            "Phase 2 validation still failing after repair loop: %s",
             final_validation["errors"],
         )
 
-    # Usage / raw response come from the last LLM attempt (not postprocessors).
-    _postprocessor_models = {"postprocessor", "mechanism_postprocessor"}
-    last_llm_attempt = next(
-        (a for a in reversed(attempts) if a.get("model") not in _postprocessor_models),
-        attempts[0],
-    )
+    last_attempt = attempts[-1]
     debug_meta: dict = {
         "model": PHASE2_MODEL,
-        "usage": last_llm_attempt["usage"],
-        "raw_response": last_llm_attempt["llm_response_raw"],
+        "usage": last_attempt["usage"],
+        "raw_response": last_attempt["llm_response_raw"],
         "writer_packet": writer_packet,
         "attempts": attempts,
         "final_validation_ok": final_validation["ok"],
@@ -743,12 +683,13 @@ def _run_phase2_repair(
         {"resume": draft.resume or "", "cover_letter": draft.cover_letter or ""},
         indent=2,
     )
-    # Pass only the errors list — matching exactly what phase2_repair.txt expects.
     validation_errors = validation_report.get("errors", [])
+    repair_brief = validation_report.get("repair_brief", {})
 
     messages: list = [
         {"role": "developer", "content": repair_instructions},
         {"role": "user", "content": f"VALIDATION_ERRORS:\n{json.dumps(validation_errors, indent=2)}"},
+        {"role": "user", "content": f"REPAIR_BRIEF:\n{json.dumps(repair_brief, indent=2)}"},
         {"role": "user", "content": f"WRITER_PACKET:\n{json.dumps(writer_packet, indent=2)}"},
         {"role": "user", "content": f"WORKING_OUTPUT_JSON:\n{working_output}"},
         {"role": "user", "content": f"TAILORING_PLAN:\n{json.dumps(plan, indent=2)}"},

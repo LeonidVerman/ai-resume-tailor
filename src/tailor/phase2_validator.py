@@ -157,6 +157,8 @@ def validate_phase2_output(
     role_source_char_counts: dict[str, int] = writer_packet.get("role_source_char_counts", {})
     jd_is_delivery_oriented: bool = writer_packet.get("jd_is_delivery_oriented", False)
     arch_mechanisms: list[str] = writer_packet.get("must_surface_arch_mechanisms", [])
+    arch_mechanisms_primary: list[str] = writer_packet.get("arch_mechanisms_primary", arch_mechanisms)
+    arch_mechanisms_backstop: list[str] = writer_packet.get("arch_mechanisms_backstop", [])
     allowance_map: dict[str, int] = writer_packet.get("role_density_shortfall_allowance", {})
     density = writer_packet.get("density_targets", {})
     bullet_min_map: dict[str, int] = density.get(
@@ -197,6 +199,7 @@ def validate_phase2_output(
     role_bullet_counts: dict[str, int] = {}
     role_mechanism_counts: dict[str, int] = {}
 
+    repair_roles: list[dict] = []
     prev_display_priority: str | None = None
     for role_header, bullets in roles:
         effective_priority, thin_reason = effective_priorities.get(role_header, ("low", ""))
@@ -256,6 +259,41 @@ def validate_phase2_output(
                 f"mechanism(s) in bullets; minimum is {mech_required}"
             )
 
+        # Accumulate per-role repair data for the machine-readable repair brief.
+        repair_roles.append({
+            "role_header": role_header,
+            "effective_priority": effective_priority,
+            "bullets": {
+                "have": bullet_count,
+                "need": min_bullets,
+                "allowance": allow,
+                "effective_min": effective_min_bullets,
+                "deficit": max(0, effective_min_bullets - bullet_count),
+            },
+            "mechanisms": {
+                "have": mech_count,
+                "need": mech_required,
+                "deficit": max(0, mech_required - mech_count),
+            },
+            "allowed_phrases": {
+                "arch_mechanisms_primary": arch_mechanisms_primary,
+                "arch_mechanisms_backstop": arch_mechanisms_backstop,
+                "strategic_signals": (
+                    writer_packet.get("must_surface_strategic_signals", [])
+                    if role_level == "director" else []
+                ),
+                "operational_signals": (
+                    writer_packet.get("must_surface_operational_signals", [])
+                    if role_level == "director" else []
+                ),
+            },
+            "action_plan": {
+                "add_bullets": max(0, effective_min_bullets - bullet_count),
+                "rewrite_bullets_for_mechanisms": max(0, mech_required - mech_count),
+                "split_bullets": 1 if max(0, effective_min_bullets - bullet_count) > 0 else 0,
+            },
+        })
+
         # Advisory: high-priority role appearing after a medium-priority role.
         display_priority = "thin" if effective_priority == "thin_override" else effective_priority
         if prev_display_priority == "medium" and display_priority == "high":
@@ -286,7 +324,8 @@ def validate_phase2_output(
         )
 
     # --- 5. Date correctness (unchanged) ---
-    if current_date and current_date not in cover_letter:
+    cover_letter_date_missing: bool = bool(current_date and current_date not in cover_letter)
+    if cover_letter_date_missing:
         errors.append(f"Cover letter does not contain CURRENT_DATE: {current_date!r}")
 
     # --- 6. Soft director checks (warnings only; upgrade to errors once stable) ---
@@ -313,6 +352,16 @@ def validate_phase2_output(
                 f"Consider adding process/quality/delivery framing."
             )
 
+    repair_brief: dict = {
+        "global_issues": {
+            "missing_metrics": missing_metrics,
+            "missing_skills": missing_required_skills,
+            "unsafe_nouns_in_resume": unsafe_terms_found,
+            "cover_letter_date_missing": cover_letter_date_missing,
+        },
+        "roles": repair_roles,
+    }
+
     return {
         "ok": len(errors) == 0,
         "errors": errors,
@@ -327,6 +376,7 @@ def validate_phase2_output(
             "strategic_signal_count": strategic_signal_count,
             "operational_signal_count": operational_signal_count,
         },
+        "repair_brief": repair_brief,
     }
 
 
