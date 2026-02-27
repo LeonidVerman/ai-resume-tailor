@@ -446,5 +446,75 @@ class TestBulletGuard(unittest.TestCase):
         self.assertIn("horizontal scaling", result["resume"].lower())
 
 
+class TestViaClauseGuard(unittest.TestCase):
+    """Injector prefers bullets without an existing via/using/through clause (A)."""
+
+    def _wp(self, phrases: list[str]) -> dict:
+        return {
+            "arch_mechanisms_primary": phrases,
+            "arch_mechanisms_backstop": [],
+            "must_surface_arch_mechanisms": phrases,
+            "density_targets": {
+                "mechanism_min_by_priority": {"high": 1, "medium": 0, "low": 0},
+                "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+            },
+            "role_priorities": {"Eng | Co": "high"},
+            "role_source_bullet_counts": {"Eng | Co": 5},
+            "role_source_char_counts": {"Eng | Co": 400},
+            "jd_is_delivery_oriented": False,
+        }
+
+    def test_prefers_clean_bullet_over_via_bullet(self):
+        """When bullet 0 already has a via-clause, bullet 1 (clean) should be chosen."""
+        resume = "\n".join([
+            "Experience",
+            "Eng | Co | 2022 - Present",
+            "- Improved throughput via indexing",        # has via-clause
+            "- Shipped the payment integration module",  # clean → should receive injection
+            "- Mentored engineers",
+            "- Led sprint planning",
+            "Education",
+        ])
+        result = postprocess_mechanism_enforcement(
+            {"resume": resume, "cover_letter": ""},
+            self._wp(["horizontal scaling"]),
+        )
+        lines = result["resume"].split("\n")
+        # Find the two bullet lines by content
+        via_bullet = next(l for l in lines if "indexing" in l.lower())
+        clean_bullet = next(l for l in lines if "payment integration" in l.lower())
+
+        # The injected phrase should appear on the clean bullet, not the via-bullet
+        self.assertNotIn("horizontal scaling", via_bullet.lower(),
+                         "Via-clause bullet should not be the preferred target")
+        self.assertIn("horizontal scaling", clean_bullet.lower(),
+                      "Clean bullet should receive the injection")
+
+    def test_falls_back_to_via_bullet_when_all_others_modified(self):
+        """When no clean unmodified bullet exists, the injector falls back to a via bullet."""
+        resume = "\n".join([
+            "Experience",
+            "Eng | Co | 2022 - Present",
+            "- Improved throughput via indexing",
+            "Education",
+        ])
+        wp = self._wp(["horizontal scaling"])
+        result = postprocess_mechanism_enforcement(
+            {"resume": resume, "cover_letter": ""},
+            wp,
+        )
+        # The only bullet must receive the injection regardless of its via-clause
+        self.assertIn("horizontal scaling", result["resume"].lower())
+
+    def test_has_via_clause_helper(self):
+        """Unit test for _has_via_clause."""
+        from tailor.mechanism_postprocessor import _has_via_clause
+        self.assertTrue(_has_via_clause("- Improved performance via Redis"))
+        self.assertTrue(_has_via_clause("- Scaled systems through sharding"))
+        self.assertTrue(_has_via_clause("- Built pipeline using Kafka"))
+        self.assertFalse(_has_via_clause("- Shipped the analytics dashboard"))
+        self.assertFalse(_has_via_clause("- Led cross-functional team of 8"))
+
+
 if __name__ == "__main__":
     unittest.main()

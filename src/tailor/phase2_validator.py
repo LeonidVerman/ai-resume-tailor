@@ -157,6 +157,7 @@ def validate_phase2_output(
     role_source_char_counts: dict[str, int] = writer_packet.get("role_source_char_counts", {})
     jd_is_delivery_oriented: bool = writer_packet.get("jd_is_delivery_oriented", False)
     arch_mechanisms: list[str] = writer_packet.get("must_surface_arch_mechanisms", [])
+    allowance_map: dict[str, int] = writer_packet.get("role_density_shortfall_allowance", {})
     density = writer_packet.get("density_targets", {})
     bullet_min_map: dict[str, int] = density.get(
         "bullet_min_by_priority", {"high": 4, "medium": 3, "low": 1}
@@ -231,11 +232,16 @@ def validate_phase2_output(
             min_bullets = bullet_min_map.get(effective_priority, 1)
             mech_required = mechanism_min_map.get(effective_priority, 0)
 
-        if bullet_count < min_bullets:
-            errors.append(
+        allow = _find_role_allowance(role_header, allowance_map)
+        effective_min_bullets = max(1, min_bullets - allow)
+        if bullet_count < effective_min_bullets:
+            error_msg = (
                 f"Role {role_header!r} ({effective_priority} priority) has {bullet_count} "
                 f"bullet(s); minimum is {min_bullets}"
             )
+            if allow:
+                error_msg += f" (allowance {allow} applied → effective {effective_min_bullets})"
+            errors.append(error_msg)
         elif bullet_count > 6 and effective_priority == "high":
             warnings.append(
                 f"Role {role_header!r} has {bullet_count} bullets; "
@@ -707,6 +713,17 @@ def _find_source_bullet_count(
         if _roles_match(plan_name, role_header):
             return count
     return 99
+
+
+def _find_role_allowance(
+    role_header: str,
+    allowance_map: dict[str, int],
+) -> int:
+    """Return bullet-count shortfall allowance for a role; 0 if not specified."""
+    for plan_name, allow in allowance_map.items():
+        if _roles_match(plan_name, role_header):
+            return allow
+    return 0
 
 
 def _find_source_char_count(

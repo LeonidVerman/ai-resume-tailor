@@ -147,3 +147,77 @@ class TestLocationSuffixRoleMatching:
         report = validate_phase2_output(packet, resume, cover, _DATE)
         bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
         assert bullet_errors == [], f"Unexpected bullet errors: {bullet_errors}"
+
+
+class TestBulletShortfallAllowance:
+    """role_density_shortfall_allowance relaxes the bullet minimum for a role."""
+
+    def _make_packet_with_allowance(
+        self,
+        role_name: str,
+        priority: str = "high",
+        source_bullets: int = 5,
+        allowance: int = 0,
+    ) -> dict:
+        p = _make_packet(role_name, priority=priority, source_bullets=source_bullets)
+        if allowance:
+            p["role_density_shortfall_allowance"] = {role_name: allowance}
+        return p
+
+    def test_allowance_prevents_bullet_error(self):
+        """3 bullets with allowance=1 on a high-priority role → no error (3 ≥ 4-1)."""
+        resume = _make_resume(
+            "Senior Engineer | Acme Corp",
+            ["Built X", "Led Y", "Shipped Z"],  # 3 bullets; high needs 4
+        )
+        packet = self._make_packet_with_allowance(
+            "Senior Engineer | Acme Corp", priority="high", source_bullets=5, allowance=1
+        )
+        cover = f"{_DATE}\n\nDear Hiring Manager,"
+        report = validate_phase2_output(packet, resume, cover, _DATE)
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        assert bullet_errors == [], f"Unexpected bullet errors with allowance=1: {bullet_errors}"
+
+    def test_no_allowance_produces_error(self):
+        """Same 3-bullet role without an allowance still produces a bullet error."""
+        resume = _make_resume(
+            "Senior Engineer | Acme Corp",
+            ["Built X", "Led Y", "Shipped Z"],  # 3 bullets; high needs 4
+        )
+        packet = _make_packet("Senior Engineer | Acme Corp", priority="high", source_bullets=5)
+        cover = f"{_DATE}\n\nDear Hiring Manager,"
+        report = validate_phase2_output(packet, resume, cover, _DATE)
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        assert bullet_errors, "Expected bullet error without allowance"
+
+    def test_allowance_capped_at_effective_min_1(self):
+        """A large allowance never drops effective minimum below 1."""
+        resume = _make_resume(
+            "Senior Engineer | Acme Corp",
+            ["Built X"],  # 1 bullet
+        )
+        # high needs 4; allowance=10 → effective min = max(1, 4-10) = 1
+        packet = self._make_packet_with_allowance(
+            "Senior Engineer | Acme Corp", priority="high", source_bullets=5, allowance=10
+        )
+        cover = f"{_DATE}\n\nDear Hiring Manager,"
+        report = validate_phase2_output(packet, resume, cover, _DATE)
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        assert bullet_errors == [], f"Large allowance should floor at 1 bullet: {bullet_errors}"
+
+    def test_error_message_includes_allowance_detail(self):
+        """When an error occurs despite an allowance, the message notes the allowance."""
+        resume = _make_resume(
+            "Senior Engineer | Acme Corp",
+            ["Built X"],  # 1 bullet; high needs 4; allowance=2 → effective 2; 1 < 2
+        )
+        packet = self._make_packet_with_allowance(
+            "Senior Engineer | Acme Corp", priority="high", source_bullets=5, allowance=2
+        )
+        cover = f"{_DATE}\n\nDear Hiring Manager,"
+        report = validate_phase2_output(packet, resume, cover, _DATE)
+        bullet_errors = [e for e in report["errors"] if "bullet" in e.lower()]
+        assert bullet_errors, "Should still error when 1 bullet < effective min of 2"
+        assert "allowance 2 applied" in bullet_errors[0], (
+            f"Error should mention allowance: {bullet_errors[0]}"
+        )

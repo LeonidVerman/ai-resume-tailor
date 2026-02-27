@@ -316,6 +316,17 @@ def _is_bullet_line(line: str) -> bool:
     return s.startswith("- ") or s.startswith("• ")
 
 
+# Markers that indicate a bullet already carries an injected technique clause.
+# Prefer bullets without these to avoid awkward stacking ("via X via Y").
+_VIA_CLAUSE_MARKERS: tuple[str, ...] = (" via ", " using ", " through ")
+
+
+def _has_via_clause(line: str) -> bool:
+    """Return True if ``line`` already contains a via/using/through clause."""
+    line_lower = line.lower()
+    return any(marker in line_lower for marker in _VIA_CLAUSE_MARKERS)
+
+
 def _inject_phrases_into_role_lines(
     lines: list[str],
     role_start: int,
@@ -361,26 +372,38 @@ def _inject_phrases_into_role_lines(
 
         target: int | None = None
 
-        # Preferred: unmodified bullet with a performance/infra keyword
+        # Pass 1: unmodified + preferred keyword + no existing via-clause
         for i in range(role_start, role_end):
             if not _is_bullet_line(lines[i]):
                 continue
             line_lower = lines[i].lower()
             if (
-                any(kw in line_lower for kw in _MECHANISM_PREF_KEYWORDS)
-                and i not in modified_indices
+                i not in modified_indices
+                and any(kw in line_lower for kw in _MECHANISM_PREF_KEYWORDS)
+                and not _has_via_clause(lines[i])
             ):
                 target = i
                 break
 
-        # Fallback: any unmodified bullet
+        # Pass 2: unmodified + no existing via-clause (any bullet)
+        if target is None:
+            for i in range(role_start, role_end):
+                if (
+                    _is_bullet_line(lines[i])
+                    and i not in modified_indices
+                    and not _has_via_clause(lines[i])
+                ):
+                    target = i
+                    break
+
+        # Pass 3: any unmodified bullet (may already have a via-clause)
         if target is None:
             for i in range(role_start, role_end):
                 if _is_bullet_line(lines[i]) and i not in modified_indices:
                     target = i
                     break
 
-        # Last resort: first bullet (may already be modified)
+        # Pass 4: last resort — first bullet regardless of modification state
         if target is None:
             for i in range(role_start, role_end):
                 if _is_bullet_line(lines[i]):
