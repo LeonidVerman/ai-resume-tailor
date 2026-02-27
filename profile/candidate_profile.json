@@ -110,7 +110,9 @@
     "usage_patterns": [
       "prototyping_new_modules",
       "investigating_problems_and_root_causes",
-      "rapid_learning_of_new_tools_and_tech"
+      "rapid_learning_of_new_tools_and_tech",
+      "model_evaluation",
+      "A_B_tests",
     ],
     "principles": [
       "engineer_remains_accountable",
