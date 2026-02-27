@@ -195,15 +195,15 @@ class TestWriterPacket:
         assert "snmp" in terms_lower
 
     def test_mechanisms_from_profile(self):
-        """must_surface_mechanisms includes architecture patterns from candidate profile."""
+        """must_surface_arch_mechanisms includes architecture patterns from candidate profile."""
         plan = _minimal_plan()
         packet = build_writer_packet(plan, _candidate_profile_str(), "", "job desc")
-        mechanisms_lower = [m.lower() for m in packet["must_surface_mechanisms"]]
+        mechanisms_lower = [m.lower() for m in packet["must_surface_arch_mechanisms"]]
         assert any("horizontal scaling" in m for m in mechanisms_lower)
         assert any("read replica" in m for m in mechanisms_lower)
 
     def test_mechanisms_with_unsafe_nouns_are_filtered(self):
-        """Mechanism phrases containing an unsafe JD noun are excluded from must_surface_mechanisms."""
+        """Mechanism phrases containing an unsafe JD noun are excluded from must_surface_arch_mechanisms."""
         import json as _json
         # Profile with one clean pattern and one containing a hardcoded unsafe noun.
         profile_str = _json.dumps({
@@ -220,7 +220,7 @@ class TestWriterPacket:
         })
         plan = _minimal_plan()
         packet = build_writer_packet(plan, profile_str, "", "job desc")
-        mechanisms_lower = [m.lower() for m in packet["must_surface_mechanisms"]]
+        mechanisms_lower = [m.lower() for m in packet["must_surface_arch_mechanisms"]]
         # Safe pattern kept
         assert any("horizontal scaling" in m for m in mechanisms_lower)
         # Pattern containing the unsafe noun must be dropped
@@ -352,7 +352,7 @@ class TestPhase2Validator:
     def _make_packet(self, **overrides) -> dict:
         base = {
             "must_keep_metrics": ["1M+", "25%"],
-            "must_surface_mechanisms": [
+            "must_surface_arch_mechanisms": [
                 "Horizontal scaling of trading servers",
                 "Database read replicas for read-heavy GET endpoints",
                 "Multiple caching layers to reduce DB load",
@@ -669,7 +669,7 @@ class TestThinRoleOverride:
                          source_chars: int = 0, jd_delivery: bool = False) -> dict:
         return {
             "must_keep_metrics": [],
-            "must_surface_mechanisms": [],
+            "must_surface_arch_mechanisms": [],
             "must_include_skills": [],
             "allowed_skill_pool": [],
             "do_not_add_terms": [],
@@ -745,7 +745,7 @@ class TestThinRoleOverride:
         """First 2 non-thin roles after a thin role still get high-priority enforcement."""
         packet = {
             "must_keep_metrics": [],
-            "must_surface_mechanisms": [],
+            "must_surface_arch_mechanisms": [],
             "must_include_skills": [],
             "allowed_skill_pool": [],
             "do_not_add_terms": [],
@@ -842,7 +842,7 @@ class TestVeryOldRoleRelaxation:
     def _packet(self, role_name: str, plan_priority: str = "high") -> dict:
         return {
             "must_keep_metrics": [],
-            "must_surface_mechanisms": [],
+            "must_surface_arch_mechanisms": [],
             "must_include_skills": [],
             "allowed_skill_pool": [],
             "do_not_add_terms": [],
@@ -1338,15 +1338,18 @@ class TestWriterPacketTaxonomyFields:
         assert "strategic_weight" in rwp
         assert "operational_weight" in rwp
 
-    def test_legacy_must_surface_mechanisms_still_present(self):
-        """Backward compat: legacy field still in packet (release N)."""
+    def test_legacy_field_absent(self):
+        """must_surface_mechanisms has been removed from the WriterPacket."""
         pkt = self._packet()
-        assert "must_surface_mechanisms" in pkt
+        assert "must_surface_mechanisms" not in pkt
 
-    def test_legacy_field_equals_arch_list(self):
-        """Legacy must_surface_mechanisms == must_surface_arch_mechanisms (release N)."""
+    def test_provenance_fields_present(self):
+        """arch_mechanisms_primary and arch_mechanisms_backstop must always be emitted."""
         pkt = self._packet()
-        assert pkt["must_surface_mechanisms"] == pkt["must_surface_arch_mechanisms"]
+        assert "arch_mechanisms_primary" in pkt
+        assert isinstance(pkt["arch_mechanisms_primary"], list)
+        assert "arch_mechanisms_backstop" in pkt
+        assert isinstance(pkt["arch_mechanisms_backstop"], list)
 
     def test_arch_mechanisms_contain_only_arch_phrases(self):
         """Capability statements must not leak into arch list."""
@@ -1423,7 +1426,6 @@ def _make_director_packet(
         "role_level": "director",
         "must_keep_metrics": [],
         "must_surface_arch_mechanisms": [],
-        "must_surface_mechanisms": [],
         "must_surface_strategic_signals": strategic_signals or [],
         "must_surface_operational_signals": operational_signals or [],
         "must_include_skills": [],
@@ -1550,7 +1552,6 @@ class TestValidatorArchMechanismDensity:
             "role_level": "senior",
             "must_keep_metrics": [],
             "must_surface_arch_mechanisms": arch_mechanisms,
-            "must_surface_mechanisms": arch_mechanisms,  # legacy compat
             "must_surface_strategic_signals": [],
             "must_surface_operational_signals": [],
             "must_include_skills": [],
@@ -1605,3 +1606,78 @@ class TestValidatorArchMechanismDensity:
         # Fallback keyword check should still find Redis/Kafka as mechanisms
         mech_errors = [e for e in report["errors"] if "mechanism" in e.lower()]
         assert not mech_errors, f"Fallback keyword check should pass: {report['errors']}"
+
+
+# ---------------------------------------------------------------------------
+# WriterPacket provenance split (G1 / G3 / G4)
+# ---------------------------------------------------------------------------
+
+class TestWriterPacketProvenance:
+    """Tests for arch_mechanisms_primary / arch_mechanisms_backstop split."""
+
+    def _profile_with_patterns(self, patterns: list[str]) -> str:
+        return json.dumps({
+            "experience_highlights": [{"architecture_patterns": patterns}],
+            "scalability_reliability_patterns": [],
+        })
+
+    def _plan_with_safe_translation(self, translations: list[str]) -> dict:
+        plan = _minimal_plan()
+        plan["evidence_map"][0]["safe_translation"] = translations
+        return plan
+
+    def test_legacy_field_absent(self):
+        """must_surface_mechanisms must NOT appear in the emitted WriterPacket."""
+        pkt = build_writer_packet(_minimal_plan(), _candidate_profile_str(), "", "jd")
+        assert "must_surface_mechanisms" not in pkt
+
+    def test_provenance_fields_present(self):  # G1
+        """arch_mechanisms_primary and arch_mechanisms_backstop always emitted."""
+        pkt = build_writer_packet(_minimal_plan(), _candidate_profile_str(), "", "jd")
+        assert "arch_mechanisms_primary" in pkt
+        assert isinstance(pkt["arch_mechanisms_primary"], list)
+        assert "arch_mechanisms_backstop" in pkt
+        assert isinstance(pkt["arch_mechanisms_backstop"], list)
+
+    def test_profile_phrases_land_in_primary(self):  # G1
+        """Profile architecture_patterns are in arch_mechanisms_primary."""
+        profile = self._profile_with_patterns(["horizontal scaling of servers"])
+        pkt = build_writer_packet(_minimal_plan(), profile, "", "jd")
+        assert any("horizontal scaling" in p.lower() for p in pkt["arch_mechanisms_primary"])
+
+    def test_safe_translation_arch_in_backstop(self):  # G1
+        """Arch-quality safe_translation phrases land in arch_mechanisms_backstop."""
+        plan = self._plan_with_safe_translation(["Redis caching layer for session data"])
+        pkt = build_writer_packet(plan, "{}", "", "jd")
+        assert any("redis" in p.lower() for p in pkt["arch_mechanisms_backstop"])
+
+    def test_safe_translation_capability_not_in_backstop(self):  # G3
+        """Capability statements from safe_translation are NOT in backstop arch list."""
+        plan = self._plan_with_safe_translation(
+            ["Strong cloud infrastructure experience with deep expertise"]
+        )
+        pkt = build_writer_packet(plan, "{}", "", "jd")
+        backstop_text = " ".join(pkt["arch_mechanisms_backstop"]).lower()
+        assert "cloud infrastructure experience" not in backstop_text
+
+    def test_backstop_not_duplicates_primary(self):  # G1 — dedup across sources
+        """A safe_translation phrase that duplicates a profile phrase is not in backstop."""
+        profile = self._profile_with_patterns(["horizontal scaling of servers"])
+        plan = self._plan_with_safe_translation(["horizontal scaling of servers"])
+        pkt = build_writer_packet(plan, profile, "", "jd")
+        # Should be in primary only, not backstop
+        assert any("horizontal scaling" in p.lower() for p in pkt["arch_mechanisms_primary"])
+        assert not any("horizontal scaling" in p.lower() for p in pkt["arch_mechanisms_backstop"])
+
+    def test_substring_dedup_prefers_longer_phrase(self):  # G4
+        """Shorter phrase subsumed by a longer one is dropped from the arch list."""
+        profile = self._profile_with_patterns([
+            "database read replicas",
+            "Database read replicas for read-heavy GET endpoints",
+        ])
+        pkt = build_writer_packet(_minimal_plan(), profile, "", "jd")
+        arch = pkt["must_surface_arch_mechanisms"]
+        short_present = any(p.strip().lower() == "database read replicas" for p in arch)
+        long_present = any("read-heavy" in p.lower() for p in arch)
+        assert long_present, "The longer, more specific phrase must survive"
+        assert not short_present, "The shorter redundant phrase must be dropped"

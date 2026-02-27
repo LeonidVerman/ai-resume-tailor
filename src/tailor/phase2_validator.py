@@ -156,11 +156,7 @@ def validate_phase2_output(
     role_source_counts: dict[str, int] = writer_packet.get("role_source_bullet_counts", {})
     role_source_char_counts: dict[str, int] = writer_packet.get("role_source_char_counts", {})
     jd_is_delivery_oriented: bool = writer_packet.get("jd_is_delivery_oriented", False)
-    # Prefer the typed arch list; fall back to legacy field for backward compat.
-    arch_mechanisms: list[str] = writer_packet.get(
-        "must_surface_arch_mechanisms",
-        writer_packet.get("must_surface_mechanisms", []),
-    )
+    arch_mechanisms: list[str] = writer_packet.get("must_surface_arch_mechanisms", [])
     density = writer_packet.get("density_targets", {})
     bullet_min_map: dict[str, int] = density.get(
         "bullet_min_by_priority", {"high": 4, "medium": 3, "low": 1}

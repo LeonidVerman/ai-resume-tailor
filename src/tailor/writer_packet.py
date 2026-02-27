@@ -8,7 +8,7 @@ involved in its construction.
 import json
 import re
 
-from tailor.mechanism_taxonomy import build_mechanism_taxonomy
+from tailor.mechanism_taxonomy import build_mechanism_taxonomy, _normalize_for_dedup
 from tailor.phase2_validator import (
     normalize_role_header,
     _is_thin_or_non_repositioning_role,
@@ -113,14 +113,14 @@ def build_writer_packet(
     return {
         "role_level": role_level,
         "must_keep_metrics": must_keep_metrics,
-        # Taxonomy fields (new in release N)
+        # Taxonomy fields
         "must_surface_arch_mechanisms": mechanism_fields["must_surface_arch_mechanisms"],
+        "arch_mechanisms_primary": mechanism_fields["arch_mechanisms_primary"],
+        "arch_mechanisms_backstop": mechanism_fields["arch_mechanisms_backstop"],
         "must_surface_strategic_signals": mechanism_fields["must_surface_strategic_signals"],
         "must_surface_operational_signals": mechanism_fields["must_surface_operational_signals"],
         "mechanism_dedup_map": mechanism_fields["mechanism_dedup_map"],
         "role_weight_profile": _build_role_weight_profile(role_level),
-        # Legacy field (release N backward compat) = arch list
-        "must_surface_mechanisms": mechanism_fields["must_surface_mechanisms"],
         "must_include_skills": must_include_skills,
         "allowed_skill_pool": allowed_skill_pool,
         "do_not_add_terms": do_not_add_terms,
@@ -175,25 +175,27 @@ def _normalize_plan_metric(s: str) -> str:
     return s
 
 
-def _collect_raw_mechanism_phrases(plan: dict, profile: dict) -> list[str]:
-    """Collect raw mechanism phrases from profile + plan evidence (pre-taxonomy).
+def _collect_profile_phrases(profile: dict) -> list[str]:
+    """Collect mechanism phrases from candidate profile only.
 
-    Sources (in priority order):
+    Sources:
     1. candidate_profile.experience_highlights[*].architecture_patterns
     2. candidate_profile.scalability_reliability_patterns (underscore → space)
-    3. plan.evidence_map[*].safe_translation
     """
     items: list[str] = []
-
     for highlight in profile.get("experience_highlights", []):
         for pattern in highlight.get("architecture_patterns", []):
             if isinstance(pattern, str):
                 items.append(pattern)
-
     for pattern in profile.get("scalability_reliability_patterns", []):
         if isinstance(pattern, str):
             items.append(pattern.replace("_", " "))
+    return items
 
+
+def _collect_safe_translation_phrases(plan: dict) -> list[str]:
+    """Collect mechanism phrases from plan evidence_map[*].safe_translation only."""
+    items: list[str] = []
     for entry in plan.get("evidence_map", []):
         raw = entry.get("safe_translation", [])
         if isinstance(raw, str):
@@ -203,8 +205,12 @@ def _collect_raw_mechanism_phrases(plan: dict, profile: dict) -> list[str]:
             for translation in raw:
                 if isinstance(translation, str) and translation:
                     items.append(translation)
-
     return items
+
+
+def _collect_raw_mechanism_phrases(plan: dict, profile: dict) -> list[str]:
+    """Convenience wrapper — profile phrases first, then safe_translation phrases."""
+    return _collect_profile_phrases(profile) + _collect_safe_translation_phrases(plan)
 
 
 def _build_mechanism_fields(
@@ -212,24 +218,50 @@ def _build_mechanism_fields(
     profile: dict,
     unsafe_nouns: list[str] | None = None,
 ) -> dict:
-    """Build all mechanism-related WriterPacket fields via the taxonomy.
+    """Build all mechanism-related WriterPacket fields with provenance split.
+
+    Profile-derived phrases are classified as PRIMARY (strict enforcement).
+    safe_translation-derived phrases are classified as BACKSTOP (last resort).
 
     Returns a dict with keys:
-        ``must_surface_arch_mechanisms``     — arch-only list (strict enforcement)
+        ``must_surface_arch_mechanisms``     — primary + backstop arch list
+        ``arch_mechanisms_primary``          — profile-derived arch phrases only
+        ``arch_mechanisms_backstop``         — safe_translation arch phrases only
         ``must_surface_strategic_signals``   — leadership/vision signals (soft)
         ``must_surface_operational_signals`` — process/quality signals (soft)
         ``mechanism_dedup_map``              — canonical → suppressed variants
-        ``must_surface_mechanisms``          — legacy alias = arch list (release N)
     """
-    raw = _collect_raw_mechanism_phrases(plan, profile)
-    taxonomy = build_mechanism_taxonomy(raw, unsafe_nouns=unsafe_nouns)
+    profile_phrases = _collect_profile_phrases(profile)
+    safe_phrases = _collect_safe_translation_phrases(plan)
+
+    # Classify each source independently so provenance is preserved.
+    primary_tax = build_mechanism_taxonomy(profile_phrases, unsafe_nouns=unsafe_nouns)
+    backstop_tax = build_mechanism_taxonomy(safe_phrases, unsafe_nouns=unsafe_nouns)
+
+    primary_arch = primary_tax["arch"]
+    primary_norms = {_normalize_for_dedup(p) for p in primary_arch}
+
+    # Drop backstop phrases that are exact or substring duplicates of primary phrases.
+    backstop_arch = [
+        p for p in backstop_tax["arch"]
+        if _normalize_for_dedup(p) not in primary_norms
+        and not any(_normalize_for_dedup(p) in pn for pn in primary_norms)
+    ]
+
+    merged_dedup = dict(primary_tax["dedup_map"])
+    merged_dedup.update(backstop_tax["dedup_map"])
+
     return {
-        "must_surface_arch_mechanisms": taxonomy["arch"],
-        "must_surface_strategic_signals": taxonomy["strategic"],
-        "must_surface_operational_signals": taxonomy["operational"],
-        "mechanism_dedup_map": taxonomy["dedup_map"],
-        # Release-N backward compat: legacy field = arch list only
-        "must_surface_mechanisms": taxonomy["arch"],
+        "must_surface_arch_mechanisms": primary_arch + backstop_arch,
+        "arch_mechanisms_primary": primary_arch,
+        "arch_mechanisms_backstop": backstop_arch,
+        "must_surface_strategic_signals": (
+            primary_tax["strategic"] + backstop_tax["strategic"]
+        ),
+        "must_surface_operational_signals": (
+            primary_tax["operational"] + backstop_tax["operational"]
+        ),
+        "mechanism_dedup_map": merged_dedup,
     }
 
 

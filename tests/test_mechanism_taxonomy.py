@@ -105,6 +105,41 @@ class TestClassifyPhrase(unittest.TestCase):
         result = classify_phrase("Led caching layer implementation")
         self.assertEqual(result, PhraseCategory.ARCH)
 
+    # --- B1: Experience-statement gate ---
+
+    def test_experience_statement_strong_rejected(self):
+        self.assertEqual(
+            classify_phrase("Strong cloud infrastructure experience"),
+            PhraseCategory.REJECT,
+        )
+
+    def test_proven_expertise_rejected(self):
+        self.assertEqual(
+            classify_phrase("proven expertise in distributed systems"),
+            PhraseCategory.REJECT,
+        )
+
+    def test_solid_background_rejected(self):
+        self.assertEqual(
+            classify_phrase("solid hands-on experience with backend systems"),
+            PhraseCategory.REJECT,
+        )
+
+    def test_experience_with_mechanism_noun_allowed_through_gate(self):
+        # "caching" is a _MECHANISM_SHAPED_NOUN → gate passes, ARCH wins
+        self.assertEqual(
+            classify_phrase("Strong caching layer performance"),
+            PhraseCategory.ARCH,
+        )
+
+    def test_experience_with_scaling_noun_allowed(self):
+        # "scaling" is a mechanism-shaped noun → gate passes; "horizontal scaling"
+        # matches _ARCH_KEYWORDS so phrase is ARCH overall.
+        self.assertEqual(
+            classify_phrase("proven horizontal scaling approach for high traffic"),
+            PhraseCategory.ARCH,
+        )
+
 
 # ---------------------------------------------------------------------------
 # _get_canonical_phrase (variant map)
@@ -273,6 +308,51 @@ class TestBuildMechanismTaxonomyCompat(unittest.TestCase):
         self.assertIn("operational", result)
         self.assertIn("rejected", result)
         self.assertIn("dedup_map", result)
+
+
+# ---------------------------------------------------------------------------
+# build_mechanism_taxonomy — B2 substring dedup
+# ---------------------------------------------------------------------------
+
+class TestSubstringDedupArch(unittest.TestCase):
+    """Shorter arch phrases that are substrings of longer ones are dropped (B2)."""
+
+    def _tax(self, phrases):
+        return build_mechanism_taxonomy(phrases)
+
+    def test_shorter_dropped_when_longer_present(self):
+        """Short 'database read replicas' dropped when long form is also present."""
+        result = self._tax([
+            "database read replicas",
+            "Database read replicas for read-heavy GET endpoints",
+        ])
+        arch = result["arch"]
+        self.assertEqual(len(arch), 1, f"Expected 1 arch phrase, got: {arch}")
+        self.assertIn("read-heavy", arch[0])
+
+    def test_different_phrases_both_kept(self):
+        """Non-overlapping phrases are both kept."""
+        result = self._tax([
+            "horizontal scaling of trading servers",
+            "Redis caching layer",
+        ])
+        self.assertEqual(len(result["arch"]), 2)
+
+    def test_equal_length_phrases_both_kept(self):
+        """Two phrases of the same normalized length are never dropped by this rule."""
+        result = self._tax(["Redis caching", "Kafka streaming"])
+        self.assertEqual(len(result["arch"]), 2)
+
+    def test_three_way_cascade(self):
+        """Of three nested phrases only the longest survives."""
+        result = self._tax([
+            "caching",
+            "Redis caching",
+            "Redis caching layer for session data",
+        ])
+        arch = result["arch"]
+        self.assertEqual(len(arch), 1, f"Only the longest should survive: {arch}")
+        self.assertIn("session data", arch[0])
 
 
 if __name__ == "__main__":

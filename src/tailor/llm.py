@@ -454,7 +454,7 @@ You will be given a WRITER_PACKET JSON as the first user message.
 It encodes hard constraints derived from the plan and source documents.
 You MUST follow all of these:
 - must_keep_metrics: every item MUST appear verbatim in the resume output.
-- must_surface_mechanisms: at least 4 MUST appear explicitly in the top 2
+- must_surface_arch_mechanisms: at least 4 MUST appear explicitly in the top 2
   roles. Use concrete names such as "read replicas", "horizontal scaling",
   "multi-layer caching", "async messaging", "stateless services", etc.
   Do NOT write "improved scalability" without naming the mechanism.

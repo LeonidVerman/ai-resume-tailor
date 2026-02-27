@@ -35,7 +35,7 @@ def _make_packet(
 ) -> dict:
     return {
         "must_keep_metrics": [],
-        "must_surface_mechanisms": [],
+        "must_surface_arch_mechanisms": [],
         "must_include_skills": must_include_skills or [],
         "allowed_skill_pool": ["Python", "Java"],
         "unsafe_jd_nouns": [],

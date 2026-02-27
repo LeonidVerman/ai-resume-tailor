@@ -1,17 +1,20 @@
 """Deterministic mechanism-enforcement post-processor for Phase 2.
 
 Runs after ``postprocess_token_compliance`` and injects named mechanism phrases
-from ``must_surface_mechanisms`` (WriterPacket) into existing bullet lines for
-roles that still fall short of their ``mechanism_min_by_priority`` target.
+from ``arch_mechanisms_primary`` (and ``arch_mechanisms_backstop`` as last resort)
+into existing bullet lines for roles that still fall short of their
+``mechanism_min_by_priority`` target.
 
 No LLM is involved: all injection is done by appending `` via {phrase}`` to
 a chosen existing bullet line.  The cover letter is never modified.
 
 Guarantees
 ----------
-- Only injects phrases from ``writer_packet["must_surface_mechanisms"]``.
+- Only injects phrases from ``writer_packet["arch_mechanisms_primary"]`` +
+  ``writer_packet["arch_mechanisms_backstop"]`` (primary pool exhausted first).
 - Never duplicates a phrase already present (case-insensitive) in a role block.
 - Never adds new lines; only modifies existing bullet lines.
+- Only injects into explicit bullet lines (starting with ``- `` or ``•``).
 - Phrases are distributed across deficit roles without reuse where possible.
 - A second safety-net pass is attempted if the first pass still leaves deficits.
 """
@@ -23,7 +26,6 @@ import logging
 from tailor.phase2_validator import (
     _RESUME_SECTION_HEADERS,
     _bullet_has_arch_mechanism,
-    _bullet_has_mechanism,
     _compute_effective_priorities,
     _is_date_line,
     _parse_roles,
@@ -76,10 +78,11 @@ def postprocess_mechanism_enforcement(
     output_json:
         Phase 2 output with keys ``resume`` and ``cover_letter``.
     writer_packet:
-        WriterPacket dict.  Keys used: ``must_surface_arch_mechanisms``
-        (falls back to ``must_surface_mechanisms`` for backward compat),
-        ``density_targets``, ``role_priorities``, ``role_source_bullet_counts``,
-        ``role_source_char_counts``, ``jd_is_delivery_oriented``.
+        WriterPacket dict.  Keys used: ``arch_mechanisms_primary``,
+        ``arch_mechanisms_backstop`` (falls back to ``must_surface_arch_mechanisms``
+        for older packets), ``density_targets``, ``role_priorities``,
+        ``role_source_bullet_counts``, ``role_source_char_counts``,
+        ``jd_is_delivery_oriented``.
     validation_report:
         Optional ValidationReport from the preceding validator run.  When
         provided, ``stats.role_mechanism_counts`` is used as the baseline
@@ -94,12 +97,15 @@ def postprocess_mechanism_enforcement(
     resume = output_json.get("resume") or ""
     cover_letter = output_json.get("cover_letter") or ""
 
-    # Prefer the typed arch list; fall back to legacy field for backward compat.
-    # Strategic/operational signals are NOT injected mechanically (spec §1.8).
-    must_surface: list[str] = writer_packet.get(
-        "must_surface_arch_mechanisms",
-        writer_packet.get("must_surface_mechanisms", []),
-    )
+    # Primary pool (profile-derived) is exhausted before backstop (safe_translation).
+    # Falls back to the flat must_surface_arch_mechanisms for older packets that
+    # do not carry provenance split fields.
+    primary: list[str] = writer_packet.get("arch_mechanisms_primary", [])
+    backstop: list[str] = writer_packet.get("arch_mechanisms_backstop", [])
+    if primary or backstop:
+        must_surface: list[str] = primary + backstop
+    else:
+        must_surface = writer_packet.get("must_surface_arch_mechanisms", [])
     if not must_surface:
         return {"resume": resume, "cover_letter": cover_letter}
 
@@ -301,21 +307,13 @@ def _find_experience_role_sections(
 
 
 def _is_bullet_line(line: str) -> bool:
-    """Return True for lines that contain bullet content.
+    """Return True only for explicit bullet-marker lines (``-`` or ``•``).
 
-    A line is a bullet line when it is non-empty, not a known section header,
-    and not a date/tenure line (e.g. "Nov 2025 - Present").  Bullet-prefix
-    markers (``-``, ``•``) are accepted but not required, matching the same
-    heuristic used in ``_parse_roles``.
+    Injection targets must have an explicit bullet prefix so that prose lines,
+    date lines, and section headers are never modified.
     """
     s = line.strip()
-    if not s:
-        return False
-    if s in _RESUME_SECTION_HEADERS:
-        return False
-    if _is_date_line(s):
-        return False
-    return True
+    return s.startswith("- ") or s.startswith("• ")
 
 
 def _inject_phrases_into_role_lines(

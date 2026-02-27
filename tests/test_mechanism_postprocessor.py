@@ -18,7 +18,9 @@ def _make_writer_packet(
     """Build a minimal writer_packet for testing."""
     role_priority_keys = role_priority_keys or []
     return {
-        "must_surface_mechanisms": must_surface,
+        "must_surface_arch_mechanisms": must_surface,
+        "arch_mechanisms_primary": must_surface,
+        "arch_mechanisms_backstop": [],
         "density_targets": {
             "mechanism_min_by_priority": {"high": mechanism_min, "medium": 1, "low": 0},
             "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
@@ -328,6 +330,120 @@ class TestInjectTrailingPunctuation(unittest.TestCase):
     def test_no_trailing_punctuation_unchanged(self):
         result = self._inject("- Improved system throughput", "Horizontal scaling")
         self.assertIn("throughput via horizontal scaling", result.lower())
+
+
+class TestPostprocessorPrimaryFirst(unittest.TestCase):
+    """Primary phrases are injected before backstop phrases (G2 / C1 / C2)."""
+
+    def _wp(self, primary: list[str], backstop: list[str], mechanism_min: int = 2) -> dict:
+        return {
+            "arch_mechanisms_primary": primary,
+            "arch_mechanisms_backstop": backstop,
+            "must_surface_arch_mechanisms": primary + backstop,
+            "density_targets": {
+                "mechanism_min_by_priority": {"high": mechanism_min, "medium": 1, "low": 0},
+                "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+            },
+            "role_priorities": {"Senior Engineer | Acme Corp": "high"},
+            "role_source_bullet_counts": {"Senior Engineer | Acme Corp": 5},
+            "role_source_char_counts": {"Senior Engineer | Acme Corp": 500},
+            "jd_is_delivery_oriented": False,
+        }
+
+    def _blank_resume(self) -> str:
+        return "\n".join([
+            "Experience",
+            "Senior Engineer | Acme Corp | 2022 - Present",
+            "- Built the ingestion pipeline from scratch",
+            "- Optimised batch processing runtime",
+            "- Shipped the analytics dashboard",
+            "- Coordinated stakeholder reviews",
+            "Education",
+        ])
+
+    def test_primary_satisfied_no_backstop_injected(self):
+        """When primary pool covers the deficit, no backstop phrase is injected (G2)."""
+        primary = ["horizontal scaling", "Redis caching"]
+        backstop = ["message queue", "circuit breaker"]
+        result = postprocess_mechanism_enforcement(
+            {"resume": self._blank_resume(), "cover_letter": ""},
+            self._wp(primary, backstop, mechanism_min=2),
+        )
+        block = result["resume"].lower()
+        self.assertIn("horizontal scaling", block, "Primary phrase 1 must be injected")
+        self.assertIn("redis caching", block, "Primary phrase 2 must be injected")
+        self.assertNotIn("message queue", block, "Backstop must not be injected")
+        self.assertNotIn("circuit breaker", block, "Backstop must not be injected")
+
+    def test_backstop_used_when_primary_exhausted(self):
+        """When primary pool is smaller than deficit, backstop fills the remainder (G2)."""
+        primary = ["horizontal scaling"]  # only 1; deficit is 2
+        backstop = ["message queue", "circuit breaker"]
+        result = postprocess_mechanism_enforcement(
+            {"resume": self._blank_resume(), "cover_letter": ""},
+            self._wp(primary, backstop, mechanism_min=2),
+        )
+        block = result["resume"].lower()
+        self.assertIn("horizontal scaling", block, "Primary phrase must be injected")
+        backstop_found = sum(1 for p in backstop if p.lower() in block)
+        self.assertEqual(backstop_found, 1, "Exactly one backstop phrase should fill the gap")
+
+
+class TestBulletGuard(unittest.TestCase):
+    """Postprocessor only injects into explicit bullet lines (C3)."""
+
+    def _wp(self, phrases: list[str]) -> dict:
+        return {
+            "arch_mechanisms_primary": phrases,
+            "arch_mechanisms_backstop": [],
+            "must_surface_arch_mechanisms": phrases,
+            "density_targets": {
+                "mechanism_min_by_priority": {"high": 1, "medium": 0, "low": 0},
+                "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+            },
+            "role_priorities": {"Dev | Corp": "high"},
+            "role_source_bullet_counts": {"Dev | Corp": 5},
+            "role_source_char_counts": {"Dev | Corp": 300},
+            "jd_is_delivery_oriented": False,
+        }
+
+    def test_prose_line_not_modified(self):
+        """A prose line without a bullet marker is never an injection target."""
+        resume = "\n".join([
+            "Experience",
+            "Dev | Corp | 2022 - Present",
+            "Designed the overall platform architecture.",  # prose — no - prefix
+            "- Shipped the payment integration module",
+            "- Mentored two junior engineers",
+            "- Led quarterly planning",
+            "Education",
+        ])
+        result = postprocess_mechanism_enforcement(
+            {"resume": resume, "cover_letter": ""},
+            self._wp(["horizontal scaling"]),
+        )
+        self.assertIn(
+            "Designed the overall platform architecture.",
+            result["resume"],
+            "Prose line must be unchanged",
+        )
+
+    def test_bullet_line_receives_injection(self):
+        """Explicit '- ' bullet lines are valid injection targets."""
+        resume = "\n".join([
+            "Experience",
+            "Dev | Corp | 2022 - Present",
+            "- Built the ingestion pipeline",
+            "- Optimised batch processing",
+            "- Shipped analytics dashboard",
+            "- Coordinated stakeholder reviews",
+            "Education",
+        ])
+        result = postprocess_mechanism_enforcement(
+            {"resume": resume, "cover_letter": ""},
+            self._wp(["horizontal scaling"]),
+        )
+        self.assertIn("horizontal scaling", result["resume"].lower())
 
 
 if __name__ == "__main__":

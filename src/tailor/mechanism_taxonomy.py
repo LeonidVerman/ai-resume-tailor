@@ -77,6 +77,28 @@ _REJECT_STARTS: tuple[str, ...] = (
     "familiar with", "versed in",
 )
 
+# Experience-statement gate (B1):
+# Phrases that open with a generic capability adjective or contain an experience
+# noun are rejected unless they also contain a mechanism-shaped noun (see below).
+# Prevents "Strong cloud infrastructure experience" from entering the ARCH bucket.
+_EXPERIENCE_ADJ_STARTS: tuple[str, ...] = (
+    "strong ", "proven ", "solid ", "hands-on ",
+)
+
+_EXPERIENCE_NOUN_KEYWORDS: tuple[str, ...] = (
+    "experience", "expertise", "familiarity", "knowledge of",
+)
+
+# Mechanism-shaped nouns that override the experience gate: if a phrase has
+# experience language AND one of these nouns, it may still be ARCH.
+# E.g. "Strong caching layer performance" → gate passes through → ARCH.
+_MECHANISM_SHAPED_NOUNS: frozenset[str] = frozenset({
+    "cache", "caching", "replica", "replication", "queue", "messaging",
+    "scaling", "sharding", "circuit breaker", "tracing", "load balancing",
+    "concurrency", "throughput", "latency", "rate limiting", "backpressure",
+    "connection pool", "transaction", "indexing", "partitioning",
+})
+
 
 # ---------------------------------------------------------------------------
 # Variant / canonicalization map
@@ -148,6 +170,16 @@ def classify_phrase(phrase: str) -> PhraseCategory:
         if p.startswith(pat):
             return PhraseCategory.REJECT
 
+    # 1.5 Experience-statement gate
+    # "Strong cloud infrastructure experience" → REJECT (no mechanism noun)
+    # "Strong caching layer performance" → allowed through (mechanism noun: caching)
+    has_exp_language = (
+        any(p.startswith(adj) for adj in _EXPERIENCE_ADJ_STARTS)
+        or any(kw in p for kw in _EXPERIENCE_NOUN_KEYWORDS)
+    )
+    if has_exp_language and not any(mn in p for mn in _MECHANISM_SHAPED_NOUNS):
+        return PhraseCategory.REJECT
+
     # 2. Arch: implementation-level patterns take priority
     for kw in _ARCH_KEYWORDS:
         if kw in p:
@@ -168,6 +200,32 @@ def classify_phrase(phrase: str) -> PhraseCategory:
 
     # 5. Unclassified → REJECT
     return PhraseCategory.REJECT
+
+
+# ---------------------------------------------------------------------------
+# Substring dedup helper (B2)
+# ---------------------------------------------------------------------------
+
+def _substring_dedup_arch(phrases: list[str]) -> list[str]:
+    """Drop arch phrases whose normalized form is a proper substring of another's norm.
+
+    Given phrases A and B where ``norm(A)`` is contained in ``norm(B)`` and
+    ``len(norm(B)) > len(norm(A))``, A is dropped in favour of the more specific B.
+    Insertion order of surviving phrases is preserved.
+
+    Example: "database read replicas" is dropped when
+    "Database read replicas for read-heavy GET endpoints" is also present.
+    """
+    norms = [_normalize_for_dedup(p) for p in phrases]
+    result: list[str] = []
+    for i, (phrase, norm_i) in enumerate(zip(phrases, norms)):
+        dominated = any(
+            j != i and norm_i in norm_j and len(norm_j) > len(norm_i)
+            for j, norm_j in enumerate(norms)
+        )
+        if not dominated:
+            result.append(phrase)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -262,6 +320,9 @@ def build_mechanism_taxonomy(
             operational.append(canonical)
         else:
             rejected.append(canonical)
+
+    # B2: drop shorter arch phrases subsumed by longer more-specific ones.
+    arch = _substring_dedup_arch(arch)
 
     return {
         "arch": arch,
