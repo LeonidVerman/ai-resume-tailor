@@ -135,3 +135,144 @@ Delivery-language injection
 Business framing preservation
 
 Mechanism retention logic
+
+====================================
+
+New System Improvement Ideas (Not Repeating Andela)
+
+Here are new issues specific to this run:
+
+1. “Architecture Collapse Under Managerial Tone” Problem
+
+In this run, the writer removed most architectural mechanisms because JD emphasized management.
+
+Your system needs:
+
+If arch_weight >= 0.6, never remove mechanism-level depth even when JD emphasizes management.
+
+Currently the generator overreacts to leadership signals.
+
+2. Metric Dropout During Rewrite
+
+The generator dropped:
+
+20%
+
+some strong mechanism signals
+
+Add rule:
+
+If metric appears in MASTER_RESUME and also in must_keep_metrics, it must be preserved unless explicitly contradicted by density limits.
+
+This prevents silent erosion.
+
+3. AI Theme Drift
+
+JD asked for:
+“Own AI-powered product from concept to production”
+
+Your system correctly avoided hallucination.
+
+But it didn’t:
+
+Strengthen AI relevance via safe_translation
+
+Add heuristic:
+
+If JD asks for AI product leadership but only AI lab contractor exists, auto-inject safe translation sentence tying ambiguity handling and AI tooling to product iteration.
+
+This keeps alignment without inflation.
+
+4. Missing “Short Feedback Loop” Language
+
+JD explicitly mentions:
+
+rapid iteration
+
+short feedback loops
+
+Your candidate profile supports:
+
+meeting deadlines
+
+ambiguity
+
+evaluation loops
+
+Add micro-library:
+
+If JD contains:
+
+rapid iteration
+
+feedback loop
+
+Inject:
+
+“short feedback loops”
+
+“iteration under evolving requirements”
+
+These are safe additions.
+
+5. Leadership Practice Underuse
+
+You have strong leadership practice data in profile:
+
+transparent_decision_making
+
+clear_task_definition
+
+code_review_as_collaborative_quality_process
+
+But writer rarely surfaces these unless JD strongly forces it.
+
+Add rule:
+
+For managerial roles, automatically inject 1 explicit leadership practice bullet from candidate_profile.leadership.practices.
+
+6. AI Tools Underutilized
+
+Plata role is AI-heavy.
+
+Your profile includes:
+
+RAG
+
+vector_databases
+
+model evaluation
+
+A/B tests
+
+But generator avoided these.
+
+Add rule:
+
+When JD mentions AI-driven features, include one concept-level AI familiarity (e.g., RAG, model evaluation) without claiming production ownership.
+
+This increases perceived relevance safely.
+
+Final Assessment
+
+This run was:
+
+Safe
+
+Honest
+
+But under-optimized
+
+It leaned too conservative on architecture.
+
+After the upgrades above, the resume will:
+
+Keep metrics
+
+Keep mechanisms
+
+Strengthen AI alignment
+
+Elevate leadership tone
+
+Without crossing into hallucination territory.
