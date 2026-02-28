@@ -16,8 +16,23 @@ from __future__ import annotations
 import logging
 import re
 from datetime import date
+from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Ledger validation error prefixes (exported for use by llm.py)
+# ---------------------------------------------------------------------------
+
+#: Prefix for errors where exact_span is in the doc but differs from target.
+#: These errors are judge-eligible after the repair loop.
+LEDGER_MISMATCH_ERROR_PREFIX: str = "LEDGER_SPAN_MISMATCH"
+
+#: Prefix for errors where the ledger's exact_span is not found in the document.
+LEDGER_SPAN_NOT_FOUND_PREFIX: str = "LEDGER_SPAN_NOT_FOUND"
+
+#: Prefix for errors where a required item has no ledger entry at all.
+LEDGER_ENTRY_MISSING_PREFIX: str = "LEDGER_ENTRY_MISSING"
 
 # ---------------------------------------------------------------------------
 # Mechanism keyword set — LEGACY FALLBACK only.
@@ -115,6 +130,196 @@ _RESUME_SECTION_HEADERS: frozenset[str] = frozenset(
 
 
 # ---------------------------------------------------------------------------
+# Ledger-driven validation helpers
+# ---------------------------------------------------------------------------
+
+def _build_ledger_index(evidence_ledger: dict) -> dict[tuple[str, str], dict]:
+    """Return ``{(kind, target): entry}`` from ``evidence_ledger.entries``.
+
+    When multiple entries share the same ``(kind, target)``, the last one wins.
+    Unknown/empty kinds or targets are silently skipped.
+    """
+    index: dict[tuple[str, str], dict] = {}
+    for entry in evidence_ledger.get("entries", []):
+        kind = entry.get("kind", "")
+        target = entry.get("target", "")
+        if kind and target:
+            index[(kind, target)] = entry
+    return index
+
+
+def _check_ledger_honesty(entry: dict, resume: str, cover_letter: str) -> bool:
+    """Return True if ``exact_span`` is a substring of the expected document(s).
+
+    Location semantics:
+        - ``"resume"``       → span must appear in *resume*.
+        - ``"cover_letter"`` → span must appear in *cover_letter*.
+        - ``"both"``         → span must appear in at least one of the two.
+
+    An empty ``exact_span`` always returns False.
+    Matching is case-insensitive.
+    """
+    span = entry.get("exact_span", "")
+    if not span:
+        return False
+    location = entry.get("location", "")
+    span_lower = span.lower()
+    if location == "resume":
+        return span_lower in resume.lower()
+    if location == "cover_letter":
+        return span_lower in cover_letter.lower()
+    if location == "both":
+        return span_lower in resume.lower() or span_lower in cover_letter.lower()
+    return False
+
+
+def _check_ledger_requirement(
+    kind: str,
+    target: str,
+    ledger_index: dict[tuple[str, str], dict],
+    resume: str,
+    cover_letter: str,
+) -> dict[str, Any]:
+    """Evaluate one required item against the ledger and return a result dict.
+
+    Return keys
+    -----------
+    satisfied : bool
+        True when honesty passes **and** ``exact_span`` case-insensitively
+        matches ``target`` (fully resolved — no judge needed).
+    mismatch : bool
+        True when honesty passes but ``exact_span != target`` (judge-eligible).
+    error : str
+        Non-empty when neither satisfied nor mismatch.
+    entry_id : str
+        Ledger entry ``id`` (empty when no entry).
+    location : str
+        Ledger entry ``location`` (empty when no entry).
+    span : str
+        ``exact_span`` from ledger (empty when no entry).
+    """
+    entry = ledger_index.get((kind, target))
+    if entry is None:
+        return {
+            "satisfied": False,
+            "mismatch": False,
+            "error": (
+                f"{LEDGER_ENTRY_MISSING_PREFIX} for {kind} '{target}': "
+                f"no ledger entry provided"
+            ),
+            "entry_id": "",
+            "location": "",
+            "span": "",
+        }
+
+    location = entry.get("location", "")
+    exact_span = entry.get("exact_span", "")
+    entry_id = entry.get("id", f"{kind}_{target}")
+
+    if location == "missing":
+        return {
+            "satisfied": False,
+            "mismatch": False,
+            "error": (
+                f"Required {kind.replace('_', ' ')} '{target}' is missing per ledger"
+            ),
+            "entry_id": entry_id,
+            "location": location,
+            "span": exact_span,
+        }
+
+    if not _check_ledger_honesty(entry, resume, cover_letter):
+        return {
+            "satisfied": False,
+            "mismatch": False,
+            "error": (
+                f"{LEDGER_SPAN_NOT_FOUND_PREFIX}: exact_span {exact_span!r} "
+                f"for {kind} '{target}' not found in {location}"
+            ),
+            "entry_id": entry_id,
+            "location": location,
+            "span": exact_span,
+        }
+
+    # Honesty check passes — compare wording
+    if exact_span.lower() == target.lower():
+        return {
+            "satisfied": True,
+            "mismatch": False,
+            "error": "",
+            "entry_id": entry_id,
+            "location": location,
+            "span": exact_span,
+        }
+
+    # Honesty passes but wording differs → judge-eligible mismatch
+    return {
+        "satisfied": False,
+        "mismatch": True,
+        "error": "",
+        "entry_id": entry_id,
+        "location": location,
+        "span": exact_span,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Post-judge application
+# ---------------------------------------------------------------------------
+
+def apply_judge_to_validation(
+    report: dict,
+    judge_verdicts: dict[str, bool],
+) -> dict:
+    """Return an updated ValidationReport with judge-approved mismatches cleared.
+
+    Parameters
+    ----------
+    report:
+        The ValidationReport produced by ``validate_phase2_output``.
+    judge_verdicts:
+        ``{candidate_id: verdict_bool}`` from the judge.
+        ``True`` means the mismatch is semantically approved.
+
+    Returns
+    -------
+    An updated copy of ``report`` with approved ``LEDGER_SPAN_MISMATCH`` errors
+    removed.  ``ok`` is recomputed.  Each ``judge_candidates`` entry gains a
+    ``judge_verdict`` key with the corresponding boolean (or ``None``).
+    """
+    if not judge_verdicts:
+        return report
+
+    approved_ids = {cid for cid, ok in judge_verdicts.items() if ok}
+    if not approved_ids:
+        return report
+
+    _prefix_bracket = LEDGER_MISMATCH_ERROR_PREFIX + "["
+    new_errors: list[str] = []
+    for err in report.get("errors", []):
+        if err.startswith(_prefix_bracket):
+            try:
+                bracket_end = err.index("]")
+                error_id = err[len(_prefix_bracket): bracket_end]
+                if error_id in approved_ids:
+                    continue  # judge approved — remove this error
+            except ValueError:
+                pass  # malformed prefix — keep the error
+        new_errors.append(err)
+
+    updated_candidates = [
+        {**c, "judge_verdict": judge_verdicts.get(c.get("id", ""))}
+        for c in report.get("judge_candidates", [])
+    ]
+
+    updated = dict(report)
+    updated["errors"] = new_errors
+    updated["ok"] = len(new_errors) == 0
+    updated["judge_candidates"] = updated_candidates
+    return updated
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -124,10 +329,12 @@ def validate_phase2_output(
     cover_letter: str,
     current_date: str,
     now: date | None = None,
+    evidence_ledger: dict | None = None,
 ) -> dict:
     """Check Phase 2 output against WriterPacket constraints.
 
-    Returns a ValidationReport dict with keys: ok, errors, warnings, stats.
+    Returns a ValidationReport dict with keys:
+        ok, errors, warnings, stats, repair_brief, judge_candidates, ledger_findings.
     ``ok`` is True only when there are no errors.
 
     Density is enforced per effective priority:
@@ -144,12 +351,27 @@ def validate_phase2_output(
     ----------
     now:
         Reference date for very-old-role detection.  Defaults to today.
+    evidence_ledger:
+        Optional evidence ledger produced by the Phase 2 writer.  When
+        provided, required-skill and required-metric checks use ledger-driven
+        validation (allowing rewording) instead of verbatim substring search.
+        Unsafe-noun enforcement is always verbatim regardless of the ledger.
     """
     if now is None:
         now = date.today()
 
     errors: list[str] = []
     warnings: list[str] = []
+
+    # --- Ledger setup ---
+    judge_candidates: list[dict] = []
+    ledger_index: dict[tuple[str, str], dict] = {}
+    if evidence_ledger is not None:
+        ledger_index = _build_ledger_index(evidence_ledger)
+    ledger_findings: dict = {
+        "ledger_present": evidence_ledger is not None,
+        "entry_count": len(ledger_index),
+    }
 
     role_level: str = writer_packet.get("role_level", "senior")
     role_priorities: dict[str, str] = writer_packet.get("role_priorities", {})
@@ -184,16 +406,42 @@ def validate_phase2_output(
         jd_is_delivery_oriented,
     )
 
-    # --- 1. Metrics preservation (unchanged) ---
+    # --- 1. Metrics preservation ---
     metrics_found: list[str] = []
     missing_metrics: list[str] = []
-    for metric in writer_packet.get("must_keep_metrics", []):
-        if _metric_found(metric, resume):
-            metrics_found.append(metric)
-        else:
-            missing_metrics.append(metric)
-    if missing_metrics:
-        errors.append(f"Missing required metrics: {', '.join(missing_metrics)}")
+    if evidence_ledger is not None:
+        for metric in writer_packet.get("must_keep_metrics", []):
+            res = _check_ledger_requirement(
+                "required_metric", metric, ledger_index, resume, cover_letter
+            )
+            if res["satisfied"]:
+                metrics_found.append(metric)
+            elif res["mismatch"]:
+                entry_id = res["entry_id"]
+                errors.append(
+                    f"{LEDGER_MISMATCH_ERROR_PREFIX}[{entry_id}]: "
+                    f"target '{metric}', span '{res['span']}' "
+                    f"in {res['location']} (judge-eligible)"
+                )
+                judge_candidates.append({
+                    "id": entry_id,
+                    "kind": "required_metric",
+                    "target": metric,
+                    "location": res["location"],
+                    "exact_span": res["span"],
+                })
+                missing_metrics.append(metric)
+            else:
+                errors.append(res["error"])
+                missing_metrics.append(metric)
+    else:
+        for metric in writer_packet.get("must_keep_metrics", []):
+            if _metric_found(metric, resume):
+                metrics_found.append(metric)
+            else:
+                missing_metrics.append(metric)
+        if missing_metrics:
+            errors.append(f"Missing required metrics: {', '.join(missing_metrics)}")
 
     # --- 2. Priority-based bullet density + mechanism density ---
     role_bullet_counts: dict[str, int] = {}
@@ -303,21 +551,63 @@ def validate_phase2_output(
             )
         prev_display_priority = display_priority
 
-    # --- 3. Required skills retention (unchanged) ---
+    # --- 3. Required skills retention ---
     missing_required_skills: list[str] = []
-    for skill in writer_packet.get("must_include_skills", []):
-        if skill.lower() not in skills_text.lower():
-            missing_required_skills.append(skill)
-    if missing_required_skills:
-        errors.append(f"Missing required skills: {', '.join(missing_required_skills)}")
+    if evidence_ledger is not None:
+        for skill in writer_packet.get("must_include_skills", []):
+            res = _check_ledger_requirement(
+                "required_skill", skill, ledger_index, resume, cover_letter
+            )
+            if res["satisfied"]:
+                pass  # fully resolved
+            elif res["mismatch"]:
+                entry_id = res["entry_id"]
+                errors.append(
+                    f"{LEDGER_MISMATCH_ERROR_PREFIX}[{entry_id}]: "
+                    f"target '{skill}', span '{res['span']}' "
+                    f"in {res['location']} (judge-eligible)"
+                )
+                judge_candidates.append({
+                    "id": entry_id,
+                    "kind": "required_skill",
+                    "target": skill,
+                    "location": res["location"],
+                    "exact_span": res["span"],
+                })
+                missing_required_skills.append(skill)
+            else:
+                errors.append(res["error"])
+                missing_required_skills.append(skill)
+    else:
+        for skill in writer_packet.get("must_include_skills", []):
+            if skill.lower() not in skills_text.lower():
+                missing_required_skills.append(skill)
+        if missing_required_skills:
+            errors.append(f"Missing required skills: {', '.join(missing_required_skills)}")
 
-    # --- 4. Unsafe JD nouns (unchanged) ---
+    # --- 4. Unsafe JD nouns ---
+    # Primary enforcement: always verbatim.  The ledger adds an extra honesty
+    # check: if the ledger claims an unsafe noun is present, that is also an error.
     allowed_pool_lower = {s.lower() for s in writer_packet.get("allowed_skill_pool", [])}
     unsafe_terms_found: list[str] = []
     for term in writer_packet.get("unsafe_jd_nouns", []):
         term_lower = term.lower()
-        if term_lower in resume.lower() and term_lower not in allowed_pool_lower:
+        verbatim_present = term_lower in resume.lower() and term_lower not in allowed_pool_lower
+        if verbatim_present:
             unsafe_terms_found.append(term)
+        # Ledger safety check: if ledger entry claims the noun is present, flag it.
+        if evidence_ledger is not None:
+            unsafe_entry = ledger_index.get(("unsafe_noun_check", term))
+            if (
+                unsafe_entry is not None
+                and unsafe_entry.get("location", "missing") != "missing"
+            ):
+                errors.append(
+                    f"LEDGER_UNSAFE_PRESENT: ledger claims unsafe noun '{term}' "
+                    f"is at {unsafe_entry.get('location')} (must be absent)"
+                )
+                if term not in unsafe_terms_found:
+                    unsafe_terms_found.append(term)
     if unsafe_terms_found:
         errors.append(
             f"Unsafe JD nouns found in resume: {', '.join(unsafe_terms_found)}"
@@ -362,6 +652,8 @@ def validate_phase2_output(
         "roles": repair_roles,
     }
 
+    ledger_findings["judge_candidate_count"] = len(judge_candidates)
+
     return {
         "ok": len(errors) == 0,
         "errors": errors,
@@ -377,6 +669,8 @@ def validate_phase2_output(
             "operational_signal_count": operational_signal_count,
         },
         "repair_brief": repair_brief,
+        "judge_candidates": judge_candidates,
+        "ledger_findings": ledger_findings,
     }
 
 

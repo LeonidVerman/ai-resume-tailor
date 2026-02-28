@@ -420,9 +420,10 @@ class TestPhase2PromptSelection:
         )
 
     def test_phase2_prompt_file_has_version_header(self):
-        """The phase2.txt file on disk contains the expected version header prefix."""
+        """The phase2.txt file on disk contains a recognised version header prefix."""
         from tailor.prompts import _load_prompt
         content = _load_prompt("phase2")
-        assert "[TAILOR_PHASE2_WRITER v" in content, (
-            "phase2.txt must contain a '[TAILOR_PHASE2_WRITER v...]' version header"
+        valid_headers = ("[TAILOR_PHASE2_WRITER v", "[PHASE2_WRITER_LAYER v")
+        assert any(h in content for h in valid_headers), (
+            f"phase2.txt must contain one of {valid_headers} as a version header"
         )

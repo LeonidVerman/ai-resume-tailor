@@ -9,10 +9,12 @@ from typing import Any
 from openai import OpenAI
 
 from tailor.config import (
+    ENABLE_PHASE2_JUDGE,
     PHASE1_MAX_TOKENS,
     PHASE1_MODEL,
     PHASE1_REPAIR_TEMPERATURE,
     PHASE1_TEMPERATURE,
+    PHASE2_JUDGE_MODEL,
     PHASE2_MAX_REPAIR_ATTEMPTS,
     PHASE2_MAX_TOKENS,
     PHASE2_MODEL,
@@ -22,7 +24,11 @@ from tailor.config import (
 )
 from tailor.plan_validator import validate_plan_extended
 from tailor.job import JobData
-from tailor.phase2_validator import validate_phase2_output
+from tailor.phase2_validator import (
+    LEDGER_MISMATCH_ERROR_PREFIX,
+    apply_judge_to_validation,
+    validate_phase2_output,
+)
 from tailor.prompts import _load_candidate_profile, _load_prompt, _load_prompt_optional
 from tailor.writer_packet import build_writer_packet
 
@@ -512,11 +518,13 @@ def tailor_documents_with_plan(
         profile_str, task, current_date,
     )
 
+    current_ledger: dict | None = attempt1_meta.get("evidence_ledger")
     validation1 = validate_phase2_output(
         writer_packet,
         result.resume or "",
         result.cover_letter or "",
         current_date,
+        evidence_ledger=current_ledger,
     )
 
     attempts = [
@@ -526,6 +534,7 @@ def tailor_documents_with_plan(
             "validation_report": validation1,
             "model": attempt1_meta["model"],
             "usage": attempt1_meta["usage"],
+            "evidence_ledger": current_ledger,
         }
     ]
 
@@ -539,12 +548,15 @@ def tailor_documents_with_plan(
         repair_result, repair_messages, repair_meta = _run_phase2_repair(
             writer_packet, plan, job, resume_template, cover_template,
             profile_str, task, current_date, current_validation, current_result,
+            draft_ledger=current_ledger,
         )
+        current_ledger = repair_meta.get("evidence_ledger")
         repair_validation = validate_phase2_output(
             writer_packet,
             repair_result.resume or "",
             repair_result.cover_letter or "",
             current_date,
+            evidence_ledger=current_ledger,
         )
         attempts.append(
             {
@@ -553,6 +565,7 @@ def tailor_documents_with_plan(
                 "validation_report": repair_validation,
                 "model": repair_meta["model"],
                 "usage": repair_meta["usage"],
+                "evidence_ledger": current_ledger,
             }
         )
         current_result = repair_result
@@ -560,6 +573,28 @@ def tailor_documents_with_plan(
 
     final_result = current_result
     final_validation = current_validation
+
+    # --- Judge round: post-repair semantic verification for ledger mismatches ---
+    judge_round_meta: dict = {}
+    if (
+        not final_validation["ok"]
+        and ENABLE_PHASE2_JUDGE
+        and final_validation.get("judge_candidates")
+        and any(
+            LEDGER_MISMATCH_ERROR_PREFIX in e
+            for e in final_validation.get("errors", [])
+        )
+    ):
+        judge_verdicts, judge_meta = _run_judge_round(
+            final_validation["judge_candidates"],
+            final_result,
+            job,
+        )
+        judge_round_meta = {"judge_verdicts": judge_verdicts, "judge_meta": judge_meta}
+        if judge_verdicts:
+            final_validation = apply_judge_to_validation(final_validation, judge_verdicts)
+            if final_validation["ok"]:
+                logger.info("Phase 2 validation passed after judge round.")
 
     if not final_validation["ok"]:
         logger.warning(
@@ -576,6 +611,7 @@ def tailor_documents_with_plan(
         "attempts": attempts,
         "final_validation_ok": final_validation["ok"],
         "phase2_prompt_name": attempt1_meta.get("phase2_prompt_name", "tailor"),
+        "judge_round": judge_round_meta,
     }
 
     return final_result, attempt1_messages, debug_meta
@@ -675,14 +711,19 @@ def _run_phase2_repair(
     current_date: str,
     validation_report: dict,
     draft: TailorResult,
+    draft_ledger: dict | None = None,
 ) -> tuple[TailorResult, list, dict]:
     """Execute a repair pass using the phase2_repair.txt prompt."""
     repair_instructions = _load_prompt("phase2_repair")
 
-    working_output = json.dumps(
-        {"resume": draft.resume or "", "cover_letter": draft.cover_letter or ""},
-        indent=2,
-    )
+    working_output_dict: dict = {
+        "resume": draft.resume or "",
+        "cover_letter": draft.cover_letter or "",
+    }
+    if draft_ledger is not None:
+        working_output_dict["evidence_ledger"] = draft_ledger
+    working_output = json.dumps(working_output_dict, indent=2)
+
     validation_errors = validation_report.get("errors", [])
     repair_brief = validation_report.get("repair_brief", {})
 
@@ -726,13 +767,99 @@ def _parse_phase2_response(response: Any, model: str) -> tuple[TailorResult, lis
         cover_letter=raw.get("cover_letter"),
     )
     usage = _extract_usage(response)
-    meta = {
+    meta: dict = {
         "model": model,
         "usage": usage,
         "raw_response": raw_content,
     }
+    # Extract evidence_ledger when the LLM included it
+    ledger = raw.get("evidence_ledger")
+    if isinstance(ledger, dict):
+        meta["evidence_ledger"] = ledger
     # messages not available here; callers own their message lists
     return result, [], meta
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 judge round
+# ---------------------------------------------------------------------------
+
+def _run_judge_round(
+    judge_candidates: list[dict],
+    result: TailorResult,
+    job: JobData,
+) -> tuple[dict[str, bool], dict]:
+    """Call the judge model to semantically verify ledger-span mismatches.
+
+    Only called after all writer + repair attempts have been exhausted and
+    at least one ``LEDGER_SPAN_MISMATCH`` error remains.
+
+    Parameters
+    ----------
+    judge_candidates:
+        Items from ``ValidationReport.judge_candidates`` — entries where
+        honesty check passed but ``exact_span != target``.
+    result:
+        The final TailorResult (resume + cover_letter text).
+    job:
+        Job data (used for job description context).
+
+    Returns
+    -------
+    verdicts:
+        ``{candidate_id: True/False}`` — True means semantically approved.
+    meta:
+        Debug info: model, usage, raw_response.
+    """
+    judge_instructions = _load_prompt_optional("judge").strip()
+    if not judge_instructions:
+        logger.warning("prompts/judge.txt not found; skipping judge round.")
+        return {}, {}
+
+    # Cap candidates to avoid excessive context usage (spec: up to 20 entries)
+    candidates = judge_candidates[:20]
+
+    messages: list = [
+        {"role": "developer", "content": judge_instructions},
+        {"role": "user", "content": f"TARGETS_TO_CHECK:\n{json.dumps(candidates, indent=2)}"},
+        {"role": "user", "content": f"RESUME_TEXT:\n{result.resume or ''}"},
+        {"role": "user", "content": f"COVER_LETTER_TEXT:\n{result.cover_letter or ''}"},
+        {"role": "user", "content": f"JOB_DESCRIPTION:\n{job.description}"},
+    ]
+
+    response = get_client().chat.completions.create(
+        model=PHASE2_JUDGE_MODEL,
+        messages=messages,
+        temperature=0.0,
+        response_format={"type": "json_object"},
+    )
+
+    raw_content = response.choices[0].message.content
+    usage = _extract_usage(response)
+    meta = {
+        "model": PHASE2_JUDGE_MODEL,
+        "usage": usage,
+        "raw_response": raw_content,
+    }
+
+    try:
+        raw = json.loads(raw_content)
+        results_list = raw.get("results", [])
+        verdicts: dict[str, bool] = {
+            r["id"]: r.get("verdict", "no") == "yes"
+            for r in results_list
+            if isinstance(r, dict) and "id" in r
+        }
+    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+        logger.warning("Judge response could not be parsed (%s); all rejected.", exc)
+        verdicts = {}
+
+    logger.info(
+        "Judge round: %d candidate(s) evaluated, %d approved.",
+        len(candidates),
+        sum(1 for v in verdicts.values() if v),
+    )
+    return verdicts, meta
 
 
 # ---------------------------------------------------------------------------

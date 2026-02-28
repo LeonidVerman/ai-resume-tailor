@@ -49,7 +49,7 @@
     }
   ],
   "technical_skills": {
-    "languages": ["Java", "C#", "Python", "TypeScript", "C#", "VBA"],
+    "languages": ["Java", "C#", "Python", "TypeScript", "VBA"],
     "backend_systems": [
       "high-throughput APIs",
       "distributed systems",
@@ -61,7 +61,7 @@
     "datastores": ["MySQL", "PostgreSQL", "Redis", "Oracle"],
     "infra_devops": ["AWS", "Docker", "Kubernetes", "CI/CD"],
     "api_patterns": ["REST", "WebSockets"],
-    "async_messaging": ["message_queues", "idempotent_processing", "retry_safe_design", "Kafka", "Rabbit MQ"],
+    "async_messaging": ["message_queues", "idempotent_processing", "retry_safe_design", "Kafka", "RabbitMQ"],
     "observability": ["metrics_logs_tracing_mindset"]
   },
   "authz_authn_experience": {
@@ -112,7 +112,7 @@
       "investigating_problems_and_root_causes",
       "rapid_learning_of_new_tools_and_tech",
       "model_evaluation",
-      "A_B_tests",
+      "A_B_tests"
     ],
     "principles": [
       "engineer_remains_accountable",

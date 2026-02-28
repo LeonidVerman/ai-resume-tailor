@@ -35,3 +35,7 @@ PHASE2_REPAIR_TEMPERATURE: float = float(os.environ.get("PHASE2_REPAIR_TEMPERATU
 PHASE1_MAX_TOKENS: int = int(os.environ.get("PHASE1_MAX_TOKENS", "8000"))
 PHASE2_MAX_TOKENS: int = int(os.environ.get("PHASE2_MAX_TOKENS", "8000"))
 PHASE2_MAX_REPAIR_ATTEMPTS: int = int(os.environ.get("PHASE2_MAX_REPAIR_ATTEMPTS", "3"))
+
+# --- Phase 2 judge model (post-repair semantic verification) ---
+PHASE2_JUDGE_MODEL: str = os.environ.get("PHASE2_JUDGE_MODEL", "gpt-4o-mini")
+ENABLE_PHASE2_JUDGE: bool = os.environ.get("ENABLE_PHASE2_JUDGE", "true").lower() not in ("0", "false", "no")
