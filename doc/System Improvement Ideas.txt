@@ -1,0 +1,137 @@
+3. System Improvement Ideas (Very Important)
+
+Based on this run, here are structural insights for improving your generator.
+
+A. Add “Delivery Elevation Layer” for Delivery Roles
+
+Right now your system is architecture-heavy.
+
+For delivery roles, add a planner rule:
+
+If JD includes:
+
+delivery
+
+portfolio
+
+stakeholder
+
+engagement
+
+outcome-based
+
+risk
+
+trade-off
+
+Then force insertion of:
+
+delivery predictability
+
+delivery stability
+
+trade-off balancing
+
+accountability for outcomes
+
+cross-functional alignment
+
+These phrases can be truth-preserving reinterpretations.
+
+B. Reinstate Mechanisms When arch_weight > 0.6
+
+This Andela run removed mechanisms.
+
+Given:
+
+arch_weight = 0.7
+
+Mechanisms should never disappear.
+
+Add rule:
+
+If arch_weight >= 0.6, at least 2 mechanism bullets must survive in highest-priority role.
+
+C. Add “Business Impact Reinforcement”
+
+Your generator tends to accidentally remove:
+
+Top-5
+
+#1
+
+Market positioning signals
+
+Add rule:
+
+Any market ranking metric must never be removed unless JD contradicts it.
+
+These are gold signals.
+
+D. Add “Trade-Off Injection” Heuristic
+
+For senior/delivery roles:
+
+If JD contains “risk”, “trade-off”, “quality”, “stability”:
+
+Inject one truthful trade-off sentence from constraints_and_tradeoffs.
+
+You have this data in candidate_profile but system underuses it.
+
+E. Cover Letter Tone Adjuster
+
+Add simple tone control:
+
+If role_level == senior AND JD contains “delivery manager”:
+
+Tone = “ownership and governance”
+
+Avoid pure technical emphasis
+
+Force at least 1 paragraph about:
+
+delivery accountability
+
+risk balancing
+
+stakeholder alignment
+
+F. Summary Needs Stronger Business Framing
+
+Your summaries are too generic.
+
+Add rule:
+
+First sentence must include scale signal (1M+, top-5, throughput %, team size).
+
+This instantly raises seniority perception.
+
+G. Add “Stakeholder Reframe Library”
+
+You avoid claiming VP/C-level partnership (correct).
+
+But you can truthfully say:
+
+“aligned engineering execution with business objectives”
+
+“worked closely with product and leadership”
+
+“ensured delivery aligned with regulatory and market requirements”
+
+Add these as safe translations.
+
+Final Take
+
+You are VERY close to having a production-ready AI resume system.
+
+Your remaining gap is not hallucination control.
+
+It’s:
+
+Strategic emphasis tuning
+
+Delivery-language injection
+
+Business framing preservation
+
+Mechanism retention logic

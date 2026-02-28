@@ -45,72 +45,91 @@ REPAIR PRINCIPLES
 - Fix only what is required to pass validation, but fix it meaningfully.
 - Do not satisfy constraints by mechanically appending unrelated phrases.
 - Prefer rewriting a bullet so it naturally includes required tokens rather than tacking them onto the end.
+- Never fabricate ledger spans. Ledger must reflect the actual final output.
 
 REPAIR ORDER
-1) Cover letter date and structure:
+
+1) Cover letter date and structure
 - cover_letter must start with CURRENT_DATE on its own line.
 
-2) Unsafe JD nouns:
+2) Unsafe JD nouns
 - If unsafe_jd_nouns are present, remove them verbatim.
 - Replace using safe_translation if available; otherwise use neutral supported phrasing.
 - Final scan: no unsafe_jd_nouns may appear verbatim anywhere.
 
-3) Required skills and metrics (verbatim tokens):
+3) Required skills and metrics
 - For each missing required skill token in REPAIR_BRIEF:
-  - Ensure the exact token appears in the resume (prefer Skills section).
+  - Ensure the concept is present in the resume.
+  - Exact wording may differ, but must be truthful and supported.
 - For each missing required metric token in REPAIR_BRIEF:
-  - Ensure the exact token appears in a truthful place (usually the role bullet or summary).
-- Do not change the meaning. Only adjust phrasing so the exact token is present.
+  - Ensure the metric fact is present truthfully.
+- Do not distort meaning.
+- If using rewording, ensure ledger exact_span matches the actual wording used.
 
-4) Bullet count failures per role:
+4) Bullet count failures per role
 - If a role is short on bullets:
-  - First split a compound bullet into two meaningful bullets.
-  - If still short and allowance permits, add minimal supported bullets grounded in evidence/allowed claims.
+  - First split compound bullets into two meaningful bullets.
+  - If still short and allowance permits, add minimal supported bullets grounded in evidence.
+  - Do not invent new responsibilities.
 
-5) Mechanism requirements per role:
+5) Mechanism requirements per role (role-targeted enforcement)
 - Only enforce mechanisms if WRITER_PACKET.must_surface_arch_mechanisms is non-empty.
-- Integrate mechanisms meaningfully into relevant bullets. Do not create absurd combinations.
+- Mechanisms must be inserted into the specific failing role mentioned in REPAIR_BRIEF.
+- Do not insert mechanisms into unrelated roles.
+- Do not combine unrelated mechanisms in a single sentence.
+- Use exact phrases from WRITER_PACKET.must_surface_arch_mechanisms.
+- Integrate them naturally into relevant bullets within that role.
 
-EVIDENCE LEDGER REQUIREMENTS (must be accurate)
-Update evidence_ledger to match the final output.
+EVIDENCE LEDGER REQUIREMENTS (template-driven and strict)
 
-Evidence ledger structure must be:
+The ledger must include entries for ALL required items, even if missing.
+
+You must construct ledger entries using this template logic:
+
+1) For every WRITER_PACKET.must_include_skills:
+   - Ensure there is exactly one entry of kind "required_skill".
+2) For every WRITER_PACKET.must_keep_metrics (if present):
+   - Ensure there is exactly one entry of kind "required_metric".
+3) For every WRITER_PACKET.unsafe_jd_nouns (if present):
+   - Ensure there is exactly one entry of kind "unsafe_noun_check".
+
+If WORKING_OUTPUT_JSON already contains ledger entries:
+- Reuse existing ids.
+- Update location and exact_span to reflect the final text.
+- Do not drop required entries.
+
+Ledger entry structure:
+
 {
-  "entries": [
-    {
-      "id": "REQ_SKILL_1",
-      "kind": "required_skill",
-      "target": "AI-assisted coding tools",
-      "location": "resume",
-      "exact_span": "AI-assisted coding tools",
-      "notes": ""
-    }
-  ]
+  "id": "REQ_SKILL_1",
+  "kind": "required_skill",
+  "target": "AI-assisted coding tools",
+  "location": "resume|cover_letter|both|missing",
+  "exact_span": "exact substring from output or empty string",
+  "notes": ""
 }
 
-Rules:
-- exact_span must be an exact substring copied from resume or cover_letter.
-- If a required token is still missing, set location="missing" and exact_span="" and explain in notes.
-- For unsafe nouns, location must be "missing" if they do not appear (this is the desired state).
-- Include entries for:
-  - all WRITER_PACKET.must_include_skills (required_skill)
-  - all WRITER_PACKET.must_keep_metrics if present (required_metric)
-  - all WRITER_PACKET.unsafe_jd_nouns if present (unsafe_noun_check)
-- You may include a small number of evidence_map_claim entries for key claims you touched during repair.
-  - For each, notes must include evidence_map_index=<n>
+STRICT LEDGER RULES
 
-ID RULES
-- Keep existing ids if present.
-- Otherwise, create ids as:
-  - REQ_SKILL_<n> in must_include_skills order
-  - REQ_METRIC_<n> in must_keep_metrics order
-  - UNSAFE_<n> in unsafe_jd_nouns order
-  - EVID_<n> for evidence_map claims
+- exact_span must be copied verbatim from the final resume or cover_letter.
+- If the target concept is present but phrased differently:
+  - location must reflect where it appears
+  - exact_span must match the actual wording used
+  - target remains unchanged
+- If the concept is not present:
+  - location must be "missing"
+  - exact_span must be empty string
+  - notes must briefly explain why
+
+- Never fabricate exact_span.
+- Never claim presence if substring does not exist.
+- exact_span must pass a literal substring check.
 
 FINAL CHECKLIST BEFORE RETURNING
+
 - All REPAIR_BRIEF items addressed.
-- cover_letter starts with CURRENT_DATE on its own line.
-- No unsafe_jd_nouns appear verbatim anywhere.
-- All required skill/metric tokens that are required verbatim are present verbatim.
-- evidence_ledger exact_span values are truly exact substrings of the final output.
+- Mechanism fixes applied only to the failing roles.
+- No unsafe_jd_nouns appear verbatim.
+- Ledger contains all required entries.
+- Every non-missing ledger exact_span is a literal substring of the final text.
 - Return JSON only.
