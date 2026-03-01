@@ -240,7 +240,7 @@ def _call_assess_llm(
     response = client.chat.completions.create(
         model=model,
         temperature=temperature,
-        max_tokens=max_tokens,
+        max_completion_tokens=max_tokens,
         messages=messages,
     )
     raw = _strip_code_fence(response.choices[0].message.content or "")
@@ -251,7 +251,7 @@ def _call_assess_llm(
         repair_resp = client.chat.completions.create(
             model=model,
             temperature=0.0,
-            max_tokens=max_tokens,
+            max_completion_tokens=max_tokens,
             messages=messages + [
                 {"role": "assistant", "content": raw},
                 {"role": "user", "content": "Return valid JSON only. No extra text or markdown."},
