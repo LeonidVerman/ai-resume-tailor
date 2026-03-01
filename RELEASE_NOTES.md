@@ -1,5 +1,27 @@
 # Release Notes
 
+## 0.1.4.APLHA — 2025-03-01
+
+**Role level expansion, role preservation, mechanism placement, manager density, assess debug output.**
+
+### New features
+
+- **Expanded `role_level` enum** (`llm.py`, `schemas/phase1_output.json`): four levels → seven. New values: `manager` (people + delivery accountability), `staff` (high-leverage IC, cross-team technical leadership), `principal` (org-wide technical strategy and standards). Coercion updated: `"Staff Engineer"` → `staff` (previously fell to `senior`); `"Engineering Manager"` → `manager`; `"Principal …"` → `principal`; `"Head of …"` → `director`.
+- **Role weight profiles** extended (`writer_packet.py`): added `_WEIGHT_PROFILES` entries for `manager` (arch 0.3 / strategic 0.4 / operational 0.3), `principal` (0.5 / 0.4 / 0.1), and `staff` (0.65 / 0.25 / 0.1).
+- **`role.txt` loader passes `ROLE_LEVEL`** (`llm.py`): `_build_phase2_developer_instructions` now accepts `role_level` and forwards it to `_load_prompt_optional("role", ROLE_LEVEL=…)`. `role.txt` already documents all seven levels.
+- **Role preservation — `MISSING_ROLE` validator check** (`phase2_validator.py`): `WriterPacket` gains `master_resume_role_names` (all role headers from master resume). Validator check #8 emits `MISSING_ROLE: <role>` error if any master role is absent from the output — either as a full role header or within an `Earlier roles` collapsed block. `repair_brief.global_issues` gains `missing_roles` field. New helpers: `_extract_earlier_roles_block()`, `_role_found_in_output()`. Repair prompt step 6 (already in place) handles re-insertion.
+- **Mechanism placement warning** (`phase2_validator.py`): for high-priority roles with `mech_required > 0`, warns when no mechanism appears in the first two bullets — nudges writer/repair to front-load mechanism content.
+- **Manager-level leadership/delivery density** (`phase2_validator.py`): when `role_level == "manager"`, warns if fewer than 2 leadership-verb bullets (`Led`, `Managed`, `Mentored`, `Guided`, `Coordinated`, `Partnered`, `Improved`) appear in high-priority roles; also warns if the JD is delivery-oriented but the resume contains no delivery vocabulary (`backlog`, `roadmap`, `timeline`, `risk`).
+- **Assess debug output** (`assess.py`): `_process_one_position` now calls `save_debug_data` after tailoring, writing `tmp/<Company>-<Role>-<timestamp>.json` (phase 1 + phase 2 debug) — same format as the regular `tailor` command. No docx/pdf generated.
+- **Assessment run scripts** (`tests/run_assess.sh`, `tests/run_assess.cmd`): convenience wrappers with defaults (model: gpt-5.2, temperature: 0.5, positions: `tests/data/positions.txt`); all CLI flags pass through.
+
+### Tests
+
+- 50 new deterministic tests (total: 315; was 265 at 0.1.3).
+- New test classes: `TestRoleTxtLoading`, `TestRolePresenceValidation`, `TestMechanismPlacementCheck`, `TestManagerDensityChecks`; expanded `TestWriterPacketWeightProfile` (manager/staff/principal profiles); expanded `TestValidatePlan` (new enum values + coercion).
+
+---
+
 ## 0.1.3.APLHA — 2025-02-28
 
 **Postprocessors removed, evidence ledger, LLM judge, and repair loop simplification.**

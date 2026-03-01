@@ -1,105 +1,65 @@
-[ROLE_LEVEL_TUNING v1.1]
+[ROLE_LEVEL_TUNING v1.2]
 
-You will receive role_level in the plan or writer packet.
+You will receive role_level.
 
 role_level is one of:
 director, manager, principal, staff, senior, mid, junior.
 
-Apply the relevant guidance below to BOTH resume and cover letter.
-Do not invent facts. Do not change employers, titles, or dates.
-Use only supported claims from MASTER_RESUME and CANDIDATE_PROFILE.
-If a rule conflicts with required tokens or validation constraints, satisfy tokens first.
+Apply guidance to BOTH resume and cover letter.
 
-GENERAL RULES (all levels)
-- Prefer concrete outcomes and mechanisms over generic adjectives.
-- Keep claims grounded and specific.
-- Do not add unsupported tools, metrics, domains, or responsibilities.
-- Keep thin roles concise and factual.
-- Mechanisms may be included, but the framing must match role level.
+GENERAL RULES
+- Prefer concrete mechanisms and outcomes over adjectives.
+- Avoid generic phrases unless followed by specific system detail.
+- Avoid stacking multiple mechanisms in one sentence.
+- Avoid vague claims like “mission-critical systems” without specifics.
 
-MECHANISM FRAMING RULE (all levels)
-If a mechanism phrase is used, keep it verbatim if required by the writer packet,
-but adjust surrounding framing to match role level:
-- Director: "Led / drove / established / set direction for ... including <mechanism>"
-- Manager: "Led the team to deliver ... including <mechanism>" or "Guided implementation ... including <mechanism>"
-- Principal: "Defined architecture / standards ... including <mechanism>"
-- Staff: "Designed / led technical direction ... using <mechanism>"
-- Senior: "Designed / implemented ... using <mechanism>"
-- Mid: "Built / improved ... using <mechanism>"
-- Junior: "Contributed to / supported ... using <mechanism>"
+GENERIC LANGUAGE SUPPRESSION
+Do not use:
+- scalable platform
+- robust system
+- cutting-edge
+- innovative solution
+unless followed by specific mechanism and measurable outcome.
 
-Do not imply ownership beyond the role level.
+MECHANISM DEPTH RULE
+Every mechanism bullet must include:
+- The mechanism itself
+- The system boundary or component it affected
+- A constraint or tradeoff
+- A measurable or observable outcome (if supported)
 
-DIRECTOR LEVEL
-Primary objective: leadership, strategy, execution, org impact.
-Tone: executive but concrete. Credibility comes from outcomes and decisions.
-Resume emphasis:
-- Lead with leadership scope and business outcomes.
-- Frame mechanisms as architectural direction and platform evolution, not hands-on implementation.
-- Show cross-team collaboration and operational maturity (tradeoffs, reliability, delivery predictability).
-- Mention hiring, mentoring, process improvement only if supported.
-Bullet style:
-- Start bullets with leadership verbs: Led, Directed, Drove, Established, Owned, Scaled.
-Avoid:
-- Inflating scope (P&L, company-wide strategy) unless explicitly supported.
+DIRECTOR
+- Emphasize strategy, org impact, cross-team alignment.
+- Include hiring, mentoring, delivery governance if supported.
+- Frame mechanisms as architectural direction, not implementation.
+- Include at least one bullet about delivery improvement if supported.
 
-MANAGER LEVEL
-Primary objective: people leadership + delivery accountability + technical judgment.
-Tone: practical, delivery-oriented, grounded.
-Resume emphasis:
-- Make team leadership explicit: coaching/mentoring, setting standards, improving execution.
-- Include delivery language when supported: backlog, milestones, timelines, risk management, cross-functional alignment.
-- Include mechanisms when they support credibility, but do not stack multiple mechanisms into one sentence.
-Bullet style:
-- Start bullets with: Led, Managed, Mentored, Guided, Coordinated, Partnered, Improved.
-Avoid:
-- Director-level strategy inflation.
-- Pure IC tone unless sources strongly indicate hands-on coding; even then, keep it brief.
+MANAGER
+- Make team leadership explicit.
+- Include delivery language: roadmap, milestones, risk, cross-functional coordination (if supported).
+- Include at least:
+  - 1 people development or mentorship signal
+  - 1 delivery process or execution improvement signal
+- Mechanisms support credibility but are not stacked.
 
-PRINCIPAL LEVEL
-Primary objective: org-wide technical direction without people-management claims unless supported.
-Tone: technical strategy, standards, architecture governance.
-Resume emphasis:
-- Architecture roadmaps, reference patterns, platform consistency, reliability standards.
-- Cross-team technical influence and decision-making.
-- Use mechanisms as exemplars of architectural direction.
-Bullet style:
-- Start bullets with: Defined, Established, Standardized, Designed, Led (technical), Guided, Drove.
-Avoid:
-- Claiming people management or delivery ownership unless supported.
+PRINCIPAL
+- Emphasize standards, architectural governance, cross-team influence.
+- Use mechanisms as exemplars of design direction.
 
-STAFF LEVEL
-Primary objective: high-leverage technical leadership across teams.
-Tone: hands-on architecture + influence.
-Resume emphasis:
-- Solving ambiguous problems, leading complex initiatives, mentoring engineers.
-- Use mechanisms to show depth and how outcomes were achieved.
-Bullet style:
-- Start bullets with: Led, Designed, Drove, Implemented, Mentored, Delivered.
-Avoid:
-- Director-level org claims.
+STAFF
+- High-leverage execution + influence.
+- Mix architecture depth and mentorship.
 
-SENIOR LEVEL
-Primary objective: architecture depth, ownership of complex systems, high-leverage execution.
-Tone: confident, technical, outcome-driven.
-Resume emphasis:
-- Distributed systems, scalability, reliability, performance, integration experience.
-- Leadership is secondary but present (mentoring, leading projects).
-Avoid:
-- Generic "scalable platform" without mechanisms.
-- Inflating people management beyond sources.
+SENIOR
+- Architecture depth dominates.
+- Mechanisms + performance + reliability.
+- Leadership secondary but visible.
 
-MID LEVEL
-Primary objective: strong execution, growing ownership, reliable delivery.
-Tone: clear, practical, results-focused.
+MID / JUNIOR
+- Focus on execution and learning velocity.
+- Mechanisms framed as contribution, not ownership.
 
-JUNIOR LEVEL
-Primary objective: capability, learning velocity, dependable contribution.
-Tone: humble but confident, concrete.
-
-FINAL ROLE-LEVEL SELF-CHECK
-- Does the tone match role_level?
-- Are leadership claims appropriate for role_level?
-- Are mechanisms framed appropriately for role_level?
-- Are outcomes and metrics included where supported?
-- Did you avoid overclaiming scope?
+FINAL CHECK
+- Tone matches role_level.
+- No scope inflation.
+- Mechanisms are natural and contextual.
