@@ -487,10 +487,6 @@ def run_assess_pipeline(
                 print(f"  Skipping — assess LLM failed: {exc}")
                 continue
 
-            errs = validate_assessment_response(raw_assessment)
-            if errs:
-                print(f"  Warning — assessment response issues: {errs}")
-
             _cache_save(cache_dir, cache_key, raw_assessment)
 
         # --- Persist raw ---
