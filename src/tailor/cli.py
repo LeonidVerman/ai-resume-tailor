@@ -78,6 +78,10 @@ def _main_assess(argv: list[str]) -> None:
         help="Directory for caching raw assessment results.",
     )
     parser.add_argument(
+        "--workers", type=int, default=None, metavar="N",
+        help="Number of parallel threads (default: min(positions, 20)).",
+    )
+    parser.add_argument(
         "--runs", type=int, default=1,
         help="(Reserved) Number of judge runs per position.",
     )
@@ -95,6 +99,7 @@ def _main_assess(argv: list[str]) -> None:
         max_positions=args.max_positions,
         cache_dir=args.cache_dir,
         runs=args.runs,
+        workers=args.workers,
     )
 
 

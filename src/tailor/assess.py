@@ -15,6 +15,8 @@ import hashlib
 import json
 import logging
 import os
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -391,8 +393,92 @@ def _save_csv(path: Path, entries: list[dict]) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Per-position worker (runs in a thread)
+# ---------------------------------------------------------------------------
+
+def _process_one_position(
+    url: str,
+    idx: int,
+    total: int,
+    resume_template: str,
+    cover_template: str,
+    profile_str: str,
+    model: str,
+    temperature: float,
+    cache_dir: str | None,
+    raw_dir: Path,
+    weights: dict[str, float],
+    print_lock: threading.Lock,
+) -> dict | None:
+    """Scrape → tailor → assess one position URL.  Returns an entry dict or None on failure."""
+
+    def _print(*args: Any) -> None:
+        with print_lock:
+            print(*args)
+
+    _print(f"\n[{idx}/{total}] {url}")
+
+    try:
+        job = scrape_job_url(url)
+    except Exception as exc:
+        _print(f"  [{idx}] Skipping — scrape failed: {exc}")
+        return None
+
+    _print(f"  [{idx}] Company: {job.company}  |  Role: {job.job_title}")
+
+    try:
+        result, plan, phase2_debug = _tailor_position(job, resume_template, cover_template)
+    except Exception as exc:
+        _print(f"  [{idx}] Skipping — tailoring failed: {exc}")
+        return None
+
+    cache_key = _position_cache_key(url, result.resume or "", result.cover_letter or "", model)
+    raw_assessment = _cache_load(cache_dir, cache_key)
+
+    if raw_assessment is not None:
+        _print(f"  [{idx}] (using cached assessment)")
+    else:
+        assessment_input = build_assessment_input(
+            job, result, resume_template, cover_template, profile_str, phase2_debug, plan
+        )
+        try:
+            raw_assessment = _call_assess_llm(assessment_input, model, temperature)
+        except Exception as exc:
+            _print(f"  [{idx}] Skipping — assess LLM failed: {exc}")
+            return None
+        _cache_save(cache_dir, cache_key, raw_assessment)
+
+    raw_path = _save_raw(raw_dir, cache_key, raw_assessment)
+
+    raw_scores: dict = raw_assessment.get("scores", {})
+    scores_flat: dict[str, int] = {
+        k: raw_scores[k]["score"]
+        for k in _SCORE_KEYS
+        if isinstance(raw_scores.get(k), dict) and isinstance(raw_scores[k].get("score"), int)
+    }
+    integrated = compute_integrated_score(scores_flat, weights)
+
+    _print(f"  [{idx}] {job.company} / {job.job_title} — integrated: {integrated:.2f}")
+
+    return {
+        "position_url": url,
+        "company": job.company,
+        "role_title": job.job_title,
+        "scores": scores_flat,
+        "overall_readiness": scores_flat.get("overall_readiness"),
+        "integrated_score": integrated,
+        "raw_assessment_path": raw_path,
+        "flags": raw_assessment.get("flags", {}),
+        "notes": raw_assessment.get("notes", {}),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main pipeline
 # ---------------------------------------------------------------------------
+
+_MAX_WORKERS_CAP = 20
+
 
 def run_assess_pipeline(
     positions_file: str,
@@ -402,6 +488,7 @@ def run_assess_pipeline(
     max_positions: int | None = None,
     cache_dir: str | None = None,
     runs: int = 1,
+    workers: int | None = None,
     weights: dict[str, float] | None = None,
 ) -> dict:
     """Score tailored documents for each URL in *positions_file*.
@@ -426,6 +513,9 @@ def run_assess_pipeline(
         Directory for caching raw assessment results.  None = no cache.
     runs:
         Reserved for future multi-judge averaging; currently always 1.
+    workers:
+        Number of parallel threads.  Default: min(len(urls), 20).
+        If the provided value exceeds the default, the default is used with a warning.
     weights:
         Category weights for integrated score.  Defaults to _DEFAULT_WEIGHTS.
 
@@ -447,81 +537,48 @@ def run_assess_pipeline(
     if max_positions is not None:
         urls = urls[:max_positions]
 
-    print(f"Assessing {len(urls)} position(s) with model {model}...")
+    # Resolve effective worker count
+    default_workers = min(len(urls), _MAX_WORKERS_CAP)
+    if workers is None:
+        effective_workers = default_workers
+    elif workers > default_workers:
+        print(
+            f"Warning: --workers {workers} exceeds maximum {default_workers} "
+            f"(min(positions={len(urls)}, cap={_MAX_WORKERS_CAP})). "
+            f"Using {default_workers}."
+        )
+        effective_workers = default_workers
+    else:
+        effective_workers = workers
 
-    # Load shared resources once
+    print(
+        f"Assessing {len(urls)} position(s) with model {model} "
+        f"using {effective_workers} parallel worker(s)..."
+    )
+
+    # Load shared resources once (read-only, safe to share across threads)
     resume_template = read_docx(RESUME_TEMPLATE)
     cover_template = read_docx(COVER_TEMPLATE)
     profile_str = _load_candidate_profile()
 
-    position_entries: list[dict] = []
+    print_lock = threading.Lock()
 
-    for i, url in enumerate(urls, 1):
-        print(f"\n[{i}/{len(urls)}] {url}")
-
-        # --- Scrape ---
-        try:
-            job = scrape_job_url(url)
-        except Exception as exc:
-            print(f"  Skipping — scrape failed: {exc}")
-            continue
-
-        print(f"  Company: {job.company}  |  Role: {job.job_title}")
-
-        # --- Tailor ---
-        try:
-            result, plan, phase2_debug = _tailor_position(
-                job, resume_template, cover_template
+    # Submit all positions; preserve submission order in the final report
+    with ThreadPoolExecutor(max_workers=effective_workers) as executor:
+        futures = [
+            executor.submit(
+                _process_one_position,
+                url, i, len(urls),
+                resume_template, cover_template, profile_str,
+                model, temperature, cache_dir, raw_dir, weights, print_lock,
             )
-        except Exception as exc:
-            print(f"  Skipping — tailoring failed: {exc}")
-            continue
-
-        # --- Cache lookup ---
-        cache_key = _position_cache_key(
-            url, result.resume or "", result.cover_letter or "", model
-        )
-        raw_assessment = _cache_load(cache_dir, cache_key)
-
-        if raw_assessment is not None:
-            print("  (using cached assessment)")
-        else:
-            assessment_input = build_assessment_input(
-                job, result, resume_template, cover_template, profile_str, phase2_debug, plan
-            )
-            try:
-                raw_assessment = _call_assess_llm(assessment_input, model, temperature)
-            except Exception as exc:
-                print(f"  Skipping — assess LLM failed: {exc}")
-                continue
-
-            _cache_save(cache_dir, cache_key, raw_assessment)
-
-        # --- Persist raw ---
-        raw_path = _save_raw(raw_dir, cache_key, raw_assessment)
-
-        # --- Extract scores ---
-        raw_scores: dict = raw_assessment.get("scores", {})
-        scores_flat: dict[str, int] = {
-            k: raw_scores[k]["score"]
-            for k in _SCORE_KEYS
-            if isinstance(raw_scores.get(k), dict) and isinstance(raw_scores[k].get("score"), int)
-        }
-        integrated = compute_integrated_score(scores_flat, weights)
-
-        entry: dict = {
-            "position_url": url,
-            "company": job.company,
-            "role_title": job.job_title,
-            "scores": scores_flat,
-            "overall_readiness": scores_flat.get("overall_readiness"),
-            "integrated_score": integrated,
-            "raw_assessment_path": raw_path,
-            "flags": raw_assessment.get("flags", {}),
-            "notes": raw_assessment.get("notes", {}),
-        }
-        position_entries.append(entry)
-        print(f"  Integrated score: {integrated:.2f}")
+            for i, url in enumerate(urls, 1)
+        ]
+        position_entries: list[dict] = [
+            entry
+            for future in futures
+            if (entry := future.result()) is not None
+        ]
 
     # --- Aggregate ---
     agg = _aggregate(position_entries, weights)
