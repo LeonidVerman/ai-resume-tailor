@@ -128,6 +128,21 @@ _RESUME_SECTION_HEADERS: frozenset[str] = frozenset(
     }
 )
 
+# ---------------------------------------------------------------------------
+# Manager-level density vocabulary
+# ---------------------------------------------------------------------------
+
+#: Leadership action verbs whose presence (as the first word of a bullet)
+#: signals a leadership-framed bullet for manager-level density checks.
+_LEADERSHIP_VERBS: frozenset[str] = frozenset({
+    "led", "managed", "mentored", "guided", "coordinated", "partnered", "improved",
+})
+
+#: Delivery vocabulary for manager-level JD-matching checks.
+_DELIVERY_VOCAB: frozenset[str] = frozenset({
+    "backlog", "roadmap", "timeline", "risk",
+})
+
 
 # ---------------------------------------------------------------------------
 # Ledger-driven validation helpers
@@ -320,6 +335,83 @@ def apply_judge_to_validation(
 
 
 # ---------------------------------------------------------------------------
+# Role-preservation helpers (A2)
+# ---------------------------------------------------------------------------
+
+def _extract_earlier_roles_block(resume: str) -> list[str]:
+    """Return the collapsed role lines from an "Earlier roles" block, if present.
+
+    Looks for a line equal to "Earlier roles" in the Experience section, then
+    collects subsequent non-empty lines that contain "|" (the collapsed entries
+    in "Company | Title | Years" format) until the next known section header.
+    """
+    lines = resume.split("\n")
+    exp_start: int | None = None
+    exp_end = len(lines)
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if s == "Experience":
+            exp_start = i + 1
+        elif exp_start is not None and s in _RESUME_SECTION_HEADERS and s != "Experience":
+            exp_end = i
+            break
+    if exp_start is None:
+        return []
+
+    earlier_lines: list[str] = []
+    in_earlier_block = False
+    for line in lines[exp_start:exp_end]:
+        s = line.strip()
+        if not s:
+            continue
+        if s == "Earlier roles":
+            in_earlier_block = True
+            continue
+        if in_earlier_block:
+            if s in _RESUME_SECTION_HEADERS:
+                break
+            if "|" in s:
+                earlier_lines.append(s)
+    return earlier_lines
+
+
+def _role_found_in_output(
+    master_role: str,
+    output_role_headers: list[str],
+    earlier_lines: list[str],
+) -> bool:
+    """Return True if a master-resume role is represented in the output.
+
+    Two checks (either is sufficient):
+    1. Fuzzy header match — ``_roles_match`` against any full role header.
+    2. Earlier-roles block match — meaningful name parts appear in the
+       collapsed-block text (handles format differences like Company | Title | Years
+       vs Title | Company | Date).
+    """
+    # 1. Full role header match
+    for header in output_role_headers:
+        if _roles_match(master_role, header):
+            return True
+
+    # 2. Earlier-roles block — extract non-year name parts and look for them
+    if not earlier_lines:
+        return False
+
+    earlier_block_lower = " ".join(earlier_lines).lower()
+    master_parts = [
+        p.strip()
+        for p in normalize_role_header(master_role).split("|")
+    ]
+    for part in master_parts:
+        # Strip 4-digit year tokens from the part before substring checking
+        part_clean = re.sub(r"\b(19|20)\d{2}\b", "", part).strip()
+        if len(part_clean) > 3 and part_clean.lower() in earlier_block_lower:
+            return True
+
+    return False
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -507,6 +599,18 @@ def validate_phase2_output(
                 f"mechanism(s) in bullets; minimum is {mech_required}"
             )
 
+        # A3T1: mechanism placement — at least 1 mechanism in first 2 bullets
+        # of high-priority roles (warning only; escalate to error once stable).
+        if effective_priority == "high" and mech_required > 0 and len(bullets) >= 1:
+            first_two_mech = sum(
+                1 for b in bullets[:2] if _bullet_has_arch_mechanism(b, arch_mechanisms)
+            )
+            if first_two_mech == 0:
+                warnings.append(
+                    f"Role {role_header!r}: no mechanism found in first 2 bullets; "
+                    f"consider leading with a mechanism bullet"
+                )
+
         # Accumulate per-role repair data for the machine-readable repair brief.
         repair_roles.append({
             "role_header": role_header,
@@ -642,12 +746,53 @@ def validate_phase2_output(
                 f"Consider adding process/quality/delivery framing."
             )
 
+    # --- 7. Manager-level leadership/delivery density (warnings only) ---
+    manager_leadership_count: int = 0
+    if role_level == "manager":
+        for role_header, bullets in roles:
+            eff_priority, _ = effective_priorities.get(role_header, ("low", ""))
+            if eff_priority == "high":
+                for bullet in bullets:
+                    first_word = (
+                        bullet.strip().split()[0].lower().rstrip(",")
+                        if bullet.strip() else ""
+                    )
+                    if first_word in _LEADERSHIP_VERBS:
+                        manager_leadership_count += 1
+
+        if manager_leadership_count < 2:
+            warnings.append(
+                f"Manager role: only {manager_leadership_count} leadership-verb bullet(s) "
+                f"in high-priority roles (recommended: ≥2). "
+                f"Consider using Led / Managed / Mentored / Guided."
+            )
+        if jd_is_delivery_oriented:
+            delivery_found = any(v in resume.lower() for v in _DELIVERY_VOCAB)
+            if not delivery_found:
+                warnings.append(
+                    "Manager role with delivery-oriented JD: "
+                    "no delivery vocabulary (backlog/roadmap/timeline/risk) found in resume."
+                )
+
+    # --- 8. Role preservation: every master-resume role must appear in output ---
+    master_role_names: list[str] = writer_packet.get("master_resume_role_names", [])
+    missing_roles: list[str] = []
+    if master_role_names:
+        output_role_headers = [h for h, _ in roles]
+        earlier_lines = _extract_earlier_roles_block(resume)
+        for master_role in master_role_names:
+            if not _role_found_in_output(master_role, output_role_headers, earlier_lines):
+                missing_roles.append(master_role)
+        if missing_roles:
+            errors.append(f"MISSING_ROLE: {'; '.join(missing_roles)}")
+
     repair_brief: dict = {
         "global_issues": {
             "missing_metrics": missing_metrics,
             "missing_skills": missing_required_skills,
             "unsafe_nouns_in_resume": unsafe_terms_found,
             "cover_letter_date_missing": cover_letter_date_missing,
+            "missing_roles": missing_roles,
         },
         "roles": repair_roles,
     }
@@ -667,6 +812,7 @@ def validate_phase2_output(
             "role_parsing_debug": role_parsing_debug,
             "strategic_signal_count": strategic_signal_count,
             "operational_signal_count": operational_signal_count,
+            "manager_leadership_count": manager_leadership_count,
         },
         "repair_brief": repair_brief,
         "judge_candidates": judge_candidates,

@@ -38,6 +38,8 @@ When adding evidence:
 - Provide location that points to where the quote came from (eg, "MASTER_RESUME > Technical Skills", "MASTER_RESUME > Experience > CardinalChain bullet 2").
 - Keep allowed_claims short and bounded. No new scope.
 
+role_level is one of: director, manager, principal, staff, senior, mid, junior.
+
 V2.1 SCHEMA REFERENCE (do not invent additional sections)
 
 "theme_priority": {

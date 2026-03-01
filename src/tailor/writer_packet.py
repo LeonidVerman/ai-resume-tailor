@@ -112,6 +112,7 @@ def build_writer_packet(
 
     return {
         "role_level": role_level,
+        "master_resume_role_names": list(role_stats.keys()),
         "must_keep_metrics": must_keep_metrics,
         # Taxonomy fields
         "must_surface_arch_mechanisms": mechanism_fields["must_surface_arch_mechanisms"],
@@ -267,8 +268,11 @@ def _build_mechanism_fields(
 
 # Weight profiles per role_level (arch / strategic / operational weights).
 _WEIGHT_PROFILES: dict[str, dict] = {
-    "director": {"arch_weight": 0.4, "strategic_weight": 0.4, "operational_weight": 0.2},
-    "senior":   {"arch_weight": 0.7, "strategic_weight": 0.2, "operational_weight": 0.1},
+    "director":  {"arch_weight": 0.4,  "strategic_weight": 0.4,  "operational_weight": 0.2},
+    "manager":   {"arch_weight": 0.3,  "strategic_weight": 0.4,  "operational_weight": 0.3},
+    "principal": {"arch_weight": 0.5,  "strategic_weight": 0.4,  "operational_weight": 0.1},
+    "staff":     {"arch_weight": 0.65, "strategic_weight": 0.25, "operational_weight": 0.1},
+    "senior":    {"arch_weight": 0.7,  "strategic_weight": 0.2,  "operational_weight": 0.1},
 }
 _DEFAULT_WEIGHT_PROFILE: dict = {"arch_weight": 0.7, "strategic_weight": 0.2, "operational_weight": 0.1}
 

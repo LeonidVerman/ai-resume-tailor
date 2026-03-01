@@ -12,7 +12,7 @@
   "properties": {
     "role_level": {
       "type": "string",
-      "enum": ["director", "senior", "mid", "junior"]
+      "enum": ["director", "manager", "principal", "staff", "senior", "mid", "junior"]
     },
     "jd_top_themes": {
       "type": "array",

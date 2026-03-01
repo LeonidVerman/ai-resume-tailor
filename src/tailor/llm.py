@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 _client: OpenAI | None = None
 
 # --- Allowed values ---
-_VALID_ROLE_LEVELS = {"director", "senior", "mid", "junior"}
+_VALID_ROLE_LEVELS = {"director", "manager", "principal", "staff", "senior", "mid", "junior"}
 _VALID_PRIORITIES = {"high", "medium", "low"}
 _VALID_EVIDENCE_SOURCES = {"candidate_profile", "master_resume"}
 
@@ -79,11 +79,19 @@ def _coerce_role_level(raw: str) -> str:
     Handles cases where the LLM returns a job title instead of the enum
     (e.g. "Senior Software Engineer" → "senior").
     Falls back to "junior" for anything unrecognised.
+
+    Order matters — more-specific patterns are checked first.
     """
     s = raw.lower()
-    if "director" in s or "vp" in s:
+    if "director" in s or "vp" in s or "head of" in s:
         return "director"
-    if "senior" in s or "staff" in s:
+    if "principal" in s:
+        return "principal"
+    if "staff" in s:
+        return "staff"
+    if "manager" in s:
+        return "manager"
+    if "senior" in s:
         return "senior"
     if "mid" in s or "intermediate" in s:
         return "mid"
@@ -621,12 +629,18 @@ def tailor_documents_with_plan(
 # Phase 2 internal helpers
 # ---------------------------------------------------------------------------
 
-def _build_phase2_developer_instructions() -> tuple[str, str]:
+def _build_phase2_developer_instructions(role_level: str = "senior") -> tuple[str, str]:
     """Build developer instructions for the Phase 2 writer.
 
     Prefers ``phase2.txt`` — a self-contained plan-aware writer prompt
     that already embeds plan/packet compliance rules.  Falls back to the
     legacy assembly (``tailor.txt`` + inline constants) when the file is absent.
+
+    Parameters
+    ----------
+    role_level:
+        The active role level (from WriterPacket), forwarded to ``role.txt``
+        as ``{ROLE_LEVEL}`` if the prompt uses that placeholder.
 
     Returns
     -------
@@ -647,10 +661,11 @@ def _build_phase2_developer_instructions() -> tuple[str, str]:
             _WRITER_PACKET_RULES,
         ]
 
-    # Optional per-candidate / per-role overlays (always appended when present)
+    # Optional per-candidate / per-role overlays (always appended when present).
+    # role.txt receives ROLE_LEVEL so it can highlight the active level.
     parts += [
         _load_prompt_optional("candidate").strip(),
-        _load_prompt_optional("role").strip(),
+        _load_prompt_optional("role", ROLE_LEVEL=role_level).strip(),
     ]
 
     return "\n\n".join(p for p in parts if p), prompt_name
@@ -667,7 +682,9 @@ def _run_phase2_writer(
     current_date: str,
 ) -> tuple[TailorResult, list, dict]:
     """Execute a normal Phase 2 writer LLM call."""
-    developer_instructions, prompt_name = _build_phase2_developer_instructions()
+    developer_instructions, prompt_name = _build_phase2_developer_instructions(
+        role_level=writer_packet.get("role_level", "senior")
+    )
 
     messages: list = [
         {"role": "developer", "content": developer_instructions},

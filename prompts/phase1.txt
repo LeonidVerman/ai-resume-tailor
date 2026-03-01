@@ -28,6 +28,22 @@ OUTPUT FORMAT
 Return JSON only conforming to the enforced output schema.
 Do not add keys not defined in the schema.
 
+ROLE LEVEL CLASSIFICATION (role_level)
+
+You must set role_level to exactly one of:
+director, manager, principal, staff, senior, mid, junior.
+
+Choose based on the JOB_DESCRIPTION title and responsibilities:
+
+- director: titles like Director/Head/VP; strong org strategy, multi-team scope.
+- manager: titles like Engineering Manager / Delivery Manager; people leadership + delivery accountability.
+- principal: Principal Engineer / Enterprise Architect; org-wide technical direction, standards, governance.
+- staff: Staff Engineer; cross-team technical leadership, high-leverage execution.
+- senior: Senior Engineer; deep ownership, architecture depth, limited people-management scope.
+- mid/junior: as implied by JD expectations.
+
+Do not pick "director" just because leadership is mentioned; use title and scope.
+
 PLANNING GUIDANCE
 A) jd_top_themes
 - Extract 5 themes (4-7 allowed).

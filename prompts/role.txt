@@ -1,7 +1,9 @@
-[ROLE_LEVEL_TUNING v1.0]
+[ROLE_LEVEL_TUNING v1.1]
 
-You will receive role_level in the plan or writer packet:
-role_level is one of: director, senior, mid, junior.
+You will receive role_level in the plan or writer packet.
+
+role_level is one of:
+director, manager, principal, staff, senior, mid, junior.
 
 Apply the relevant guidance below to BOTH resume and cover letter.
 Do not invent facts. Do not change employers, titles, or dates.
@@ -19,6 +21,9 @@ MECHANISM FRAMING RULE (all levels)
 If a mechanism phrase is used, keep it verbatim if required by the writer packet,
 but adjust surrounding framing to match role level:
 - Director: "Led / drove / established / set direction for ... including <mechanism>"
+- Manager: "Led the team to deliver ... including <mechanism>" or "Guided implementation ... including <mechanism>"
+- Principal: "Defined architecture / standards ... including <mechanism>"
+- Staff: "Designed / led technical direction ... using <mechanism>"
 - Senior: "Designed / implemented ... using <mechanism>"
 - Mid: "Built / improved ... using <mechanism>"
 - Junior: "Contributed to / supported ... using <mechanism>"
@@ -30,70 +35,69 @@ Primary objective: leadership, strategy, execution, org impact.
 Tone: executive but concrete. Credibility comes from outcomes and decisions.
 Resume emphasis:
 - Lead with leadership scope and business outcomes.
-- Use metrics to show impact (delivery, reliability, scaling, speed, quality).
 - Frame mechanisms as architectural direction and platform evolution, not hands-on implementation.
-- Show cross-team collaboration and operational maturity (reliability, incident response, tradeoffs).
-- Mention hiring, mentoring, process improvement, and delivery predictability only if supported.
+- Show cross-team collaboration and operational maturity (tradeoffs, reliability, delivery predictability).
+- Mention hiring, mentoring, process improvement only if supported.
 Bullet style:
 - Start bullets with leadership verbs: Led, Directed, Drove, Established, Owned, Scaled.
-- Include 1 mechanism clause when it strengthens credibility, but avoid stacking multiple mechanisms in one bullet.
 Avoid:
-- IC-only tone like "implemented X in code" unless the sources explicitly show hands-on work and you choose to mention it briefly.
-- Overclaiming executive strategy, P&L, company-wide AI transformation, or roadmap ownership unless supported.
-Cover letter emphasis:
-- Connect leadership, delivery, and platform evolution to the company needs.
-- Mention 1 to 2 mechanisms as examples of how you guide systems and teams.
+- Inflating scope (P&L, company-wide strategy) unless explicitly supported.
+
+MANAGER LEVEL
+Primary objective: people leadership + delivery accountability + technical judgment.
+Tone: practical, delivery-oriented, grounded.
+Resume emphasis:
+- Make team leadership explicit: coaching/mentoring, setting standards, improving execution.
+- Include delivery language when supported: backlog, milestones, timelines, risk management, cross-functional alignment.
+- Include mechanisms when they support credibility, but do not stack multiple mechanisms into one sentence.
+Bullet style:
+- Start bullets with: Led, Managed, Mentored, Guided, Coordinated, Partnered, Improved.
+Avoid:
+- Director-level strategy inflation.
+- Pure IC tone unless sources strongly indicate hands-on coding; even then, keep it brief.
+
+PRINCIPAL LEVEL
+Primary objective: org-wide technical direction without people-management claims unless supported.
+Tone: technical strategy, standards, architecture governance.
+Resume emphasis:
+- Architecture roadmaps, reference patterns, platform consistency, reliability standards.
+- Cross-team technical influence and decision-making.
+- Use mechanisms as exemplars of architectural direction.
+Bullet style:
+- Start bullets with: Defined, Established, Standardized, Designed, Led (technical), Guided, Drove.
+Avoid:
+- Claiming people management or delivery ownership unless supported.
+
+STAFF LEVEL
+Primary objective: high-leverage technical leadership across teams.
+Tone: hands-on architecture + influence.
+Resume emphasis:
+- Solving ambiguous problems, leading complex initiatives, mentoring engineers.
+- Use mechanisms to show depth and how outcomes were achieved.
+Bullet style:
+- Start bullets with: Led, Designed, Drove, Implemented, Mentored, Delivered.
+Avoid:
+- Director-level org claims.
 
 SENIOR LEVEL
 Primary objective: architecture depth, ownership of complex systems, high-leverage execution.
 Tone: confident, technical, outcome-driven.
 Resume emphasis:
-- Lead with distributed systems, scalability, reliability, performance, integration experience.
-- Use mechanisms to explain how outcomes were achieved.
-- Show ownership: designed components, drove initiatives, set standards, mentored engineers.
+- Distributed systems, scalability, reliability, performance, integration experience.
 - Leadership is secondary but present (mentoring, leading projects).
-Bullet style:
-- Start bullets with technical ownership verbs: Designed, Built, Implemented, Optimized, Led, Delivered.
-- Include 2 to 3 mechanism clauses across the role, distributed across bullets.
 Avoid:
-- Purely generic phrases like "scalable architecture" without mechanisms.
+- Generic "scalable platform" without mechanisms.
 - Inflating people management beyond sources.
-Cover letter emphasis:
-- Connect mechanisms and ownership to the job themes.
-- Show collaboration and reliability mindset.
 
 MID LEVEL
 Primary objective: strong execution, growing ownership, reliable delivery.
 Tone: clear, practical, results-focused.
-Resume emphasis:
-- Emphasize contributions to core systems, feature delivery, performance improvements, and reliability.
-- Include mechanisms sparingly and only where supported.
-- Show progression: increasing ownership, improving systems, collaborating effectively.
-Bullet style:
-- Start bullets with: Built, Improved, Delivered, Automated, Refactored, Supported.
-- Use 1 to 2 mechanisms across the role, not in every bullet.
-Avoid:
-- Over-framing as a system architect unless sources support it.
-- Heavy leadership framing.
-Cover letter emphasis:
-- Focus on execution strength, collaboration, learning, and reliability.
 
 JUNIOR LEVEL
 Primary objective: capability, learning velocity, dependable contribution.
 Tone: humble but confident, concrete.
-Resume emphasis:
-- Highlight clearly supported tasks and outcomes (bug fixes, features, tests, documentation, tooling).
-- Mention collaboration, mentorship received, and growth (only if supported).
-- Mechanisms should be minimal and simple.
-Bullet style:
-- Start bullets with: Contributed to, Assisted with, Implemented, Tested, Documented, Supported.
-- Use at most 1 mechanism phrase per role, only if supported and simple.
-Avoid:
-- Claims of owning architecture, leading teams, or large-scale responsibility unless explicitly supported.
-Cover letter emphasis:
-- Focus on motivation, learning, teamwork, and delivering well-scoped results.
 
-FINAL ROLE-LEVEL SELF-CHECK (must do before output)
+FINAL ROLE-LEVEL SELF-CHECK
 - Does the tone match role_level?
 - Are leadership claims appropriate for role_level?
 - Are mechanisms framed appropriately for role_level?

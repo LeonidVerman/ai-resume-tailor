@@ -183,6 +183,55 @@ class TestValidatePlan:
         with pytest.raises(PlanValidationError, match="JSON object"):
             validate_plan(["not", "a", "dict"])
 
+    # ---- A1: new role levels accepted directly ----
+
+    def test_new_role_levels_accepted(self):
+        """manager / principal / staff are valid enum values and pass unchanged."""
+        from tailor.llm import validate_plan
+        for level in ("manager", "principal", "staff"):
+            plan = _minimal_plan()
+            plan["role_level"] = level
+            assert validate_plan(plan)["role_level"] == level, (
+                f"Expected {level!r} to be accepted as-is"
+            )
+
+    # ---- A1: coercion of job-title strings for new levels ----
+
+    def test_engineering_manager_coerced_to_manager(self):
+        """'Engineering Manager' job title is coerced to 'manager'."""
+        from tailor.llm import validate_plan
+        plan = _minimal_plan()
+        plan["role_level"] = "Engineering Manager"
+        assert validate_plan(plan)["role_level"] == "manager"
+
+    def test_manager_engineering_coerced_to_manager(self):
+        """'Manager, Engineering' coerces to 'manager'."""
+        from tailor.llm import validate_plan
+        plan = _minimal_plan()
+        plan["role_level"] = "Manager, Engineering"
+        assert validate_plan(plan)["role_level"] == "manager"
+
+    def test_staff_engineer_coerced_to_staff(self):
+        """'Staff Engineer' job title is coerced to 'staff' (not 'senior')."""
+        from tailor.llm import validate_plan
+        plan = _minimal_plan()
+        plan["role_level"] = "Staff Engineer"
+        assert validate_plan(plan)["role_level"] == "staff"
+
+    def test_principal_engineer_coerced_to_principal(self):
+        """'Principal Software Engineer' is coerced to 'principal'."""
+        from tailor.llm import validate_plan
+        plan = _minimal_plan()
+        plan["role_level"] = "Principal Software Engineer"
+        assert validate_plan(plan)["role_level"] == "principal"
+
+    def test_head_of_engineering_coerced_to_director(self):
+        """'Head of Engineering' is coerced to 'director'."""
+        from tailor.llm import validate_plan
+        plan = _minimal_plan()
+        plan["role_level"] = "Head of Engineering"
+        assert validate_plan(plan)["role_level"] == "director"
+
 
 # ---------------------------------------------------------------------------
 # Phase 1 — plan_tailoring

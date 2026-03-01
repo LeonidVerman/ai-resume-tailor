@@ -35,6 +35,14 @@ Return JSON only with exactly these keys:
 
 Do not include any other keys. Do not include markdown. Do not include explanations.
 
+ROLE PRESERVATION (do not delete roles)
+- Do not remove roles that exist in MASTER_RESUME.
+- If older low-priority roles are not relevant, collapse them into a short "Earlier roles" section:
+  - Header: "Earlier roles"
+  - One line per role: "Company | Title | Years"
+  - No bullets for these collapsed roles.
+- Keep the main Experience section in reverse chronological order for the non-collapsed roles.
+
 EVIDENCE LEDGER PURPOSE
 The evidence_ledger must make it possible for an external validator (or later a judge model) to verify:
 - Which required skills/metrics/tokens are present and where

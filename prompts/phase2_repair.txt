@@ -80,6 +80,13 @@ REPAIR ORDER
 - Use exact phrases from WRITER_PACKET.must_surface_arch_mechanisms.
 - Integrate them naturally into relevant bullets within that role.
 
+6) Missing roles from MASTER_RESUME (role preservation)
+- If REPAIR_BRIEF indicates missing roles:
+  - Add an "Earlier roles" section near the end of Experience.
+  - For each missing role, add one line: "Company | Title | Years".
+  - Do not invent bullets. Do not add responsibilities.
+  - Ensure the role names and years match MASTER_RESUME.
+
 EVIDENCE LEDGER REQUIREMENTS (template-driven and strict)
 
 The ledger must include entries for ALL required items, even if missing.

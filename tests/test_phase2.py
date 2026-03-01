@@ -1409,9 +1409,30 @@ class TestWriterPacketWeightProfile:
         assert rwp["operational_weight"] == 0.1
 
     def test_unknown_level_uses_default(self):
-        pkt = self._packet_for_level("staff")
+        pkt = self._packet_for_level("wizard")  # truly unknown level
         rwp = pkt["role_weight_profile"]
         assert rwp["arch_weight"] == 0.7  # default
+
+    def test_staff_weight_profile(self):
+        pkt = self._packet_for_level("staff")
+        rwp = pkt["role_weight_profile"]
+        assert rwp["arch_weight"] == 0.65
+        assert rwp["strategic_weight"] == 0.25
+        assert rwp["operational_weight"] == 0.1
+
+    def test_manager_weight_profile(self):
+        pkt = self._packet_for_level("manager")
+        rwp = pkt["role_weight_profile"]
+        assert rwp["arch_weight"] == 0.3
+        assert rwp["strategic_weight"] == 0.4
+        assert rwp["operational_weight"] == 0.3
+
+    def test_principal_weight_profile(self):
+        pkt = self._packet_for_level("principal")
+        rwp = pkt["role_weight_profile"]
+        assert rwp["arch_weight"] == 0.5
+        assert rwp["strategic_weight"] == 0.4
+        assert rwp["operational_weight"] == 0.1
 
 
 # ---------------------------------------------------------------------------
@@ -1681,3 +1702,398 @@ class TestWriterPacketProvenance:
         long_present = any("read-heavy" in p.lower() for p in arch)
         assert long_present, "The longer, more specific phrase must survive"
         assert not short_present, "The shorter redundant phrase must be dropped"
+
+
+# ---------------------------------------------------------------------------
+# A1: role.txt loading for expanded role-level enum
+# ---------------------------------------------------------------------------
+
+class TestRoleTxtLoading:
+    """role.txt must load without error and mention every valid role level."""
+
+    def test_role_txt_loads_for_all_levels(self):
+        """_load_prompt_optional('role', ROLE_LEVEL=level) returns non-empty text
+        for every valid role level, including the three new ones."""
+        from tailor.prompts import _load_prompt_optional
+        for level in ("director", "manager", "principal", "staff", "senior", "mid", "junior"):
+            text = _load_prompt_optional("role", ROLE_LEVEL=level)
+            assert text, f"role.txt returned empty for level={level!r}"
+            assert level in text.lower(), (
+                f"role.txt does not mention level {level!r}. "
+                f"Ensure role.txt has guidance for all seven levels."
+            )
+
+
+# ---------------------------------------------------------------------------
+# A2: Role presence validation (missing-role detection)
+# ---------------------------------------------------------------------------
+
+def _make_role_presence_packet(
+    master_role_names: list[str] | None = None,
+    role_priorities: dict | None = None,
+) -> dict:
+    """Minimal writer_packet for role-presence tests."""
+    names = master_role_names or []
+    return {
+        "role_level": "senior",
+        "master_resume_role_names": names,
+        "must_keep_metrics": [],
+        "must_surface_arch_mechanisms": [],
+        "must_surface_strategic_signals": [],
+        "must_surface_operational_signals": [],
+        "must_include_skills": [],
+        "allowed_skill_pool": [],
+        "do_not_add_terms": [],
+        "unsafe_jd_nouns": [],
+        "role_priorities": role_priorities or {},
+        "role_source_bullet_counts": {},
+        "role_source_char_counts": {},
+        "jd_is_delivery_oriented": False,
+        "density_targets": {
+            "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+            "mechanism_min_by_priority": {"high": 0, "medium": 0, "low": 0},
+        },
+    }
+
+
+class TestRolePresenceValidation:
+    """Validator detects roles missing from the output (A2)."""
+
+    def _cover(self) -> str:
+        d = date.today()
+        return f"{d.strftime('%B')} {d.day}, {d.year}\n\nDear Hiring Manager,\n\nI am a fit."
+
+    def test_missing_old_role_produces_error(self):
+        """A master-resume role absent from the output triggers MISSING_ROLE error."""
+        pkt = _make_role_presence_packet(
+            master_role_names=["Developer | OldCo | 1999 - 2003"],
+            role_priorities={"Senior Engineer | Acme Corp": "high"},
+        )
+        resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2020 - Present\n"
+            "- Built services using horizontal scaling\n"
+            "- Implemented read replicas\n"
+            "- Improved caching with Redis\n"
+            "- Mentored junior engineers\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        role_errors = [e for e in report["errors"] if "MISSING_ROLE" in e]
+        assert role_errors, f"Expected MISSING_ROLE error but got: {report['errors']}"
+        assert "OldCo" in role_errors[0] or "Developer" in role_errors[0]
+
+    def test_role_in_earlier_roles_block_passes(self):
+        """A role collapsed into an 'Earlier roles' block satisfies the presence check."""
+        pkt = _make_role_presence_packet(
+            master_role_names=["Developer | OldCo | 1999 - 2003"],
+            role_priorities={"Senior Engineer | Acme Corp": "high"},
+        )
+        resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2020 - Present\n"
+            "- Built services using horizontal scaling\n"
+            "- Implemented read replicas\n"
+            "- Improved caching with Redis\n"
+            "- Mentored junior engineers\n\n"
+            "Earlier roles\n"
+            "OldCo | Developer | 1999 - 2003\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        role_errors = [e for e in report["errors"] if "MISSING_ROLE" in e]
+        assert not role_errors, (
+            f"Role in 'Earlier roles' block should satisfy presence check: {report['errors']}"
+        )
+
+    def test_all_roles_present_as_full_headers_passes(self):
+        """When all master roles appear as full headers, no MISSING_ROLE error is raised."""
+        pkt = _make_role_presence_packet(
+            master_role_names=[
+                "Senior Engineer | Acme Corp",
+                "Engineer | Beta Corp",
+            ],
+            role_priorities={
+                "Senior Engineer | Acme Corp": "high",
+                "Engineer | Beta Corp": "medium",
+            },
+        )
+        resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2020 - Present\n"
+            "- Built services using horizontal scaling\n"
+            "- Implemented read replicas\n"
+            "- Improved caching with Redis\n"
+            "- Mentored junior engineers\n\n"
+            "Engineer | Beta Corp | 2017 - 2020\n"
+            "- Developed backend APIs\n"
+            "- Maintained CI/CD pipelines\n"
+            "- Delivered feature work\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        role_errors = [e for e in report["errors"] if "MISSING_ROLE" in e]
+        assert not role_errors, f"All roles present — no MISSING_ROLE expected: {report['errors']}"
+
+    def test_missing_role_in_repair_brief_global_issues(self):
+        """Missing roles appear in repair_brief.global_issues.missing_roles."""
+        pkt = _make_role_presence_packet(
+            master_role_names=["Old Dev | GoneCo | 2000 - 2004"],
+        )
+        resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2020 - Present\n"
+            "- Built services\n"
+            "- Improved caching\n"
+            "- Led deployments\n"
+            "- Mentored team\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        missing = report["repair_brief"]["global_issues"]["missing_roles"]
+        assert missing, "missing_roles in repair_brief should be non-empty"
+        assert any("GoneCo" in r or "Old Dev" in r for r in missing)
+
+    def test_no_master_roles_skips_check(self):
+        """When master_resume_role_names is empty, no MISSING_ROLE errors are raised."""
+        pkt = _make_role_presence_packet(master_role_names=[])
+        resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2020 - Present\n"
+            "- Built services\n"
+            "- Improved caching\n"
+            "- Led deployments\n"
+            "- Mentored team\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        role_errors = [e for e in report["errors"] if "MISSING_ROLE" in e]
+        assert not role_errors
+
+
+# ---------------------------------------------------------------------------
+# A3 Track 1: Mechanism placement (first 2 bullets)
+# ---------------------------------------------------------------------------
+
+def _make_mechanism_placement_packet(arch_mechanisms: list[str]) -> dict:
+    """Minimal packet for mechanism placement tests; high-priority role with mechanisms."""
+    return {
+        "role_level": "senior",
+        "master_resume_role_names": [],
+        "must_keep_metrics": [],
+        "must_surface_arch_mechanisms": arch_mechanisms,
+        "must_surface_strategic_signals": [],
+        "must_surface_operational_signals": [],
+        "must_include_skills": [],
+        "allowed_skill_pool": [],
+        "do_not_add_terms": [],
+        "unsafe_jd_nouns": [],
+        "role_priorities": {"Senior Engineer | Acme Corp": "high"},
+        "role_source_bullet_counts": {"Senior Engineer | Acme Corp": 10},
+        "role_source_char_counts": {"Senior Engineer | Acme Corp": 1000},
+        "jd_is_delivery_oriented": False,
+        "density_targets": {
+            "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+            "mechanism_min_by_priority": {"high": 1, "medium": 0, "low": 0},
+        },
+    }
+
+
+class TestMechanismPlacementCheck:
+    """At least 1 mechanism must appear in the first 2 bullets of high-priority roles (A3T1)."""
+
+    def _cover(self) -> str:
+        d = date.today()
+        return f"{d.strftime('%B')} {d.day}, {d.year}\n\nDear Hiring Manager,\n\nI am a fit."
+
+    def test_mechanism_only_in_third_bullet_emits_placement_warning(self):
+        """Mechanism present but only in bullet 3 → placement warning emitted."""
+        pkt = _make_mechanism_placement_packet(["database read replicas"])
+        resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2022 - Present\n"
+            "- Led backend feature delivery\n"
+            "- Improved system reliability\n"
+            "- Scaled reads via database read replicas\n"
+            "- Mentored junior engineers\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        placement_warnings = [w for w in report["warnings"] if "first 2 bullets" in w]
+        assert placement_warnings, (
+            f"Expected placement warning when mechanism is only in bullet 3, "
+            f"got warnings: {report['warnings']}"
+        )
+
+    def test_mechanism_in_first_bullet_no_placement_warning(self):
+        """Mechanism in the very first bullet → no placement warning."""
+        pkt = _make_mechanism_placement_packet(["database read replicas"])
+        resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2022 - Present\n"
+            "- Scaled reads via database read replicas for heavy GET traffic\n"
+            "- Improved system reliability\n"
+            "- Led backend feature delivery\n"
+            "- Mentored junior engineers\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        placement_warnings = [w for w in report["warnings"] if "first 2 bullets" in w]
+        assert not placement_warnings, (
+            f"No placement warning expected when mechanism is in first bullet: {report['warnings']}"
+        )
+
+    def test_mechanism_in_second_bullet_no_placement_warning(self):
+        """Mechanism in bullet 2 → no placement warning."""
+        pkt = _make_mechanism_placement_packet(["database read replicas"])
+        resume = (
+            "Experience\n"
+            "Senior Engineer | Acme Corp | 2022 - Present\n"
+            "- Led backend feature delivery\n"
+            "- Scaled reads via database read replicas for heavy GET traffic\n"
+            "- Improved system reliability\n"
+            "- Mentored junior engineers\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        placement_warnings = [w for w in report["warnings"] if "first 2 bullets" in w]
+        assert not placement_warnings, (
+            f"No placement warning expected when mechanism is in bullet 2: {report['warnings']}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# A3 Track 2: Manager-level leadership/delivery density
+# ---------------------------------------------------------------------------
+
+def _make_manager_packet(jd_is_delivery_oriented: bool = False) -> dict:
+    """Minimal writer_packet for manager-level density tests."""
+    return {
+        "role_level": "manager",
+        "master_resume_role_names": [],
+        "must_keep_metrics": [],
+        "must_surface_arch_mechanisms": [],
+        "must_surface_strategic_signals": [],
+        "must_surface_operational_signals": [],
+        "must_include_skills": [],
+        "allowed_skill_pool": [],
+        "do_not_add_terms": [],
+        "unsafe_jd_nouns": [],
+        "role_priorities": {"Engineering Manager | Acme Corp": "high"},
+        "role_source_bullet_counts": {"Engineering Manager | Acme Corp": 10},
+        "role_source_char_counts": {"Engineering Manager | Acme Corp": 1000},
+        "jd_is_delivery_oriented": jd_is_delivery_oriented,
+        "density_targets": {
+            "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+            "mechanism_min_by_priority": {"high": 0, "medium": 0, "low": 0},
+        },
+    }
+
+
+class TestManagerDensityChecks:
+    """Manager-level leadership/delivery density warnings (A3T2)."""
+
+    def _cover(self) -> str:
+        d = date.today()
+        return f"{d.strftime('%B')} {d.day}, {d.year}\n\nDear Hiring Manager,\n\nI am a fit."
+
+    def _resume_with_bullets(self, bullets: list[str]) -> str:
+        bullet_text = "\n".join(f"- {b}" for b in bullets)
+        return (
+            "Experience\n"
+            "Engineering Manager | Acme Corp | 2020 - Present\n"
+            f"{bullet_text}\n\n"
+            "Technical Skills\nPython\n"
+        )
+
+    def test_manager_no_leadership_bullets_emits_warning(self):
+        """Manager role with zero leadership-verb bullets in high-priority role → warning."""
+        pkt = _make_manager_packet()
+        resume = self._resume_with_bullets([
+            "Delivered product features on schedule",
+            "Improved system reliability through automated testing",
+            "Partnered with product on quarterly roadmap",  # 'Partnered' counts
+            "Collaborated across teams to align deliverables",
+        ])
+        # Remove 'partnered' to guarantee 0 leadership verbs
+        resume = self._resume_with_bullets([
+            "Delivered product features on schedule",
+            "Improved system reliability",
+            "Collaborated across teams",
+            "Worked with stakeholders on priorities",
+        ])
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        leadership_warnings = [w for w in report["warnings"] if "leadership-verb" in w.lower()]
+        assert leadership_warnings, (
+            f"Expected leadership-verb warning for manager with 0 leadership bullets, "
+            f"got: {report['warnings']}"
+        )
+
+    def test_manager_two_leadership_bullets_no_warning(self):
+        """Manager role with ≥2 leadership-verb bullets → no leadership warning."""
+        pkt = _make_manager_packet()
+        resume = self._resume_with_bullets([
+            "Led a team of 8 engineers delivering platform features",
+            "Managed cross-functional delivery for two product lines",
+            "Collaborated with product to define quarterly goals",
+            "Improved on-call reliability through runbook improvements",
+        ])
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        leadership_warnings = [w for w in report["warnings"] if "leadership-verb" in w.lower()]
+        assert not leadership_warnings, (
+            f"No leadership warning expected with 2 leadership bullets: {report['warnings']}"
+        )
+
+    def test_manager_delivery_vocab_warning_when_jd_delivery_oriented(self):
+        """Manager + delivery JD + no delivery vocab in resume → delivery warning."""
+        pkt = _make_manager_packet(jd_is_delivery_oriented=True)
+        resume = self._resume_with_bullets([
+            "Led a team of engineers delivering platform features",
+            "Managed cross-functional collaboration across teams",
+            "Mentored junior engineers on best practices",
+            "Guided code review culture and quality standards",
+        ])
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        delivery_warnings = [
+            w for w in report["warnings"] if "delivery vocabulary" in w.lower()
+        ]
+        assert delivery_warnings, (
+            f"Expected delivery vocabulary warning for manager with delivery JD, "
+            f"got: {report['warnings']}"
+        )
+
+    def test_manager_delivery_vocab_present_no_warning(self):
+        """Manager + delivery JD + delivery vocab in resume → no delivery warning."""
+        pkt = _make_manager_packet(jd_is_delivery_oriented=True)
+        resume = self._resume_with_bullets([
+            "Led team delivery against roadmap commitments",
+            "Managed backlog refinement and sprint planning",
+            "Mentored engineers on testing best practices",
+            "Guided risk assessment for quarterly releases",
+        ])
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        delivery_warnings = [
+            w for w in report["warnings"] if "delivery vocabulary" in w.lower()
+        ]
+        assert not delivery_warnings, (
+            f"No delivery warning expected when vocab present: {report['warnings']}"
+        )
+
+    def test_non_manager_no_leadership_checks(self):
+        """Senior role_level does not emit manager leadership/delivery warnings."""
+        pkt = _make_manager_packet()
+        pkt["role_level"] = "senior"
+        resume = self._resume_with_bullets([
+            "Delivered product features on schedule",
+            "Improved system reliability",
+            "Collaborated across teams",
+            "Worked with stakeholders on priorities",
+        ])
+        report = validate_phase2_output(pkt, resume, self._cover(), _today())
+        manager_warnings = [
+            w for w in report["warnings"]
+            if "leadership-verb" in w.lower() or "delivery vocabulary" in w.lower()
+        ]
+        assert not manager_warnings, (
+            f"Senior role should not emit manager-specific warnings: {manager_warnings}"
+        )
