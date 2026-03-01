@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from tailor.config import ASSESS_MODEL, ASSESS_TEMPERATURE, COVER_TEMPLATE, RESUME_TEMPLATE
+from tailor.debug import save_debug_data
 from tailor.docx.template_fill import read_docx
 from tailor.job import JobData
 from tailor.job.scrape import scrape_job_url
@@ -93,7 +94,7 @@ def _tailor_position(
     job: JobData,
     resume_template: str,
     cover_template: str,
-) -> tuple[Any, dict | None, dict | None]:
+) -> tuple[Any, dict | None, dict | None, dict | None]:
     """Run Phase 1 → Phase 2 for one position.
 
     Returns
@@ -101,26 +102,27 @@ def _tailor_position(
     result : TailorResult
     plan : validated plan dict, or None if Phase 1 failed
     phase2_debug : Phase 2 debug meta dict, or None if unavailable
+    phase1_debug : Phase 1 debug dict (model, usage, raw_response, plan_json), or None
     """
     try:
-        raw_plan, _, _ = plan_tailoring(job, resume_template, cover_template)
+        raw_plan, p1_messages, p1_meta = plan_tailoring(job, resume_template, cover_template)
     except (PlanParseError, Exception) as exc:
         logger.warning("Phase 1 failed for %s: %s", job.source_url, exc)
         result, _ = tailor_documents(job, resume_template, cover_template)
-        return result, None, None
+        return result, None, None, None
 
     gate_errors = _run_schema_gate(raw_plan)
     if gate_errors:
         logger.warning("Phase 1 schema invalid for %s: %s", job.source_url, gate_errors[0])
         result, _ = tailor_documents(job, resume_template, cover_template)
-        return result, None, None
+        return result, None, None, None
 
     try:
         validate_plan(raw_plan)
     except PlanValidationError as exc:
         logger.warning("Phase 1 validation failed for %s: %s", job.source_url, exc)
         result, _ = tailor_documents(job, resume_template, cover_template)
-        return result, None, None
+        return result, None, None, None
 
     extended_errors = validate_plan_extended(raw_plan)
     if extended_errors:
@@ -131,7 +133,19 @@ def _tailor_position(
 
     plan = raw_plan
     result, _, phase2_debug = tailor_documents_with_plan(plan, job, resume_template, cover_template)
-    return result, plan, phase2_debug
+
+    phase1_debug = {
+        "llm_request": p1_messages,
+        "llm_response_raw": p1_meta.get("raw_response") if p1_meta else None,
+        "plan_json": plan,
+        "model": p1_meta.get("model") if p1_meta else None,
+        "usage": p1_meta.get("usage") if p1_meta else None,
+        "schema_errors": [],
+        "validation_errors": [],
+        "prompt_used": p1_meta.get("prompt_used") if p1_meta else None,
+    }
+
+    return result, plan, phase2_debug, phase1_debug
 
 
 # ---------------------------------------------------------------------------
@@ -427,10 +441,20 @@ def _process_one_position(
     _print(f"  [{idx}] Company: {job.company}  |  Role: {job.job_title}")
 
     try:
-        result, plan, phase2_debug = _tailor_position(job, resume_template, cover_template)
+        result, plan, phase2_debug, phase1_debug = _tailor_position(job, resume_template, cover_template)
     except Exception as exc:
         _print(f"  [{idx}] Skipping — tailoring failed: {exc}")
         return None
+
+    save_debug_data(
+        job.company,
+        job.job_title,
+        {"resume": result.resume, "cover_letter": result.cover_letter},
+        llm_request=None,
+        diff=None,
+        phase1=phase1_debug,
+        phase2=phase2_debug,
+    )
 
     cache_key = _position_cache_key(url, result.resume or "", result.cover_letter or "", model)
     raw_assessment = _cache_load(cache_dir, cache_key)
