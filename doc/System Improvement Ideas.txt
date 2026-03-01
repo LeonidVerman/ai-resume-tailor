@@ -276,3 +276,463 @@ Strengthen AI alignment
 Elevate leadership tone
 
 Without crossing into hallucination territory.
+
+3. New System Improvement Ideas (Not Previously Listed)
+
+Only new observations specific to this run:
+
+1. Mechanism Suppression When JD Mentions Different Stack
+
+JD emphasized Ruby on Rails / React / GraphQL.
+Your system reacted by suppressing backend architectural differentiation entirely.
+
+New rule suggestion:
+
+If JD stack is unsupported BUT arch_weight >= 0.6
+-> Preserve architectural differentiation fully.
+-> Add “adaptability” sentence instead of suppressing core strengths.
+
+Current behavior over-prioritizes stack matching.
+
+2. Leadership Depth Not Scaled for “Manager” Title
+
+Role is “Manager, Engineering”, but role_level was “senior”.
+
+Planner correctly identified leadership themes, but writer did not:
+
+Add hiring/onboarding signals
+
+Surface leadership practices from profile
+
+Expand mentorship framing
+
+Add rule:
+
+If JD contains “manage”, “recruit”, “growth”, “culture”
+-> Auto-inject 1 leadership-practice bullet from candidate_profile.leadership.practices.
+
+Currently that data is underused.
+
+3. Over-Generic Rewrite Risk
+
+This run regressed into generic phrasing:
+
+“improving scalability and reliability”
+“enterprise-scale platforms”
+
+Add enforcement:
+
+If a role originally contains specific mechanisms,
+-> Rewritten version must contain >= mechanism_min_by_priority
+even if JD does not explicitly request those mechanisms.
+
+You already have mechanism_min_by_priority in packet — but writer failed to enforce it strictly.
+
+4. “Unsafe Noun Avoidance Drift”
+
+System avoided Rails/React (correct)
+But failed to replace them with safe adaptability framing.
+
+Add auto-injection when stack gap exists:
+
+Example:
+
+“Strong backend foundation and rapid adaptation to new full stack technologies.”
+
+This prevents resume looking mismatched without hallucinating.
+
+5. Token Preservation Failure Under Density Compression
+
+Required tokens:
+
+top 5 Japanese market
+
+top-5
+
+25%
+
+20%
+
+Some were lost in rewrite.
+
+Add pre-return check:
+
+For each must_keep_metric token:
+-> Hard fail if missing before repair loop.
+
+Currently it seems soft-failed.
+
+6. Observability Skill Under-Used
+
+JD mentions observability tools.
+
+Your profile contains:
+metrics_logs_tracing_mindset
+
+But resume only lists it in skills — not in experience.
+
+Add rule:
+
+If JD mentions observability
+-> Insert 1 sentence tying metrics_logs_tracing_mindset to production reliability.
+
+Final Evaluation of This Run
+
+This generation:
+
+Was safe (no hallucinated Rails/React)
+
+But became overly generic
+
+Lost architectural differentiation
+
+Underused leadership evidence
+
+Under-surfaced mechanisms
+
+After applying upgrades above, this will be significantly stronger for Lillio.
+
+New System Improvement Ideas (Only New vs Previous Rounds)
+
+Here are new insights specific to this Fingerprint sample, not repeated from earlier Andela/Plata/Lillio rounds:
+
+A. Role-Level Consistency Enforcement
+
+Problem:
+Writer packet says role_level = "senior", but the JD is clearly Senior Engineering Manager.
+
+The writer follows “senior IC framing”, not EM framing.
+
+Improvement:
+
+Add a rule:
+
+If job title contains "Manager" AND role_level != "director",
+-> Activate "senior_manager_mode":
+
+Increase leadership weight to >= 0.5
+
+Enforce at least:
+
+2 leadership bullets per high-priority role
+
+1 execution predictability reference
+
+1 cross-functional reference
+
+This avoids under-positioning you.
+
+B. Mandatory Mechanism Injection Per High-Priority Role
+
+Even though arch_weight = 0.7, mechanisms were not surfaced.
+
+New rule:
+
+For each HIGH priority role:
+
+At least 2 distinct must_surface_arch_mechanisms must appear in bullets.
+
+If not present -> automatic Phase 2 repair.
+
+This must be structural, not advisory.
+
+C. Metric Token Normalization Pre-Writer
+
+Writer struggles with:
+
+"Top 5 Japanese market"
+
+"top-5"
+
+"one of top 5 on Japanese market"
+
+Before Phase 2:
+
+Canonicalize metric tokens into an internal normalized map:
+
+"Top 5 Japanese market" -> canonical: TOP5_JAPAN
+
+"top-5" -> alias
+
+Then ledger validates canonical id instead of surface phrase.
+
+This removes fragile string matching.
+
+D. Leadership Density Validator
+
+Add density rule:
+
+For roles where:
+
+JD contains “manage”, “lead squads”, “coach”, “mentor”
+AND role_level is senior/director
+
+Require:
+
+>=1 bullet explicitly containing:
+
+coached OR mentored OR led engineers
+
+AND delivery predictability OR standards OR execution
+
+This ensures EM alignment.
+
+E. Growth / Dashboard Gap Handling Logic
+
+The writer properly avoided hallucinating PLG or dashboard infra.
+
+Good.
+
+But improvement opportunity:
+
+If JD contains unsupported growth/dashboard features:
+
+Auto-insert safe translation sentence in summary like:
+“Experience building scalable backend systems that support large user bases and operational visibility.”
+
+This keeps alignment without hallucination.
+
+Overall Assessment
+Was quality improved?
+
+Yes — compared to earlier runs:
+
+Less hallucination
+
+Cleaner scope discipline
+
+Better leadership framing
+
+Still weak areas:
+
+Mechanism surfacing inconsistent
+
+Leadership depth not fully matching Senior EM role
+
+Bullet density too low for high-priority roles
+
+NEW System Improvement Ideas (Not Previously Mentioned)
+
+Only new insights specific to this League sample:
+
+1. Customer-Facing Weight Escalation Rule
+
+Your system underweights delivery and customer themes because arch_weight = 0.7.
+
+New rule:
+
+If JD contains:
+
+“customer-facing”
+
+“delivery timelines”
+
+“communicate risks”
+
+“shared timelines”
+
+“manage backlog”
+
+Then:
+
+Reduce arch_weight cap to <= 0.5
+
+Increase operational_weight to >= 0.3
+
+This prevents overly technical framing for delivery-heavy EM roles.
+
+2. Risk Communication Injection Rule
+
+League heavily emphasizes risk escalation.
+
+Add rule:
+
+If JD contains “communicate risks” or “identify risks and escalate”:
+-> Force at least one bullet containing:
+
+risk communication
+
+delivery risk management
+
+escalation handling
+
+Currently this is too optional.
+
+3. Timeline & Backlog Token Enforcement
+
+JD strongly references:
+
+sprints
+
+backlog
+
+shared timelines
+
+Add a “delivery vocabulary requirement”:
+
+For delivery-heavy roles:
+
+At least one mention of:
+
+sprint OR backlog OR delivery timeline
+
+At least one mention of:
+
+roadmap OR scope OR prioritization
+
+This increases alignment without hallucinating product ownership.
+
+4. Customer Domain Neutralization
+
+The model avoids healthcare specifics (correct), but doesn’t adapt tone to enterprise context.
+
+Add rule:
+
+If JD contains “enterprise” OR “compliance” OR “security policies”:
+-> Insert one safe statement like:
+“Delivered systems in regulated environments requiring disciplined engineering practices.”
+
+This is supported by your fintech background and aligns well.
+
+5. Mandatory Architecture Surface for High-Priority Roles
+
+In this output, architecture mechanisms were not surfaced at all — despite being required.
+
+You need a strict structural validator rule:
+
+For each high-priority role:
+
+mechanism_min_by_priority["high"] must be satisfied
+
+If not -> force repair
+
+Right now writer ignores that field.
+
+Overall Assessment
+
+Compared to previous samples:
+
+Strengths
+
+No hallucinated healthcare claims.
+
+Good grounding.
+
+Tone professional.
+
+Weaknesses
+
+Underweighted delivery and risk management.
+
+Architecture mechanisms missing (validation gap).
+
+Summary still slightly IC-heavy.
+
+3 System Improvement Ideas (NEW Ideas Only)
+
+These are new compared to previous Andela / Plata / Lillio / League / Fingerprint reviews.
+
+1. Mechanism Placement Rule
+
+Problem:
+Mechanisms were buried only in one role and not aligned to role priority weights.
+
+Improvement:
+Add constraint:
+
+High-priority roles must include at least one primary mechanism in first two bullets.
+
+This avoids mechanisms drifting to low-priority roles.
+
+2. Ecosystem Mirroring Rule
+
+JD requires:
+
+Java + C#
+
+Enterprise SaaS
+
+Cloud-native modernization
+
+Your system underemphasized C# and .NET even though it’s present in profile.
+
+Add:
+
+When JD mentions multiple language ecosystems (e.g., .NET and Java), ensure both are surfaced if present in skill pool.
+
+3. Public Sector SaaS Gap Handling Strategy
+
+Currently system avoids inventing public sector SaaS (correct), but does not compensate.
+
+Add:
+
+When JD requires unsupported domain (e.g., public sector SaaS), add a “domain-adjacent framing clause”:
+“Experience building regulated, compliance-sensitive platforms.”
+
+This fills narrative gap without hallucinating.
+
+4. “Architecture Governance” Keyword Trigger
+
+JD strongly emphasizes:
+
+architecture standards
+
+governance
+
+reference architecture
+
+System underused those terms.
+
+Add rule:
+
+If JD contains governance/standards keywords, ensure at least one bullet includes: design reviews, architecture standards, governance, or reusable patterns.
+
+5. Enterprise Architect Tone Shift
+
+Even though role_level = senior, this JD is architect-heavy.
+
+You may want:
+
+If title contains “Architect”, increase strategic framing weight slightly even if role_level = senior.
+
+Right now tone is still IC-heavy.
+
+6. Early Career Compression Policy
+
+System currently keeps too much early-career weight.
+
+Add:
+
+If role_priorities mark a role as low and older than 10 years, restrict to maximum 2 bullets.
+
+This improves density and seniority signal.
+
+7. Platform Vocabulary Injection
+
+Add JD vocabulary injection list:
+
+platform evolution
+
+shared services
+
+modular architecture
+
+cross-product interoperability
+
+architecture roadmap
+
+System currently paraphrases but does not mirror vocabulary enough.
+
+Overall Assessment
+
+This NEOGOV generation was:
+
++Honest
++No hallucinations
++Clean alignment with constraints
+-Under-architected in language
+-Mechanisms not distributed properly
+-Governance vocabulary underused
+-C# ecosystem underemphasized
+
+With the upgrades above, it becomes materially stronger for Enterprise Architect.
