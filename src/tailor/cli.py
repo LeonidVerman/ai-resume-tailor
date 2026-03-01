@@ -8,7 +8,7 @@ import sys
 
 logger = logging.getLogger(__name__)
 
-from tailor.config import COVER_TEMPLATE, ENABLE_PLAN_REPAIR, ENABLE_TWO_PHASE, OUTPUT_DIR, RESUME_TEMPLATE
+from tailor.config import ASSESS_MODEL, ASSESS_TEMPERATURE, COVER_TEMPLATE, ENABLE_PLAN_REPAIR, ENABLE_TWO_PHASE, OUTPUT_DIR, RESUME_TEMPLATE
 from tailor.debug import save_debug_data
 from tailor.diff import diff_resume
 from tailor.docx.pdf import docx_to_pdf
@@ -39,6 +39,67 @@ def _confirm_overwrite(path, force=False):
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "assess":
+        _main_assess(sys.argv[2:])
+        return
+    _main_tailor()
+
+
+def _main_assess(argv: list[str]) -> None:
+    """Entry point for the `tailor assess` subcommand."""
+    from tailor.assess import run_assess_pipeline
+
+    parser = argparse.ArgumentParser(
+        prog="tailor assess",
+        description="Score tailored documents for a batch of job positions.",
+    )
+    parser.add_argument(
+        "--positions", required=True, metavar="FILE",
+        help="Path to positions file (one URL per line).",
+    )
+    parser.add_argument(
+        "--out", required=True, metavar="PATH",
+        help="Output path for the aggregate JSON report.",
+    )
+    parser.add_argument(
+        "--model", default=ASSESS_MODEL, metavar="MODEL",
+        help=f"LLM model for assessment (default: {ASSESS_MODEL}).",
+    )
+    parser.add_argument(
+        "--temperature", type=float, default=ASSESS_TEMPERATURE, metavar="T",
+        help=f"Sampling temperature (default: {ASSESS_TEMPERATURE}).",
+    )
+    parser.add_argument(
+        "--max_positions", type=int, default=None, metavar="N",
+        help="Maximum number of positions to process.",
+    )
+    parser.add_argument(
+        "--cache_dir", default=None, metavar="DIR",
+        help="Directory for caching raw assessment results.",
+    )
+    parser.add_argument(
+        "--runs", type=int, default=1,
+        help="(Reserved) Number of judge runs per position.",
+    )
+    parser.add_argument(
+        "--judge_only_after_validation_fail", default="false",
+        help="(Reserved) Future flag.",
+    )
+    args = parser.parse_args(argv)
+
+    run_assess_pipeline(
+        positions_file=args.positions,
+        out_path=args.out,
+        model=args.model,
+        temperature=args.temperature,
+        max_positions=args.max_positions,
+        cache_dir=args.cache_dir,
+        runs=args.runs,
+    )
+
+
+def _main_tailor() -> None:
+    """Entry point for the default `tailor` (generate) command."""
     parser = argparse.ArgumentParser(
         description="Tailor a resume and cover letter to a specific job posting."
     )
