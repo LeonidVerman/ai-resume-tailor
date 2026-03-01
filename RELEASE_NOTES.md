@@ -1,5 +1,26 @@
 # Release Notes
 
+## 0.1.3.APLHA — 2025-02-28
+
+**Postprocessors removed, evidence ledger, LLM judge, and repair loop simplification.**
+
+### New features
+- **Evidence ledger validation** (`phase2_validator.py`): Phase 2 writer now emits a structured `evidence_ledger` alongside the resume/cover letter. Validator cross-checks each ledger entry against actual output spans — rewording is allowed, but fabrication is flagged. Exports `LEDGER_MISMATCH_ERROR_PREFIX`, `LEDGER_SPAN_NOT_FOUND_PREFIX`, `LEDGER_ENTRY_MISSING_PREFIX`.
+- **LLM judge round** (`prompts/judge.txt`): after repair, any remaining `LEDGER_SPAN_MISMATCH` errors are submitted to a judge model (default `gpt-4o-mini`) for semantic verdict. `apply_judge_to_validation(report, verdicts)` removes approved mismatches from the error list. Controlled by `ENABLE_PHASE2_JUDGE` (default true) and `PHASE2_JUDGE_MODEL`.
+- **`repair_brief`** in `ValidationReport`: structured dict with `global_issues` (missing metrics, skills, unsafe nouns, cover letter date) and per-role `action_plan` passed to repair prompt.
+- **`judge_candidates`** in `ValidationReport`: list of `{id, kind, target, location, exact_span}` items eligible for judge evaluation.
+- **Repair loop simplified**: `PHASE2_MAX_REPAIR_ATTEMPTS` reduced from 3 to 1 — pipeline is now write → 1 repair → 1 judge, eliminating unnecessary LLM calls.
+
+### Removed
+- **Mechanism postprocessor** (`mechanism_postprocessor.py`) deleted — enforcement now handled entirely by writer prompt + repair loop + judge.
+- **Token postprocessor** (`token_postprocessor.py`) deleted.
+
+### Tests
+- 2 new test files: `tests/test_ledger_validation.py` (54 tests), `tests/test_phase2_repair_loop.py` (25 tests).
+- Total: 265 tests (was 263 at 0.1.2).
+
+---
+
 ## 0.1.2.APLHA — 2025-02-27
 
 **Mechanism taxonomy, enforcement hardening, and WriterPacket provenance split.**
