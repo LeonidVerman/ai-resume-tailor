@@ -396,7 +396,7 @@ def _save_csv(path: Path, entries: list[dict]) -> None:
 
 def run_assess_pipeline(
     positions_file: str,
-    out_path: str,
+    out_dir: str = "reports",
     model: str = ASSESS_MODEL,
     temperature: float = ASSESS_TEMPERATURE,
     max_positions: int | None = None,
@@ -410,8 +410,12 @@ def run_assess_pipeline(
     ----------
     positions_file:
         Path to a text file with one URL per line (# comments / blank lines ignored).
-    out_path:
-        Destination path for the aggregate JSON report.
+    out_dir:
+        Base reports directory.  A timestamped subfolder is created inside it::
+
+            <out_dir>/<YYYYMMDD_HHmmss>/assess_<YYYYMMDD_HHmmss>.json
+            <out_dir>/<YYYYMMDD_HHmmss>/assess_<YYYYMMDD_HHmmss>.csv
+            <out_dir>/<YYYYMMDD_HHmmss>/raw/<hash>.json
     model:
         OpenAI model used for assessment.
     temperature:
@@ -427,10 +431,17 @@ def run_assess_pipeline(
 
     Returns
     -------
-    The aggregate report dict (also written to *out_path*).
+    The aggregate report dict (also written to the timestamped JSON file).
     """
     if weights is None:
         weights = _DEFAULT_WEIGHTS
+
+    # Capture timestamp once — folder name and filenames share the same value.
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir = Path(out_dir) / ts
+    raw_dir = run_dir / "raw"
+    report_path = run_dir / f"assess_{ts}.json"
+    csv_path = run_dir / f"assess_{ts}.csv"
 
     urls = load_positions(positions_file)
     if max_positions is not None:
@@ -442,9 +453,6 @@ def run_assess_pipeline(
     resume_template = read_docx(RESUME_TEMPLATE)
     cover_template = read_docx(COVER_TEMPLATE)
     profile_str = _load_candidate_profile()
-
-    out_path_obj = Path(out_path)
-    raw_dir = out_path_obj.parent / "raw"
 
     position_entries: list[dict] = []
 
@@ -530,13 +538,12 @@ def run_assess_pipeline(
     }
 
     # --- Write aggregate JSON ---
-    out_path_obj.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_path_obj, "w", encoding="utf-8") as f:
+    run_dir.mkdir(parents=True, exist_ok=True)
+    with open(report_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
-    print(f"\nReport saved to {out_path}")
+    print(f"\nReport saved to {report_path}")
 
     # --- Write CSV ---
-    csv_path = out_path_obj.with_suffix(".csv")
     _save_csv(csv_path, position_entries)
     print(f"CSV   saved to {csv_path}")
 

@@ -58,8 +58,8 @@ def _main_assess(argv: list[str]) -> None:
         help="Path to positions file (one URL per line).",
     )
     parser.add_argument(
-        "--out", required=True, metavar="PATH",
-        help="Output path for the aggregate JSON report.",
+        "--out", default="reports", metavar="DIR",
+        help="Base reports directory (default: reports). A timestamped subfolder is created inside.",
     )
     parser.add_argument(
         "--model", default=ASSESS_MODEL, metavar="MODEL",
@@ -89,7 +89,7 @@ def _main_assess(argv: list[str]) -> None:
 
     run_assess_pipeline(
         positions_file=args.positions,
-        out_path=args.out,
+        out_dir=args.out,
         model=args.model,
         temperature=args.temperature,
         max_positions=args.max_positions,
