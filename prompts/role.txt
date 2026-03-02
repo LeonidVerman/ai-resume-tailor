@@ -1,4 +1,4 @@
-[ROLE_LEVEL_TUNING v1.2]
+[ROLE_LEVEL_TUNING v2.0]
 
 You will receive role_level.
 
@@ -8,10 +8,11 @@ director, manager, principal, staff, senior, mid, junior.
 Apply guidance to BOTH resume and cover letter.
 
 GENERAL RULES
-- Prefer concrete mechanisms and outcomes over adjectives.
-- Avoid generic phrases unless followed by specific system detail.
+- Prefer concrete artifacts and outcomes over adjectives.
+- Avoid generic phrases unless followed by specific system or process detail.
 - Avoid stacking multiple mechanisms in one sentence.
 - Avoid vague claims like “mission-critical systems” without specifics.
+- Do not inflate scope beyond evidence.
 
 GENERIC LANGUAGE SUPPRESSION
 Do not use:
@@ -25,41 +26,158 @@ MECHANISM DEPTH RULE
 Every mechanism bullet must include:
 - The mechanism itself
 - The system boundary or component it affected
-- A constraint or tradeoff
+- A constraint, tradeoff, or context
 - A measurable or observable outcome (if supported)
 
+---------------------------------------------------------------------
+
 DIRECTOR
-- Emphasize strategy, org impact, cross-team alignment.
-- Include hiring, mentoring, delivery governance if supported.
-- Frame mechanisms as architectural direction, not implementation.
-- Include at least one bullet about delivery improvement if supported.
+
+Focus:
+- Organizational impact
+- Strategy
+- Cross-team coordination
+- Delivery governance
+
+Artifact Enforcement (MANDATORY if supported by evidence):
+Include at least 3 of the following artifact types across the resume:
+
+1) Delivery Governance Artifact
+   - Release cadence definition
+   - Process transformation
+   - Quality or predictability improvement
+   - Escalation framework
+   - Risk management mechanism
+
+2) Organizational Leadership Artifact
+   - Hiring decisions or headcount growth
+   - Team structure evolution
+   - Mentorship or leadership development program
+   - Performance management system
+
+3) Cross-Functional Alignment Artifact
+   - Roadmap alignment with Product
+   - Executive reporting
+   - Dependency coordination across teams
+   - Stakeholder negotiation
+
+4) Strategic Technical Direction Artifact
+   - Platform standardization
+   - Architectural direction setting
+   - Long-term modernization initiative
+   - Governance of shared components
+
+Rules:
+- Do not describe leadership abstractly.
+- At least one artifact must include measurable impact or observable change.
+- Mechanisms must support strategic direction, not implementation detail.
+
+---------------------------------------------------------------------
 
 MANAGER
-- Make team leadership explicit.
-- Include delivery language: roadmap, milestones, risk, cross-functional coordination (if supported).
-- Include at least:
-  - 1 people development or mentorship signal
-  - 1 delivery process or execution improvement signal
-- Mechanisms support credibility but are not stacked.
+
+Focus:
+- Team execution
+- Delivery ownership
+- People development
+- Operational reliability
+
+Artifact Enforcement (MANDATORY if supported by evidence):
+Include at least 3 of the following artifact types across the resume:
+
+1) Delivery Execution Artifact
+   - Sprint planning ownership
+   - Milestone delivery
+   - Incident leadership
+   - Backlog prioritization
+   - Reduction of spillover or missed commitments
+
+2) People Development Artifact
+   - Hiring participation
+   - Mentoring engineers
+   - Performance reviews
+   - Career growth guidance
+   - Onboarding improvements
+
+3) Cross-Functional Coordination Artifact
+   - Collaboration with Product or Design
+   - Stakeholder updates
+   - Risk communication
+   - Requirement clarification cycles
+
+4) Operational Improvement Artifact
+   - Process optimization
+   - Test coverage increase
+   - Deployment pipeline improvement
+   - Observability or reliability enhancement
+
+Rules:
+- At least one artifact must show execution accountability (not just participation).
+- At least one artifact must show people leadership.
+- Mechanisms should reinforce delivery credibility, not dominate.
+
+---------------------------------------------------------------------
 
 PRINCIPAL
-- Emphasize standards, architectural governance, cross-team influence.
-- Use mechanisms as exemplars of design direction.
+
+Focus:
+- Architecture standards
+- Cross-team influence
+- Technical leadership without direct org management
+
+Artifact Expectations:
+Include at least 2 of:
+- Architecture review process
+- Cross-team standard adoption
+- Design RFC leadership
+- System boundary clarification
+- Platform-level design tradeoff
+
+Mechanisms must illustrate architectural direction.
+
+---------------------------------------------------------------------
 
 STAFF
-- High-leverage execution + influence.
-- Mix architecture depth and mentorship.
+
+Focus:
+- High-leverage execution
+- Mentorship
+- Influence within team or domain
+
+Include at least:
+- 1 cross-team contribution
+- 1 technical depth artifact
+- 1 reliability or scalability artifact
+
+---------------------------------------------------------------------
 
 SENIOR
-- Architecture depth dominates.
-- Mechanisms + performance + reliability.
-- Leadership secondary but visible.
+
+Focus:
+- Strong technical ownership
+- Performance and reliability impact
+
+Include:
+- 1 significant technical initiative
+- 1 performance or reliability improvement
+- 1 collaboration signal
+
+---------------------------------------------------------------------
 
 MID / JUNIOR
-- Focus on execution and learning velocity.
-- Mechanisms framed as contribution, not ownership.
+
+Focus:
+- Execution quality
+- Learning velocity
+- Growing ownership
+
+Mechanisms framed as contribution, not strategy.
+
+---------------------------------------------------------------------
 
 FINAL CHECK
 - Tone matches role_level.
+- Artifacts are concrete, not abstract.
 - No scope inflation.
-- Mechanisms are natural and contextual.
+- Mechanisms are contextual and relevant.
+- Leadership claims are supported by operational evidence.
