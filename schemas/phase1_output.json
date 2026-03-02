@@ -3,6 +3,10 @@
   "required": [
     "role_level",
     "resume_mode",
+    "jd_domain",
+    "candidate_primary_domain",
+    "domain_mismatch",
+    "domain_translation_rule_ids",
     "jd_top_themes",
     "vocabulary_anchoring",
     "evidence_map",
@@ -16,6 +20,39 @@
     "role_level": {
       "type": "string",
       "enum": ["director", "manager", "principal", "staff", "senior", "mid", "junior"]
+    },
+
+    "jd_domain": {
+      "type": "string",
+      "enum": [
+        "fintech_trading", "fintech_payments", "crypto_web3",
+        "b2b_saas_platform", "consumer_saas", "marketplace",
+        "healthcare_enterprise", "gov_public_sector", "edtech",
+        "security_privacy", "devtools_platform", "data_analytics",
+        "growth_plg", "mobile_apps", "identity_access", "infra_cloud_ops"
+      ]
+    },
+
+    "candidate_primary_domain": {
+      "type": "string",
+      "enum": [
+        "fintech_trading", "fintech_payments", "crypto_web3",
+        "b2b_saas_platform", "consumer_saas", "marketplace",
+        "healthcare_enterprise", "gov_public_sector", "edtech",
+        "security_privacy", "devtools_platform", "data_analytics",
+        "growth_plg", "mobile_apps", "identity_access", "infra_cloud_ops"
+      ]
+    },
+
+    "domain_mismatch": {
+      "type": "boolean"
+    },
+
+    "domain_translation_rule_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 0,
+      "maxItems": 3
     },
 
     "resume_mode": {

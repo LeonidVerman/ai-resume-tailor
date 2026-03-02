@@ -21,6 +21,7 @@ from tailor.config import (
     PHASE2_REPAIR_TEMPERATURE,
     PHASE2_TEMPERATURE,
     SCHEMAS_DIR,
+    load_domain_translation_rules,
 )
 from tailor.plan_validator import validate_plan_extended
 from tailor.job import JobData
@@ -63,6 +64,10 @@ def _get_phase1_schema() -> dict:
 _PLAN_REQUIRED_KEYS = frozenset({
     "role_level",
     "resume_mode",
+    "jd_domain",
+    "candidate_primary_domain",
+    "domain_mismatch",
+    "domain_translation_rule_ids",
     "jd_top_themes",
     "vocabulary_anchoring",
     "evidence_map",
@@ -126,6 +131,24 @@ def _run_schema_gate(data: Any) -> list[str]:
         errors.append(
             f"schema_invalid: role_level must be a string, "
             f"got {type(data['role_level']).__name__}"
+        )
+
+    # domain fields
+    for str_key in ("jd_domain", "candidate_primary_domain"):
+        if not isinstance(data.get(str_key), str):
+            errors.append(
+                f"schema_invalid: {str_key} must be a string, "
+                f"got {type(data.get(str_key)).__name__}"
+            )
+    if not isinstance(data.get("domain_mismatch"), bool):
+        errors.append(
+            f"schema_invalid: domain_mismatch must be a boolean, "
+            f"got {type(data.get('domain_mismatch')).__name__}"
+        )
+    if not isinstance(data.get("domain_translation_rule_ids"), list):
+        errors.append(
+            f"schema_invalid: domain_translation_rule_ids must be a list, "
+            f"got {type(data.get('domain_translation_rule_ids')).__name__}"
         )
 
     # jd_top_themes: list of objects each with required keys
@@ -276,6 +299,40 @@ def validate_plan(data: Any) -> dict:
     if not isinstance(vocab.get("optional_embed"), list):
         raise PlanValidationError("vocabulary_anchoring.optional_embed must be a list")
 
+    # Domain fields
+    try:
+        rules_data = load_domain_translation_rules()
+        valid_domains: set[str] = set(rules_data.get("domains", []))
+    except Exception:
+        valid_domains = set()
+
+    for field in ("jd_domain", "candidate_primary_domain"):
+        val = data.get(field)
+        if not isinstance(val, str):
+            raise PlanValidationError(
+                f"{field} must be a string, got {type(val).__name__}"
+            )
+        if valid_domains and val not in valid_domains:
+            raise PlanValidationError(
+                f"{field} {val!r} is not a valid domain"
+            )
+
+    if not isinstance(data.get("domain_mismatch"), bool):
+        raise PlanValidationError(
+            f"domain_mismatch must be a boolean, got "
+            f"{type(data.get('domain_mismatch')).__name__}"
+        )
+
+    rule_ids = data.get("domain_translation_rule_ids")
+    if not isinstance(rule_ids, list):
+        raise PlanValidationError(
+            f"domain_translation_rule_ids must be a list, got {type(rule_ids).__name__}"
+        )
+    if len(rule_ids) > 3:
+        raise PlanValidationError(
+            f"domain_translation_rule_ids must have at most 3 entries, got {len(rule_ids)}"
+        )
+
     return data
 
 
@@ -320,9 +377,23 @@ def plan_tailoring(
         current_date=current_date,
     )
 
+    try:
+        domain_rules = load_domain_translation_rules()
+        domain_rules_blob = json.dumps(
+            {"domains": domain_rules["domains"], "rules": domain_rules["rules"]},
+            indent=2,
+        )
+    except Exception as exc:
+        logger.warning("Could not load domain_translation_rules.json: %s", exc)
+        domain_rules_blob = ""
+
     messages: list = [
         {"role": "developer", "content": planner_instructions},
     ]
+    if domain_rules_blob:
+        messages.append(
+            {"role": "user", "content": f"DOMAIN_TRANSLATION_RULES:\n{domain_rules_blob}"}
+        )
     if profile:
         messages.append({"role": "user", "content": f"CANDIDATE_PROFILE:\n{profile}"})
     messages.append({"role": "user", "content": f"JOB_DESCRIPTION:\n{job.description}"})
@@ -400,6 +471,16 @@ def plan_repair_tailoring(
     repair_instructions = _load_prompt("phase1_repair")
     profile = _load_candidate_profile()
 
+    try:
+        domain_rules = load_domain_translation_rules()
+        domain_rules_blob = json.dumps(
+            {"domains": domain_rules["domains"], "rules": domain_rules["rules"]},
+            indent=2,
+        )
+    except Exception as exc:
+        logger.warning("Could not load domain_translation_rules.json: %s", exc)
+        domain_rules_blob = ""
+
     messages: list = [
         {"role": "developer", "content": repair_instructions},
         {
@@ -417,6 +498,10 @@ def plan_repair_tailoring(
     ]
     if raw_text:
         messages.append({"role": "user", "content": f"RAW_TEXT:\n{raw_text}"})
+    if domain_rules_blob:
+        messages.append(
+            {"role": "user", "content": f"DOMAIN_TRANSLATION_RULES:\n{domain_rules_blob}"}
+        )
     if profile:
         messages.append({"role": "user", "content": f"CANDIDATE_PROFILE:\n{profile}"})
     messages.append({"role": "user", "content": f"JOB_DESCRIPTION:\n{job.description}"})

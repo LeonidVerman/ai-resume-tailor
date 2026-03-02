@@ -9,6 +9,7 @@ import json
 import logging
 import re
 
+from tailor.config import load_domain_translation_rules
 from tailor.mechanism_taxonomy import build_mechanism_taxonomy, _normalize_for_dedup
 
 logger = logging.getLogger(__name__)
@@ -119,8 +120,19 @@ def build_writer_packet(
         plan, role_source_bullet_counts, role_source_char_counts, jd_is_delivery_oriented,
     )
 
+    # --- Domain translation fields ---
+    jd_domain: str = plan.get("jd_domain", "")
+    candidate_primary_domain: str = plan.get("candidate_primary_domain", "")
+    domain_mismatch: bool = bool(plan.get("domain_mismatch", False))
+    domain_translation_rule_ids: list[str] = list(plan.get("domain_translation_rule_ids") or [])
+    domain_translation_rules_applied = _resolve_domain_rules(domain_translation_rule_ids)
+
     return {
         "role_level": role_level,
+        "jd_domain": jd_domain,
+        "candidate_primary_domain": candidate_primary_domain,
+        "domain_mismatch": domain_mismatch,
+        "domain_translation_rules_applied": domain_translation_rules_applied,
         "jd_vocab_must_embed": jd_vocab_must_embed,
         "jd_vocab_optional_embed": jd_vocab_optional_embed,
         "master_resume_role_names": list(role_stats.keys()),
@@ -686,3 +698,28 @@ def _dedup_case_insensitive(items: list[str]) -> list[str]:
             seen.add(item.lower())
             result.append(item)
     return result
+
+
+def _resolve_domain_rules(rule_ids: list[str]) -> list[dict]:
+    """Look up each rule_id in the loaded domain translation rules.
+
+    Unknown IDs are skipped with a warning.  Returns full rule objects so
+    the Phase 2 writer receives actionable content, not bare IDs.
+    """
+    if not rule_ids:
+        return []
+    try:
+        rules_data = load_domain_translation_rules()
+        index: dict = rules_data.get("_index", {})
+    except Exception as exc:
+        logger.warning("Could not load domain_translation_rules.json: %s", exc)
+        return []
+
+    resolved: list[dict] = []
+    for rid in rule_ids:
+        rule = index.get(rid)
+        if rule is None:
+            logger.warning("domain_translation_rule_id %r not found in rules file; skipping.", rid)
+        else:
+            resolved.append(rule)
+    return resolved

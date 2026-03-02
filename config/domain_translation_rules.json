@@ -1,0 +1,427 @@
+{
+  "version": "1.0",
+  "domains": [
+    "fintech_trading",
+    "fintech_payments",
+    "crypto_web3",
+    "b2b_saas_platform",
+    "consumer_saas",
+    "marketplace",
+    "healthcare_enterprise",
+    "gov_public_sector",
+    "edtech",
+    "security_privacy",
+    "devtools_platform",
+    "data_analytics",
+    "growth_plg",
+    "mobile_apps",
+    "identity_access",
+    "infra_cloud_ops"
+  ],
+  "rules": [
+    {
+      "rule_id": "R01_REGULATED_CONSTRAINTS_TO_REGULATED_ENTERPRISE",
+      "from_domains": ["fintech_trading", "fintech_payments", "crypto_web3"],
+      "to_domains": ["healthcare_enterprise", "gov_public_sector", "security_privacy"],
+      "intent": "Translate regulated/controlled environment constraints without claiming domain membership.",
+      "source_patterns": [
+        "regulatory constraints",
+        "auditability",
+        "compliance",
+        "security reviews",
+        "controls",
+        "restricted change windows"
+      ],
+      "target_frames": [
+        "regulated enterprise delivery constraints",
+        "security and auditability requirements",
+        "risk-managed change process"
+      ],
+      "allowed_phrases": [
+        "operated under regulatory and security constraints",
+        "designed for auditability and change control",
+        "aligned delivery with compliance and risk requirements"
+      ],
+      "forbidden_phrases": [
+        "healthcare experience",
+        "HIPAA",
+        "PHI",
+        "clinical workflows",
+        "government clearance",
+        "public-sector program ownership"
+      ],
+      "evidence_requirements": {
+        "must_have_any_keywords": ["regulat", "audit", "compliance", "security", "risk", "controls"],
+        "min_evidence_snippets": 1
+      }
+    },
+    {
+      "rule_id": "R02_TRADING_PLATFORM_TO_ENTERPRISE_PLATFORM",
+      "from_domains": ["fintech_trading", "crypto_web3"],
+      "to_domains": ["b2b_saas_platform", "gov_public_sector", "healthcare_enterprise"],
+      "intent": "Translate low-latency/high-availability platform work into enterprise platform framing.",
+      "source_patterns": [
+        "low-latency trading",
+        "high availability",
+        "real-time systems",
+        "throughput under peak load"
+      ],
+      "target_frames": [
+        "high-availability enterprise platform",
+        "mission reliability and performance under production pressure",
+        "platform scalability and resilience"
+      ],
+      "allowed_phrases": [
+        "built high-availability distributed services under strict reliability targets",
+        "delivered performance and resilience improvements under peak load",
+        "improved platform reliability and operability at scale"
+      ],
+      "forbidden_phrases": [
+        "enterprise architecture for healthcare",
+        "government platform modernization program",
+        "unified data model across products"
+      ],
+      "evidence_requirements": {
+        "must_have_any_keywords": ["availability", "latency", "throughput", "scale", "distributed"],
+        "min_evidence_snippets": 1
+      }
+    },
+    {
+      "rule_id": "R03_EXTERNAL_APIS_TO_INTEGRATION_PLATFORM",
+      "from_domains": ["fintech_trading", "fintech_payments", "crypto_web3", "b2b_saas_platform"],
+      "to_domains": ["b2b_saas_platform", "marketplace", "gov_public_sector"],
+      "intent": "Translate API development into partner/client integration language without inventing clients.",
+      "source_patterns": [
+        "REST APIs",
+        "integration endpoints",
+        "API gateway",
+        "webhooks",
+        "SDKs"
+      ],
+      "target_frames": [
+        "integration platform capabilities",
+        "external-facing integration surfaces",
+        "stable API contracts and partner integration"
+      ],
+      "allowed_phrases": [
+        "designed stable API contracts to support integrations",
+        "improved API reliability, observability, and backward compatibility",
+        "built integration surfaces with clear versioning and operational support"
+      ],
+      "forbidden_phrases": [
+        "built apps for external clients",
+        "managed enterprise customer implementations",
+        "professional services delivery"
+      ],
+      "evidence_requirements": {
+        "must_have_any_keywords": ["API", "REST", "gateway", "webhook", "integration"],
+        "min_evidence_snippets": 1
+      }
+    },
+    {
+      "rule_id": "R04_SLO_LATENCY_MONITORING_TO_PLATFORM_GOVERNANCE",
+      "from_domains": ["fintech_trading", "infra_cloud_ops", "b2b_saas_platform"],
+      "to_domains": ["gov_public_sector", "b2b_saas_platform", "healthcare_enterprise"],
+      "intent": "Translate monitoring/latency work into SLO/SLA governance framing (without inventing SLAs).",
+      "source_patterns": [
+        "monitoring",
+        "alerting",
+        "latency tracking",
+        "incident response",
+        "observability"
+      ],
+      "target_frames": [
+        "operational excellence and reliability governance",
+        "SLO-oriented reliability practice",
+        "incident management and service health"
+      ],
+      "allowed_phrases": [
+        "strengthened observability and incident response practices",
+        "improved service health through monitoring and operational feedback loops",
+        "introduced reliability-focused operational practices"
+      ],
+      "forbidden_phrases": [
+        "formal SLA ownership",
+        "compliance reporting for government systems"
+      ],
+      "evidence_requirements": {
+        "must_have_any_keywords": ["monitor", "alert", "incident", "observability", "latency"],
+        "min_evidence_snippets": 1
+      }
+    },
+    {
+      "rule_id": "R05_TEAM_LEAD_TO_DELIVERY_OWNERSHIP",
+      "from_domains": [
+        "fintech_trading",
+        "b2b_saas_platform",
+        "consumer_saas",
+        "devtools_platform",
+        "infra_cloud_ops"
+      ],
+      "to_domains": ["growth_plg", "edtech", "healthcare_enterprise", "marketplace"],
+      "intent": "Translate team leadership into delivery artifacts without inventing HR processes.",
+      "source_patterns": [
+        "team lead",
+        "mentoring",
+        "ownership",
+        "planning",
+        "coordination"
+      ],
+      "target_frames": [
+        "delivery ownership and execution cadence",
+        "cross-functional coordination",
+        "predictable delivery improvements"
+      ],
+      "allowed_phrases": [
+        "owned delivery cadence and execution rituals",
+        "partnered with product and stakeholders to align scope and priorities",
+        "improved delivery predictability through process and quality improvements"
+      ],
+      "forbidden_phrases": [
+        "formal performance management",
+        "direct hiring ownership",
+        "managed budgets"
+      ],
+      "evidence_requirements": {
+        "must_have_any_keywords": ["lead", "mentor", "team", "coord", "deliver"],
+        "min_evidence_snippets": 1
+      }
+    },
+    {
+      "rule_id": "R06_DATA_PIPELINES_TO_ANALYTICS_FOUNDATION",
+      "from_domains": ["fintech_trading", "b2b_saas_platform", "consumer_saas"],
+      "to_domains": ["data_analytics", "growth_plg", "devtools_platform"],
+      "intent": "Translate data processing/storage work into analytics foundation framing without inventing BI ownership.",
+      "source_patterns": [
+        "data pipelines",
+        "ETL",
+        "event processing",
+        "data storage",
+        "stream processing"
+      ],
+      "target_frames": [
+        "analytics foundation",
+        "event-driven data processing",
+        "data quality and reliability improvements"
+      ],
+      "allowed_phrases": [
+        "improved data processing reliability and observability",
+        "built event-driven processing to support downstream consumers",
+        "strengthened data quality and operational visibility"
+      ],
+      "forbidden_phrases": [
+        "owned company-wide analytics strategy",
+        "built growth dashboards for product leadership"
+      ],
+      "evidence_requirements": {
+        "must_have_any_keywords": ["pipeline", "ETL", "event", "stream", "data"],
+        "min_evidence_snippets": 1
+      }
+    },
+    {
+      "rule_id": "R07_SECURITY_ENGINEERING_TO_ENTERPRISE_SECURITY_POSTURE",
+      "from_domains": ["fintech_trading", "fintech_payments", "crypto_web3", "b2b_saas_platform"],
+      "to_domains": ["security_privacy", "gov_public_sector", "healthcare_enterprise", "identity_access"],
+      "intent": "Translate security controls into enterprise security posture framing.",
+      "source_patterns": [
+        "security",
+        "access control",
+        "encryption",
+        "threat modeling",
+        "secure coding",
+        "audit logs"
+      ],
+      "target_frames": [
+        "enterprise security posture",
+        "privacy-aware engineering",
+        "access control and auditability"
+      ],
+      "allowed_phrases": [
+        "improved access control and auditability for production systems",
+        "implemented security-minded patterns and reviews",
+        "reduced operational risk through security controls"
+      ],
+      "forbidden_phrases": [
+        "HIPAA compliance",
+        "FedRAMP",
+        "SOC2 ownership"
+      ],
+      "evidence_requirements": {
+        "must_have_any_keywords": ["security", "access", "encrypt", "audit", "auth"],
+        "min_evidence_snippets": 1
+      }
+    },
+    {
+      "rule_id": "R08_MICROSERVICES_TO_PLATFORM_STANDARDS",
+      "from_domains": ["fintech_trading", "b2b_saas_platform", "devtools_platform"],
+      "to_domains": ["b2b_saas_platform", "gov_public_sector", "healthcare_enterprise"],
+      "intent": "Translate service architecture into platform standards and governance without inventing cross-product authority.",
+      "source_patterns": [
+        "microservices",
+        "service boundaries",
+        "API standards",
+        "shared libraries",
+        "platform patterns"
+      ],
+      "target_frames": [
+        "platform standards and architectural consistency",
+        "reference patterns and shared components",
+        "service boundary governance"
+      ],
+      "allowed_phrases": [
+        "established reference patterns to improve consistency across services",
+        "clarified service boundaries and integration contracts",
+        "reduced integration friction through shared patterns"
+      ],
+      "forbidden_phrases": [
+        "unified 22+ products",
+        "company-wide governance authority"
+      ],
+      "evidence_requirements": {
+        "must_have_any_keywords": ["service", "microservice", "boundary", "standard", "platform"],
+        "min_evidence_snippets": 1
+      }
+    },
+    {
+      "rule_id": "R09_AI_TO_PRODUCTIVITY_AND_QUALITY",
+      "from_domains": [
+        "fintech_trading",
+        "b2b_saas_platform",
+        "devtools_platform",
+        "growth_plg"
+      ],
+      "to_domains": [
+        "b2b_saas_platform",
+        "consumer_saas",
+        "edtech",
+        "healthcare_enterprise"
+      ],
+      "intent": "Translate AI tool usage into productivity/quality improvements without claiming AI product ownership.",
+      "source_patterns": [
+        "AI-assisted development",
+        "ChatGPT",
+        "Cursor",
+        "Claude",
+        "coding agents"
+      ],
+      "target_frames": [
+        "accelerated delivery through AI-assisted workflows",
+        "improved documentation/spec quality",
+        "faster ramp-up on unfamiliar systems"
+      ],
+      "allowed_phrases": [
+        "used AI-assisted tools to accelerate debugging and prototyping",
+        "improved spec quality and documentation with AI support",
+        "reduced iteration time on complex problems using AI-assisted workflows"
+      ],
+      "forbidden_phrases": [
+        "owned AI product strategy",
+        "built AI features for customers",
+        "trained production AI models"
+      ],
+      "evidence_requirements": {
+        "must_have_any_keywords": ["ChatGPT", "Cursor", "Claude", "AI"],
+        "min_evidence_snippets": 1
+      }
+    },
+    {
+      "rule_id": "R10_ENTERPRISE_ARCHITECTURE_SOFTENING",
+      "from_domains": ["fintech_trading", "b2b_saas_platform", "infra_cloud_ops"],
+      "to_domains": ["gov_public_sector", "healthcare_enterprise", "b2b_saas_platform"],
+      "intent": "Provide safe equivalents for enterprise architecture terms that are often over-claimed.",
+      "source_patterns": [
+        "platform unification",
+        "unified data model",
+        "cross-product interoperability",
+        "enterprise architecture"
+      ],
+      "target_frames": [
+        "platform integration and standardization",
+        "shared patterns and interoperability across services",
+        "architecture alignment and modernization"
+      ],
+      "allowed_phrases": [
+        "improved interoperability via shared patterns and stable contracts",
+        "standardized interfaces to reduce integration friction",
+        "guided modernization and architectural alignment"
+      ],
+      "forbidden_phrases": [
+        "unified data model",
+        "platform unification across products",
+        "enterprise architect for government"
+      ],
+      "evidence_requirements": {
+        "must_have_any_keywords": ["standard", "interface", "integration", "platform", "modern"],
+        "min_evidence_snippets": 1
+      }
+    },
+    {
+      "rule_id": "R11_CUSTOMER_FACING_SOFTENING",
+      "from_domains": ["fintech_trading", "b2b_saas_platform", "consumer_saas"],
+      "to_domains": ["marketplace", "healthcare_enterprise", "gov_public_sector"],
+      "intent": "Avoid unsafe client-facing claims; translate to stakeholder collaboration when evidence is limited.",
+      "source_patterns": [
+        "client-facing",
+        "built apps for clients",
+        "customer delivery",
+        "implementation"
+      ],
+      "target_frames": [
+        "stakeholder collaboration",
+        "cross-functional requirements alignment",
+        "integration support and operational partnership"
+      ],
+      "allowed_phrases": [
+        "partnered with stakeholders to clarify requirements and tradeoffs",
+        "supported integrations and operational needs across teams",
+        "coordinated with product and operations to deliver outcomes"
+      ],
+      "forbidden_phrases": [
+        "external client delivery ownership",
+        "managed customer implementations",
+        "consulting engagements"
+      ],
+      "evidence_requirements": {
+        "must_have_any_keywords": ["stakeholder", "product", "requirements", "coord"],
+        "min_evidence_snippets": 1
+      }
+    },
+    {
+      "rule_id": "R12_LEGACY_MODERNIZATION_TO_MODERNIZATION_NARRATIVE",
+      "from_domains": [
+        "fintech_trading",
+        "b2b_saas_platform",
+        "gov_public_sector",
+        "infra_cloud_ops"
+      ],
+      "to_domains": ["gov_public_sector", "healthcare_enterprise", "b2b_saas_platform", "edtech"],
+      "intent": "Translate legacy/system modernization into modernization narrative without inventing cloud migrations.",
+      "source_patterns": [
+        "legacy refactor",
+        "system modernization",
+        "technical debt reduction",
+        "documentation overhaul",
+        "stability improvements"
+      ],
+      "target_frames": [
+        "modernization and maintainability",
+        "migration-safe refactoring",
+        "operational and reliability maturity"
+      ],
+      "allowed_phrases": [
+        "reduced operational risk through targeted modernization",
+        "improved maintainability and onboarding via documentation and refactoring",
+        "stabilized production behavior through incremental modernization"
+      ],
+      "forbidden_phrases": [
+        "migrated to Kubernetes",
+        "cloud-native architecture",
+        "replatformed to microservices"
+      ],
+      "evidence_requirements": {
+        "must_have_any_keywords": ["modern", "refactor", "debt", "maintain", "document"],
+        "min_evidence_snippets": 1
+      }
+    }
+  ]
+}

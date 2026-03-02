@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -10,10 +11,62 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 PROMPTS_DIR = BASE_DIR / "prompts"
 SCHEMAS_DIR = BASE_DIR / "schemas"
+CONFIG_DIR = BASE_DIR / "config"
 PROFILE_DIR = BASE_DIR / "profile"
 TEMPLATES_DIR = BASE_DIR / "templates"
 OUTPUT_DIR = BASE_DIR / "output"
 TMP_DIR = BASE_DIR / "tmp"
+
+
+# ---------------------------------------------------------------------------
+# Domain translation rules loader
+# ---------------------------------------------------------------------------
+
+_DOMAIN_RULES_CACHE: dict | None = None
+
+
+def load_domain_translation_rules() -> dict:
+    """Load and validate config/domain_translation_rules.json.
+
+    Returns the parsed dict augmented with a ``_index`` key mapping
+    each ``rule_id`` to its rule object for O(1) lookup.
+
+    Caches the result in memory; subsequent calls are free.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the JSON file does not exist.
+    ValueError
+        If required top-level keys (``version``, ``domains``, ``rules``) are absent
+        or have wrong types.
+    """
+    global _DOMAIN_RULES_CACHE
+    if _DOMAIN_RULES_CACHE is not None:
+        return _DOMAIN_RULES_CACHE
+
+    path = CONFIG_DIR / "domain_translation_rules.json"
+    with open(path, encoding="utf-8") as f:
+        data: dict = json.load(f)
+
+    for key in ("version", "domains", "rules"):
+        if key not in data:
+            raise ValueError(
+                f"domain_translation_rules.json missing required key: {key!r}"
+            )
+    if not isinstance(data["domains"], list):
+        raise ValueError("domain_translation_rules.json: 'domains' must be a list")
+    if not isinstance(data["rules"], list):
+        raise ValueError("domain_translation_rules.json: 'rules' must be a list")
+
+    data["_index"] = {
+        rule["rule_id"]: rule
+        for rule in data["rules"]
+        if isinstance(rule, dict) and "rule_id" in rule
+    }
+
+    _DOMAIN_RULES_CACHE = data
+    return data
 
 RESUME_TEMPLATE = str(TEMPLATES_DIR / "Leonid_Verman_Resume_Template.docx")
 COVER_TEMPLATE = str(TEMPLATES_DIR / "Leonid_Verman_Cover_Letter_Template.docx")

@@ -22,6 +22,10 @@ def _minimal_plan() -> dict:
     return {
         "role_level": "senior",
         "resume_mode": "technical_depth",
+        "jd_domain": "b2b_saas_platform",
+        "candidate_primary_domain": "fintech_trading",
+        "domain_mismatch": False,
+        "domain_translation_rule_ids": [],
         "jd_top_themes": [
             {"theme": f"Theme {i}", "priority": "primary", "why_important": "important", "keywords": ["kw"]}
             for i in range(5)

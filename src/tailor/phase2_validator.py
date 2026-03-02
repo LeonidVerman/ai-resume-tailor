@@ -800,6 +800,21 @@ def validate_phase2_output(
                 f"from jd_vocab_must_embed"
             )
 
+    # --- 10. Domain mismatch: forbidden domain membership phrases ---
+    domain_forbidden_phrases_found: list[str] = []
+    if writer_packet.get("domain_mismatch"):
+        resume_lower = resume.lower()
+        cover_lower = cover_letter.lower()
+        for rule in writer_packet.get("domain_translation_rules_applied", []):
+            for phrase in rule.get("forbidden_phrases", []):
+                phrase_lower = phrase.lower()
+                if phrase_lower in resume_lower or phrase_lower in cover_lower:
+                    domain_forbidden_phrases_found.append(phrase)
+        if domain_forbidden_phrases_found:
+            errors.append(
+                f"DOMAIN_FORBIDDEN_PHRASES: {'; '.join(domain_forbidden_phrases_found)}"
+            )
+
     repair_brief: dict = {
         "global_issues": {
             "missing_metrics": missing_metrics,
@@ -811,6 +826,7 @@ def validate_phase2_output(
                 [a for a in jd_vocab_must_embed if a.lower() not in resume.lower()]
                 if jd_vocab_must_embed else []
             ),
+            "domain_forbidden_phrases": domain_forbidden_phrases_found,
         },
         "roles": repair_roles,
     }
@@ -832,6 +848,7 @@ def validate_phase2_output(
             "operational_signal_count": operational_signal_count,
             "manager_leadership_count": manager_leadership_count,
             "vocab_anchors_found": vocab_anchors_found,
+            "domain_forbidden_phrases_found": domain_forbidden_phrases_found,
         },
         "repair_brief": repair_brief,
         "judge_candidates": judge_candidates,
