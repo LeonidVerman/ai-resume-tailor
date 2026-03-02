@@ -786,6 +786,20 @@ def validate_phase2_output(
         if missing_roles:
             errors.append(f"MISSING_ROLE: {'; '.join(missing_roles)}")
 
+    # --- 9. JD vocabulary anchoring ---
+    jd_vocab_must_embed: list[str] = writer_packet.get("jd_vocab_must_embed", [])
+    vocab_anchors_found: int = 0
+    if jd_vocab_must_embed:
+        resume_lower = resume.lower()
+        vocab_anchors_found = sum(
+            1 for anchor in jd_vocab_must_embed if anchor.lower() in resume_lower
+        )
+        if vocab_anchors_found < 2:
+            errors.append(
+                f"JD_VOCAB_MISSING: found {vocab_anchors_found}/2 required anchors "
+                f"from jd_vocab_must_embed"
+            )
+
     repair_brief: dict = {
         "global_issues": {
             "missing_metrics": missing_metrics,
@@ -793,6 +807,10 @@ def validate_phase2_output(
             "unsafe_nouns_in_resume": unsafe_terms_found,
             "cover_letter_date_missing": cover_letter_date_missing,
             "missing_roles": missing_roles,
+            "missing_vocab_anchors": (
+                [a for a in jd_vocab_must_embed if a.lower() not in resume.lower()]
+                if jd_vocab_must_embed else []
+            ),
         },
         "roles": repair_roles,
     }
@@ -813,6 +831,7 @@ def validate_phase2_output(
             "strategic_signal_count": strategic_signal_count,
             "operational_signal_count": operational_signal_count,
             "manager_leadership_count": manager_leadership_count,
+            "vocab_anchors_found": vocab_anchors_found,
         },
         "repair_brief": repair_brief,
         "judge_candidates": judge_candidates,

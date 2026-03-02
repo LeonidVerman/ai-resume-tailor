@@ -59,9 +59,12 @@ def _get_phase1_schema() -> dict:
 
 
 # Required top-level keys for a TailoringPlan — single source of truth.
+# Must stay in sync with schemas/phase1_output.json "required" array.
 _PLAN_REQUIRED_KEYS = frozenset({
     "role_level",
+    "resume_mode",
     "jd_top_themes",
+    "vocabulary_anchoring",
     "evidence_map",
     "resume_strategy",
     "cover_letter_strategy",
@@ -262,6 +265,16 @@ def validate_plan(data: Any) -> dict:
                 raise PlanValidationError(
                     f"Evidence quote exceeds 25-word limit ({word_count} words): {quote!r}"
                 )
+
+    vocab = data.get("vocabulary_anchoring")
+    if not isinstance(vocab, dict):
+        raise PlanValidationError(
+            f"vocabulary_anchoring must be a JSON object, got {type(vocab).__name__}"
+        )
+    if not isinstance(vocab.get("must_embed"), list):
+        raise PlanValidationError("vocabulary_anchoring.must_embed must be a list")
+    if not isinstance(vocab.get("optional_embed"), list):
+        raise PlanValidationError("vocabulary_anchoring.optional_embed must be a list")
 
     return data
 

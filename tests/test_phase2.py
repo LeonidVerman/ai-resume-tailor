@@ -2097,3 +2097,128 @@ class TestManagerDensityChecks:
         assert not manager_warnings, (
             f"Senior role should not emit manager-specific warnings: {manager_warnings}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Check 9: JD vocabulary anchoring (spec 2.3)
+# ---------------------------------------------------------------------------
+
+def _make_vocab_packet(must_embed: list[str], optional_embed: list[str] | None = None) -> dict:
+    """Minimal writer_packet with vocab anchoring fields for validator tests."""
+    return {
+        "role_level": "senior",
+        "jd_vocab_must_embed": must_embed,
+        "jd_vocab_optional_embed": optional_embed or [],
+        "master_resume_role_names": [],
+        "must_keep_metrics": [],
+        "must_surface_arch_mechanisms": [],
+        "must_include_skills": [],
+        "allowed_skill_pool": [],
+        "do_not_add_terms": [],
+        "unsafe_jd_nouns": [],
+        "role_priorities": {"Senior Engineer | Acme Corp": "high"},
+        "role_source_bullet_counts": {"Senior Engineer | Acme Corp": 10},
+        "role_source_char_counts": {"Senior Engineer | Acme Corp": 1000},
+        "jd_is_delivery_oriented": False,
+        "density_targets": {
+            "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+            "mechanism_min_by_priority": {"high": 0, "medium": 0, "low": 0},
+        },
+    }
+
+
+def _vocab_resume(extra_lines: str = "") -> str:
+    d = date.today()
+    return (
+        f"Professional Summary\n"
+        f"Experienced engineer.\n\n"
+        f"Experience\n"
+        f"Senior Engineer | Acme Corp | 2022 - Present\n"
+        f"- Built distributed systems for high-throughput workloads.\n"
+        f"- Improved scalability of the data pipeline significantly.\n"
+        f"- Mentored engineers on code quality best practices.\n"
+        f"- Delivered three major features ahead of schedule.\n"
+        f"{extra_lines}\n\n"
+        f"Technical Skills\nPython, Java\n"
+    )
+
+
+def _vocab_cover() -> str:
+    d = date.today()
+    return f"{d.strftime('%B')} {d.day}, {d.year}\n\nDear Hiring Manager,\n\nI am a fit."
+
+
+class TestJDVocabValidator:
+    """Check 9: JD vocabulary anchor presence in resume text."""
+
+    def test_two_anchors_present_passes(self):
+        """When ≥2 must_embed anchors appear in resume, no JD_VOCAB_MISSING error."""
+        pkt = _make_vocab_packet(["distributed systems", "scalability"])
+        resume = _vocab_resume()
+        report = validate_phase2_output(pkt, resume, _vocab_cover(), _today())
+        vocab_errors = [e for e in report["errors"] if "JD_VOCAB_MISSING" in e]
+        assert not vocab_errors, f"Expected no vocab error, got: {vocab_errors}"
+        assert report["stats"]["vocab_anchors_found"] == 2
+
+    def test_one_anchor_present_fails(self):
+        """When only 1 must_embed anchor appears in resume, JD_VOCAB_MISSING error emitted."""
+        pkt = _make_vocab_packet(["distributed systems", "kubernetes"])
+        resume = _vocab_resume()  # contains "distributed systems" but not "kubernetes"
+        report = validate_phase2_output(pkt, resume, _vocab_cover(), _today())
+        vocab_errors = [e for e in report["errors"] if "JD_VOCAB_MISSING" in e]
+        assert vocab_errors, f"Expected JD_VOCAB_MISSING error, got errors: {report['errors']}"
+        assert "1/2" in vocab_errors[0]
+        assert report["stats"]["vocab_anchors_found"] == 1
+
+    def test_zero_anchors_present_fails(self):
+        """When no must_embed anchors appear in resume, JD_VOCAB_MISSING error emitted."""
+        pkt = _make_vocab_packet(["kubernetes", "terraform"])
+        resume = _vocab_resume()
+        report = validate_phase2_output(pkt, resume, _vocab_cover(), _today())
+        vocab_errors = [e for e in report["errors"] if "JD_VOCAB_MISSING" in e]
+        assert vocab_errors, f"Expected JD_VOCAB_MISSING error, got: {report['errors']}"
+        assert "0/2" in vocab_errors[0]
+        assert report["stats"]["vocab_anchors_found"] == 0
+
+    def test_empty_must_embed_no_check(self):
+        """When jd_vocab_must_embed is empty, no vocabulary check is performed."""
+        pkt = _make_vocab_packet([])
+        resume = _vocab_resume()
+        report = validate_phase2_output(pkt, resume, _vocab_cover(), _today())
+        vocab_errors = [e for e in report["errors"] if "JD_VOCAB_MISSING" in e]
+        assert not vocab_errors, f"No vocab check expected for empty must_embed"
+        assert report["stats"]["vocab_anchors_found"] == 0
+
+    def test_missing_packet_field_no_check(self):
+        """When jd_vocab_must_embed is absent from packet, no vocab check is performed."""
+        pkt = _make_vocab_packet(["distributed systems", "scalability"])
+        del pkt["jd_vocab_must_embed"]
+        resume = _vocab_resume()
+        report = validate_phase2_output(pkt, resume, _vocab_cover(), _today())
+        vocab_errors = [e for e in report["errors"] if "JD_VOCAB_MISSING" in e]
+        assert not vocab_errors
+
+    def test_anchor_matching_case_insensitive(self):
+        """Anchor matching is case-insensitive."""
+        pkt = _make_vocab_packet(["Distributed Systems", "SCALABILITY"])
+        resume = _vocab_resume()  # has "distributed systems" and "scalability" in lowercase
+        report = validate_phase2_output(pkt, resume, _vocab_cover(), _today())
+        vocab_errors = [e for e in report["errors"] if "JD_VOCAB_MISSING" in e]
+        assert not vocab_errors, f"Case-insensitive match should pass, got: {vocab_errors}"
+
+    def test_repair_brief_includes_missing_vocab_anchors(self):
+        """repair_brief.global_issues.missing_vocab_anchors lists unembedded anchors."""
+        pkt = _make_vocab_packet(["kubernetes", "terraform"])
+        resume = _vocab_resume()
+        report = validate_phase2_output(pkt, resume, _vocab_cover(), _today())
+        missing = report["repair_brief"]["global_issues"].get("missing_vocab_anchors", [])
+        assert "kubernetes" in missing
+        assert "terraform" in missing
+
+    def test_repair_brief_empty_when_anchors_present(self):
+        """When anchors are satisfied, missing_vocab_anchors is empty."""
+        pkt = _make_vocab_packet(["distributed systems", "scalability"])
+        resume = _vocab_resume()
+        report = validate_phase2_output(pkt, resume, _vocab_cover(), _today())
+        missing = report["repair_brief"]["global_issues"].get("missing_vocab_anchors", [])
+        assert missing == []

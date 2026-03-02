@@ -18,13 +18,18 @@ from tailor.config import PHASE1_MODEL
 # ---------------------------------------------------------------------------
 
 def _minimal_plan() -> dict:
-    """Return a minimal valid TailoringPlan (v2.1)."""
+    """Return a minimal valid TailoringPlan (matches schemas/phase1_output.json)."""
     return {
         "role_level": "senior",
+        "resume_mode": "technical_depth",
         "jd_top_themes": [
-            {"theme": f"Theme {i}", "why_important": "important", "keywords": ["kw"]}
+            {"theme": f"Theme {i}", "priority": "primary", "why_important": "important", "keywords": ["kw"]}
             for i in range(5)
         ],
+        "vocabulary_anchoring": {
+            "must_embed": ["distributed systems", "scalability"],
+            "optional_embed": ["cloud-native"],
+        },
         "evidence_map": [
             {
                 "theme": "Theme 0",
@@ -475,4 +480,139 @@ class TestPhase2PromptSelection:
         valid_headers = ("[TAILOR_PHASE2_WRITER v", "[PHASE2_WRITER_LAYER v")
         assert any(h in content for h in valid_headers), (
             f"phase2.txt must contain one of {valid_headers} as a version header"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Phase 1 schema unification (spec 1.1–1.3)
+# ---------------------------------------------------------------------------
+
+class TestPhase1SchemaEnforcement:
+    """Ensure validate_plan enforces schema fields added in the latest schema revision."""
+
+    def test_vocabulary_anchoring_required(self):
+        """Plans missing vocabulary_anchoring must fail validation."""
+        from tailor.llm import PlanValidationError, validate_plan
+        plan = _minimal_plan()
+        del plan["vocabulary_anchoring"]
+        with pytest.raises(PlanValidationError, match="missing required keys"):
+            validate_plan(plan)
+
+    def test_resume_mode_required(self):
+        """Plans missing resume_mode must fail validation."""
+        from tailor.llm import PlanValidationError, validate_plan
+        plan = _minimal_plan()
+        del plan["resume_mode"]
+        with pytest.raises(PlanValidationError, match="missing required keys"):
+            validate_plan(plan)
+
+    def test_vocabulary_anchoring_wrong_type_raises(self):
+        """vocabulary_anchoring must be a dict, not a list or string."""
+        from tailor.llm import PlanValidationError, validate_plan
+        plan = _minimal_plan()
+        plan["vocabulary_anchoring"] = ["event-driven", "microservices"]
+        with pytest.raises(PlanValidationError, match="vocabulary_anchoring must be a JSON object"):
+            validate_plan(plan)
+
+    def test_vocabulary_anchoring_must_embed_wrong_type_raises(self):
+        """vocabulary_anchoring.must_embed must be a list."""
+        from tailor.llm import PlanValidationError, validate_plan
+        plan = _minimal_plan()
+        plan["vocabulary_anchoring"] = {"must_embed": "event-driven", "optional_embed": []}
+        with pytest.raises(PlanValidationError, match="must_embed must be a list"):
+            validate_plan(plan)
+
+    def test_vocabulary_anchoring_empty_lists_passes(self):
+        """vocabulary_anchoring with empty lists is valid."""
+        from tailor.llm import validate_plan
+        plan = _minimal_plan()
+        plan["vocabulary_anchoring"] = {"must_embed": [], "optional_embed": []}
+        assert validate_plan(plan) is plan
+
+    def test_repair_output_validates_same_as_fresh(self):
+        """A 'repaired' plan dict passes validate_plan identically to a fresh one."""
+        from tailor.llm import validate_plan
+        plan = _minimal_plan()
+        # Simulate repair: validate returns the same dict — no repair-specific branching
+        result = validate_plan(plan)
+        assert result is plan
+        assert result["vocabulary_anchoring"]["must_embed"] == ["distributed systems", "scalability"]
+
+
+# ---------------------------------------------------------------------------
+# Writer packet vocab propagation (spec 2.1–2.2)
+# ---------------------------------------------------------------------------
+
+_SAMPLE_MASTER_RESUME_FOR_VOCAB = (
+    "Professional Summary\n"
+    "Experienced engineer.\n\n"
+    "Experience\n"
+    "Senior Engineer | Acme Corp | 2020 - Present\n"
+    "- Built scalable distributed systems.\n\n"
+    "Technical Skills\n"
+    "Python, Java, AWS\n"
+)
+
+
+class TestWriterPacketVocabPropagation:
+    """Writer packet must contain jd_vocab_must_embed and jd_vocab_optional_embed."""
+
+    def test_vocab_fields_propagated_correctly(self):
+        """Vocab anchors from plan flow into writer packet unchanged."""
+        from tailor.writer_packet import build_writer_packet
+
+        plan = _minimal_plan()
+        plan["vocabulary_anchoring"] = {
+            "must_embed": ["event-driven architecture", "microservices"],
+            "optional_embed": ["cloud-native", "observability"],
+        }
+        packet = build_writer_packet(plan, "", _SAMPLE_MASTER_RESUME_FOR_VOCAB, "")
+
+        assert packet["jd_vocab_must_embed"] == ["event-driven architecture", "microservices"]
+        assert packet["jd_vocab_optional_embed"] == ["cloud-native", "observability"]
+
+    def test_vocab_fields_always_present_when_empty(self):
+        """Both vocab fields are always in the packet even when the lists are empty."""
+        from tailor.writer_packet import build_writer_packet
+
+        plan = _minimal_plan()
+        plan["vocabulary_anchoring"] = {"must_embed": [], "optional_embed": []}
+        packet = build_writer_packet(plan, "", _SAMPLE_MASTER_RESUME_FOR_VOCAB, "")
+
+        assert "jd_vocab_must_embed" in packet
+        assert "jd_vocab_optional_embed" in packet
+        assert packet["jd_vocab_must_embed"] == []
+        assert packet["jd_vocab_optional_embed"] == []
+
+    def test_vocab_fields_default_to_empty_when_anchoring_missing(self):
+        """When vocabulary_anchoring is absent from plan, packet fields default to []."""
+        from tailor.writer_packet import build_writer_packet
+
+        plan = _minimal_plan()
+        del plan["vocabulary_anchoring"]
+        packet = build_writer_packet(plan, "", _SAMPLE_MASTER_RESUME_FOR_VOCAB, "")
+
+        assert packet["jd_vocab_must_embed"] == []
+        assert packet["jd_vocab_optional_embed"] == []
+
+    def test_ordering_preserved(self):
+        """Vocab anchor order must be preserved as provided by Phase 1."""
+        from tailor.writer_packet import build_writer_packet
+
+        plan = _minimal_plan()
+        anchors = ["alpha", "beta", "gamma", "delta"]
+        plan["vocabulary_anchoring"] = {"must_embed": anchors, "optional_embed": []}
+        packet = build_writer_packet(plan, "", _SAMPLE_MASTER_RESUME_FOR_VOCAB, "")
+
+        assert packet["jd_vocab_must_embed"] == anchors
+
+    def test_phase2_prompt_references_writer_packet_anchors(self):
+        """The phase2.txt prompt must reference WRITER_PACKET for vocab anchors."""
+        from tailor.prompts import _load_prompt
+        content = _load_prompt("phase2")
+        assert "jd_vocab_must_embed" in content, (
+            "phase2.txt must reference WRITER_PACKET.jd_vocab_must_embed"
+        )
+        assert "jd_vocab_optional_embed" in content, (
+            "phase2.txt must reference WRITER_PACKET.jd_vocab_optional_embed"
         )

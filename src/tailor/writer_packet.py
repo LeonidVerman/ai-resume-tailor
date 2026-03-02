@@ -6,9 +6,12 @@ involved in its construction.
 """
 
 import json
+import logging
 import re
 
 from tailor.mechanism_taxonomy import build_mechanism_taxonomy, _normalize_for_dedup
+
+logger = logging.getLogger(__name__)
 from tailor.phase2_validator import (
     normalize_role_header,
     _is_thin_or_non_repositioning_role,
@@ -90,6 +93,12 @@ def build_writer_packet(
     profile = _parse_json_safe(candidate_profile_str)
     role_level: str = plan.get("role_level", "senior")
 
+    vocab_anchoring = plan.get("vocabulary_anchoring") or {}
+    if not vocab_anchoring:
+        logger.warning("vocabulary_anchoring missing from plan; defaulting to empty lists")
+    jd_vocab_must_embed: list[str] = list(vocab_anchoring.get("must_embed") or [])
+    jd_vocab_optional_embed: list[str] = list(vocab_anchoring.get("optional_embed") or [])
+
     jd_keywords_lower = _collect_jd_keywords(plan)
     all_source_skills = _collect_source_skills(profile, master_resume_str)
 
@@ -112,6 +121,8 @@ def build_writer_packet(
 
     return {
         "role_level": role_level,
+        "jd_vocab_must_embed": jd_vocab_must_embed,
+        "jd_vocab_optional_embed": jd_vocab_optional_embed,
         "master_resume_role_names": list(role_stats.keys()),
         "must_keep_metrics": must_keep_metrics,
         # Taxonomy fields

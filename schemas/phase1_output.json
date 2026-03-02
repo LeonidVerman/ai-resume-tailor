@@ -2,7 +2,9 @@
   "type": "object",
   "required": [
     "role_level",
+    "resume_mode",
     "jd_top_themes",
+    "vocabulary_anchoring",
     "evidence_map",
     "resume_strategy",
     "cover_letter_strategy",
@@ -10,23 +12,48 @@
   ],
   "additionalProperties": false,
   "properties": {
+
     "role_level": {
       "type": "string",
       "enum": ["director", "manager", "principal", "staff", "senior", "mid", "junior"]
     },
+
+    "resume_mode": {
+      "type": "string",
+      "enum": [
+        "technical_depth",
+        "manager_delivery",
+        "architecture_governance",
+        "product_growth",
+        "culture_building"
+      ]
+    },
+
     "jd_top_themes": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["theme", "why_important", "keywords"],
+        "required": ["theme", "priority", "why_important", "keywords"],
         "additionalProperties": false,
         "properties": {
-          "theme":          { "type": "string" },
-          "why_important":  { "type": "string" },
-          "keywords":       { "type": "array", "items": { "type": "string" } }
+          "theme":         { "type": "string" },
+          "priority":      { "type": "string", "enum": ["primary", "secondary", "supporting"] },
+          "why_important": { "type": "string" },
+          "keywords":      { "type": "array", "items": { "type": "string" } }
         }
       }
     },
+
+    "vocabulary_anchoring": {
+      "type": "object",
+      "required": ["must_embed", "optional_embed"],
+      "additionalProperties": false,
+      "properties": {
+        "must_embed":   { "type": "array", "items": { "type": "string" } },
+        "optional_embed": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
     "evidence_map": {
       "type": "array",
       "items": {
@@ -42,18 +69,25 @@
               "required": ["source", "location", "quote", "allowed_claims"],
               "additionalProperties": false,
               "properties": {
-                "source":         { "type": "string", "enum": ["candidate_profile", "master_resume"] },
-                "location":       { "type": "string" },
-                "quote":          { "type": "string" },
-                "allowed_claims": { "type": "array", "items": { "type": "string" } }
+                "source": {
+                  "type": "string",
+                  "enum": ["candidate_profile", "master_resume"]
+                },
+                "location": { "type": "string" },
+                "quote": { "type": "string" },
+                "allowed_claims": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
               }
             }
           },
-          "gaps":             { "type": "array", "items": { "type": "string" } },
+          "gaps": { "type": "array", "items": { "type": "string" } },
           "safe_translation": { "type": "array", "items": { "type": "string" } }
         }
       }
     },
+
     "resume_strategy": {
       "type": "object",
       "required": ["summary", "experience", "skills"],
@@ -65,7 +99,7 @@
           "additionalProperties": false,
           "properties": {
             "include_points": { "type": "array", "items": { "type": "string" } },
-            "avoid_points":   { "type": "array", "items": { "type": "string" } }
+            "avoid_points": { "type": "array", "items": { "type": "string" } }
           }
         },
         "experience": {
@@ -75,28 +109,25 @@
             "required": [
               "role_name",
               "priority",
-              "keep_metrics",
               "bullets_to_emphasize",
               "bullets_to_compress",
               "bullets_to_reframe"
             ],
             "additionalProperties": false,
             "properties": {
-              "role_name":             { "type": "string" },
-              "priority":              { "type": "string", "enum": ["high", "medium", "low"] },
-              "keep_metrics":          { "type": "array", "items": { "type": "string" } },
-              "bullets_to_emphasize":  { "type": "array", "items": { "type": "string" } },
-              "bullets_to_compress":   { "type": "array", "items": { "type": "string" } },
+              "role_name": { "type": "string" },
+              "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+              "bullets_to_emphasize": { "type": "array", "items": { "type": "string" } },
+              "bullets_to_compress": { "type": "array", "items": { "type": "string" } },
               "bullets_to_reframe": {
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "required": ["before", "after_intent", "constraints"],
+                  "required": ["before", "after_intent"],
                   "additionalProperties": false,
                   "properties": {
-                    "before":       { "type": "string" },
-                    "after_intent": { "type": "string" },
-                    "constraints":  { "type": "array", "items": { "type": "string" } }
+                    "before": { "type": "string" },
+                    "after_intent": { "type": "string" }
                   }
                 }
               }
@@ -105,36 +136,50 @@
         },
         "skills": {
           "type": "object",
-          "required": ["reorder_categories", "promote_skills", "demote_skills", "do_not_add_skills"],
+          "required": ["promote_skills", "demote_skills", "do_not_add_skills"],
           "additionalProperties": false,
           "properties": {
-            "reorder_categories":  { "type": "array", "items": { "type": "string" } },
-            "promote_skills":      { "type": "array", "items": { "type": "string" } },
-            "demote_skills":       { "type": "array", "items": { "type": "string" } },
-            "do_not_add_skills":   { "type": "array", "items": { "type": "string" } }
+            "promote_skills": { "type": "array", "items": { "type": "string" } },
+            "demote_skills": { "type": "array", "items": { "type": "string" } },
+            "do_not_add_skills": { "type": "array", "items": { "type": "string" } }
           }
         }
       }
     },
+
     "cover_letter_strategy": {
       "type": "object",
-      "required": ["company_and_role_mentions", "bullet_overlaps_to_reference", "structure"],
+      "required": ["company_and_role_mentions", "structure"],
       "additionalProperties": false,
       "properties": {
-        "company_and_role_mentions":    { "type": "array", "items": { "type": "string" } },
-        "bullet_overlaps_to_reference": { "type": "array", "items": { "type": "string" } },
-        "structure":                    { "type": "array", "items": { "type": "string" } }
+        "company_and_role_mentions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "structure": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
       }
     },
+
     "risk_checks": {
       "type": "object",
-      "required": ["do_not_invent", "likely_hallucination_traps", "claims_requiring_strict_grounding"],
+      "required": [
+        "do_not_invent",
+        "likely_hallucination_traps",
+        "claims_requiring_strict_grounding"
+      ],
       "additionalProperties": false,
       "properties": {
-        "do_not_invent":                     { "type": "array", "items": { "type": "string" } },
-        "likely_hallucination_traps":        { "type": "array", "items": { "type": "string" } },
-        "claims_requiring_strict_grounding": { "type": "array", "items": { "type": "string" } }
+        "do_not_invent": { "type": "array", "items": { "type": "string" } },
+        "likely_hallucination_traps": { "type": "array", "items": { "type": "string" } },
+        "claims_requiring_strict_grounding": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
       }
     }
+
   }
 }
