@@ -878,8 +878,8 @@ def _parse_phase2_response(response: Any, model: str) -> tuple[TailorResult, lis
     raw_content = response.choices[0].message.content
     raw = json.loads(raw_content)
     result = TailorResult(
-        resume=raw.get("resume"),
-        cover_letter=raw.get("cover_letter"),
+        resume=raw.get("resume") or raw.get("tailored_resume"),
+        cover_letter=raw.get("cover_letter") or raw.get("tailored_cover_letter"),
     )
     usage = _extract_usage(response)
     meta: dict = {
@@ -1033,8 +1033,8 @@ def tailor_documents(
 
     raw = json.loads(response.choices[0].message.content)
     result = TailorResult(
-        resume=raw.get("resume"),
-        cover_letter=raw.get("cover_letter"),
+        resume=raw.get("resume") or raw.get("tailored_resume"),
+        cover_letter=raw.get("cover_letter") or raw.get("tailored_cover_letter"),
     )
     llm_request = _build_llm_request_record(
         messages, PHASE2_MODEL, PHASE2_TEMPERATURE, response_format=response_format,

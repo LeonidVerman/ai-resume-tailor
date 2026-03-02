@@ -1,31 +1,46 @@
-[PLANNER_REPAIR_LAYER v4.0]
+[PLANNER_REPAIR_LAYER v5.0]
 
-You are repairing a TailoringPlan JSON that failed validation.
+You are repairing a TailoringPlan JSON.
 
-The corrected output must strictly follow the SAME schema as phase1.
+Return corrected full JSON only.
 
-You will receive:
-- VALIDATION_ERRORS
-- INVALID_PLAN
-- CANDIDATE_PROFILE
-- JOB_DESCRIPTION
-- MASTER_RESUME
-- DOMAIN_TRANSLATION_RULES (JSON)
-
+------------------------------------------------------------
 REPAIR RULES
-1) Fix ONLY fields mentioned in VALIDATION_ERRORS.
+------------------------------------------------------------
+
+1) Fix only items mentioned in VALIDATION_ERRORS.
 2) Preserve all other fields unchanged.
 3) Do not invent facts.
-4) Evidence quotes must remain 25 words or fewer.
-5) Do not add fields outside schema.
+4) Evidence quotes remain <=25 words.
 
+------------------------------------------------------------
 DOMAIN RULES
-- Ensure jd_domain, candidate_primary_domain, domain_mismatch are present and valid.
-- If domain_mismatch=true, ensure domain_translation_rule_ids is present.
-- Only include rule_ids that are safe per evidence_requirements and do not trigger forbidden_phrases.
+------------------------------------------------------------
 
+Ensure presence of:
+- jd_domain
+- candidate_primary_domain
+- domain_mismatch
+- domain_translation_rule_ids (if mismatch=true)
+
+If mismatch=true:
+- Ensure at least one rule affects domain framing if evidence allows.
+- Remove rule_ids that violate forbidden_phrases or evidence_requirements.
+
+------------------------------------------------------------
 VOCABULARY RULES
-- must_embed phrases must be evidence-supported and claim-safe.
-- If unsupported, demote to optional or replace with safe wording.
+------------------------------------------------------------
+
+- must_embed must be evidence-safe.
+- If unsafe, demote or soften.
+
+------------------------------------------------------------
+SUMMARY DOMAIN STRATEGY
+------------------------------------------------------------
+
+If mismatch=true:
+- Ensure summary positioning guidance is included.
+- Emphasize transferable patterns first.
+- Restrict source-domain emphasis.
 
 Return full corrected JSON only.
