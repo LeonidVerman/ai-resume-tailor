@@ -2222,3 +2222,352 @@ class TestJDVocabValidator:
         report = validate_phase2_output(pkt, resume, _vocab_cover(), _today())
         missing = report["repair_brief"]["global_issues"].get("missing_vocab_anchors", [])
         assert missing == []
+
+
+# ---------------------------------------------------------------------------
+# Check 11: Employer integrity (no invented roles, no modified company names)
+# ---------------------------------------------------------------------------
+
+_MASTER_ROLES = [
+    "Engineering Manager | CardinalChain Software",
+    "Senior Engineer | Acme Corp",
+    "Developer | OldCo | 2010 - 2014",
+]
+
+_MASTER_DATES = {
+    "Engineering Manager | CardinalChain Software": "Nov 2024 – Sep 2025",
+    "Senior Engineer | Acme Corp": "Jan 2022 – Oct 2024",
+}
+
+
+def _make_employer_integrity_packet(
+    master_role_names: list[str] | None = None,
+    master_role_dates: dict | None = None,
+    role_priorities: dict | None = None,
+) -> dict:
+    """Minimal writer_packet for employer integrity validator tests."""
+    names = master_role_names if master_role_names is not None else list(_MASTER_ROLES)
+    return {
+        "role_level": "manager",
+        "master_resume_role_names": names,
+        "master_role_dates": master_role_dates if master_role_dates is not None else {},
+        "must_keep_metrics": [],
+        "must_surface_arch_mechanisms": [],
+        "must_surface_strategic_signals": [],
+        "must_surface_operational_signals": [],
+        "must_include_skills": [],
+        "allowed_skill_pool": [],
+        "do_not_add_terms": [],
+        "unsafe_jd_nouns": [],
+        "role_priorities": role_priorities or {
+            "Engineering Manager | CardinalChain Software": "high",
+            "Senior Engineer | Acme Corp": "medium",
+        },
+        "role_source_bullet_counts": {
+            "Engineering Manager | CardinalChain Software": 10,
+            "Senior Engineer | Acme Corp": 8,
+        },
+        "role_source_char_counts": {
+            "Engineering Manager | CardinalChain Software": 900,
+            "Senior Engineer | Acme Corp": 700,
+        },
+        "jd_is_delivery_oriented": False,
+        "density_targets": {
+            "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+            "mechanism_min_by_priority": {"high": 0, "medium": 0, "low": 0},
+        },
+    }
+
+
+def _ei_cover() -> str:
+    d = date.today()
+    return f"{d.strftime('%B')} {d.day}, {d.year}\n\nDear Hiring Manager,\n\nSolid fit."
+
+
+def _ei_resume(
+    roles_block: str,
+    earlier_roles_block: str = "",
+) -> str:
+    """Build a resume string with configurable role headers and an optional Earlier roles block."""
+    earlier = f"\nEarlier roles\n{earlier_roles_block}\n" if earlier_roles_block else ""
+    return (
+        "Experience\n"
+        f"{roles_block}"
+        f"{earlier}"
+        "Technical Skills\nPython\n"
+    )
+
+
+class TestEmployerIntegrityValidator:
+    """Check 11: No invented roles; no modified company names."""
+
+    # ------------------------------------------------------------------
+    # Pass cases
+    # ------------------------------------------------------------------
+
+    def test_exact_master_roles_preserved_passes(self):
+        """Exact master role headers in output → no EMPLOYER_INTEGRITY error."""
+        pkt = _make_employer_integrity_packet()
+        roles_block = (
+            "Engineering Manager | CardinalChain Software | Nov 2024 – Sep 2025\n"
+            "- Led roadmap planning and delivery.\n"
+            "- Managed a team of eight engineers.\n"
+            "- Delivered two product launches.\n"
+            "- Reduced incident rate by 30%.\n\n"
+            "Senior Engineer | Acme Corp | Jan 2022 – Oct 2024\n"
+            "- Architected distributed systems.\n"
+            "- Improved scalability of data pipelines.\n"
+            "- Mentored engineers.\n\n"
+        )
+        resume = _ei_resume(roles_block, earlier_roles_block="OldCo | Developer | 2010 - 2014")
+        report = validate_phase2_output(pkt, resume, _ei_cover(), _today())
+        ei_errors = [e for e in report["errors"] if "EMPLOYER_INTEGRITY" in e]
+        assert not ei_errors, f"Exact headers should pass, got: {ei_errors}"
+
+    def test_abbreviated_title_same_company_passes(self):
+        """Title substring of master title with exact company → passes.
+
+        The plan may emit a shortened title (e.g. drop a secondary slash-component)
+        while keeping the company name verbatim.  Substring matching on the title
+        segment accommodates this.  'Manager' IS a substring of 'Engineering Manager'.
+        """
+        pkt = _make_employer_integrity_packet()
+        roles_block = (
+            "Manager | CardinalChain Software | Nov 2024 – Sep 2025\n"
+            "- Led roadmap planning and delivery.\n"
+            "- Managed a team of eight engineers.\n"
+            "- Delivered two product launches.\n"
+            "- Reduced incident rate by 30%.\n\n"
+            "Senior Engineer | Acme Corp | Jan 2022 – Oct 2024\n"
+            "- Architected distributed systems.\n"
+            "- Improved scalability of data pipelines.\n"
+            "- Mentored engineers.\n\n"
+        )
+        resume = _ei_resume(roles_block, earlier_roles_block="OldCo | Developer | 2010 - 2014")
+        report = validate_phase2_output(pkt, resume, _ei_cover(), _today())
+        ei_errors = [e for e in report["errors"] if "EMPLOYER_INTEGRITY" in e]
+        assert not ei_errors, f"Substring title with exact company should pass: {ei_errors}"
+
+    def test_pipe_spacing_variation_passes(self):
+        """Pipe spacing variations (no spaces around pipe) are normalised and pass."""
+        pkt = _make_employer_integrity_packet()
+        roles_block = (
+            "Engineering Manager|CardinalChain Software|Nov 2024 – Sep 2025\n"
+            "- Led roadmap planning and delivery.\n"
+            "- Managed a team of eight engineers.\n"
+            "- Delivered two product launches.\n"
+            "- Reduced incident rate by 30%.\n\n"
+            "Senior Engineer|Acme Corp|Jan 2022 – Oct 2024\n"
+            "- Architected distributed systems.\n"
+            "- Improved scalability of data pipelines.\n"
+            "- Mentored engineers.\n\n"
+        )
+        resume = _ei_resume(roles_block, earlier_roles_block="OldCo | Developer | 2010 - 2014")
+        report = validate_phase2_output(pkt, resume, _ei_cover(), _today())
+        ei_errors = [e for e in report["errors"] if "EMPLOYER_INTEGRITY" in e]
+        assert not ei_errors, f"Pipe-spacing variation should pass: {ei_errors}"
+
+    def test_no_master_roles_skips_check(self):
+        """When master_resume_role_names is empty, employer integrity check is skipped."""
+        pkt = _make_employer_integrity_packet(master_role_names=[])
+        roles_block = (
+            "Engineering Manager | Brex | Nov 2024 – Sep 2025\n"
+            "- Led roadmap planning.\n"
+            "- Managed the team.\n"
+            "- Delivered features.\n"
+            "- Reduced incidents.\n\n"
+        )
+        resume = _ei_resume(roles_block)
+        report = validate_phase2_output(pkt, resume, _ei_cover(), _today())
+        ei_errors = [e for e in report["errors"] if "EMPLOYER_INTEGRITY" in e]
+        assert not ei_errors, "Empty master_role_names must skip the check"
+
+    # ------------------------------------------------------------------
+    # Fail cases
+    # ------------------------------------------------------------------
+
+    def test_invented_role_triggers_error(self):
+        """Output role not in master → EMPLOYER_INTEGRITY_NEW_ROLE error."""
+        pkt = _make_employer_integrity_packet()
+        roles_block = (
+            "Engineering Manager | Brex | Nov 2024 – Sep 2025\n"
+            "- Led roadmap planning and delivery.\n"
+            "- Managed a team of engineers.\n"
+            "- Delivered product launches.\n"
+            "- Reduced incident rate.\n\n"
+            "Senior Engineer | Acme Corp | Jan 2022 – Oct 2024\n"
+            "- Architected distributed systems.\n"
+            "- Improved scalability.\n"
+            "- Mentored engineers.\n\n"
+        )
+        resume = _ei_resume(roles_block, earlier_roles_block="OldCo | Developer | 2010 - 2014")
+        report = validate_phase2_output(pkt, resume, _ei_cover(), _today())
+        ei_errors = [e for e in report["errors"] if "EMPLOYER_INTEGRITY_NEW_ROLE" in e]
+        assert ei_errors, f"Invented company 'Brex' should trigger EMPLOYER_INTEGRITY_NEW_ROLE"
+        assert "Brex" in ei_errors[0]
+
+    def test_modified_company_name_triggers_error(self):
+        """Mutated company name (extra word) → EMPLOYER_INTEGRITY_NEW_ROLE error."""
+        pkt = _make_employer_integrity_packet()
+        # "CardinalChain Software Inc" ≠ "CardinalChain Software"
+        roles_block = (
+            "Engineering Manager | CardinalChain Software Inc | Nov 2024 – Sep 2025\n"
+            "- Led roadmap planning and delivery.\n"
+            "- Managed a team of engineers.\n"
+            "- Delivered product launches.\n"
+            "- Reduced incident rate.\n\n"
+            "Senior Engineer | Acme Corp | Jan 2022 – Oct 2024\n"
+            "- Architected distributed systems.\n"
+            "- Improved scalability.\n"
+            "- Mentored engineers.\n\n"
+        )
+        resume = _ei_resume(roles_block, earlier_roles_block="OldCo | Developer | 2010 - 2014")
+        report = validate_phase2_output(pkt, resume, _ei_cover(), _today())
+        ei_errors = [e for e in report["errors"] if "EMPLOYER_INTEGRITY_NEW_ROLE" in e]
+        assert ei_errors, "Modified company name should trigger EMPLOYER_INTEGRITY_NEW_ROLE"
+        assert "CardinalChain Software Inc" in ei_errors[0]
+
+    def test_employer_integrity_violations_in_repair_brief(self):
+        """Violated headers appear in repair_brief.global_issues.employer_integrity_violations."""
+        pkt = _make_employer_integrity_packet()
+        roles_block = (
+            "Engineering Manager | Brex | Nov 2024 – Sep 2025\n"
+            "- Led roadmap planning and delivery.\n"
+            "- Managed a team of engineers.\n"
+            "- Delivered product launches.\n"
+            "- Reduced incident rate.\n\n"
+            "Senior Engineer | Acme Corp | Jan 2022 – Oct 2024\n"
+            "- Architected distributed systems.\n"
+            "- Improved scalability.\n"
+            "- Mentored engineers.\n\n"
+        )
+        resume = _ei_resume(roles_block, earlier_roles_block="OldCo | Developer | 2010 - 2014")
+        report = validate_phase2_output(pkt, resume, _ei_cover(), _today())
+        violations = report["repair_brief"]["global_issues"].get("employer_integrity_violations", [])
+        assert violations, "repair_brief must list employer integrity violations"
+        assert any("Brex" in v for v in violations)
+
+    def test_employer_integrity_violations_in_stats(self):
+        """stats['employer_integrity_violations'] lists violated headers."""
+        pkt = _make_employer_integrity_packet()
+        roles_block = (
+            "Engineering Manager | Brex | Nov 2024 – Sep 2025\n"
+            "- Led roadmap planning and delivery.\n"
+            "- Managed a team of engineers.\n"
+            "- Delivered product launches.\n"
+            "- Reduced incident rate.\n\n"
+            "Senior Engineer | Acme Corp | Jan 2022 – Oct 2024\n"
+            "- Architected distributed systems.\n"
+            "- Improved scalability.\n"
+            "- Mentored engineers.\n\n"
+        )
+        resume = _ei_resume(roles_block, earlier_roles_block="OldCo | Developer | 2010 - 2014")
+        report = validate_phase2_output(pkt, resume, _ei_cover(), _today())
+        stats_violations = report["stats"].get("employer_integrity_violations", [])
+        assert any("Brex" in v for v in stats_violations)
+
+    # ------------------------------------------------------------------
+    # Date integrity
+    # ------------------------------------------------------------------
+
+    def test_matching_dates_passes(self):
+        """Dates identical to master (after normalization) → no DATE_INTEGRITY error."""
+        pkt = _make_employer_integrity_packet(master_role_dates=dict(_MASTER_DATES))
+        roles_block = (
+            "Engineering Manager | CardinalChain Software | Nov 2024 – Sep 2025\n"
+            "- Led roadmap planning and delivery.\n"
+            "- Managed a team of engineers.\n"
+            "- Delivered product launches.\n"
+            "- Reduced incident rate.\n\n"
+            "Senior Engineer | Acme Corp | Jan 2022 – Oct 2024\n"
+            "- Architected distributed systems.\n"
+            "- Improved scalability.\n"
+            "- Mentored engineers.\n\n"
+        )
+        resume = _ei_resume(roles_block, earlier_roles_block="OldCo | Developer | 2010 - 2014")
+        report = validate_phase2_output(pkt, resume, _ei_cover(), _today())
+        date_errors = [e for e in report["errors"] if "DATE_INTEGRITY" in e]
+        assert not date_errors, f"Matching dates should pass, got: {date_errors}"
+
+    def test_modified_end_date_triggers_error(self):
+        """Changing 'Sep 2025' to 'Present' triggers DATE_INTEGRITY_MODIFIED error."""
+        pkt = _make_employer_integrity_packet(master_role_dates=dict(_MASTER_DATES))
+        # master: "Nov 2024 – Sep 2025" — output: "Nov 2024 – Present"
+        roles_block = (
+            "Engineering Manager | CardinalChain Software | Nov 2024 – Present\n"
+            "- Led roadmap planning and delivery.\n"
+            "- Managed a team of engineers.\n"
+            "- Delivered product launches.\n"
+            "- Reduced incident rate.\n\n"
+            "Senior Engineer | Acme Corp | Jan 2022 – Oct 2024\n"
+            "- Architected distributed systems.\n"
+            "- Improved scalability.\n"
+            "- Mentored engineers.\n\n"
+        )
+        resume = _ei_resume(roles_block, earlier_roles_block="OldCo | Developer | 2010 - 2014")
+        report = validate_phase2_output(pkt, resume, _ei_cover(), _today())
+        date_errors = [e for e in report["errors"] if "DATE_INTEGRITY_MODIFIED" in e]
+        assert date_errors, (
+            "Changed end date from 'Sep 2025' to 'Present' should trigger DATE_INTEGRITY_MODIFIED"
+        )
+        assert "CardinalChain Software" in date_errors[0] or "Nov 2024" in date_errors[0]
+
+    def test_no_master_dates_skips_date_check(self):
+        """When master_role_dates is empty, date integrity check is skipped."""
+        pkt = _make_employer_integrity_packet(master_role_dates={})
+        roles_block = (
+            "Engineering Manager | CardinalChain Software | Nov 2024 – Present\n"
+            "- Led roadmap planning and delivery.\n"
+            "- Managed a team of engineers.\n"
+            "- Delivered product launches.\n"
+            "- Reduced incident rate.\n\n"
+            "Senior Engineer | Acme Corp | Jan 2022 – Oct 2024\n"
+            "- Architected distributed systems.\n"
+            "- Improved scalability.\n"
+            "- Mentored engineers.\n\n"
+        )
+        resume = _ei_resume(roles_block, earlier_roles_block="OldCo | Developer | 2010 - 2014")
+        report = validate_phase2_output(pkt, resume, _ei_cover(), _today())
+        date_errors = [e for e in report["errors"] if "DATE_INTEGRITY_MODIFIED" in e]
+        assert not date_errors, "Empty master_role_dates must skip date integrity check"
+
+    def test_date_integrity_violations_in_repair_brief(self):
+        """Date violations appear in repair_brief.global_issues.date_integrity_violations."""
+        pkt = _make_employer_integrity_packet(master_role_dates=dict(_MASTER_DATES))
+        roles_block = (
+            "Engineering Manager | CardinalChain Software | Nov 2024 – Present\n"
+            "- Led roadmap planning and delivery.\n"
+            "- Managed a team of engineers.\n"
+            "- Delivered product launches.\n"
+            "- Reduced incident rate.\n\n"
+            "Senior Engineer | Acme Corp | Jan 2022 – Oct 2024\n"
+            "- Architected distributed systems.\n"
+            "- Improved scalability.\n"
+            "- Mentored engineers.\n\n"
+        )
+        resume = _ei_resume(roles_block, earlier_roles_block="OldCo | Developer | 2010 - 2014")
+        report = validate_phase2_output(pkt, resume, _ei_cover(), _today())
+        date_violations = report["repair_brief"]["global_issues"].get("date_integrity_violations", [])
+        assert date_violations, "repair_brief must list date integrity violations"
+
+    def test_writer_packet_includes_master_role_dates(self):
+        """build_writer_packet propagates master_role_dates into the WriterPacket."""
+        master_resume = (
+            "Experience\n"
+            "Engineering Manager | CardinalChain Software\n"
+            "Nov 2024 – Sep 2025\n"
+            "- Led the team.\n\n"
+            "Senior Engineer | Acme Corp\n"
+            "Jan 2022 – Oct 2024\n"
+            "- Built services.\n\n"
+            "Technical Skills\nPython\n"
+        )
+        plan = _minimal_plan()
+        plan["role_level"] = "manager"
+        pkt = build_writer_packet(plan, "{}", master_resume, "job description")
+        dates = pkt.get("master_role_dates", {})
+        assert dates, "master_role_dates must be populated from the master resume"
+        # At least one role header should map to a date string
+        assert any("2024" in v or "2022" in v for v in dates.values()), (
+            f"Expected date strings in master_role_dates values, got: {dates}"
+        )

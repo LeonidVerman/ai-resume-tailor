@@ -113,6 +113,7 @@ def build_writer_packet(
     integration_reframes = _build_integration_reframes(plan)
     role_priorities = _build_role_priorities(plan)
     role_stats = _parse_master_resume_role_stats(master_resume_str)
+    master_role_dates = _parse_master_role_dates(master_resume_str)
     role_source_bullet_counts = _build_role_source_bullet_counts(plan, role_stats)
     role_source_char_counts = _build_role_source_char_counts(plan, role_stats)
     jd_is_delivery_oriented = _compute_jd_is_delivery_oriented(plan)
@@ -136,6 +137,7 @@ def build_writer_packet(
         "jd_vocab_must_embed": jd_vocab_must_embed,
         "jd_vocab_optional_embed": jd_vocab_optional_embed,
         "master_resume_role_names": list(role_stats.keys()),
+        "master_role_dates": master_role_dates,
         "must_keep_metrics": must_keep_metrics,
         # Taxonomy fields
         "must_surface_arch_mechanisms": mechanism_fields["must_surface_arch_mechanisms"],
@@ -442,6 +444,51 @@ def _canonicalize_role_name(name: str) -> str:
     """
     s = re.sub(r"\s*\|\s*", "|", name.lower())
     return re.sub(r"\s+", " ", s).strip()
+
+
+def _parse_master_role_dates(resume_text: str) -> dict[str, str]:
+    """Return {normalised_role_header: date_string} for the Experience section.
+
+    Captures date lines that appear on a separate line immediately after each
+    role header in the master resume.  Used to populate ``master_role_dates``
+    in the WriterPacket so the Phase 2 validator can enforce date integrity.
+
+    Roles whose date is embedded inline in the header (e.g. "Title | Corp |
+    2020–Present") will have an empty-string value; only the separate-line
+    format is captured here because the inline variant is already available
+    to the validator via ``_parse_role_date_lines``.
+    """
+    lines = resume_text.split("\n")
+    exp_start: int | None = None
+    exp_end = len(lines)
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if s == "Experience":
+            exp_start = i + 1
+        elif exp_start is not None and s in _RESUME_SECTION_HEADERS and s != "Experience":
+            exp_end = i
+            break
+    if exp_start is None:
+        return {}
+
+    result: dict[str, str] = {}
+    current_header: str | None = None
+    awaiting_date = False
+
+    for line in lines[exp_start:exp_end]:
+        s = line.strip()
+        if not s:
+            continue
+        if "|" in s and not s.startswith("-") and not s.startswith("•"):
+            current_header = normalize_role_header(s)
+            result[current_header] = ""
+            awaiting_date = True
+        elif current_header is not None and awaiting_date:
+            if _is_resume_date_line(s):
+                result[current_header] = s
+            awaiting_date = False
+
+    return result
 
 
 def _build_role_source_bullet_counts(plan: dict, role_stats: dict) -> dict[str, int]:

@@ -34,6 +34,12 @@ LEDGER_SPAN_NOT_FOUND_PREFIX: str = "LEDGER_SPAN_NOT_FOUND"
 #: Prefix for errors where a required item has no ledger entry at all.
 LEDGER_ENTRY_MISSING_PREFIX: str = "LEDGER_ENTRY_MISSING"
 
+#: Error code when a role appears in output that is not in the master resume role list.
+EMPLOYER_INTEGRITY_NEW_ROLE: str = "EMPLOYER_INTEGRITY_NEW_ROLE"
+
+#: Error code when an output role's date range differs from the master resume.
+DATE_INTEGRITY_MODIFIED: str = "DATE_INTEGRITY_MODIFIED"
+
 # ---------------------------------------------------------------------------
 # Mechanism keyword set — LEGACY FALLBACK only.
 #
@@ -412,6 +418,93 @@ def _role_found_in_output(
 
 
 # ---------------------------------------------------------------------------
+# Employer integrity helpers
+# ---------------------------------------------------------------------------
+
+def _normalize_date_str(d: str) -> str:
+    """Normalise a date-range string for comparison.
+
+    Collapses spacing and unifies dash variants (–, —, -) so that
+    "Nov 2024 – Sep 2025" and "Nov 2024 - Sep 2025" compare equal.
+    """
+    d = re.sub(r"\s*[–\-—]\s*", " - ", d)
+    return " ".join(d.split()).lower()
+
+
+def _employer_integrity_match(output_header: str, master_header: str) -> bool:
+    """Return True when *output_header* is an acceptable variant of *master_header*.
+
+    Stricter than ``_roles_match``: the company part (last non-date pipe-segment)
+    must be an exact normalised match so that subtle company-name changes (e.g.
+    "CardinalChain Software" vs "CardinalChain Software Inc") are flagged.
+    The title part (first pipe-segment) allows substring matching to accommodate
+    plan-abbreviated multi-component titles.
+
+    Date segments (parts containing a 4-digit year) are stripped before comparison
+    so that inline date suffixes in output headers (e.g. "| Nov 2024 – Sep 2025")
+    do not cause false positives.
+
+    Falls back to a bidirectional substring test when either header has fewer
+    than two non-date pipe-separated segments.
+    """
+    out_norm = normalize_role_header(output_header).lower()
+    master_norm = normalize_role_header(master_header).lower()
+
+    if out_norm == master_norm:
+        return True
+
+    def _non_date_parts(norm: str) -> list[str]:
+        return [p.strip() for p in norm.split(" | ") if not _YEAR_RE.search(p)]
+
+    out_parts = _non_date_parts(out_norm)
+    master_parts = _non_date_parts(master_norm)
+
+    if len(out_parts) < 2 or len(master_parts) < 2:
+        out_clean = " | ".join(out_parts)
+        master_clean = " | ".join(master_parts)
+        return out_clean in master_clean or master_clean in out_clean
+
+    # Company (last non-date segment) must match exactly.
+    if out_parts[-1] != master_parts[-1]:
+        return False
+
+    # Title (first segment) allows substring — the plan may abbreviate long titles.
+    return out_parts[0] in master_parts[0] or master_parts[0] in out_parts[0]
+
+
+def _earlier_role_entry_matches_master(
+    entry_header: str,
+    master_role_names: list[str],
+) -> bool:
+    """Return True when a compressed "Earlier roles" entry corresponds to a master role.
+
+    "Earlier roles" entries use a reversed format (Company | Title | Year), so
+    ``_employer_integrity_match`` can fail.  This function instead finds the
+    first meaningful part (the company, which is typically the first segment
+    after stripping years and dashes) and checks whether it appears as a
+    substring in any normalised master role name.
+
+    Returns True conservatively when no meaningful part can be extracted (so as
+    not to generate false-positive violations for degenerate entries).
+    """
+    parts = [p.strip() for p in entry_header.split(" | ")]
+    for part in parts:
+        # Strip year tokens and dash characters, then collapse whitespace.
+        clean = re.sub(r"\b(19|20)\d{2}\b", "", part)
+        clean = re.sub(r"[–\-—]", " ", clean).strip()
+        clean = " ".join(clean.split())
+        if len(clean) <= 3:
+            continue
+        # First meaningful part is typically the company name — check it.
+        clean_lower = clean.lower()
+        for master in master_role_names:
+            if clean_lower in normalize_role_header(master).lower():
+                return True
+        return False  # First meaningful part not found in any master role.
+    return True  # Nothing meaningful to evaluate; conservatively allow.
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -774,12 +867,14 @@ def validate_phase2_output(
                     "no delivery vocabulary (backlog/roadmap/timeline/risk) found in resume."
                 )
 
+    # Shared structures for Checks 8 and 11 (computed once).
+    output_role_headers: list[str] = [h for h, _ in roles]
+    earlier_lines: list[str] = _extract_earlier_roles_block(resume)
+
     # --- 8. Role preservation: every master-resume role must appear in output ---
     master_role_names: list[str] = writer_packet.get("master_resume_role_names", [])
     missing_roles: list[str] = []
     if master_role_names:
-        output_role_headers = [h for h, _ in roles]
-        earlier_lines = _extract_earlier_roles_block(resume)
         for master_role in master_role_names:
             if not _role_found_in_output(master_role, output_role_headers, earlier_lines):
                 missing_roles.append(master_role)
@@ -815,6 +910,65 @@ def validate_phase2_output(
                 f"DOMAIN_FORBIDDEN_PHRASES: {'; '.join(domain_forbidden_phrases_found)}"
             )
 
+    # --- 11. Employer integrity: no invented roles; no modified company names ---
+    employer_integrity_violations: list[str] = []
+    date_integrity_violations: list[str] = []
+    if master_role_names and output_role_headers:
+        # Normalise the "Earlier roles" compressed entries so we can distinguish
+        # them from full role headers (they use a reversed Company | Title | Year
+        # format and require looser matching logic).
+        earlier_headers_norm: set[str] = {
+            normalize_role_header(l).lower() for l in earlier_lines
+        }
+        for out_header in output_role_headers:
+            if out_header.lower() in earlier_headers_norm:
+                matched = _earlier_role_entry_matches_master(out_header, master_role_names)
+            else:
+                matched = any(
+                    _employer_integrity_match(out_header, m) for m in master_role_names
+                )
+            if not matched:
+                employer_integrity_violations.append(out_header)
+
+        if employer_integrity_violations:
+            logger.warning(
+                "EMPLOYER_INTEGRITY_NEW_ROLE:\n"
+                "  output_roles=%s\n  master_roles=%s\n  violations=%s",
+                output_role_headers,
+                master_role_names,
+                employer_integrity_violations,
+            )
+            errors.append(
+                f"{EMPLOYER_INTEGRITY_NEW_ROLE}: "
+                f"{'; '.join(employer_integrity_violations)}"
+            )
+
+    # Date integrity: each output role's date line must match the master date.
+    master_role_dates: dict[str, str] = writer_packet.get("master_role_dates", {})
+    if master_role_dates:
+        for out_header, out_date in role_date_lines.items():
+            # For roles with inline dates (no separate date line), extract the
+            # date from the last pipe segment of the header when it contains a year.
+            if not out_date:
+                header_parts = [p.strip() for p in out_header.split(" | ")]
+                if len(header_parts) >= 3 and _YEAR_RE.search(header_parts[-1]):
+                    out_date = header_parts[-1]
+            if not out_date:
+                continue
+            for master_name, master_date in master_role_dates.items():
+                if not _roles_match(out_header, master_name):
+                    continue
+                if master_date and _normalize_date_str(out_date) != _normalize_date_str(master_date):
+                    date_integrity_violations.append(
+                        f"{out_header!r}: master='{master_date}' output='{out_date}'"
+                    )
+                break  # matched this master role; stop inner loop
+
+        if date_integrity_violations:
+            errors.append(
+                f"{DATE_INTEGRITY_MODIFIED}: {'; '.join(date_integrity_violations)}"
+            )
+
     repair_brief: dict = {
         "global_issues": {
             "missing_metrics": missing_metrics,
@@ -827,6 +981,8 @@ def validate_phase2_output(
                 if jd_vocab_must_embed else []
             ),
             "domain_forbidden_phrases": domain_forbidden_phrases_found,
+            "employer_integrity_violations": employer_integrity_violations,
+            "date_integrity_violations": date_integrity_violations,
         },
         "roles": repair_roles,
     }
@@ -849,6 +1005,8 @@ def validate_phase2_output(
             "manager_leadership_count": manager_leadership_count,
             "vocab_anchors_found": vocab_anchors_found,
             "domain_forbidden_phrases_found": domain_forbidden_phrases_found,
+            "employer_integrity_violations": employer_integrity_violations,
+            "date_integrity_violations": date_integrity_violations,
         },
         "repair_brief": repair_brief,
         "judge_candidates": judge_candidates,
