@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Run calibration mode for ai-resume-tailor
+# Sends the unmodified master resume/cover letter to assessment to establish a baseline.
+# Usage: ./run_calibrate.sh [--positions FILE] [--model MODEL] [--temperature T] [--workers N] [--max_positions N] [--out DIR] [--cache_dir DIR]
+# Defaults: positions=tests/data/positions.txt, model=gpt-5.2, temperature=0.5
+
+set -euo pipefail
+
+# Defaults
+POSITIONS="tests/data/positions.txt"
+MODEL="gpt-5.2"
+TEMPERATURE="0.5"
+WORKERS=""
+MAX_POSITIONS=""
+OUT="reports"
+CACHE_DIR=""
+
+# Change to repo root (script lives in tests/, repo root is one level up)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
+
+# Build positional args array
+ARGS=(
+    --positions "$POSITIONS"
+    --model "$MODEL"
+    --temperature "$TEMPERATURE"
+    --out "$OUT"
+)
+
+[ -n "$WORKERS" ]       && ARGS+=(--workers "$WORKERS")
+[ -n "$MAX_POSITIONS" ] && ARGS+=(--max_positions "$MAX_POSITIONS")
+[ -n "$CACHE_DIR" ]     && ARGS+=(--cache_dir "$CACHE_DIR")
+
+# Append any extra CLI args passed directly to this script
+ARGS+=("$@")
+
+echo "Running: PYTHONPATH=src python -m tailor assess --calibrate ${ARGS[*]}"
+echo
+
+PYTHONPATH=src python -m tailor assess --calibrate "${ARGS[@]}"

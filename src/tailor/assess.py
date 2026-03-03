@@ -413,6 +413,105 @@ def _save_csv(path: Path, entries: list[dict]) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Calibration data matching
+# ---------------------------------------------------------------------------
+
+def _normalize_name(name: str) -> list[str]:
+    """Normalize a company name to lowercase alphanumeric tokens."""
+    return re.findall(r"[a-z0-9]+", name.lower())
+
+
+def _names_match(a: str, b: str) -> bool:
+    """Return True when two company name strings refer to the same company.
+
+    Handles partial matches such as "Plata Card" vs "Plata": the shorter
+    name's tokens must all appear in the longer name's token list.
+    """
+    wa, wb = _normalize_name(a), _normalize_name(b)
+    if not wa or not wb:
+        return False
+    if wa == wb:
+        return True
+    shorter, longer = (wa, wb) if len(wa) <= len(wb) else (wb, wa)
+    return all(w in longer for w in shorter)
+
+
+def _extract_company_slug(filename: str) -> str:
+    """Extract the company portion from a calibration document filename.
+
+    Examples
+    --------
+    "Leonid_Verman_Resume_NEOGOV.docx"               → "NEOGOV"
+    "Leonid_Verman_Cover_Letter_Jonas_Software.docx"  → "Jonas Software"
+    """
+    stem = Path(filename).stem
+    for marker in ("Cover_Letter_", "Resume_"):
+        idx = stem.find(marker)
+        if idx != -1:
+            return stem[idx + len(marker):].replace("_", " ")
+    return stem
+
+
+def _find_in_index(company: str, index: dict[str, str]) -> str | None:
+    """Return the text for *company* in *index*, or None if not found."""
+    for slug, text in index.items():
+        if _names_match(company, slug):
+            return text
+    return None
+
+
+def build_calibration_index(data_dir: str) -> tuple[dict[str, str], dict[str, str]]:
+    """Scan *data_dir* and build company→text indexes for resumes and covers.
+
+    Filenames must follow the pattern:
+      <any>_Resume_<CompanyName>.docx
+      <any>_Cover_Letter_<CompanyName>.docx
+
+    Returns
+    -------
+    (resume_index, cover_index)
+        Each dict maps a company slug (extracted from the filename) to the
+        plain text extracted from the .docx file.
+
+    Raises
+    ------
+    ValueError
+        If *data_dir* does not exist or is not a directory.
+    """
+    data_path = Path(data_dir)
+    if not data_path.is_dir():
+        raise ValueError(f"Calibration data directory not found: {data_dir!r}")
+
+    resume_index: dict[str, str] = {}
+    cover_index: dict[str, str] = {}
+
+    for f in sorted(data_path.glob("*.docx")):
+        slug = _extract_company_slug(f.name)
+        stem = f.stem
+        if "Cover_Letter" in stem:
+            cover_index[slug] = read_docx(str(f))
+        elif "Resume" in stem:
+            resume_index[slug] = read_docx(str(f))
+
+    return resume_index, cover_index
+
+
+def validate_calibration_coverage(
+    companies: list[str],
+    resume_index: dict[str, str],
+    cover_index: dict[str, str],
+) -> list[str]:
+    """Return error messages for companies without a matching calibration file."""
+    errors: list[str] = []
+    for company in companies:
+        if _find_in_index(company, resume_index) is None:
+            errors.append(f"Missing resume for company: {company!r}")
+        if _find_in_index(company, cover_index) is None:
+            errors.append(f"Missing cover letter for company: {company!r}")
+    return errors
+
+
+# ---------------------------------------------------------------------------
 # Calibration helpers
 # ---------------------------------------------------------------------------
 
@@ -459,6 +558,9 @@ def _process_one_position(
     weights: dict[str, float],
     print_lock: threading.Lock,
     calibrate: bool = False,
+    calibration_index: tuple[dict[str, str], dict[str, str]] | None = None,
+    calibration_errors: list[str] | None = None,
+    calibration_errors_lock: threading.Lock | None = None,
 ) -> dict | None:
     """Scrape → tailor → assess one position URL.  Returns an entry dict or None on failure."""
 
@@ -492,12 +594,32 @@ def _process_one_position(
         phase2=phase2_debug,
     )
 
-    # In calibration mode substitute master texts into the generated_* fields while
-    # keeping the same payload structure (writer_packet, validator_findings, etc.).
-    if calibrate:
+    # Determine what resume/cover letter text to send to the assessor.
+    # calibration_index  → use pre-generated sample docx files
+    # calibrate          → use master template (existing behaviour)
+    # otherwise          → use the tailored output
+    from tailor.llm import TailorResult as _TailorResult  # local to avoid circular at module level
+
+    if calibration_index is not None:
+        resume_idx, cover_idx = calibration_index
+        cal_resume = _find_in_index(job.company, resume_idx)
+        cal_cover = _find_in_index(job.company, cover_idx)
+        missing_parts: list[str] = []
+        if cal_resume is None:
+            missing_parts.append("resume")
+        if cal_cover is None:
+            missing_parts.append("cover letter")
+        if missing_parts:
+            msg = f"No {' or '.join(missing_parts)} found for company {job.company!r} (URL: {url})"
+            if calibration_errors is not None and calibration_errors_lock is not None:
+                with calibration_errors_lock:
+                    calibration_errors.append(msg)
+            _print(f"  [{idx}] ERROR — {msg}")
+            return None
+        assessment_result = _TailorResult(resume=cal_resume, cover_letter=cal_cover)
+    elif calibrate:
         today = date.today()
         current_date = f"{today.strftime('%B')} {today.day}, {today.year}"
-        from tailor.llm import TailorResult as _TailorResult  # local to avoid circular at module level
         assessment_result = _TailorResult(
             resume=resume_template,
             cover_letter=_prepare_calibration_cover_letter(
@@ -568,6 +690,7 @@ def run_assess_pipeline(
     workers: int | None = None,
     weights: dict[str, float] | None = None,
     calibrate: bool = False,
+    calibrate_data: str | None = None,
 ) -> dict:
     """Score tailored documents for each URL in *positions_file*.
 
@@ -606,7 +729,13 @@ def run_assess_pipeline(
 
     # Capture timestamp once — folder name and filenames share the same value.
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_dir = Path(out_dir) / ts
+    if calibrate_data:
+        dir_suffix = "_calibration_data"
+    elif calibrate:
+        dir_suffix = "_calibration"
+    else:
+        dir_suffix = ""
+    run_dir = Path(out_dir) / f"{ts}{dir_suffix}"
     raw_dir = run_dir / "raw"
     report_path = run_dir / f"assess_{ts}.json"
     csv_path = run_dir / f"assess_{ts}.csv"
@@ -629,7 +758,12 @@ def run_assess_pipeline(
     else:
         effective_workers = workers
 
-    if calibrate:
+    if calibrate_data:
+        print(
+            f"[CALIBRATION DATA MODE] Pre-generated sample documents from {calibrate_data!r} "
+            "will be sent to assessment."
+        )
+    elif calibrate:
         print("[CALIBRATION MODE] Master resume/cover letter will be sent to assessment.")
     print(
         f"Assessing {len(urls)} position(s) with model {model} "
@@ -641,7 +775,19 @@ def run_assess_pipeline(
     cover_template = read_docx(COVER_TEMPLATE)
     profile_str = _load_candidate_profile()
 
+    # Build calibration index when --calibrate-data is provided.
+    cal_index: tuple[dict[str, str], dict[str, str]] | None = None
+    if calibrate_data:
+        cal_index = build_calibration_index(calibrate_data)
+        resume_idx, cover_idx = cal_index
+        print(
+            f"  Loaded {len(resume_idx)} resume(s): {', '.join(resume_idx.keys())}; "
+            f"{len(cover_idx)} cover letter(s): {', '.join(cover_idx.keys())}"
+        )
+
     print_lock = threading.Lock()
+    calibration_errors: list[str] = []
+    calibration_errors_lock = threading.Lock()
 
     # Submit all positions; preserve submission order in the final report
     with ThreadPoolExecutor(max_workers=effective_workers) as executor:
@@ -652,6 +798,9 @@ def run_assess_pipeline(
                 resume_template, cover_template, profile_str,
                 model, temperature, cache_dir, raw_dir, weights, print_lock,
                 calibrate,
+                cal_index,
+                calibration_errors if cal_index is not None else None,
+                calibration_errors_lock if cal_index is not None else None,
             )
             for i, url in enumerate(urls, 1)
         ]
@@ -661,6 +810,14 @@ def run_assess_pipeline(
             if (entry := future.result()) is not None
         ]
 
+    # Abort if any positions were missing calibration files.
+    if calibration_errors:
+        error_msg = (
+            "Calibration data files missing for the following positions:\n"
+            + "\n".join(f"  {e}" for e in calibration_errors)
+        )
+        raise ValueError(error_msg)
+
     # --- Aggregate ---
     agg = _aggregate(position_entries, weights)
 
@@ -668,7 +825,8 @@ def run_assess_pipeline(
         "version": "assess_report_v1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "model": model,
-        "calibrate": calibrate,
+        "calibrate": calibrate and not calibrate_data,
+        "calibrate_data": bool(calibrate_data),
         "positions_count": len(position_entries),
         "positions": position_entries,
         "category_averages": agg["category_averages"],

@@ -6,11 +6,13 @@ Covers:
   - integrated score math
   - per-category aggregation
   - calibration cover letter preparation
+  - calibration data matching (company name normalization, file index, samples)
 """
 
 import json
 import os
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -20,10 +22,16 @@ from tailor.assess import (
     _DEFAULT_WEIGHTS,
     _SCORE_KEYS,
     _aggregate,
+    _extract_company_slug,
+    _find_in_index,
+    _names_match,
+    _normalize_name,
     _prepare_calibration_cover_letter,
+    build_calibration_index,
     compute_integrated_score,
     load_positions,
     validate_assessment_response,
+    validate_calibration_coverage,
 )
 
 
@@ -338,3 +346,233 @@ def test_calibration_various_date_formats():
         result = _prepare_calibration_cover_letter(text, "Co", "Role", "April 1, 2026")
         assert "April 1, 2026" in result, f"Date not replaced for input: {date_str!r}"
         assert date_str not in result, f"Original date still present for input: {date_str!r}"
+
+
+# ---------------------------------------------------------------------------
+# _normalize_name
+# ---------------------------------------------------------------------------
+
+def test_normalize_name_basic():
+    assert _normalize_name("Plata Card") == ["plata", "card"]
+
+
+def test_normalize_name_uppercase():
+    assert _normalize_name("NEOGOV") == ["neogov"]
+
+
+def test_normalize_name_underscores():
+    assert _normalize_name("Jonas_Software") == ["jonas", "software"]
+
+
+def test_normalize_name_empty():
+    assert _normalize_name("") == []
+
+
+def test_normalize_name_special_chars_stripped():
+    assert _normalize_name("Co. Ltd.") == ["co", "ltd"]
+
+
+def test_normalize_name_numbers_kept():
+    assert _normalize_name("Web3 Corp") == ["web3", "corp"]
+
+
+# ---------------------------------------------------------------------------
+# _names_match
+# ---------------------------------------------------------------------------
+
+def test_names_match_exact():
+    assert _names_match("NEOGOV", "NEOGOV")
+
+
+def test_names_match_case_insensitive():
+    assert _names_match("neogov", "NEOGOV")
+
+
+def test_names_match_partial_shorter_first():
+    assert _names_match("Plata", "Plata Card")
+
+
+def test_names_match_partial_longer_first():
+    assert _names_match("Plata Card", "Plata")
+
+
+def test_names_match_spaces_vs_underscores():
+    assert _names_match("Jonas Software", "Jonas_Software")
+
+
+def test_names_match_no_match():
+    assert not _names_match("NEOGOV", "Fingerprint")
+
+
+def test_names_match_empty_a():
+    assert not _names_match("", "NEOGOV")
+
+
+def test_names_match_empty_b():
+    assert not _names_match("NEOGOV", "")
+
+
+def test_names_match_single_word_subset():
+    assert _names_match("League", "League Healthcare")
+
+
+def test_names_match_unrelated_words():
+    assert not _names_match("Alpha Beta", "Gamma Delta")
+
+
+# ---------------------------------------------------------------------------
+# _extract_company_slug
+# ---------------------------------------------------------------------------
+
+def test_extract_company_slug_resume_simple():
+    assert _extract_company_slug("Leonid_Verman_Resume_NEOGOV.docx") == "NEOGOV"
+
+
+def test_extract_company_slug_cover_simple():
+    assert _extract_company_slug("Leonid_Verman_Cover_Letter_Fingerprint.docx") == "Fingerprint"
+
+
+def test_extract_company_slug_cover_multi_word():
+    assert _extract_company_slug("Leonid_Verman_Cover_Letter_Jonas_Software.docx") == "Jonas Software"
+
+
+def test_extract_company_slug_resume_multi_word():
+    assert _extract_company_slug("Leonid_Verman_Resume_Plata_Card.docx") == "Plata Card"
+
+
+def test_extract_company_slug_plata():
+    assert _extract_company_slug("Leonid_Verman_Resume_Plata.docx") == "Plata"
+
+
+# ---------------------------------------------------------------------------
+# _find_in_index
+# ---------------------------------------------------------------------------
+
+def test_find_in_index_exact():
+    index = {"NEOGOV": "resume text", "Fingerprint": "other text"}
+    assert _find_in_index("NEOGOV", index) == "resume text"
+
+
+def test_find_in_index_partial_match():
+    index = {"Plata": "plata text"}
+    assert _find_in_index("Plata Card", index) == "plata text"
+
+
+def test_find_in_index_not_found():
+    index = {"NEOGOV": "text"}
+    assert _find_in_index("Fingerprint", index) is None
+
+
+def test_find_in_index_empty_index():
+    assert _find_in_index("NEOGOV", {}) is None
+
+
+# ---------------------------------------------------------------------------
+# validate_calibration_coverage
+# ---------------------------------------------------------------------------
+
+def test_validate_coverage_all_present():
+    resume_idx = {"NEOGOV": "r1", "Fingerprint": "r2"}
+    cover_idx = {"NEOGOV": "c1", "Fingerprint": "c2"}
+    errors = validate_calibration_coverage(["NEOGOV", "Fingerprint"], resume_idx, cover_idx)
+    assert errors == []
+
+
+def test_validate_coverage_missing_resume():
+    resume_idx = {"Fingerprint": "r"}
+    cover_idx = {"NEOGOV": "c", "Fingerprint": "c2"}
+    errors = validate_calibration_coverage(["NEOGOV", "Fingerprint"], resume_idx, cover_idx)
+    assert any("resume" in e and "NEOGOV" in e for e in errors)
+
+
+def test_validate_coverage_missing_cover():
+    resume_idx = {"NEOGOV": "r", "Fingerprint": "r2"}
+    cover_idx = {"Fingerprint": "c"}
+    errors = validate_calibration_coverage(["NEOGOV", "Fingerprint"], resume_idx, cover_idx)
+    assert any("cover" in e and "NEOGOV" in e for e in errors)
+
+
+def test_validate_coverage_partial_match_ok():
+    resume_idx = {"Plata": "resume text"}
+    cover_idx = {"Plata": "cover text"}
+    errors = validate_calibration_coverage(["Plata Card"], resume_idx, cover_idx)
+    assert errors == []
+
+
+# ---------------------------------------------------------------------------
+# build_calibration_index — directory does not exist
+# ---------------------------------------------------------------------------
+
+def test_build_calibration_index_missing_dir():
+    with pytest.raises(ValueError, match="not found"):
+        build_calibration_index("/nonexistent/path/that/does/not/exist")
+
+
+def test_build_calibration_index_empty_dir(tmp_path):
+    resume_idx, cover_idx = build_calibration_index(str(tmp_path))
+    assert resume_idx == {}
+    assert cover_idx == {}
+
+
+# ---------------------------------------------------------------------------
+# tests/samples — verify sample data consistency
+# ---------------------------------------------------------------------------
+
+# Positions used in the calibration run; company names as returned by the
+# scraper for the five hiring.cafe URLs.
+_SAMPLE_COMPANIES = ["NEOGOV", "Plata Card", "Lillio", "Fingerprint", "League"]
+_SAMPLES_DIR = str(Path(__file__).parent / "samples")
+
+
+@pytest.mark.skipif(
+    not Path(_SAMPLES_DIR).is_dir(),
+    reason="tests/samples directory not present",
+)
+class TestSamplesDirectory:
+    """Verify that tests/samples contains matching files for all known positions."""
+
+    def test_samples_dir_is_readable(self):
+        docx_files = list(Path(_SAMPLES_DIR).glob("*.docx"))
+        assert docx_files, "Expected at least one .docx file in tests/samples"
+
+    def test_build_calibration_index_succeeds(self):
+        resume_idx, cover_idx = build_calibration_index(_SAMPLES_DIR)
+        assert len(resume_idx) > 0, "No resume files found in tests/samples"
+        assert len(cover_idx) > 0, "No cover letter files found in tests/samples"
+
+    def test_all_companies_have_resume(self):
+        resume_idx, _ = build_calibration_index(_SAMPLES_DIR)
+        missing = [
+            c for c in _SAMPLE_COMPANIES
+            if _find_in_index(c, resume_idx) is None
+        ]
+        assert not missing, f"No resume found for: {missing}"
+
+    def test_all_companies_have_cover_letter(self):
+        _, cover_idx = build_calibration_index(_SAMPLES_DIR)
+        missing = [
+            c for c in _SAMPLE_COMPANIES
+            if _find_in_index(c, cover_idx) is None
+        ]
+        assert not missing, f"No cover letter found for: {missing}"
+
+    def test_validate_calibration_coverage_passes(self):
+        resume_idx, cover_idx = build_calibration_index(_SAMPLES_DIR)
+        errors = validate_calibration_coverage(_SAMPLE_COMPANIES, resume_idx, cover_idx)
+        assert errors == [], f"Coverage errors:\n" + "\n".join(errors)
+
+    def test_resume_texts_not_empty(self):
+        resume_idx, _ = build_calibration_index(_SAMPLES_DIR)
+        empty = [slug for slug, text in resume_idx.items() if not text.strip()]
+        assert not empty, f"Empty resume text for: {empty}"
+
+    def test_cover_texts_not_empty(self):
+        _, cover_idx = build_calibration_index(_SAMPLES_DIR)
+        empty = [slug for slug, text in cover_idx.items() if not text.strip()]
+        assert not empty, f"Empty cover letter text for: {empty}"
+
+    def test_resume_count_matches_cover_count(self):
+        resume_idx, cover_idx = build_calibration_index(_SAMPLES_DIR)
+        assert len(resume_idx) == len(cover_idx), (
+            f"Resume count ({len(resume_idx)}) != cover letter count ({len(cover_idx)})"
+        )

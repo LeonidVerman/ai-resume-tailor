@@ -98,7 +98,22 @@ def _main_assess(argv: list[str]) -> None:
             "All other assessment inputs (writer_packet, etc.) are unchanged."
         ),
     )
+    parser.add_argument(
+        "--calibrate-data", default=None, metavar="DIR", dest="calibrate_data",
+        help=(
+            "Calibration-with-data mode: assess pre-generated resume/cover letter "
+            "files from DIR instead of the tailored output. "
+            "Files must follow the naming convention "
+            "<Name>_Resume_<Company>.docx / <Name>_Cover_Letter_<Company>.docx. "
+            "Each position must have a matching pair; the run aborts if any are missing. "
+            "Default samples directory: tests/samples. "
+            "Mutually exclusive with --calibrate."
+        ),
+    )
     args = parser.parse_args(argv)
+
+    if args.calibrate and args.calibrate_data:
+        parser.error("--calibrate and --calibrate-data are mutually exclusive.")
 
     run_assess_pipeline(
         positions_file=args.positions,
@@ -110,6 +125,7 @@ def _main_assess(argv: list[str]) -> None:
         runs=args.runs,
         workers=args.workers,
         calibrate=args.calibrate,
+        calibrate_data=args.calibrate_data,
     )
 
 
