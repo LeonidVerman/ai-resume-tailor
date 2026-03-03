@@ -89,6 +89,15 @@ def _main_assess(argv: list[str]) -> None:
         "--judge_only_after_validation_fail", default="false",
         help="(Reserved) Future flag.",
     )
+    parser.add_argument(
+        "--calibrate", action="store_true", default=False,
+        help=(
+            "Calibration mode: send the unmodified master resume and cover letter "
+            "to assessment instead of the tailored output. "
+            "The cover letter date, company, and role are still substituted. "
+            "All other assessment inputs (writer_packet, etc.) are unchanged."
+        ),
+    )
     args = parser.parse_args(argv)
 
     run_assess_pipeline(
@@ -100,6 +109,7 @@ def _main_assess(argv: list[str]) -> None:
         cache_dir=args.cache_dir,
         runs=args.runs,
         workers=args.workers,
+        calibrate=args.calibrate,
     )
 
 

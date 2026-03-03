@@ -625,6 +625,7 @@ def tailor_documents_with_plan(
     )
 
     current_ledger: dict | None = attempt1_meta.get("evidence_ledger")
+    current_domain_translation_ledger: list | None = attempt1_meta.get("domain_translation_ledger")
     validation1 = validate_phase2_output(
         writer_packet,
         result.resume or "",
@@ -641,6 +642,7 @@ def tailor_documents_with_plan(
             "model": attempt1_meta["model"],
             "usage": attempt1_meta["usage"],
             "evidence_ledger": current_ledger,
+            "domain_translation_ledger": current_domain_translation_ledger,
         }
     ]
 
@@ -655,8 +657,10 @@ def tailor_documents_with_plan(
             writer_packet, plan, job, resume_template, cover_template,
             profile_str, task, current_date, current_validation, current_result,
             draft_ledger=current_ledger,
+            draft_domain_translation_ledger=current_domain_translation_ledger,
         )
         current_ledger = repair_meta.get("evidence_ledger")
+        current_domain_translation_ledger = repair_meta.get("domain_translation_ledger")
         repair_validation = validate_phase2_output(
             writer_packet,
             repair_result.resume or "",
@@ -672,6 +676,7 @@ def tailor_documents_with_plan(
                 "model": repair_meta["model"],
                 "usage": repair_meta["usage"],
                 "evidence_ledger": current_ledger,
+                "domain_translation_ledger": current_domain_translation_ledger,
             }
         )
         current_result = repair_result
@@ -827,6 +832,7 @@ def _run_phase2_repair(
     validation_report: dict,
     draft: TailorResult,
     draft_ledger: dict | None = None,
+    draft_domain_translation_ledger: list | None = None,
 ) -> tuple[TailorResult, list, dict]:
     """Execute a repair pass using the phase2_repair.txt prompt."""
     repair_instructions = _load_prompt("phase2_repair")
@@ -837,6 +843,8 @@ def _run_phase2_repair(
     }
     if draft_ledger is not None:
         working_output_dict["evidence_ledger"] = draft_ledger
+    if draft_domain_translation_ledger is not None:
+        working_output_dict["domain_translation_ledger"] = draft_domain_translation_ledger
     working_output = json.dumps(working_output_dict, indent=2)
 
     validation_errors = validation_report.get("errors", [])
@@ -877,9 +885,23 @@ def _run_phase2_repair(
 def _parse_phase2_response(response: Any, model: str) -> tuple[TailorResult, list, dict]:
     raw_content = response.choices[0].message.content
     raw = json.loads(raw_content)
+
+    def _str_field(*keys: str) -> str | None:
+        """Return the first key whose value is a non-empty string; None otherwise.
+
+        Guards against the LLM returning a structured dict for resume/cover_letter
+        (e.g. when the response schema grows complex), which would cause downstream
+        AttributeError when string methods are called on the value.
+        """
+        for key in keys:
+            val = raw.get(key)
+            if isinstance(val, str) and val:
+                return val
+        return None
+
     result = TailorResult(
-        resume=raw.get("resume") or raw.get("tailored_resume"),
-        cover_letter=raw.get("cover_letter") or raw.get("tailored_cover_letter"),
+        resume=_str_field("resume", "tailored_resume"),
+        cover_letter=_str_field("cover_letter", "tailored_cover_letter"),
     )
     usage = _extract_usage(response)
     meta: dict = {
@@ -891,6 +913,10 @@ def _parse_phase2_response(response: Any, model: str) -> tuple[TailorResult, lis
     ledger = raw.get("evidence_ledger")
     if isinstance(ledger, dict):
         meta["evidence_ledger"] = ledger
+    # Extract domain_translation_ledger when the LLM included it (v8.0+)
+    domain_ledger = raw.get("domain_translation_ledger")
+    if isinstance(domain_ledger, list):
+        meta["domain_translation_ledger"] = domain_ledger
     # messages not available here; callers own their message lists
     return result, [], meta
 

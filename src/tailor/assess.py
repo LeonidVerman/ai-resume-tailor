@@ -15,9 +15,10 @@ import hashlib
 import json
 import logging
 import os
+import re
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +47,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _PROMPT_VERSION = "assess_v1"
+
+# Company name and role title currently present in the cover letter template.
+# Update these if the template is re-written for a different target role.
+_COVER_TEMPLATE_COMPANY = "Tigera"
+_COVER_TEMPLATE_TITLE = "Senior Software Engineer"
 
 _SCORE_KEYS: list[str] = [
     "truthfulness",
@@ -407,6 +413,35 @@ def _save_csv(path: Path, entries: list[dict]) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Calibration helpers
+# ---------------------------------------------------------------------------
+
+_DATE_RE = re.compile(
+    r"\b(?:January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)\s+\d{1,2}(?:[a-z]{1,2})?,?\s*\d{4}\b",
+    re.IGNORECASE,
+)
+
+
+def _prepare_calibration_cover_letter(
+    master_cover_text: str,
+    company: str,
+    job_title: str,
+    current_date: str,
+) -> str:
+    """Replace date, company, and job title in the master cover letter for calibration.
+
+    The assessment LLM penalises mismatched company/position, so these three
+    fields must reflect the actual position being evaluated even when the rest of
+    the cover letter is the unchanged master template text.
+    """
+    text = _DATE_RE.sub(current_date, master_cover_text)
+    text = text.replace(_COVER_TEMPLATE_COMPANY, company)
+    text = text.replace(_COVER_TEMPLATE_TITLE, job_title)
+    return text
+
+
+# ---------------------------------------------------------------------------
 # Per-position worker (runs in a thread)
 # ---------------------------------------------------------------------------
 
@@ -423,6 +458,7 @@ def _process_one_position(
     raw_dir: Path,
     weights: dict[str, float],
     print_lock: threading.Lock,
+    calibrate: bool = False,
 ) -> dict | None:
     """Scrape → tailor → assess one position URL.  Returns an entry dict or None on failure."""
 
@@ -456,14 +492,31 @@ def _process_one_position(
         phase2=phase2_debug,
     )
 
-    cache_key = _position_cache_key(url, result.resume or "", result.cover_letter or "", model)
+    # In calibration mode substitute master texts into the generated_* fields while
+    # keeping the same payload structure (writer_packet, validator_findings, etc.).
+    if calibrate:
+        today = date.today()
+        current_date = f"{today.strftime('%B')} {today.day}, {today.year}"
+        from tailor.llm import TailorResult as _TailorResult  # local to avoid circular at module level
+        assessment_result = _TailorResult(
+            resume=resume_template,
+            cover_letter=_prepare_calibration_cover_letter(
+                cover_template, job.company, job.job_title, current_date
+            ),
+        )
+    else:
+        assessment_result = result
+
+    cache_key = _position_cache_key(
+        url, assessment_result.resume or "", assessment_result.cover_letter or "", model
+    )
     raw_assessment = _cache_load(cache_dir, cache_key)
 
     if raw_assessment is not None:
         _print(f"  [{idx}] (using cached assessment)")
     else:
         assessment_input = build_assessment_input(
-            job, result, resume_template, cover_template, profile_str, phase2_debug, plan
+            job, assessment_result, resume_template, cover_template, profile_str, phase2_debug, plan
         )
         try:
             raw_assessment = _call_assess_llm(assessment_input, model, temperature)
@@ -514,6 +567,7 @@ def run_assess_pipeline(
     runs: int = 1,
     workers: int | None = None,
     weights: dict[str, float] | None = None,
+    calibrate: bool = False,
 ) -> dict:
     """Score tailored documents for each URL in *positions_file*.
 
@@ -575,6 +629,8 @@ def run_assess_pipeline(
     else:
         effective_workers = workers
 
+    if calibrate:
+        print("[CALIBRATION MODE] Master resume/cover letter will be sent to assessment.")
     print(
         f"Assessing {len(urls)} position(s) with model {model} "
         f"using {effective_workers} parallel worker(s)..."
@@ -595,6 +651,7 @@ def run_assess_pipeline(
                 url, i, len(urls),
                 resume_template, cover_template, profile_str,
                 model, temperature, cache_dir, raw_dir, weights, print_lock,
+                calibrate,
             )
             for i, url in enumerate(urls, 1)
         ]
@@ -611,6 +668,7 @@ def run_assess_pipeline(
         "version": "assess_report_v1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "model": model,
+        "calibrate": calibrate,
         "positions_count": len(position_entries),
         "positions": position_entries,
         "category_averages": agg["category_averages"],

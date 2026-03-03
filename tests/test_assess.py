@@ -5,6 +5,7 @@ Covers:
   - assessment response schema validation
   - integrated score math
   - per-category aggregation
+  - calibration cover letter preparation
 """
 
 import json
@@ -14,9 +15,12 @@ import tempfile
 import pytest
 
 from tailor.assess import (
+    _COVER_TEMPLATE_COMPANY,
+    _COVER_TEMPLATE_TITLE,
     _DEFAULT_WEIGHTS,
     _SCORE_KEYS,
     _aggregate,
+    _prepare_calibration_cover_letter,
     compute_integrated_score,
     load_positions,
     validate_assessment_response,
@@ -271,3 +275,66 @@ def test_aggregate_integrated_score_matches_compute():
     result = _aggregate(entries, _DEFAULT_WEIGHTS)
     expected = compute_integrated_score(result["category_averages"], _DEFAULT_WEIGHTS)
     assert result["integrated_score"] == expected
+
+
+# ---------------------------------------------------------------------------
+# _prepare_calibration_cover_letter
+# ---------------------------------------------------------------------------
+
+def _cover_with(date_str: str = "", company: str = "", title: str = "") -> str:
+    """Build a minimal cover letter string containing the given tokens."""
+    parts = []
+    if date_str:
+        parts.append(date_str)
+    parts.append(f"I am applying for the {title} position at {company}.")
+    return "\n".join(parts)
+
+
+def test_calibration_date_replaced():
+    text = _cover_with(date_str="February 16th, 2026", company=_COVER_TEMPLATE_COMPANY, title=_COVER_TEMPLATE_TITLE)
+    result = _prepare_calibration_cover_letter(text, _COVER_TEMPLATE_COMPANY, _COVER_TEMPLATE_TITLE, "March 5, 2026")
+    assert "March 5, 2026" in result
+    assert "February" not in result
+
+
+def test_calibration_company_replaced():
+    text = _cover_with(company=_COVER_TEMPLATE_COMPANY, title=_COVER_TEMPLATE_TITLE)
+    result = _prepare_calibration_cover_letter(text, "Acme Corp", _COVER_TEMPLATE_TITLE, "March 5, 2026")
+    assert "Acme Corp" in result
+    assert _COVER_TEMPLATE_COMPANY not in result
+
+
+def test_calibration_title_replaced():
+    text = _cover_with(company=_COVER_TEMPLATE_COMPANY, title=_COVER_TEMPLATE_TITLE)
+    result = _prepare_calibration_cover_letter(text, _COVER_TEMPLATE_COMPANY, "Engineering Manager", "March 5, 2026")
+    assert "Engineering Manager" in result
+    assert _COVER_TEMPLATE_TITLE not in result
+
+
+def test_calibration_all_three_replaced():
+    text = _cover_with(date_str="February 16h, 2026", company=_COVER_TEMPLATE_COMPANY, title=_COVER_TEMPLATE_TITLE)
+    result = _prepare_calibration_cover_letter(text, "Fingerprint", "Engineering Manager", "March 2, 2026")
+    assert "Fingerprint" in result
+    assert "Engineering Manager" in result
+    assert "March 2, 2026" in result
+    assert "February" not in result
+    assert _COVER_TEMPLATE_COMPANY not in result
+    assert _COVER_TEMPLATE_TITLE not in result
+
+
+def test_calibration_no_date_unchanged():
+    text = f"I apply for {_COVER_TEMPLATE_TITLE} at {_COVER_TEMPLATE_COMPANY}."
+    result = _prepare_calibration_cover_letter(text, "NewCo", "Director", "March 5, 2026")
+    # No date was present, so no date replacement artefacts
+    assert "March 5, 2026" not in result
+    assert "NewCo" in result
+    assert "Director" in result
+
+
+def test_calibration_various_date_formats():
+    """Regex should handle ordinal suffixes and the typo 'h' seen in the template."""
+    for date_str in ["February 16h, 2026", "March 5, 2026", "January 1st, 2026", "December 31st, 2025"]:
+        text = f"{date_str}\nSome content."
+        result = _prepare_calibration_cover_letter(text, "Co", "Role", "April 1, 2026")
+        assert "April 1, 2026" in result, f"Date not replaced for input: {date_str!r}"
+        assert date_str not in result, f"Original date still present for input: {date_str!r}"
