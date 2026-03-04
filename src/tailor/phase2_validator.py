@@ -47,6 +47,10 @@ DOMAIN_TRANSLATION_MIN_TOTAL_NOT_MET: str = "DOMAIN_TRANSLATION_MIN_TOTAL_NOT_ME
 DOMAIN_TRANSLATION_ANCHOR_NOT_MET: str = "DOMAIN_TRANSLATION_ANCHOR_NOT_MET"
 DOMAIN_TRANSLATION_FIRST_K_NOT_MET: str = "DOMAIN_TRANSLATION_FIRST_K_NOT_MET"
 
+#: Skill graph validator error codes.
+SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION: str = "SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION"
+SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION: str = "SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION"
+
 # ---------------------------------------------------------------------------
 # Mechanism keyword set — LEGACY FALLBACK only.
 #
@@ -1135,6 +1139,36 @@ def validate_phase2_output(
                     f"no domain translation span in anchor role first {fk_dt} bullets"
                 )
 
+    # --- 15. Skill section allowlist ---
+    skill_section_violations: list[str] = []
+    allowlist_ss = {s.lower() for s in (writer_packet.get("skill_allowlist_skills_section") or [])}
+    if allowlist_ss:
+        skills_raw = _extract_skills_section(resume)
+        for token in _tokenize_skills_section(skills_raw):
+            if token and token not in allowlist_ss:
+                skill_section_violations.append(token)
+                errors.append(
+                    f"{SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION}: "
+                    f"skill {token!r} not in allowlist"
+                )
+
+    # --- 16. Experience tool claim allowlist ---
+    experience_tool_violations: list[str] = []
+    allowlist_exp = {s.lower() for s in (writer_packet.get("skill_allowlist_experience_claims") or [])}
+    if allowlist_exp:
+        for _role_header, bullets in roles:
+            for bullet in bullets:
+                bullet_lower = bullet.lower()
+                for tool in _HIGH_RISK_TOOL_LEXICON:
+                    pattern = r"\b" + re.escape(tool) + r"\b"
+                    if re.search(pattern, bullet_lower) and tool not in allowlist_exp:
+                        if tool not in experience_tool_violations:
+                            experience_tool_violations.append(tool)
+                        errors.append(
+                            f"{SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION}: "
+                            f"tool {tool!r} claimed in experience bullet but not in allowlist"
+                        )
+
     repair_brief: dict = {
         "global_issues": {
             "missing_metrics": missing_metrics,
@@ -1151,6 +1185,8 @@ def validate_phase2_output(
             "date_integrity_violations": date_integrity_violations,
             "narrative_missing_summary_themes": narrative_missing_summary_themes,
             "narrative_anchor_missing_theme_ids": narrative_anchor_missing_theme_ids,
+            "skill_section_violations": skill_section_violations,
+            "experience_tool_violations": experience_tool_violations,
         },
         "roles": repair_roles,
     }
@@ -1177,6 +1213,8 @@ def validate_phase2_output(
             "date_integrity_violations": date_integrity_violations,
             "narrative_missing_summary_themes": narrative_missing_summary_themes,
             "narrative_anchor_missing_theme_ids": narrative_anchor_missing_theme_ids,
+            "skill_section_violations": skill_section_violations,
+            "experience_tool_violations": experience_tool_violations,
         },
         "repair_brief": repair_brief,
         "judge_candidates": judge_candidates,
@@ -1401,6 +1439,18 @@ def _extract_raw_role_headers(resume: str) -> list[str]:
         if "|" in s and not s.startswith("-") and not s.startswith("•"):
             headers.append(s)
     return headers
+
+
+_HIGH_RISK_TOOL_LEXICON: frozenset[str] = frozenset({
+    "azure", "gcp", "terraform", "ansible", "react", "rails", "angular",
+    "graphql", ".net", "kotlin", "swift", "unity", "snowflake", "databricks",
+})
+
+
+def _tokenize_skills_section(text: str) -> list[str]:
+    """Split raw skills section text into individual skill tokens."""
+    tokens = re.split(r"[,|•·:\n]+", text)
+    return [t.strip().lower() for t in tokens if t.strip()]
 
 
 def _extract_skills_section(resume: str) -> str:

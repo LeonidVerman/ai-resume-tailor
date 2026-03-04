@@ -2965,3 +2965,111 @@ class TestNarrativeValidators:
         assert not dt_errors, (
             f"No mismatch → Check 14 must be skipped: {dt_errors}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Skill graph validators (Checks 15/16)
+# ---------------------------------------------------------------------------
+
+_SG_DIRECT = ["python", "docker", "kubernetes", "postgresql", "rest apis"]
+_SG_SKILLS_SECTION_ONLY = ["event-driven architecture"]  # allowed_usage=skills_section_only
+_SG_CAN_CLAIM = ["container orchestration"]              # allowed_usage=can_claim_experience
+
+
+def _make_skill_graph_packet(
+    skill_allowlist_skills_section: list[str] | None = None,
+    skill_allowlist_experience_claims: list[str] | None = None,
+) -> dict:
+    """Minimal writer_packet for skill graph validator tests."""
+    ss = skill_allowlist_skills_section if skill_allowlist_skills_section is not None \
+        else _SG_DIRECT + _SG_SKILLS_SECTION_ONLY + _SG_CAN_CLAIM
+    exp = skill_allowlist_experience_claims if skill_allowlist_experience_claims is not None \
+        else _SG_DIRECT + _SG_CAN_CLAIM
+    return {
+        "role_level": "senior",
+        "narrative_plan": {},
+        "domain_mismatch": False,
+        "master_resume_role_names": ["Senior Engineer | Acme Corp"],
+        "must_keep_metrics": [],
+        "must_surface_arch_mechanisms": [],
+        "must_surface_strategic_signals": [],
+        "must_surface_operational_signals": [],
+        "must_include_skills": [],
+        "allowed_skill_pool": [],
+        "do_not_add_terms": [],
+        "unsafe_jd_nouns": [],
+        "role_priorities": {"Senior Engineer | Acme Corp": "high"},
+        "role_source_bullet_counts": {"Senior Engineer | Acme Corp": 5},
+        "role_source_char_counts": {"Senior Engineer | Acme Corp": 400},
+        "jd_is_delivery_oriented": False,
+        "density_targets": {
+            "bullet_min_by_priority": {"high": 3, "medium": 2, "low": 1},
+            "mechanism_min_by_priority": {"high": 0, "medium": 0, "low": 0},
+        },
+        "skill_allowlist_skills_section": ss,
+        "skill_allowlist_experience_claims": exp,
+    }
+
+
+def _sg_resume(skills_section: str, bullets: str = "") -> str:
+    """Build a minimal resume for skill graph tests."""
+    bullet_block = bullets or (
+        "- Built distributed systems for scalability.\n"
+        "- Improved platform reliability and uptime.\n"
+        "- Led incident response processes.\n"
+        "- Mentored junior engineers."
+    )
+    return (
+        "Professional Summary\n"
+        "Experienced engineer focused on distributed systems.\n\n"
+        "Experience\n"
+        f"Senior Engineer | Acme Corp | 2021 - Present\n"
+        f"{bullet_block}\n\n"
+        f"Technical Skills\n{skills_section}\n"
+    )
+
+
+class TestSkillGraphValidators:
+    """Checks 15/16: SkillSectionAllowlistValidator, ExperienceToolClaimAllowlistValidator."""
+
+    def test_skill_section_violation(self):
+        """Skills section lists 'Terraform' not in allowlist → SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION."""
+        pkt = _make_skill_graph_packet()
+        resume = _sg_resume("Python, Docker, Terraform")
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        errs = [e for e in report["errors"] if "SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION" in e]
+        assert errs, f"Expected skill section violation for 'terraform', got: {report['errors']}"
+        assert any("terraform" in e for e in errs), errs
+
+    def test_experience_tool_violation(self):
+        """Bullet mentions 'Azure' not in experience claim allowlist → SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION."""
+        pkt = _make_skill_graph_packet()
+        bullets = (
+            "- Deployed microservices on Azure for high availability.\n"
+            "- Built distributed systems for scalability."
+        )
+        resume = _sg_resume("Python, Docker", bullets)
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        errs = [e for e in report["errors"] if "SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION" in e]
+        assert errs, f"Expected experience tool violation for 'azure', got: {report['errors']}"
+        assert any("azure" in e for e in errs), errs
+
+    def test_skills_section_allowed_concept_passes(self):
+        """'event-driven architecture' in skills_section_only allowlist → no Check 15 error."""
+        pkt = _make_skill_graph_packet()
+        resume = _sg_resume("Python, Docker, event-driven architecture")
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        errs = [e for e in report["errors"] if "SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION" in e]
+        assert not errs, f"Allowed concept must not trigger violation: {errs}"
+
+    def test_experience_direct_skill_passes(self):
+        """Bullet mentions 'Kubernetes' which is in direct_skills (experience claim allowed) → no Check 16 error."""
+        pkt = _make_skill_graph_packet()
+        bullets = (
+            "- Orchestrated containers using Kubernetes for high availability.\n"
+            "- Built distributed systems for scalability."
+        )
+        resume = _sg_resume("Python, Docker, Kubernetes", bullets)
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        errs = [e for e in report["errors"] if "SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION" in e]
+        assert not errs, f"Direct skill 'kubernetes' in experience claim allowlist must not fail: {errs}"

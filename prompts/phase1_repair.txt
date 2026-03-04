@@ -1,4 +1,4 @@
-[PLANNER_REPAIR_LAYER v5.1]
+[PLANNER_REPAIR_LAYER v5.2]
 
 You are repairing a TailoringPlan JSON.
 
@@ -24,7 +24,6 @@ Ensure presence of:
 - domain_translation_rule_ids (if mismatch=true)
 
 If mismatch=true:
-- Ensure at least one rule affects domain framing if evidence allows.
 - Remove rule_ids that violate forbidden_phrases or evidence_requirements.
 
 ------------------------------------------------------------
@@ -33,15 +32,6 @@ VOCABULARY RULES
 
 - must_embed must be evidence-safe.
 - If unsafe, demote or soften.
-
-------------------------------------------------------------
-SUMMARY DOMAIN STRATEGY
-------------------------------------------------------------
-
-If mismatch=true:
-- Ensure summary positioning guidance is included.
-- Emphasize transferable patterns first.
-- Restrict source-domain emphasis.
 
 ------------------------------------------------------------
 NARRATIVE PLAN REPAIR (MANDATORY WHEN REFERENCED)
@@ -57,41 +47,53 @@ narrative_plan must include:
 - anchor_role_coverage
 - domain_translation_binding
 
-A) anchor_role_id repair
+anchor_role_id:
 - Must match one of resume_strategy.experience.role_name values.
-- Select using role priority rule:
-  - most recent "high" priority role, else most recent "medium".
-- Do not select unrelated roles unless they are high priority.
+- Most recent high priority role, else most recent medium.
 
-B) theme_ranked repair
-- Must include 2â€“6 items.
-- theme_id format: T1, T2, T3...
-- priority must be one of: primary, secondary, supporting
-- signature_terms must be 3â€“12 short terms each.
+theme_ranked:
+- 2–6 items
+- theme_id: T1, T2, T3...
+- signature_terms: 3–12 short terms
 
-signature_terms repair rules:
-- Prefer stable terms from JD keywords, vocabulary anchors, and leadership/architecture primitives.
-- Avoid unsafe nouns.
-- Avoid overly generic filler.
+summary_coverage:
+- must_cover_theme_ids includes T1 and T2
 
-C) summary_coverage repair
-- must_cover_theme_ids must include T1 and T2.
-- should_cover_theme_ids may include T3.
-
-D) anchor_role_coverage repair
-Defaults (unless explicitly overridden by VALIDATION_ERRORS):
+anchor_role_coverage defaults (unless error requests changes):
 - first_k_bullets = 3
 - top_k_themes_to_cover = 2
 - min_theme_occurrences: {T1: 2, T2: 1}
 
-E) domain_translation_binding repair
+domain_translation_binding:
 If domain_mismatch=true:
-- min_total_rule_instantiations: min(2, len(domain_translation_rule_ids)) but >=1 if rule_ids non-empty
-- min_instantiations_in_anchor_role: 1 if rule_ids non-empty else 0
-- require_target_frame_in_anchor_role_first_k: true if rule_ids non-empty else false
-
+- min_total_rule_instantiations >=1 if any rule_ids exist
+- min_instantiations_in_anchor_role = 1 if rule_ids exist else 0
+- require_target_frame_in_anchor_role_first_k = true if rule_ids exist else false
 If domain_mismatch=false:
-- set values to 0 / false
+- values 0 / false
+
+------------------------------------------------------------
+SKILL GRAPH REPAIR (MANDATORY WHEN REFERENCED)
+------------------------------------------------------------
+
+If VALIDATION_ERRORS mention skill_graph OR required fields are missing:
+Repair skill_graph while preserving other fields.
+
+skill_graph must include:
+- direct_skills
+- related_skills
+
+Repair rules:
+1) direct_skills must only contain items supported by MASTER_RESUME or CANDIDATE_PROFILE.
+2) related_skills items must include:
+   root_skill, item, derivation_type, confidence, allowed_usage
+
+Allowed usage repair:
+- derivation_type tool => allowed_usage is forbidden unless explicit evidence exists
+- derivation_type responsibility => forbidden unless explicit evidence exists
+- concept/method/pattern => skills_section_only by default
+
+Remove any inferred vendor stacks unless explicitly evidenced.
 
 ------------------------------------------------------------
 RETURN

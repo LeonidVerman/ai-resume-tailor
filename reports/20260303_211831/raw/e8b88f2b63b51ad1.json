@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Hands-on technical leader with experience managing teams of up to 20 engineers",
+        "Improved system throughput by 25% through the introduction of a transactional cache"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "Senior backend engineer and engineering leader with 15+ years... within fintech and crypto domains",
+        "contributing to the development of intuitive onboarding flows and analytics"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Mentored and managed a team of developers"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "increasing test coverage by 20%",
+        "scaling production systems to over 1M users"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "introduction of a transactional cache for trading data",
+        "Async Messaging: Kafka, RabbitMQ, idempotent processing, retry-safe design"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 9,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "Vancouver, Canada | +1 778 317 3248 | leonidverman@gmail.com"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "apply for the Senior Engineering Manager, Dashboard + Growth role at Fingerprint",
+        "bring my expertise... driving product-led growth initiatives... onboarding flows and analytics"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "Senior Engineering Manager, Dashboard + Growth role at Fingerprint",
+        "Technical Skills... TypeScript, Go... AWS, Docker, Kubernetes"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied direct \"product-led growth initiatives\" experience without concrete examples (only stated generally in cover letter).",
+      "Dashboard/analytics-console leadership is asserted but not evidenced with specific dashboard, funnel, or experimentation outcomes."
+    ],
+    "most_damaging_gaps": [
+      "No concrete examples of building/leading onboarding funnels, feature discovery, or experimentation (A/B tests, activation metrics).",
+      "Limited evidence of customer-facing web app/dashboard ownership (React/TypeScript UI, analytics UX, event pipelines).",
+      "People-management scope is not clearly tied to managing two squads or multi-team delivery cadence/operating model."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets showing Growth/PLG work: onboarding steps, activation metrics, funnel conversion lifts, experimentation cadence, and instrumentation.",
+      "Add Dashboard-specific experience: customer console/analytics, event-driven telemetry, query performance, RBAC/settings UX, and reliability/latency SLOs.",
+      "Clarify management seniority: number of direct reports, number of teams/squads, hiring/performance management, and cross-functional partnership with Product/Design/GTM."
+    ]
+  }
+}

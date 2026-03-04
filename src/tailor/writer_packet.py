@@ -129,6 +129,22 @@ def build_writer_packet(
     domain_translation_rules_applied = _resolve_domain_rules(domain_translation_rule_ids)
     narrative_plan: dict = plan.get("narrative_plan") or {}
 
+    skill_graph: dict = plan.get("skill_graph") or {}
+    _direct_skills: list[str] = [s.lower() for s in skill_graph.get("direct_skills", [])]
+    _related_skills: list[dict] = skill_graph.get("related_skills", [])
+    skill_allowlist_skills_section: list[str] = list(dict.fromkeys(
+        _direct_skills + [
+            r["item"].lower() for r in _related_skills
+            if r.get("allowed_usage") in {"skills_section_only", "can_claim_experience"}
+        ]
+    ))
+    skill_allowlist_experience_claims: list[str] = list(dict.fromkeys(
+        _direct_skills + [
+            r["item"].lower() for r in _related_skills
+            if r.get("allowed_usage") == "can_claim_experience"
+        ]
+    ))
+
     return {
         "role_level": role_level,
         "jd_domain": jd_domain,
@@ -138,6 +154,9 @@ def build_writer_packet(
         "jd_vocab_must_embed": jd_vocab_must_embed,
         "jd_vocab_optional_embed": jd_vocab_optional_embed,
         "narrative_plan": narrative_plan,
+        "skill_graph": skill_graph,
+        "skill_allowlist_skills_section": skill_allowlist_skills_section,
+        "skill_allowlist_experience_claims": skill_allowlist_experience_claims,
         "master_resume_role_names": list(role_stats.keys()),
         "master_role_dates": master_role_dates,
         "must_keep_metrics": must_keep_metrics,

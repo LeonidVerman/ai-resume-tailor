@@ -148,6 +148,10 @@ def _minimal_plan() -> dict:
                 "require_target_frame_in_anchor_role_first_k": False,
             },
         },
+        "skill_graph": {
+            "direct_skills": ["Python", "Docker", "Kubernetes", "PostgreSQL", "REST APIs"],
+            "related_skills": [],
+        },
     }
 
 
