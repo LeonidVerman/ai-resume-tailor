@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 4,
+      "evidence": [
+        "“Enhanced onboarding flows and product engagement features, driving product-led growth and improving user retention.”",
+        "“leverage my expertise in building onboarding flows and analytics dashboards”"
+      ]
+    },
+    "role_fit": {
+      "score": 6,
+      "evidence": [
+        "“apply for the Senior Engineering Manager, Dashboard + Growth role at Fingerprint.”",
+        "“eager to leverage my expertise in building onboarding flows and analytics dashboards”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "“Senior engineering leader with 15+ years… leading teams up to 20 engineers.”",
+        "“including roles as VP and Director of Software Development”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“raising test coverage by 20%”",
+        "“Improved system throughput by 25% with a transactional cache”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "“transactional cache for trading data, significantly reducing database load and latency”",
+        "“improving scalability and reliability through high-performance Java components”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“Enhanced onboarding flows and product engagement features, driving product-led growth”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "“drawn to Fingerprint's mission to empower developers in fraud detection”",
+        "“partnering with product and design teams to translate roadmap vision into reality”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "“hands-on leadership style emphasizes architectural guidance and technical leadership”",
+        "“Senior engineering leader with 15+ years in fintech and crypto”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Claims of direct “onboarding flows” / “product engagement features” / “product-led growth” ownership are not supported elsewhere in the provided experience narrative.",
+      "Stated “expertise in building… analytics dashboards” is not evidenced by specific dashboard/analytics delivery examples in the resume."
+    ],
+    "most_damaging_gaps": [
+      "Lack of concrete dashboard/analytics console experience (data-intensive UI, customer-facing analytics) aligned to “Dashboard” squad.",
+      "Weak evidence of PLG/growth engineering outcomes (funnels, activation metrics, experimentation) aligned to “Growth” squad.",
+      "Missing explicit modern web stack signals (TypeScript/React) and SaaS console context emphasized in the JD."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Replace or qualify PLG/onboarding/dashboard claims with specific, defensible examples (what was built, for whom, measurable outcome).",
+      "Add mechanisms relevant to the JD: event instrumentation/analytics pipelines, experimentation (A/B), performance for dashboards, and cross-functional delivery cadence across two squads.",
+      "Tailor leadership story to EM scope: hiring/performance management, predictable delivery, estimation accuracy, and how you set standards across multiple teams."
+    ]
+  }
+}

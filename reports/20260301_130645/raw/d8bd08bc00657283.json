@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“Led a backend engineering team delivering a trading system for 1M+ clients”",
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”"
+      ]
+    },
+    "role_fit": {
+      "score": 3,
+      "evidence": [
+        "“Senior backend engineer and engineering leader… in fintech and crypto”",
+        "“aligning closely with the product-led growth initiatives outlined in your job description”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "“VP / Director of Software Development / Lead Software Developer”",
+        "“Hands-on technical leader with experience managing teams of up to 20 engineers”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“raising test coverage by 20%”",
+        "“Improved system throughput by 25%”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "“introducing a transactional cache for trading data”",
+        "“Implemented multiple caching layers to reduce database load”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 7,
+      "evidence": [
+        "“Eligible to work remotely for U.S. companies from Canada (no visa required for remote).”",
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 4,
+      "evidence": [
+        "“I am excited to apply for the Senior Engineering Manager, Dashboard + Growth role at Fingerprint.”",
+        "“aligning closely with the product-led growth initiatives outlined in your job description”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“Senior Engineering Manager, Dashboard + Growth role at Fingerprint”",
+        "“I am eager to bring my expertise in technical leadership, strategic execution, and team management”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied PLG alignment without evidence of building onboarding/activation features: “aligning closely with the product-led growth initiatives…”"
+    ],
+    "most_damaging_gaps": [
+      "No demonstrated dashboard/analytics console ownership (customer-facing UI/console, analytics, event instrumentation).",
+      "No concrete Growth/PLG work (onboarding flows, feature discovery, conversion funnels) beyond generic statements.",
+      "Tech stack mismatch/omission for role: no TypeScript/React or Go experience shown in the generated resume."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add specific, evidence-based examples of leading customer-facing product surfaces (dashboards/console), including analytics, performance, and reliability outcomes.",
+      "Replace generic PLG claims with concrete growth initiatives (trial-to-paid funnel steps, onboarding milestones, feature adoption metrics, experimentation/A-B testing) or remove the claim.",
+      "Reposition resume toward EM outcomes: cross-functional partnership (Product/Design/GTM), predictable delivery, org/process improvements, and multi-squad leadership signals relevant to “Dashboard + Growth.”"
+    ]
+  }
+}

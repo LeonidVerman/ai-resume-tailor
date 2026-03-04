@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+    "company": "League",
+    "role_title": "Engineering Manager, Apps & Solutions (Western Canada)"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“Led teams of up to 20 engineers delivering customer-facing platforms serving 1M+ users”",
+        "“Currently an independent contractor supporting world-leading AI labs”"
+      ]
+    },
+    "role_fit": {
+      "score": 6,
+      "evidence": [
+        "“Strong technical lead experienced in agile coordination, mentorship, and managing delivery risks”",
+        "“delivering high-quality, customer-specific applications on shared timelines strongly resonates”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "“VP / Director of Software Development”",
+        "“managed sprint priorities… communicated delivery risks transparently”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "“increasing automated test coverage by 20%”",
+        "“Improved system throughput by 25% by introducing a transactional cache layer”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 8,
+      "evidence": [
+        "“horizontal scaling of trading servers, database read replicas… multiple caching layers”",
+        "“asynchronous messaging for component decoupling to ensure fault tolerance”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 7,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“Experience… in fintech and crypto”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 7,
+      "evidence": [
+        "“apply for the Engineering Manager, Apps & Solutions… role at League”",
+        "“managed sprint priorities… improved automated test coverage by 20%… balanced immediate roadmap commitments”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 7,
+      "evidence": [
+        "“customer-facing platforms serving 1M+ users while operating under strict regulatory and timeline constraints”",
+        "“work proactively to unblock engineers… ensure that delivery timelines remain predictable”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Healthcare/enterprise customer delivery specifics are implied but not evidenced (no concrete healthcare customer examples).",
+      "“customer-facing” and “customer-specific applications” are asserted without named customer/project scope in the documents."
+    ],
+    "most_damaging_gaps": [
+      "Limited direct evidence of customer relationship management (updates, risk communication cadence, stakeholder management).",
+      "No explicit testing partnership model (manual + automated, QA collaboration) despite JD emphasis.",
+      "No security/compliance leadership specifics (secure coding, access management, incident/breach process) aligned to League’s security responsibilities."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–3 bullets demonstrating customer-facing delivery: stakeholder updates, dependency management, escalations, and launch/testing coordination with customers.",
+      "Explicitly cover QA/testing leadership (manual + automated, working with QA team, release criteria, defect triage) and tie to shipped outcomes.",
+      "Add security/compliance leadership examples (secure coding practices, access controls, audit readiness, incident response) relevant to regulated environments and League’s security responsibilities."
+    ]
+  }
+}

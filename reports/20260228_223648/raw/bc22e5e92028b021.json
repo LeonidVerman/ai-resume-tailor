@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+    "company": "Lillio",
+    "role_title": "Manager, Engineering"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "led teams of up to 20 engineers",
+        "raising test coverage by 20%... Improved system throughput by 25%"
+      ]
+    },
+    "role_fit": {
+      "score": 3,
+      "evidence": [
+        "Senior backend engineer and engineering leader... in fintech and crypto",
+        "Proficient with AWS, PostgreSQL, TypeScript"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "VP / Director of Software Development",
+        "Hands-on technical leader with experience managing teams of up to 20 engineers"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "raising test coverage by 20%... reducing onboarding time",
+        "Improved system throughput by 25%... reducing database load and latency"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "introducing a transactional cache for trading data",
+        "improving scalability and reliability through high-performance Java components"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 4,
+      "evidence": [
+        "Manager, Engineering role at Lillio",
+        "Senior backend engineer... Proficient with AWS, PostgreSQL, TypeScript"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "apply for the Manager, Engineering role at Lillio",
+        "contribute to building innovative solutions that elevate early childhood education"
+      ]
+    },
+    "overall_readiness": {
+      "score": 4,
+      "evidence": [
+        "Senior backend engineer and engineering leader... fintech and crypto",
+        "Technical Skills... Java, C#, Python, TypeScript"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implicit fit to Lillio’s Ruby on Rails/React/GraphQL stack is not supported; those technologies are not mentioned anywhere in the resume/cover letter."
+    ],
+    "most_damaging_gaps": [
+      "No evidence of Ruby on Rails, React, or GraphQL experience despite JD tech stack emphasis.",
+      "Limited people-management specifics for this role (e.g., hiring, onboarding, performance management, career ladders) beyond general mentoring statements.",
+      "Domain narrative is heavily fintech/crypto; little demonstration of product/customer empathy aligned to ECE/EdTech context."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add explicit, truthful mapping to the JD stack (Ruby on Rails/React/GraphQL) or clearly position as transferable with a concrete upskilling/transition plan and examples of analogous work.",
+      "Strengthen engineering-manager scope: include bullets on recruiting, onboarding, 1:1s, feedback cycles, goal-setting, and cross-functional roadmap alignment (with specific examples).",
+      "Add mechanisms relevant to Lillio’s environment (web app reliability, observability, SOC2/security controls, AWS/Postgres/Heroku operations) with concrete outcomes."
+    ]
+  }
+}

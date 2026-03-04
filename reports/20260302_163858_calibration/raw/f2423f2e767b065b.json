@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+    "company": "League",
+    "role_title": "Engineering Manager, Apps & Solutions (Western Canada)"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "led teams of up to 20 engineers"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "Lead Software Engineer with 15+ years... trading and fintech systems",
+        "built fintech and blockchain systems... serving over 1M users"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Experienced team lead and project manager"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "raising test coverage by 20%",
+        "Improved system throughput by 25%"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "introducing a transactional cache for trading data",
+        "Built a prototype in-memory database (H2 → Oracle replication)"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 5,
+      "evidence": [
+        "Engineering Manager, Apps & Solutions (Western Canada) role at League",
+        "Contribute as an independent contractor helping world-leading AI labs train and evaluate"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "contribute to building reliable, scalable systems for your clients",
+        "I currently contribute as an independent contractor supporting world-leading AI research labs"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Lead Software Developer/Team Leader| GMO-Z.com Fintech CA, Vancouver",
+        "Mentored and managed a team of developers"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Customer-facing delivery and implementations experience is implied for an A&S role, but not evidenced beyond fintech platform work.",
+      "Formal engineering manager responsibilities (performance management, hiring, career growth) are not clearly supported by the resume text."
+    ],
+    "most_damaging_gaps": [
+      "Little to no direct evidence of customer-facing delivery: timelines, risk communication, launches with customers.",
+      "No healthcare/enterprise apps context; domain narrative remains fintech/crypto-centric.",
+      "Engineering manager mechanics are thin: sprint/backlog ownership, dependency management, QA partnership, stakeholder comms."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Rewrite summary + top bullets to match League A&S: customer-facing delivery, roadmap execution, dependency/risk management, launches.",
+      "Add explicit EM scope examples: sprint/backlog ownership, cross-team coordination, stakeholder updates, hiring/onboarding, career growth.",
+      "Add QA/testing and release mechanisms relevant to the JD (manual/automated testing partnership, UAT, rollout plans, incident/risk escalation)."
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 7,
+      "evidence": [
+        "“led teams of up to 20 engineers”",
+        "“leverage my experience in product-led growth initiatives”"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "“Senior backend engineer and engineering leader… in fintech and blockchain”",
+        "“opportunity to lead the Dashboard and Growth teams… drive adoption and retention”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "“VP / Director of Software Development”",
+        "“Hands-on technical leader… Successfully led teams of up to 20 engineers”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“raising test coverage by 20%”",
+        "“Improved system throughput by 25%”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 4,
+      "evidence": [
+        "“high-performance Java components”",
+        "“introducing a transactional cache for trading data”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 7,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“I am excited to apply for the Senior Engineering Manager position at Fingerprint.”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "“lead the Dashboard and Growth teams at Fingerprint”",
+        "“fostering a high-performance culture, mentoring engineers”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“particularly excited about the opportunity to lead the Dashboard and Growth teams”",
+        "“Senior backend engineer and engineering leader with 15+ years”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Cover letter claims “experience in product-led growth initiatives” without specific PLG/onboarding/funnel examples elsewhere in the resume."
+    ],
+    "most_damaging_gaps": [
+      "Little to no direct dashboard/analytics or customer-facing console experience (core of “Dashboard” squad).",
+      "No concrete examples of onboarding flows, feature discovery, activation milestones, or experimentation (core of “Growth” squad).",
+      "Resume reads primarily as senior backend/fintech leader; lacks evidence of leading web app product experiences (TypeScript/React, SaaS UI, analytics)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets showing customer-facing product work: dashboards/analytics, UX-performance, event instrumentation, and decision-making metrics.",
+      "Replace generic PLG language with specific outcomes (activation rate, trial-to-paid conversion, retention) or remove the claim if not true.",
+      "Add architecture mechanisms relevant to Fingerprint’s domain: high-scale analytics pipelines, event-driven tracking, performance/latency SLOs, and reliability practices for dashboards/onboarding."
+    ]
+  }
+}

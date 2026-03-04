@@ -1,0 +1,207 @@
+{
+  "version": "assess_report_v1",
+  "generated_at": "2026-03-02T22:55:58.153628+00:00",
+  "model": "gpt-5.2",
+  "positions_count": 5,
+  "positions": [
+    {
+      "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+      "company": "NEOGOV",
+      "role_title": "Enterprise Architect, Platform",
+      "scores": {
+        "truthfulness": 3,
+        "role_fit": 1,
+        "seniority_positioning": 1,
+        "clarity_impact": 1,
+        "mechanism_quality": 1,
+        "constraint_compliance": 1,
+        "cover_letter_effectiveness": 1,
+        "overall_readiness": 1
+      },
+      "overall_readiness": 1,
+      "integrated_score": 1.4,
+      "raw_assessment_path": "reports\\20260302_145346\\raw\\abac9f4a7d82b2bc.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "No generated resume/cover letter content provided; cannot verify any job-relevant claims."
+        ],
+        "most_damaging_gaps": [
+          "Missing generated resume entirely (blank).",
+          "Missing generated cover letter entirely (blank).",
+          "No demonstrated alignment to Enterprise Architect–Platform requirements (cloud-native platform unification, architecture governance, .NET/Java, Angular, IaC, data/AI)."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Provide the generated resume text and ensure it explicitly targets NEOGOV’s platform unification, interoperability, and modernization scope.",
+          "Provide a tailored cover letter referencing NEOGOV, the \"22+ products\" platform goal, and concrete architecture leadership examples (APIs/events/data/SSO/DevOps).",
+          "Add role-relevant skills and evidence (cloud, IaC, .NET + Java, Angular, data modeling, CI/CD/observability) with quantified outcomes and clear ownership boundaries."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+      "company": "Plata Card",
+      "role_title": "Engineering Manager",
+      "scores": {
+        "truthfulness": 2,
+        "role_fit": 1,
+        "seniority_positioning": 1,
+        "clarity_impact": 1,
+        "mechanism_quality": 1,
+        "constraint_compliance": 1,
+        "cover_letter_effectiveness": 1,
+        "overall_readiness": 1
+      },
+      "overall_readiness": 1,
+      "integrated_score": 1.2,
+      "raw_assessment_path": "reports\\20260302_145346\\raw\\3bcb6bf7f4da89d7.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "No generated resume or cover letter content provided; cannot verify any claims against the JD."
+        ],
+        "most_damaging_gaps": [
+          "Missing generated resume content entirely.",
+          "Missing generated cover letter content entirely.",
+          "No evidence of Engineering Manager responsibilities (planning, delivery, cross-functional leadership, hiring).",
+          "No evidence of AI/ML product leadership or AI-powered assistant experience.",
+          "No architecture/engineering mechanisms described for scalable backend services and integrations."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Provide the generated resume text (tailored to Plata Card Engineering Manager) so alignment and mechanisms can be evaluated.",
+          "Provide the generated cover letter text; ensure it addresses AI-powered Financial Assistant delivery, cross-functional collaboration, and hands-on EM leadership.",
+          "Include quantified delivery/leadership outcomes and concrete architecture mechanisms (event-driven services, observability, reliability, integrations) relevant to the JD."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+      "company": "Lillio",
+      "role_title": "Manager, Engineering",
+      "scores": {
+        "truthfulness": 3,
+        "role_fit": 1,
+        "seniority_positioning": 2,
+        "clarity_impact": 4,
+        "mechanism_quality": 2,
+        "constraint_compliance": 1,
+        "cover_letter_effectiveness": 2,
+        "overall_readiness": 1
+      },
+      "overall_readiness": 1,
+      "integrated_score": 2.1,
+      "raw_assessment_path": "reports\\20260302_145346\\raw\\85e96785b52ad479.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Cover letter targets a different company/role: \"Senior Software Engineer role at Tigera\" instead of Lillio Manager, Engineering.",
+          "No generated resume provided (empty), so any resume-based tailoring/claims cannot be verified in the generated documents."
+        ],
+        "most_damaging_gaps": [
+          "Missing resume entirely (generated_resume_text is empty).",
+          "Cover letter is for the wrong company and wrong role level (Senior SWE vs Engineering Manager).",
+          "No alignment to Lillio stack/needs (Rails/React/GraphQL, SOC2, AWS/Heroku/Postgres, people management practices) in generated materials."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Provide an actual tailored resume for Lillio Manager, Engineering, emphasizing 3+ years people management, hiring/onboarding, process improvement, and cross-functional leadership.",
+          "Rewrite the cover letter to explicitly reference Lillio, its mission in early childhood education, and the Engineering Manager responsibilities (1:1s, career growth, roadmap alignment).",
+          "Add concrete mechanisms and relevant stack signals (AWS/Postgres/observability; any Rails/React/GraphQL adjacency without overstating) plus quantified outcomes tied to team/process improvements."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+      "company": "Fingerprint",
+      "role_title": "Senior Engineering Manager, Dashboard + Growth",
+      "scores": {
+        "truthfulness": 2,
+        "role_fit": 1,
+        "seniority_positioning": 1,
+        "clarity_impact": 1,
+        "mechanism_quality": 1,
+        "constraint_compliance": 1,
+        "cover_letter_effectiveness": 1,
+        "overall_readiness": 1
+      },
+      "overall_readiness": 1,
+      "integrated_score": 1.2,
+      "raw_assessment_path": "reports\\20260302_145346\\raw\\0ed9214e7318e4df.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Cannot assess truthfulness because the generated resume and cover letter are empty."
+        ],
+        "most_damaging_gaps": [
+          "No generated resume content to evaluate against the Senior Engineering Manager (Dashboard + Growth) requirements.",
+          "No generated cover letter content tailored to Fingerprint, Dashboard, Growth, PLG, or analytics console leadership.",
+          "Missing any evidence of people leadership across two squads, cross-functional execution, or dashboard/growth product delivery."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Provide the generated resume text (currently empty) with leadership scope, delivery outcomes, and relevant stack (web/SaaS, React/TS/Go, cloud).",
+          "Provide the generated cover letter text (currently empty) explicitly addressing Fingerprint’s Dashboard + Growth mission (PLG onboarding, analytics console, scale/performance).",
+          "Add concrete, role-relevant examples: managing multiple squads, partnering with Product/Design/GTM, improving onboarding funnels/activation, and building data-intensive dashboards."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+      "company": "League",
+      "role_title": "Engineering Manager, Apps & Solutions (Western Canada)",
+      "scores": {
+        "truthfulness": 3,
+        "role_fit": 1,
+        "seniority_positioning": 1,
+        "clarity_impact": 1,
+        "mechanism_quality": 1,
+        "constraint_compliance": 1,
+        "cover_letter_effectiveness": 1,
+        "overall_readiness": 1
+      },
+      "overall_readiness": 1,
+      "integrated_score": 1.4,
+      "raw_assessment_path": "reports\\20260302_145346\\raw\\4266ca07f9da7e71.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "No generated resume/cover letter content provided; cannot verify any claims against the JD."
+        ],
+        "most_damaging_gaps": [
+          "Missing generated resume entirely (empty).",
+          "Missing generated cover letter entirely (empty).",
+          "No evidence of Engineering Manager responsibilities: customer delivery, sprint/backlog ownership, risk escalation, team growth."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Provide the actual generated resume text tailored to League’s Engineering Manager, Apps & Solutions role (customer delivery, agile execution, people management).",
+          "Provide a tailored cover letter referencing League, customer-facing delivery, risk management, and team growth; include relevant metrics from the master resume.",
+          "Explicitly map experience to JD needs: managing sprints/backlog, QA/testing partnership, stakeholder/customer communication, and security/secure coding accountability."
+        ]
+      }
+    }
+  ],
+  "category_averages": {
+    "truthfulness": 2.6,
+    "role_fit": 1.0,
+    "seniority_positioning": 1.2,
+    "clarity_impact": 1.6,
+    "mechanism_quality": 1.2,
+    "constraint_compliance": 1.0,
+    "cover_letter_effectiveness": 1.2,
+    "overall_readiness": 1.0
+  },
+  "integrated_score": 1.46,
+  "weights": {
+    "truthfulness": 0.2,
+    "role_fit": 0.2,
+    "seniority_positioning": 0.1,
+    "clarity_impact": 0.15,
+    "mechanism_quality": 0.1,
+    "constraint_compliance": 0.15,
+    "cover_letter_effectiveness": 0.05,
+    "overall_readiness": 0.05
+  }
+}

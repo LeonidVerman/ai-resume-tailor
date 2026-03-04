@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 9,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote) Nov 2025 – Present",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "specializing in high-performance, fault-tolerant distributed systems",
+        "led a backend engineering team delivering trading system for 1M+ clients"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 5,
+      "evidence": [
+        "Senior engineering leader with 15+ years in fintech and crypto backend systems",
+        "Mentored and managed a team of developers"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "raising test coverage by 20% and streamlining documentation",
+        "serving 1M+ users"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "transactional cache for trading data, significantly reducing database load",
+        "Built a prototype in-memory database (H2 → Oracle replication)"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "Senior engineering leader with 15+ years in fintech and crypto backend systems",
+        "which aligns with Fingerprint’s focus on product-led growth"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "apply for the Senior Engineering Manager, Dashboard + Growth role at Fingerprint",
+        "opportunity to lead the Dashboard and Growth teams in creating delightful product experiences"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Lead Software Developer/Team Leader | GMO-Z.com Fintech CA",
+        "I am particularly drawn to the opportunity to lead the Dashboard and Growth teams"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied PLG/domain fit without evidence of owning onboarding funnels/feature discovery: \"aligns with Fingerprint’s focus on product-led growth\""
+    ],
+    "most_damaging_gaps": [
+      "No demonstrated dashboard/analytics or customer-console experience (core of \"Dashboard\" squad).",
+      "No clear evidence of managing two squads / multiple teams; management scope is vague beyond \"team of developers\".",
+      "Stack mismatch for the role’s preferred frontend/PLG work (no React/TypeScript product experience shown)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add concrete examples of customer-facing SaaS UI/dashboard or analytics work (even if internal), including performance/scale and metrics.",
+      "Clarify engineering management scope: number of direct reports, hiring/performance management, cross-functional cadence with Product/Design/GTM.",
+      "Replace generic PLG statements with specific growth mechanisms delivered (onboarding steps, activation metrics, experimentation, event tracking) or remove the claim."
+    ]
+  }
+}

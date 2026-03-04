@@ -1,0 +1,85 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 6,
+      "evidence": [
+        "Experienced in guiding modernization efforts and implementing architecture governance practices.",
+        "leading teams to deliver reliable, cloud-ready platforms"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "Senior backend engineer and engineering leader with 15+ years focused on high-performance",
+        "beneficial in aligning NEOGOV’s platform design with analytics and AI integration frameworks"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Senior backend engineer and engineering leader with 15+ years"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "raising test coverage by 20% and streamlining documentation",
+        "Improved system throughput by 25% with a transactional cache"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "transactional cache reducing database load and latency",
+        "high-performance Java components"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 5,
+      "evidence": [
+        "Languages & Frameworks: Java, C#, Go, Spring, SpringBoot, Python",
+        "Architecture governance, high-performance distributed systems, documentation, mentoring, DevOps practices."
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "apply for the Enterprise Architect – Platform role at NEOGOV",
+        "particularly drawn to NEOGOV’s mission of serving the public sector"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Designed and implemented high-performance, scalable architectures that support mission-critical systems.",
+        "eager to leverage my expertise in architecture governance and modernization efforts"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Claim of \"cloud-ready platforms\" without concrete cloud migration/unification examples in bullets.",
+      "Claim of \"implementing architecture governance practices\" without specific governance artifacts (principles, standards, review boards) described.",
+      "Implied platform/enterprise architecture scope for multi-product unification not evidenced in experience section."
+    ],
+    "most_damaging_gaps": [
+      "Little to no direct match to JD stack: missing Angular, GraphQL, Terraform/AWS CDK, and explicit .NET + Java platform architecture examples.",
+      "No demonstrated experience unifying \"22+ products\" / shared services / unified data models / SSO / onboarding / common admin.",
+      "Limited data/analytics/AI platform specifics (e.g., Snowflake/Databricks, data pipelines) beyond generic AI-labs contractor mention."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add explicit platform-architecture artifacts and outcomes (reference architectures, standards for APIs/events/security, architecture review process) tied to real projects.",
+      "Tailor experience bullets to NEOGOV priorities: cross-product integration, SSO/identity, shared services, data model consolidation, and cloud/IaC/container modernization with concrete examples.",
+      "Close stack gaps or clarify equivalents: call out any Angular/TypeScript UI integration, GraphQL vs REST decisions, Terraform/CDK usage, and .NET + Java coexistence patterns if true."
+    ]
+  }
+}

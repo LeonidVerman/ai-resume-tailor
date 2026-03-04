@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+    "company": "Lillio",
+    "role_title": "Manager, Engineering"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“roles as VP and Director of Software Development”",
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "“Manager of Engineering with 15+ years of experience leading… in fintech and crypto”",
+        "“Languages & Frameworks: Java, C#, TypeScript, Python”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 9,
+      "evidence": [
+        "“Manager of Engineering with 15+ years of experience”",
+        "“led teams of up to 20 engineers”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“raising test coverage by 20%”",
+        "“Improved system throughput by 25% with a transactional cache”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 7,
+      "evidence": [
+        "“Implemented horizontal scaling of trading servers and multiple caching layers”",
+        "“Established database read replicas for read-heavy GET endpoints”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "“Manager, Engineering role at Lillio”",
+        "“Languages & Frameworks: Java, C#, TypeScript, Python”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "“apply for the Manager, Engineering role at Lillio”",
+        "“aligning with your mission to improve early childhood outcomes”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“Manager of Engineering with 15+ years of experience”",
+        "“led teams of up to 20 engineers”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Potential overreach on domain alignment: “Committed to mission-driven work and improving outcomes” without concrete ECE examples.",
+      "Ambiguous claim: “Mentored and managed a diverse team” (diversity not evidenced elsewhere)."
+    ],
+    "most_damaging_gaps": [
+      "No demonstrated experience with Lillio’s core stack (Ruby on Rails, React, GraphQL).",
+      "Limited evidence of manager-specific responsibilities from the JD (recruiting, hiring, onboarding, roadmap alignment).",
+      "Little evidence of SOC2/controls, Heroku, or Postgres-in-production emphasis beyond a skills list."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add explicit people-management scope and routines tied to the JD (1:1s, feedback, career ladders, performance management) with concrete examples.",
+      "Address Lillio stack fit honestly: either show real Rails/React/GraphQL exposure or position as transferable leadership while highlighting closest analogs (APIs, TypeScript, Postgres, AWS).",
+      "Add cross-functional/roadmap and delivery examples (partnering with Product/Design, aligning roadmap to business goals, improving processes) and include one or two specific outcomes."
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 5,
+      "evidence": [
+        "“experience in product-led growth initiatives”",
+        "“defining onboarding flows and product engagement features”"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "“Senior Engineering Manager, Dashboard + Growth role at Fingerprint”",
+        "“ensuring that onboarding flows and dashboards remain performant”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "“VP / Director of Software Development”",
+        "“led teams of 15-20 engineers”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“raising test coverage by 20%”",
+        "“Improved system throughput by 25% with a transactional cache”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "“transactional cache for trading data”",
+        "“high-performance, fault-tolerant distributed systems”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 8,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor”",
+        "“Vancouver, Canada”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "“drawn to Fingerprint's mission of empowering developers to combat online fraud”",
+        "“bridge engineering and stakeholders, translating technical tradeoffs”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“experience with product-led growth initiatives, including defining onboarding flows”",
+        "“Senior engineering leader with 15+ years in fintech and crypto backend systems”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Claims direct PLG/onboarding ownership without supporting resume bullets: “defining onboarding flows and product engagement features”.",
+      "Implies dashboard/onboarding product experience not evidenced in work history: “onboarding flows and dashboards remain performant”."
+    ],
+    "most_damaging_gaps": [
+      "No concrete dashboard/analytics console experience (data-intensive dashboards, event instrumentation, analytics pipelines).",
+      "Weak evidence of Growth/PLG execution (funnels, activation metrics, experiments, feature discovery mechanisms).",
+      "Limited alignment to preferred stack (TypeScript/React) and customer-facing SaaS console context."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Replace/qualify PLG claims with truthful, specific examples (or remove) and add any real funnel/activation/experiment work with metrics.",
+      "Add 2–4 bullets showing mechanisms relevant to Dashboard/Growth (event tracking, analytics KPIs, performance at scale, experimentation cadence, stakeholder partnership).",
+      "Tailor summary/skills to Fingerprint’s stack and domain: customer-facing SaaS, security/privacy considerations, and (if true) any TypeScript/React or API-for-console experience."
+    ]
+  }
+}

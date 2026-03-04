@@ -1,0 +1,209 @@
+{
+  "version": "assess_report_v1",
+  "generated_at": "2026-03-02T18:17:06.443852+00:00",
+  "model": "gpt-5.2",
+  "positions_count": 5,
+  "positions": [
+    {
+      "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+      "company": "NEOGOV",
+      "role_title": "Enterprise Architect, Platform",
+      "scores": {
+        "truthfulness": 7,
+        "role_fit": 4,
+        "seniority_positioning": 6,
+        "clarity_impact": 7,
+        "mechanism_quality": 5,
+        "constraint_compliance": 5,
+        "cover_letter_effectiveness": 5,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.6,
+      "raw_assessment_path": "reports\\20260302_101437\\raw\\ebb2e8e7d73bd0a1.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Implied breadth of \"cloud-native architectures\" and \"architecture governance\" without concrete platform-unification examples.",
+          "Resume lists \"Infrastructure-as-Code\" but provides no Terraform/AWS CDK evidence or projects."
+        ],
+        "most_damaging_gaps": [
+          "No explicit experience unifying many products into a shared platform (NEOGOV: \"connects 22+ products\").",
+          "Missing JD-specific stack signals: Angular, GraphQL, SQL Server, Terraform/AWS CDK, Snowflake/Databricks.",
+          "No concrete SSO/OIDC/SAML or enterprise identity integration experience; only generic auth references."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–3 bullets showing platform architecture work: shared services, unified data model, cross-product interoperability (even if within fintech domain).",
+          "Make DevOps/IaC concrete: name cloud provider, CI/CD tooling, and any Terraform/CDK (or remove IaC claim if not true).",
+          "Tailor to NEOGOV’s priorities: SSO/onboarding/common admin, data model consolidation, analytics/AI integration; include relevant mechanisms and outcomes."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+      "company": "Plata",
+      "role_title": "Engineering Manager",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 6,
+        "seniority_positioning": 7,
+        "clarity_impact": 7,
+        "mechanism_quality": 6,
+        "constraint_compliance": 5,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 6
+      },
+      "overall_readiness": 6,
+      "integrated_score": 6.5,
+      "raw_assessment_path": "reports\\20260302_101437\\raw\\2102714a4445e832.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Resume claims \"Led engineering teams, focusing on hiring\" at GMO-Z.com without specifics (no counts/outcomes).",
+          "Cover letter implies readiness to \"drive the development of AI-powered financial assistant products\" without prior assistant-like product evidence."
+        ],
+        "most_damaging_gaps": [
+          "Limited concrete evidence of leading AI/ML product development end-to-end (concept to production) beyond AI model evaluation contracting.",
+          "Weak demonstration of people-management fundamentals expected of EM (hiring, performance management, coaching) with specific examples.",
+          "Little mention of user-facing assistant/recommendation interaction logic, experimentation loops, or product iteration mechanisms."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets explicitly mapping to EM responsibilities: hiring decisions, performance management, on-call/incident leadership, and delivery predictability (with metrics).",
+          "Replace generic AI statements with one concrete AI-powered feature shipped (or clearly frame AI work as evaluation/tooling only) and describe production architecture/integration.",
+          "Tailor mechanisms to Plata’s Financial Assistant: short feedback loops, experimentation, data/AI collaboration cadence, and backend integration patterns (APIs, eventing, observability)."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+      "company": "Lillio",
+      "role_title": "Manager, Engineering",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 4,
+        "seniority_positioning": 7,
+        "clarity_impact": 7,
+        "mechanism_quality": 5,
+        "constraint_compliance": 5,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.95,
+      "raw_assessment_path": "reports\\20260302_101437\\raw\\71473652c13aaaba.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "No clear evidence of direct experience with Lillio stack (Ruby on Rails/React/GraphQL) despite JD emphasis; resume stays generic on web stack."
+        ],
+        "most_damaging_gaps": [
+          "Limited alignment to Lillio’s web product stack and domain (ECE/EdTech); background is primarily trading/fintech.",
+          "Manager-of-engineering responsibilities in JD (recruiting, onboarding, roadmap alignment) are only lightly evidenced.",
+          "Architecture mechanisms requested by JD (AWS/Heroku/Postgres/observability) are listed but not demonstrated with concrete examples in experience."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets showing engineering management outcomes that mirror the JD: hiring/recruiting involvement, performance management, career ladders, and process improvements.",
+          "Reframe experience toward full-stack/product delivery: examples of shipping user-facing features, partnering with Product/Design, and operating a web app (even if backend-heavy).",
+          "Strengthen technical fit by adding concrete AWS/Postgres/observability stories (incidents, scaling, SLOs, dashboards), and explicitly address how you’d lead teams working in Rails/React/GraphQL without claiming direct experience."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+      "company": "Fingerprint",
+      "role_title": "Senior Engineering Manager, Dashboard + Growth",
+      "scores": {
+        "truthfulness": 6,
+        "role_fit": 4,
+        "seniority_positioning": 5,
+        "clarity_impact": 7,
+        "mechanism_quality": 5,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 5,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.45,
+      "raw_assessment_path": "reports\\20260302_101437\\raw\\1b10221227fe9baa.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Cover letter claims “experience in creating product-led growth experiences” without specific PLG/onboarding/dashboard examples in resume.",
+          "Implied fit for “Dashboard + Growth” despite resume being largely trading/fintech backend; no explicit analytics console ownership."
+        ],
+        "most_damaging_gaps": [
+          "No concrete examples of onboarding funnels, feature discovery, or conversion milestones (core Growth mission).",
+          "No clear dashboard/analytics product delivery (core Dashboard mission) beyond generic distributed-systems work.",
+          "Limited evidence of managing two squads / multi-team EM scope; leadership described but not clearly at EM-of-EM or dual-squad level."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets showing dashboard/analytics delivery (e.g., customer console, metrics, observability UI, data pipelines) and outcomes.",
+          "Replace generic PLG claim with specific growth initiatives (trial-to-paid funnel, onboarding steps, activation metrics) or remove it.",
+          "Clarify management scope: number of direct reports, team structure, cadence (planning, estimation, delivery predictability) aligned to EM responsibilities."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+      "company": "League",
+      "role_title": "Engineering Manager, Apps & Solutions (Western Canada)",
+      "scores": {
+        "truthfulness": 7,
+        "role_fit": 5,
+        "seniority_positioning": 6,
+        "clarity_impact": 7,
+        "mechanism_quality": 4,
+        "constraint_compliance": 4,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 6
+      },
+      "overall_readiness": 6,
+      "integrated_score": 5.65,
+      "raw_assessment_path": "reports\\20260302_101437\\raw\\5a87d141b5d6a827.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Customer-facing/client management is asserted generically without concrete examples (e.g., “Experienced in customer-facing positions”).",
+          "Agile delivery leadership is claimed, but lacks specific artifacts (cadence, ceremonies, release planning) beyond “managing team sprints and backlog”.",
+          "Healthcare/enterprise app delivery context is not evidenced; experience is primarily “fintech and blockchain”."
+        ],
+        "most_damaging_gaps": [
+          "No demonstrated healthcare domain or enterprise app delivery examples; little linkage to “applications powered by League to one or more customers”.",
+          "Weak evidence of direct customer communication, testing/launch coordination, and QA partnership expected by the JD.",
+          "Missing platform-to-solution feedback loop and cross-org dependency management specifics (R&D feedback, shared dependencies, escalation examples)."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–3 bullets showing direct client/customer delivery: launch coordination, timeline negotiations, risk escalations, and stakeholder updates (with outcomes).",
+          "Introduce mechanisms aligned to League A&S: release management, QA partnership (manual/automated), acceptance testing, incident/rollback plans, and secure coding/compliance habits.",
+          "Reframe experience toward “apps & solutions” and enterprise delivery: roadmap ownership per customer, dependency management across teams, and examples of balancing short-term delivery with platform investments."
+        ]
+      }
+    }
+  ],
+  "category_averages": {
+    "truthfulness": 7.2,
+    "role_fit": 4.6,
+    "seniority_positioning": 6.2,
+    "clarity_impact": 7.0,
+    "mechanism_quality": 5.0,
+    "constraint_compliance": 5.0,
+    "cover_letter_effectiveness": 5.6,
+    "overall_readiness": 5.4
+  },
+  "integrated_score": 5.83,
+  "weights": {
+    "truthfulness": 0.2,
+    "role_fit": 0.2,
+    "seniority_positioning": 0.1,
+    "clarity_impact": 0.15,
+    "mechanism_quality": 0.1,
+    "constraint_compliance": 0.15,
+    "cover_letter_effectiveness": 0.05,
+    "overall_readiness": 0.05
+  }
+}

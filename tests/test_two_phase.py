@@ -117,6 +117,37 @@ def _minimal_plan() -> dict:
             "likely_hallucination_traps": ["networking protocols"],
             "claims_requiring_strict_grounding": ["compliance statements"],
         },
+        "narrative_plan": {
+            "anchor_role_id": "Senior Engineer | Acme Corp",
+            "theme_ranked": [
+                {
+                    "theme_id": "T1",
+                    "label": "Scalability",
+                    "priority": "primary",
+                    "signature_terms": ["scalability", "distributed systems"],
+                },
+                {
+                    "theme_id": "T2",
+                    "label": "Cloud",
+                    "priority": "secondary",
+                    "signature_terms": ["cloud", "microservices"],
+                },
+            ],
+            "summary_coverage": {
+                "must_cover_theme_ids": ["T1", "T2"],
+                "should_cover_theme_ids": [],
+            },
+            "anchor_role_coverage": {
+                "first_k_bullets": 3,
+                "top_k_themes_to_cover": 2,
+                "min_theme_occurrences": {"T1": 1, "T2": 1},
+            },
+            "domain_translation_binding": {
+                "min_total_rule_instantiations": 0,
+                "min_instantiations_in_anchor_role": 0,
+                "require_target_frame_in_anchor_role_first_k": False,
+            },
+        },
     }
 
 

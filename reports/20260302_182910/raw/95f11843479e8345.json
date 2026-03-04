@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+    "company": "Plata Card",
+    "role_title": "Engineering Manager"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "led teams of up to 20 engineers to deliver reliable, scalable products"
+      ]
+    },
+    "role_fit": {
+      "score": 6,
+      "evidence": [
+        "Engineering Manager with 15+ years of experience leading engineering teams",
+        "commitment to building intelligent systems that enhance customer experience"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Led a backend engineering team delivering a high-availability regulated fintech platform"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "raising test coverage by 20%",
+        "Improved system throughput by 25%"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 4,
+      "evidence": [
+        "introducing a transactional cache for trading data",
+        "improving scalability and reliability through high-performance Java components"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 5,
+      "evidence": [
+        "Engineering Manager with 15+ years of experience leading engineering teams",
+        "I am eager to leverage my experience in leading cross-functional teams"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "apply for the Engineering Manager role at Plata Card",
+        "opportunity to discuss how I can contribute to the success of Plata Card's Financial Assistant team"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "Engineering Manager with 15+ years of experience",
+        "Proven expertise in Java backend engineering, distributed systems, and AI-assisted development workflows"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume summary positions as \"Engineering Manager\" but experience titles are mostly Lead/Director; EM-specific duties (hiring/performance management) not evidenced in bullets.",
+      "Cover letter implies \"driving the development of AI-powered products\" without concrete product AI delivery examples beyond model training/evaluation contracting."
+    ],
+    "most_damaging_gaps": [
+      "Little evidence of owning an AI-powered, user-facing assistant/recommendation product end-to-end (concept→production).",
+      "Missing JD-specific delivery mechanisms: planning/prioritization, task decomposition, on-time delivery, cross-functional execution with Product/Data/AI.",
+      "Architecture details are thin for this role (integrations, scalable backend services, short feedback loops/iteration)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets demonstrating EM operating cadence: planning, prioritization, decomposition, delivery predictability, and stakeholder management with Product/Data/Business.",
+      "Include concrete AI/product examples (even if limited): what AI feature, how integrated, reliability/monitoring/guardrails, and measurable user/business impact—avoid generic claims.",
+      "Strengthen architecture section with specific mechanisms relevant to an assistant backend (event-driven flows, retries/idempotency, observability, integrations) and tie to outcomes."
+    ]
+  }
+}

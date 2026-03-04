@@ -2571,3 +2571,397 @@ class TestEmployerIntegrityValidator:
         assert any("2024" in v or "2022" in v for v in dates.values()), (
             f"Expected date strings in master_role_dates values, got: {dates}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Check 12/13/14: Narrative validators
+# ---------------------------------------------------------------------------
+
+_NARRATIVE_ANCHOR_ROLE = "Engineering Manager | Acme Corp"
+
+_SAMPLE_NARRATIVE_PLAN = {
+    "anchor_role_id": _NARRATIVE_ANCHOR_ROLE,
+    "theme_ranked": [
+        {
+            "theme_id": "T1",
+            "label": "Platform Reliability",
+            "priority": "primary",
+            "signature_terms": ["reliability", "uptime", "incident", "sla"],
+        },
+        {
+            "theme_id": "T2",
+            "label": "Team Leadership",
+            "priority": "secondary",
+            "signature_terms": ["managed", "team", "mentored", "hiring"],
+        },
+        {
+            "theme_id": "T3",
+            "label": "Product Delivery",
+            "priority": "supporting",
+            "signature_terms": ["roadmap", "delivery", "shipped", "launched"],
+        },
+    ],
+    "summary_coverage": {
+        "must_cover_theme_ids": ["T1", "T2"],
+        "should_cover_theme_ids": ["T3"],
+    },
+    "anchor_role_coverage": {
+        "first_k_bullets": 3,
+        "top_k_themes_to_cover": 2,
+        "min_theme_occurrences": {"T1": 2, "T2": 1},
+    },
+    "domain_translation_binding": {
+        "min_total_rule_instantiations": 0,
+        "min_instantiations_in_anchor_role": 0,
+        "require_target_frame_in_anchor_role_first_k": False,
+    },
+}
+
+
+def _make_narrative_packet(
+    narrative_plan: dict | None = None,
+    domain_mismatch: bool = False,
+) -> dict:
+    """Minimal writer_packet for narrative validator tests."""
+    plan = narrative_plan if narrative_plan is not None else _SAMPLE_NARRATIVE_PLAN
+    return {
+        "role_level": "manager",
+        "narrative_plan": plan,
+        "domain_mismatch": domain_mismatch,
+        "master_resume_role_names": [_NARRATIVE_ANCHOR_ROLE],
+        "must_keep_metrics": [],
+        "must_surface_arch_mechanisms": [],
+        "must_surface_strategic_signals": [],
+        "must_surface_operational_signals": [],
+        "must_include_skills": [],
+        "allowed_skill_pool": [],
+        "do_not_add_terms": [],
+        "unsafe_jd_nouns": [],
+        "role_priorities": {_NARRATIVE_ANCHOR_ROLE: "high"},
+        "role_source_bullet_counts": {_NARRATIVE_ANCHOR_ROLE: 8},
+        "role_source_char_counts": {_NARRATIVE_ANCHOR_ROLE: 700},
+        "jd_is_delivery_oriented": False,
+        "density_targets": {
+            "bullet_min_by_priority": {"high": 4, "medium": 3, "low": 1},
+            "mechanism_min_by_priority": {"high": 0, "medium": 0, "low": 0},
+        },
+    }
+
+
+def _narrative_cover() -> str:
+    d = date.today()
+    return f"{d.strftime('%B')} {d.day}, {d.year}\n\nDear Hiring Manager,\n\nExcited to apply."
+
+
+def _narrative_resume(
+    summary_lines: str,
+    anchor_bullets: str,
+    extra_roles: str = "",
+) -> str:
+    """Build a resume with a configurable summary and anchor role bullets."""
+    return (
+        "Professional Summary\n"
+        f"{summary_lines}\n\n"
+        "Experience\n"
+        f"{_NARRATIVE_ANCHOR_ROLE} | 2022 - Present\n"
+        f"{anchor_bullets}\n\n"
+        f"{extra_roles}"
+        "Technical Skills\nPython\n"
+    )
+
+
+class TestNarrativeValidators:
+    """Checks 12/13/14: SummaryThemeValidator, AnchorRoleDominanceValidator,
+    DomainTranslationAnchorValidator."""
+
+    # ------------------------------------------------------------------
+    # Check 12: SummaryThemeValidator
+    # ------------------------------------------------------------------
+
+    def test_summary_missing_theme_fails(self):
+        """Summary lacks T1 signature terms → NARRATIVE_SUMMARY_THEME_MISSING for T1."""
+        pkt = _make_narrative_packet()
+        # Summary only mentions T2 terms (team, managed), no T1 (reliability/uptime/incident/sla)
+        resume = _narrative_resume(
+            summary_lines="Experienced manager leading teams and managing hiring processes.",
+            anchor_bullets=(
+                "- Improved platform reliability through better monitoring.\n"
+                "- Drove uptime improvements via incident response protocols.\n"
+                "- Managed team of engineers and supported hiring."
+            ),
+        )
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        errors = [e for e in report["errors"] if "NARRATIVE_SUMMARY_THEME_MISSING" in e]
+        assert errors, f"Expected NARRATIVE_SUMMARY_THEME_MISSING, got: {report['errors']}"
+        assert "T1" in errors[0], f"Expected T1 missing, got: {errors[0]}"
+
+    def test_summary_all_themes_covered_passes(self):
+        """Summary covers both T1 and T2 signature terms → no summary error."""
+        pkt = _make_narrative_packet()
+        # Summary mentions T1 (reliability, incident) and T2 (team, managed)
+        resume = _narrative_resume(
+            summary_lines=(
+                "Engineering leader improving platform reliability and incident response, "
+                "managing high-performance teams."
+            ),
+            anchor_bullets=(
+                "- Drove reliability improvements across the platform.\n"
+                "- Established incident response protocols to improve uptime.\n"
+                "- Managed team and led hiring for three open positions."
+            ),
+        )
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        summary_errors = [e for e in report["errors"] if "NARRATIVE_SUMMARY_THEME_MISSING" in e]
+        assert not summary_errors, f"Summary covers both themes — no error expected: {summary_errors}"
+
+    def test_summary_missing_theme_in_repair_brief(self):
+        """Missing theme IDs appear in repair_brief.global_issues.narrative_missing_summary_themes."""
+        pkt = _make_narrative_packet()
+        resume = _narrative_resume(
+            summary_lines="Experienced manager leading teams.",
+            anchor_bullets=(
+                "- Improved reliability and uptime significantly.\n"
+                "- Led incident response efforts.\n"
+                "- Managed a team of eight engineers."
+            ),
+        )
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        missing = report["repair_brief"]["global_issues"].get("narrative_missing_summary_themes", [])
+        assert "T1" in missing, f"T1 should be in missing summary themes: {missing}"
+
+    # ------------------------------------------------------------------
+    # Check 13: AnchorRoleDominanceValidator
+    # ------------------------------------------------------------------
+
+    def test_anchor_role_bullets_missing_theme_fails(self):
+        """First 3 anchor bullets have 0 T1 hits (need 2) → NARRATIVE_ANCHOR_ROLE_DOMINANCE_FAILED."""
+        pkt = _make_narrative_packet()
+        # Summary covers both themes to avoid Check 12 failure
+        # First 3 anchor bullets only mention T2 terms, no T1
+        resume = _narrative_resume(
+            summary_lines=(
+                "Engineering leader improving reliability and incident response, "
+                "managing teams effectively."
+            ),
+            anchor_bullets=(
+                "- Managed a cross-functional team of ten engineers.\n"
+                "- Led hiring and mentored junior engineers.\n"
+                "- Coordinated team performance reviews.\n"
+                "- Reduced platform incidents through better monitoring."  # T1, but bullet 4
+            ),
+        )
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        anchor_errors = [e for e in report["errors"] if "NARRATIVE_ANCHOR_ROLE_DOMINANCE_FAILED" in e]
+        assert anchor_errors, (
+            f"Expected NARRATIVE_ANCHOR_ROLE_DOMINANCE_FAILED, got: {report['errors']}"
+        )
+        assert "T1" in anchor_errors[0], f"T1 should be in the error: {anchor_errors[0]}"
+
+    def test_anchor_role_bullets_all_themes_covered_passes(self):
+        """First 3 bullets have ≥2 T1 hits and ≥1 T2 hit → no anchor dominance error."""
+        pkt = _make_narrative_packet()
+        resume = _narrative_resume(
+            summary_lines=(
+                "Engineering leader driving reliability and incident response, managing teams."
+            ),
+            anchor_bullets=(
+                "- Improved platform reliability through enhanced monitoring and uptime SLAs.\n"
+                "- Led incident response protocols reducing mean time to recovery.\n"
+                "- Managed and mentored a team of ten engineers."
+            ),
+        )
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        anchor_errors = [e for e in report["errors"] if "NARRATIVE_ANCHOR_ROLE_DOMINANCE_FAILED" in e]
+        assert not anchor_errors, f"All themes covered — no error expected: {anchor_errors}"
+
+    def test_anchor_role_missing_theme_in_repair_brief(self):
+        """Missing anchor theme IDs appear in repair_brief.global_issues."""
+        pkt = _make_narrative_packet()
+        resume = _narrative_resume(
+            summary_lines="Engineering leader improving reliability and incident response, managing teams.",
+            anchor_bullets=(
+                "- Managed cross-functional teams.\n"
+                "- Led hiring process for three roles.\n"
+                "- Mentored junior engineers."
+            ),
+        )
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        missing = report["repair_brief"]["global_issues"].get("narrative_anchor_missing_theme_ids", [])
+        assert "T1" in missing, f"T1 should be missing: {missing}"
+
+    # ------------------------------------------------------------------
+    # Check 14: DomainTranslationAnchorValidator
+    # ------------------------------------------------------------------
+
+    def test_domain_translation_anchor_not_met_fails(self):
+        """Ledger entries exist but none in anchor role → DOMAIN_TRANSLATION_ANCHOR_NOT_MET."""
+        narrative_plan = {
+            **_SAMPLE_NARRATIVE_PLAN,
+            "domain_translation_binding": {
+                "min_total_rule_instantiations": 1,
+                "min_instantiations_in_anchor_role": 1,
+                "require_target_frame_in_anchor_role_first_k": False,
+            },
+        }
+        pkt = _make_narrative_packet(narrative_plan=narrative_plan, domain_mismatch=True)
+        resume = _narrative_resume(
+            summary_lines="Engineering leader improving reliability and incident response, managing teams.",
+            anchor_bullets=(
+                "- Improved reliability and uptime of the platform.\n"
+                "- Led incident response and managed team.\n"
+                "- Drove uptime SLAs and mentored engineers."
+            ),
+        )
+        # Ledger has entries, but in a non-anchor role
+        dt_ledger = [
+            {
+                "rule_id": "rule_1",
+                "target_frame_used": "payment processing",
+                "exact_span": "payment processing flow",
+                "location": "resume.role[Senior Engineer | OtherCo].bullet[1]",
+            }
+        ]
+        report = validate_phase2_output(
+            pkt, resume, _narrative_cover(), _today(),
+            domain_translation_ledger=dt_ledger,
+        )
+        anchor_err = [e for e in report["errors"] if "DOMAIN_TRANSLATION_ANCHOR_NOT_MET" in e]
+        assert anchor_err, (
+            f"Expected DOMAIN_TRANSLATION_ANCHOR_NOT_MET, got: {report['errors']}"
+        )
+
+    def test_domain_translation_all_pass(self):
+        """Ledger has entry in anchor role → no domain translation anchor error."""
+        narrative_plan = {
+            **_SAMPLE_NARRATIVE_PLAN,
+            "domain_translation_binding": {
+                "min_total_rule_instantiations": 1,
+                "min_instantiations_in_anchor_role": 1,
+                "require_target_frame_in_anchor_role_first_k": False,
+            },
+        }
+        pkt = _make_narrative_packet(narrative_plan=narrative_plan, domain_mismatch=True)
+        resume = _narrative_resume(
+            summary_lines="Engineering leader improving reliability and incident response, managing teams.",
+            anchor_bullets=(
+                "- Improved reliability and uptime of the platform.\n"
+                "- Led incident response and managed team.\n"
+                "- Drove uptime SLAs and mentored engineers."
+            ),
+        )
+        # Ledger has entry in the anchor role
+        dt_ledger = [
+            {
+                "rule_id": "rule_1",
+                "target_frame_used": "reliability engineering",
+                "exact_span": "reliability and uptime",
+                "location": f"resume.role[{_NARRATIVE_ANCHOR_ROLE}].bullet[1]",
+            }
+        ]
+        report = validate_phase2_output(
+            pkt, resume, _narrative_cover(), _today(),
+            domain_translation_ledger=dt_ledger,
+        )
+        dt_errors = [
+            e for e in report["errors"]
+            if "DOMAIN_TRANSLATION_ANCHOR_NOT_MET" in e
+            or "DOMAIN_TRANSLATION_MIN_TOTAL_NOT_MET" in e
+        ]
+        assert not dt_errors, f"Anchor entry present — no DT error expected: {dt_errors}"
+
+    def test_domain_translation_min_total_not_met_fails(self):
+        """Active ledger entries below min_total → DOMAIN_TRANSLATION_MIN_TOTAL_NOT_MET."""
+        narrative_plan = {
+            **_SAMPLE_NARRATIVE_PLAN,
+            "domain_translation_binding": {
+                "min_total_rule_instantiations": 2,
+                "min_instantiations_in_anchor_role": 0,
+                "require_target_frame_in_anchor_role_first_k": False,
+            },
+        }
+        pkt = _make_narrative_packet(narrative_plan=narrative_plan, domain_mismatch=True)
+        resume = _narrative_resume(
+            summary_lines="Engineering leader improving reliability and incident response, managing teams.",
+            anchor_bullets=(
+                "- Improved reliability and uptime of the platform.\n"
+                "- Led incident response and managed team.\n"
+                "- Drove SLAs and mentored engineers."
+            ),
+        )
+        # Only 1 active entry, need 2
+        dt_ledger = [
+            {
+                "rule_id": "rule_1",
+                "target_frame_used": "reliability",
+                "exact_span": "reliability and uptime",
+                "location": f"resume.role[{_NARRATIVE_ANCHOR_ROLE}].bullet[1]",
+            }
+        ]
+        report = validate_phase2_output(
+            pkt, resume, _narrative_cover(), _today(),
+            domain_translation_ledger=dt_ledger,
+        )
+        total_err = [e for e in report["errors"] if "DOMAIN_TRANSLATION_MIN_TOTAL_NOT_MET" in e]
+        assert total_err, f"Expected DOMAIN_TRANSLATION_MIN_TOTAL_NOT_MET, got: {report['errors']}"
+
+    def test_narrative_plan_absent_skips_all_narrative_checks(self):
+        """Empty narrative_plan → no narrative errors emitted."""
+        pkt = _make_narrative_packet(narrative_plan={})
+        # Resume has no summary and no anchor role bullets (worst case)
+        resume = (
+            "Experience\n"
+            f"{_NARRATIVE_ANCHOR_ROLE} | 2022 - Present\n"
+            "- Built infrastructure.\n"
+            "- Deployed services.\n"
+            "- Monitored systems.\n"
+            "- Improved tooling.\n\n"
+            "Technical Skills\nPython\n"
+        )
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        narrative_errors = [
+            e for e in report["errors"]
+            if any(
+                code in e
+                for code in (
+                    "NARRATIVE_SUMMARY_THEME_MISSING",
+                    "NARRATIVE_ANCHOR_ROLE_DOMINANCE_FAILED",
+                    "DOMAIN_TRANSLATION_MIN_TOTAL_NOT_MET",
+                    "DOMAIN_TRANSLATION_ANCHOR_NOT_MET",
+                    "DOMAIN_TRANSLATION_FIRST_K_NOT_MET",
+                )
+            )
+        ]
+        assert not narrative_errors, (
+            f"Empty narrative_plan must skip all narrative checks: {narrative_errors}"
+        )
+
+    def test_domain_translation_skipped_when_no_mismatch(self):
+        """domain_mismatch=False → Check 14 is skipped even if ledger provided."""
+        narrative_plan = {
+            **_SAMPLE_NARRATIVE_PLAN,
+            "domain_translation_binding": {
+                "min_total_rule_instantiations": 5,  # would fail if checked
+                "min_instantiations_in_anchor_role": 5,
+                "require_target_frame_in_anchor_role_first_k": True,
+            },
+        }
+        pkt = _make_narrative_packet(narrative_plan=narrative_plan, domain_mismatch=False)
+        resume = _narrative_resume(
+            summary_lines="Engineering leader improving reliability and incident response, managing teams.",
+            anchor_bullets=(
+                "- Improved reliability and uptime of the platform.\n"
+                "- Led incident response and managed team.\n"
+                "- Drove SLAs and mentored engineers."
+            ),
+        )
+        report = validate_phase2_output(
+            pkt, resume, _narrative_cover(), _today(),
+            domain_translation_ledger=[],  # empty but provided
+        )
+        dt_errors = [
+            e for e in report["errors"]
+            if "DOMAIN_TRANSLATION" in e
+        ]
+        assert not dt_errors, (
+            f"No mismatch → Check 14 must be skipped: {dt_errors}"
+        )

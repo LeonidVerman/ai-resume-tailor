@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+    "company": "Plata",
+    "role_title": "Engineering Manager"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote) Nov 2025 – Present”",
+        "“Improved system throughput by 25% through the introduction of a transactional cache”"
+      ]
+    },
+    "role_fit": {
+      "score": 6,
+      "evidence": [
+        "“Engineering Manager with 15+ years of experience in backend engineering and team leadership”",
+        "“translate ambiguous requirements into clear technical solutions”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "“My experience leading teams of up to 20 engineers”",
+        "“VP / Director of Software Development / Lead Software Developer”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "“raising test coverage by 20%”",
+        "“serve over 1M users”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "“transactional cache for trading data”",
+        "“event-driven architecture”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 9,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor)”",
+        "“Vancouver, Canada | +1 778 317 3248 | leonidverman@gmail.com”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 7,
+      "evidence": [
+        "“apply for the Engineering Manager role at Plata”",
+        "“collaborating closely with Product, Data, and AI teams”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 7,
+      "evidence": [
+        "“drive day-to-day delivery, planning, and prioritization effectively”",
+        "“high-performance, fault-tolerant distributed systems within fintech and crypto domains”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume implies direct AI product contribution: “contributing to the development of AI-powered features” (contracting described as model training/evaluation).",
+      "GMO bullet attributes outcome to management actions: “achieving top-5 market position… through effective planning and prioritization” (causality not evidenced)."
+    ],
+    "most_damaging_gaps": [
+      "Limited evidence of owning an “AI-powered product from concept to production” (assistant/recommendations) beyond model evaluation work.",
+      "Missing explicit people-management scope for EM: hiring, performance management, career development, and process ownership are only lightly referenced.",
+      "No explicit mention of English level (B1+) or international collaboration context, which is a stated requirement."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets demonstrating EM core responsibilities (hiring, performance reviews, delivery rituals, roadmap execution) with concrete outcomes.",
+      "Reframe AI experience to be accurate and more relevant to Plata (e.g., LLM integration, RAG, production AI feature delivery) or clearly state it’s evaluation/training support.",
+      "Add architecture examples aligned to a Financial Assistant (conversation orchestration, tool/function calling, data privacy, observability, reliability/SLOs)."
+    ]
+  }
+}

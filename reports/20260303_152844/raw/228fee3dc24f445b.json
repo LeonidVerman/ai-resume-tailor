@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 7,
+      "evidence": [
+        "Led a backend engineering team delivering a trading system for 1M+ clients",
+        "Mentored and managed a team of developers"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "focus on product-led growth and user engagement",
+        "helping to build intuitive onboarding flows and high-scale analytics"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Hands-on engineering leader with 15+ years of experience"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "raising test coverage by 20% and streamlining documentation",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "introducing a transactional cache for trading data",
+        "Built a prototype in-memory database (H2 – Oracle replication)"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "Senior Engineering Manager, Dashboard + Growth role at Fingerprint",
+        "Contribute as an independent contractor helping world-leading AI labs"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "particularly drawn to this role because of its focus on creating product-led growth experiences",
+        "helping to build intuitive onboarding flows and high-scale analytics"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Hands-on engineering leader with 15+ years of experience",
+        "Technical Skills... Go... AWS... Kubernetes"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume summary claims \"focus on product-led growth and user engagement\" without supporting PLG/onboarding/dashboard examples in experience bullets.",
+      "Cover letter claims \"drive user engagement and retention\" but resume experience is primarily trading/fintech infrastructure, not growth funnels."
+    ],
+    "most_damaging_gaps": [
+      "No concrete dashboard/analytics ownership examples (customer console, analytics, reporting, event instrumentation).",
+      "No specific PLG/onboarding funnel work (trial-to-paid, activation milestones, feature discovery) beyond generic statements.",
+      "People-management scope for two squads is not clearly evidenced (hiring, performance management, multi-team cadence, cross-functional rituals)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets showing dashboard/analytics delivery: metrics pipelines, event-driven analytics, performance/latency, customer-facing console UX collaboration.",
+      "Replace generic PLG claims with specific growth mechanisms and outcomes (activation rate, conversion, retention), or remove PLG language if not true.",
+      "Strengthen EM-level leadership signals: managing multiple teams, setting execution cadence, stakeholder alignment with Product/Design/GTM, and handling underperformance."
+    ]
+  }
+}

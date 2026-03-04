@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+    "company": "Lillio",
+    "role_title": "Manager, Engineering"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“raising test coverage by 20%”",
+        "“Improved system throughput by 25% by introducing a transactional cache”"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "“backend engineering and team leadership”",
+        "“Infrastructure & DevOps: AWS… Databases: … PostgreSQL”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "“VP / Director of Software Development”",
+        "“Managed a diverse team… through regular 1:1s, feedback, and objectives setting”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“trading system for 1M+ clients”",
+        "“reducing onboarding time for new engineers”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "“transactional cache for trading data… reducing database load and latency”",
+        "“improving scalability and reliability through high-performance Java components”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor”",
+        "“Languages & Frameworks: Java… TypeScript”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "“apply for the Manager, Engineering role at Lillio”",
+        "“contribute to your mission of empowering early childhood educators”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“Manager, Engineering role at Lillio”",
+        "“Tech stack: … React, Ruby on Rails, TypeScript”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "No clear hallucinations versus the provided master resume; content appears largely reused/consistent."
+    ],
+    "most_damaging_gaps": [
+      "No evidence of Ruby on Rails/React/GraphQL delivery despite JD emphasizing leading web apps in that stack.",
+      "Limited demonstration of roadmap alignment and product-management partnership beyond generic statements.",
+      "Missing concrete recruiting/hiring/onboarding leadership examples (a core responsibility in JD)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add explicit examples of managing roadmap execution with Product/Design (planning, tradeoffs, outcomes), not just “collaborated across teams”.",
+      "Address Lillio’s stack directly: either show real Rails/React/GraphQL experience or position a credible transition plan with adjacent evidence (TypeScript, web APIs, full-stack exposure).",
+      "Include specific people-leadership outcomes: hiring, onboarding, performance management, promotions, retention, and process improvements with measurable results."
+    ]
+  }
+}

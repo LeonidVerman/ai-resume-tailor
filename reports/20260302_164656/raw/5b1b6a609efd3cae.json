@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 5,
+      "evidence": [
+        "“Enhanced onboarding flows and product engagement features, driving user retention and satisfaction.”",
+        "“Senior Engineering Manager with 15+ years of experience leading high-performance… systems”"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "“contribute to building intuitive onboarding flows and robust analytics dashboards”",
+        "“background is in fintech and blockchain… translate directly to the enterprise SaaS platform environment”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "“VP / Director of Software Development / Lead Software Developer”",
+        "“Hands-on technical leader with a track record of mentoring engineers”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“Improved system throughput by 25% with a transactional cache”",
+        "“Led a backend engineering team delivering trading systems for 1M+ clients”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "“transactional cache… reducing database load and latency”",
+        "“Asynchronous Messaging: Kafka, RabbitMQ”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“Hands-on technical leader… driving product-led growth initiatives”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "“apply for the Senior Engineering Manager, Dashboard + Growth position at Fingerprint”",
+        "“mission of empowering developers to combat online fraud”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“Enhanced onboarding flows and product engagement features”",
+        "“translate directly to the enterprise SaaS platform environment at Fingerprint”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Claim of having “Enhanced onboarding flows and product engagement features” in a trading-systems role is not supported elsewhere in the provided experience."
+    ],
+    "most_damaging_gaps": [
+      "Little concrete evidence of building/owning customer-facing SaaS dashboards or analytics consoles (core of the role).",
+      "People-management scope is vague for a role leading “two mission-critical squads” (no clear examples of managing multiple teams, performance management, hiring).",
+      "PLG/growth execution is asserted but not demonstrated with funnel metrics, experiments, or adoption/retention outcomes."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Replace or qualify the dashboard/onboarding/PLG claims with verifiable examples (or reframe as transferable patterns) and add any real UI/console/analytics work if it exists.",
+      "Add explicit engineering-management details: team sizes per role, hiring/coaching examples, delivery cadence improvements, and cross-functional partnership with Product/Design/GTM.",
+      "Tailor mechanisms to Fingerprint’s domain: event instrumentation, analytics pipelines, performance of dashboards, experimentation (A/B), and reliability/scale practices tied to customer-facing consoles."
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote) Nov 2025 – Present",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "role_fit": {
+      "score": 3,
+      "evidence": [
+        "Lead Software Engineer with 15+ years of experience designing and leading development of high-performance... trading and fintech systems",
+        "apply for the Senior Engineering Manager, Dashboard + Growth role at Fingerprint"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Mentored and managed a team of developers"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "raising test coverage by 20% and streamlining documentation, reducing onboarding time",
+        "Led a backend engineering team delivering trading system for 1M+ clients"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "introducing a transactional cache for trading data, significantly reducing database load and latency",
+        "Built a prototype in-memory database (H2 → Oracle replication)"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 4,
+      "evidence": [
+        "Professional Summary... trading and fintech systems... Java backend engineering",
+        "Technical Skills... Go... AWS... Docker, Kubernetes"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 4,
+      "evidence": [
+        "I am excited to apply for the Senior Engineering Manager, Dashboard + Growth role at Fingerprint.",
+        "I would welcome the chance to bring this expertise to your team and contribute to building reliable, scalable systems"
+      ]
+    },
+    "overall_readiness": {
+      "score": 4,
+      "evidence": [
+        "Lead Software Developer/Team Leader| GMO-Z.com Fintech CA, Vancouver",
+        "I currently contribute as an independent contractor supporting world-leading AI research labs"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "No clear evidence of dashboard/analytics console ownership; resume focuses on trading platforms.",
+      "No evidenced product-led growth/onboarding funnel work despite applying to 'Dashboard + Growth'."
+    ],
+    "most_damaging_gaps": [
+      "Missing direct experience leading customer-facing web dashboard/analytics products (console, insights, performance).",
+      "Missing PLG/growth engineering examples (onboarding flows, activation milestones, feature discovery).",
+      "People-management scope is implied but not concretely evidenced (cadence, performance management, cross-functional leadership)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets explicitly mapping past work to Dashboard/Growth: analytics surfaces, customer console UX-performance, event instrumentation, funnel metrics (activation/conversion/retention).",
+      "Strengthen engineering management evidence: team size per role, hiring, performance management, delivery predictability, and cross-functional partnership with Product/Design/GTM.",
+      "Tailor the cover letter to Fingerprint’s mission and the two squads (Dashboard + Growth) with specific proposed initiatives (e.g., onboarding milestones, feature discovery, scalable analytics)."
+    ]
+  }
+}

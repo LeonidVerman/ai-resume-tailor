@@ -127,6 +127,7 @@ def build_writer_packet(
     domain_mismatch: bool = bool(plan.get("domain_mismatch", False))
     domain_translation_rule_ids: list[str] = list(plan.get("domain_translation_rule_ids") or [])
     domain_translation_rules_applied = _resolve_domain_rules(domain_translation_rule_ids)
+    narrative_plan: dict = plan.get("narrative_plan") or {}
 
     return {
         "role_level": role_level,
@@ -136,6 +137,7 @@ def build_writer_packet(
         "domain_translation_rules_applied": domain_translation_rules_applied,
         "jd_vocab_must_embed": jd_vocab_must_embed,
         "jd_vocab_optional_embed": jd_vocab_optional_embed,
+        "narrative_plan": narrative_plan,
         "master_resume_role_names": list(role_stats.keys()),
         "master_role_dates": master_role_dates,
         "must_keep_metrics": must_keep_metrics,

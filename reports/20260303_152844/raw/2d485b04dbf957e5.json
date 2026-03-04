@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+    "company": "Lillio",
+    "role_title": "Manager, Engineering"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "including roles as VP and Director of Software Development",
+        "led teams of up to 20 engineers"
+      ]
+    },
+    "role_fit": {
+      "score": 3,
+      "evidence": [
+        "focused on high-performance, fault-tolerant distributed systems",
+        "apply for the Manager, Engineering role at Lillio"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "VP / Director of Software Development",
+        "Led a backend engineering team"
+      ]
+    },
+    "clarity_impact": {
+      "score": 5,
+      "evidence": [
+        "serve over 1M users",
+        "Implemented process improvements and agile coordination"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 4,
+      "evidence": [
+        "high-performance Java components",
+        "Built a cached JDBC driver wrapper"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 4,
+      "evidence": [
+        "Eligible to work remotely for U.S. companies from Canada",
+        "I am excited to apply for the Manager, Engineering role at Lillio."
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "commitment to fostering a culture of continuous improvement and mentoring",
+        "drawn to Lillio's mission-driven approach and commitment to diversity and inclusion"
+      ]
+    },
+    "overall_readiness": {
+      "score": 4,
+      "evidence": [
+        "Technical Skills: Java, C#, Python, TypeScript",
+        "bring my expertise in engineering leadership and collaborative partnership with product teams"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied product/engineering management fit for Lillio’s Rails/React/GraphQL stack without showing any direct Ruby on Rails/React/GraphQL experience in the resume."
+    ],
+    "most_damaging_gaps": [
+      "Job stack alignment missing: no Ruby on Rails, React, GraphQL, Heroku called out.",
+      "People-management specifics are thin for this role (1:1s, career ladders, hiring, onboarding, DEI practices).",
+      "Lacks evidence of roadmap/business alignment and cross-functional execution beyond generic phrasing."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add explicit, truthful mapping to Lillio’s stack and environment (e.g., any real React/TypeScript UI work, GraphQL consumption, AWS/Postgres/observability), and avoid implying Rails/GraphQL leadership if not done.",
+      "Strengthen manager-specific accomplishments: hiring, onboarding, performance management, 1:1 cadence, goal setting, and examples of improving engineering processes across a team.",
+      "Increase impact density with concrete metrics and mechanisms (e.g., reliability/latency improvements, incident reduction, delivery cycle time), not just “process improvements” and “agile coordination.”"
+    ]
+  }
+}

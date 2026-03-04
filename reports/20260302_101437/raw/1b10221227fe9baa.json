@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 6,
+      "evidence": [
+        "“led teams of up to 20 engineers to deliver scalable, reliable platforms serving over 1M users”",
+        "“I believe my experience in creating product-led growth experiences…align well with the goals of your Dashboard and Growth teams.”"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "“Senior Engineering Manager, Dashboard + Growth role at Fingerprint.”",
+        "“experience in backend engineering and team leadership…built fintech and blockchain systems”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 5,
+      "evidence": [
+        "“Senior engineering leader with 15+ years…leading teams of up to 20 engineers”",
+        "“VP / Director of Software Development / Lead Software Developer”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“raising test coverage by 20%…reducing onboarding time for new engineers.”",
+        "“Improved system throughput by 25%…reducing database load and latency”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "“introducing a transactional cache for trading data”",
+        "“Hands-on experience with distributed systems, scalability, and performance optimization.”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“I believe my experience in creating product-led growth experiences”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "“particularly drawn to Fingerprint's mission of empowering developers to combat online fraud.”",
+        "“partner across functions to translate roadmap vision into reality”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“Senior engineering leader with 15+ years in fintech and crypto backend systems”",
+        "“apply for the Senior Engineering Manager, Dashboard + Growth role”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Cover letter claims “experience in creating product-led growth experiences” without specific PLG/onboarding/dashboard examples in resume.",
+      "Implied fit for “Dashboard + Growth” despite resume being largely trading/fintech backend; no explicit analytics console ownership."
+    ],
+    "most_damaging_gaps": [
+      "No concrete examples of onboarding funnels, feature discovery, or conversion milestones (core Growth mission).",
+      "No clear dashboard/analytics product delivery (core Dashboard mission) beyond generic distributed-systems work.",
+      "Limited evidence of managing two squads / multi-team EM scope; leadership described but not clearly at EM-of-EM or dual-squad level."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets showing dashboard/analytics delivery (e.g., customer console, metrics, observability UI, data pipelines) and outcomes.",
+      "Replace generic PLG claim with specific growth initiatives (trial-to-paid funnel, onboarding steps, activation metrics) or remove it.",
+      "Clarify management scope: number of direct reports, team structure, cadence (planning, estimation, delivery predictability) aligned to EM responsibilities."
+    ]
+  }
+}

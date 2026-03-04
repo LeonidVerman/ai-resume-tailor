@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 3,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "role_fit": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "seniority_positioning": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "clarity_impact": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "mechanism_quality": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "constraint_compliance": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 1,
+      "evidence": [
+        "generated_cover_letter_text\":\"\"",
+        "generated_resume_text\":\"\""
+      ]
+    },
+    "overall_readiness": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "No generated resume/cover letter content provided; cannot verify any job-relevant claims."
+    ],
+    "most_damaging_gaps": [
+      "Missing generated resume entirely (blank).",
+      "Missing generated cover letter entirely (blank).",
+      "No demonstrated alignment to Enterprise Architect–Platform requirements (cloud-native platform unification, architecture governance, .NET/Java, Angular, IaC, data/AI)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Provide the generated resume text and ensure it explicitly targets NEOGOV’s platform unification, interoperability, and modernization scope.",
+      "Provide a tailored cover letter referencing NEOGOV, the \"22+ products\" platform goal, and concrete architecture leadership examples (APIs/events/data/SSO/DevOps).",
+      "Add role-relevant skills and evidence (cloud, IaC, .NET + Java, Angular, data modeling, CI/CD/observability) with quantified outcomes and clear ownership boundaries."
+    ]
+  }
+}

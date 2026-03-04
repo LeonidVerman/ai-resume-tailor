@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+    "company": "League",
+    "role_title": "Engineering Manager, Apps & Solutions (Western Canada)"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Engineering Manager with 15+ years of experience in backend engineering and team leadership",
+        "directing teams of up to 20 engineers"
+      ]
+    },
+    "role_fit": {
+      "score": 6,
+      "evidence": [
+        "apply for the Engineering Manager, Apps & Solutions role at League",
+        "deliver high-quality solutions to your customers"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Led a backend engineering team delivering a trading system for over 1M clients"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "increasing test coverage by 20%",
+        "Improved system throughput by 25%"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "introduction of a transactional cache for trading data",
+        "Async Messaging: Kafka, RabbitMQ, idempotent processing, retry-safe design"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 9,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "Vancouver, Canada | +1 778 317 3248 | leonidverman@gmail.com"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "I am excited to apply for the Engineering Manager, Apps & Solutions role at League.",
+        "I am particularly drawn to League's commitment to improving health outcomes through technology"
+      ]
+    },
+    "overall_readiness": {
+      "score": 7,
+      "evidence": [
+        "Mentored and managed a team of developers, enhancing delivery speed",
+        "deliver reliable and scalable solutions under tight timelines"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume positions candidate as \"Engineering Manager\" in summary, but experience titles are primarily Lead/VP/Director; could be interpretive rather than explicit EM role.",
+      "Healthcare/enterprise customer-facing delivery is implied but not evidenced with specific healthcare clients or app delivery examples."
+    ],
+    "most_damaging_gaps": [
+      "Little evidence of customer-facing delivery management (status updates, dependency management, risk escalation) central to Apps & Solutions.",
+      "No explicit healthcare domain experience or examples of building consumer-facing apps/solutions (mobile/web) on a platform.",
+      "Testing/QA partnership is mentioned only via coverage increase; lacks examples of release readiness, manual/automated QA collaboration, or launch processes."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–3 bullets showing customer-facing program execution: sprint/backlog ownership, dependency management, risk escalation, and launch coordination (use concrete examples).",
+      "Translate fintech/crypto experience into League-relevant language: platform + solution-specific work, multi-tenant considerations, privacy/security, and stakeholder management.",
+      "Strengthen QA/release narrative: collaboration with QA, automated + manual testing strategy, acceptance criteria, and production rollout/incident learnings."
+    ]
+  }
+}

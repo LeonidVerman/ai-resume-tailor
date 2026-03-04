@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote) Nov 2025 – Present",
+        "Improved system throughput by 25% with a transactional cache for trading data"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "Proven expertise in scalable, modular architectures and cloud-native solutions",
+        "Platforms & Tools: AWS, Docker, Kubernetes, CI/CD, RabbitMQ, Kafka"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "Senior backend engineer and engineering leader with 15+ years of experience",
+        "VP / Director of Software Development / Lead Software Developer"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "delivering a scalable trading system for 1M+ clients",
+        "raising test coverage by 20%"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "transactional cache for trading data, significantly reducing database load and latency",
+        "Platforms & Tools: AWS, Docker, Kubernetes, CI/CD, RabbitMQ, Kafka"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 3,
+      "evidence": [
+        "Earlier roles ... (repeated section appears twice)",
+        "Education ... (repeated section appears twice)"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "apply for the Enterprise Architect, Platform role at NEOGOV",
+        "eager to contribute to your vision of a unified, cloud-ready, and AI-enabled platform"
+      ]
+    },
+    "overall_readiness": {
+      "score": 4,
+      "evidence": [
+        "Strong experience with Angular front-end frameworks and RESTful API or GraphQL integration design (not addressed in resume)",
+        "Earlier roles ... Education ... Technical Skills (duplicated blocks reduce polish)"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume claims 'cloud-native solutions' without concrete cloud-native architecture examples (e.g., IaC, microservices modernization outcomes)."
+    ],
+    "most_damaging_gaps": [
+      "No evidence of enterprise/platform architecture ownership across multiple products (NEOGOV: 'connects 22+ products').",
+      "Missing key JD specifics: Terraform/AWS CDK, Angular, GraphQL, SQL Server, and explicit .NET/Java platform unification work.",
+      "Resume formatting/duplication issues (Education/Skills/Earlier roles repeated) hurt credibility and readability."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add platform-architecture artifacts aligned to JD: reference architectures, shared services, unified data models, SSO/onboarding/common admin, and cross-product interoperability (even if from fintech context).",
+      "Close explicit skill gaps (or clarify non-experience): Terraform/AWS CDK, SQL Server, Angular, GraphQL; also explicitly mention REST API design and governance patterns (API standards, event-driven, security).",
+      "Fix structural issues: remove duplicated sections, add an 'Architecture & Platform Leadership' section with 3–5 high-signal bullets and outcomes."
+    ]
+  }
+}

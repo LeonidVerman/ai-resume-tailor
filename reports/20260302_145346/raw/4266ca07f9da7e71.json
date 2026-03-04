@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+    "company": "League",
+    "role_title": "Engineering Manager, Apps & Solutions (Western Canada)"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 3,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "role_fit": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "seniority_positioning": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "clarity_impact": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "mechanism_quality": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "constraint_compliance": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 1,
+      "evidence": [
+        "generated_cover_letter_text\":\"\"",
+        "generated_resume_text\":\"\""
+      ]
+    },
+    "overall_readiness": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "No generated resume/cover letter content provided; cannot verify any claims against the JD."
+    ],
+    "most_damaging_gaps": [
+      "Missing generated resume entirely (empty).",
+      "Missing generated cover letter entirely (empty).",
+      "No evidence of Engineering Manager responsibilities: customer delivery, sprint/backlog ownership, risk escalation, team growth."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Provide the actual generated resume text tailored to League’s Engineering Manager, Apps & Solutions role (customer delivery, agile execution, people management).",
+      "Provide a tailored cover letter referencing League, customer-facing delivery, risk management, and team growth; include relevant metrics from the master resume.",
+      "Explicitly map experience to JD needs: managing sprints/backlog, QA/testing partnership, stakeholder/customer communication, and security/secure coding accountability."
+    ]
+  }
+}

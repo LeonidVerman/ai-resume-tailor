@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+    "company": "League",
+    "role_title": "Engineering Manager, Apps & Solutions (Western Canada)"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“Led teams of up to 20 engineers”",
+        "“raising test coverage by 20%... Improved system throughput by 25%”"
+      ]
+    },
+    "role_fit": {
+      "score": 5,
+      "evidence": [
+        "“fintech and crypto... trading system for 1M+ clients”",
+        "“committed to fostering strong relationships with customers and internal teams”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "“VP / Director of Software Development”",
+        "“managed sprints and backlog to ensure timely delivery”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“serving 1M+ users”",
+        "“raising test coverage by 20%... throughput by 25%”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 4,
+      "evidence": [
+        "“high-performance, fault-tolerant distributed systems”",
+        "“introducing a transactional cache for trading data”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor”",
+        "“Engineering Manager – Apps and Solutions role at League”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "“Engineering Manager – Apps and Solutions role at League”",
+        "“drawn to League's mission of delivering personalized health experiences”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "“managed sprints and backlogs”",
+        "“committed to fostering strong relationships with customers”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Customer-facing delivery and relationship depth is asserted but not evidenced with concrete examples (e.g., “fostering strong relationships with customers”).",
+      "Healthcare/enterprise apps context is implied via mission alignment, but no direct healthcare delivery experience is shown."
+    ],
+    "most_damaging_gaps": [
+      "Limited explicit customer-facing delivery leadership examples (launch/testing with customers, dependency management, risk comms).",
+      "No clear healthcare/consumer app domain experience; background is primarily fintech/crypto backend.",
+      "Testing/QA partnership and secure coding/access management responsibilities are only lightly addressed (“security compliance”) without specifics."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets showing customer-facing program execution: joint roadmap definition, launch/testing coordination, dependency/risk escalation, and timeline communication.",
+      "Introduce concrete architecture mechanisms relevant to “Apps & Solutions” delivery (integration patterns, multi-tenant/platform leverage, release management) beyond generic “distributed systems”.",
+      "Strengthen security/testing evidence: secure coding practices, access management, incident handling, and explicit collaboration with QA/testing methodologies."
+    ]
+  }
+}

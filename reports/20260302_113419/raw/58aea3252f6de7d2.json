@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+    "company": "Lillio",
+    "role_title": "Manager, Engineering"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“led teams of up to 20 engineers”",
+        "“Improved system throughput by 25% through architectural improvements”"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "“fintech and blockchain systems”",
+        "“Senior engineering leader with 15+ years in fintech and distributed systems”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "“VP / Director of Software Development”",
+        "“proven team leadership managing up to 20 engineers”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 6,
+      "evidence": [
+        "“serving 1M+ users”",
+        "“improving system maintainability and onboarding through documentation and testing”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 4,
+      "evidence": [
+        "“Improved system throughput by 25% through architectural improvements”",
+        "“delivering a scalable trading system for 1M+ users”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 5,
+      "evidence": [
+        "“Manager, Engineering role at Lillio”",
+        "“Contribute as an independent contractor helping world-leading AI labs”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "“apply for the Manager, Engineering role at Lillio”",
+        "“drawn to Lillio's commitment to improving early childhood education outcomes”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“Strong technical background in backend and distributed systems”",
+        "“eager to collaborate across teams to enhance product quality”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume claims “Mentored and managed a diverse team of developers” (diverse not evidenced elsewhere in resume).",
+      "Cover letter claims “top-5 platforms in the Japanese market” (not substantiated within generated resume text)."
+    ],
+    "most_damaging_gaps": [
+      "Little/no alignment to Lillio’s stack: Ruby on Rails, React, GraphQL, Postgres/Heroku.",
+      "Manager-specific responsibilities are not evidenced (recruiting, hiring, onboarding, roadmap alignment).",
+      "Mechanisms are vague; lacks concrete examples of scaling/process improvements relevant to web SaaS/EdTech."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add explicit, relevant technical fit: any Ruby/Rails, React/TypeScript UI leadership, GraphQL, Postgres, Heroku/AWS usage tied to outcomes.",
+      "Strengthen manager scope evidence: hiring/recruiting, performance management, 1:1s, career ladders, roadmap/business alignment, cross-functional delivery with Product/Design.",
+      "Replace vague architecture phrases with concrete mechanisms (e.g., caching layers, read replicas, queueing, observability) and measurable results tied to reliability/latency/incident reduction."
+    ]
+  }
+}

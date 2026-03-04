@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+    "company": "Plata",
+    "role_title": "Engineering Manager"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 9,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "role_fit": {
+      "score": 5,
+      "evidence": [
+        "Lead Software Engineer with 15+ years of experience designing and leading development of high-performance... fintech systems",
+        "supporting world-leading AI research labs in training and evaluating advanced AI models"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Lead Software Developer/Team Leader"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "delivering trading system for 1M+ clients",
+        "raising test coverage by 20%"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "introducing a transactional cache for trading data",
+        "improving scalability and reliability through high-performance Java components"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "Engineering Manager role at Plata",
+        "Experienced team lead and project manager"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "I am excited to apply for the Engineering Manager role at Plata.",
+        "contribute as an independent contractor supporting world-leading AI research labs"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "Mentored and managed a team of developers, improving delivery speed",
+        "Shape the architecture, design, and implementation of scalable backend services"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "No clear evidence of direct ownership of an AI-powered user-facing product; only 'training and evaluating advanced AI models'.",
+      "Management scope is implied (\"VP / Director\") but hiring/performance management specifics are not evidenced in bullets."
+    ],
+    "most_damaging_gaps": [
+      "Missing explicit Engineering Manager delivery signals (planning, prioritization, execution cadence, stakeholder management).",
+      "No concrete examples of building an AI-powered assistant/recommendation/user-facing intelligent feature in production.",
+      "Cross-functional collaboration with Product/Data/AI is not demonstrated with specific outcomes."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Rewrite experience bullets to show EM responsibilities: planning, prioritization, on-time delivery, and cross-functional execution (Product/Data/Business).",
+      "Add 1–2 specific AI-in-production examples (even small) or clearly frame AI work as integration/enablement rather than model training only.",
+      "Add architecture mechanisms relevant to Plata’s backend + AI assistant context (event-driven flows, integrations, reliability/observability ownership) with concrete incidents/scale."
+    ]
+  }
+}

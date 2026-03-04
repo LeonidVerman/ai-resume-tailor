@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“Led a backend engineering team delivering a trading system for 1M+ clients”",
+        "“Improved system throughput by 25% by introducing a transactional cache”"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "“Senior backend engineer and engineering leader”",
+        "“opportunity to lead the Dashboard and Growth teams in creating delightful product experiences”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "“VP / Director of Software Development / Lead Software Developer”",
+        "“Mentored and managed a team of developers”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“raising test coverage by 20% and streamlining documentation”",
+        "“serving over 1M users”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "“transactional cache for trading data”",
+        "“high-performance Java components”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“Other: ... product-led growth strategies”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "“lead the Dashboard and Growth teams in creating delightful product experiences”",
+        "“My experience in mentoring engineers, driving delivery cadence”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“Senior Engineering Manager, Dashboard + Growth role at Fingerprint”",
+        "“Technical Skills... TypeScript, Go... AWS, Docker, Kubernetes”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume claims “product-led growth strategies” without any concrete PLG/onboarding/funnel work examples.",
+      "Cover letter implies direct fit for “Dashboard and Growth” but provides no dashboard/analytics or onboarding mechanisms."
+    ],
+    "most_damaging_gaps": [
+      "Missing explicit engineering management scope for two squads (hiring, performance management, multi-team cadence).",
+      "No concrete dashboard/analytics or event instrumentation experience (funnels, activation metrics, feature discovery).",
+      "Limited evidence of modern web app/customer-facing console work (React/TypeScript depth, UX-performance tradeoffs)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets demonstrating dashboard/analytics delivery (e.g., metrics pipelines, customer console performance, RBAC, audit logs).",
+      "Replace generic PLG wording with specific growth work (onboarding steps, activation milestones, experiment framework, conversion lift).",
+      "Strengthen EM positioning: clarify management responsibilities (team structure, performance feedback, planning/estimation, cross-functional rituals) and outcomes."
+    ]
+  }
+}

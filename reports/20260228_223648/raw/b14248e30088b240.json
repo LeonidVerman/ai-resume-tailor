@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“led teams of up to 20 engineers”",
+        "“Improved system throughput by 25% with transactional cache”"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "“Senior engineering leader with 15+ years in fintech and crypto backend systems”",
+        "“opportunity to lead the Dashboard and Growth teams in creating product-led growth experiences”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "“VP / Director of Software Development”",
+        "“Senior Software Engineer (Independent Contractor) | Mercor”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“raising test coverage by 20%”",
+        "“Improved system throughput by 25%”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "“transactional cache… reducing database load and latency”",
+        "“distributed, fault-tolerant systems”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“Languages & Frameworks: Java, Go, AWS, Docker, Kubernetes, CI/CD”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "“apply for the Senior Engineering Manager, Dashboard + Growth role at Fingerprint”",
+        "“drawn to Fingerprint's mission… combat online fraud”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“Senior engineering leader with 15+ years in fintech and crypto backend systems”",
+        "“lead the Dashboard and Growth teams in creating product-led growth experiences”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied PLG/growth execution without concrete evidence: “creating product-led growth experiences” (no onboarding/funnel/dashboard examples).",
+      "DevOps/stack listing mixes categories: “Languages & Frameworks: Java, Go, AWS, Docker, Kubernetes, CI/CD” (suggests breadth without substantiation)."
+    ],
+    "most_damaging_gaps": [
+      "No demonstrated dashboard/analytics ownership (customer console, metrics, data-intensive UI/API) relevant to “Dashboard”.",
+      "No concrete product-led growth/onboarding/funnel experimentation outcomes relevant to “Growth”.",
+      "Limited evidence of managing two squads / multi-team EM scope; leadership is present but EM operating model is not described."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets showing dashboard/analytics delivery (e.g., customer console, reporting pipelines, event tracking, performance/latency at scale) and quantify usage/latency/availability.",
+      "Replace generic PLG language with specific growth mechanisms you actually led (trial→paid funnel instrumentation, onboarding milestones, feature discovery, A/B tests) or remove the claim.",
+      "Reframe experience explicitly as engineering management: hiring/performance management, planning/estimation accuracy, cross-functional Product/Design/GTM cadence, and how you ran two teams (even if in prior roles)."
+    ]
+  }
+}

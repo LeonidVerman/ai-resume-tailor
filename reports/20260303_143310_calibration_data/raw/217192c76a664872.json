@@ -1,0 +1,86 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Led teams of up to 20 engineers delivering enterprise-scale platforms serving 1M+ users.",
+        "Improved throughput by 25% via transactional caching strategy that reduced database pressure"
+      ]
+    },
+    "role_fit": {
+      "score": 5,
+      "evidence": [
+        "Deep hands-on experience with Java and C# ecosystems, AWS, Docker, Kubernetes, CI/CD",
+        "I am particularly drawn to NEOGOV’s mission to modernize and unify a multi-product ecosystem."
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "Senior backend engineer and engineering leader with 15+ years of experience",
+        "Established engineering standards, design reviews, and code-review practices"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "Improved test coverage by 20%, strengthening CI/CD reliability and reducing regression risk",
+        "Improved throughput by 25% via transactional caching strategy"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 7,
+      "evidence": [
+        "horizontal scaling of trading servers, database read replicas... multiple caching layers",
+        "asynchronous messaging for component decoupling using Kafka and RabbitMQ"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "Strong focus on modular architecture, reliability, and scalable backend foundations",
+        "Technical Skills... AWS, Docker, Kubernetes, CI/CD"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "apply for the Enterprise Architect, Platform role at NEOGOV",
+        "aligns well with NEOGOV’s focus on AI-enabled and cloud-ready architecture"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "I have also driven improvements in CI/CD pipelines, containerized deployment with Docker and Kubernetes",
+        "architectural standards"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied breadth of \"Java and C# ecosystems\" for SaaS platform architecture without concrete SaaS/multi-product examples in the resume text.",
+      "Enterprise Architect scope claims are not strongly evidenced by explicit platform unification, shared services, or unified data model ownership."
+    ],
+    "most_damaging_gaps": [
+      "Missing explicit experience with Angular and front-end integration expectations in the JD.",
+      "No clear Infrastructure-as-Code (Terraform/AWS CDK) evidence despite JD requirement.",
+      "No concrete examples of cross-product interoperability, SSO, onboarding, common administration, or unified data models (core JD duties).",
+      "No mention of Snowflake/Databricks or comparable modern analytics stack; AI mention is model evaluation, not platform AI integration.",
+      "Limited evidence of .NET implementation depth (mentions C# but few role bullets demonstrating it)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets demonstrating platform unification work: shared services, SSO/OIDC/SAML, tenant onboarding, common admin, cross-product API standards.",
+      "Add concrete cloud/IaC and modernization specifics: Terraform/AWS CDK, reference architectures, environment automation, observability tooling, cost/perf governance.",
+      "Address JD tech stack gaps explicitly (Angular, GraphQL, SQL Server/MySQL performance tuning, .NET Core) or clarify transferable equivalents with examples."
+    ]
+  }
+}

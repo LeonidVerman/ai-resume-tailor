@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+    "company": "League",
+    "role_title": "Engineering Manager, Apps & Solutions (Western Canada)"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 7,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote) Nov 2025 – Present",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "role_fit": {
+      "score": 5,
+      "evidence": [
+        "Engineering Manager – Apps and Solutions role at League",
+        "Managed customer relationships... communicate project risks and timelines effectively"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Lead Software Developer/Team Leader"
+      ]
+    },
+    "clarity_impact": {
+      "score": 6,
+      "evidence": [
+        "serving 1M+ users",
+        "Improved system throughput by 25%"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 4,
+      "evidence": [
+        "Scaled and maintained high-throughput, fault-tolerant distributed systems",
+        "introducing a transactional cache for trading data"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 4,
+      "evidence": [
+        "Lead Software Developer/Team Leader... improving delivery predictability through agile coordination",
+        "Technical Skills... Emerging Tools: AI-assisted coding (ChatGPT, Claude, Cursor AI)"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "apply for the Engineering Manager – Apps and Solutions role at League",
+        "drawn to this position at League because of your commitment to delivering personalized health experiences"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Experienced team lead and project manager",
+        "Managed customer relationships... communicate project risks"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "GMO role: \"Managed customer relationships\" is asserted but not backed by specific customer/project details in the resume.",
+      "Summary claims \"project manager\" responsibilities without concrete PM artifacts (roadmaps, launches, stakeholder cadence) described."
+    ],
+    "most_damaging_gaps": [
+      "Little evidence of apps/solutions delivery to external enterprise customers end-to-end (definition, testing, launch) as described in the JD.",
+      "Healthcare/consumer experience domain alignment is minimal; motivation paragraph is generic.",
+      "Agile execution and QA/testing partnership are mentioned but not demonstrated with concrete practices (sprint metrics, QA collaboration, release process)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets showing true customer-facing delivery ownership: roadmap delivery, dependency management, risk escalation, and launch/testing coordination (mirroring JD language).",
+      "Surface concrete engineering-management behaviors: hiring/onboarding, performance management, career growth examples, and sprint/backlog ownership with outcomes.",
+      "Add mechanisms relevant to League’s environment (mobile/app integration, API contracts, release management, QA strategy, secure coding/access management) with specific examples rather than general statements."
+    ]
+  }
+}

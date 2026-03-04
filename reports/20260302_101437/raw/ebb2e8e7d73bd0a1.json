@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 7,
+      "evidence": [
+        "Led a backend engineering team delivering a trading system for 1M+ clients",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "designed and implemented cloud-native architectures that support scalable, modular systems for fintech and blockchain applications",
+        "eager to contribute to the development of a unified, AI-enabled ecosystem"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "Senior backend engineer and engineering leader with 15+ years of experience",
+        "VP / Director of Software Development / Lead Software Developer"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "raising test coverage by 20% and streamlining documentation",
+        "throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "cloud-native architecture and high-performance Java components",
+        "event-driven architecture"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 5,
+      "evidence": [
+        "Languages & Frameworks: Java, C#, Python, TypeScript, Spring, SpringBoot",
+        "Other: Technical leadership, architecture governance, modernization efforts"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "apply for the Enterprise Architect – Platform role at NEOGOV",
+        "drawn to NEOGOV’s mission of serving the public sector"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Proven expertise in designing cloud-native architectures and leading teams to deliver scalable solutions for over 1M users",
+        "I have honed my skills in modern architecture practices and data interoperability"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied breadth of \"cloud-native architectures\" and \"architecture governance\" without concrete platform-unification examples.",
+      "Resume lists \"Infrastructure-as-Code\" but provides no Terraform/AWS CDK evidence or projects."
+    ],
+    "most_damaging_gaps": [
+      "No explicit experience unifying many products into a shared platform (NEOGOV: \"connects 22+ products\").",
+      "Missing JD-specific stack signals: Angular, GraphQL, SQL Server, Terraform/AWS CDK, Snowflake/Databricks.",
+      "No concrete SSO/OIDC/SAML or enterprise identity integration experience; only generic auth references."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–3 bullets showing platform architecture work: shared services, unified data model, cross-product interoperability (even if within fintech domain).",
+      "Make DevOps/IaC concrete: name cloud provider, CI/CD tooling, and any Terraform/CDK (or remove IaC claim if not true).",
+      "Tailor to NEOGOV’s priorities: SSO/onboarding/common admin, data model consolidation, analytics/AI integration; include relevant mechanisms and outcomes."
+    ]
+  }
+}

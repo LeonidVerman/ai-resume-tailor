@@ -8,7 +8,6 @@ __pycache__/
 
 # Output files
 output/
-reports/
 .cache/
 
 # Job descriptions

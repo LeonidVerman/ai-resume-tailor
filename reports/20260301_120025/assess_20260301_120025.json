@@ -1,0 +1,208 @@
+{
+  "version": "assess_report_v1",
+  "generated_at": "2026-03-01T20:05:58.418438+00:00",
+  "model": "gpt-5.2",
+  "positions_count": 5,
+  "positions": [
+    {
+      "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+      "company": "NEOGOV",
+      "role_title": "Enterprise Architect, Platform",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 5,
+        "seniority_positioning": 6,
+        "clarity_impact": 7,
+        "mechanism_quality": 6,
+        "constraint_compliance": 4,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 6.0,
+      "raw_assessment_path": "reports\\20260301_120025\\raw\\0428f65406017dd8.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Resume claims \"architectural governance\" and \"modernization practices\" without concrete examples of governance artifacts (principles/standards/reference architectures) in bullets.",
+          "Cover letter claims \"scalable, modular architectures\" but resume bullets mostly describe trading-system scaling, not modular platform unification."
+        ],
+        "most_damaging_gaps": [
+          "Missing explicit multi-product SaaS platform unification / cross-product interoperability experience (core of JD: \"connects 22+ products\").",
+          "Missing IaC (Terraform/AWS CDK) and explicit architecture roadmap ownership language expected for Enterprise Architect – Platform.",
+          "Missing key JD technologies: Angular and .NET/Java both as implemented in SaaS context; also no GraphQL/REST design detail (REST not explicitly stated)."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add platform-architecture artifacts and scope: reference architectures, standards/principles, governance forums, and examples of enforcing patterns across multiple teams/services.",
+          "Directly address JD platform initiatives with credible parallels: SSO/identity, unified data model, onboarding/admin, API/event-driven interoperability; explicitly mention REST API design (and GraphQL only if true).",
+          "Close tooling gaps or clarify experience: IaC (Terraform/AWS CDK), .NET Core/C# usage in production, and any front-end integration (Angular) if applicable; otherwise reposition as Java/platform architect with a plan."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+      "company": "Plata",
+      "role_title": "Engineering Manager",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 6,
+        "seniority_positioning": 7,
+        "clarity_impact": 7,
+        "mechanism_quality": 6,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 6
+      },
+      "overall_readiness": 6,
+      "integrated_score": 6.65,
+      "raw_assessment_path": "reports\\20260301_120025\\raw\\d30bd46101f56c89.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "“Streamlined documentation and onboarding processes, ensuring reliable, on-time delivery aligned with product and business goals” (impact claim without concrete metric/context)"
+        ],
+        "most_damaging_gaps": [
+          "No clear evidence of owning an AI-powered user-facing product end-to-end (“AI-powered product from concept to production”).",
+          "Limited explicit people-management scope for EM (hiring, performance management, planning/prioritization) beyond general leadership phrasing.",
+          "Backend architecture mechanisms relevant to scaling (e.g., read replicas, multi-layer caching, integrations) are not spelled out for Plata-style services."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets explicitly mapping to EM responsibilities: hiring, performance management, sprint planning, prioritization, stakeholder management with Product/Data.",
+          "Reframe AI experience toward product delivery: describe any assistant/recommendation/LLM integration work; if none, clearly position as “AI evaluation + AI-assisted engineering” without implying AI product ownership.",
+          "Include concrete architecture examples aligned to the JD: scalable backend services/integrations, reliability practices (SLIs/SLOs, incident response), and explicit scaling mechanisms (read replicas, caching layers, async decoupling)."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+      "company": "Lillio",
+      "role_title": "Manager, Engineering",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 4,
+        "seniority_positioning": 9,
+        "clarity_impact": 7,
+        "mechanism_quality": 7,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 6.5,
+      "raw_assessment_path": "reports\\20260301_120025\\raw\\c1d11fc9de800631.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Potential overreach on domain alignment: “Committed to mission-driven work and improving outcomes” without concrete ECE examples.",
+          "Ambiguous claim: “Mentored and managed a diverse team” (diversity not evidenced elsewhere)."
+        ],
+        "most_damaging_gaps": [
+          "No demonstrated experience with Lillio’s core stack (Ruby on Rails, React, GraphQL).",
+          "Limited evidence of manager-specific responsibilities from the JD (recruiting, hiring, onboarding, roadmap alignment).",
+          "Little evidence of SOC2/controls, Heroku, or Postgres-in-production emphasis beyond a skills list."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add explicit people-management scope and routines tied to the JD (1:1s, feedback, career ladders, performance management) with concrete examples.",
+          "Address Lillio stack fit honestly: either show real Rails/React/GraphQL exposure or position as transferable leadership while highlighting closest analogs (APIs, TypeScript, Postgres, AWS).",
+          "Add cross-functional/roadmap and delivery examples (partnering with Product/Design, aligning roadmap to business goals, improving processes) and include one or two specific outcomes."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+      "company": "Fingerprint",
+      "role_title": "Senior Engineering Manager, Dashboard + Growth",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 4,
+        "seniority_positioning": 6,
+        "clarity_impact": 7,
+        "mechanism_quality": 5,
+        "constraint_compliance": 7,
+        "cover_letter_effectiveness": 5,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 6.1,
+      "raw_assessment_path": "reports\\20260301_120025\\raw\\a6e3af1863dd7165.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Implied PLG/dashboard relevance without concrete examples: “product-led growth experiences that turn trial users into loyal customers”.",
+          "Potential overreach on cross-functional alignment: “aligning well with Fingerprint's mission” without showing Dashboard/Growth outcomes."
+        ],
+        "most_damaging_gaps": [
+          "No direct dashboard/analytics or customer-console ownership evidence (core of “Dashboard” squad).",
+          "No concrete PLG funnel/onboarding/activation metrics or experiments (core of “Growth” squad).",
+          "Little evidence of managing two squads / multi-team execution cadence, forecasting, and stakeholder management."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets showing dashboard/analytics work (event tracking, metrics pipelines, customer-facing console performance, RBAC/settings UX) with measurable outcomes.",
+          "Add explicit engineering-management signals for this role: multi-squad leadership, planning/estimation accuracy, handling underperformance, hiring, and cross-functional partnership with Product/Design/GTM (with examples).",
+          "Tailor summary/cover letter to Fingerprint’s stack and mission: mention SaaS console, onboarding flows, experimentation, and scale/performance/observability practices tied to customer-facing web apps."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+      "company": "League",
+      "role_title": "Engineering Manager, Apps & Solutions (Western Canada)",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 5,
+        "seniority_positioning": 6,
+        "clarity_impact": 6,
+        "mechanism_quality": 4,
+        "constraint_compliance": 5,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 6
+      },
+      "overall_readiness": 6,
+      "integrated_score": 5.85,
+      "raw_assessment_path": "reports\\20260301_120025\\raw\\ae6777733d387d4c.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Implied customer-facing delivery depth without concrete examples: “customer-facing delivery to League”",
+          "Stakeholder/risk communication claim not evidenced with specifics: “communicate risks and coordinate project dependencies”"
+        ],
+        "most_damaging_gaps": [
+          "Little healthcare/enterprise apps context; focus remains fintech/crypto rather than “complex enterprise or healthcare environments”",
+          "Missing concrete A&S mechanisms: sprint/backlog ownership, QA partnership, testing/launch coordination",
+          "Resume omits key quantified impacts present in source profile (e.g., coverage +20%, throughput +25%), reducing credibility/impact"
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add explicit customer-facing delivery examples (timeline commitments, dependency management, launch/testing coordination) with 1–2 concrete bullets per role.",
+          "Re-introduce quantified outcomes and specific initiatives from the source background (e.g., “test coverage by 20%”, “throughput by 25%”) to raise impact and confidence.",
+          "Include 2–3 architecture mechanisms relevant to League delivery (e.g., “asynchronous messaging”, “multi-layer caching”, “read replicas”) tied to outcomes and reliability."
+        ]
+      }
+    }
+  ],
+  "category_averages": {
+    "truthfulness": 8.0,
+    "role_fit": 4.8,
+    "seniority_positioning": 6.8,
+    "clarity_impact": 6.8,
+    "mechanism_quality": 5.6,
+    "constraint_compliance": 5.6,
+    "cover_letter_effectiveness": 5.8,
+    "overall_readiness": 5.4
+  },
+  "integrated_score": 6.22,
+  "weights": {
+    "truthfulness": 0.2,
+    "role_fit": 0.2,
+    "seniority_positioning": 0.1,
+    "clarity_impact": 0.15,
+    "mechanism_quality": 0.1,
+    "constraint_compliance": 0.15,
+    "cover_letter_effectiveness": 0.05,
+    "overall_readiness": 0.05
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+    "company": "Lillio",
+    "role_title": "Manager, Engineering"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“Improved system throughput by 25% by introducing a transactional cache”"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "“Senior backend engineer and engineering leader… in fintech and crypto”",
+        "“apply for the Manager, Engineering role at Lillio”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "“VP / Director of Software Development / Lead Software Developer”",
+        "“led teams of up to 20 engineers”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“raising test coverage by 20%… reducing onboarding time”",
+        "“serving 1M+ users… Improved system throughput by 25%”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "“transactional cache for trading data… reducing database load and latency”",
+        "“improving scalability and reliability through high-performance architecture”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "“Technical Skills… Java… TypeScript… AWS… Kubernetes”",
+        "“Manager, Engineering role at Lillio”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "“aligns perfectly with Lillio's mission to empower early childhood educators”",
+        "“I am passionate about mentoring and coaching engineers”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“engineering leader with 15+ years… led teams of up to 20 engineers”",
+        "“Technical Skills… Metrics and observability”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Claims of “Led recruiting, hiring, and onboarding processes” are not substantiated with specific examples/metrics elsewhere in the generated resume."
+    ],
+    "most_damaging_gaps": [
+      "Little to no alignment to Lillio’s stack (Ruby on Rails, React, GraphQL, Postgres/Heroku) beyond generic full-stack/TypeScript mention.",
+      "Missing explicit people-management operating cadence expected for the role (1:1s, goal-setting, performance management, career ladders).",
+      "Limited evidence of product/roadmap leadership and cross-functional partnership depth (Product/Design, roadmap alignment to business objectives)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add concrete engineering-management examples: 1:1 cadence, feedback/performance processes, career growth outcomes, and team delivery metrics.",
+      "Tailor to Lillio’s environment: explicitly connect relevant experience to “AWS, PostgreSQL, observability tools, SOC2 controls” (only if true) and discuss how you’d lead teams building web product experiences.",
+      "Strengthen mechanisms with 2–3 architecture bullets that show how you scale and operate systems (e.g., incident response, SLOs, on-call, reliability practices) rather than “high-performance architecture” phrasing."
+    ]
+  }
+}

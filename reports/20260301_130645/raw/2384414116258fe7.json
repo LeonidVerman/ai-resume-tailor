@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+    "company": "Lillio",
+    "role_title": "Manager, Engineering"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "Improved system throughput by 25% through the implementation of a transactional cache"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "Lead Software Engineer and Engineering Manager with 15+ years of experience in high-performance",
+        "hands-on technical expertise in distributed systems and cloud infrastructure"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "Lead Software Engineer and Engineering Manager",
+        "Led teams of up to 20 engineers, focusing on professional and technical growth"
+      ]
+    },
+    "clarity_impact": {
+      "score": 6,
+      "evidence": [
+        "serving 1M+ users",
+        "improving maintainability and onboarding through documentation and testing"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "transactional cache for trading data, significantly reducing database load and latency",
+        "High-throughput APIs, distributed systems, fault tolerance"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "Tech stack: AWS, Docker, Kubernetes",
+        "Languages & Frameworks: Java, Python, TypeScript"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "apply for the Manager, Engineering role at Lillio",
+        "aligns perfectly with Lillio's mission to empower early childhood educators"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Manager, Engineering role at Lillio",
+        "positions me well to contribute to Lillio's engineering team"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume claims: \"Advocated for diversity, inclusion, and belonging\" (not evidenced by specific roles/initiatives in the resume content)."
+    ],
+    "most_damaging_gaps": [
+      "No demonstrated experience with Lillio stack: Ruby on Rails, React, GraphQL (not mentioned anywhere).",
+      "Limited evidence of core engineering-manager responsibilities (recruiting, hiring, onboarding, roadmap alignment) beyond generic leadership statements.",
+      "Missing security/compliance signals relevant to JD nice-to-haves (e.g., SOC2) and limited mention of product-lens execution."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add explicit, truthful mapping to the JD stack (or clearly state transferable experience + learning plan) instead of omitting Ruby on Rails/React/GraphQL entirely.",
+      "Strengthen engineering management evidence with concrete examples: hiring, performance management, 1:1 cadence, career ladders, delivery metrics, cross-functional roadmap alignment.",
+      "Increase mechanism specificity for scaling/operations (e.g., \"read replicas\", \"async messaging\", \"incident response\", \"observability\" usage) tied to outcomes and team practices."
+    ]
+  }
+}

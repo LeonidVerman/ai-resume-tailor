@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote) Nov 2025 – Present",
+        "Improved system throughput by 25% via transactional cache reducing database load and latency"
+      ]
+    },
+    "role_fit": {
+      "score": 5,
+      "evidence": [
+        "hands-on experience with cloud platforms (AWS), containerization (Docker, Kubernetes), and CI/CD practices",
+        "Lead Software Engineer with 15+ years of experience... in fintech and crypto"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Lead Software Engineer with 15+ years of experience... architectural governance"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "delivering scalable trading systems for 1M+ clients",
+        "raising test coverage by 20%... Improved system throughput by 25%"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "leveraging horizontal scaling, database read replicas, and multiple caching layers",
+        "Async Messaging: Kafka, RabbitMQ"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 4,
+      "evidence": [
+        "Technical Skills... Cloud & DevOps: AWS, Docker, Kubernetes, CI/CD",
+        "Languages & Frameworks: Java, C#, Go, Spring, SpringBoot"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "apply for the Enterprise Architect, Platform role at NEOGOV",
+        "contributing to the development of a unified, cloud-ready platform"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Experienced team lead and project manager with a track record of delivering mission-critical platforms",
+        "I have successfully designed and led the development of scalable, modular architectures"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume claims \"architectural governance\" and \"modernization practices\" without concrete examples of governance artifacts (principles/standards/reference architectures) in bullets.",
+      "Cover letter claims \"scalable, modular architectures\" but resume bullets mostly describe trading-system scaling, not modular platform unification."
+    ],
+    "most_damaging_gaps": [
+      "Missing explicit multi-product SaaS platform unification / cross-product interoperability experience (core of JD: \"connects 22+ products\").",
+      "Missing IaC (Terraform/AWS CDK) and explicit architecture roadmap ownership language expected for Enterprise Architect – Platform.",
+      "Missing key JD technologies: Angular and .NET/Java both as implemented in SaaS context; also no GraphQL/REST design detail (REST not explicitly stated)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add platform-architecture artifacts and scope: reference architectures, standards/principles, governance forums, and examples of enforcing patterns across multiple teams/services.",
+      "Directly address JD platform initiatives with credible parallels: SSO/identity, unified data model, onboarding/admin, API/event-driven interoperability; explicitly mention REST API design (and GraphQL only if true).",
+      "Close tooling gaps or clarify experience: IaC (Terraform/AWS CDK), .NET Core/C# usage in production, and any front-end integration (Angular) if applicable; otherwise reposition as Java/platform architect with a plan."
+    ]
+  }
+}

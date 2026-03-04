@@ -1,0 +1,208 @@
+{
+  "version": "assess_report_v1",
+  "generated_at": "2026-03-02T22:15:23.449101+00:00",
+  "model": "gpt-5.2",
+  "positions_count": 5,
+  "positions": [
+    {
+      "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+      "company": "NEOGOV",
+      "role_title": "Enterprise Architect, Platform",
+      "scores": {
+        "truthfulness": 5,
+        "role_fit": 4,
+        "seniority_positioning": 6,
+        "clarity_impact": 7,
+        "mechanism_quality": 6,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 5,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.45,
+      "raw_assessment_path": "reports\\20260302_141300\\raw\\b5ce2b933bb5e43f.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Claim of “cross-product interoperability” architecture work is not substantiated with concrete examples or scope in the resume.",
+          "“architecture governance” appears in skills but no governance artifacts (principles/standards/review boards) are evidenced."
+        ],
+        "most_damaging_gaps": [
+          "Missing JD-specific stack signals: Angular, GraphQL, and explicit .NET Core/C# platform work in experience (not just skills).",
+          "No Terraform/AWS CDK or clear Infrastructure-as-Code examples despite JD emphasis on IaC-managed modernization.",
+          "Limited evidence of enterprise SaaS platform unification across “22+ products,” unified data models, SSO, onboarding, common admin."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Replace vague platform claims with 2–3 concrete architecture case studies (e.g., shared services, identity/SSO, unified data model, cross-domain APIs/events), including scope and outcomes.",
+          "Add explicit cloud modernization + IaC examples (Terraform/CDK, container orchestration patterns, CI/CD, observability) tied to real delivered systems.",
+          "Tailor to NEOGOV’s JD keywords: .NET Core + Java coexistence, Angular integration, data consolidation (SQL Server/Oracle/MySQL), analytics/AI enablement (Snowflake/Databricks), and platform governance mechanisms."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+      "company": "Plata Card",
+      "role_title": "Engineering Manager",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 5,
+        "seniority_positioning": 7,
+        "clarity_impact": 7,
+        "mechanism_quality": 6,
+        "constraint_compliance": 5,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 6
+      },
+      "overall_readiness": 6,
+      "integrated_score": 6.3,
+      "raw_assessment_path": "reports\\20260302_141300\\raw\\b1a5ad4d51f7aef7.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Implied direct AI product leadership: resume says “Engineering Manager” and “own delivery cadence”, but no explicit “AI-powered product from concept to production” ownership is evidenced.",
+          "Cross-functional scope may be overstated: “Led a cross-functional backend engineering team” without naming functions (Product/Data/AI) or concrete examples."
+        ],
+        "most_damaging_gaps": [
+          "No concrete examples of building an AI-powered, user-facing assistant/recommendation product (concept→production).",
+          "Limited evidence of EM fundamentals requested by JD (hiring, performance management, planning/prioritization details).",
+          "Architecture for assistant/backend integrations is generic; lacks specifics like event-driven interaction flows, reliability/observability practices for AI features."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–3 bullets demonstrating AI/ML product delivery (even if via LLM integration, RAG, experimentation loops, or data-driven features) with outcomes and production constraints.",
+          "Make EM scope explicit: hiring involvement, performance coaching, roadmap planning, prioritization tradeoffs, and cross-team rituals with Product/Data/AI stakeholders.",
+          "Strengthen architecture section with concrete mechanisms relevant to an assistant (service boundaries, integration patterns, evaluation/monitoring, latency/SLOs, incident learnings)."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+      "company": "Lillio",
+      "role_title": "Manager, Engineering",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 4,
+        "seniority_positioning": 7,
+        "clarity_impact": 7,
+        "mechanism_quality": 5,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 6.1,
+      "raw_assessment_path": "reports\\20260302_141300\\raw\\e31fca257418615a.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Implied domain motivation without supporting experience: “motivated by mission-driven impact in early childhood education.”"
+        ],
+        "most_damaging_gaps": [
+          "No evidence of Ruby on Rails/React/GraphQL/Heroku experience despite JD stack emphasis.",
+          "Limited explicit people-management mechanisms (1:1s, career growth, hiring/onboarding, performance management).",
+          "Weak linkage to roadmap alignment/business objectives and cross-functional partnership specifics (Product/Design)."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add concrete engineering-management examples matching the JD: 1:1 cadence, feedback, leveling, objectives, and a hiring/onboarding contribution (if true).",
+          "Bridge to Lillio’s stack and environment honestly: highlight any relevant web/full-stack work, Postgres/AWS/observability, and how you’d ramp on Rails/React/GraphQL.",
+          "Increase role-relevant impact bullets: process improvements, delivery predictability, cross-functional execution, and culture-building outcomes (with metrics where possible)."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+      "company": "Fingerprint",
+      "role_title": "Senior Engineering Manager, Dashboard + Growth",
+      "scores": {
+        "truthfulness": 7,
+        "role_fit": 4,
+        "seniority_positioning": 5,
+        "clarity_impact": 7,
+        "mechanism_quality": 5,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.7,
+      "raw_assessment_path": "reports\\20260302_141300\\raw\\7692af69e3b41f3d.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Cover letter claims “top 5 platforms in the Japanese market” while the resume only states “trading system for 1M+ clients” (top-5 not shown there).",
+          "Resume claims “Hands-on leadership with a strong focus on strategic execution” without concrete dashboard/PLG examples."
+        ],
+        "most_damaging_gaps": [
+          "No demonstrated experience leading dashboard/analytics or customer-console engineering (core of the role).",
+          "No concrete product-led growth/onboarding funnel work beyond generic intent statements.",
+          "Limited evidence of managing two squads / multi-team EM scope; leadership examples are present but not clearly at Senior EM level in SaaS product org."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets showing dashboard/analytics delivery (e.g., metrics pipelines, customer console performance, event tracking, adoption reporting) with scale and outcomes.",
+          "Translate leadership into Senior EM signals: multi-team ownership, hiring/performance management, cross-functional roadmap execution with Product/Design/GTM, and predictable delivery metrics.",
+          "Replace generic PLG statements with evidenced examples (onboarding steps, activation milestones, feature discovery experiments) or explicitly frame as transferable experience with a concrete plan."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+      "company": "League",
+      "role_title": "Engineering Manager, Apps & Solutions (Western Canada)",
+      "scores": {
+        "truthfulness": 7,
+        "role_fit": 5,
+        "seniority_positioning": 6,
+        "clarity_impact": 6,
+        "mechanism_quality": 4,
+        "constraint_compliance": 4,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.45,
+      "raw_assessment_path": "reports\\20260302_141300\\raw\\fa53bb8f5e21ffd6.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "GMO role: \"Managed customer relationships\" is asserted but not backed by specific customer/project details in the resume.",
+          "Summary claims \"project manager\" responsibilities without concrete PM artifacts (roadmaps, launches, stakeholder cadence) described."
+        ],
+        "most_damaging_gaps": [
+          "Little evidence of apps/solutions delivery to external enterprise customers end-to-end (definition, testing, launch) as described in the JD.",
+          "Healthcare/consumer experience domain alignment is minimal; motivation paragraph is generic.",
+          "Agile execution and QA/testing partnership are mentioned but not demonstrated with concrete practices (sprint metrics, QA collaboration, release process)."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets showing true customer-facing delivery ownership: roadmap delivery, dependency management, risk escalation, and launch/testing coordination (mirroring JD language).",
+          "Surface concrete engineering-management behaviors: hiring/onboarding, performance management, career growth examples, and sprint/backlog ownership with outcomes.",
+          "Add mechanisms relevant to League’s environment (mobile/app integration, API contracts, release management, QA strategy, secure coding/access management) with specific examples rather than general statements."
+        ]
+      }
+    }
+  ],
+  "category_averages": {
+    "truthfulness": 7.0,
+    "role_fit": 4.4,
+    "seniority_positioning": 6.2,
+    "clarity_impact": 6.8,
+    "mechanism_quality": 5.2,
+    "constraint_compliance": 5.4,
+    "cover_letter_effectiveness": 5.8,
+    "overall_readiness": 5.2
+  },
+  "integrated_score": 5.8,
+  "weights": {
+    "truthfulness": 0.2,
+    "role_fit": 0.2,
+    "seniority_positioning": 0.1,
+    "clarity_impact": 0.15,
+    "mechanism_quality": 0.1,
+    "constraint_compliance": 0.15,
+    "cover_letter_effectiveness": 0.05,
+    "overall_readiness": 0.05
+  }
+}

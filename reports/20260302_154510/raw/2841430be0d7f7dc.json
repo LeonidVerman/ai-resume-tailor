@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+    "company": "Plata Card",
+    "role_title": "Engineering Manager"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "led teams of up to 20 engineers"
+      ]
+    },
+    "role_fit": {
+      "score": 6,
+      "evidence": [
+        "Engineering Manager with 15+ years of experience leading high-performance... systems in fintech and crypto",
+        "committed to fostering cross-team collaboration with Product, Data, and AI stakeholders"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Engineering Manager with 15+ years of experience... managing teams of up to 20 engineers"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "trading system for 1M+ clients",
+        "improving system throughput by 25% through a transactional cache"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "high-performance Java components",
+        "Designed stable API contracts to support integrations"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "AI-assisted tools (ChatGPT, Cursor, Claude)",
+        "API Patterns: REST, WebSockets"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 7,
+      "evidence": [
+        "apply for the Engineering Manager role at Plata Card",
+        "translate ambiguous product requirements into clear technical solutions"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "Owned delivery cadence and execution rituals",
+        "contribute to building intelligent systems that enhance customer experience"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Owned delivery cadence and execution rituals (not clearly supported with concrete examples/metrics in the resume bullets)",
+      "Partnered with product and stakeholders to align scope and priorities (plausible, but thinly evidenced)"
+    ],
+    "most_damaging_gaps": [
+      "No concrete example of leading an AI-powered product from concept to production (only AI lab contractor support and AI-assisted tooling)",
+      "Limited architecture detail for scalable backend services/integrations (few specifics beyond 'API contracts' and 'transactional cache')",
+      "People-management scope is asserted but not evidenced (hiring, performance management, team health/process outcomes)"
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 1–2 bullets showing EM ownership: planning/prioritization, hiring/interviewing, performance management, and measurable delivery outcomes.",
+      "Include a specific AI/ML product-adjacent delivery story (even if integrating LLM features or data-driven components) with production reliability/iteration details.",
+      "Strengthen architecture mechanisms with concrete patterns (event-driven flows, retries/idempotency, observability) tied to outcomes and scale."
+    ]
+  }
+}

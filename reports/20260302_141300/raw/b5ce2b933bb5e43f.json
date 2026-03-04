@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 5,
+      "evidence": [
+        "“Designed and documented a modular architecture that supported shared services and cross-product interoperability.”",
+        "“Expertise in platform architecture, modernization patterns, and API integration”"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "“platform architecture, modernization patterns, and API integration”",
+        "“drive platform unification and data interoperability”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "“engineering leader with 15+ years”",
+        "“VP / Director of Software Development / Lead Software Developer”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“Improved system throughput by 25% with a transactional cache”",
+        "“serving 1M+ users”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "“Implemented horizontal scaling of trading servers and multiple caching layers”",
+        "“transactional cache… reducing database load and latency”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“Contribute as an independent contractor helping world-leading AI labs train and evaluate”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "“apply for the Enterprise Architect, Platform role at NEOGOV”",
+        "“eager to leverage my expertise in platform architecture and modernization patterns”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“Technical Skills… AWS, Docker, Kubernetes, CI/CD”",
+        "“I look forward to the opportunity to collaborate with your engineering and product leadership teams”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Claim of “cross-product interoperability” architecture work is not substantiated with concrete examples or scope in the resume.",
+      "“architecture governance” appears in skills but no governance artifacts (principles/standards/review boards) are evidenced."
+    ],
+    "most_damaging_gaps": [
+      "Missing JD-specific stack signals: Angular, GraphQL, and explicit .NET Core/C# platform work in experience (not just skills).",
+      "No Terraform/AWS CDK or clear Infrastructure-as-Code examples despite JD emphasis on IaC-managed modernization.",
+      "Limited evidence of enterprise SaaS platform unification across “22+ products,” unified data models, SSO, onboarding, common admin."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Replace vague platform claims with 2–3 concrete architecture case studies (e.g., shared services, identity/SSO, unified data model, cross-domain APIs/events), including scope and outcomes.",
+      "Add explicit cloud modernization + IaC examples (Terraform/CDK, container orchestration patterns, CI/CD, observability) tied to real delivered systems.",
+      "Tailor to NEOGOV’s JD keywords: .NET Core + Java coexistence, Angular integration, data consolidation (SQL Server/Oracle/MySQL), analytics/AI enablement (Snowflake/Databricks), and platform governance mechanisms."
+    ]
+  }
+}

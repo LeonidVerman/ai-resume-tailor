@@ -74,6 +74,7 @@ _PLAN_REQUIRED_KEYS = frozenset({
     "resume_strategy",
     "cover_letter_strategy",
     "risk_checks",
+    "narrative_plan",
 })
 
 
@@ -211,6 +212,14 @@ def _run_schema_gate(data: Any) -> list[str]:
                 f"got {type(exp).__name__}"
             )
 
+    # narrative_plan must be a dict
+    np = data.get("narrative_plan")
+    if "narrative_plan" in data and not isinstance(np, dict):
+        errors.append(
+            f"schema_invalid: narrative_plan must be an object, "
+            f"got {type(np).__name__}"
+        )
+
     return errors[:15]  # cap to avoid flooding repair context
 
 
@@ -332,6 +341,21 @@ def validate_plan(data: Any) -> dict:
         raise PlanValidationError(
             f"domain_translation_rule_ids must have at most 3 entries, got {len(rule_ids)}"
         )
+
+    # narrative_plan: anchor_role_id must match a role in resume_strategy.experience
+    np = data.get("narrative_plan")
+    if isinstance(np, dict):
+        anchor = np.get("anchor_role_id", "")
+        if anchor:
+            exp_roles = [
+                e.get("role_name", "")
+                for e in (data.get("resume_strategy") or {}).get("experience", [])
+            ]
+            if exp_roles and anchor not in exp_roles:
+                raise PlanValidationError(
+                    f"narrative_plan.anchor_role_id {anchor!r} does not match any "
+                    f"resume_strategy.experience role_name: {exp_roles}"
+                )
 
     return data
 
@@ -632,6 +656,7 @@ def tailor_documents_with_plan(
         result.cover_letter or "",
         current_date,
         evidence_ledger=current_ledger,
+        domain_translation_ledger=current_domain_translation_ledger,
     )
 
     attempts = [
@@ -667,6 +692,7 @@ def tailor_documents_with_plan(
             repair_result.cover_letter or "",
             current_date,
             evidence_ledger=current_ledger,
+            domain_translation_ledger=current_domain_translation_ledger,
         )
         attempts.append(
             {

@@ -1,0 +1,85 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "Lead Software Engineer with 15+ years of experience...trading and fintech systems",
+        "apply for the Enterprise Architect, Platform role at NEOGOV"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Lead Software Developer/Team Leader"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "raising test coverage by 20% and streamlining documentation",
+        "serving 1M+ users"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "transactional cache for trading data",
+        "Built a prototype in-memory database (H2 → Oracle replication)"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 5,
+      "evidence": [
+        "Languages & Frameworks: Java, C#, VBA, Go",
+        "Tools: ... Docker, Kubernetes"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 4,
+      "evidence": [
+        "built fintech and blockchain systems that became top-5 platforms",
+        "contribute as an independent contractor supporting world-leading AI research labs"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "apply for the Enterprise Architect, Platform role at NEOGOV",
+        "Proven expertise in Java backend engineering, distributed systems"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied platform/enterprise architecture ownership is not evidenced (no mention of \"platform roadmap\", \"reference architectures\", or \"architecture governance\")."
+    ],
+    "most_damaging_gaps": [
+      "Missing explicit SaaS platform unification experience (\"connects 22+ products\", shared services, unified data models).",
+      "No Angular/GraphQL evidence; JD asks \"Angular\" and \"RESTful API or GraphQL integration design\".",
+      "No IaC/Terraform/AWS CDK evidence; JD asks \"Infrastructure-as-Code using Terraform or AWS CDK\".",
+      "No clear SSO / identity integration experience; JD includes \"single sign-on\" and cross-product onboarding/admin.",
+      "Limited cloud-native modernization specifics (containers/IaC/service-oriented) beyond listing \"Docker, Kubernetes\"."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add platform-architecture artifacts and governance: explicitly describe \"reference architectures\", \"architecture principles/standards\", and cross-team design reviews tied to outcomes.",
+      "Map experience to JD initiatives: include concrete examples of cross-system integration, shared services, identity/SSO patterns, and data interoperability (even if from fintech domain).",
+      "Close key keyword/skill gaps with truthful specifics: REST/GraphQL design, cloud (AWS/Azure/GCP) architecture decisions, and IaC (Terraform/CDK) usage with at least one project example."
+    ]
+  }
+}

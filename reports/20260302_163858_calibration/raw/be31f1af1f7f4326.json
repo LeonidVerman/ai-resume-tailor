@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 9,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "led teams of up to 20 engineers to deliver reliable, scalable products"
+      ]
+    },
+    "role_fit": {
+      "score": 3,
+      "evidence": [
+        "Lead Software Engineer with 15+ years... trading and fintech systems",
+        "apply for the Senior Engineering Manager, Dashboard + Growth role at Fingerprint"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Experienced team lead and project manager"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "raising test coverage by 20%",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "high-performance Java components",
+        "introducing a transactional cache for trading data"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "Contribute as an independent contractor helping world-leading AI labs",
+        "Languages & Frameworks: Java, C#, VBA, Go... Python"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 4,
+      "evidence": [
+        "built fintech and blockchain systems that became top-5 platforms",
+        "contribute to building reliable, scalable systems for your clients"
+      ]
+    },
+    "overall_readiness": {
+      "score": 4,
+      "evidence": [
+        "Lead Software Engineer with 15+ years... trading and fintech systems",
+        "apply for the Senior Engineering Manager, Dashboard + Growth role"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Dashboard/Growth/PLG experience is not evidenced; resume focuses on trading/fintech backend rather than onboarding, feature discovery, or analytics consoles."
+    ],
+    "most_damaging_gaps": [
+      "No demonstrated product-led growth work (onboarding funnels, activation milestones, feature discovery).",
+      "No clear dashboard/analytics console ownership (customer-facing web app, analytics UX, event instrumentation).",
+      "Engineering management scope is implied but not clearly mapped to managing two squads, cross-functional partnership (Product/Design/GTM), and predictable delivery."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Rewrite summary and top bullets to match Fingerprint’s mission: customer console/dashboard, onboarding flows, adoption/retention, and analytics at scale (even if via analogous fintech console experiences).",
+      "Add explicit engineering management signals: number of direct reports, cadence/process (planning, estimation, performance management), and cross-functional delivery with Product/Design/GT M—currently mostly “team lead” phrasing.",
+      "Add mechanisms relevant to web SaaS dashboards: event tracking/metrics, data pipelines/aggregations, performance/latency SLOs for UI/API, and reliability/observability outcomes (not just backend trading throughput)."
+    ]
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "version": "assess_report_v1",
+  "generated_at": "2026-03-02T19:23:17.882584+00:00",
+  "model": "gpt-5.2",
+  "positions_count": 5,
+  "positions": [
+    {
+      "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+      "company": "NEOGOV",
+      "role_title": "Enterprise Architect, Platform",
+      "scores": {
+        "truthfulness": 6,
+        "role_fit": 4,
+        "seniority_positioning": 7,
+        "clarity_impact": 7,
+        "mechanism_quality": 6,
+        "constraint_compliance": 5,
+        "cover_letter_effectiveness": 5,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.6,
+      "raw_assessment_path": "reports\\20260302_112028\\raw\\ca592efff981ceb2.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Claims of \"cross-product interoperability\" and \"platform unification\" are asserted but not substantiated by specific examples in the resume bullets.",
+          "Implied enterprise architecture governance depth: \"Established architecture governance\" without naming principles/standards/processes used."
+        ],
+        "most_damaging_gaps": [
+          "Missing JD-required stack signals: no Angular, no GraphQL, no explicit .NET Core/.NET ecosystem work beyond listing C#.",
+          "No Infrastructure-as-Code evidence (Terraform/AWS CDK) despite JD calling it out.",
+          "No analytics/data platform experience (Snowflake/Databricks) and only generic AI mention; lacks concrete AI/analytics integration architecture."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets showing true multi-product/platform integration work (SSO, shared services, unified data models, onboarding/admin) with concrete outcomes.",
+          "Explicitly address NEOGOV’s required technologies: .NET Core/C#, Java, Angular, REST/GraphQL, SQL Server/Oracle/MySQL, and add any real IaC (Terraform/CDK) experience or clearly state exposure/learning plan.",
+          "Strengthen enterprise-architect mechanisms: include reference architecture artifacts (e.g., API standards, eventing patterns, security model, governance cadence) and a modernization roadmap example (containers, CI/CD, observability)."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+      "company": "Plata",
+      "role_title": "Engineering Manager",
+      "scores": {
+        "truthfulness": 7,
+        "role_fit": 6,
+        "seniority_positioning": 8,
+        "clarity_impact": 8,
+        "mechanism_quality": 5,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 7,
+        "overall_readiness": 6
+      },
+      "overall_readiness": 6,
+      "integrated_score": 6.65,
+      "raw_assessment_path": "reports\\20260302_112028\\raw\\030c98c65d41ee20.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Resume claims “Proven expertise in building... AI-powered products” but experience bullets describe AI tooling/model evaluation rather than shipping an AI product.",
+          "Cover letter implies direct collaboration “with Product, Data, and AI teams” without concrete examples in the resume."
+        ],
+        "most_damaging_gaps": [
+          "No clear evidence of owning an “AI-powered product from concept to production” (JD core requirement).",
+          "Limited explicit engineering-manager scope: hiring, performance management, planning/prioritization, and delivery rituals are not concretely evidenced.",
+          "Architecture mechanisms are thin vs JD emphasis on “scalable backend services and integrations” for an evolving assistant product."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets showing EM responsibilities explicitly (hiring, performance management, planning/prioritization, stakeholder management) with outcomes.",
+          "Replace/qualify “AI-powered products” with a concrete shipped AI feature (or clearly state AI-adjacent work: model evaluation + AI-assisted engineering) to reduce overclaim risk.",
+          "Add architecture/integration specifics relevant to an assistant (service boundaries, data pipelines, retrieval/RAG, latency/SLOs, monitoring/incident process) beyond “transactional cache” and generic “Java components.”"
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+      "company": "Lillio",
+      "role_title": "Manager, Engineering",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 4,
+        "seniority_positioning": 8,
+        "clarity_impact": 7,
+        "mechanism_quality": 6,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 6.3,
+      "raw_assessment_path": "reports\\20260302_112028\\raw\\d6f8f4b72a59f70a.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "No clear hallucinations versus the provided master resume; content appears largely reused/consistent."
+        ],
+        "most_damaging_gaps": [
+          "No evidence of Ruby on Rails/React/GraphQL delivery despite JD emphasizing leading web apps in that stack.",
+          "Limited demonstration of roadmap alignment and product-management partnership beyond generic statements.",
+          "Missing concrete recruiting/hiring/onboarding leadership examples (a core responsibility in JD)."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add explicit examples of managing roadmap execution with Product/Design (planning, tradeoffs, outcomes), not just “collaborated across teams”.",
+          "Address Lillio’s stack directly: either show real Rails/React/GraphQL experience or position a credible transition plan with adjacent evidence (TypeScript, web APIs, full-stack exposure).",
+          "Include specific people-leadership outcomes: hiring, onboarding, performance management, promotions, retention, and process improvements with measurable results."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+      "company": "Fingerprint",
+      "role_title": "Senior Engineering Manager, Dashboard + Growth",
+      "scores": {
+        "truthfulness": 7,
+        "role_fit": 4,
+        "seniority_positioning": 6,
+        "clarity_impact": 7,
+        "mechanism_quality": 4,
+        "constraint_compliance": 7,
+        "cover_letter_effectiveness": 5,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.8,
+      "raw_assessment_path": "reports\\20260302_112028\\raw\\53a90f5c5a084a86.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Cover letter claims “experience in product-led growth initiatives” without specific PLG/onboarding/funnel examples elsewhere in the resume."
+        ],
+        "most_damaging_gaps": [
+          "Little to no direct dashboard/analytics or customer-facing console experience (core of “Dashboard” squad).",
+          "No concrete examples of onboarding flows, feature discovery, activation milestones, or experimentation (core of “Growth” squad).",
+          "Resume reads primarily as senior backend/fintech leader; lacks evidence of leading web app product experiences (TypeScript/React, SaaS UI, analytics)."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets showing customer-facing product work: dashboards/analytics, UX-performance, event instrumentation, and decision-making metrics.",
+          "Replace generic PLG language with specific outcomes (activation rate, trial-to-paid conversion, retention) or remove the claim if not true.",
+          "Add architecture mechanisms relevant to Fingerprint’s domain: high-scale analytics pipelines, event-driven tracking, performance/latency SLOs, and reliability practices for dashboards/onboarding."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+      "company": "League",
+      "role_title": "Engineering Manager, Apps & Solutions (Western Canada)",
+      "scores": {
+        "truthfulness": 6,
+        "role_fit": 5,
+        "seniority_positioning": 7,
+        "clarity_impact": 7,
+        "mechanism_quality": 4,
+        "constraint_compliance": 4,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.5,
+      "raw_assessment_path": "reports\\20260302_112028\\raw\\53df5c56f10afc3a.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Customer-facing/client-communication depth is asserted but not evidenced with concrete examples (e.g., named customers, launch coordination, stakeholder cadence).",
+          "“escalated issues to leadership” is plausible but not backed by a specific incident or outcome."
+        ],
+        "most_damaging_gaps": [
+          "Little to no healthcare/enterprise apps context; most examples are trading/crypto rather than customer app delivery.",
+          "Missing concrete mechanisms central to the role (sprint/backlog ownership, QA partnership/testing strategy, release/launch management).",
+          "Resume does not demonstrate the requested platform + solution-specific delivery model; reads as backend systems leadership rather than apps/solutions delivery."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets explicitly about customer delivery: roadmap commitments, launch/testing coordination, handling dependencies, and communicating risks/timelines to customers.",
+          "Surface specific engineering management mechanisms: sprint planning, backlog prioritization, on-call/incident practices, QA collaboration (manual + automated), and release management.",
+          "Reframe experience toward “apps & solutions” outcomes (cross-functional product work, cohesive end-user experience, enterprise constraints), and reduce generic statements like “delivered high-quality software on tight timelines” by adding specifics."
+        ]
+      }
+    }
+  ],
+  "category_averages": {
+    "truthfulness": 6.8,
+    "role_fit": 4.6,
+    "seniority_positioning": 7.2,
+    "clarity_impact": 7.2,
+    "mechanism_quality": 5.0,
+    "constraint_compliance": 5.6,
+    "cover_letter_effectiveness": 5.8,
+    "overall_readiness": 5.2
+  },
+  "integrated_score": 5.97,
+  "weights": {
+    "truthfulness": 0.2,
+    "role_fit": 0.2,
+    "seniority_positioning": 0.1,
+    "clarity_impact": 0.15,
+    "mechanism_quality": 0.1,
+    "constraint_compliance": 0.15,
+    "cover_letter_effectiveness": 0.05,
+    "overall_readiness": 0.05
+  }
+}

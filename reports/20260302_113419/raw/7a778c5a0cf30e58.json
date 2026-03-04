@@ -1,0 +1,85 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 5,
+      "evidence": [
+        "“Designed and documented a scalable, modular, and cloud-native architecture that supported shared services and unified data models.”",
+        "“Experienced in collaborating with product and engineering teams to drive platform unification and cross-product interoperability.”"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "“Strong expertise in Java backend engineering and cloud platform experience”",
+        "“establishing reusable patterns across APIs and event-driven systems”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "“VP / Director of Software Development / Lead Software Developer”",
+        "“lead teams up to 20 engineers”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“raising test coverage by 20%”",
+        "“Improved system throughput by 25%”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 7,
+      "evidence": [
+        "“Implemented horizontal scaling, multiple caching layers, and asynchronous messaging for component decoupling”",
+        "“Established architecture governance principles and standards across APIs and event-driven systems”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“Cloud Platforms: AWS, Docker, Kubernetes, CI/CD”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "“apply for the Enterprise Architect – Platform role at NEOGOV.”",
+        "“driving modernization efforts towards cloud-native architectures.”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "“Senior backend engineer and engineering leader with 15+ years”",
+        "“Design and document a scalable, modular, and cloud-native architecture”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Claims of “cloud-native architecture” and “unified data models” at GMO-Z.com are not supported by the master resume specifics.",
+      "“platform unification and cross-product interoperability” is asserted but not evidenced by concrete multi-product SaaS examples."
+    ],
+    "most_damaging_gaps": [
+      "Missing explicit .NET Core/.NET ecosystem depth despite listing C# (JD asks “.NET (Core/C#) and Java ecosystems”).",
+      "No Angular experience shown (JD explicitly requests Angular).",
+      "No Infrastructure-as-Code evidence (Terraform/AWS CDK) despite JD requirement.",
+      "Limited direct SaaS multi-product platform integration narrative; experience is primarily fintech/crypto trading systems."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Replace generic platform claims with specific, verifiable integration/architecture examples (e.g., SSO-like auth, shared services, data model decisions) tied to named systems you built.",
+      "Address core JD keywords with evidence: add any real .NET Core work, Angular exposure, and IaC (Terraform/CDK) projects; if none, avoid implying them and position a learning plan.",
+      "Tailor to NEOGOV’s platform outcomes: reference architectures for “shared services, unified data models, onboarding, common administration,” and add concrete governance artifacts (principles, standards, review process)."
+    ]
+  }
+}

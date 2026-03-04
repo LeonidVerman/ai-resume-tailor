@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+    "company": "Plata",
+    "role_title": "Engineering Manager"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 7,
+      "evidence": [
+        "“led teams of up to 20 engineers”",
+        "“Proven expertise in building scalable backend services and AI-powered products.”"
+      ]
+    },
+    "role_fit": {
+      "score": 6,
+      "evidence": [
+        "“Engineering Manager with 15+ years of experience leading engineering teams”",
+        "“eager to leverage my technical hands-on expertise and experience in cross-team collaboration with Product, Data, and AI teams”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "“VP / Director of Software Development”",
+        "“Lead Software Developer/Team Leader”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "“trading system for 1M+ clients”",
+        "“raising test coverage by 20%”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "“introducing a transactional cache for trading data”",
+        "“improving scalability and reliability through high-performance Java components”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“AI Tools: ChatGPT, Cursor, Claude Code”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 7,
+      "evidence": [
+        "“apply for the Engineering Manager role at Plata”",
+        "“building intelligent systems that enhance customer experience and engagement”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "“Proven expertise in building scalable backend services and AI-powered products.”",
+        "“drive the development of AI-powered financial solutions”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume claims “Proven expertise in building... AI-powered products” but experience bullets describe AI tooling/model evaluation rather than shipping an AI product.",
+      "Cover letter implies direct collaboration “with Product, Data, and AI teams” without concrete examples in the resume."
+    ],
+    "most_damaging_gaps": [
+      "No clear evidence of owning an “AI-powered product from concept to production” (JD core requirement).",
+      "Limited explicit engineering-manager scope: hiring, performance management, planning/prioritization, and delivery rituals are not concretely evidenced.",
+      "Architecture mechanisms are thin vs JD emphasis on “scalable backend services and integrations” for an evolving assistant product."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets showing EM responsibilities explicitly (hiring, performance management, planning/prioritization, stakeholder management) with outcomes.",
+      "Replace/qualify “AI-powered products” with a concrete shipped AI feature (or clearly state AI-adjacent work: model evaluation + AI-assisted engineering) to reduce overclaim risk.",
+      "Add architecture/integration specifics relevant to an assistant (service boundaries, data pipelines, retrieval/RAG, latency/SLOs, monitoring/incident process) beyond “transactional cache” and generic “Java components.”"
+    ]
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 5,
+      "evidence": [
+        "“integrating AI capabilities into enterprise platforms”",
+        "“Cloud & Infrastructure: AWS, Azure, Docker, Kubernetes, Terraform”"
+      ]
+    },
+    "role_fit": {
+      "score": 6,
+      "evidence": [
+        "“Enterprise Architect with 15+ years of experience”",
+        "“Established architectural direction for platform unification and data model consolidation”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "“VP / Director of Software Development / Lead Software Developer”",
+        "“Enterprise Architect with 15+ years of experience”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“serving 1M+ users”",
+        "“Improved system throughput by 25%”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "“horizontal scaling and reduced database load through multiple caching layers”",
+        "“microservices, event-driven architecture, API design, data modeling”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 7,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“I am excited to apply for the Enterprise Architect, Platform role at NEOGOV.”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "“contribute to NEOGOV's mission of creating a unified, AI-enabled ecosystem”",
+        "“eager to bring my expertise in cloud transformation, data interoperability”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "“Languages & Frameworks: Java, C#, Python, TypeScript… REST, GraphQL”",
+        "“designing scalable, cloud-native solutions that integrate AI capabilities”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume claims “integrating AI capabilities into enterprise platforms” without concrete project examples.",
+      "Lists “Azure” and “Terraform” as skills; no supporting experience bullets showing real usage.",
+      "Claims “GraphQL” experience; not evidenced in work history bullets."
+    ],
+    "most_damaging_gaps": [
+      "Missing explicit alignment to NEOGOV stack requirements: “.NET (Core/C#)” and “Angular”.",
+      "No concrete examples of “single sign-on, customer onboarding, common administration” ownership.",
+      "Limited evidence of enterprise SaaS multi-product integration (22+ products), beyond generic “platform unification”."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–3 bullets demonstrating platform/enterprise architecture outcomes tied to JD (SSO, unified admin, onboarding, shared services, unified data model).",
+      "Replace generic AI statements with one concrete integration mechanism (e.g., analytics pipeline, feature store, RAG, model serving) and measurable impact.",
+      "Either substantiate or de-emphasize unproven skills (Azure/Terraform/GraphQL) and explicitly address gaps (.NET Core/C# depth, Angular, SQL Server)."
+    ]
+  }
+}

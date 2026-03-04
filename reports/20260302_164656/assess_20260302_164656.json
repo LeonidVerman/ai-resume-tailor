@@ -1,0 +1,136 @@
+{
+  "version": "assess_report_v1",
+  "generated_at": "2026-03-03T00:49:28.445620+00:00",
+  "model": "gpt-5.2",
+  "calibrate": false,
+  "positions_count": 3,
+  "positions": [
+    {
+      "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+      "company": "Plata Card",
+      "role_title": "Engineering Manager",
+      "scores": {
+        "truthfulness": 6,
+        "role_fit": 5,
+        "seniority_positioning": 8,
+        "clarity_impact": 7,
+        "mechanism_quality": 4,
+        "constraint_compliance": 4,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.6,
+      "raw_assessment_path": "reports\\20260302_164656\\raw\\027dc53d8b3a4d6b.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Implies direct experience building \"AI-powered solutions\" without concrete AI product examples beyond model evaluation contracting.",
+          "Claims \"successfully led cross-functional teams\" and EM-style ownership without explicit hiring/performance-management evidence in the resume bullets."
+        ],
+        "most_damaging_gaps": [
+          "No concrete example of owning an AI-powered user-facing product from concept to production (core JD requirement).",
+          "Missing explicit architecture mechanisms relevant to the JD (event-driven design, retries/idempotency, integrations) and observability specifics.",
+          "Resume is light on EM fundamentals requested: hiring, performance management, planning/prioritization, and cross-functional execution details."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Replace generic AI claims with one specific, truthful AI-adjacent production example (e.g., LLM/RAG integration, recommendations, or assistant-like feature), or clearly position AI work as evaluation/tooling rather than product ownership.",
+          "Add 2–4 architecture bullets that mirror the JD: event-driven services, idempotent/retry-safe workflows, scalable backend integrations, and reliability/observability practices (e.g., SLIs/SLOs, on-call, incident learnings).",
+          "Strengthen Engineering Manager scope with concrete delivery leadership: planning/prioritization, stakeholder alignment with Product/Data, and people leadership activities you can support (mentoring, leveling, hiring involvement if applicable)."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+      "company": "Lillio",
+      "role_title": "Manager, Engineering",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 3,
+        "seniority_positioning": 7,
+        "clarity_impact": 7,
+        "mechanism_quality": 4,
+        "constraint_compliance": 4,
+        "cover_letter_effectiveness": 5,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.45,
+      "raw_assessment_path": "reports\\20260302_164656\\raw\\d17d04f66cadc6b5.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Implied people-management depth (hiring/onboarding/DEI leadership) is not evidenced with concrete examples in the resume beyond general 'mentored and coached'."
+        ],
+        "most_damaging_gaps": [
+          "No demonstrated experience with Lillio’s core stack (Ruby on Rails, React, GraphQL) despite being central to the JD.",
+          "Limited evidence of engineering-manager responsibilities (recruiting, hiring, onboarding, performance management, career ladders) required by the JD.",
+          "Architecture/process mechanisms are mostly fintech-backend oriented; little about web-app delivery, SDLC quality practices, or SOC2/controls relevant to the role."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add explicit Engineering Manager scope: examples of 1:1s, feedback cycles, goal-setting, performance management, hiring/onboarding, and cross-team leadership (with metrics).",
+          "Tailor to Lillio’s stack and product: either show real Rails/React/GraphQL delivery or clearly position as stack-adjacent with concrete ramp-up proof (projects, migrations, or comparable frameworks).",
+          "Include stronger, relevant mechanisms: planning/roadmapping alignment, incident/operational excellence, quality practices (testing strategy, CI/CD), and security/compliance (SOC2, access controls) tied to outcomes."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+      "company": "Fingerprint",
+      "role_title": "Senior Engineering Manager, Dashboard + Growth",
+      "scores": {
+        "truthfulness": 5,
+        "role_fit": 4,
+        "seniority_positioning": 6,
+        "clarity_impact": 7,
+        "mechanism_quality": 6,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.5,
+      "raw_assessment_path": "reports\\20260302_164656\\raw\\5b1b6a609efd3cae.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Claim of having “Enhanced onboarding flows and product engagement features” in a trading-systems role is not supported elsewhere in the provided experience."
+        ],
+        "most_damaging_gaps": [
+          "Little concrete evidence of building/owning customer-facing SaaS dashboards or analytics consoles (core of the role).",
+          "People-management scope is vague for a role leading “two mission-critical squads” (no clear examples of managing multiple teams, performance management, hiring).",
+          "PLG/growth execution is asserted but not demonstrated with funnel metrics, experiments, or adoption/retention outcomes."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Replace or qualify the dashboard/onboarding/PLG claims with verifiable examples (or reframe as transferable patterns) and add any real UI/console/analytics work if it exists.",
+          "Add explicit engineering-management details: team sizes per role, hiring/coaching examples, delivery cadence improvements, and cross-functional partnership with Product/Design/GTM.",
+          "Tailor mechanisms to Fingerprint’s domain: event instrumentation, analytics pipelines, performance of dashboards, experimentation (A/B), and reliability/scale practices tied to customer-facing consoles."
+        ]
+      }
+    }
+  ],
+  "category_averages": {
+    "truthfulness": 6.33,
+    "role_fit": 4.0,
+    "seniority_positioning": 7.0,
+    "clarity_impact": 7.0,
+    "mechanism_quality": 4.67,
+    "constraint_compliance": 4.67,
+    "cover_letter_effectiveness": 5.67,
+    "overall_readiness": 5.0
+  },
+  "integrated_score": 5.52,
+  "weights": {
+    "truthfulness": 0.2,
+    "role_fit": 0.2,
+    "seniority_positioning": 0.1,
+    "clarity_impact": 0.15,
+    "mechanism_quality": 0.1,
+    "constraint_compliance": 0.15,
+    "cover_letter_effectiveness": 0.05,
+    "overall_readiness": 0.05
+  }
+}

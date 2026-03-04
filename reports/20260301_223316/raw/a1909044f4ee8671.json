@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+    "company": "Plata",
+    "role_title": "Engineering Manager"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“Improved system throughput by 25% by introducing a transactional cache”"
+      ]
+    },
+    "role_fit": {
+      "score": 6,
+      "evidence": [
+        "“Engineering Manager with 15+ years of experience in backend engineering and team leadership”",
+        "“driving AI-powered product development”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "“VP / Director of Software Development / Lead Software Developer”",
+        "“Led a backend engineering team delivering a trading system for 1M+ clients”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "“raising test coverage by 20% and streamlining documentation”",
+        "“serving 1M+ users… Improved system throughput by 25%”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "“transactional cache for trading data… reducing database load and latency”",
+        "“improving scalability and reliability through high-performance Java components”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 4,
+      "evidence": [
+        "“driving AI-powered product development”",
+        "“My experience with AI-powered product development aligns well with Plata's mission”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "“apply for the Engineering Manager role at Plata”",
+        "“led teams of up to 20 engineers, focusing on… delivery management, and cross-team collaboration”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "“Engineering Manager with 15+ years of experience… team leadership”",
+        "“Partner closely… to build impactful, user-centric solutions”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied direct AI product delivery ownership without concrete examples: “driving AI-powered product development”.",
+      "Generic claim of “AI-powered product development” not tied to a shipped assistant/recommendations feature."
+    ],
+    "most_damaging_gaps": [
+      "No concrete examples of leading an AI/ML product from concept to production (assistant/recommendations) despite claiming “AI-powered product development”.",
+      "Missing explicit people-management scope details expected for EM (hiring, performance management) beyond generic “mentored and managed”.",
+      "Architecture mechanisms requested by the role are under-specified (integrations, service design, reliability practices) and not clearly connected to an AI assistant context."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Replace generic AI claims with specific shipped outcomes (what AI feature, how it was integrated, metrics, reliability/guardrails).",
+      "Add explicit EM responsibilities aligned to JD: hiring, performance management, planning/prioritization, stakeholder management, and examples of delivery under ambiguity.",
+      "Strengthen backend architecture section with concrete mechanisms (event-driven flows, retry/idempotency, observability/SLIs) and how they enable an evolving assistant product."
+    ]
+  }
+}

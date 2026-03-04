@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 5,
+      "evidence": [
+        "Experienced in product-led growth strategies and analytics infrastructure",
+        "leverage my expertise in building onboarding flows and analytics features"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "Senior Engineering Manager with 15+ years of experience leading high-performance... distributed systems in fintech and blockchain",
+        "opportunity to lead teams in creating product-led growth experiences"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "Senior Engineering Manager with 15+ years of experience",
+        "led teams of up to 20 engineers to deliver reliable, high-quality products"
+      ]
+    },
+    "clarity_impact": {
+      "score": 6,
+      "evidence": [
+        "delivering a trading system for 1M+ clients, improving scalability and reliability",
+        "Built a prototype in-memory database that boosted data access speed"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 4,
+      "evidence": [
+        "improving scalability and reliability through high-performance Java components",
+        "ensuring low latency and high transaction reliability"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 5,
+      "evidence": [
+        "Experienced in product-led growth strategies and analytics infrastructure",
+        "I am eager to leverage my expertise in building onboarding flows and analytics features"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "I am particularly drawn to Fingerprint's mission to empower developers in fraud detection",
+        "opportunity to lead teams in creating product-led growth experiences"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Senior Engineering Manager with 15+ years of experience leading high-performance... systems in fintech and blockchain",
+        "eager to leverage my expertise in building onboarding flows and analytics features"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Claims of direct PLG/growth experience are asserted without supporting bullets: \"product-led growth strategies\" / \"building onboarding flows\".",
+      "Claims of \"analytics infrastructure\" and \"customer console/dashboard\"-type work are not evidenced in experience bullets."
+    ],
+    "most_damaging_gaps": [
+      "No concrete evidence of leading customer-facing dashboard/analytics products (core of the role).",
+      "No concrete evidence of growth/onboarding funnel work (PLG conversion milestones, feature discovery).",
+      "Mechanisms for scale/quality (observability, CI/CD, performance, event pipelines) are mentioned only generically, not tied to outcomes."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Replace unsupported PLG/dashboard claims with truthful parallels (e.g., customer-facing consoles in trading/ops, admin tooling) and explicitly label as analogous if not direct.",
+      "Add 3–5 high-signal bullets showing engineering management outcomes relevant to Fingerprint: predictable delivery, estimation accuracy, cross-functional partnership, handling underperformance, raising standards.",
+      "Add specific architecture mechanisms and scale practices (e.g., caching layers, async messaging, read replicas, SLOs/monitoring, CI/CD) and connect them to measurable results."
+    ]
+  }
+}

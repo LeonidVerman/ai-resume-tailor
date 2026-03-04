@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+    "company": "League",
+    "role_title": "Engineering Manager, Apps & Solutions (Western Canada)"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 9,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote) Nov 2025 – Present",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "Lead Software Engineer with 15+ years... trading and fintech systems",
+        "built fintech and blockchain systems... top-5 platforms in the Japanese market"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Experienced team lead and project manager"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "raising test coverage by 20% and streamlining documentation",
+        "serving 1M+ users"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "introducing a transactional cache for trading data",
+        "prototype in-memory database (H2 → Oracle replication)"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 5,
+      "evidence": [
+        "Eligible to work remotely for U.S. companies from Canada (no visa required for remote).",
+        "Boosted team productivity by integrating Generative AI tools (ChatGPT, Cursor AI)"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "apply for the Engineering Manager, Apps & Solutions (Western Canada) role at League",
+        "contribute to building reliable, scalable systems for your clients"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Lead Software Developer/Team Leader| GMO-Z.com Fintech CA, Vancouver",
+        "I would welcome the chance to bring this expertise to your team"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Customer-facing delivery/relationship management is central to the role, but the documents don’t substantiate direct customer communication ownership beyond generic phrasing."
+    ],
+    "most_damaging_gaps": [
+      "Missing explicit customer-facing delivery leadership (timelines, risk communication, launch coordination) aligned to Apps & Solutions.",
+      "Little/no healthcare or enterprise app delivery context; resume is heavily trading/crypto-backend oriented.",
+      "Weak evidence of QA partnership/testing strategy and secure coding/access management responsibilities expected in the JD."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add concrete customer-facing delivery examples (e.g., \"ran sprint planning with customer PM\", \"communicated delivery risks\", \"supported UAT and launch\").",
+      "Reframe experience toward EM responsibilities: backlog/sprint management, cross-team dependency management, hiring/onboarding, career growth, and escalation mechanisms.",
+      "Add security/testing specifics relevant to League (secure coding practices, access management, QA collaboration, automated+manual test strategy) and reduce irrelevant fintech/crypto emphasis where possible."
+    ]
+  }
+}

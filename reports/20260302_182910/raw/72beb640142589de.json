@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 7,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "Enterprise Architect with 15+ years of experience designing... systems in fintech and blockchain",
+        "eager to bring my expertise in platform architecture, cloud transformation, and cross-product integration"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "Enterprise Architect with 15+ years of experience",
+        "VP / Director of Software Development / Lead Software Developer"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "trading system for 1M+ clients (one of the top 5 on the Japanese market)",
+        "raising test coverage by 20%"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "introducing a transactional cache for trading data",
+        "cloud-native architectures"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "Systems & Platforms: AWS, Docker, Kubernetes, CI/CD",
+        "Languages & Frameworks: Java, C#, Spring, SpringBoot"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "apply for the Enterprise Architect – Platform role at NEOGOV",
+        "define and implement a next-generation architecture that connects multiple products"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Enterprise Architect with 15+ years of experience",
+        "Technical Skills... AWS, Docker, Kubernetes, CI/CD"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume positions candidate as \"Enterprise Architect\" without showing enterprise/platform architecture ownership in experience bullets.",
+      "Claims \"cloud-native architectures\" but provides no concrete cloud migration/IaC/reference architecture examples."
+    ],
+    "most_damaging_gaps": [
+      "Missing key JD technologies: Angular, .NET Core/C# in SaaS context, GraphQL, SQL Server; no Snowflake/Databricks evidence.",
+      "No explicit platform unification/interoperability work (\"22+ products\", shared services, unified data models, SSO, onboarding).",
+      "No architecture governance artifacts (principles, standards, reference architectures) or hands-on IaC (Terraform/AWS CDK)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–4 bullets showing platform/enterprise architecture deliverables (reference architectures, standards, API/event governance, cross-team design reviews).",
+      "Close JD keyword gaps with truthful specifics: REST/GraphQL design, SSO/OIDC/SAML exposure (if any), IaC (Terraform/CDK), data modeling across products, observability/CI-CD at scale.",
+      "Tailor experience to SaaS multi-product integration: describe shared services, interoperability patterns, and any cloud modernization/containerization initiatives with outcomes."
+    ]
+  }
+}

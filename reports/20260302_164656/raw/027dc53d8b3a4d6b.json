@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+    "company": "Plata Card",
+    "role_title": "Engineering Manager"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 6,
+      "evidence": [
+        "Skilled in building scalable, AI-powered solutions that enhance user experience and engagement.",
+        "successfully led cross-functional teams to deliver scalable fintech systems"
+      ]
+    },
+    "role_fit": {
+      "score": 5,
+      "evidence": [
+        "apply for the Engineering Manager role at Plata Card",
+        "patterns of leading engineering teams and managing delivery translate directly to building AI-powered products"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "Engineering Manager with 15+ years of experience",
+        "mentoring teams of up to 20 engineers"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "serving over 1M users",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 4,
+      "evidence": [
+        "improving scalability and reliability through high-performance Java components",
+        "Built high-availability distributed services under strict reliability targets"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 4,
+      "evidence": [
+        "Skilled in building scalable, AI-powered solutions",
+        "Owned delivery cadence and execution rituals, ensuring reliable and on-time feature delivery"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "drawn to your mission of creating intelligent systems that simplify financial management",
+        "support world-leading AI labs in training and evaluating advanced models"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Engineering Manager with 15+ years of experience leading high-performance",
+        "I look forward to the opportunity to contribute to your Financial Assistant team"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implies direct experience building \"AI-powered solutions\" without concrete AI product examples beyond model evaluation contracting.",
+      "Claims \"successfully led cross-functional teams\" and EM-style ownership without explicit hiring/performance-management evidence in the resume bullets."
+    ],
+    "most_damaging_gaps": [
+      "No concrete example of owning an AI-powered user-facing product from concept to production (core JD requirement).",
+      "Missing explicit architecture mechanisms relevant to the JD (event-driven design, retries/idempotency, integrations) and observability specifics.",
+      "Resume is light on EM fundamentals requested: hiring, performance management, planning/prioritization, and cross-functional execution details."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Replace generic AI claims with one specific, truthful AI-adjacent production example (e.g., LLM/RAG integration, recommendations, or assistant-like feature), or clearly position AI work as evaluation/tooling rather than product ownership.",
+      "Add 2–4 architecture bullets that mirror the JD: event-driven services, idempotent/retry-safe workflows, scalable backend integrations, and reliability/observability practices (e.g., SLIs/SLOs, on-call, incident learnings).",
+      "Strengthen Engineering Manager scope with concrete delivery leadership: planning/prioritization, stakeholder alignment with Product/Data, and people leadership activities you can support (mentoring, leveling, hiring involvement if applicable)."
+    ]
+  }
+}

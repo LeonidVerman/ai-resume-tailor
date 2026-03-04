@@ -1,0 +1,210 @@
+{
+  "version": "assess_report_v1",
+  "generated_at": "2026-03-03T22:44:58.047003+00:00",
+  "model": "gpt-5.2",
+  "calibrate": true,
+  "calibrate_data": false,
+  "positions_count": 5,
+  "positions": [
+    {
+      "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+      "company": "NEOGOV",
+      "role_title": "Enterprise Architect, Platform",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 4,
+        "seniority_positioning": 6,
+        "clarity_impact": 7,
+        "mechanism_quality": 5,
+        "constraint_compliance": 5,
+        "cover_letter_effectiveness": 4,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 5.75,
+      "raw_assessment_path": "reports\\20260303_144211_calibration\\raw\\e70595e3a5a964fa.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Implied platform/enterprise architecture ownership is not evidenced (no mention of \"platform roadmap\", \"reference architectures\", or \"architecture governance\")."
+        ],
+        "most_damaging_gaps": [
+          "Missing explicit SaaS platform unification experience (\"connects 22+ products\", shared services, unified data models).",
+          "No Angular/GraphQL evidence; JD asks \"Angular\" and \"RESTful API or GraphQL integration design\".",
+          "No IaC/Terraform/AWS CDK evidence; JD asks \"Infrastructure-as-Code using Terraform or AWS CDK\".",
+          "No clear SSO / identity integration experience; JD includes \"single sign-on\" and cross-product onboarding/admin.",
+          "Limited cloud-native modernization specifics (containers/IaC/service-oriented) beyond listing \"Docker, Kubernetes\"."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add platform-architecture artifacts and governance: explicitly describe \"reference architectures\", \"architecture principles/standards\", and cross-team design reviews tied to outcomes.",
+          "Map experience to JD initiatives: include concrete examples of cross-system integration, shared services, identity/SSO patterns, and data interoperability (even if from fintech domain).",
+          "Close key keyword/skill gaps with truthful specifics: REST/GraphQL design, cloud (AWS/Azure/GCP) architecture decisions, and IaC (Terraform/CDK) usage with at least one project example."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+      "company": "Plata",
+      "role_title": "Engineering Manager",
+      "scores": {
+        "truthfulness": 9,
+        "role_fit": 5,
+        "seniority_positioning": 6,
+        "clarity_impact": 8,
+        "mechanism_quality": 6,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 5,
+        "overall_readiness": 6
+      },
+      "overall_readiness": 6,
+      "integrated_score": 6.65,
+      "raw_assessment_path": "reports\\20260303_144211_calibration\\raw\\40d8659dd4491994.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "No clear evidence of direct ownership of an AI-powered user-facing product; only 'training and evaluating advanced AI models'.",
+          "Management scope is implied (\"VP / Director\") but hiring/performance management specifics are not evidenced in bullets."
+        ],
+        "most_damaging_gaps": [
+          "Missing explicit Engineering Manager delivery signals (planning, prioritization, execution cadence, stakeholder management).",
+          "No concrete examples of building an AI-powered assistant/recommendation/user-facing intelligent feature in production.",
+          "Cross-functional collaboration with Product/Data/AI is not demonstrated with specific outcomes."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Rewrite experience bullets to show EM responsibilities: planning, prioritization, on-time delivery, and cross-functional execution (Product/Data/Business).",
+          "Add 1–2 specific AI-in-production examples (even small) or clearly frame AI work as integration/enablement rather than model training only.",
+          "Add architecture mechanisms relevant to Plata’s backend + AI assistant context (event-driven flows, integrations, reliability/observability ownership) with concrete incidents/scale."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+      "company": "Lillio",
+      "role_title": "Manager, Engineering",
+      "scores": {
+        "truthfulness": 9,
+        "role_fit": 4,
+        "seniority_positioning": 7,
+        "clarity_impact": 8,
+        "mechanism_quality": 7,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 5,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 6.6,
+      "raw_assessment_path": "reports\\20260303_144211_calibration\\raw\\be1ed28290c8657c.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "No clear evidence of Ruby on Rails/React/GraphQL experience despite JD emphasis; resume lists mostly Java/Spring."
+        ],
+        "most_damaging_gaps": [
+          "Does not demonstrate the JD’s core web stack (Ruby on Rails, React, GraphQL, TypeScript) in experience bullets.",
+          "Engineering manager responsibilities are lightly evidenced (limited mention of hiring, onboarding, roadmap alignment, cross-functional delivery).",
+          "Mission/EdTech alignment is generic; no concrete examples of product-led collaboration with Product/Design or user outcomes."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Reframe resume/summary toward engineering management: add explicit examples of 1:1s, performance feedback, career ladders, hiring/onboarding, and process improvements.",
+          "Add (truthful) evidence of relevant stack or adjacent full-stack delivery (React/TS, GraphQL, Rails or comparable) and cloud deployment patterns (AWS/Heroku/Postgres) tied to shipped products.",
+          "Tailor cover letter to Lillio’s mission and the role’s cross-functional leadership: cite specific collaboration with Product/Design, roadmap-to-business alignment, and quality/security practices (e.g., SOC2, observability)."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+      "company": "Fingerprint",
+      "role_title": "Senior Engineering Manager, Dashboard + Growth",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 3,
+        "seniority_positioning": 6,
+        "clarity_impact": 7,
+        "mechanism_quality": 5,
+        "constraint_compliance": 4,
+        "cover_letter_effectiveness": 4,
+        "overall_readiness": 4
+      },
+      "overall_readiness": 4,
+      "integrated_score": 5.35,
+      "raw_assessment_path": "reports\\20260303_144211_calibration\\raw\\0ba9fddee2072748.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "No clear evidence of dashboard/analytics console ownership; resume focuses on trading platforms.",
+          "No evidenced product-led growth/onboarding funnel work despite applying to 'Dashboard + Growth'."
+        ],
+        "most_damaging_gaps": [
+          "Missing direct experience leading customer-facing web dashboard/analytics products (console, insights, performance).",
+          "Missing PLG/growth engineering examples (onboarding flows, activation milestones, feature discovery).",
+          "People-management scope is implied but not concretely evidenced (cadence, performance management, cross-functional leadership)."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets explicitly mapping past work to Dashboard/Growth: analytics surfaces, customer console UX-performance, event instrumentation, funnel metrics (activation/conversion/retention).",
+          "Strengthen engineering management evidence: team size per role, hiring, performance management, delivery predictability, and cross-functional partnership with Product/Design/GTM.",
+          "Tailor the cover letter to Fingerprint’s mission and the two squads (Dashboard + Growth) with specific proposed initiatives (e.g., onboarding milestones, feature discovery, scalable analytics)."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+      "company": "League",
+      "role_title": "Engineering Manager, Apps & Solutions (Western Canada)",
+      "scores": {
+        "truthfulness": 9,
+        "role_fit": 4,
+        "seniority_positioning": 6,
+        "clarity_impact": 7,
+        "mechanism_quality": 5,
+        "constraint_compliance": 5,
+        "cover_letter_effectiveness": 5,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 6.0,
+      "raw_assessment_path": "reports\\20260303_144211_calibration\\raw\\242233665cb3fb8b.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Customer-facing delivery/relationship management is central to the role, but the documents don’t substantiate direct customer communication ownership beyond generic phrasing."
+        ],
+        "most_damaging_gaps": [
+          "Missing explicit customer-facing delivery leadership (timelines, risk communication, launch coordination) aligned to Apps & Solutions.",
+          "Little/no healthcare or enterprise app delivery context; resume is heavily trading/crypto-backend oriented.",
+          "Weak evidence of QA partnership/testing strategy and secure coding/access management responsibilities expected in the JD."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add concrete customer-facing delivery examples (e.g., \"ran sprint planning with customer PM\", \"communicated delivery risks\", \"supported UAT and launch\").",
+          "Reframe experience toward EM responsibilities: backlog/sprint management, cross-team dependency management, hiring/onboarding, career growth, and escalation mechanisms.",
+          "Add security/testing specifics relevant to League (secure coding practices, access management, QA collaboration, automated+manual test strategy) and reduce irrelevant fintech/crypto emphasis where possible."
+        ]
+      }
+    }
+  ],
+  "category_averages": {
+    "truthfulness": 8.6,
+    "role_fit": 4.0,
+    "seniority_positioning": 6.2,
+    "clarity_impact": 7.4,
+    "mechanism_quality": 5.6,
+    "constraint_compliance": 5.2,
+    "cover_letter_effectiveness": 4.6,
+    "overall_readiness": 5.0
+  },
+  "integrated_score": 6.07,
+  "weights": {
+    "truthfulness": 0.2,
+    "role_fit": 0.2,
+    "seniority_positioning": 0.1,
+    "clarity_impact": 0.15,
+    "mechanism_quality": 0.1,
+    "constraint_compliance": 0.15,
+    "cover_letter_effectiveness": 0.05,
+    "overall_readiness": 0.05
+  }
+}

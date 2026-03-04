@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+    "company": "Lillio",
+    "role_title": "Manager, Engineering"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 5,
+      "evidence": [
+        "Technical Skills: ... TypeScript, Ruby on Rails, React",
+        "Engineering Manager with 15+ years of experience in leading development teams"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "Manager, Engineering role at Lillio",
+        "delivering high-performance, fault-tolerant distributed systems in fintech and blockchain"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Mentored and managed a team of developers"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "raising test coverage by 20%",
+        "Improved system throughput by 25%"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "introducing a transactional cache for trading data",
+        "High-throughput APIs, distributed systems, fault tolerance, event-driven architecture"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 8,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "March 3, 2026"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "aligns with Lillio's mission to empower early childhood educators",
+        "focusing on their professional and technical growth through regular feedback and objective setting"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "Engineering Manager with 15+ years of experience in leading development teams",
+        "I am eager to help shape and scale Lillio's engineering culture"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume lists \"Ruby on Rails, React\" in skills without any supporting experience bullets.",
+      "Resume headline claims \"Engineering Manager\" though work history titles are mostly Lead/VP/Director; management scope not concretely evidenced."
+    ],
+    "most_damaging_gaps": [
+      "Little to no evidence of the JD stack (Rails/React/GraphQL/Postgres/Heroku) being used in shipped products.",
+      "Cover letter and resume lack concrete examples of people-management cadence (1:1s, performance management, hiring, onboarding) and roadmap alignment.",
+      "Domain narrative stays fintech/crypto; limited translation to EdTech/customer-facing product delivery and cross-functional partnership."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Replace or qualify the Rails/React skill claim with evidence (projects, shipped features) or remove; add any GraphQL/Postgres/Heroku/AWS specifics actually used.",
+      "Add management-specific proof: hiring/interviewing, onboarding, performance reviews, career ladders, conflict resolution, and examples of \"align roadmap with business objectives\".",
+      "Tailor to Lillio: include 1–2 examples of partnering with Product/Design, shipping user-facing experiences, and improving reliability/security/observability in a SaaS context."
+    ]
+  }
+}

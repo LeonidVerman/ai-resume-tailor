@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+    "company": "Plata Card",
+    "role_title": "Engineering Manager"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "led teams of up to 20 engineers to deliver reliable, scalable products"
+      ]
+    },
+    "role_fit": {
+      "score": 5,
+      "evidence": [
+        "Lead Software Engineer with 15+ years of experience designing and leading development of... fintech systems",
+        "helping world-leading AI labs train and evaluate advanced models"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Led a backend engineering team delivering trading system for 1M+ clients"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "raising test coverage by 20% and streamlining documentation",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "introducing a transactional cache for trading data",
+        "Built a prototype in-memory database (H2 → Oracle replication)"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "Contribute as an independent contractor helping world-leading AI labs train and evaluate advanced models",
+        "Boosted team productivity by integrating Generative AI tools (ChatGPT, Cursor AI)"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "apply for the Engineering Manager role at Plata Card",
+        "contribute to building reliable, scalable systems for your clients"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "Experienced team lead and project manager",
+        "Partner closely with Product, Data, and AI teams (JD) vs resume focus on trading systems"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "No concrete evidence of \"AI-powered product from concept to production\" ownership; only \"train and evaluate\" AI models is stated."
+    ],
+    "most_damaging_gaps": [
+      "Limited direct alignment to Financial Assistant / user-facing AI product development; experience reads as trading/crypto infrastructure.",
+      "Engineering Manager core responsibilities (hiring, performance management, prioritization cadence) are not explicitly evidenced beyond generic leadership.",
+      "Missing explicit modern backend/AI-adjacent mechanisms relevant to assistants (e.g., event-driven interaction flows, retrieval patterns, experimentation loops)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add explicit EM delivery signals: planning/prioritization, stakeholder management, hiring/performance examples (even small-scale) tied to outcomes.",
+      "Reframe AI experience toward productization: describe any production integrations of AI tools/features (or clearly state scope if only evaluation).",
+      "Tailor mechanisms to Plata’s assistant context: scalable backend integrations, event-driven workflows, reliability/observability practices, and fast iteration loops."
+    ]
+  }
+}

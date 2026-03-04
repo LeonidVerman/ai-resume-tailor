@@ -1,0 +1,208 @@
+{
+  "version": "assess_report_v1",
+  "generated_at": "2026-03-03T22:50:54.214619+00:00",
+  "model": "gpt-5.2",
+  "calibrate": false,
+  "calibrate_data": true,
+  "positions_count": 5,
+  "positions": [
+    {
+      "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+      "company": "NEOGOV",
+      "role_title": "Enterprise Architect, Platform",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 4,
+        "seniority_positioning": 6,
+        "clarity_impact": 7,
+        "mechanism_quality": 7,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 6,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 6.2,
+      "raw_assessment_path": "reports\\20260303_144756_calibration_data\\raw\\217192c76a664872.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Implied breadth of \"enterprise architect\" ownership without concrete examples of multi-product SaaS unification (no direct evidence of \"22+ products\"-style integration).",
+          "Claimed \"governance practices such as design reviews and architectural standards\" without showing scope (enterprise-wide vs team-level)."
+        ],
+        "most_damaging_gaps": [
+          "No evidence of .NET + Java platform architecture in a SaaS multi-product environment (experience reads fintech/trading-centric).",
+          "Missing key JD items: Angular, GraphQL, SSO/OIDC/SAML, unified data models, customer onboarding/common admin.",
+          "No Infrastructure-as-Code (Terraform/AWS CDK) or modern data/analytics stack (Snowflake/Databricks) shown."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add explicit platform-architecture examples that map to NEOGOV: cross-product interoperability, shared services, and reference architectures (even if from fintech domain).",
+          "Close hard-skill gaps from the JD (or remove implied fit): IaC (Terraform/CDK), SSO/OIDC, data model consolidation, and ideally Angular/GraphQL if applicable.",
+          "Strengthen enterprise-architect positioning with concrete artifacts and governance scope: principles/standards, target-state diagrams, ADRs, and multi-year roadmap ownership."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+      "company": "Plata",
+      "role_title": "Engineering Manager",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 6,
+        "seniority_positioning": 7,
+        "clarity_impact": 7,
+        "mechanism_quality": 8,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 7,
+        "overall_readiness": 7
+      },
+      "overall_readiness": 7,
+      "integrated_score": 6.95,
+      "raw_assessment_path": "reports\\20260303_144756_calibration_data\\raw\\baf742b2b1ba7cfa.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Implied AI product ownership: cover letter references \"building AI-driven features such as a Financial Assistant\" while experience is model training/evaluation."
+        ],
+        "most_damaging_gaps": [
+          "Limited explicit people-management scope for EM (hiring, performance management) despite JD emphasis on \"Lead the team across hiring\".",
+          "AI/ML leadership is indirect (\"model training and evaluation\") rather than \"Own and drive the development of an AI-powered product\".",
+          "Cross-functional collaboration with Product/Data/AI is asserted but not evidenced with concrete examples (specific partners, artifacts, outcomes)."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add concrete EM responsibilities and examples (hiring, performance, coaching, on-call/incident response ownership) with outcomes; currently mostly tech-lead framing.",
+          "Reframe AI experience precisely: distinguish LLM evaluation/tooling from shipping AI product features; add any real production AI integrations if they exist.",
+          "Tailor to Plata’s Financial Assistant domain: include examples of user-facing assistant/recommendation flows, experimentation/metrics, and collaboration with Product/Data."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+      "company": "Lillio",
+      "role_title": "Manager, Engineering",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 4,
+        "seniority_positioning": 7,
+        "clarity_impact": 7,
+        "mechanism_quality": 7,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 5,
+        "overall_readiness": 5
+      },
+      "overall_readiness": 5,
+      "integrated_score": 6.25,
+      "raw_assessment_path": "reports\\20260303_144756_calibration_data\\raw\\8875b70fa2974f25.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "No clear evidence of Ruby on Rails, React, or GraphQL experience; resume lists \"Java, JavaScript, Python\" only.",
+          "Manager-level responsibilities in JD (recruiting, onboarding, roadmap alignment) are asserted generally without concrete examples."
+        ],
+        "most_damaging_gaps": [
+          "Missing alignment to Lillio stack (Ruby on Rails, React, GraphQL, TypeScript) and web-app/full-stack delivery.",
+          "Limited evidence of people-management mechanics: \"regular 1:1s\", career growth, hiring, onboarding, DEI practices.",
+          "Cover letter is largely generic; little specificity to Lillio’s product, ECE domain, or concrete management outcomes."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add concrete engineering-management examples matching the JD: hiring/onboarding, 1:1s, performance feedback, career ladders, and cross-team delivery with Product/Design.",
+          "Address the tech stack gap explicitly: either demonstrate relevant Rails/React/GraphQL experience (if true) or position transferable web-stack experience and a credible ramp plan.",
+          "Make the cover letter materially more Lillio-specific: tie leadership approach to mission (ECE), include 1–2 relevant shipped initiatives and how they improved customer outcomes."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+      "company": "Fingerprint",
+      "role_title": "Senior Engineering Manager, Dashboard + Growth",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 4,
+        "seniority_positioning": 7,
+        "clarity_impact": 7,
+        "mechanism_quality": 7,
+        "constraint_compliance": 6,
+        "cover_letter_effectiveness": 5,
+        "overall_readiness": 6
+      },
+      "overall_readiness": 6,
+      "integrated_score": 6.3,
+      "raw_assessment_path": "reports\\20260303_144756_calibration_data\\raw\\f56b8fa4d02f6135.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Dashboard/PLG relevance is implied rather than evidenced; no direct onboarding, funnel, or analytics dashboard ownership described."
+        ],
+        "most_damaging_gaps": [
+          "Little evidence of product-led growth work (onboarding flows, activation milestones, feature discovery).",
+          "Limited dashboard/analytics domain experience; resume focuses on trading systems rather than customer console UX + analytics.",
+          "People-management scope is asserted but not demonstrated with concrete EM responsibilities (hiring, performance management, org processes)."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–4 bullets showing growth-facing work (activation funnel instrumentation, experiments, conversion metrics, feature adoption).",
+          "Add dashboard/analytics examples (event tracking, metrics definitions, data pipelines, query performance, multi-tenant SaaS console concerns).",
+          "Clarify engineering management responsibilities with specifics (team structure across squads, hiring, performance feedback loops, delivery/estimation improvements)."
+        ]
+      }
+    },
+    {
+      "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+      "company": "League",
+      "role_title": "Engineering Manager, Apps & Solutions (Western Canada)",
+      "scores": {
+        "truthfulness": 8,
+        "role_fit": 6,
+        "seniority_positioning": 7,
+        "clarity_impact": 8,
+        "mechanism_quality": 8,
+        "constraint_compliance": 7,
+        "cover_letter_effectiveness": 7,
+        "overall_readiness": 7
+      },
+      "overall_readiness": 7,
+      "integrated_score": 7.25,
+      "raw_assessment_path": "reports\\20260303_144756_calibration_data\\raw\\53ea7f7028fe3513.json",
+      "flags": {
+        "suspected_hallucinations": [
+          "Implicit customer-facing ownership is suggested but not evidenced with concrete customer examples (e.g., named clients, direct stakeholder cadence)."
+        ],
+        "most_damaging_gaps": [
+          "Little to no healthcare/enterprise app delivery context; examples are almost entirely fintech/crypto trading systems.",
+          "Customer-facing delivery specifics are thin (testing/launch coordination with customers, dependency management across orgs, status reporting).",
+          "People-management signals exist, but ongoing EM responsibilities (hiring, performance management, career growth plans) are not demonstrated."
+        ]
+      },
+      "notes": {
+        "top_3_improvements": [
+          "Add 2–3 bullets demonstrating customer-facing delivery: stakeholder updates, managing shared dependencies, launch/testing coordination, and risk escalations.",
+          "Strengthen explicit engineering management scope: hiring/onboarding, performance reviews, career growth, team health, and cross-functional rituals.",
+          "Translate fintech mechanisms to League’s domain: quality/testing partnership with QA, security/compliance practices, and delivering multi-team roadmaps on fixed timelines."
+        ]
+      }
+    }
+  ],
+  "category_averages": {
+    "truthfulness": 8.0,
+    "role_fit": 4.8,
+    "seniority_positioning": 6.8,
+    "clarity_impact": 7.2,
+    "mechanism_quality": 7.4,
+    "constraint_compliance": 6.2,
+    "cover_letter_effectiveness": 6.0,
+    "overall_readiness": 6.0
+  },
+  "integrated_score": 6.59,
+  "weights": {
+    "truthfulness": 0.2,
+    "role_fit": 0.2,
+    "seniority_positioning": 0.1,
+    "clarity_impact": 0.15,
+    "mechanism_quality": 0.1,
+    "constraint_compliance": 0.15,
+    "cover_letter_effectiveness": 0.05,
+    "overall_readiness": 0.05
+  }
+}

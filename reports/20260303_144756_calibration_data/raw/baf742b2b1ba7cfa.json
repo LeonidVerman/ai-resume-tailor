@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+    "company": "Plata",
+    "role_title": "Engineering Manager"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "Led engineering teams of up to 20 engineers and scaled production platforms to 1M+ users",
+        "Supports world-leading AI labs as an independent contractor, contributing to advanced model training and evaluation"
+      ]
+    },
+    "role_fit": {
+      "score": 6,
+      "evidence": [
+        "apply for the Engineering Manager role at Plata",
+        "directly relevant to building AI-driven features such as a Financial Assistant"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "Senior backend engineer and engineering leader with 15+ years",
+        "VP / Director of Software Development"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "Raised test coverage by 20%",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 8,
+      "evidence": [
+        "Database read replicas for read-heavy GET endpoints and Multiple caching layers to reduce DB load",
+        "Asynchronous messaging for component decoupling to improve service isolation and resilience"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 6,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "Managed planning, task decomposition, and cross-team collaboration"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 7,
+      "evidence": [
+        "partnering closely with product and business stakeholders to align architecture decisions",
+        "help Plata scale its Financial Assistant platform with disciplined engineering leadership"
+      ]
+    },
+    "overall_readiness": {
+      "score": 7,
+      "evidence": [
+        "Managed planning, task decomposition, and cross-team collaboration to ensure strong team performance",
+        "hands-on technical leader, I have shaped backend architecture using event-driven architecture patterns"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied AI product ownership: cover letter references \"building AI-driven features such as a Financial Assistant\" while experience is model training/evaluation."
+    ],
+    "most_damaging_gaps": [
+      "Limited explicit people-management scope for EM (hiring, performance management) despite JD emphasis on \"Lead the team across hiring\".",
+      "AI/ML leadership is indirect (\"model training and evaluation\") rather than \"Own and drive the development of an AI-powered product\".",
+      "Cross-functional collaboration with Product/Data/AI is asserted but not evidenced with concrete examples (specific partners, artifacts, outcomes)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add concrete EM responsibilities and examples (hiring, performance, coaching, on-call/incident response ownership) with outcomes; currently mostly tech-lead framing.",
+      "Reframe AI experience precisely: distinguish LLM evaluation/tooling from shipping AI product features; add any real production AI integrations if they exist.",
+      "Tailor to Plata’s Financial Assistant domain: include examples of user-facing assistant/recommendation flows, experimentation/metrics, and collaboration with Product/Data."
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“Improved system throughput by 25% by introducing a transactional cache”"
+      ]
+    },
+    "role_fit": {
+      "score": 3,
+      "evidence": [
+        "“Lead Software Engineer… trading and fintech systems… Java backend engineering”",
+        "“Enterprise Architect, Platform role at NEOGOV… built fintech and blockchain systems”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "“VP / Director of Software Development / Lead Software Developer”",
+        "“Lead Software Engineer with 15+ years of experience designing and leading development”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "“raising test coverage by 20%… reducing onboarding time”",
+        "“serving 1M+ users… throughput by 25%”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 4,
+      "evidence": [
+        "“introducing a transactional cache for trading data”",
+        "“Built a prototype in-memory database (H2 → Oracle replication)”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 5,
+      "evidence": [
+        "“Proven expertise in Java backend engineering”",
+        "“Languages & Frameworks: Java, C#, … SpringBoot …”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 4,
+      "evidence": [
+        "“apply for the Enterprise Architect, Platform role at NEOGOV”",
+        "“built fintech and blockchain systems… serving over 1M users”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 4,
+      "evidence": [
+        "“Lead Software Engineer with 15+ years… trading and fintech systems”",
+        "“Technical Skills… Docker, Kubernetes… AWS… CI/CD”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [],
+    "most_damaging_gaps": [
+      "No demonstrated enterprise/platform architecture work unifying “22+ products”, shared services, or cross-product interoperability.",
+      "Missing/weak alignment to NEOGOV stack requirements: .NET+Java in SaaS, Angular, GraphQL, IaC (Terraform/AWS CDK).",
+      "No evidence of architecture governance ownership (principles/standards), SSO/onboarding/common admin, or data model consolidation/analytics platform work (Snowflake/Databricks)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add platform-architecture bullets explicitly mapping to JD: reference architectures, shared services, interoperability, API standards, eventing, security patterns, and governance.",
+      "Close key stack gaps (or clarify experience): .NET Core/C#, Angular, GraphQL, Terraform/AWS CDK, CI/CD + observability, and cloud modernization specifics.",
+      "Rewrite cover letter to NEOGOV/public-sector SaaS platform outcomes (SSO, onboarding, unified admin, data interoperability, analytics/AI enablement) rather than primarily fintech/crypto."
+    ]
+  }
+}

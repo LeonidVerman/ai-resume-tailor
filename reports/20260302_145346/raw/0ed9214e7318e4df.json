@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 2,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "role_fit": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "seniority_positioning": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "clarity_impact": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "mechanism_quality": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "constraint_compliance": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 1,
+      "evidence": [
+        "generated_cover_letter_text\":\"\"",
+        "generated_resume_text\":\"\""
+      ]
+    },
+    "overall_readiness": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Cannot assess truthfulness because the generated resume and cover letter are empty."
+    ],
+    "most_damaging_gaps": [
+      "No generated resume content to evaluate against the Senior Engineering Manager (Dashboard + Growth) requirements.",
+      "No generated cover letter content tailored to Fingerprint, Dashboard, Growth, PLG, or analytics console leadership.",
+      "Missing any evidence of people leadership across two squads, cross-functional execution, or dashboard/growth product delivery."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Provide the generated resume text (currently empty) with leadership scope, delivery outcomes, and relevant stack (web/SaaS, React/TS/Go, cloud).",
+      "Provide the generated cover letter text (currently empty) explicitly addressing Fingerprint’s Dashboard + Growth mission (PLG onboarding, analytics console, scale/performance).",
+      "Add concrete, role-relevant examples: managing multiple squads, partnering with Product/Design/GTM, improving onboarding funnels/activation, and building data-intensive dashboards."
+    ]
+  }
+}

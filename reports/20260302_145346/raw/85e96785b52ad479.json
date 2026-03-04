@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+    "company": "Lillio",
+    "role_title": "Manager, Engineering"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 3,
+      "evidence": [
+        "I am excited to apply for the Senior Software Engineer role at Tigera.",
+        "led teams of up to 20 engineers to deliver reliable, scalable products."
+      ]
+    },
+    "role_fit": {
+      "score": 1,
+      "evidence": [
+        "apply for the Senior Software Engineer role at Tigera.",
+        "built fintech and blockchain systems"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 2,
+      "evidence": [
+        "apply for the Senior Software Engineer role",
+        "roles as VP and Director of Software Development"
+      ]
+    },
+    "clarity_impact": {
+      "score": 4,
+      "evidence": [
+        "serving over 1M users",
+        "led teams of up to 20 engineers"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 2,
+      "evidence": [
+        "backend engineering and team leadership",
+        "AI-accelerated workflows (ChatGPT, Claude, Cursor AI)"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "generated_cover_letter_text\":\"\""
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 2,
+      "evidence": [
+        "apply for the Senior Software Engineer role at Tigera.",
+        "I would welcome the chance to bring this expertise to your team"
+      ]
+    },
+    "overall_readiness": {
+      "score": 1,
+      "evidence": [
+        "generated_resume_text\":\"\"",
+        "apply for the Senior Software Engineer role at Tigera."
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Cover letter targets a different company/role: \"Senior Software Engineer role at Tigera\" instead of Lillio Manager, Engineering.",
+      "No generated resume provided (empty), so any resume-based tailoring/claims cannot be verified in the generated documents."
+    ],
+    "most_damaging_gaps": [
+      "Missing resume entirely (generated_resume_text is empty).",
+      "Cover letter is for the wrong company and wrong role level (Senior SWE vs Engineering Manager).",
+      "No alignment to Lillio stack/needs (Rails/React/GraphQL, SOC2, AWS/Heroku/Postgres, people management practices) in generated materials."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Provide an actual tailored resume for Lillio Manager, Engineering, emphasizing 3+ years people management, hiring/onboarding, process improvement, and cross-functional leadership.",
+      "Rewrite the cover letter to explicitly reference Lillio, its mission in early childhood education, and the Engineering Manager responsibilities (1:1s, career growth, roadmap alignment).",
+      "Add concrete mechanisms and relevant stack signals (AWS/Postgres/observability; any Rails/React/GraphQL adjacency without overstating) plus quantified outcomes tied to team/process improvements."
+    ]
+  }
+}

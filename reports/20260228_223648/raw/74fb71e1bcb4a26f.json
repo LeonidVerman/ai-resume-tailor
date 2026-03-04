@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+    "company": "League",
+    "role_title": "Engineering Manager, Apps & Solutions (Western Canada)"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 9,
+      "evidence": [
+        "led teams of up to 20 engineers",
+        "raising test coverage by 20%... Improved system throughput by 25%"
+      ]
+    },
+    "role_fit": {
+      "score": 5,
+      "evidence": [
+        "customer-facing delivery and communication",
+        "deliver high-quality, scalable solutions in fintech and crypto environments"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "Senior backend engineer and engineering leader",
+        "VP / Director of Software Development"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "serving 1M+ users under regulatory constraints",
+        "Improved system throughput by 25%... raising test coverage by 20%"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "transactional cache for trading data",
+        "high-performance Java components"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 7,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "Skilled in customer-facing delivery and communication"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "apply for the Engineering Manager, Apps & Solutions role at League",
+        "drawn to this role... opportunity to shape product and engineering vision"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "managing complex software delivery projects while ensuring compliance",
+        "eager to bring my expertise in leading software development teams"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Healthcare/QA partnership specifics are implied but not evidenced (no explicit QA-team collaboration examples).",
+      "Customer-facing/risk escalation experience is asserted but not backed by concrete customer/project examples."
+    ],
+    "most_damaging_gaps": [
+      "No concrete examples of customer relationship management (timelines, risk escalation, dependency management).",
+      "Limited evidence of testing strategy/QA partnership beyond a single coverage metric.",
+      "No healthcare/enterprise app delivery context; domain remains fintech/crypto without translation to healthcare CX."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–3 bullets showing customer-facing delivery: stakeholder updates, risk escalations, dependency management, launch/testing coordination.",
+      "Include explicit agile execution details (sprint/backlog ownership, roadmap delivery, cross-team planning) aligned to Apps & Solutions delivery.",
+      "Translate regulated-systems experience to healthcare/security: secure coding, access management, incident handling, and quality gates with QA."
+    ]
+  }
+}

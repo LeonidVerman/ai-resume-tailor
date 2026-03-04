@@ -1,0 +1,28 @@
+{
+  "version": "assess_report_v1",
+  "generated_at": "2026-03-01T06:36:28.142003+00:00",
+  "model": "gpt-5.2",
+  "positions_count": 0,
+  "positions": [],
+  "category_averages": {
+    "truthfulness": 0.0,
+    "role_fit": 0.0,
+    "seniority_positioning": 0.0,
+    "clarity_impact": 0.0,
+    "mechanism_quality": 0.0,
+    "constraint_compliance": 0.0,
+    "cover_letter_effectiveness": 0.0,
+    "overall_readiness": 0.0
+  },
+  "integrated_score": 0.0,
+  "weights": {
+    "truthfulness": 0.2,
+    "role_fit": 0.2,
+    "seniority_positioning": 0.1,
+    "clarity_impact": 0.15,
+    "mechanism_quality": 0.1,
+    "constraint_compliance": 0.15,
+    "cover_letter_effectiveness": 0.05,
+    "overall_readiness": 0.05
+  }
+}

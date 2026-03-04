@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/exwk8pxuhzs8v6d6",
+    "company": "League",
+    "role_title": "Engineering Manager, Apps & Solutions (Western Canada)"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 8,
+      "evidence": [
+        "“Senior Software Engineer (Independent Contractor) | Mercor (Remote)”",
+        "“Directed engineering and product development for enterprise-scale crypto trading platforms serving 1M+ users”"
+      ]
+    },
+    "role_fit": {
+      "score": 5,
+      "evidence": [
+        "“Engineering Manager with 15+ years of experience leading software development teams”",
+        "“bring my expertise in team management, agile methodologies, and customer-facing delivery to League”"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 6,
+      "evidence": [
+        "“VP / Director of Software Development / Lead Software Developer”",
+        "“Engineering Manager with 15+ years of experience leading software development teams”"
+      ]
+    },
+    "clarity_impact": {
+      "score": 6,
+      "evidence": [
+        "“delivering scalable fintech and crypto systems for over 1M users”",
+        "“improving scalability and reliability through high-performance Java components”"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 4,
+      "evidence": [
+        "“high-throughput APIs, distributed systems, fault tolerance, low-latency design”",
+        "“improving scalability and reliability through high-performance Java components”"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 5,
+      "evidence": [
+        "“Contribute as an independent contractor helping world-leading AI labs train and evaluate advanced models”",
+        "“Technical Skills… Agile Coordination, Team Mentorship, Risk Management, AI-assisted Development Tools”"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "“apply for the Engineering Manager, Apps & Solutions role at League”",
+        "“fostering strong relationships with stakeholders to communicate risks and coordinate project dependencies”"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "“Engineering Manager with 15+ years of experience leading software development teams”",
+        "“I am eager to bring my expertise… to League, contributing to… healthcare solutions”"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied customer-facing delivery depth without concrete examples: “customer-facing delivery to League”",
+      "Stakeholder/risk communication claim not evidenced with specifics: “communicate risks and coordinate project dependencies”"
+    ],
+    "most_damaging_gaps": [
+      "Little healthcare/enterprise apps context; focus remains fintech/crypto rather than “complex enterprise or healthcare environments”",
+      "Missing concrete A&S mechanisms: sprint/backlog ownership, QA partnership, testing/launch coordination",
+      "Resume omits key quantified impacts present in source profile (e.g., coverage +20%, throughput +25%), reducing credibility/impact"
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add explicit customer-facing delivery examples (timeline commitments, dependency management, launch/testing coordination) with 1–2 concrete bullets per role.",
+      "Re-introduce quantified outcomes and specific initiatives from the source background (e.g., “test coverage by 20%”, “throughput by 25%”) to raise impact and confidence.",
+      "Include 2–3 architecture mechanisms relevant to League delivery (e.g., “asynchronous messaging”, “multi-layer caching”, “read replicas”) tied to outcomes and reliability."
+    ]
+  }
+}

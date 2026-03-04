@@ -12,11 +12,11 @@
     "evidence_map",
     "resume_strategy",
     "cover_letter_strategy",
-    "risk_checks"
+    "risk_checks",
+    "narrative_plan"
   ],
   "additionalProperties": false,
   "properties": {
-
     "role_level": {
       "type": "string",
       "enum": ["director", "manager", "principal", "staff", "senior", "mid", "junior"]
@@ -44,9 +44,7 @@
       ]
     },
 
-    "domain_mismatch": {
-      "type": "boolean"
-    },
+    "domain_mismatch": { "type": "boolean" },
 
     "domain_translation_rule_ids": {
       "type": "array",
@@ -73,10 +71,10 @@
         "required": ["theme", "priority", "why_important", "keywords"],
         "additionalProperties": false,
         "properties": {
-          "theme":         { "type": "string" },
-          "priority":      { "type": "string", "enum": ["primary", "secondary", "supporting"] },
+          "theme": { "type": "string" },
+          "priority": { "type": "string", "enum": ["primary", "secondary", "supporting"] },
           "why_important": { "type": "string" },
-          "keywords":      { "type": "array", "items": { "type": "string" } }
+          "keywords": { "type": "array", "items": { "type": "string" } }
         }
       }
     },
@@ -86,7 +84,7 @@
       "required": ["must_embed", "optional_embed"],
       "additionalProperties": false,
       "properties": {
-        "must_embed":   { "type": "array", "items": { "type": "string" } },
+        "must_embed": { "type": "array", "items": { "type": "string" } },
         "optional_embed": { "type": "array", "items": { "type": "string" } }
       }
     },
@@ -106,16 +104,10 @@
               "required": ["source", "location", "quote", "allowed_claims"],
               "additionalProperties": false,
               "properties": {
-                "source": {
-                  "type": "string",
-                  "enum": ["candidate_profile", "master_resume"]
-                },
+                "source": { "type": "string", "enum": ["candidate_profile", "master_resume"] },
                 "location": { "type": "string" },
                 "quote": { "type": "string" },
-                "allowed_claims": {
-                  "type": "array",
-                  "items": { "type": "string" }
-                }
+                "allowed_claims": { "type": "array", "items": { "type": "string" } }
               }
             }
           },
@@ -189,14 +181,8 @@
       "required": ["company_and_role_mentions", "structure"],
       "additionalProperties": false,
       "properties": {
-        "company_and_role_mentions": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "structure": {
-          "type": "array",
-          "items": { "type": "string" }
-        }
+        "company_and_role_mentions": { "type": "array", "items": { "type": "string" } },
+        "structure": { "type": "array", "items": { "type": "string" } }
       }
     },
 
@@ -211,12 +197,100 @@
       "properties": {
         "do_not_invent": { "type": "array", "items": { "type": "string" } },
         "likely_hallucination_traps": { "type": "array", "items": { "type": "string" } },
-        "claims_requiring_strict_grounding": {
+        "claims_requiring_strict_grounding": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "narrative_plan": {
+      "type": "object",
+      "required": [
+        "anchor_role_id",
+        "theme_ranked",
+        "summary_coverage",
+        "anchor_role_coverage",
+        "domain_translation_binding"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "anchor_role_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Role name (must match one of resume_strategy.experience.role_name) where narrative dominance is enforced."
+        },
+
+        "theme_ranked": {
           "type": "array",
-          "items": { "type": "string" }
+          "minItems": 2,
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "required": ["theme_id", "label", "priority", "signature_terms"],
+            "additionalProperties": false,
+            "properties": {
+              "theme_id": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 },
+              "priority": { "type": "string", "enum": ["primary", "secondary", "supporting"] },
+              "signature_terms": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 12,
+                "items": { "type": "string" },
+                "description": "Short terms to enable rephrase-tolerant deterministic validation (not exact phrase enforcement)."
+              }
+            }
+          }
+        },
+
+        "summary_coverage": {
+          "type": "object",
+          "required": ["must_cover_theme_ids", "should_cover_theme_ids"],
+          "additionalProperties": false,
+          "properties": {
+            "must_cover_theme_ids": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 3,
+              "items": { "type": "string" }
+            },
+            "should_cover_theme_ids": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 2,
+              "items": { "type": "string" }
+            }
+          }
+        },
+
+        "anchor_role_coverage": {
+          "type": "object",
+          "required": ["first_k_bullets", "top_k_themes_to_cover", "min_theme_occurrences"],
+          "additionalProperties": false,
+          "properties": {
+            "first_k_bullets": { "type": "integer", "minimum": 2, "maximum": 5 },
+            "top_k_themes_to_cover": { "type": "integer", "minimum": 1, "maximum": 3 },
+            "min_theme_occurrences": {
+              "type": "object",
+              "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 4 },
+              "description": "Map theme_id -> minimum signature-term hits in (anchor role first_k bullets)."
+            }
+          }
+        },
+
+        "domain_translation_binding": {
+          "type": "object",
+          "required": [
+            "min_total_rule_instantiations",
+            "min_instantiations_in_anchor_role",
+            "require_target_frame_in_anchor_role_first_k"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "min_total_rule_instantiations": { "type": "integer", "minimum": 0, "maximum": 5 },
+            "min_instantiations_in_anchor_role": { "type": "integer", "minimum": 0, "maximum": 3 },
+            "require_target_frame_in_anchor_role_first_k": { "type": "boolean" }
+          }
         }
       }
     }
-
   }
 }

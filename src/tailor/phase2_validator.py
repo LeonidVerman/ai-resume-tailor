@@ -40,6 +40,13 @@ EMPLOYER_INTEGRITY_NEW_ROLE: str = "EMPLOYER_INTEGRITY_NEW_ROLE"
 #: Error code when an output role's date range differs from the master resume.
 DATE_INTEGRITY_MODIFIED: str = "DATE_INTEGRITY_MODIFIED"
 
+#: Narrative validator error codes.
+NARRATIVE_SUMMARY_THEME_MISSING: str = "NARRATIVE_SUMMARY_THEME_MISSING"
+NARRATIVE_ANCHOR_ROLE_DOMINANCE_FAILED: str = "NARRATIVE_ANCHOR_ROLE_DOMINANCE_FAILED"
+DOMAIN_TRANSLATION_MIN_TOTAL_NOT_MET: str = "DOMAIN_TRANSLATION_MIN_TOTAL_NOT_MET"
+DOMAIN_TRANSLATION_ANCHOR_NOT_MET: str = "DOMAIN_TRANSLATION_ANCHOR_NOT_MET"
+DOMAIN_TRANSLATION_FIRST_K_NOT_MET: str = "DOMAIN_TRANSLATION_FIRST_K_NOT_MET"
+
 # ---------------------------------------------------------------------------
 # Mechanism keyword set — LEGACY FALLBACK only.
 #
@@ -505,6 +512,46 @@ def _earlier_role_entry_matches_master(
 
 
 # ---------------------------------------------------------------------------
+# Narrative validator helpers
+# ---------------------------------------------------------------------------
+
+def _extract_summary(resume: str) -> str:
+    """Return the text of the Professional Summary / Summary section."""
+    lines = resume.split("\n")
+    in_summary = False
+    result: list[str] = []
+    for line in lines:
+        s = line.strip()
+        if s in ("Professional Summary", "Summary"):
+            in_summary = True
+            continue
+        if in_summary:
+            if s in _RESUME_SECTION_HEADERS:
+                break
+            if s:
+                result.append(s)
+    return " ".join(result)
+
+
+def _extract_anchor_role_bullets(
+    roles: list[tuple[str, list[str]]],
+    anchor_role_id: str,
+    first_k: int,
+) -> list[str]:
+    """Return the first *first_k* bullets from the anchor role (fuzzy name match)."""
+    for role_header, bullets in roles:
+        if _roles_match(role_header, anchor_role_id):
+            return bullets[:first_k]
+    return []
+
+
+def _count_signature_hits(text: str, signature_terms: list[str]) -> int:
+    """Count how many signature terms appear in *text* (case-insensitive substring)."""
+    text_norm = " ".join(text.lower().split())
+    return sum(1 for term in signature_terms if term.lower() in text_norm)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -515,6 +562,7 @@ def validate_phase2_output(
     current_date: str,
     now: date | None = None,
     evidence_ledger: dict | None = None,
+    domain_translation_ledger: list | None = None,
 ) -> dict:
     """Check Phase 2 output against WriterPacket constraints.
 
@@ -541,6 +589,10 @@ def validate_phase2_output(
         provided, required-skill and required-metric checks use ledger-driven
         validation (allowing rewording) instead of verbatim substring search.
         Unsafe-noun enforcement is always verbatim regardless of the ledger.
+    domain_translation_ledger:
+        Optional list of domain translation ledger entries produced by the
+        Phase 2 writer.  Used by Check 14 (DomainTranslationAnchorValidator).
+        Each entry has ``rule_id``, ``exact_span``, and ``location`` keys.
     """
     if now is None:
         now = date.today()
@@ -969,6 +1021,120 @@ def validate_phase2_output(
                 f"{DATE_INTEGRITY_MODIFIED}: {'; '.join(date_integrity_violations)}"
             )
 
+    # --- 12. Narrative: summary theme coverage ---
+    narrative_plan: dict = writer_packet.get("narrative_plan") or {}
+    narrative_missing_summary_themes: list[str] = []
+    narrative_anchor_missing_theme_ids: list[str] = []
+
+    if narrative_plan:
+        theme_map: dict[str, dict] = {
+            t["theme_id"]: t for t in narrative_plan.get("theme_ranked", [])
+        }
+        must_cover = (
+            narrative_plan.get("summary_coverage", {}).get("must_cover_theme_ids", [])
+        )
+        if must_cover and theme_map:
+            summary_text = _extract_summary(resume)
+            for theme_id in must_cover:
+                theme_entry = theme_map.get(theme_id)
+                if not theme_entry:
+                    continue
+                hits = _count_signature_hits(
+                    summary_text, theme_entry.get("signature_terms", [])
+                )
+                if hits < 1:
+                    narrative_missing_summary_themes.append(theme_id)
+                    errors.append(
+                        f"{NARRATIVE_SUMMARY_THEME_MISSING}: theme {theme_id} "
+                        f"({theme_entry['label']!r}) 0 signature-term hits in summary"
+                    )
+
+    # --- 13. Narrative: anchor role dominance ---
+    if narrative_plan:
+        anchor_role_id: str = narrative_plan.get("anchor_role_id", "")
+        arc = narrative_plan.get("anchor_role_coverage", {})
+        first_k_bullets: int = arc.get("first_k_bullets", 3)
+        top_k_themes: int = arc.get("top_k_themes_to_cover", 2)
+        min_occ: dict[str, int] = arc.get("min_theme_occurrences", {})
+
+        if anchor_role_id and theme_map:
+            anchor_bullets = _extract_anchor_role_bullets(
+                roles, anchor_role_id, first_k_bullets
+            )
+            bullets_text = " ".join(anchor_bullets)
+            top_themes = list(theme_map.values())[:top_k_themes]
+
+            for theme_entry in top_themes:
+                tid = theme_entry["theme_id"]
+                required = min_occ.get(tid, 1)
+                if required == 0:
+                    continue
+                hits = _count_signature_hits(
+                    bullets_text, theme_entry.get("signature_terms", [])
+                )
+                if hits < required:
+                    narrative_anchor_missing_theme_ids.append(tid)
+
+            if narrative_anchor_missing_theme_ids:
+                errors.append(
+                    f"{NARRATIVE_ANCHOR_ROLE_DOMINANCE_FAILED}: "
+                    f"anchor role {anchor_role_id!r} first {first_k_bullets} bullets "
+                    f"missing themes {narrative_anchor_missing_theme_ids}"
+                )
+
+    # --- 14. Domain translation anchor validator ---
+    domain_tb = (narrative_plan or {}).get("domain_translation_binding", {})
+    if (
+        narrative_plan
+        and writer_packet.get("domain_mismatch", False)
+        and domain_translation_ledger is not None
+        and domain_tb
+    ):
+        active_dt = [
+            e for e in domain_translation_ledger
+            if e.get("exact_span") and e.get("location") != "skipped"
+        ]
+        min_total = domain_tb.get("min_total_rule_instantiations", 0)
+        min_anchor_dt = domain_tb.get("min_instantiations_in_anchor_role", 0)
+        req_first_k = domain_tb.get("require_target_frame_in_anchor_role_first_k", False)
+        dt_anchor_id: str = (narrative_plan or {}).get("anchor_role_id", "")
+
+        if min_total > 0 and len(active_dt) < min_total:
+            errors.append(
+                f"{DOMAIN_TRANSLATION_MIN_TOTAL_NOT_MET}: "
+                f"found {len(active_dt)} instantiations, need {min_total}"
+            )
+
+        if min_anchor_dt > 0:
+            anchor_dt_entries = [
+                e for e in active_dt
+                if dt_anchor_id.lower() in (e.get("location") or "").lower()
+            ]
+            if len(anchor_dt_entries) < min_anchor_dt:
+                errors.append(
+                    f"{DOMAIN_TRANSLATION_ANCHOR_NOT_MET}: "
+                    f"found {len(anchor_dt_entries)} in anchor role, "
+                    f"need {min_anchor_dt}"
+                )
+
+        if req_first_k and dt_anchor_id:
+            fk_dt: int = (narrative_plan or {}).get(
+                "anchor_role_coverage", {}
+            ).get("first_k_bullets", 3)
+            anchor_bullets_dt = _extract_anchor_role_bullets(
+                roles, dt_anchor_id, fk_dt
+            )
+            first_k_text = " ".join(anchor_bullets_dt).lower()
+            dt_hit = any(
+                (e.get("exact_span") or "").lower() in first_k_text
+                for e in active_dt
+            )
+            if not dt_hit:
+                errors.append(
+                    f"{DOMAIN_TRANSLATION_FIRST_K_NOT_MET}: "
+                    f"no domain translation span in anchor role first {fk_dt} bullets"
+                )
+
     repair_brief: dict = {
         "global_issues": {
             "missing_metrics": missing_metrics,
@@ -983,6 +1149,8 @@ def validate_phase2_output(
             "domain_forbidden_phrases": domain_forbidden_phrases_found,
             "employer_integrity_violations": employer_integrity_violations,
             "date_integrity_violations": date_integrity_violations,
+            "narrative_missing_summary_themes": narrative_missing_summary_themes,
+            "narrative_anchor_missing_theme_ids": narrative_anchor_missing_theme_ids,
         },
         "roles": repair_roles,
     }
@@ -1007,6 +1175,8 @@ def validate_phase2_output(
             "domain_forbidden_phrases_found": domain_forbidden_phrases_found,
             "employer_integrity_violations": employer_integrity_violations,
             "date_integrity_violations": date_integrity_violations,
+            "narrative_missing_summary_themes": narrative_missing_summary_themes,
+            "narrative_anchor_missing_theme_ids": narrative_anchor_missing_theme_ids,
         },
         "repair_brief": repair_brief,
         "judge_candidates": judge_candidates,
