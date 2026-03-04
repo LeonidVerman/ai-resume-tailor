@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+    "company": "Lillio",
+    "role_title": "Manager, Engineering"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 6,
+      "evidence": [
+        "Languages & Frameworks: ... Ruby on Rails, React, GraphQL",
+        "Engineering Manager with 15+ years of experience in backend engineering and team leadership"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "I am excited to apply for the Manager, Engineering role at Lillio.",
+        "Languages & Frameworks: Java, C#, Python, TypeScript, Ruby on Rails, React, GraphQL"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Mentored and managed a team of developers"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "raising test coverage by 20%",
+        "Improved system throughput by 25% by introducing a transactional cache"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 5,
+      "evidence": [
+        "introducing a transactional cache for trading data",
+        "Built a prototype in-memory database that boosted data access speed"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 7,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "March 3, 2026"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 5,
+      "evidence": [
+        "My experience aligns well with Lillio's mission to empower early childhood educators",
+        "I am eager to bring my expertise in team development, process optimization"
+      ]
+    },
+    "overall_readiness": {
+      "score": 5,
+      "evidence": [
+        "Engineering Manager with 15+ years of experience",
+        "Languages & Frameworks: ... Ruby on Rails, React, GraphQL"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Resume lists \"Ruby on Rails, React, GraphQL\" despite no supporting experience bullets showing use in roles.",
+      "Title/branding as \"Engineering Manager\" is asserted in summary without explicit manager role dates/responsibilities beyond lead/VP titles."
+    ],
+    "most_damaging_gaps": [
+      "Missing Lillio stack credibility: no concrete Ruby on Rails/React/GraphQL project examples, outcomes, or architecture decisions tied to that stack.",
+      "Engineering management specifics are thin: limited evidence of \"1:1s, objectives setting, career growth\" and hiring/onboarding ownership.",
+      "No mention of SOC2/controls, Heroku, or Postgres/AWS usage in context of web product delivery (only listed as skills)."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Replace or substantiate the RoR/React/GraphQL skill claims with 2–3 specific projects (what was built, scale, your role, results). If no experience, remove them.",
+      "Add explicit engineering management scope: team size, cadence (1:1s, performance reviews), hiring/interviewing, onboarding, roadmap alignment with Product/Design.",
+      "Tailor to Lillio’s domain and priorities: user-facing web app impact, security/compliance posture (SOC2), AWS/Postgres operational excellence, and mission-driven motivation with a concrete example."
+    ]
+  }
+}

@@ -13,13 +13,25 @@
     "resume_strategy",
     "cover_letter_strategy",
     "risk_checks",
-    "narrative_plan"
+    "narrative_plan",
+    "skill_graph"
   ],
   "additionalProperties": false,
   "properties": {
     "role_level": {
       "type": "string",
       "enum": ["director", "manager", "principal", "staff", "senior", "mid", "junior"]
+    },
+
+    "resume_mode": {
+      "type": "string",
+      "enum": [
+        "technical_depth",
+        "manager_delivery",
+        "architecture_governance",
+        "product_growth",
+        "culture_building"
+      ]
     },
 
     "jd_domain": {
@@ -53,19 +65,10 @@
       "maxItems": 3
     },
 
-    "resume_mode": {
-      "type": "string",
-      "enum": [
-        "technical_depth",
-        "manager_delivery",
-        "architecture_governance",
-        "product_growth",
-        "culture_building"
-      ]
-    },
-
     "jd_top_themes": {
       "type": "array",
+      "minItems": 4,
+      "maxItems": 7,
       "items": {
         "type": "object",
         "required": ["theme", "priority", "why_important", "keywords"],
@@ -84,13 +87,14 @@
       "required": ["must_embed", "optional_embed"],
       "additionalProperties": false,
       "properties": {
-        "must_embed": { "type": "array", "items": { "type": "string" } },
-        "optional_embed": { "type": "array", "items": { "type": "string" } }
+        "must_embed": { "type": "array", "items": { "type": "string" }, "minItems": 0, "maxItems": 6 },
+        "optional_embed": { "type": "array", "items": { "type": "string" }, "minItems": 0, "maxItems": 8 }
       }
     },
 
     "evidence_map": {
       "type": "array",
+      "minItems": 4,
       "items": {
         "type": "object",
         "required": ["theme", "evidence", "gaps", "safe_translation"],
@@ -133,6 +137,7 @@
         },
         "experience": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "object",
             "required": [
@@ -212,11 +217,7 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "anchor_role_id": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Role name (must match one of resume_strategy.experience.role_name) where narrative dominance is enforced."
-        },
+        "anchor_role_id": { "type": "string", "minLength": 1 },
 
         "theme_ranked": {
           "type": "array",
@@ -227,15 +228,14 @@
             "required": ["theme_id", "label", "priority", "signature_terms"],
             "additionalProperties": false,
             "properties": {
-              "theme_id": { "type": "string", "minLength": 1 },
-              "label": { "type": "string", "minLength": 1 },
+              "theme_id": { "type": "string" },
+              "label": { "type": "string" },
               "priority": { "type": "string", "enum": ["primary", "secondary", "supporting"] },
               "signature_terms": {
                 "type": "array",
                 "minItems": 3,
                 "maxItems": 12,
-                "items": { "type": "string" },
-                "description": "Short terms to enable rephrase-tolerant deterministic validation (not exact phrase enforcement)."
+                "items": { "type": "string" }
               }
             }
           }
@@ -246,18 +246,8 @@
           "required": ["must_cover_theme_ids", "should_cover_theme_ids"],
           "additionalProperties": false,
           "properties": {
-            "must_cover_theme_ids": {
-              "type": "array",
-              "minItems": 2,
-              "maxItems": 3,
-              "items": { "type": "string" }
-            },
-            "should_cover_theme_ids": {
-              "type": "array",
-              "minItems": 0,
-              "maxItems": 2,
-              "items": { "type": "string" }
-            }
+            "must_cover_theme_ids": { "type": "array", "minItems": 2, "maxItems": 3, "items": { "type": "string" } },
+            "should_cover_theme_ids": { "type": "array", "minItems": 0, "maxItems": 2, "items": { "type": "string" } }
           }
         },
 
@@ -270,8 +260,7 @@
             "top_k_themes_to_cover": { "type": "integer", "minimum": 1, "maximum": 3 },
             "min_theme_occurrences": {
               "type": "object",
-              "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 4 },
-              "description": "Map theme_id -> minimum signature-term hits in (anchor role first_k bullets)."
+              "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 4 }
             }
           }
         },
@@ -288,6 +277,58 @@
             "min_total_rule_instantiations": { "type": "integer", "minimum": 0, "maximum": 5 },
             "min_instantiations_in_anchor_role": { "type": "integer", "minimum": 0, "maximum": 3 },
             "require_target_frame_in_anchor_role_first_k": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "skill_graph": {
+      "type": "object",
+      "required": [
+        "direct_skills",
+        "related_skills"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "direct_skills": {
+          "type": "array",
+          "minItems": 5,
+          "items": { "type": "string" },
+          "description": "Skills/tools explicitly supported by master_resume or candidate_profile."
+        },
+        "related_skills": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 150,
+          "items": {
+            "type": "object",
+            "required": [
+              "root_skill",
+              "item",
+              "derivation_type",
+              "confidence",
+              "allowed_usage"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "root_skill": { "type": "string", "minLength": 1 },
+              "item": { "type": "string", "minLength": 1 },
+
+              "derivation_type": {
+                "type": "string",
+                "enum": ["concept", "method", "pattern", "tool", "responsibility"]
+              },
+
+              "confidence": {
+                "type": "string",
+                "enum": ["high", "medium", "low"]
+              },
+
+              "allowed_usage": {
+                "type": "string",
+                "enum": ["skills_section_only", "can_claim_experience", "forbidden"]
+              }
+            }
           }
         }
       }

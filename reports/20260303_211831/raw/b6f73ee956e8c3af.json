@@ -1,0 +1,85 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 6,
+      "evidence": [
+        "Cloud Platforms: AWS, Azure",
+        "Infrastructure & DevOps: Docker, Kubernetes, CI/CD, Terraform"
+      ]
+    },
+    "role_fit": {
+      "score": 5,
+      "evidence": [
+        "driving modernization initiatives to enhance platform interoperability and data integration",
+        "Architectural Patterns: Microservices, Event-driven architecture, API design (REST, GraphQL)"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 7,
+      "evidence": [
+        "VP / Director of Software Development",
+        "Adept at leading cross-functional teams and driving modernization initiatives"
+      ]
+    },
+    "clarity_impact": {
+      "score": 7,
+      "evidence": [
+        "trading system for over 1M clients",
+        "Improved system throughput by 25%"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 6,
+      "evidence": [
+        "horizontal scaling of trading servers and multiple caching layers",
+        "Established architectural standards and governance for shared services and data models"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 9,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "Eligible to work remotely for U.S. companies from Canada (no visa required for remote)."
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "apply for the Enterprise Architect – Platform role at NEOGOV",
+        "aligning closely with NEOGOV's mission to create a unified, cloud-ready ecosystem"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "Architectural Patterns: Microservices, Event-driven architecture, API design (REST, GraphQL)",
+        "I am eager to bring my expertise in cloud-native architecture, data integration, and hands-on technical leadership"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Azure experience is asserted (\"Cloud Platforms: AWS, Azure\") but Azure is not evidenced in the master resume experience.",
+      "Terraform is asserted (\"Infrastructure & DevOps... Terraform\") but not evidenced in the master resume.",
+      "GraphQL is asserted (\"API design (REST, GraphQL)\") without support in the master resume."
+    ],
+    "most_damaging_gaps": [
+      "No Angular experience shown, despite JD asking for \"Strong experience with Angular\".",
+      "No .NET Core/C# implementation detail beyond a skills list; JD expects proven .NET + Java ecosystems.",
+      "Missing platform-unification specifics (SSO/OIDC/SAML, unified data models, cross-product onboarding/admin) central to the role."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Replace or qualify unsupported skills (Azure/Terraform/GraphQL) unless you can cite concrete projects, outcomes, and tooling used.",
+      "Add explicit platform-architecture examples mapped to NEOGOV: SSO/identity, shared services, unified data model, cross-product integration patterns, and governance artifacts (principles/standards/reference architectures).",
+      "Address key JD tech gaps directly: either demonstrate Angular and .NET Core/C# work with specifics, or reframe candidly (transferable experience + learning plan) to reduce mismatch."
+    ]
+  }
+}

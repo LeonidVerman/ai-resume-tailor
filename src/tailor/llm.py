@@ -75,6 +75,7 @@ _PLAN_REQUIRED_KEYS = frozenset({
     "cover_letter_strategy",
     "risk_checks",
     "narrative_plan",
+    "skill_graph",
 })
 
 
@@ -220,6 +221,13 @@ def _run_schema_gate(data: Any) -> list[str]:
             f"got {type(np).__name__}"
         )
 
+    # skill_graph must be a dict
+    sg = data.get("skill_graph")
+    if "skill_graph" in data and not isinstance(sg, dict):
+        errors.append(
+            f"schema_invalid: skill_graph must be an object, got {type(sg).__name__}"
+        )
+
     return errors[:15]  # cap to avoid flooding repair context
 
 
@@ -356,6 +364,14 @@ def validate_plan(data: Any) -> dict:
                     f"narrative_plan.anchor_role_id {anchor!r} does not match any "
                     f"resume_strategy.experience role_name: {exp_roles}"
                 )
+
+    # skill_graph: basic structural check
+    sg = data.get("skill_graph")
+    if isinstance(sg, dict):
+        if not isinstance(sg.get("direct_skills"), list):
+            raise PlanValidationError("skill_graph.direct_skills must be a list")
+        if not isinstance(sg.get("related_skills"), list):
+            raise PlanValidationError("skill_graph.related_skills must be a list")
 
     return data
 
