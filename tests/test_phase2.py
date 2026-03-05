@@ -3008,6 +3008,14 @@ def _make_skill_graph_packet(
         },
         "skill_allowlist_skills_section": ss,
         "skill_allowlist_experience_claims": exp,
+        # 2-tier skill policy: git/jenkins are in truth tier only (not JD-scoped focus)
+        "skill_policy": {
+            "skills_truth_allowlist": _SG_DIRECT + _SG_CAN_CLAIM + _SG_SKILLS_SECTION_ONLY + ["git", "jenkins"],
+            "skills_focus_allowlist": _SG_DIRECT + _SG_CAN_CLAIM + _SG_SKILLS_SECTION_ONLY,
+            "focus_skills_min_count": 5,
+            "claim_experience_allowlist": _SG_DIRECT + _SG_CAN_CLAIM,
+            "cover_letter_tool_allowlist_global": _SG_DIRECT,
+        },
     }
 
 
@@ -3073,3 +3081,101 @@ class TestSkillGraphValidators:
         report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
         errs = [e for e in report["errors"] if "SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION" in e]
         assert not errs, f"Direct skill 'kubernetes' in experience claim allowlist must not fail: {errs}"
+
+
+class TestTwoTierSkillAllowlist:
+    """Checks 15 (truth tier) and 15b (focus-coverage warning) for 2-tier skill policy."""
+
+    def test_truth_allows_git_and_jenkins(self):
+        """git and jenkins are in truth allowlist → no SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION."""
+        pkt = _make_skill_graph_packet()
+        resume = _sg_resume("Python, Docker, git, Jenkins")
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        errs = [e for e in report["errors"] if "SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION" in e]
+        assert not errs, f"git/jenkins in truth allowlist must not trigger violation: {errs}"
+
+    def test_truth_blocks_genuinely_invented_skill(self):
+        """A skill not in any allowlist tier → SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION."""
+        pkt = _make_skill_graph_packet()
+        resume = _sg_resume("Python, Docker, OracleDB_Pro_X9_Ultra")
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        errs = [e for e in report["errors"] if "SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION" in e]
+        assert errs, f"Completely invented skill must be flagged: {report['errors']}"
+
+    def test_focus_warning_emitted_when_below_min(self):
+        """Skills section with fewer focus skills than focus_skills_min_count → SKILL_FOCUS_MIN_NOT_MET warning."""
+        pkt = _make_skill_graph_packet()
+        # Only 2 focus skills (min is 5)
+        resume = _sg_resume("Python, Docker")
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        warnings = report.get("warnings", [])
+        assert any("SKILL_FOCUS_MIN_NOT_MET" in w for w in warnings), (
+            f"Expected SKILL_FOCUS_MIN_NOT_MET warning, got: {warnings}"
+        )
+
+    def test_focus_no_warning_when_min_met(self):
+        """Skills section meets focus_skills_min_count (≥ 5) → no SKILL_FOCUS_MIN_NOT_MET warning."""
+        pkt = _make_skill_graph_packet()
+        # Include all 7 focus skills: _SG_DIRECT (5) + _SG_CAN_CLAIM (1) + _SG_SKILLS_SECTION_ONLY (1)
+        all_focus = ", ".join(_SG_DIRECT + _SG_CAN_CLAIM + _SG_SKILLS_SECTION_ONLY)
+        resume = _sg_resume(all_focus)
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        warnings = report.get("warnings", [])
+        assert not any("SKILL_FOCUS_MIN_NOT_MET" in w for w in warnings), (
+            f"Unexpected SKILL_FOCUS_MIN_NOT_MET warning: {warnings}"
+        )
+
+    def test_cl_v4_uses_global_allowlist(self):
+        """Tool in cover_letter_tool_allowlist_global (not per-proof list) → no CL_TOOL_ALLOWLIST_VIOLATION."""
+        pkt = _make_skill_graph_packet()
+        # Add "terraform" to global allowlist; it is NOT in per-proof allowed_tool_mentions
+        pkt = dict(pkt)
+        pkt["skill_policy"] = dict(pkt["skill_policy"])
+        pkt["skill_policy"]["cover_letter_tool_allowlist_global"] = ["terraform"]
+        pkt["direct_skills_set"] = []  # ensure not covered by direct skills path
+        pkt["cover_letter_plan"] = {
+            "structure_version": "CL_V1_4PARA_2PROOF",
+            "bridge_sentence_required": False,
+            "proof_points": [
+                {
+                    "proof_id": "P1",
+                    "required_exact_span": "I used Terraform to manage infrastructure.",
+                    "allowed_tool_mentions": [],  # terraform NOT in per-proof list
+                },
+            ],
+        }
+        # Cover letter: Dear salutation + 3 body paragraphs (hook, P1 with terraform, P2)
+        cl = (
+            "Dear Hiring Manager,\n\n"
+            "Hook paragraph.\n\n"
+            "I used Terraform to manage infrastructure.\n\n"
+            "We scaled using proven patterns."
+        )
+        report = validate_phase2_output(pkt, _sg_resume("Python, Docker"), cl, _today())
+        errs = [e for e in report["errors"] if "CL_TOOL_ALLOWLIST_VIOLATION" in e]
+        assert not errs, (
+            f"Terraform in cl_global_allowlist must not trigger CL_TOOL_ALLOWLIST_VIOLATION: {errs}"
+        )
+
+    def test_backward_compat_no_skill_policy_key(self):
+        """Packet without skill_policy falls back to skill_allowlist_skills_section."""
+        pkt = _make_skill_graph_packet()
+        pkt = {k: v for k, v in pkt.items() if k != "skill_policy"}
+        # "Terraform" is not in old-style allowlist → still flagged
+        resume = _sg_resume("Python, Terraform")
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        errs = [e for e in report["errors"] if "SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION" in e]
+        assert errs, f"Terraform should still be flagged without skill_policy: {errs}"
+
+    def test_focus_warning_is_not_a_hard_error(self):
+        """Focus shortfall emits a warning only, not a hard error; report.ok is unaffected by it."""
+        pkt = _make_skill_graph_packet()
+        # Minimal skills → focus shortfall
+        resume = _sg_resume("Python")
+        report = validate_phase2_output(pkt, resume, _narrative_cover(), _today())
+        warnings = report.get("warnings", [])
+        focus_warnings = [w for w in warnings if "SKILL_FOCUS_MIN_NOT_MET" in w]
+        # Warning emitted, but it is NOT in errors
+        assert focus_warnings, "SKILL_FOCUS_MIN_NOT_MET should appear in warnings"
+        focus_errors = [e for e in report["errors"] if "SKILL_FOCUS_MIN_NOT_MET" in e]
+        assert not focus_errors, "SKILL_FOCUS_MIN_NOT_MET must not appear in errors"

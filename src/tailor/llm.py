@@ -959,13 +959,23 @@ def _build_validation_context(writer_packet: dict) -> dict:
     """Return a compact context object for the Phase 2 repair agent.
 
     Contains the anchor role, domain flag, a slim cover-letter plan summary,
-    and a 20-item sample of the skills allowlist — all the stable reference
-    data the repair agent needs without repeating the full WriterPacket.
+    and a 20-item sample of the truth-tier skills allowlist — all the stable
+    reference data the repair agent needs without repeating the full WriterPacket.
     """
     narrative_plan = writer_packet.get("narrative_plan") or {}
     arc = narrative_plan.get("anchor_role_coverage", {})
     cl_plan = writer_packet.get("cover_letter_plan") or {}
-    skills_allowlist = writer_packet.get("skill_allowlist_skills_section") or []
+
+    # Prefer pre-normalized truth allowlist from skill_policy; fall back to old field.
+    _sp = writer_packet.get("skill_policy") or {}
+    _truth_norm = _sp.get("skills_truth_allowlist_norm")
+    if _truth_norm is not None:
+        _skills_sample: list[str] = sorted(_truth_norm)[:20]
+    elif _sp.get("skills_truth_allowlist") is not None:
+        _skills_sample = sorted({s.lower() for s in _sp["skills_truth_allowlist"]})[:20]
+    else:
+        _old_list = writer_packet.get("skill_allowlist_skills_section") or []
+        _skills_sample = sorted({s.lower() for s in _old_list})[:20]
 
     cl_plan_summary = {
         "structure_version": cl_plan.get("structure_version", "CL_V1_4PARA_2PROOF"),
@@ -984,7 +994,7 @@ def _build_validation_context(writer_packet: dict) -> dict:
         "first_k_bullets": arc.get("first_k_bullets", 3),
         "domain_mismatch": writer_packet.get("domain_mismatch", False),
         "cl_plan_summary": cl_plan_summary,
-        "skills_allowlist_sample": sorted({s.lower() for s in skills_allowlist})[:20],
+        "skills_truth_allowlist_sample": _skills_sample,
     }
 
 

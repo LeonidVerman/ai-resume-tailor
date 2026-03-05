@@ -329,7 +329,7 @@ class TestSkillAllowlistStructuredError:
         assert all("raw" in t and "normalized" in t for t in tokens)
         norm_vals = [t["normalized"] for t in tokens]
         assert "graphql" in norm_vals
-        assert isinstance(payload["allowlist_sample"], list)
+        assert isinstance(payload["skills_truth_allowlist_sample"], list)
         assert payload["output_format_hint"] == "flat_list_preferred"
 
     def test_allowlist_sample_max_20(self):
@@ -342,7 +342,24 @@ class TestSkillAllowlistStructuredError:
             if e["code"] == SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION
         ]
         if errs:
-            assert len(errs[0]["payload"]["allowlist_sample"]) <= 20
+            assert len(errs[0]["payload"]["skills_truth_allowlist_sample"]) <= 20
+
+    def test_violation_payload_has_focus_fields(self):
+        """SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION payload includes focus coverage fields."""
+        wp = self._wp_skills(["python", "java"])
+        resume = self._resume_with_skills("Python, Java, GraphQL")
+        report = validate_phase2_output(wp, resume, "", "")
+        errs = [
+            e for e in report["structured_errors"]
+            if e["code"] == SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION
+        ]
+        assert errs
+        payload = errs[0]["payload"]
+        assert "focus_skills_min_count" in payload
+        assert "focus_skills_found_count" in payload
+        assert "missing_focus_skills_sample" in payload
+        assert isinstance(payload["missing_focus_skills_sample"], list)
+        assert isinstance(payload["skills_focus_allowlist_sample"], list)
 
     def test_no_violation_no_structured_error(self):
         wp = self._wp_skills(["python", "java"])
@@ -350,6 +367,105 @@ class TestSkillAllowlistStructuredError:
         report = validate_phase2_output(wp, resume, "", "")
         codes = [e["code"] for e in report["structured_errors"]]
         assert SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION not in codes
+
+
+# ---------------------------------------------------------------------------
+# Section 5b: SKILL_FOCUS_MIN_NOT_MET structured error (soft)
+# ---------------------------------------------------------------------------
+
+
+class TestFocusCoverageStructuredError:
+    """SKILL_FOCUS_MIN_NOT_MET appears in structured_errors but NOT in errors (soft)."""
+
+    from tailor.phase2_validator import SKILL_FOCUS_MIN_NOT_MET as _FMN
+
+    def _wp_focus(
+        self,
+        truth_list: list[str],
+        focus_list: list[str],
+        focus_min: int,
+    ) -> dict:
+        from tailor.phase2_validator import SKILL_FOCUS_MIN_NOT_MET  # noqa: F401
+        return _minimal_wp(
+            skill_allowlist_skills_section=truth_list,
+            skill_policy={
+                "skills_truth_allowlist": truth_list,
+                "skills_truth_allowlist_norm": [s.lower() for s in truth_list],
+                "skills_focus_allowlist": focus_list,
+                "skills_focus_allowlist_norm": [s.lower() for s in focus_list],
+                "focus_skills_min_count": focus_min,
+                "claim_experience_allowlist": truth_list,
+                "claim_experience_allowlist_norm": [s.lower() for s in truth_list],
+                "cover_letter_tool_allowlist_global": [],
+                "cover_letter_tool_allowlist_global_norm": [],
+            },
+        )
+
+    def _resume(self, skills: str) -> str:
+        return (
+            "Professional Summary\nExperienced.\n\n"
+            "Experience\nRole | Co | 2020 - Present\n- Did work.\n\n"
+            f"Technical Skills\n{skills}"
+        )
+
+    def test_focus_shortfall_emits_structured_error(self):
+        """When focus count < min, SKILL_FOCUS_MIN_NOT_MET is in structured_errors."""
+        wp = self._wp_focus(["python", "java", "kafka"], ["java", "kafka"], 2)
+        resume = self._resume("Python")  # only 1 focus skill; min is 2
+        report = validate_phase2_output(wp, resume, "", "")
+        codes = [e["code"] for e in report["structured_errors"]]
+        from tailor.phase2_validator import SKILL_FOCUS_MIN_NOT_MET
+        assert SKILL_FOCUS_MIN_NOT_MET in codes
+
+    def test_focus_shortfall_not_in_hard_errors(self):
+        """SKILL_FOCUS_MIN_NOT_MET must not appear in errors (soft constraint)."""
+        from tailor.phase2_validator import SKILL_FOCUS_MIN_NOT_MET
+        wp = self._wp_focus(["python", "java", "kafka"], ["java", "kafka"], 2)
+        resume = self._resume("Python")
+        report = validate_phase2_output(wp, resume, "", "")
+        assert not any(SKILL_FOCUS_MIN_NOT_MET in e for e in report["errors"])
+
+    def test_focus_met_no_structured_error(self):
+        """When focus count ≥ min, no SKILL_FOCUS_MIN_NOT_MET structured error."""
+        from tailor.phase2_validator import SKILL_FOCUS_MIN_NOT_MET
+        wp = self._wp_focus(["python", "java", "kafka"], ["java", "kafka"], 2)
+        resume = self._resume("Java, Kafka")  # both focus skills present
+        report = validate_phase2_output(wp, resume, "", "")
+        codes = [e["code"] for e in report["structured_errors"]]
+        assert SKILL_FOCUS_MIN_NOT_MET not in codes
+
+    def test_focus_structured_error_payload_shape(self):
+        """SKILL_FOCUS_MIN_NOT_MET payload has all required fields."""
+        from tailor.phase2_validator import SKILL_FOCUS_MIN_NOT_MET
+        wp = self._wp_focus(["python", "java", "kafka"], ["java", "kafka"], 2)
+        resume = self._resume("Python")  # only python, no focus skills
+        report = validate_phase2_output(wp, resume, "", "")
+        focus_errs = [
+            e for e in report["structured_errors"]
+            if e["code"] == SKILL_FOCUS_MIN_NOT_MET
+        ]
+        assert focus_errs
+        payload = focus_errs[0]["payload"]
+        assert payload["focus_skills_min_count"] == 2
+        assert payload["focus_skills_found_count"] == 0
+        assert isinstance(payload["missing_focus_skills_sample"], list)
+        assert isinstance(payload["skills_truth_allowlist_sample"], list)
+        assert isinstance(payload["skills_focus_allowlist_sample"], list)
+
+    def test_focus_missing_sample_up_to_8(self):
+        """missing_focus_skills_sample is capped at 8 items."""
+        from tailor.phase2_validator import SKILL_FOCUS_MIN_NOT_MET
+        many_focus = [f"skill{i}" for i in range(15)]
+        truth = many_focus + ["python"]
+        wp = self._wp_focus(truth, many_focus, 10)
+        resume = self._resume("Python")  # none of the 15 focus skills
+        report = validate_phase2_output(wp, resume, "", "")
+        focus_errs = [
+            e for e in report["structured_errors"]
+            if e["code"] == SKILL_FOCUS_MIN_NOT_MET
+        ]
+        assert focus_errs
+        assert len(focus_errs[0]["payload"]["missing_focus_skills_sample"]) <= 8
 
 
 # ---------------------------------------------------------------------------
@@ -610,7 +726,7 @@ class TestBuildValidationContext:
         assert ctx["first_k_bullets"] == 3
         assert ctx["domain_mismatch"] is True
         assert "cl_plan_summary" in ctx
-        assert isinstance(ctx["skills_allowlist_sample"], list)
+        assert isinstance(ctx["skills_truth_allowlist_sample"], list)
 
     def test_cl_plan_summary_has_proof_points(self):
         wp = _minimal_wp(
@@ -635,7 +751,21 @@ class TestBuildValidationContext:
         big_list = [f"skill{i}" for i in range(30)]
         wp = _minimal_wp(skill_allowlist_skills_section=big_list)
         ctx = _build_validation_context(wp)
-        assert len(ctx["skills_allowlist_sample"]) <= 20
+        assert len(ctx["skills_truth_allowlist_sample"]) <= 20
+
+    def test_context_prefers_skill_policy_truth_allowlist(self):
+        """When skill_policy present, skills_truth_allowlist_sample uses truth tier, not old field."""
+        wp = _minimal_wp(
+            skill_allowlist_skills_section=["old_skill"],
+            skill_policy={
+                "skills_truth_allowlist": ["new_skill_a", "new_skill_b"],
+                "skills_truth_allowlist_norm": ["new_skill_a", "new_skill_b"],
+            },
+        )
+        ctx = _build_validation_context(wp)
+        sample = ctx["skills_truth_allowlist_sample"]
+        assert "new_skill_a" in sample
+        assert "old_skill" not in sample
 
     def test_empty_narrative_plan_defaults(self):
         wp = _minimal_wp(narrative_plan=None)

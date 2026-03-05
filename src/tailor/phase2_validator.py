@@ -52,6 +52,7 @@ DOMAIN_TRANSLATION_FIRST_K_NOT_MET: str = "DOMAIN_TRANSLATION_FIRST_K_NOT_MET"
 #: Skill graph validator error codes.
 SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION: str = "SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION"
 SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION: str = "SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION"
+SKILL_FOCUS_MIN_NOT_MET: str = "SKILL_FOCUS_MIN_NOT_MET"
 
 #: Cover-letter validator error codes (V1–V4).
 CL_PARAGRAPH_COUNT_INVALID: str = "CL_PARAGRAPH_COUNT_INVALID"
@@ -765,12 +766,14 @@ def _validate_cl_tool_allowlist(
     paragraphs: list[str],
     cover_letter_plan: dict,
     direct_skills_set: set[str],
+    cl_global_allowlist: set[str] | None = None,
 ) -> list[str]:
     """V4: Check for unlisted high-risk tool tokens in proof paragraphs.
 
     Uses the same _HIGH_RISK_TOOL_LEXICON as the resume experience-claim check.
     P1 → paragraph index 1 (0-based), P2 → paragraph index 2.
-    The per-proof allowlist is: proof.allowed_tool_mentions ∪ direct_skills_set.
+    The per-proof allowlist is: proof.allowed_tool_mentions ∪ direct_skills_set
+    ∪ cl_global_allowlist (when provided).
     """
     errors: list[str] = []
     proof_points = cover_letter_plan.get("proof_points", [])
@@ -783,9 +786,11 @@ def _validate_cl_tool_allowlist(
             continue
 
         para_lower = paragraphs[para_idx].lower()
-        allowed: set[str] = {
-            m.lower() for m in proof.get("allowed_tool_mentions", [])
-        } | direct_skills_set
+        allowed: set[str] = (
+            {m.lower() for m in proof.get("allowed_tool_mentions", [])}
+            | direct_skills_set
+            | (cl_global_allowlist or set())
+        )
 
         for tool in _HIGH_RISK_TOOL_LEXICON:
             pattern = r"\b" + re.escape(tool) + r"\b"
@@ -1470,12 +1475,47 @@ def validate_phase2_output(
                     "payload": _dt_structured_payload,
                 })
 
-    # --- 15. Skill section allowlist ---
+    # --- 15. Skill section allowlist (truth tier) ---
+    _skill_policy: dict = writer_packet.get("skill_policy") or {}
+
+    # Use pre-normalized list when available (already lowercase, no recompute needed).
+    _truth_norm = _skill_policy.get("skills_truth_allowlist_norm")
+    if _truth_norm is not None:
+        allowlist_ss = set(_truth_norm)
+    elif _skill_policy.get("skills_truth_allowlist") is not None:
+        allowlist_ss = {s.lower() for s in _skill_policy["skills_truth_allowlist"]}
+    else:
+        # Backward compat: fall back to old JD-scoped allowlist
+        allowlist_ss = {s.lower() for s in (writer_packet.get("skill_allowlist_skills_section") or [])}
+
+    # Pre-compute skills tokens and focus coverage (shared by check 15 payload and check 15b).
+    _focus_list = _skill_policy.get("skills_focus_allowlist", [])
+    _focus_min = _skill_policy.get("focus_skills_min_count", 0)
+    _focus_found_count = 0
+    _missing_focus_sample: list[str] = []
+    _focus_allowlist_sample: list[str] = []
+
+    _skills_raw_15 = _extract_skills_section(resume)
+    _skills_tokens_15 = _tokenize_skills_section(_skills_raw_15)
+
+    if _focus_list and allowlist_ss:
+        _focus_norm_pre = _skill_policy.get("skills_focus_allowlist_norm")
+        _focus_set = set(_focus_norm_pre) if _focus_norm_pre is not None \
+            else {s.lower() for s in _focus_list}
+        _focus_found_tokens = [
+            t for t in _skills_tokens_15
+            if t in _focus_set or t.replace(" ", "") in _focus_set
+        ]
+        _focus_found_count = len(_focus_found_tokens)
+        _skills_tokens_set_15 = set(_skills_tokens_15)
+        _missing_focus_sample = [
+            s for s in _focus_list if s not in _skills_tokens_set_15
+        ][:8]
+        _focus_allowlist_sample = sorted(_focus_set)[:20]
+
     skill_section_violations: list[str] = []
-    allowlist_ss = {s.lower() for s in (writer_packet.get("skill_allowlist_skills_section") or [])}
     if allowlist_ss:
-        skills_raw = _extract_skills_section(resume)
-        for token in _tokenize_skills_section(skills_raw):
+        for token in _skills_tokens_15:
             # Also test the space-collapsed form to catch CamelCase compounds
             # written with spaces, e.g. "Rabbit MQ" → "rabbit mq" vs allowlist
             # entry "rabbitmq" (from "RabbitMQ".lower()).
@@ -1498,8 +1538,33 @@ def validate_phase2_output(
                     "offending_tokens": [
                         {"raw": t, "normalized": t} for t in skill_section_violations
                     ],
-                    "allowlist_sample": sorted(allowlist_ss)[:20],
+                    "skills_truth_allowlist_sample": sorted(allowlist_ss)[:20],
+                    "skills_focus_allowlist_sample": _focus_allowlist_sample,
+                    "focus_skills_min_count": _focus_min,
+                    "focus_skills_found_count": _focus_found_count,
+                    "missing_focus_skills_sample": _missing_focus_sample,
                     "output_format_hint": "flat_list_preferred",
+                },
+            })
+
+    # --- 15b. Focus-tier coverage (soft warning + structured error) ---
+    if _focus_list and _focus_min > 0 and allowlist_ss:
+        if _focus_found_count < _focus_min:
+            warnings.append(
+                f"{SKILL_FOCUS_MIN_NOT_MET}: "
+                f"need {_focus_min} focus skills, found {_focus_found_count}; "
+                f"missing_sample={_missing_focus_sample[:5]}"
+            )
+            # SOFT: goes into structured_errors only — not errors — so ok is unaffected.
+            structured_errors.append({
+                "code": SKILL_FOCUS_MIN_NOT_MET,
+                "message": f"found {_focus_found_count}/{_focus_min} required focus skills",
+                "payload": {
+                    "focus_skills_min_count": _focus_min,
+                    "focus_skills_found_count": _focus_found_count,
+                    "missing_focus_skills_sample": _missing_focus_sample,
+                    "skills_truth_allowlist_sample": sorted(allowlist_ss)[:20],
+                    "skills_focus_allowlist_sample": _focus_allowlist_sample,
                 },
             })
 
@@ -1613,7 +1678,12 @@ def validate_phase2_output(
         _direct_set: set[str] = {
             s.lower() for s in (writer_packet.get("direct_skills_set") or [])
         }
-        cl_tool_errors = _validate_cl_tool_allowlist(cl_paragraphs, cl_plan, _direct_set)
+        _cl_global_set: set[str] = {
+            s.lower() for s in _skill_policy.get("cover_letter_tool_allowlist_global", [])
+        }
+        cl_tool_errors = _validate_cl_tool_allowlist(
+            cl_paragraphs, cl_plan, _direct_set, _cl_global_set
+        )
         errors.extend(cl_tool_errors)
 
     repair_brief: dict = {

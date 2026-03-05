@@ -191,6 +191,76 @@ def build_writer_packet(
         plan.get("cover_letter_plan") or {}, _cl_allowed
     )
 
+    # --- 2-tier skill policy ---
+    _all_non_forbidden: list[str] = [
+        r["item"].lower() for r in _related_skills
+        if r.get("allowed_usage") != "forbidden"
+    ]
+    _master_resume_skills: list[str] = _parse_master_resume_skills(master_resume_str)
+    _cl_proof_tools: list[str] = [
+        m.lower()
+        for proof in cover_letter_plan.get("proof_points", [])
+        for m in proof.get("allowed_tool_mentions", [])
+    ]
+    skill_policy: dict = {
+        "skills_truth_allowlist": list(dict.fromkeys(
+            _direct_skills + _all_non_forbidden + _master_resume_skills
+        )),
+        "skills_focus_allowlist": skill_allowlist_skills_section,
+        "focus_skills_min_count": _focus_min_for_role(role_level),
+        "claim_experience_allowlist": skill_allowlist_experience_claims,
+        "cover_letter_tool_allowlist_global": list(dict.fromkeys(
+            _direct_skills + _cl_proof_tools
+        )),
+    }
+
+    # --- Normalize and enforce subset guardrails ---
+    _truth_norm_set: set[str] = {s.lower() for s in skill_policy["skills_truth_allowlist"]}
+    _focus_norm_set: set[str] = {s.lower() for s in skill_policy["skills_focus_allowlist"]}
+    _claim_norm_set: set[str] = {s.lower() for s in skill_policy["claim_experience_allowlist"]}
+    _cl_global_norm_set: set[str] = {s.lower() for s in skill_policy["cover_letter_tool_allowlist_global"]}
+
+    # focus ⊆ truth
+    if not _focus_norm_set <= _truth_norm_set:
+        _excess = _focus_norm_set - _truth_norm_set
+        logger.warning(
+            "skill_policy guardrail: focus ⊄ truth; trimming %d item(s): %s",
+            len(_excess), sorted(_excess),
+        )
+        _focus_norm_set &= _truth_norm_set
+        skill_policy["skills_focus_allowlist"] = [
+            s for s in skill_policy["skills_focus_allowlist"] if s.lower() in _focus_norm_set
+        ]
+    # claim ⊆ truth
+    if not _claim_norm_set <= _truth_norm_set:
+        _excess = _claim_norm_set - _truth_norm_set
+        logger.warning(
+            "skill_policy guardrail: claim ⊄ truth; trimming %d item(s): %s",
+            len(_excess), sorted(_excess),
+        )
+        _claim_norm_set &= _truth_norm_set
+        skill_policy["claim_experience_allowlist"] = [
+            s for s in skill_policy["claim_experience_allowlist"] if s.lower() in _claim_norm_set
+        ]
+    # cl_global ⊆ claim
+    if not _cl_global_norm_set <= _claim_norm_set:
+        _excess = _cl_global_norm_set - _claim_norm_set
+        logger.warning(
+            "skill_policy guardrail: cl_global ⊄ claim; trimming %d item(s): %s",
+            len(_excess), sorted(_excess),
+        )
+        _cl_global_norm_set &= _claim_norm_set
+        skill_policy["cover_letter_tool_allowlist_global"] = [
+            s for s in skill_policy["cover_letter_tool_allowlist_global"]
+            if s.lower() in _cl_global_norm_set
+        ]
+
+    # Store pre-normalized sorted lists for efficient validator use
+    skill_policy["skills_truth_allowlist_norm"] = sorted(_truth_norm_set)
+    skill_policy["skills_focus_allowlist_norm"] = sorted(_focus_norm_set)
+    skill_policy["claim_experience_allowlist_norm"] = sorted(_claim_norm_set)
+    skill_policy["cover_letter_tool_allowlist_global_norm"] = sorted(_cl_global_norm_set)
+
     return {
         "role_level": role_level,
         "jd_domain": jd_domain,
@@ -203,6 +273,7 @@ def build_writer_packet(
         "skill_graph": skill_graph,
         "skill_allowlist_skills_section": skill_allowlist_skills_section,
         "skill_allowlist_experience_claims": skill_allowlist_experience_claims,
+        "skill_policy": skill_policy,
         "cover_letter_plan": cover_letter_plan,
         "direct_skills_set": sorted(direct_skills_set),
         "can_claim_experience_set": sorted(can_claim_experience_set),
@@ -781,6 +852,25 @@ def _parse_resume_skills_section(resume_text: str) -> list[str]:
                 tokens.append(token)
 
     return tokens
+
+
+def _parse_master_resume_skills(resume_str: str) -> list[str]:
+    """Return lowercase skill tokens from the master resume's Skills section.
+
+    Delegates to ``_parse_resume_skills_section`` and lowercases all tokens.
+    Used to populate the broad truth tier of ``skill_policy``.
+    """
+    return [t.lower() for t in _parse_resume_skills_section(resume_str)]
+
+
+def _focus_min_for_role(role_level: str) -> int:
+    """Return the minimum number of focus skills required for a given role level."""
+    rl = role_level.lower()
+    if rl in {"manager", "director"}:
+        return 6
+    if rl in {"principal", "staff", "senior"}:
+        return 5
+    return 4
 
 
 # ---------------------------------------------------------------------------

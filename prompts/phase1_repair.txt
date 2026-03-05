@@ -1,4 +1,4 @@
-[PLANNER_REPAIR_LAYER v5.3]
+[PLANNER_REPAIR_LAYER v5.4]
 
 You are repairing a TailoringPlan JSON.
 
@@ -34,6 +34,41 @@ Rules:
 - remove inferred vendor stacks unless explicitly evidenced
 
 ------------------------------------------------------------
+SKILL POLICY REPAIR (2-TIER) (MANDATORY WHEN REFERENCED)
+------------------------------------------------------------
+
+If VALIDATION_ERRORS mention skill_policy OR required fields are missing:
+Repair skill_policy while preserving other fields.
+
+Construction rules (deterministic):
+
+A) skills_truth_allowlist
+- Include all skill_graph.direct_skills.
+- Include all related_skills where allowed_usage != forbidden.
+- Exclude forbidden.
+
+B) claim_experience_allowlist
+- Include all direct_skills.
+- Include related_skills where allowed_usage == can_claim_experience.
+
+C) skills_focus_allowlist
+- Must be subset of skills_truth_allowlist.
+- Prefer JD-relevant terms that support jd_top_themes.
+- Keep compact (8–20 typical).
+
+D) focus_skills_min_count
+- director/manager: 6
+- principal/staff: 6
+- senior/mid/junior: 5
+If skills_focus_allowlist has fewer than focus_skills_min_count, set min_count to its length.
+
+E) cover_letter_tool_allowlist_global
+- Union of cover_letter_plan.proof_points[*].allowed_tool_mentions
+- Must be subset of claim_experience_allowlist
+
+Never invent tools.
+
+------------------------------------------------------------
 COVER LETTER PLAN REPAIR (MANDATORY WHEN REFERENCED)
 ------------------------------------------------------------
 
@@ -53,7 +88,7 @@ Proof points repair rules:
 - evidence_ref must point to an existing evidence_map item (free-text pointer ok)
 - mechanism_hint and outcome_hint must be supported by evidence_map allowed_claims
 - required_exact_span must be:
-  - 10â€“160 chars
+  - 10–160 chars
   - claim-safe
   - natural phrase that can appear verbatim in a cover letter
   - must not introduce tools not allowed
