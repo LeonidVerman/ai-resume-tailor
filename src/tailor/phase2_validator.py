@@ -18,6 +18,8 @@ import re
 from datetime import date
 from typing import Any
 
+from tailor.cover_letter import parse_cover_letter, parse_cover_letter_body
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -50,6 +52,16 @@ DOMAIN_TRANSLATION_FIRST_K_NOT_MET: str = "DOMAIN_TRANSLATION_FIRST_K_NOT_MET"
 #: Skill graph validator error codes.
 SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION: str = "SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION"
 SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION: str = "SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION"
+
+#: Cover-letter validator error codes (V1–V4).
+CL_PARAGRAPH_COUNT_INVALID: str = "CL_PARAGRAPH_COUNT_INVALID"
+CL_P1_SPAN_MISSING: str = "CL_P1_SPAN_MISSING"
+CL_P2_SPAN_MISSING: str = "CL_P2_SPAN_MISSING"
+CL_BRIDGE_MISSING: str = "CL_BRIDGE_MISSING"
+CL_LEDGER_MISSING_ENTRY: str = "CL_LEDGER_MISSING_ENTRY"
+CL_LEDGER_SPAN_NOT_FOUND: str = "CL_LEDGER_SPAN_NOT_FOUND"
+CL_LEDGER_LOCATION_INVALID: str = "CL_LEDGER_LOCATION_INVALID"
+CL_TOOL_ALLOWLIST_VIOLATION: str = "CL_TOOL_ALLOWLIST_VIOLATION"
 
 # ---------------------------------------------------------------------------
 # Mechanism keyword set — LEGACY FALLBACK only.
@@ -344,8 +356,18 @@ def apply_judge_to_validation(
         for c in report.get("judge_candidates", [])
     ]
 
+    # Also filter structured_errors for approved mismatches.
+    new_structured: list[dict] = [
+        e for e in report.get("structured_errors", [])
+        if not (
+            e.get("code", "").startswith(LEDGER_MISMATCH_ERROR_PREFIX)
+            and e.get("payload", {}).get("entry_id", "") in approved_ids
+        )
+    ]
+
     updated = dict(report)
     updated["errors"] = new_errors
+    updated["structured_errors"] = new_structured
     updated["ok"] = len(new_errors) == 0
     updated["judge_candidates"] = updated_candidates
     return updated
@@ -556,6 +578,243 @@ def _count_signature_hits(text: str, signature_terms: list[str]) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Cover-letter validator helpers (V1–V4)
+# ---------------------------------------------------------------------------
+
+def _split_cover_letter_paragraphs(text: str) -> list[str]:
+    """Split cover letter text into paragraphs at blank lines."""
+    return [p.strip() for p in re.split(r"\n\n+", text) if p.strip()]
+
+
+def _validate_cl_paragraph_count(
+    paragraphs: list[str],
+    bridge_required: bool,
+) -> list[str]:
+    """V1: Ensure correct paragraph count.
+
+    When bridge_sentence_required=true → exactly 4 paragraphs required.
+    Otherwise               → 3 or 4 paragraphs are accepted.
+
+    Error includes diagnostic payload: expected, actual, body_preview,
+    body_paragraphs_lengths for easier repair-loop debugging.
+    """
+    n = len(paragraphs)
+    lengths = [len(p) for p in paragraphs]
+    body_preview = " | ".join(paragraphs)[:200]
+
+    if bridge_required:
+        if n != 4:
+            return [
+                f"{CL_PARAGRAPH_COUNT_INVALID}: expected=4, actual={n}, "
+                f"body_preview={body_preview!r}, "
+                f"body_paragraphs_lengths={lengths}"
+            ]
+    else:
+        if n not in (3, 4):
+            return [
+                f"{CL_PARAGRAPH_COUNT_INVALID}: expected=3-4, actual={n}, "
+                f"body_preview={body_preview!r}, "
+                f"body_paragraphs_lengths={lengths}"
+            ]
+    return []
+
+
+def _validate_cl_required_spans(
+    paragraphs: list[str],
+    cover_letter_plan: dict,
+) -> list[str]:
+    """V2: Validate required_exact_span values appear verbatim in the correct paragraph.
+
+    P1 → paragraph 2 (1-based index 2, 0-based index 1).
+    P2 → paragraph 3 (1-based index 3, 0-based index 2).
+
+    Error payload includes:
+    - required_exact_span: the span that was expected
+    - expected_paragraph_index: 1-based index where it should appear
+    - found_in_paragraph_index: 1-based index where it was actually found
+      (or null if not found anywhere in the body)
+
+    When bridge_sentence_required=true and fewer than 4 paragraphs exist,
+    also emits CL_BRIDGE_MISSING.
+    """
+    errors: list[str] = []
+    proof_points = cover_letter_plan.get("proof_points", [])
+    bridge_required: bool = cover_letter_plan.get("bridge_sentence_required", False)
+
+    _para_map: dict[str, int] = {"P1": 1, "P2": 2}  # 0-based indices
+    _error_map: dict[str, str] = {
+        "P1": CL_P1_SPAN_MISSING,
+        "P2": CL_P2_SPAN_MISSING,
+    }
+
+    for proof in proof_points:
+        pid = proof.get("proof_id", "")
+        span = proof.get("required_exact_span", "")
+        if not span or pid not in _para_map:
+            continue
+        expected_0 = _para_map[pid]
+        expected_1based = expected_0 + 1
+
+        # Check correct paragraph
+        if expected_0 < len(paragraphs) and span in paragraphs[expected_0]:
+            continue  # found in correct location
+
+        # Search for span elsewhere in the body
+        found_1based: int | None = None
+        for i, para in enumerate(paragraphs):
+            if span in para:
+                found_1based = i + 1
+                break
+
+        errors.append(
+            f"{_error_map[pid]}: "
+            f"required_exact_span={span!r}, "
+            f"expected_paragraph_index={expected_1based}, "
+            f"found_in_paragraph_index={found_1based}"
+        )
+
+    if bridge_required and len(paragraphs) < 4:
+        errors.append(
+            f"{CL_BRIDGE_MISSING}: bridge_sentence_required=true "
+            f"but paragraph 4 is missing"
+        )
+
+    return errors
+
+
+_CL_PARA_LOC_RE: re.Pattern[str] = re.compile(r"^paragraph\[(\d+)\]$")
+
+
+def _parse_cl_ledger_location(location: str) -> int | None:
+    """Parse 'paragraph[N]' → N (1-based integer). Returns None on failure."""
+    m = _CL_PARA_LOC_RE.match(location.strip())
+    return int(m.group(1)) if m else None
+
+
+def _validate_cl_ledger(
+    cover_letter: str,
+    paragraphs: list[str],
+    cover_letter_ledger: list[dict],
+    cover_letter_plan: dict,
+) -> list[str]:
+    """V3: Validate cover_letter_ledger entries for required proof points.
+
+    Checks:
+    - P1, P2 (and BRIDGE when bridge_sentence_required=true) each have an entry.
+    - Each entry's exact_span is a literal substring of the cover letter.
+    - Each entry's location parses to a valid paragraph index and the span
+      actually appears in that paragraph.
+    """
+    errors: list[str] = []
+    bridge_required: bool = cover_letter_plan.get("bridge_sentence_required", False)
+
+    ledger_index: dict[str, dict] = {
+        entry.get("proof_id", ""): entry
+        for entry in cover_letter_ledger
+        if entry.get("proof_id")
+    }
+
+    required_ids = ["P1", "P2"]
+    if bridge_required:
+        required_ids.append("BRIDGE")
+
+    for pid in required_ids:
+        entry = ledger_index.get(pid)
+        if entry is None:
+            errors.append(f"{CL_LEDGER_MISSING_ENTRY}: no ledger entry for {pid}")
+            continue
+
+        span = entry.get("exact_span", "")
+        location = entry.get("location", "")
+
+        if not span or span not in cover_letter:
+            errors.append(
+                f"{CL_LEDGER_SPAN_NOT_FOUND}: ledger entry {pid} "
+                f"exact_span not found in cover letter"
+            )
+            continue
+
+        para_idx = _parse_cl_ledger_location(location)
+        if para_idx is None:
+            errors.append(
+                f"{CL_LEDGER_LOCATION_INVALID}: ledger entry {pid} "
+                f"location {location!r} is not in 'paragraph[N]' format"
+            )
+            continue
+
+        if para_idx < 1 or para_idx > len(paragraphs):
+            errors.append(
+                f"{CL_LEDGER_LOCATION_INVALID}: ledger entry {pid} "
+                f"location {location!r} out of range "
+                f"(cover letter has {len(paragraphs)} paragraph(s))"
+            )
+            continue
+
+        para_text = paragraphs[para_idx - 1]
+        if span not in para_text:
+            errors.append(
+                f"{CL_LEDGER_LOCATION_INVALID}: ledger entry {pid} "
+                f"exact_span not found in {location} "
+                f"(span exists elsewhere in cover letter)"
+            )
+
+    return errors
+
+
+def _validate_cl_tool_allowlist(
+    paragraphs: list[str],
+    cover_letter_plan: dict,
+    direct_skills_set: set[str],
+) -> list[str]:
+    """V4: Check for unlisted high-risk tool tokens in proof paragraphs.
+
+    Uses the same _HIGH_RISK_TOOL_LEXICON as the resume experience-claim check.
+    P1 → paragraph index 1 (0-based), P2 → paragraph index 2.
+    The per-proof allowlist is: proof.allowed_tool_mentions ∪ direct_skills_set.
+    """
+    errors: list[str] = []
+    proof_points = cover_letter_plan.get("proof_points", [])
+    _para_map: dict[str, int] = {"P1": 1, "P2": 2}
+
+    for proof in proof_points:
+        pid = proof.get("proof_id", "")
+        para_idx = _para_map.get(pid)
+        if para_idx is None or para_idx >= len(paragraphs):
+            continue
+
+        para_lower = paragraphs[para_idx].lower()
+        allowed: set[str] = {
+            m.lower() for m in proof.get("allowed_tool_mentions", [])
+        } | direct_skills_set
+
+        for tool in _HIGH_RISK_TOOL_LEXICON:
+            pattern = r"\b" + re.escape(tool) + r"\b"
+            if re.search(pattern, para_lower) and tool not in allowed:
+                errors.append(
+                    f"{CL_TOOL_ALLOWLIST_VIOLATION}: tool {tool!r} appears in "
+                    f"{pid} paragraph but is not in allowed_tool_mentions"
+                )
+
+    return errors
+
+
+# ---------------------------------------------------------------------------
+# Domain translation helpers
+# ---------------------------------------------------------------------------
+
+def _format_dt_rules_sample(rules: list[dict]) -> list[dict]:
+    """Return a compact sample of domain translation rule fields for error payloads."""
+    return [
+        {
+            "rule_id": r.get("rule_id", ""),
+            "allowed_phrases_sample": (r.get("allowed_phrases") or [])[:2],
+            "target_frames_sample": (r.get("target_frames") or [])[:2],
+        }
+        for r in rules
+    ]
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -567,6 +826,7 @@ def validate_phase2_output(
     now: date | None = None,
     evidence_ledger: dict | None = None,
     domain_translation_ledger: list | None = None,
+    cover_letter_ledger: list | None = None,
 ) -> dict:
     """Check Phase 2 output against WriterPacket constraints.
 
@@ -603,6 +863,7 @@ def validate_phase2_output(
 
     errors: list[str] = []
     warnings: list[str] = []
+    structured_errors: list[dict] = []
 
     # --- Ledger setup ---
     judge_candidates: list[dict] = []
@@ -1052,6 +1313,16 @@ def validate_phase2_output(
                         f"{NARRATIVE_SUMMARY_THEME_MISSING}: theme {theme_id} "
                         f"({theme_entry['label']!r}) 0 signature-term hits in summary"
                     )
+                    structured_errors.append({
+                        "code": NARRATIVE_SUMMARY_THEME_MISSING,
+                        "message": f"theme {theme_id} has 0 signature-term hits in summary",
+                        "payload": {
+                            "missing_theme_ids": [theme_id],
+                            "required_signature_terms": {
+                                theme_id: theme_entry.get("signature_terms", []),
+                            },
+                        },
+                    })
 
     # --- 13. Narrative: anchor role dominance ---
     if narrative_plan:
@@ -1059,7 +1330,16 @@ def validate_phase2_output(
         arc = narrative_plan.get("anchor_role_coverage", {})
         first_k_bullets: int = arc.get("first_k_bullets", 3)
         top_k_themes: int = arc.get("top_k_themes_to_cover", 2)
-        min_occ: dict[str, int] = arc.get("min_theme_occurrences", {})
+        _min_occ_raw = arc.get("min_theme_occurrences", {})
+        # New format: [{theme_id, min_count}]; old dict format kept for compat.
+        if isinstance(_min_occ_raw, list):
+            min_occ: dict[str, int] = {
+                e["theme_id"]: e["min_count"]
+                for e in _min_occ_raw
+                if isinstance(e, dict) and "theme_id" in e and "min_count" in e
+            }
+        else:
+            min_occ = dict(_min_occ_raw)
 
         if anchor_role_id and theme_map:
             anchor_bullets = _extract_anchor_role_bullets(
@@ -1085,6 +1365,23 @@ def validate_phase2_output(
                     f"anchor role {anchor_role_id!r} first {first_k_bullets} bullets "
                     f"missing themes {narrative_anchor_missing_theme_ids}"
                 )
+                structured_errors.append({
+                    "code": NARRATIVE_ANCHOR_ROLE_DOMINANCE_FAILED,
+                    "message": (
+                        f"anchor role first {first_k_bullets} bullets missing themes "
+                        f"{narrative_anchor_missing_theme_ids}"
+                    ),
+                    "payload": {
+                        "anchor_role_id": anchor_role_id,
+                        "first_k_bullets": first_k_bullets,
+                        "missing_theme_ids": narrative_anchor_missing_theme_ids,
+                        "required_signature_terms": {
+                            tid: theme_map[tid].get("signature_terms", [])
+                            for tid in narrative_anchor_missing_theme_ids
+                            if tid in theme_map
+                        },
+                    },
+                })
 
     # --- 14. Domain translation anchor validator ---
     domain_tb = (narrative_plan or {}).get("domain_translation_binding", {})
@@ -1102,32 +1399,59 @@ def validate_phase2_output(
         min_anchor_dt = domain_tb.get("min_instantiations_in_anchor_role", 0)
         req_first_k = domain_tb.get("require_target_frame_in_anchor_role_first_k", False)
         dt_anchor_id: str = (narrative_plan or {}).get("anchor_role_id", "")
+        _dt_rules_applied: list[dict] = writer_packet.get("domain_translation_rules_applied") or []
+        _dt_rules_sample = _format_dt_rules_sample(_dt_rules_applied)
+        fk_dt: int = (narrative_plan or {}).get(
+            "anchor_role_coverage", {}
+        ).get("first_k_bullets", 3)
+
+        # Pre-compute anchor-role DT count for shared structured error payload.
+        _dt_anchor_entries = [
+            e for e in active_dt
+            if dt_anchor_id and dt_anchor_id.lower() in (e.get("location") or "").lower()
+        ]
+        _dt_structured_payload: dict = {
+            "required_total": min_total,
+            "found_total": len(active_dt),
+            "required_in_anchor_role": min_anchor_dt,
+            "found_in_anchor_role": len(_dt_anchor_entries),
+            "anchor_role_id": dt_anchor_id,
+            "applied_rules": _dt_rules_sample,
+            "first_k_bullets": fk_dt,
+        }
 
         if min_total > 0 and len(active_dt) < min_total:
             errors.append(
                 f"{DOMAIN_TRANSLATION_MIN_TOTAL_NOT_MET}: "
-                f"found {len(active_dt)} instantiations, need {min_total}"
+                f"required_total={min_total}, found_total={len(active_dt)}, "
+                f"anchor_role_id={dt_anchor_id!r}, "
+                f"applied_rules={_dt_rules_sample}"
             )
+            structured_errors.append({
+                "code": DOMAIN_TRANSLATION_MIN_TOTAL_NOT_MET,
+                "message": f"required {min_total} DT instantiations, found {len(active_dt)}",
+                "payload": _dt_structured_payload,
+            })
 
-        if min_anchor_dt > 0:
-            anchor_dt_entries = [
-                e for e in active_dt
-                if dt_anchor_id.lower() in (e.get("location") or "").lower()
-            ]
-            if len(anchor_dt_entries) < min_anchor_dt:
-                errors.append(
-                    f"{DOMAIN_TRANSLATION_ANCHOR_NOT_MET}: "
-                    f"found {len(anchor_dt_entries)} in anchor role, "
-                    f"need {min_anchor_dt}"
-                )
+        if min_anchor_dt > 0 and len(_dt_anchor_entries) < min_anchor_dt:
+            errors.append(
+                f"{DOMAIN_TRANSLATION_ANCHOR_NOT_MET}: "
+                f"required_in_anchor_role={min_anchor_dt}, "
+                f"found_in_anchor_role={len(_dt_anchor_entries)}, "
+                f"anchor_role_id={dt_anchor_id!r}, "
+                f"applied_rules={_dt_rules_sample}"
+            )
+            structured_errors.append({
+                "code": DOMAIN_TRANSLATION_ANCHOR_NOT_MET,
+                "message": (
+                    f"required {min_anchor_dt} DT instantiations in anchor role, "
+                    f"found {len(_dt_anchor_entries)}"
+                ),
+                "payload": _dt_structured_payload,
+            })
 
         if req_first_k and dt_anchor_id:
-            fk_dt: int = (narrative_plan or {}).get(
-                "anchor_role_coverage", {}
-            ).get("first_k_bullets", 3)
-            anchor_bullets_dt = _extract_anchor_role_bullets(
-                roles, dt_anchor_id, fk_dt
-            )
+            anchor_bullets_dt = _extract_anchor_role_bullets(roles, dt_anchor_id, fk_dt)
             first_k_text = " ".join(anchor_bullets_dt).lower()
             dt_hit = any(
                 (e.get("exact_span") or "").lower() in first_k_text
@@ -1136,8 +1460,15 @@ def validate_phase2_output(
             if not dt_hit:
                 errors.append(
                     f"{DOMAIN_TRANSLATION_FIRST_K_NOT_MET}: "
-                    f"no domain translation span in anchor role first {fk_dt} bullets"
+                    f"no domain translation span in anchor role first {fk_dt} bullets, "
+                    f"anchor_role_id={dt_anchor_id!r}, "
+                    f"applied_rules={_dt_rules_sample}"
                 )
+                structured_errors.append({
+                    "code": DOMAIN_TRANSLATION_FIRST_K_NOT_MET,
+                    "message": f"no DT span in anchor role first {fk_dt} bullets",
+                    "payload": _dt_structured_payload,
+                })
 
     # --- 15. Skill section allowlist ---
     skill_section_violations: list[str] = []
@@ -1145,12 +1476,32 @@ def validate_phase2_output(
     if allowlist_ss:
         skills_raw = _extract_skills_section(resume)
         for token in _tokenize_skills_section(skills_raw):
-            if token and token not in allowlist_ss:
+            # Also test the space-collapsed form to catch CamelCase compounds
+            # written with spaces, e.g. "Rabbit MQ" → "rabbit mq" vs allowlist
+            # entry "rabbitmq" (from "RabbitMQ".lower()).
+            if (
+                token
+                and token not in allowlist_ss
+                and token.replace(" ", "") not in allowlist_ss
+            ):
                 skill_section_violations.append(token)
-                errors.append(
-                    f"{SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION}: "
-                    f"skill {token!r} not in allowlist"
-                )
+        if skill_section_violations:
+            errors.append(
+                f"{SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION}: "
+                f"offending_tokens={skill_section_violations!r}"
+            )
+            structured_errors.append({
+                "code": SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION,
+                "message": f"{len(skill_section_violations)} disallowed token(s) in Skills section",
+                "payload": {
+                    "section": "resume.skills",
+                    "offending_tokens": [
+                        {"raw": t, "normalized": t} for t in skill_section_violations
+                    ],
+                    "allowlist_sample": sorted(allowlist_ss)[:20],
+                    "output_format_hint": "flat_list_preferred",
+                },
+            })
 
     # --- 16. Experience tool claim allowlist ---
     experience_tool_violations: list[str] = []
@@ -1168,6 +1519,102 @@ def validate_phase2_output(
                             f"{SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION}: "
                             f"tool {tool!r} claimed in experience bullet but not in allowlist"
                         )
+
+    # --- 17–20. Cover-letter validators (V1–V4) ---
+    # Only active when cover_letter_plan is present in the writer packet.
+    cl_paragraph_errors: list[str] = []
+    cl_span_errors: list[str] = []
+    cl_ledger_errors: list[str] = []
+    cl_tool_errors: list[str] = []
+
+    cl_plan: dict = writer_packet.get("cover_letter_plan") or {}
+    if cl_plan and cover_letter:
+        cl_paragraphs = parse_cover_letter_body(cover_letter)
+        bridge_required: bool = cl_plan.get("bridge_sentence_required", False)
+
+        # V1: paragraph count
+        cl_paragraph_errors = _validate_cl_paragraph_count(cl_paragraphs, bridge_required)
+        errors.extend(cl_paragraph_errors)
+        if cl_paragraph_errors:
+            _has_salutation = bool(re.search(r"\bDear\b", cover_letter, re.IGNORECASE))
+            _expected_n: int | str = 4 if bridge_required else "3-4"
+            structured_errors.append({
+                "code": CL_PARAGRAPH_COUNT_INVALID,
+                "message": f"expected {_expected_n} body paragraphs, got {len(cl_paragraphs)}",
+                "payload": {
+                    "expected_body_paragraphs": _expected_n,
+                    "actual_body_paragraphs": len(cl_paragraphs),
+                    "has_salutation": _has_salutation,
+                    "body_paragraphs_preview": [p[:160] for p in cl_paragraphs[:4]],
+                },
+            })
+
+        # V2: required exact spans
+        cl_span_errors = _validate_cl_required_spans(cl_paragraphs, cl_plan)
+        errors.extend(cl_span_errors)
+        # V2 structured errors — rebuilt inline from the same data
+        _cl_para_idx: dict[str, int] = {"P1": 1, "P2": 2}  # 0-based
+        _cl_code_map: dict[str, str] = {"P1": CL_P1_SPAN_MISSING, "P2": CL_P2_SPAN_MISSING}
+        for _proof in cl_plan.get("proof_points", []):
+            _pid = _proof.get("proof_id", "")
+            _span = _proof.get("required_exact_span", "")
+            if not _span or _pid not in _cl_para_idx:
+                continue
+            _exp_0 = _cl_para_idx[_pid]
+            _exp_1b = _exp_0 + 1
+            if _exp_0 < len(cl_paragraphs) and _span in cl_paragraphs[_exp_0]:
+                continue  # correct location — no error
+            _found_1b: int | None = None
+            for _i, _para in enumerate(cl_paragraphs):
+                if _span in _para:
+                    _found_1b = _i + 1
+                    break
+            structured_errors.append({
+                "code": _cl_code_map[_pid],
+                "message": (
+                    f"{_pid} required_exact_span not found in body paragraph {_exp_1b}"
+                ),
+                "payload": {
+                    "proof_id": _pid,
+                    "required_exact_span": _span,
+                    "expected_body_paragraph_index": _exp_1b,
+                    "found_in_body_paragraph_index": _found_1b,
+                },
+            })
+        # CL_BRIDGE_MISSING structured error
+        if bridge_required and len(cl_paragraphs) < 4:
+            _src = writer_packet.get("candidate_primary_domain", "<source_domain>")
+            _jd = writer_packet.get("jd_domain", "<jd_domain>")
+            _dt_r = writer_packet.get("domain_translation_rules_applied") or []
+            _tfp = (
+                (_dt_r[0].get("target_frames") or ["<transferable_pattern>"])[0]
+                if _dt_r else "<transferable_pattern>"
+            )
+            structured_errors.append({
+                "code": CL_BRIDGE_MISSING,
+                "message": "bridge sentence paragraph (body paragraph 4) is missing",
+                "payload": {
+                    "bridge_sentence": (
+                        f"While my background is in {_src}, the underlying patterns of "
+                        f"{_tfp} translate directly to {_jd}."
+                    ),
+                    "expected_body_paragraph_index": 4,
+                },
+            })
+
+        # V3: ledger entries (only when cover_letter_ledger provided)
+        if cover_letter_ledger is not None:
+            cl_ledger_errors = _validate_cl_ledger(
+                cover_letter, cl_paragraphs, cover_letter_ledger, cl_plan
+            )
+            errors.extend(cl_ledger_errors)
+
+        # V4: tool allowlist per proof paragraph
+        _direct_set: set[str] = {
+            s.lower() for s in (writer_packet.get("direct_skills_set") or [])
+        }
+        cl_tool_errors = _validate_cl_tool_allowlist(cl_paragraphs, cl_plan, _direct_set)
+        errors.extend(cl_tool_errors)
 
     repair_brief: dict = {
         "global_issues": {
@@ -1187,6 +1634,10 @@ def validate_phase2_output(
             "narrative_anchor_missing_theme_ids": narrative_anchor_missing_theme_ids,
             "skill_section_violations": skill_section_violations,
             "experience_tool_violations": experience_tool_violations,
+            "cl_paragraph_errors": cl_paragraph_errors,
+            "cl_span_errors": cl_span_errors,
+            "cl_ledger_errors": cl_ledger_errors,
+            "cl_tool_errors": cl_tool_errors,
         },
         "roles": repair_roles,
     }
@@ -1196,6 +1647,7 @@ def validate_phase2_output(
     return {
         "ok": len(errors) == 0,
         "errors": errors,
+        "structured_errors": structured_errors,
         "warnings": warnings,
         "stats": {
             "metrics_found": metrics_found,
@@ -1215,6 +1667,10 @@ def validate_phase2_output(
             "narrative_anchor_missing_theme_ids": narrative_anchor_missing_theme_ids,
             "skill_section_violations": skill_section_violations,
             "experience_tool_violations": experience_tool_violations,
+            "cl_paragraph_errors": cl_paragraph_errors,
+            "cl_span_errors": cl_span_errors,
+            "cl_ledger_errors": cl_ledger_errors,
+            "cl_tool_errors": cl_tool_errors,
         },
         "repair_brief": repair_brief,
         "judge_candidates": judge_candidates,
@@ -1448,9 +1904,51 @@ _HIGH_RISK_TOOL_LEXICON: frozenset[str] = frozenset({
 
 
 def _tokenize_skills_section(text: str) -> list[str]:
-    """Split raw skills section text into individual skill tokens."""
-    tokens = re.split(r"[,|•·:\n]+", text)
-    return [t.strip().lower() for t in tokens if t.strip()]
+    """Split raw skills section text into individual skill tokens.
+
+    Handles:
+    - Category labels: "Languages: Python, Java" → only tokenizes "Python", "Java".
+    - Parenthesized lists: "AI tools (ChatGPT, Cursor)" → tokens include
+      both the outer label ("ai tools") and inner items ("chatgpt", "cursor").
+      The paren group is flattened into the token stream.
+    - Version annotations like "Python (3.9+)" produce "python" plus "3.9+"
+      but version-only tokens (no letters) are filtered out.
+
+    Token filtering:
+    - Strip, lowercase, collapse spaces.
+    - Must contain at least one letter (filters out version strings like "3.9+").
+    - Length must be > 1.
+    """
+    result: list[str] = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        # Strip category label (everything before the first colon)
+        if ":" in line:
+            _, _, rhs = line.partition(":")
+            line = rhs.strip()
+        if not line:
+            continue
+        # Flatten parenthesized groups: "AI tools (ChatGPT, Cursor)"
+        # → "AI tools , ChatGPT, Cursor"
+        line = re.sub(r"\(([^)]*)\)", lambda m: ", " + m.group(1), line)
+        tokens = re.split(r"[,|•·;]+", line)
+        for token in tokens:
+            raw = re.sub(r"\s+", " ", token.strip().rstrip(".,;:"))
+            # Strip any embedded "SubCategory: " prefix within the token itself.
+            # This handles multi-colon lines like:
+            #   "Databases: MySQL, NoSql Systems & Platforms: Tomcat"
+            # where comma-splitting leaves "NoSql Systems & Platforms: Tomcat"
+            # as a raw token with its own internal colon.
+            if ":" in raw:
+                _, _, raw = raw.partition(":")
+                raw = raw.strip()
+            t = raw.lower()
+            # Must contain at least one letter and have length > 1
+            if t and len(t) > 1 and re.search(r"[a-z]", t):
+                result.append(t)
+    return result
 
 
 def _extract_skills_section(resume: str) -> str:

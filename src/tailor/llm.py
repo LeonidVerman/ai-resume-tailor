@@ -25,6 +25,7 @@ from tailor.config import (
 )
 from tailor.plan_validator import validate_plan_extended
 from tailor.job import JobData
+from tailor.cover_letter import build_cover_letter_ledger
 from tailor.phase2_validator import (
     LEDGER_MISMATCH_ERROR_PREFIX,
     apply_judge_to_validation,
@@ -617,6 +618,110 @@ You MUST follow all of these:
 """.strip()
 
 
+_RESUME_SUMMARY_HEADERS = frozenset({"professional summary", "summary", "profile"})
+_RESUME_EXPERIENCE_HEADERS = frozenset({"experience", "work experience", "employment"})
+_RESUME_STOP_HEADERS = frozenset({
+    "technical skills", "skills", "education", "projects",
+    "certifications", "awards", "publications",
+})
+
+
+def _find_resume_coarse_location(item: str, resume: str) -> str:
+    """Return a coarse location string for an item found in the resume.
+
+    Returns one of: ``"resume.summary"``, ``"resume.experience"``, ``"resume"``.
+    Uses simple section-header detection; does not parse bullets.
+    """
+    item_lower = item.lower()
+    in_summary = False
+    in_experience = False
+
+    for line in resume.split("\n"):
+        stripped = line.strip().lower()
+        if stripped in _RESUME_SUMMARY_HEADERS:
+            in_summary = True
+            in_experience = False
+            continue
+        if stripped in _RESUME_EXPERIENCE_HEADERS:
+            in_summary = False
+            in_experience = True
+            continue
+        if stripped in _RESUME_STOP_HEADERS:
+            in_summary = False
+            in_experience = False
+            continue
+        if in_summary and item_lower in stripped:
+            return "resume.summary"
+        if in_experience and item_lower in stripped:
+            return "resume.experience"
+
+    return "resume"
+
+
+def _autofill_evidence_ledger(
+    evidence_ledger: dict,
+    resume: str,
+    must_keep_metrics: list[str],
+    must_include_skills: list[str],
+) -> dict:
+    """Add missing ledger entries when required items are found in the resume.
+
+    When the LLM omits ledger entries for items that are actually present in the
+    resume text, the validator raises LEDGER_ENTRY_MISSING errors unnecessarily.
+    This function fills in those entries deterministically before validation.
+
+    Only runs when evidence_ledger is not None. Does not modify entries that
+    already exist. Does not add entries for items not found in resume text.
+
+    Uses ``_find_resume_coarse_location`` to produce section-level locations
+    (``resume.summary``, ``resume.experience``, or ``resume``) rather than the
+    generic ``"resume"`` fallback.
+    """
+    if not isinstance(evidence_ledger, dict):
+        return evidence_ledger
+
+    existing_entries: list[dict] = list(evidence_ledger.get("entries", []))
+    existing_keys: set[tuple[str, str]] = {
+        (e.get("kind", ""), e.get("target", ""))
+        for e in existing_entries
+        if isinstance(e, dict)
+    }
+
+    new_entries = list(existing_entries)
+    resume_lower = resume.lower()
+
+    for metric in must_keep_metrics:
+        key = ("required_metric", metric)
+        if key in existing_keys:
+            continue
+        if metric.lower() in resume_lower:
+            new_entries.append({
+                "kind": "required_metric",
+                "target": metric,
+                "exact_span": metric,
+                "location": _find_resume_coarse_location(metric, resume),
+                "id": f"autofill_metric_{len(new_entries)}",
+            })
+
+    for skill in must_include_skills:
+        key = ("required_skill", skill)
+        if key in existing_keys:
+            continue
+        if skill.lower() in resume_lower:
+            new_entries.append({
+                "kind": "required_skill",
+                "target": skill,
+                "exact_span": skill,
+                "location": _find_resume_coarse_location(skill, resume),
+                "id": f"autofill_skill_{len(new_entries)}",
+            })
+
+    if len(new_entries) == len(existing_entries):
+        return evidence_ledger  # no changes needed
+
+    return {**evidence_ledger, "entries": new_entries}
+
+
 def tailor_documents_with_plan(
     plan: dict,
     job: JobData,
@@ -666,6 +771,22 @@ def tailor_documents_with_plan(
 
     current_ledger: dict | None = attempt1_meta.get("evidence_ledger")
     current_domain_translation_ledger: list | None = attempt1_meta.get("domain_translation_ledger")
+    current_cl_ledger: list | None = attempt1_meta.get("cover_letter_ledger")
+
+    # Override cover_letter_ledger with deterministic code-built version.
+    _cl_plan = writer_packet.get("cover_letter_plan") or {}
+    if _cl_plan and result.cover_letter:
+        current_cl_ledger = build_cover_letter_ledger(result.cover_letter, _cl_plan)
+
+    # Autofill evidence_ledger entries missed by the LLM when items are in resume.
+    if current_ledger is not None:
+        current_ledger = _autofill_evidence_ledger(
+            current_ledger,
+            result.resume or "",
+            writer_packet.get("must_keep_metrics", []),
+            writer_packet.get("must_include_skills", []),
+        )
+
     validation1 = validate_phase2_output(
         writer_packet,
         result.resume or "",
@@ -673,6 +794,7 @@ def tailor_documents_with_plan(
         current_date,
         evidence_ledger=current_ledger,
         domain_translation_ledger=current_domain_translation_ledger,
+        cover_letter_ledger=current_cl_ledger,
     )
 
     attempts = [
@@ -684,6 +806,7 @@ def tailor_documents_with_plan(
             "usage": attempt1_meta["usage"],
             "evidence_ledger": current_ledger,
             "domain_translation_ledger": current_domain_translation_ledger,
+            "cover_letter_ledger": current_cl_ledger,
         }
     ]
 
@@ -699,9 +822,23 @@ def tailor_documents_with_plan(
             profile_str, task, current_date, current_validation, current_result,
             draft_ledger=current_ledger,
             draft_domain_translation_ledger=current_domain_translation_ledger,
+            draft_cover_letter_ledger=current_cl_ledger,
         )
         current_ledger = repair_meta.get("evidence_ledger")
         current_domain_translation_ledger = repair_meta.get("domain_translation_ledger")
+        current_cl_ledger = repair_meta.get("cover_letter_ledger")
+
+        # Override cover_letter_ledger and autofill evidence_ledger (same as attempt 1).
+        if _cl_plan and repair_result.cover_letter:
+            current_cl_ledger = build_cover_letter_ledger(repair_result.cover_letter, _cl_plan)
+        if current_ledger is not None:
+            current_ledger = _autofill_evidence_ledger(
+                current_ledger,
+                repair_result.resume or "",
+                writer_packet.get("must_keep_metrics", []),
+                writer_packet.get("must_include_skills", []),
+            )
+
         repair_validation = validate_phase2_output(
             writer_packet,
             repair_result.resume or "",
@@ -709,6 +846,7 @@ def tailor_documents_with_plan(
             current_date,
             evidence_ledger=current_ledger,
             domain_translation_ledger=current_domain_translation_ledger,
+            cover_letter_ledger=current_cl_ledger,
         )
         attempts.append(
             {
@@ -719,6 +857,7 @@ def tailor_documents_with_plan(
                 "usage": repair_meta["usage"],
                 "evidence_ledger": current_ledger,
                 "domain_translation_ledger": current_domain_translation_ledger,
+                "cover_letter_ledger": current_cl_ledger,
             }
         )
         current_result = repair_result
@@ -816,6 +955,59 @@ def _build_phase2_developer_instructions(role_level: str = "senior") -> tuple[st
     return "\n\n".join(p for p in parts if p), prompt_name
 
 
+def _build_validation_context(writer_packet: dict) -> dict:
+    """Return a compact context object for the Phase 2 repair agent.
+
+    Contains the anchor role, domain flag, a slim cover-letter plan summary,
+    and a 20-item sample of the skills allowlist — all the stable reference
+    data the repair agent needs without repeating the full WriterPacket.
+    """
+    narrative_plan = writer_packet.get("narrative_plan") or {}
+    arc = narrative_plan.get("anchor_role_coverage", {})
+    cl_plan = writer_packet.get("cover_letter_plan") or {}
+    skills_allowlist = writer_packet.get("skill_allowlist_skills_section") or []
+
+    cl_plan_summary = {
+        "structure_version": cl_plan.get("structure_version", "CL_V1_4PARA_2PROOF"),
+        "bridge_sentence_required": cl_plan.get("bridge_sentence_required", False),
+        "proof_points": [
+            {
+                "proof_id": p.get("proof_id", ""),
+                "required_exact_span": p.get("required_exact_span", ""),
+            }
+            for p in cl_plan.get("proof_points", [])
+        ],
+    }
+
+    return {
+        "anchor_role_id": narrative_plan.get("anchor_role_id", ""),
+        "first_k_bullets": arc.get("first_k_bullets", 3),
+        "domain_mismatch": writer_packet.get("domain_mismatch", False),
+        "cl_plan_summary": cl_plan_summary,
+        "skills_allowlist_sample": sorted({s.lower() for s in skills_allowlist})[:20],
+    }
+
+
+def _derive_repair_targets(structured_errors: list[dict]) -> list[str]:
+    """Return a sorted list of repair target labels derived from error codes.
+
+    Mapping:
+        CL_*                              → "cover_letter"
+        SKILL_ALLOWLIST_SKILLS_SECTION_*  → "skills"
+        NARRATIVE_* / DOMAIN_TRANSLATION_*→ "anchor_role_bullets"
+    """
+    targets: set[str] = set()
+    for err in structured_errors:
+        code = err.get("code", "")
+        if code.startswith("CL_"):
+            targets.add("cover_letter")
+        elif "SKILL_ALLOWLIST_SKILLS_SECTION" in code:
+            targets.add("skills")
+        elif code.startswith("NARRATIVE_") or code.startswith("DOMAIN_TRANSLATION_"):
+            targets.add("anchor_role_bullets")
+    return sorted(targets)
+
+
 def _run_phase2_writer(
     writer_packet: dict,
     plan: dict,
@@ -875,6 +1067,7 @@ def _run_phase2_repair(
     draft: TailorResult,
     draft_ledger: dict | None = None,
     draft_domain_translation_ledger: list | None = None,
+    draft_cover_letter_ledger: list | None = None,
 ) -> tuple[TailorResult, list, dict]:
     """Execute a repair pass using the phase2_repair.txt prompt."""
     repair_instructions = _load_prompt("phase2_repair")
@@ -887,15 +1080,21 @@ def _run_phase2_repair(
         working_output_dict["evidence_ledger"] = draft_ledger
     if draft_domain_translation_ledger is not None:
         working_output_dict["domain_translation_ledger"] = draft_domain_translation_ledger
+    if draft_cover_letter_ledger is not None:
+        working_output_dict["cover_letter_ledger"] = draft_cover_letter_ledger
     working_output = json.dumps(working_output_dict, indent=2)
 
-    validation_errors = validation_report.get("errors", [])
-    repair_brief = validation_report.get("repair_brief", {})
+    structured_errors = validation_report.get("structured_errors", [])
+    validation_errors_text = validation_report.get("errors", [])
+
+    validation_context = _build_validation_context(writer_packet)
+    validation_context["repair_targets"] = _derive_repair_targets(structured_errors)
 
     messages: list = [
         {"role": "developer", "content": repair_instructions},
-        {"role": "user", "content": f"VALIDATION_ERRORS:\n{json.dumps(validation_errors, indent=2)}"},
-        {"role": "user", "content": f"REPAIR_BRIEF:\n{json.dumps(repair_brief, indent=2)}"},
+        {"role": "user", "content": f"VALIDATION_ERRORS:\n{json.dumps(structured_errors, indent=2)}"},
+        {"role": "user", "content": f"VALIDATION_ERRORS_TEXT:\n{json.dumps(validation_errors_text, indent=2)}"},
+        {"role": "user", "content": f"VALIDATION_CONTEXT:\n{json.dumps(validation_context, indent=2)}"},
         {"role": "user", "content": f"WRITER_PACKET:\n{json.dumps(writer_packet, indent=2)}"},
         {"role": "user", "content": f"WORKING_OUTPUT_JSON:\n{working_output}"},
         {"role": "user", "content": f"TAILORING_PLAN:\n{json.dumps(plan, indent=2)}"},
@@ -959,6 +1158,10 @@ def _parse_phase2_response(response: Any, model: str) -> tuple[TailorResult, lis
     domain_ledger = raw.get("domain_translation_ledger")
     if isinstance(domain_ledger, list):
         meta["domain_translation_ledger"] = domain_ledger
+    # Extract cover_letter_ledger when the LLM included it
+    cl_ledger = raw.get("cover_letter_ledger")
+    if isinstance(cl_ledger, list):
+        meta["cover_letter_ledger"] = cl_ledger
     # messages not available here; callers own their message lists
     return result, [], meta
 

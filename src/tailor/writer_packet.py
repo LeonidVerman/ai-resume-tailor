@@ -5,6 +5,7 @@ deterministic by providing explicit, pre-computed constraints.  No LLM is
 involved in its construction.
 """
 
+import copy
 import json
 import logging
 import re
@@ -77,6 +78,35 @@ _DATE_LINE_RE: re.Pattern = re.compile(
 
 
 # ---------------------------------------------------------------------------
+# Cover-letter plan helpers
+# ---------------------------------------------------------------------------
+
+def _sanitize_cover_letter_plan(cl_plan: dict, cl_allowed: set[str]) -> dict:
+    """Deep-copy cl_plan and drop allowed_tool_mentions entries outside cl_allowed.
+
+    ``cl_allowed`` should be the lowercase union of direct_skills and
+    can_claim_experience items from the skill_graph.  Any mention not in
+    that set is silently removed to prevent the Phase 2 writer from being
+    instructed to reference tools the candidate cannot claim.
+    """
+    if not cl_plan:
+        return cl_plan
+    cl_plan = copy.deepcopy(cl_plan)
+    for proof in cl_plan.get("proof_points", []):
+        mentions: list[str] = proof.get("allowed_tool_mentions", [])
+        sanitized = [m for m in mentions if m.lower() in cl_allowed]
+        if len(sanitized) < len(mentions):
+            dropped = [m for m in mentions if m.lower() not in cl_allowed]
+            logger.warning(
+                "Sanitized allowed_tool_mentions for proof %s: removed %s",
+                proof.get("proof_id"),
+                dropped,
+            )
+        proof["allowed_tool_mentions"] = sanitized
+    return cl_plan
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -145,6 +175,22 @@ def build_writer_packet(
         ]
     ))
 
+    # --- Cover-letter plan + convenience sets ---
+    direct_skills_set: set[str] = set(_direct_skills)
+    can_claim_experience_set: set[str] = {
+        r["item"].lower() for r in _related_skills
+        if r.get("allowed_usage") == "can_claim_experience"
+    }
+    skills_section_allowlist_set: set[str] = {
+        r["item"].lower() for r in _related_skills
+        if r.get("allowed_usage") in {"skills_section_only", "can_claim_experience"}
+    } | direct_skills_set
+
+    _cl_allowed: set[str] = direct_skills_set | can_claim_experience_set
+    cover_letter_plan: dict = _sanitize_cover_letter_plan(
+        plan.get("cover_letter_plan") or {}, _cl_allowed
+    )
+
     return {
         "role_level": role_level,
         "jd_domain": jd_domain,
@@ -157,6 +203,10 @@ def build_writer_packet(
         "skill_graph": skill_graph,
         "skill_allowlist_skills_section": skill_allowlist_skills_section,
         "skill_allowlist_experience_claims": skill_allowlist_experience_claims,
+        "cover_letter_plan": cover_letter_plan,
+        "direct_skills_set": sorted(direct_skills_set),
+        "can_claim_experience_set": sorted(can_claim_experience_set),
+        "skills_section_allowlist_set": sorted(skills_section_allowlist_set),
         "master_resume_role_names": list(role_stats.keys()),
         "master_role_dates": master_role_dates,
         "must_keep_metrics": must_keep_metrics,
