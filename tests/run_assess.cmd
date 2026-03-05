@@ -1,6 +1,6 @@
 @echo off
 :: Run assessment mode for ai-resume-tailor
-:: Usage: run_assess.cmd [--positions FILE] [--model MODEL] [--temperature T] [--workers N] [--max_positions N] [--out DIR] [--cache_dir DIR]
+:: Usage: run_assess.cmd [--positions FILE] [--model MODEL] [--temperature T] [--workers N] [--max_positions N] [--out DIR] [--cache_dir DIR] [--simple]
 :: Defaults: positions=tests\data\positions.txt, model=gpt-5.2, temperature=0.5
 
 setlocal

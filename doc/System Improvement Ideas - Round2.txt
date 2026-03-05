@@ -1,0 +1,427 @@
+1. Positions analyzed in the latest cycle
+
+Recent positions evaluated manually:
+
+Function Software – Director of R&D
+
+Datadog – Manager I, Developer Advocacy
+
+Altimetrik – Technical Lead (Product & Platform Engineering)
+
+Change.org – Senior Staff AI Engineer
+
+Workday – Manager, Software Development Engineering in Test
+
+These represent very different role types, which exposed different weaknesses of the tailoring system.
+
+Role	Fit	Generator quality
+Director of R&D	Strong	Good
+Developer Advocacy	Weak	Medium
+Technical Lead (Java)	Very strong	Good
+Staff AI Engineer	Medium	Medium
+SDET Manager	Very weak	Bad
+
+This diversity is actually extremely useful for tuning.
+
+2. What the system does well
+1️⃣ Content grounding
+
+The generator generally respected the rule:
+
+do not invent employers or metrics
+
+Most produced resumes stayed close to the MASTER_RESUME facts.
+
+2️⃣ Mechanism-level architecture
+
+Your prompt layer enforcing:
+
+horizontal scaling
+
+caching
+
+async messaging
+
+replicas
+
+worked well.
+
+Example strengths:
+
+horizontal scaling of trading servers
+database read replicas
+multi-layer caching
+async messaging
+
+These differentiate your profile well.
+
+3️⃣ Leadership representation
+
+The system generally preserved:
+
+team leadership
+
+VP / Director scope
+
+mentoring
+
+without exaggeration.
+
+4️⃣ Skills restructuring
+
+The system successfully reorganized skills into:
+
+backend systems
+
+infrastructure
+
+messaging
+
+AI tools
+
+which improves ATS readability.
+
+3. Systemic problems discovered
+
+Several recurring problems appeared.
+
+Problem 1 — Role mismatch not detected
+
+The system tries to force-fit every job.
+
+Example:
+
+Workday SDET role.
+
+The generator:
+
+invented QA leadership
+
+invented test frameworks
+
+invented Playwright experience
+
+This happened because the system assumes:
+
+every job should be tailored.
+
+Instead of:
+
+sometimes the correct output is “poor fit – do not apply.”
+
+This is the largest conceptual gap.
+
+Problem 2 — Over-compression of technical experience
+
+The system sometimes removes valuable bullets.
+
+Example:
+
+Removed bullet:
+
+cached JDBC driver wrapper
+
+This is actually a strong architecture signal.
+
+The model tends to compress older roles too aggressively.
+
+Problem 3 — AI experience underrepresentation
+
+For AI-related roles (Change.org):
+
+The system did not fully surface:
+
+RAG familiarity
+
+vector databases
+
+LLM evaluation
+
+AI experimentation
+
+Even though these exist in the candidate profile.
+
+Problem 4 — Skill section degradation
+
+The system simplified the skills section but sometimes removed relevant signals.
+
+Examples removed:
+
+Git
+
+Jenkins
+
+Kafka context
+
+middleware platforms
+
+This can hurt ATS matching.
+
+Problem 5 — Over-generic summaries
+
+Summaries frequently default to:
+
+“Senior backend engineer with 15+ years…”
+
+Even when the role is:
+
+AI platform
+
+Java tech lead
+
+architecture
+
+Summary should be role-specific.
+
+Problem 6 — Domain translation too conservative
+
+Your prompt layer forbids many translations (which is good), but sometimes it becomes overly restrictive.
+
+Example:
+
+Fintech systems could translate to:
+
+high-throughput transaction platforms
+low-latency distributed backend systems
+
+But the model sometimes keeps fintech language, reducing general applicability.
+
+4. Why the 2-phase architecture performed worse
+
+This was a key insight in your experiment.
+
+Your best scores (~6.6) happened with single-pass generation.
+
+The 2-phase pipeline introduced problems.
+
+Reason 1 — Over-constraint
+
+Phase2 validation enforced many rules:
+
+ledger spans
+
+theme anchors
+
+skill allowlists
+
+metric anchors
+
+domain translations
+
+This created too many failure conditions.
+
+LLMs struggle when asked to satisfy many hard constraints simultaneously.
+
+Reason 2 — Repair loops degrade language
+
+Repair prompts often produce:
+
+awkward sentences
+
+mechanical insertions
+
+unnatural phrasing
+
+Example pattern:
+
+sentence + injected metric + injected skill
+
+This hurts content quality.
+
+Reason 3 — Validation based on exact strings
+
+Many validations rely on:
+
+exact span match
+
+But LLMs naturally rephrase text.
+
+This causes:
+
+false validation failures
+Reason 4 — System complexity explosion
+
+Current architecture includes:
+
+Phase1 planning
+
+Phase2 generation
+
+Phase2 repair
+
+schema validation
+
+skill validation
+
+narrative validation
+
+domain translation
+
+This complexity causes fragility.
+
+5. Concrete improvements to try next
+
+Here are high-impact improvements.
+
+Improvement 1 — Add job fit classifier
+
+Before generation, add a job-fit evaluation step.
+
+Output:
+
+fit_level: strong | medium | weak
+
+Behavior:
+
+Fit	System action
+strong	full tailoring
+medium	lighter tailoring
+weak	recommend skip
+
+This prevents forced tailoring.
+
+Improvement 2 — Remove repair loops
+
+Repair loops damage language quality.
+
+Instead:
+
+allow soft validation
+
+log issues
+
+do not rewrite output.
+
+Improvement 3 — Replace exact string validation
+
+Instead of:
+
+span must exist exactly
+
+Use:
+
+semantic similarity validation
+
+Example:
+
+embedding similarity > threshold
+Improvement 4 — Better summary generator
+
+Summary should depend on role category.
+
+Example rule:
+
+if AI role → highlight AI experience
+if Java role → highlight backend architecture
+if leadership role → highlight team scope
+Improvement 5 — Skills section strategy
+
+Instead of rewriting skills every time:
+
+Use stable skills baseline plus small additions.
+
+Example:
+
+core_skills
++ role_specific_skills
+
+This avoids accidental loss of important tools.
+
+Improvement 6 — Preserve strong bullets
+
+Add rule:
+
+Never delete top evidence bullets unless clearly irrelevant.
+
+Examples to always keep:
+
+1M users
+
+25% throughput improvement
+
+transactional cache
+
+in-memory database
+
+horizontal scaling
+
+These are high-value signals.
+
+6. Strategic lessons about LLM resume tailoring
+
+Your experiment revealed something important.
+
+LLMs are good at:
+
+language rewriting
+
+emphasis shifting
+
+summarization
+
+LLMs are bad at:
+
+strict rule compliance
+
+schema rigidity
+
+exact string matching
+
+deterministic outputs
+
+Therefore the best architecture is:
+
+simple generation
++ light validation
++ human review
+
+not
+
+heavy automated enforcement
+7. Current system maturity
+
+Based on the last runs:
+
+Capability	Status
+Tailoring quality	Good
+Content grounding	Good
+Automation stability	Medium
+Validation logic	Over-engineered
+
+The system is already usable for real applications.
+
+Which you confirmed.
+
+8. Recommended next iteration
+
+Instead of further complicating the pipeline:
+
+Simplify it.
+
+Recommended architecture:
+
+Job Fit Classifier
+        ↓
+Single-Pass Tailoring
+        ↓
+Light Validation
+        ↓
+Manual review
+
+This will likely outperform the current system.
+
+✅ Bottom line
+
+Your system already reached the most important milestone:
+
+It generates realistic, usable tailored resumes.
+
+Further improvements should focus on:
+
+fit detection
+
+summary quality
+
+skills stability
+
+—not heavier validation.
