@@ -188,9 +188,7 @@ C) summary_coverage
 D) anchor_role_coverage defaults unless strong reason:
 - first_k_bullets = 3
 - top_k_themes_to_cover = 2
-- min_theme_occurrences default:
-  - T1: 2
-  - T2: 1
+- min_theme_occurrences default: [{"theme_id": "T1", "min_count": 2}, {"theme_id": "T2", "min_count": 1}]
 
 E) domain_translation_binding
 If domain_mismatch=true:

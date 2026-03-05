@@ -259,8 +259,16 @@
             "first_k_bullets": { "type": "integer", "minimum": 2, "maximum": 5 },
             "top_k_themes_to_cover": { "type": "integer", "minimum": 1, "maximum": 3 },
             "min_theme_occurrences": {
-              "type": "object",
-              "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 4 }
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["theme_id", "min_count"],
+                "additionalProperties": false,
+                "properties": {
+                  "theme_id": { "type": "string" },
+                  "min_count": { "type": "integer", "minimum": 0, "maximum": 4 }
+                }
+              }
             }
           }
         },

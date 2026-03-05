@@ -1059,7 +1059,13 @@ def validate_phase2_output(
         arc = narrative_plan.get("anchor_role_coverage", {})
         first_k_bullets: int = arc.get("first_k_bullets", 3)
         top_k_themes: int = arc.get("top_k_themes_to_cover", 2)
-        min_occ: dict[str, int] = arc.get("min_theme_occurrences", {})
+        min_occ_raw = arc.get("min_theme_occurrences", [])
+        if isinstance(min_occ_raw, dict):
+            # backward-compat: tests pass a dict directly
+            min_occ: dict[str, int] = min_occ_raw
+        else:
+            # new API format: array of {theme_id, min_count}
+            min_occ = {e["theme_id"]: e["min_count"] for e in min_occ_raw if isinstance(e, dict)}
 
         if anchor_role_id and theme_map:
             anchor_bullets = _extract_anchor_role_bullets(
