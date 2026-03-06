@@ -93,6 +93,10 @@ PHASE2_MAX_REPAIR_ATTEMPTS: int = int(os.environ.get("PHASE2_MAX_REPAIR_ATTEMPTS
 PHASE2_JUDGE_MODEL: str = os.environ.get("PHASE2_JUDGE_MODEL", "gpt-4o-mini")
 ENABLE_PHASE2_JUDGE: bool = os.environ.get("ENABLE_PHASE2_JUDGE", "true").lower() not in ("0", "false", "no")
 
+# --- Single-pass (--simple) mode ---
+SIMPLE_MODEL: str = os.environ.get("SIMPLE_MODEL", "gpt-5.2")
+SIMPLE_TEMPERATURE: float = float(os.environ.get("SIMPLE_TEMPERATURE", "0.3"))
+
 # --- Assessment mode ---
 ASSESS_MODEL: str = os.environ.get("ASSESS_MODEL", "gpt-4o-mini")
 ASSESS_TEMPERATURE: float = float(os.environ.get("ASSESS_TEMPERATURE", "0.2"))

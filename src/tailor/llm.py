@@ -21,6 +21,8 @@ from tailor.config import (
     PHASE2_REPAIR_TEMPERATURE,
     PHASE2_TEMPERATURE,
     SCHEMAS_DIR,
+    SIMPLE_MODEL,
+    SIMPLE_TEMPERATURE,
     load_domain_translation_rules,
 )
 from tailor.plan_validator import validate_plan_extended
@@ -1093,9 +1095,9 @@ def tailor_documents(
 
     response_format = {"type": "json_object"}
     response = get_client().chat.completions.create(
-        model=PHASE2_MODEL,
+        model=SIMPLE_MODEL,
         messages=messages,
-        temperature=PHASE2_TEMPERATURE,
+        temperature=SIMPLE_TEMPERATURE,
         response_format=response_format,
     )
 
@@ -1105,7 +1107,7 @@ def tailor_documents(
         cover_letter=raw.get("cover_letter") or raw.get("tailored_cover_letter"),
     )
     llm_request = _build_llm_request_record(
-        messages, PHASE2_MODEL, PHASE2_TEMPERATURE, response_format=response_format,
+        messages, SIMPLE_MODEL, SIMPLE_TEMPERATURE, response_format=response_format,
     )
     return result, llm_request
 

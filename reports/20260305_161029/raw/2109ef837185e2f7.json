@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+    "company": "Plata",
+    "role_title": "Engineering Manager"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 9,
+      "evidence": [
+        "Led teams up to 15–20 engineers and delivered trading platforms serving 1M+ users.",
+        "Improved maintainability by raising test coverage by 20% and streamlining documentation"
+      ]
+    },
+    "role_fit": {
+      "score": 7,
+      "evidence": [
+        "Hands-on engineering manager and senior backend engineer with 15+ years building high-throughput",
+        "important fit for building an evolving AI-powered Financial Assistant."
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "Hands-on engineering manager and senior backend engineer with 15+ years"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "Improved throughput by 25% by introducing a transactional cache",
+        "raising test coverage by 20% and streamlining documentation to reduce onboarding time"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 9,
+      "evidence": [
+        "database read replicas for read-heavy GET endpoints to isolate traffic",
+        "idempotent, retry-safe processing patterns for failure handling"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 8,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "ENGINEERING MANAGER / BACKEND ENGINEER (FINTECH & CRYPTO)"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 7,
+      "evidence": [
+        "I am applying for the Engineering Manager role at Plata.",
+        "translate unclear requirements into precise engineering plans—an important fit for building"
+      ]
+    },
+    "overall_readiness": {
+      "score": 8,
+      "evidence": [
+        "Lead a backend engineering team delivering a trading system serving 1M+ clients",
+        "Partner closely with Product, Data, and AI teams"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied AI/ML product leadership is not evidenced beyond 'training and evaluating LLMs' contractor work."
+    ],
+    "most_damaging_gaps": [
+      "Limited evidence of leading an AI-powered, user-facing product from concept to production (assistant/recommendations).",
+      "Cross-functional collaboration is asserted but not demonstrated with concrete examples (Product/Data/AI/business).",
+      "People-management specifics (hiring, performance management, team health) are lightly covered."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 2–3 bullets showing direct cross-functional delivery with Product/Data (e.g., roadmap tradeoffs, experimentation loops, stakeholder alignment).",
+      "Reframe AI experience toward product outcomes: any LLM/RAG integrations, assistant-like workflows, or data-driven features (even internal) with measurable impact.",
+      "Include explicit EM responsibilities: hiring/interviewing, performance reviews, career ladders, on-call/process improvements, and delivery cadence (sprints, SLAs)."
+    ]
+  }
+}
