@@ -1,0 +1,32 @@
+Previously, system worked with my data exclusively, and now we transition is to work with generic candidate data. Still, we keep primary focus on candidates in software development or related fields, at least in the initial version
+
+1. Since format of user's resume may fluctuate significantly, the first step is to parse the resume and convert it to the internal data structure with unified format.
+Proposed format
+- Candidate name
+- Contracts (email/phone/address)
+- Professional summary
+- Experience. List of experiences with bullet points
+- Technical skills
+It is good to allow user having multiple templates for resume/cover letter, but it is maybe not for initial SAAS release
+Also, we need to store user document themselves to reuse their formatting once content is generated
+
+2. As known from previous experience, it is not really possible to tailor resume based just on resume alone and JD.
+So, we need to gather more data about the candidate and store it in uniform way (candidate profile).
+For initial version, we can keep the current structure of candidate profile. From UI standpoint, we need a setup master which allow used to fill candidate profile as full as possible in easy and painless way.
+
+Roughly, master should cover the following
+- technical skills (programming languages, frameworks, databases, etc)
+- architecture and design patterns (OOP, design patterns, scalability etc)
+- domain (fintech, public health, etc)
+- leadership/management skills - if applicable
+- soft skills - communication etc
+- team work
+- AI experience
+
+3. Job board scraping. Currently, the system support LinkedIn, Hiring Cafe (Wellfound didn't really work in scrap way), so we need to support more popular board. Let's target 20 job boards for the initial version, including most popular like Indeed etc. I assume support will be mostly unified, but some boards may require specific scraping mechanism. For unsupported boards, the system well allow to copy/paste JD from the site, as currently done for WellFound
+
+4. Customization prompts. Users probably won't be allowed to change core prompts, but will be allowed to introduce additional prompts to tune the generation for their specific needs, or specific position. Probably, customization prompts should be divided into 2 - user specific (used by default for all roles), role specific (used for the role). Initial version may allow to have just 1 each, but later version can introduce management system allowing to store and use multiple versions of those prompts.
+
+5. Resume generation step. Basically just invokes existing generation function in the same way as now, using data prepared on steps 1-4
+
+6. Optional resume assessment. Function allowing LLM to review and assess resulted resume, in similar way as assessment system works now (but just for single role, not for a bulk)
