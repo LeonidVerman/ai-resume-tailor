@@ -99,6 +99,12 @@ def _main_assess(argv: list[str]) -> None:
         ),
     )
     parser.add_argument(
+        "-s", "--simple",
+        action="store_true",
+        help="Use single-pass generation instead of two-phase (Phase 1 + Phase 2). "
+             "Mutually exclusive with --calibrate and --calibrate-data.",
+    )
+    parser.add_argument(
         "--calibrate-data", default=None, metavar="DIR", dest="calibrate_data",
         help=(
             "Calibration-with-data mode: assess pre-generated resume/cover letter "
@@ -114,6 +120,8 @@ def _main_assess(argv: list[str]) -> None:
 
     if args.calibrate and args.calibrate_data:
         parser.error("--calibrate and --calibrate-data are mutually exclusive.")
+    if args.simple and (args.calibrate or args.calibrate_data):
+        parser.error("--simple is not applicable with --calibrate or --calibrate-data (no generation in those modes).")
 
     run_assess_pipeline(
         positions_file=args.positions,
@@ -126,6 +134,7 @@ def _main_assess(argv: list[str]) -> None:
         workers=args.workers,
         calibrate=args.calibrate,
         calibrate_data=args.calibrate_data,
+        simple=args.simple,
     )
 
 
@@ -154,6 +163,11 @@ def _main_tailor() -> None:
         "-d", "--debug",
         action="store_true",
         help="Save debug log only; skip docx/pdf generation.",
+    )
+    parser.add_argument(
+        "-s", "--simple",
+        action="store_true",
+        help="Use single-pass mode instead of two-phase (Phase 1 + Phase 2).",
     )
     args = parser.parse_args()
 
@@ -184,12 +198,15 @@ def _main_tailor() -> None:
     cover_template  = read_docx(COVER_TEMPLATE)
 
     # --- Tailor documents (two-phase or single-pass) ---
-    if ENABLE_TWO_PHASE:
+    if ENABLE_TWO_PHASE and not args.simple:
         result, llm_request, phase1_debug, phase2_debug = _run_two_phase(
             job, resume_template, cover_template
         )
     else:
-        print("Tailoring documents (single-pass)...")
+        if args.simple:
+            print("Tailoring documents (single-pass, --simple)...")
+        else:
+            print("Tailoring documents (single-pass)...")
         result, llm_request = tailor_documents(job, resume_template, cover_template)
         phase1_debug = None
         phase2_debug = None

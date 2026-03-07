@@ -77,8 +77,8 @@ DOCKER_IMAGE_DEFAULT = "minidocks/libreoffice"
 ENABLE_TWO_PHASE: bool = os.environ.get("ENABLE_TWO_PHASE", "true").lower() not in ("0", "false", "no")
 ENABLE_PLAN_REPAIR: bool = os.environ.get("ENABLE_PLAN_REPAIR", "true").lower() not in ("0", "false", "no")
 
-PHASE1_MODEL: str = os.environ.get("PHASE1_MODEL", "gpt-4.1-mini")
-PHASE2_MODEL: str = os.environ.get("PHASE2_MODEL", "gpt-4o-mini")
+PHASE1_MODEL: str = os.environ.get("PHASE1_MODEL", "gpt-5.2")
+PHASE2_MODEL: str = os.environ.get("PHASE2_MODEL", "gpt-5.2")
 
 PHASE1_TEMPERATURE: float = float(os.environ.get("PHASE1_TEMPERATURE", "0.1"))
 PHASE1_REPAIR_TEMPERATURE: float = float(os.environ.get("PHASE1_REPAIR_TEMPERATURE", "0.1"))
@@ -92,6 +92,10 @@ PHASE2_MAX_REPAIR_ATTEMPTS: int = int(os.environ.get("PHASE2_MAX_REPAIR_ATTEMPTS
 # --- Phase 2 judge model (post-repair semantic verification) ---
 PHASE2_JUDGE_MODEL: str = os.environ.get("PHASE2_JUDGE_MODEL", "gpt-4o-mini")
 ENABLE_PHASE2_JUDGE: bool = os.environ.get("ENABLE_PHASE2_JUDGE", "true").lower() not in ("0", "false", "no")
+
+# --- Single-pass (--simple) mode ---
+SIMPLE_MODEL: str = os.environ.get("SIMPLE_MODEL", "gpt-5.2")
+SIMPLE_TEMPERATURE: float = float(os.environ.get("SIMPLE_TEMPERATURE", "0.3"))
 
 # --- Assessment mode ---
 ASSESS_MODEL: str = os.environ.get("ASSESS_MODEL", "gpt-4o-mini")

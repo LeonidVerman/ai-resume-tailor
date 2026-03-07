@@ -100,16 +100,21 @@ def _tailor_position(
     job: JobData,
     resume_template: str,
     cover_template: str,
+    simple: bool = False,
 ) -> tuple[Any, dict | None, dict | None, dict | None]:
-    """Run Phase 1 → Phase 2 for one position.
+    """Run Phase 1 → Phase 2 for one position (or single-pass when simple=True).
 
     Returns
     -------
     result : TailorResult
-    plan : validated plan dict, or None if Phase 1 failed
+    plan : validated plan dict, or None if Phase 1 failed / skipped
     phase2_debug : Phase 2 debug meta dict, or None if unavailable
     phase1_debug : Phase 1 debug dict (model, usage, raw_response, plan_json), or None
     """
+    if simple:
+        result, _ = tailor_documents(job, resume_template, cover_template)
+        return result, None, None, None
+
     try:
         raw_plan, p1_messages, p1_meta = plan_tailoring(job, resume_template, cover_template)
     except (PlanParseError, Exception) as exc:
@@ -561,6 +566,7 @@ def _process_one_position(
     calibration_index: tuple[dict[str, str], dict[str, str]] | None = None,
     calibration_errors: list[str] | None = None,
     calibration_errors_lock: threading.Lock | None = None,
+    simple: bool = False,
 ) -> dict | None:
     """Scrape → tailor → assess one position URL.  Returns an entry dict or None on failure."""
 
@@ -579,7 +585,7 @@ def _process_one_position(
     _print(f"  [{idx}] Company: {job.company}  |  Role: {job.job_title}")
 
     try:
-        result, plan, phase2_debug, phase1_debug = _tailor_position(job, resume_template, cover_template)
+        result, plan, phase2_debug, phase1_debug = _tailor_position(job, resume_template, cover_template, simple=simple)
     except Exception as exc:
         _print(f"  [{idx}] Skipping — tailoring failed: {exc}")
         return None
@@ -691,6 +697,7 @@ def run_assess_pipeline(
     weights: dict[str, float] | None = None,
     calibrate: bool = False,
     calibrate_data: str | None = None,
+    simple: bool = False,
 ) -> dict:
     """Score tailored documents for each URL in *positions_file*.
 
@@ -765,6 +772,8 @@ def run_assess_pipeline(
         )
     elif calibrate:
         print("[CALIBRATION MODE] Master resume/cover letter will be sent to assessment.")
+    if simple:
+        print("[SIMPLE MODE] Single-pass generation (no Phase 1 plan).")
     print(
         f"Assessing {len(urls)} position(s) with model {model} "
         f"using {effective_workers} parallel worker(s)..."
@@ -801,6 +810,7 @@ def run_assess_pipeline(
                 cal_index,
                 calibration_errors if cal_index is not None else None,
                 calibration_errors_lock if cal_index is not None else None,
+                simple,
             )
             for i, url in enumerate(urls, 1)
         ]

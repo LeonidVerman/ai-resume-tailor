@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/8ma69ztvoreoqxp2",
+    "company": "NEOGOV",
+    "role_title": "Enterprise Architect, Platform"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 9,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote) Nov 2025 – Present",
+        "Improved throughput by 25% by introducing a transactional cache for trading data"
+      ]
+    },
+    "role_fit": {
+      "score": 6,
+      "evidence": [
+        "ENTERPRISE ARCHITECT / BACKEND ARCHITECT (PLATFORM) | JAVA & C# | DISTRIBUTED SYSTEMS",
+        "mechanisms that translate well to building shared platform services and cross-product interoperability"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "Enterprise-scale backend architect and engineering leader with 15+ years",
+        "including VP/Director and Team Lead roles"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "raising automated test coverage by 20%",
+        "platforms serving 1M+ users"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 7,
+      "evidence": [
+        "database read replicas to isolate read-heavy GET endpoints from write paths",
+        "idempotent processing and retry-safe patterns in message-driven flows"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 9,
+      "evidence": [
+        "Eligible to work remotely for U.S. companies from Canada (no visa required for remote).",
+        "currently an Independent Contractor supporting AI labs on LLM training/evaluation"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 7,
+      "evidence": [
+        "unifying 22+ products into a cloud-ready, AI-enabled ecosystem is compelling",
+        "design reviews, reference implementations, and practical DevOps habits (AWS, Docker, Kubernetes, CI/CD, and observability)"
+      ]
+    },
+    "overall_readiness": {
+      "score": 7,
+      "evidence": [
+        "I am applying for the Enterprise Architect, Platform role at NEOGOV.",
+        "Enterprise-scale backend architect and engineering leader with 15+ years"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Implied platform/enterprise architecture ownership for multi-product SaaS unification is not directly evidenced beyond fintech trading platforms (e.g., \"Enterprise Architect / Backend Architect (Platform)\")."
+    ],
+    "most_damaging_gaps": [
+      "No explicit experience with Angular despite JD asking for it (resume lists TypeScript but not Angular).",
+      "No Infrastructure-as-Code evidence (Terraform/AWS CDK) despite JD requirement.",
+      "Limited direct evidence of SaaS platform unification work (SSO, onboarding, common admin, unified data models across products).",
+      "No mention of GraphQL or data/analytics platforms like Snowflake/Databricks beyond generic ML concepts."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add explicit, credible platform-architecture examples aligned to NEOGOV: SSO/OIDC/SAML decisions, onboarding flows, shared admin, and cross-service governance (APIs/events/security).",
+      "Close key JD skill gaps with truthful specifics: Terraform/AWS CDK usage (or remove if none), and any Angular/GraphQL exposure; otherwise acknowledge and position a learning plan.",
+      "Reframe experience from trading-system mechanisms to multi-product SaaS outcomes: reference architectures, standards governance, and data model consolidation/interoperability (with concrete artifacts and results)."
+    ]
+  }
+}

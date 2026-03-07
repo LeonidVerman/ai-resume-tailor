@@ -53,16 +53,6 @@ DOMAIN_TRANSLATION_FIRST_K_NOT_MET: str = "DOMAIN_TRANSLATION_FIRST_K_NOT_MET"
 SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION: str = "SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION"
 SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION: str = "SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION"
 
-#: Cover-letter validator error codes (V1–V4).
-CL_PARAGRAPH_COUNT_INVALID: str = "CL_PARAGRAPH_COUNT_INVALID"
-CL_P1_SPAN_MISSING: str = "CL_P1_SPAN_MISSING"
-CL_P2_SPAN_MISSING: str = "CL_P2_SPAN_MISSING"
-CL_BRIDGE_MISSING: str = "CL_BRIDGE_MISSING"
-CL_LEDGER_MISSING_ENTRY: str = "CL_LEDGER_MISSING_ENTRY"
-CL_LEDGER_SPAN_NOT_FOUND: str = "CL_LEDGER_SPAN_NOT_FOUND"
-CL_LEDGER_LOCATION_INVALID: str = "CL_LEDGER_LOCATION_INVALID"
-CL_TOOL_ALLOWLIST_VIOLATION: str = "CL_TOOL_ALLOWLIST_VIOLATION"
-
 # ---------------------------------------------------------------------------
 # Mechanism keyword set — LEGACY FALLBACK only.
 #
@@ -1330,16 +1320,13 @@ def validate_phase2_output(
         arc = narrative_plan.get("anchor_role_coverage", {})
         first_k_bullets: int = arc.get("first_k_bullets", 3)
         top_k_themes: int = arc.get("top_k_themes_to_cover", 2)
-        _min_occ_raw = arc.get("min_theme_occurrences", {})
-        # New format: [{theme_id, min_count}]; old dict format kept for compat.
-        if isinstance(_min_occ_raw, list):
-            min_occ: dict[str, int] = {
-                e["theme_id"]: e["min_count"]
-                for e in _min_occ_raw
-                if isinstance(e, dict) and "theme_id" in e and "min_count" in e
-            }
+        min_occ_raw = arc.get("min_theme_occurrences", [])
+        if isinstance(min_occ_raw, dict):
+            # backward-compat: tests pass a dict directly
+            min_occ: dict[str, int] = min_occ_raw
         else:
-            min_occ = dict(_min_occ_raw)
+            # new API format: array of {theme_id, min_count}
+            min_occ = {e["theme_id"]: e["min_count"] for e in min_occ_raw if isinstance(e, dict)}
 
         if anchor_role_id and theme_map:
             anchor_bullets = _extract_anchor_role_bullets(
@@ -1616,6 +1603,36 @@ def validate_phase2_output(
         cl_tool_errors = _validate_cl_tool_allowlist(cl_paragraphs, cl_plan, _direct_set)
         errors.extend(cl_tool_errors)
 
+    # --- 15. Skill section allowlist ---
+    skill_section_violations: list[str] = []
+    allowlist_ss = {s.lower() for s in (writer_packet.get("skill_allowlist_skills_section") or [])}
+    if allowlist_ss:
+        skills_raw = _extract_skills_section(resume)
+        for token in _tokenize_skills_section(skills_raw):
+            if token and token not in allowlist_ss:
+                skill_section_violations.append(token)
+                errors.append(
+                    f"{SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION}: "
+                    f"skill {token!r} not in allowlist"
+                )
+
+    # --- 16. Experience tool claim allowlist ---
+    experience_tool_violations: list[str] = []
+    allowlist_exp = {s.lower() for s in (writer_packet.get("skill_allowlist_experience_claims") or [])}
+    if allowlist_exp:
+        for _role_header, bullets in roles:
+            for bullet in bullets:
+                bullet_lower = bullet.lower()
+                for tool in _HIGH_RISK_TOOL_LEXICON:
+                    pattern = r"\b" + re.escape(tool) + r"\b"
+                    if re.search(pattern, bullet_lower) and tool not in allowlist_exp:
+                        if tool not in experience_tool_violations:
+                            experience_tool_violations.append(tool)
+                        errors.append(
+                            f"{SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION}: "
+                            f"tool {tool!r} claimed in experience bullet but not in allowlist"
+                        )
+
     repair_brief: dict = {
         "global_issues": {
             "missing_metrics": missing_metrics,
@@ -1634,10 +1651,6 @@ def validate_phase2_output(
             "narrative_anchor_missing_theme_ids": narrative_anchor_missing_theme_ids,
             "skill_section_violations": skill_section_violations,
             "experience_tool_violations": experience_tool_violations,
-            "cl_paragraph_errors": cl_paragraph_errors,
-            "cl_span_errors": cl_span_errors,
-            "cl_ledger_errors": cl_ledger_errors,
-            "cl_tool_errors": cl_tool_errors,
         },
         "roles": repair_roles,
     }
@@ -1667,10 +1680,6 @@ def validate_phase2_output(
             "narrative_anchor_missing_theme_ids": narrative_anchor_missing_theme_ids,
             "skill_section_violations": skill_section_violations,
             "experience_tool_violations": experience_tool_violations,
-            "cl_paragraph_errors": cl_paragraph_errors,
-            "cl_span_errors": cl_span_errors,
-            "cl_ledger_errors": cl_ledger_errors,
-            "cl_tool_errors": cl_tool_errors,
         },
         "repair_brief": repair_brief,
         "judge_candidates": judge_candidates,
@@ -1904,51 +1913,9 @@ _HIGH_RISK_TOOL_LEXICON: frozenset[str] = frozenset({
 
 
 def _tokenize_skills_section(text: str) -> list[str]:
-    """Split raw skills section text into individual skill tokens.
-
-    Handles:
-    - Category labels: "Languages: Python, Java" → only tokenizes "Python", "Java".
-    - Parenthesized lists: "AI tools (ChatGPT, Cursor)" → tokens include
-      both the outer label ("ai tools") and inner items ("chatgpt", "cursor").
-      The paren group is flattened into the token stream.
-    - Version annotations like "Python (3.9+)" produce "python" plus "3.9+"
-      but version-only tokens (no letters) are filtered out.
-
-    Token filtering:
-    - Strip, lowercase, collapse spaces.
-    - Must contain at least one letter (filters out version strings like "3.9+").
-    - Length must be > 1.
-    """
-    result: list[str] = []
-    for line in text.split("\n"):
-        line = line.strip()
-        if not line:
-            continue
-        # Strip category label (everything before the first colon)
-        if ":" in line:
-            _, _, rhs = line.partition(":")
-            line = rhs.strip()
-        if not line:
-            continue
-        # Flatten parenthesized groups: "AI tools (ChatGPT, Cursor)"
-        # → "AI tools , ChatGPT, Cursor"
-        line = re.sub(r"\(([^)]*)\)", lambda m: ", " + m.group(1), line)
-        tokens = re.split(r"[,|•·;]+", line)
-        for token in tokens:
-            raw = re.sub(r"\s+", " ", token.strip().rstrip(".,;:"))
-            # Strip any embedded "SubCategory: " prefix within the token itself.
-            # This handles multi-colon lines like:
-            #   "Databases: MySQL, NoSql Systems & Platforms: Tomcat"
-            # where comma-splitting leaves "NoSql Systems & Platforms: Tomcat"
-            # as a raw token with its own internal colon.
-            if ":" in raw:
-                _, _, raw = raw.partition(":")
-                raw = raw.strip()
-            t = raw.lower()
-            # Must contain at least one letter and have length > 1
-            if t and len(t) > 1 and re.search(r"[a-z]", t):
-                result.append(t)
-    return result
+    """Split raw skills section text into individual skill tokens."""
+    tokens = re.split(r"[,|•·:\n]+", text)
+    return [t.strip().lower() for t in tokens if t.strip()]
 
 
 def _extract_skills_section(resume: str) -> str:

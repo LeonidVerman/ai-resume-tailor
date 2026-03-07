@@ -175,22 +175,6 @@ def build_writer_packet(
         ]
     ))
 
-    # --- Cover-letter plan + convenience sets ---
-    direct_skills_set: set[str] = set(_direct_skills)
-    can_claim_experience_set: set[str] = {
-        r["item"].lower() for r in _related_skills
-        if r.get("allowed_usage") == "can_claim_experience"
-    }
-    skills_section_allowlist_set: set[str] = {
-        r["item"].lower() for r in _related_skills
-        if r.get("allowed_usage") in {"skills_section_only", "can_claim_experience"}
-    } | direct_skills_set
-
-    _cl_allowed: set[str] = direct_skills_set | can_claim_experience_set
-    cover_letter_plan: dict = _sanitize_cover_letter_plan(
-        plan.get("cover_letter_plan") or {}, _cl_allowed
-    )
-
     return {
         "role_level": role_level,
         "jd_domain": jd_domain,
@@ -203,10 +187,6 @@ def build_writer_packet(
         "skill_graph": skill_graph,
         "skill_allowlist_skills_section": skill_allowlist_skills_section,
         "skill_allowlist_experience_claims": skill_allowlist_experience_claims,
-        "cover_letter_plan": cover_letter_plan,
-        "direct_skills_set": sorted(direct_skills_set),
-        "can_claim_experience_set": sorted(can_claim_experience_set),
-        "skills_section_allowlist_set": sorted(skills_section_allowlist_set),
         "master_resume_role_names": list(role_stats.keys()),
         "master_role_dates": master_role_dates,
         "must_keep_metrics": must_keep_metrics,

@@ -1,0 +1,84 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/1u2746kbh2l9crgk",
+    "company": "Lillio",
+    "role_title": "Manager, Engineering"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 9,
+      "evidence": [
+        "Led teams up to 15–20 engineers",
+        "Improved maintainability by raising test coverage by 20%"
+      ]
+    },
+    "role_fit": {
+      "score": 4,
+      "evidence": [
+        "MANAGER, ENGINEERING | BACKEND / DISTRIBUTED SYSTEMS | FINTECH / CRYPTO",
+        "building and operating high-throughput distributed systems under reliability and regulatory constraints"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "VP / Director of Software Development / Lead Software Developer",
+        "managed developers through code review practices and agile coordination"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "Improved throughput by 25% by introducing a transactional cache",
+        "raising test coverage by 20% and streamlining documentation"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 7,
+      "evidence": [
+        "Implemented database read replicas for read-heavy GET endpoints",
+        "Applied idempotent processing and retry-safe patterns in asynchronous flows"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 8,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "I am applying for the Manager, Engineering role at Lillio."
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 6,
+      "evidence": [
+        "Lillio’s mission-driven focus and product-minded engineering culture are compelling",
+        "I led a backend team supporting a trading system for 1M+ clients"
+      ]
+    },
+    "overall_readiness": {
+      "score": 6,
+      "evidence": [
+        "Engineering leader and senior backend engineer with 15+ years",
+        "I would welcome the opportunity to help your teams ship secure, maintainable software"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Direct people-management depth at scale is asserted but light on specifics beyond \"Mentored and managed developers\" and \"Led teams up to 15–20 engineers\".",
+      "Product/roadmap alignment is implied in the cover letter but not evidenced with concrete roadmap/business outcomes."
+    ],
+    "most_damaging_gaps": [
+      "Job stack mismatch: JD emphasizes \"Ruby on Rails, React, and GraphQL\"; resume emphasizes \"Java\" and lacks Rails/React/GraphQL delivery examples.",
+      "Engineering manager responsibilities in JD (\"recruiting, hiring, and onboarding\", \"regular 1:1s\", \"objectives setting\") are not concretely demonstrated.",
+      "Missing explicit examples of partnering with Product/Design and aligning roadmap to business objectives."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add explicit evidence of engineering management practices from the JD: 1:1 cadence, career ladders, performance feedback, hiring/onboarding, and process improvements.",
+      "Address the Lillio stack directly: either demonstrate real Rails/React/GraphQL experience or clearly position transferable full-stack leadership with a credible ramp plan.",
+      "Add cross-functional/product outcomes: examples of roadmap alignment, stakeholder management, and user/customer impact (especially mission-driven/EdTech framing)."
+    ]
+  }
+}

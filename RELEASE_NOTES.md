@@ -1,5 +1,41 @@
 # Release Notes
 
+## 0.1.6.ALPHA — 2026-03-05
+
+**Skill graph, skill/tool allowlist enforcement, schema fix, and `--simple` mode.**
+
+### Added
+- **`skill_graph` in Phase 1 output** (`schemas/phase1_output.json`, `llm.py`, `writer_packet.py`):
+  Phase 1 planner now produces a `skill_graph` object with `direct_skills` (candidate's verified
+  skills from the master resume) and `related_skills` (adjacent skills that may be claimed from
+  experience context). `validate_plan()` enforces presence and structural correctness of both lists.
+  `WriterPacket` derives `skill_allowlist_skills_section` and `skill_allowlist_experience_claims`
+  directly from the graph.
+- **Check 15 — Skill section allowlist** (`phase2_validator.py`): detects tokens in the resume
+  Skills section that are not in `skill_allowlist_skills_section`; emits
+  `SKILL_ALLOWLIST_SKILLS_SECTION_VIOLATION` per offending token.
+- **Check 16 — Experience tool claim allowlist** (`phase2_validator.py`): scans experience bullets
+  for high-risk tool mentions not present in `skill_allowlist_experience_claims`; emits
+  `SKILL_ALLOWLIST_EXPERIENCE_CLAIM_VIOLATION`. `_HIGH_RISK_TOOL_LEXICON` constant introduced.
+- **`--simple` / `-s` CLI flag** (`cli.py`): forces single-pass generation (skips Phase 1 planning)
+  regardless of the `ENABLE_TWO_PHASE` environment variable. Mutually exclusive with `--calibrate`
+  and `--calibrate-data`. Useful for rapid iteration and baseline scoring.
+
+### Fixed
+- **`min_theme_occurrences` schema** (`schemas/phase1_output.json`): changed from a free-form
+  `additionalProperties` object to a typed array of `{theme_id: string, min_count: integer}`
+  objects, enabling strict JSON-schema validation of narrative plan theme entries.
+
+### Changed
+- Phase 1, Phase 2, and repair prompts updated to reflect `skill_graph` structure and
+  `min_theme_occurrences` array format.
+- `validate_plan()` and `plan_repair_tailoring()` updated to pass `skill_graph` validation.
+
+### Tests
+- 437 tests passing (up from 433 at 0.1.5).
+
+---
+
 ## 0.1.5.ALPHA — 2025-03-03
 
 ### Added

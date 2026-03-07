@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/zn9vgcaf0rsurkiw",
+    "company": "Plata",
+    "role_title": "Engineering Manager"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 9,
+      "evidence": [
+        "Led teams up to 15–20 engineers and delivered trading platforms serving 1M+ users (top-5 in Japan).",
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote) Nov 2025 – Present"
+      ]
+    },
+    "role_fit": {
+      "score": 7,
+      "evidence": [
+        "AI-driven product development: ambiguity-to-spec translation; AI-assisted workflows; model evaluation experience (contract)",
+        "I’d welcome the opportunity to help Plata move quickly with short feedback loops while building reliable backend services"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "Hands-on Engineering Manager and senior backend engineer with 15+ years",
+        "VP / Director of Software Development / Lead Software Developer | CardinalChain Software Inc"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "Improved throughput by 25% by introducing a transactional cache for trading data",
+        "Improved maintainability by raising test coverage by 20% and streamlining documentation"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 8,
+      "evidence": [
+        "database read replicas for read-heavy endpoints, multi-layer caching, asynchronous messaging",
+        "stateless service design with distributed session validation via Redis"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 8,
+      "evidence": [
+        "Support world-leading AI labs by training and evaluating advanced LLMs... (Independent Contractor).",
+        "Core Competency Themes (Plata Fit)"
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 7,
+      "evidence": [
+        "I’m applying for the Engineering Manager role at Plata.",
+        "aligns well with building an evolving AI-driven Financial Assistant"
+      ]
+    },
+    "overall_readiness": {
+      "score": 7,
+      "evidence": [
+        "Engineering management & delivery: planning, prioritization, execution accountability, process improvement",
+        "Partner with Product, Data, and AI stakeholders"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "Direct \"AI-powered, user-facing product\" ownership is implied, but examples are mostly AI-lab evaluation + AI-assisted coding rather than shipping an assistant."
+    ],
+    "most_damaging_gaps": [
+      "Limited evidence of leading an AI/ML product from concept to production (beyond LLM evaluation/AI-assisted workflows).",
+      "No explicit hiring/performance-management examples despite JD emphasis on hiring and team performance.",
+      "No explicit English level (B1+) or international collaboration specifics stated."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 1–2 concrete examples of shipping AI/ML features to production (even small: ranking, recommendations, NLP, fraud/risk models, RAG prototypes).",
+      "Include explicit people-management scope: hiring, performance reviews, coaching, promotions/leveling, and delivery rituals owned.",
+      "Tailor to consumer financial assistant domain: user-centric metrics (engagement, retention), experimentation/feedback loops, and Product/Data partnership outcomes."
+    ]
+  }
+}

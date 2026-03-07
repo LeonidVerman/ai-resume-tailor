@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
@@ -21,6 +22,8 @@ from tailor.config import (
     PHASE2_REPAIR_TEMPERATURE,
     PHASE2_TEMPERATURE,
     SCHEMAS_DIR,
+    SIMPLE_MODEL,
+    SIMPLE_TEMPERATURE,
     load_domain_translation_rules,
 )
 from tailor.plan_validator import validate_plan_extended
@@ -455,7 +458,7 @@ def plan_tailoring(
         model=PHASE1_MODEL,
         messages=messages,
         temperature=PHASE1_TEMPERATURE,
-        max_tokens=PHASE1_MAX_TOKENS,
+        **_max_tokens_kwargs(PHASE1_MODEL, PHASE1_MAX_TOKENS),
         response_format=response_format,
     )
 
@@ -561,7 +564,7 @@ def plan_repair_tailoring(
         model=PHASE1_MODEL,
         messages=messages,
         temperature=PHASE1_REPAIR_TEMPERATURE,
-        max_tokens=PHASE1_MAX_TOKENS,
+        **_max_tokens_kwargs(PHASE1_MODEL, PHASE1_MAX_TOKENS),
         response_format=response_format,
     )
 
@@ -1042,7 +1045,7 @@ def _run_phase2_writer(
         model=PHASE2_MODEL,
         messages=messages,
         temperature=PHASE2_TEMPERATURE,
-        max_tokens=PHASE2_MAX_TOKENS,
+        **_max_tokens_kwargs(PHASE2_MODEL, PHASE2_MAX_TOKENS),
         response_format=response_format,
     )
 
@@ -1112,7 +1115,7 @@ def _run_phase2_repair(
         model=PHASE2_MODEL,
         messages=messages,
         temperature=PHASE2_REPAIR_TEMPERATURE,
-        max_tokens=PHASE2_MAX_TOKENS,
+        **_max_tokens_kwargs(PHASE2_MODEL, PHASE2_MAX_TOKENS),
         response_format=response_format,
     )
 
@@ -1296,9 +1299,9 @@ def tailor_documents(
 
     response_format = {"type": "json_object"}
     response = get_client().chat.completions.create(
-        model=PHASE2_MODEL,
+        model=SIMPLE_MODEL,
         messages=messages,
-        temperature=PHASE2_TEMPERATURE,
+        temperature=SIMPLE_TEMPERATURE,
         response_format=response_format,
     )
 
@@ -1308,7 +1311,7 @@ def tailor_documents(
         cover_letter=raw.get("cover_letter") or raw.get("tailored_cover_letter"),
     )
     llm_request = _build_llm_request_record(
-        messages, PHASE2_MODEL, PHASE2_TEMPERATURE, response_format=response_format,
+        messages, SIMPLE_MODEL, SIMPLE_TEMPERATURE, response_format=response_format,
     )
     return result, llm_request
 
@@ -1345,6 +1348,21 @@ def _extract_usage(response: Any) -> dict:
     return {}
 
 
+_USES_MAX_COMPLETION_TOKENS_RE = re.compile(r"^(o\d|gpt-[5-9])", re.IGNORECASE)
+
+
+def _max_tokens_kwargs(model: str, max_tokens: int | None) -> dict:
+    """Return the correct token-limit kwarg for the given model.
+
+    Newer OpenAI models (o-series, gpt-5+) require ``max_completion_tokens``;
+    older models use ``max_tokens``.
+    """
+    if max_tokens is None:
+        return {}
+    key = "max_completion_tokens" if _USES_MAX_COMPLETION_TOKENS_RE.match(model) else "max_tokens"
+    return {key: max_tokens}
+
+
 def _build_llm_request_record(
     messages: list,
     model: str,
@@ -1359,7 +1377,7 @@ def _build_llm_request_record(
         "messages": messages,
     }
     if max_tokens is not None:
-        record["max_tokens"] = max_tokens
+        record.update(_max_tokens_kwargs(model, max_tokens))
     if response_format is not None:
         record["response_format"] = response_format
     return record

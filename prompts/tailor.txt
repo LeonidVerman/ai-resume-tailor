@@ -30,6 +30,31 @@ HARD CONSTRAINTS (truth / safety)
 8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.
 9) Preserve seniority honesty: do not inflate scope (e.g., "owned company-wide strategy", "executive stakeholder management", "P&L ownership") unless explicitly supported.
 
+SECTION ORDER CONSTRAINT (STRICT)
+
+The resume MUST preserve the same top-level section order as MASTER_RESUME.
+
+Do NOT reorder, rename, or move sections.
+
+Required section order:
+
+1. Professional Summary
+2. Experience
+3. Education
+4. Technical Skills
+5. Additional (if present)
+
+Rules:
+- You may modify bullet wording within sections.
+- You may reorder bullets inside a role.
+- You may add or remove bullets within a role.
+- You may reorganize categories inside Technical Skills.
+
+However:
+- Do NOT move Technical Skills above Experience.
+- Do NOT move Education.
+- Do NOT introduce new top-level sections.
+
 TAILORING REQUIREMENTS (must do)
 10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).
 11) Ensure those themes are reflected across:

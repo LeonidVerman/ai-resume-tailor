@@ -1,0 +1,83 @@
+{
+  "version": "assess_v2",
+  "position": {
+    "position_url": "https://hiring.cafe/viewjob/53s2xltymtjae86o",
+    "company": "Fingerprint",
+    "role_title": "Senior Engineering Manager, Dashboard + Growth"
+  },
+  "scores": {
+    "truthfulness": {
+      "score": 9,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote) Nov 2025 – Present",
+        "Led teams up to 15–20 engineers and delivered customer-facing platforms scaled to 1M+ users."
+      ]
+    },
+    "role_fit": {
+      "score": 6,
+      "evidence": [
+        "While the domains differ, the same engineering judgment and tradeoffs apply to building performant dashboards",
+        "Senior backend engineer and engineering leader with 15+ years building high-throughput, low-latency distributed systems"
+      ]
+    },
+    "seniority_positioning": {
+      "score": 8,
+      "evidence": [
+        "including VP/Director scope and leading teams up to 15–20 engineers",
+        "This is not just a people-management role – this is a hands-on leadership role"
+      ]
+    },
+    "clarity_impact": {
+      "score": 8,
+      "evidence": [
+        "Improved throughput by 25% by introducing a transactional cache",
+        "raising test coverage by 20% and streamlining documentation to reduce onboarding time"
+      ]
+    },
+    "mechanism_quality": {
+      "score": 7,
+      "evidence": [
+        "database read replicas for read-heavy endpoints, multi-layer caching, asynchronous messaging to decouple components",
+        "stateless service patterns with distributed session validation via Redis, and used idempotent/retry-safe processing"
+      ]
+    },
+    "constraint_compliance": {
+      "score": 9,
+      "evidence": [
+        "Senior Software Engineer (Independent Contractor) | Mercor (Remote)",
+        "Eligible to work remotely for U.S. companies from Canada (no visa required for remote)."
+      ]
+    },
+    "cover_letter_effectiveness": {
+      "score": 7,
+      "evidence": [
+        "I’m applying for the Senior Engineering Manager, Dashboard + Growth role at Fingerprint.",
+        "partnering closely with Product and Design to ship high-quality features with speed"
+      ]
+    },
+    "overall_readiness": {
+      "score": 7,
+      "evidence": [
+        "I bring 15+ years of backend engineering and engineering leadership experience",
+        "mechanisms that keep user-facing systems fast and dependable as usage grows"
+      ]
+    }
+  },
+  "flags": {
+    "suspected_hallucinations": [
+      "No clear evidence of direct dashboard/analytics or onboarding/PLG ownership; claims are framed as transferable rather than demonstrated."
+    ],
+    "most_damaging_gaps": [
+      "Limited explicit experience leading product-led growth work (onboarding funnels, activation, retention metrics).",
+      "No concrete examples of building data-intensive dashboards/analytics/control consoles for customers.",
+      "Stack mismatch risk: JD prefers TypeScript/React/Go; resume is heavily Java/fintech with minimal front-end/product surface detail."
+    ]
+  },
+  "notes": {
+    "top_3_improvements": [
+      "Add 1–2 specific, credible examples of customer-facing console/dashboard work (even internal ops dashboards), including performance/scale and UX collaboration with Product/Design.",
+      "Demonstrate PLG leadership with concrete funnel metrics (activation, trial-to-paid, feature adoption), experimentation cadence, and instrumentation/event pipeline ownership.",
+      "Clarify modern web stack exposure relevant to Fingerprint (TypeScript/React, APIs powering UI, analytics/event-driven systems) and how you guided architecture for those surfaces."
+    ]
+  }
+}

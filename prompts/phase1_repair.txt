@@ -1,4 +1,4 @@
-[PLANNER_REPAIR_LAYER v5.3]
+[PLANNER_REPAIR_LAYER v5.2]
 
 You are repairing a TailoringPlan JSON.
 
@@ -14,7 +14,27 @@ REPAIR RULES
 4) Evidence quotes remain <=25 words.
 
 ------------------------------------------------------------
-NARRATIVE PLAN REPAIR
+DOMAIN RULES
+------------------------------------------------------------
+
+Ensure presence of:
+- jd_domain
+- candidate_primary_domain
+- domain_mismatch
+- domain_translation_rule_ids (if mismatch=true)
+
+If mismatch=true:
+- Remove rule_ids that violate forbidden_phrases or evidence_requirements.
+
+------------------------------------------------------------
+VOCABULARY RULES
+------------------------------------------------------------
+
+- must_embed must be evidence-safe.
+- If unsafe, demote or soften.
+
+------------------------------------------------------------
+NARRATIVE PLAN REPAIR (MANDATORY WHEN REFERENCED)
 ------------------------------------------------------------
 
 If VALIDATION_ERRORS mention narrative_plan OR required fields are missing:
@@ -22,49 +42,53 @@ Repair narrative_plan while preserving all other fields.
 
 Use same deterministic rules as planner.
 
+anchor_role_id:
+- Must match one of resume_strategy.experience.role_name values.
+- Most recent high priority role, else most recent medium.
+
+theme_ranked:
+- 2�6 items
+- theme_id: T1, T2, T3...
+- signature_terms: 3�12 short terms
+
+summary_coverage:
+- must_cover_theme_ids includes T1 and T2
+
+anchor_role_coverage defaults (unless error requests changes):
+- first_k_bullets = 3
+- top_k_themes_to_cover = 2
+- min_theme_occurrences: [{"theme_id": "T1", "min_count": 2}, {"theme_id": "T2", "min_count": 1}]
+
+domain_translation_binding:
+If domain_mismatch=true:
+- min_total_rule_instantiations >=1 if any rule_ids exist
+- min_instantiations_in_anchor_role = 1 if rule_ids exist else 0
+- require_target_frame_in_anchor_role_first_k = true if rule_ids exist else false
+If domain_mismatch=false:
+- values 0 / false
+
 ------------------------------------------------------------
-SKILL GRAPH REPAIR
+SKILL GRAPH REPAIR (MANDATORY WHEN REFERENCED)
 ------------------------------------------------------------
 
 If VALIDATION_ERRORS mention skill_graph OR required fields are missing:
 Repair skill_graph while preserving other fields.
 
-Rules:
-- tool/responsibility => forbidden unless explicit evidence supports can_claim_experience
-- remove inferred vendor stacks unless explicitly evidenced
+skill_graph must include:
+- direct_skills
+- related_skills
 
-------------------------------------------------------------
-COVER LETTER PLAN REPAIR (MANDATORY WHEN REFERENCED)
-------------------------------------------------------------
+Repair rules:
+1) direct_skills must only contain items supported by MASTER_RESUME or CANDIDATE_PROFILE.
+2) related_skills items must include:
+   root_skill, item, derivation_type, confidence, allowed_usage
 
-If VALIDATION_ERRORS mention cover_letter_plan OR required fields are missing:
-Repair cover_letter_plan while preserving other fields.
+Allowed usage repair:
+- derivation_type tool => allowed_usage is forbidden unless explicit evidence exists
+- derivation_type responsibility => forbidden unless explicit evidence exists
+- concept/method/pattern => skills_section_only by default
 
-cover_letter_plan must include:
-- structure_version = CL_V1_4PARA_2PROOF
-- hook_theme_id
-- proof_points (exactly 2: P1, P2)
-- bridge_sentence_required (true if domain_mismatch else false)
-- closing_guidance
-
-Proof points repair rules:
-- proof_id must be P1 and P2
-- theme_id should map to T1 for P1 and T2 for P2 unless strong reason
-- evidence_ref must point to an existing evidence_map item (free-text pointer ok)
-- mechanism_hint and outcome_hint must be supported by evidence_map allowed_claims
-- required_exact_span must be:
-  - 10–160 chars
-  - claim-safe
-  - natural phrase that can appear verbatim in a cover letter
-  - must not introduce tools not allowed
-- allowed_tool_mentions must be subset of:
-  - skill_graph.direct_skills
-  - related_skills with allowed_usage == can_claim_experience
-
-If a proof point cannot be supported:
-- downgrade to an observable, non-metric outcome (e.g., "reduced incident frequency", "improved release reliability")
-- keep mechanism concrete and safe
-- never fabricate tools
+Remove any inferred vendor stacks unless explicitly evidenced.
 
 ------------------------------------------------------------
 RETURN

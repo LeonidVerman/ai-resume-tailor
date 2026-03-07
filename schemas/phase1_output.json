@@ -14,8 +14,7 @@
     "cover_letter_strategy",
     "risk_checks",
     "narrative_plan",
-    "skill_graph",
-    "cover_letter_plan"
+    "skill_graph"
   ],
   "additionalProperties": false,
   "properties": {
@@ -266,7 +265,7 @@
                 "required": ["theme_id", "min_count"],
                 "additionalProperties": false,
                 "properties": {
-                  "theme_id": { "type": "string", "minLength": 1 },
+                  "theme_id": { "type": "string" },
                   "min_count": { "type": "integer", "minimum": 0, "maximum": 4 }
                 }
               }
@@ -302,7 +301,8 @@
         "direct_skills": {
           "type": "array",
           "minItems": 5,
-          "items": { "type": "string" }
+          "items": { "type": "string" },
+          "description": "Skills/tools explicitly supported by master_resume or candidate_profile."
         },
         "related_skills": {
           "type": "array",
@@ -321,95 +321,23 @@
             "properties": {
               "root_skill": { "type": "string", "minLength": 1 },
               "item": { "type": "string", "minLength": 1 },
+
               "derivation_type": {
                 "type": "string",
                 "enum": ["concept", "method", "pattern", "tool", "responsibility"]
               },
+
               "confidence": {
                 "type": "string",
                 "enum": ["high", "medium", "low"]
               },
+
               "allowed_usage": {
                 "type": "string",
                 "enum": ["skills_section_only", "can_claim_experience", "forbidden"]
               }
             }
           }
-        }
-      }
-    },
-
-    "cover_letter_plan": {
-      "type": "object",
-      "required": [
-        "structure_version",
-        "hook_theme_id",
-        "proof_points",
-        "bridge_sentence_required",
-        "closing_guidance"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "structure_version": {
-          "type": "string",
-          "enum": ["CL_V1_4PARA_2PROOF"]
-        },
-
-        "hook_theme_id": { "type": "string", "minLength": 1 },
-
-        "proof_points": {
-          "type": "array",
-          "minItems": 2,
-          "maxItems": 2,
-          "items": {
-            "type": "object",
-            "required": [
-              "proof_id",
-              "theme_id",
-              "evidence_ref",
-              "mechanism_hint",
-              "outcome_hint",
-              "required_exact_span",
-              "allowed_tool_mentions"
-            ],
-            "additionalProperties": false,
-            "properties": {
-              "proof_id": { "type": "string", "enum": ["P1", "P2"] },
-              "theme_id": { "type": "string", "minLength": 1 },
-
-              "evidence_ref": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Pointer-like reference to evidence_map location (free text pointer; code treats as opaque)."
-              },
-
-              "mechanism_hint": { "type": "string", "minLength": 1 },
-              "outcome_hint": { "type": "string", "minLength": 1 },
-
-              "required_exact_span": {
-                "type": "string",
-                "minLength": 10,
-                "maxLength": 160,
-                "description": "Must appear verbatim in the cover letter. Should be a natural phrase combining mechanism+outcome without fabrication."
-              },
-
-              "allowed_tool_mentions": {
-                "type": "array",
-                "minItems": 0,
-                "maxItems": 25,
-                "items": { "type": "string" },
-                "description": "Subset of skill_graph (direct + can_claim_experience) that may be referenced in this proof paragraph."
-              }
-            }
-          }
-        },
-
-        "bridge_sentence_required": { "type": "boolean" },
-
-        "closing_guidance": {
-          "type": "string",
-          "minLength": 1,
-          "description": "One-sentence intent for closing, no fluff."
         }
       }
     }
