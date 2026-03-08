@@ -1,0 +1,180 @@
+"""
+backend/tests/api/test_generation_api.py
+
+API tests for POST /generations, GET /generations, GET /generations/{id}.
+GenerationService._run_pipeline is mocked so no LLM calls occur.
+"""
+
+import io
+import uuid
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+API = "/api/v1/generations"
+RESUME_API = "/api/v1/resumes"
+JD_API = "/api/v1/job-descriptions"
+
+FAKE_RESUME = b"John Smith\njohn@example.com\nExperienced engineer."
+JD_BODY = {"raw_text": "Senior software engineer needed with Python skills."}
+
+
+def _make_tailor_result():
+    r = MagicMock()
+    r.resume = "Tailored resume text"
+    r.cover_letter = "Cover letter text"
+    return r
+
+
+def _upload_resume(client):
+    resp = client.post(
+        f"{RESUME_API}/upload",
+        files={"file": ("resume.txt", io.BytesIO(FAKE_RESUME), "text/plain")},
+    )
+    return resp.json()["id"]
+
+
+def _create_jd(client):
+    return client.post(f"{JD_API}/manual", json=JD_BODY).json()["id"]
+
+
+def _gen_request(jd_id: str, resume_id: str, mode: str = "two_phase") -> dict:
+    return {
+        "job_description_id": jd_id,
+        "structured_resume_id": resume_id,
+        "options": {"mode": mode},
+    }
+
+
+def _patch_pipeline():
+    return patch(
+        "backend.app.services.generation_service.GenerationService._run_pipeline",
+        return_value=(_make_tailor_result(), 100, 200, 0.005),
+    )
+
+
+def _patch_config():
+    return patch("tailor.config.PHASE2_MODEL", "gpt-4o")
+
+
+class TestCreateGeneration:
+    def test_success_returns_201(self, client):
+        resume_id = _upload_resume(client)
+        jd_id = _create_jd(client)
+
+        with _patch_pipeline(), _patch_config():
+            resp = client.post(API, json=_gen_request(jd_id, resume_id))
+
+        assert resp.status_code == 201
+
+    def test_response_has_run_id_and_doc_id(self, client):
+        resume_id = _upload_resume(client)
+        jd_id = _create_jd(client)
+
+        with _patch_pipeline(), _patch_config():
+            data = client.post(API, json=_gen_request(jd_id, resume_id)).json()
+
+        assert "run_id" in data
+        assert "tailored_document_id" in data
+        assert data["status"] == "succeeded"
+
+    def test_unknown_jd_returns_404(self, client):
+        resume_id = _upload_resume(client)
+
+        with _patch_config():
+            resp = client.post(
+                API,
+                json=_gen_request(str(uuid.uuid4()), resume_id),
+            )
+
+        assert resp.status_code == 404
+
+    def test_unknown_resume_returns_404(self, client):
+        jd_id = _create_jd(client)
+
+        with _patch_config():
+            resp = client.post(
+                API,
+                json=_gen_request(jd_id, str(uuid.uuid4())),
+            )
+
+        assert resp.status_code == 404
+
+    def test_missing_jd_id_returns_422(self, client):
+        resume_id = _upload_resume(client)
+        resp = client.post(API, json={"structured_resume_id": resume_id})
+        assert resp.status_code == 422
+
+    def test_pipeline_error_returns_500(self, client):
+        resume_id = _upload_resume(client)
+        jd_id = _create_jd(client)
+
+        with (
+            patch(
+                "backend.app.services.generation_service.GenerationService._run_pipeline",
+                side_effect=RuntimeError("LLM timeout"),
+            ),
+            _patch_config(),
+        ):
+            resp = client.post(API, json=_gen_request(jd_id, resume_id))
+
+        assert resp.status_code == 500
+
+
+class TestListGenerations:
+    def test_empty_list(self, client):
+        resp = client.get(API)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_list_after_generation(self, client):
+        resume_id = _upload_resume(client)
+        jd_id = _create_jd(client)
+
+        with _patch_pipeline(), _patch_config():
+            client.post(API, json=_gen_request(jd_id, resume_id))
+
+        resp = client.get(API)
+        assert resp.status_code == 200
+        assert len(resp.json()) == 1
+
+    def test_list_summary_fields(self, client):
+        resume_id = _upload_resume(client)
+        jd_id = _create_jd(client)
+
+        with _patch_pipeline(), _patch_config():
+            client.post(API, json=_gen_request(jd_id, resume_id))
+
+        item = client.get(API).json()[0]
+        assert "id" in item
+        assert "status" in item
+        assert "started_at" in item
+
+
+class TestGetGeneration:
+    def test_get_by_id_returns_200(self, client):
+        resume_id = _upload_resume(client)
+        jd_id = _create_jd(client)
+
+        with _patch_pipeline(), _patch_config():
+            run_id = client.post(API, json=_gen_request(jd_id, resume_id)).json()["run_id"]
+
+        resp = client.get(f"{API}/{run_id}")
+        assert resp.status_code == 200
+
+    def test_get_detail_fields(self, client):
+        resume_id = _upload_resume(client)
+        jd_id = _create_jd(client)
+
+        with _patch_pipeline(), _patch_config():
+            run_id = client.post(API, json=_gen_request(jd_id, resume_id)).json()["run_id"]
+
+        data = client.get(f"{API}/{run_id}").json()
+        assert data["id"] == run_id
+        assert data["status"] == "succeeded"
+        assert "user_id" in data
+
+    def test_get_unknown_returns_404(self, client):
+        resp = client.get(f"{API}/{uuid.uuid4()}")
+        assert resp.status_code == 404
