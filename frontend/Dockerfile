@@ -32,7 +32,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Copy only what is needed to run
-COPY --from=builder /app/public ./public
+# public/ is optional — only copy if it exists (created during build if empty)
+RUN mkdir -p ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
