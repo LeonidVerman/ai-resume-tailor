@@ -1,17 +1,88 @@
 # docker-compose.yml
 #
-# Current use: LibreOffice headless PDF conversion container.
-# Future use:  Full local SaaS stack (backend, frontend, postgres, storage).
+# Local development stack for ai-resume-tailor SaaS.
 #
 # Usage:
-#   docker-compose up libreoffice   # start LibreOffice converter
-#   docker-compose up               # (future) start full dev stack
+#   docker-compose up                          # start full dev stack
+#   docker-compose up postgres                 # start only postgres
+#   docker-compose up backend frontend         # start api + frontend
+#   docker-compose up libreoffice --profile libreoffice   # legacy PDF converter
+#
+# Environment:
+#   Copy .env.example to .env and fill in secrets before running.
 
 version: "3.9"
 
 services:
 
-  # ── Existing: LibreOffice PDF conversion ─────────────────────────────────
+  # ── PostgreSQL ────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tailor}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tailor}
+      POSTGRES_DB: ${POSTGRES_DB:-tailor_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tailor}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── FastAPI backend ───────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-tailor}:${POSTGRES_PASSWORD:-tailor}@postgres:5432/${POSTGRES_DB:-tailor_dev}
+      - APP_ENV=${APP_ENV:-development}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # Hot-reload: mount source so code changes are picked up
+      - ./backend:/app/backend
+
+  # ── Next.js frontend ──────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  # ── MinIO (S3-compatible local storage — optional) ────────────────────────
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # MinIO console
+    volumes:
+      - minio_data:/data
+    profiles:
+      - storage
+
+  # ── LibreOffice headless PDF conversion (legacy CLI tool) ─────────────────
   libreoffice:
     build:
       context: .
@@ -26,41 +97,6 @@ services:
     profiles:
       - libreoffice
 
-  # ── Future: PostgreSQL (Supabase-compatible) ─────────────────────────────
-  # postgres:
-  #   image: postgres:16
-  #   environment:
-  #     POSTGRES_USER: tailor
-  #     POSTGRES_PASSWORD: tailor
-  #     POSTGRES_DB: tailor_dev
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   profiles:
-  #     - backend
-
-  # ── Future: FastAPI backend ───────────────────────────────────────────────
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: ../infra/docker/backend.Dockerfile
-  #   env_file: ./backend/.env
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     - postgres
-  #   profiles:
-  #     - backend
-
-  # ── Future: Next.js frontend ──────────────────────────────────────────────
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #   ports:
-  #     - "3000:3000"
-  #   profiles:
-  #     - frontend
-
-# volumes:
-#   postgres_data:
+volumes:
+  postgres_data:
+  minio_data:

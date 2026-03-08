@@ -1,12 +1,18 @@
 # infra/railway/railway.toml
 # Railway deployment configuration for the FastAPI backend.
-# Status: PLACEHOLDER — not yet implemented (Phase 11).
+#
+# Deploy backend service on Railway:
+#   1. Connect GitHub repo in Railway dashboard
+#   2. Set environment variables (see doc/DEPLOYMENT.md)
+#   3. Railway will use this file automatically
 
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "infra/docker/backend.Dockerfile"
+dockerfilePath = "backend/Dockerfile"
 
 [deploy]
-startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+startCommand = "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
 healthcheckPath = "/api/v1/health"
 healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

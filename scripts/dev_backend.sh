@@ -3,21 +3,35 @@
 #
 # Start the FastAPI backend in development mode with hot reload.
 #
-# Status: PLACEHOLDER — backend not yet implemented.
-#         This script will be implemented in Phase 2 of the task plan.
-#
-# Future usage:
+# Usage:
 #   bash scripts/dev_backend.sh
 #
-# Prerequisites (future):
-#   - PostgreSQL running (see docker-compose.yml postgres service)
-#   - backend/.env configured
+# Prerequisites:
+#   - PostgreSQL running (docker-compose up postgres  OR  external DB)
+#   - .env configured with DATABASE_URL and OPENAI_API_KEY
 #   - pip install -e backend/
 
 set -euo pipefail
 
-echo "[dev_backend] Backend not yet implemented (Phase 2)."
-echo "  Spec: doc/IMPLEMENTATION_TASK_PLAN.md"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Load .env if present
+if [ -f "$REPO_ROOT/.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$REPO_ROOT/.env"
+  set +a
+fi
+
+cd "$REPO_ROOT"
+
+echo "[dev_backend] Starting FastAPI backend on http://localhost:8000"
+echo "[dev_backend] API docs: http://localhost:8000/docs"
+echo "[dev_backend] Health:   http://localhost:8000/api/v1/health"
 echo ""
-echo "  Future command:"
-echo "    cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+
+uvicorn backend.app.main:app \
+  --reload \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --log-level info

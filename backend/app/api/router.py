@@ -7,6 +7,7 @@ in the FastAPI application via a single API prefix.
 Registered routers
 ------------------
 - health            (no prefix)
+- metrics           /metrics
 - auth              /auth
 - candidate_profile /candidate-profile
 - resume            /resumes
@@ -29,6 +30,7 @@ from backend.app.api import (
     generation,
     health,
     job_description,
+    metrics,
     resume,
     webhooks,
 )
@@ -36,6 +38,7 @@ from backend.app.api import (
 api_router = APIRouter()
 
 api_router.include_router(health.router, tags=["health"])
+api_router.include_router(metrics.router, tags=["metrics"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(candidate_profile.router, prefix="/candidate-profile", tags=["candidate-profile"])
 api_router.include_router(resume.router, prefix="/resumes", tags=["resume"])
