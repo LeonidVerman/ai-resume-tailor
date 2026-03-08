@@ -5,6 +5,7 @@ Application settings loaded from environment variables.
 All settings have safe defaults so the backend starts locally without setup.
 """
 
+import json
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,17 +23,22 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_version: str = "dev"
     secret_key: str = "changeme"
-    allowed_origins: list[str] = ["http://localhost:3000"]
+    # Stored as a raw string; use .cors_origins for the parsed list.
+    # Accepts either a comma-separated string or a JSON array:
+    #   ALLOWED_ORIGINS=http://localhost:3000
+    #   ALLOWED_ORIGINS=http://a.com,http://b.com
+    #   ALLOWED_ORIGINS=["http://a.com","http://b.com"]
+    allowed_origins: str = "http://localhost:3000"
 
-    # ── Database (future) ──────────────────────────────────────────────────
+    # ── Database ──────────────────────────────────────────────────────────
     database_url: str = ""
 
-    # ── Supabase (future) ─────────────────────────────────────────────────
+    # ── Supabase (Auth) ───────────────────────────────────────────────────
     supabase_url: str = ""
     supabase_anon_key: str = ""
     supabase_service_role_key: str = ""
 
-    # ── Object storage (future) ────────────────────────────────────────────
+    # ── Object storage ────────────────────────────────────────────────────
     storage_endpoint: str = ""
     storage_access_key_id: str = ""
     storage_secret_access_key: str = ""
@@ -41,9 +47,17 @@ class Settings(BaseSettings):
     # ── OpenAI ────────────────────────────────────────────────────────────
     openai_api_key: str = ""
 
-    # ── Stripe (future) ───────────────────────────────────────────────────
+    # ── Stripe ────────────────────────────────────────────────────────────
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
+
+    @property
+    def cors_origins(self) -> list[str]:
+        """Parse ALLOWED_ORIGINS into a list (JSON array or comma-separated)."""
+        v = self.allowed_origins.strip()
+        if v.startswith("["):
+            return json.loads(v)
+        return [origin.strip() for origin in v.split(",") if origin.strip()]
 
     @property
     def is_production(self) -> bool:

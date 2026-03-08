@@ -28,7 +28,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tailor}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tailor} -d ${POSTGRES_DB:-tailor_dev}"]
       interval: 5s
       timeout: 5s
       retries: 10

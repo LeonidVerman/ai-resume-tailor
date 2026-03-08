@@ -1,7 +1,7 @@
 # Makefile — ai-resume-tailor
 
 .PHONY: help install test smoke calibrate assess \
-        dev-backend dev-frontend migrate seed \
+        dev-backend dev-frontend migrate create-db seed \
         docker-lo docker-backend docker-frontend up clean
 
 # ── Defaults ──────────────────────────────────────────────────────────────
@@ -57,6 +57,9 @@ dev-backend:
 
 dev-frontend:
 	bash scripts/dev_frontend.sh
+
+create-db:
+	bash scripts/create_db.sh
 
 migrate:
 	bash scripts/run_migrations.sh
