@@ -4,34 +4,44 @@ backend/app/api/router.py
 Central API router.  All sub-routers are registered here and included
 in the FastAPI application via a single API prefix.
 
-Currently registered:
-- health
-
-Future routers (not yet implemented):
-- auth
-- candidate_profile
-- resume
-- job_description
-- generation
-- documents
-- billing
-- webhooks
-- admin
+Registered routers
+------------------
+- health            (no prefix)
+- auth              /auth
+- candidate_profile /candidate-profile
+- resume            /resumes
+- job_description   /job-descriptions
+- generation        /generations
+- documents         /documents
+- billing           /billing
+- webhooks          /webhooks
+- admin             /admin
 """
 
 from fastapi import APIRouter
 
-from backend.app.api import health
+from backend.app.api import (
+    admin,
+    auth,
+    billing,
+    candidate_profile,
+    documents,
+    generation,
+    health,
+    job_description,
+    resume,
+    webhooks,
+)
 
 api_router = APIRouter()
 
 api_router.include_router(health.router, tags=["health"])
-
-# ── Future routers ─────────────────────────────────────────────────────────
-# from backend.app.api import auth, candidate_profile, resume, generation, billing, admin
-# api_router.include_router(auth.router,               prefix="/auth",              tags=["auth"])
-# api_router.include_router(candidate_profile.router,  prefix="/candidate-profile", tags=["candidate-profile"])
-# api_router.include_router(resume.router,             prefix="/resumes",           tags=["resume"])
-# api_router.include_router(generation.router,         prefix="/generations",       tags=["generation"])
-# api_router.include_router(billing.router,            prefix="/billing",           tags=["billing"])
-# api_router.include_router(admin.router,              prefix="/admin",             tags=["admin"])
+api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_router.include_router(candidate_profile.router, prefix="/candidate-profile", tags=["candidate-profile"])
+api_router.include_router(resume.router, prefix="/resumes", tags=["resume"])
+api_router.include_router(job_description.router, prefix="/job-descriptions", tags=["job-description"])
+api_router.include_router(generation.router, prefix="/generations", tags=["generation"])
+api_router.include_router(documents.router, prefix="/documents", tags=["documents"])
+api_router.include_router(billing.router, prefix="/billing", tags=["billing"])
+api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
+api_router.include_router(admin.router, prefix="/admin", tags=["admin"])

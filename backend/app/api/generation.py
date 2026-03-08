@@ -1,0 +1,124 @@
+"""
+backend/app/api/generation.py
+
+Generation endpoints.
+
+Endpoints
+---------
+POST /generations          — run the tailoring pipeline for a job + resume
+GET  /generations          — list the user's generation runs
+GET  /generations/{id}     — return run detail
+
+Phase 8 status: FUNCTIONAL (synchronous — background worker deferred)
+----------------------------------------------------------------------
+Generation runs synchronously in the request.  Long generation times
+(typically 30–90 s) mean the HTTP timeout needs to be generous.
+
+Async/background execution via Celery or FastAPI BackgroundTasks is a
+future enhancement.  The endpoint will return 202 Accepted when that
+pattern is adopted.
+
+Usage policy check (free-tier quota) is NOT enforced in this phase
+because it depends on a BillingRepository lookup — that is wired in
+the billing service and can be added here when billing is live.
+"""
+
+from fastapi import APIRouter, HTTPException, status
+
+from backend.app.dependencies import CurrentUserDep, DbDep
+from backend.app.db.repositories.generation_run_repository import GenerationRunRepository
+from backend.app.db.repositories.job_description_repository import JobDescriptionRepository
+from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
+from backend.app.db.repositories.tailored_document_repository import TailoredDocumentRepository
+from backend.app.schemas.generation import (
+    GenerationRequest,
+    GenerationResponse,
+    GenerationRunDetail,
+    GenerationRunSummary,
+)
+from backend.app.services.generation_service import GenerationService
+
+router = APIRouter()
+
+
+def _service(db) -> GenerationService:
+    return GenerationService(
+        run_repo=GenerationRunRepository(db),
+        doc_repo=TailoredDocumentRepository(db),
+        jd_repo=JobDescriptionRepository(db),
+        resume_repo=StructuredResumeRepository(db),
+    )
+
+
+def _run_repo(db) -> GenerationRunRepository:
+    return GenerationRunRepository(db)
+
+
+def _to_summary(run) -> GenerationRunSummary:
+    return GenerationRunSummary(
+        id=run.id,
+        status=run.status,
+        run_type=run.run_type,
+        model_name=run.model_name,
+        started_at=run.started_at,
+        completed_at=run.completed_at,
+        cost_estimate=float(run.cost_estimate) if run.cost_estimate else None,
+    )
+
+
+def _to_detail(run) -> GenerationRunDetail:
+    return GenerationRunDetail(
+        id=run.id,
+        user_id=run.user_id,
+        job_description_id=run.job_description_id,
+        status=run.status,
+        run_type=run.run_type,
+        model_name=run.model_name,
+        prompt_version=run.prompt_version,
+        token_input=run.token_input,
+        token_output=run.token_output,
+        cost_estimate=float(run.cost_estimate) if run.cost_estimate else None,
+        error_message=run.error_message,
+        started_at=run.started_at,
+        completed_at=run.completed_at,
+    )
+
+
+@router.post("", response_model=GenerationResponse, status_code=201)
+def generate(request: GenerationRequest, user: CurrentUserDep, db: DbDep):
+    """
+    Run the two-phase tailoring pipeline.
+
+    Accepts a job_description_id and structured_resume_id previously stored
+    via the job description and resume upload endpoints.
+
+    Returns immediately with run_id and tailored_document_id on success.
+    On pipeline failure, returns 500 with the error message.
+    """
+    try:
+        return _service(db).generate(user.id, request)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Generation failed: {exc}",
+        )
+
+
+@router.get("", response_model=list[GenerationRunSummary])
+def list_generations(user: CurrentUserDep, db: DbDep, limit: int = 50, offset: int = 0):
+    """List the authenticated user's generation runs, newest first."""
+    runs = _run_repo(db).list_by_user_id(user.id, limit=limit, offset=offset)
+    return [_to_summary(r) for r in runs]
+
+
+@router.get("/{run_id}", response_model=GenerationRunDetail)
+def get_generation(run_id: str, user: CurrentUserDep, db: DbDep):
+    """Return the full detail of a generation run."""
+    run = _run_repo(db).get_by_id(run_id)
+    if run is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Generation run not found")
+    if run.user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    return _to_detail(run)

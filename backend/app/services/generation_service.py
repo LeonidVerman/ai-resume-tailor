@@ -119,11 +119,16 @@ class GenerationService:
             raise
 
         # ── Persist tailored document ──────────────────────────────────────
+        meta = jd.metadata_jsonb or {}
         tailored_doc = self._doc_repo.create(
             user_id=user_id,
             generation_run_id=run.id,
-            resume_text=result.resume,
-            cover_letter_text=result.cover_letter,
+            company_name=meta.get("company", ""),
+            role_title=meta.get("job_title", ""),
+            # Store plain text in JSONB so it can be retrieved for rendering/download.
+            # Extended structured parsing is a future enhancement.
+            resume_jsonb={"text": result.resume} if result.resume else None,
+            cover_letter_jsonb={"text": result.cover_letter} if result.cover_letter else None,
         )
 
         # ── Finalize run record ────────────────────────────────────────────
