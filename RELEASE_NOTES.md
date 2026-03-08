@@ -1,5 +1,45 @@
 # Release Notes
 
+## 0.1.8.ALPHA — 2026-03-07
+
+### Fixed
+- **Cover letter hyperlink concatenation** (`docx/template_fill.py`): `replace_paragraph_text`
+  now clears `<w:t>` text inside `<w:hyperlink>` elements in addition to direct runs.
+  Previously, the hyperlinked email address in the cover letter name paragraph was not cleared
+  and was appended to the candidate name (e.g. `Leonid Vermanleonidverman@gmail.com`).
+  Resume generation was already protected by the skip-pre-H2 logic; this fix covers the
+  cover letter fallback path where all paragraphs are processed by `_apply_groups`.
+
+### Added
+- **`doc/GENERATION_ENTRYPOINTS.md`**: reference document covering both CLI entrypoints
+  (`tailor` generate and `tailor assess`), required files, all environment variables with
+  defaults, pipeline flowcharts, expected output paths, and key source modules.
+- **`tests/test_smoke.py`** (32 tests): no-LLM smoke tests verifying config attributes,
+  all prompt files are present and loadable, both templates are readable, resume and cover
+  letter template fill produce valid `.docx` output, cover letter hyperlink regression,
+  `normalize_cover_letter` correctness, and `validate_plan` acceptance/rejection.
+
+### Tests
+- 469 tests passing (up from 437 at 0.1.7).
+
+---
+
+## 0.1.7.ALPHA — 2026-03-05
+
+### Added
+- **Single-pass model config** (`--simple` mode): introduced `SIMPLE_MODEL` and
+  `SIMPLE_TEMPERATURE` env vars so the single-pass path has its own model config
+  (was sharing Phase 2 settings). Defaults: `SIMPLE_MODEL=gpt-5.2`, `SIMPLE_TEMPERATURE=0.3`.
+- **`prompts/tailor.txt`** — GENERAL_LAYER v1.4 (single-pass prompt).
+
+### Benchmark
+- Integral score 7.48 (previous best: 6.54 single-pass, 6.19 two-phase).
+
+### Tests
+- 437 tests passing (up from 436 at 0.1.6).
+
+---
+
 ## 0.1.6.ALPHA — 2026-03-05
 
 **Skill graph, skill/tool allowlist enforcement, schema fix, and `--simple` mode.**
