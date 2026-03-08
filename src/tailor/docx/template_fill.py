@@ -99,9 +99,12 @@ def replace_paragraph_text(paragraph, new_text):
     # Store first run's formatting by keeping the run object
     first_run = paragraph.runs[0]
 
-    # Clear text from all runs
+    # Clear text from all runs (direct runs and runs nested inside hyperlinks)
     for run in paragraph.runs:
         run.text = ""
+    for hyperlink in paragraph._p.findall(f"{{{_W}}}hyperlink"):
+        for t in hyperlink.iter(f"{{{_W}}}t"):
+            t.text = ""
 
     # Set new text on first run (preserves its formatting)
     first_run.text = new_text

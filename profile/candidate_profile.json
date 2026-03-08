@@ -106,13 +106,14 @@
     ]
   },
   "ai_tooling_practice": {
-    "hands_on_tools": ["Cursor", "ChatGPT", "Claude Code", "OpenAI"],
+    "hands_on_tools": ["Cursor", "ChatGPT", "Claude Code", "OpenAI API"],
     "usage_patterns": [
       "prototyping_new_modules",
       "investigating_problems_and_root_causes",
       "rapid_learning_of_new_tools_and_tech",
       "model_evaluation",
       "A_B_tests"
+      "AI_services_integration"
     ],
     "principles": [
       "engineer_remains_accountable",
