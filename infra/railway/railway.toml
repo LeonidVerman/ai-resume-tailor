@@ -1,0 +1,12 @@
+# infra/railway/railway.toml
+# Railway deployment configuration for the FastAPI backend.
+# Status: PLACEHOLDER — not yet implemented (Phase 11).
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "infra/docker/backend.Dockerfile"
+
+[deploy]
+startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/api/v1/health"
+healthcheckTimeout = 30

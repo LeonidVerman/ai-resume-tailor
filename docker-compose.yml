@@ -1,0 +1,66 @@
+# docker-compose.yml
+#
+# Current use: LibreOffice headless PDF conversion container.
+# Future use:  Full local SaaS stack (backend, frontend, postgres, storage).
+#
+# Usage:
+#   docker-compose up libreoffice   # start LibreOffice converter
+#   docker-compose up               # (future) start full dev stack
+
+version: "3.9"
+
+services:
+
+  # ── Existing: LibreOffice PDF conversion ─────────────────────────────────
+  libreoffice:
+    build:
+      context: .
+      dockerfile: Dockerfile.libreoffice
+    image: ai-resume-tailor-lo
+    volumes:
+      - ./output:/output
+      - type: bind
+        source: /mnt/c/Windows/Fonts
+        target: /usr/share/fonts/windows
+        read_only: true
+    profiles:
+      - libreoffice
+
+  # ── Future: PostgreSQL (Supabase-compatible) ─────────────────────────────
+  # postgres:
+  #   image: postgres:16
+  #   environment:
+  #     POSTGRES_USER: tailor
+  #     POSTGRES_PASSWORD: tailor
+  #     POSTGRES_DB: tailor_dev
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   profiles:
+  #     - backend
+
+  # ── Future: FastAPI backend ───────────────────────────────────────────────
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: ../infra/docker/backend.Dockerfile
+  #   env_file: ./backend/.env
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - postgres
+  #   profiles:
+  #     - backend
+
+  # ── Future: Next.js frontend ──────────────────────────────────────────────
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #   ports:
+  #     - "3000:3000"
+  #   profiles:
+  #     - frontend
+
+# volumes:
+#   postgres_data:
