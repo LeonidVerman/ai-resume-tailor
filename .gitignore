@@ -54,3 +54,4 @@ reports/
 
 # Docker
 *.log
+frontend/tsconfig.tsbuildinfo
