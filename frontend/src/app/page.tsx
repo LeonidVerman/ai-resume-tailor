@@ -1,16 +1,22 @@
-// Placeholder home page — will be replaced with the landing/dashboard page.
-// See doc/IMPLEMENTATION_TASK_PLAN.md Phase 9 for UI implementation.
+// Root page — redirect to dashboard if logged in, otherwise to login.
+"use client";
 
-export default function HomePage() {
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { getStoredUserId } from "@/lib/auth";
+import { Spinner } from "@/components/ui/Spinner";
+
+export default function RootPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const uid = getStoredUserId();
+    router.replace(uid ? "/dashboard" : "/login");
+  }, [router]);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <h1 className="text-3xl font-bold mb-4">AI Resume Tailor</h1>
-      <p className="text-gray-500 mb-8">
-        SaaS frontend — coming soon.
-      </p>
-      <p className="text-sm text-gray-400">
-        This is a Phase 1 scaffold. UI will be implemented in Phase 9.
-      </p>
-    </main>
+    <div className="flex min-h-screen items-center justify-center">
+      <Spinner size="lg" />
+    </div>
   );
 }

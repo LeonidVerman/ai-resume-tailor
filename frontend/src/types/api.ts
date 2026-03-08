@@ -1,0 +1,289 @@
+// frontend/src/types/api.ts
+// Typed contracts mirroring backend Pydantic schemas.
+
+// ── Auth ──────────────────────────────────────────────────────────────────
+
+export interface AuthMeResponse {
+  user_id: string;
+  email: string;
+  role: string;
+  plan_type: string;
+}
+
+export interface AuthStatusResponse {
+  auth_mode: string;
+  status: string;
+}
+
+// ── Candidate Profile ─────────────────────────────────────────────────────
+
+export interface CandidateIdentity {
+  name: string;
+  headline?: string;
+  summary?: string;
+}
+
+export interface TechnicalSkills {
+  languages?: string[];
+  backend_systems?: string[];
+  datastores?: string[];
+  infra_devops?: string[];
+  api_patterns?: string[];
+  async_messaging?: string[];
+  observability?: string[];
+  other?: Record<string, string[]>;
+}
+
+export interface ExperienceHighlight {
+  area: string;
+  market?: string;
+  impact: string[];
+  team_context: string[];
+  architecture_patterns: string[];
+  constraints_and_tradeoffs: string[];
+  skills_applied: string[];
+}
+
+export interface DomainExperience {
+  primary: string[];
+  secondary: string[];
+}
+
+export interface CandidateProfileDocument {
+  candidate_profile_version: "1.0";
+  candidate: CandidateIdentity;
+  domains?: DomainExperience;
+  experience_highlights: ExperienceHighlight[];
+  technical_skills?: TechnicalSkills;
+  scalability_reliability_patterns?: string[];
+  role_fit_themes?: string[];
+}
+
+export interface CandidateProfileResponse {
+  id: string;
+  user_id: string;
+  profile_version: string;
+  profile: CandidateProfileDocument;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CandidateProfileUpsertRequest {
+  profile: CandidateProfileDocument;
+  profile_version: "1";
+}
+
+// ── Structured Resume ─────────────────────────────────────────────────────
+
+export interface ContactInfo {
+  email?: string;
+  phone?: string;
+  location?: string;
+  linkedin_url?: string;
+  github_url?: string;
+  website_url?: string;
+}
+
+export interface ExperienceEntry {
+  company: string;
+  role: string;
+  start_date: string;
+  end_date: string;
+  bullets: string[];
+  employment_type?: string;
+}
+
+export interface EducationEntry {
+  institution: string;
+  degree?: string;
+  field_of_study?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface SkillsSection {
+  flat?: string[];
+  categorized?: Record<string, string[]>;
+}
+
+export interface StructuredResumeDocument {
+  name: string;
+  contacts: ContactInfo;
+  summary: string;
+  experience: ExperienceEntry[];
+  technical_skills: SkillsSection;
+  education: EducationEntry[];
+  raw_text?: string;
+}
+
+export interface StructuredResumeResponse {
+  id: string;
+  user_id: string;
+  resume: StructuredResumeDocument;
+  source_file_url?: string;
+  created_at: string;
+}
+
+export interface StructuredResumeSummary {
+  id: string;
+  name: string;
+  created_at: string;
+  source_file_url?: string;
+}
+
+// ── Job Description ───────────────────────────────────────────────────────
+
+export interface JobMetadata {
+  company?: string;
+  job_title?: string;
+  location?: string;
+  employment_type?: string;
+  seniority_level?: string;
+  remote_policy?: string;
+}
+
+export interface JobDescriptionScrapeRequest {
+  url: string;
+}
+
+export interface JobDescriptionManualRequest {
+  raw_text: string;
+  company?: string;
+  job_title?: string;
+  source_url?: string;
+}
+
+export interface JobDescriptionResponse {
+  id: string;
+  user_id: string;
+  source_url?: string;
+  source_type?: "scraped" | "manual";
+  raw_text: string;
+  metadata?: JobMetadata;
+  created_at: string;
+}
+
+export interface JobDescriptionSummary {
+  id: string;
+  company?: string;
+  job_title?: string;
+  source_url?: string;
+  created_at: string;
+}
+
+// ── Generation ────────────────────────────────────────────────────────────
+
+export type GenerationStatus = "pending" | "running" | "succeeded" | "failed";
+
+export interface GenerationRequest {
+  job_description_id: string;
+  structured_resume_id: string;
+  options?: { mode?: "two_phase" | "single_pass" };
+}
+
+export interface GenerationResponse {
+  run_id: string;
+  status: GenerationStatus;
+  tailored_document_id?: string;
+  message?: string;
+}
+
+export interface GenerationRunSummary {
+  id: string;
+  status: GenerationStatus;
+  run_type: string;
+  model_name: string;
+  started_at: string;
+  completed_at?: string;
+  cost_estimate?: number;
+}
+
+export interface GenerationRunDetail extends GenerationRunSummary {
+  user_id: string;
+  job_description_id?: string;
+  prompt_version: string;
+  token_input?: number;
+  token_output?: number;
+  error_message?: string;
+}
+
+// ── Tailored Document ─────────────────────────────────────────────────────
+
+export interface ArtifactURLs {
+  resume_docx_url?: string;
+  resume_pdf_url?: string;
+  cover_letter_docx_url?: string;
+  cover_letter_pdf_url?: string;
+}
+
+export interface TailoredDocumentDetail {
+  id: string;
+  user_id: string;
+  generation_run_id: string;
+  company_name: string;
+  role_title: string;
+  resume_json?: Record<string, unknown>;
+  cover_letter_json?: Record<string, unknown>;
+  artifacts: ArtifactURLs;
+  created_at: string;
+}
+
+// ── Billing ───────────────────────────────────────────────────────────────
+
+export type PlanType = "free" | "starter" | "pro";
+export type SubscriptionStatus = "active" | "canceled" | "past_due" | "trialing" | null;
+
+export interface BillingStatus {
+  user_id: string;
+  plan_type: PlanType;
+  subscription_status?: SubscriptionStatus;
+  free_generations_used: number;
+  free_generations_limit: number;
+  current_period_end?: string;
+  stripe_customer_id?: string;
+}
+
+export interface CheckoutSessionRequest {
+  plan_type: "starter" | "pro";
+  success_url: string;
+  cancel_url: string;
+}
+
+export interface CheckoutSessionResponse {
+  checkout_url: string;
+  session_id: string;
+}
+
+// ── Evaluation ────────────────────────────────────────────────────────────
+
+export interface EvaluationScores {
+  truthfulness_score?: number;
+  role_fit_score?: number;
+  clarity_score?: number;
+  seniority_score?: number;
+  integrated_score?: number;
+}
+
+export interface EvaluationResponse {
+  id: string;
+  generation_run_id: string;
+  scores: EvaluationScores;
+  created_at: string;
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────
+
+export interface SystemStats {
+  total_users: number;
+  total_generation_runs: number;
+  total_succeeded_runs: number;
+  total_failed_runs: number;
+  total_tailored_documents: number;
+  total_evaluation_runs: number;
+}
+
+// ── Generic ───────────────────────────────────────────────────────────────
+
+export interface ApiError {
+  detail: string;
+}
