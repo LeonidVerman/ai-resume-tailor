@@ -1,16 +1,9 @@
-"""Extended validator for Phase 1 (Planner) output.
+"""Backward-compatibility shim.
 
-All v2.1 experimental checks have been removed.  The function is kept as a
-no-op so callers (cli.py, llm.py) require no changes.
+Implementation moved to tailor.core_generation.plan_validator.
+All imports from this path continue to work unchanged.
 """
 
-from __future__ import annotations
+from tailor.core_generation.plan_validator import validate_plan_extended
 
-
-def validate_plan_extended(plan: dict) -> list[str]:
-    """Run extended checks on a TailoringPlan dict.
-
-    Returns a list of error strings.  Currently performs no checks; always
-    returns an empty list.
-    """
-    return []
+__all__ = ["validate_plan_extended"]
