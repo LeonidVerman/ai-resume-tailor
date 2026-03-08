@@ -8,10 +8,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies needed for psycopg and lxml
+# Install system dependencies needed for psycopg, lxml, and xhtml2pdf (pycairo)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
+    libcairo2-dev \
+    pkg-config \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency manifest first (layer cache friendly)
