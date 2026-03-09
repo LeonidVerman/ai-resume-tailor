@@ -144,8 +144,18 @@ export const generations = {
 
 export const documents = {
   get: (id: string) => request<TailoredDocumentDetail>(`/documents/${id}`),
-  downloadUrl: (id: string, part: "resume" | "cover_letter") =>
-    `${BASE_URL}/documents/${id}/download?part=${part}`,
+  download: async (id: string, part: "resume" | "cover_letter"): Promise<Blob> => {
+    const userId = getStoredUserId();
+    const headers: Record<string, string> = {};
+    if (userId) headers["X-User-Id"] = userId;
+    const res = await fetch(`${BASE_URL}/documents/${id}/download?part=${part}`, { headers });
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try { const body = await res.json(); detail = body.detail ?? detail; } catch { /* ignore */ }
+      throw new ApiError(res.status, detail);
+    }
+    return res.blob();
+  },
 };
 
 // ── Billing ───────────────────────────────────────────────────────────────

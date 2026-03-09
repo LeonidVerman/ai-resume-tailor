@@ -9,7 +9,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
-import { generations } from "@/lib/api";
+import { generations, documents } from "@/lib/api";
 import type { GenerationRunSummary } from "@/types/api";
 import { formatDateTime } from "@/lib/utils";
 
@@ -32,6 +32,22 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 20;
+
+  const handleDownload = async (docId: string, part: "resume" | "cover_letter") => {
+    try {
+      const blob = await documents.download(docId, part);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${part}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed:", err);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -96,26 +112,22 @@ export default function HistoryPage() {
                 </div>
 
                 {/* Actions */}
-                {run.status === "succeeded" && (
+                {run.status === "succeeded" && run.tailored_document_id && (
                   <div className="shrink-0 flex items-center gap-2">
-                    <a
-                      href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1"}/documents/${run.id}/download?part=resume`}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      onClick={() => handleDownload(run.tailored_document_id!, "resume")}
                       className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
                     >
                       <Download className="h-3.5 w-3.5" />
                       Resume
-                    </a>
-                    <a
-                      href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1"}/documents/${run.id}/download?part=cover_letter`}
-                      target="_blank"
-                      rel="noreferrer"
+                    </button>
+                    <button
+                      onClick={() => handleDownload(run.tailored_document_id!, "cover_letter")}
                       className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
                     >
                       <Download className="h-3.5 w-3.5" />
                       Cover letter
-                    </a>
+                    </button>
                   </div>
                 )}
               </CardBody>

@@ -170,6 +170,60 @@ class TestGenerationServiceGenerate:
                or any("failed" in str(a) for a in run_repo.update.call_args.args + tuple(run_repo.update.call_args.kwargs.values()))
 
 
+    def test_jd_metadata_injected_into_pipeline(self):
+        """company and job_title from JD metadata must be forwarded to _run_pipeline."""
+        user_id = str(uuid.uuid4())
+        jd = _make_jd(user_id)
+        jd.metadata_jsonb = {"company": "WidgetCo", "job_title": "Principal Engineer"}
+        svc, _, resume, run, doc, run_repo, doc_repo = _make_service(user_id, jd=jd)
+        tailor_result = _make_tailor_result()
+
+        request = GenerationRequest(
+            job_description_id=jd.id,
+            structured_resume_id=resume.id,
+        )
+
+        with (
+            patch(
+                "backend.app.services.generation_service.GenerationService._run_pipeline",
+                return_value=(tailor_result, 10, 20, None),
+            ) as mock_pipeline,
+            patch("tailor.config.PHASE2_MODEL", "gpt-4o"),
+        ):
+            svc.generate(user_id, request)
+
+        mock_pipeline.assert_called_once()
+        _, kwargs = mock_pipeline.call_args
+        assert kwargs.get("jd_company") == "WidgetCo"
+        assert kwargs.get("jd_job_title") == "Principal Engineer"
+
+    def test_jd_metadata_empty_when_not_set(self):
+        """When metadata_jsonb is None, company and job_title default to empty strings."""
+        user_id = str(uuid.uuid4())
+        jd = _make_jd(user_id)
+        jd.metadata_jsonb = None
+        svc, _, resume, run, doc, run_repo, doc_repo = _make_service(user_id, jd=jd)
+        tailor_result = _make_tailor_result()
+
+        request = GenerationRequest(
+            job_description_id=jd.id,
+            structured_resume_id=resume.id,
+        )
+
+        with (
+            patch(
+                "backend.app.services.generation_service.GenerationService._run_pipeline",
+                return_value=(tailor_result, 10, 20, None),
+            ) as mock_pipeline,
+            patch("tailor.config.PHASE2_MODEL", "gpt-4o"),
+        ):
+            svc.generate(user_id, request)
+
+        _, kwargs = mock_pipeline.call_args
+        assert kwargs.get("jd_company") == ""
+        assert kwargs.get("jd_job_title") == ""
+
+
 class TestExtractUsageFromMessages:
     def test_extracts_usage(self):
         msg = MagicMock()

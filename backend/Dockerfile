@@ -17,14 +17,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency manifest first (layer cache friendly)
+# Copy dependency manifests first (layer cache friendly)
 COPY backend/pyproject.toml ./backend/pyproject.toml
+COPY pyproject.toml ./pyproject.toml
 
-# Install Python dependencies
+# Install Python dependencies for the backend
 RUN pip install --no-cache-dir -e ./backend
 
-# Copy full repository so backend.app imports resolve
+# Install the tailor generator package (without playwright — browser scraping
+# is not used in the backend; the HTTP fallback handles job URL scraping)
+COPY src/ ./src/
+RUN pip install --no-cache-dir -e . --no-deps && \
+    pip install --no-cache-dir openai requests
+
+# Copy backend source and all runtime assets tailor.config resolves at runtime
+# (BASE_DIR = /app, so prompts/templates/config/schemas/profile live at /app/*)
 COPY backend/ ./backend/
+COPY prompts/ ./prompts/
+COPY templates/ ./templates/
+COPY config/ ./config/
+COPY schemas/ ./schemas/
+COPY profile/ ./profile/
 
 EXPOSE 8000
 

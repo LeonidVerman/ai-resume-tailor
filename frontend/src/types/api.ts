@@ -196,6 +196,7 @@ export interface GenerationRunSummary {
   started_at: string;
   completed_at?: string;
   cost_estimate?: number;
+  tailored_document_id?: string;
 }
 
 export interface GenerationRunDetail extends GenerationRunSummary {

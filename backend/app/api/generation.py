@@ -55,6 +55,7 @@ def _run_repo(db) -> GenerationRunRepository:
 
 
 def _to_summary(run) -> GenerationRunSummary:
+    doc_id = run.tailored_documents[0].id if run.tailored_documents else None
     return GenerationRunSummary(
         id=run.id,
         status=run.status,
@@ -63,6 +64,7 @@ def _to_summary(run) -> GenerationRunSummary:
         started_at=run.started_at,
         completed_at=run.completed_at,
         cost_estimate=float(run.cost_estimate) if run.cost_estimate else None,
+        tailored_document_id=doc_id,
     )
 
 

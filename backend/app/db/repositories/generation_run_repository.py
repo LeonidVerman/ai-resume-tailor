@@ -4,7 +4,7 @@ backend/app/db/repositories/generation_run_repository.py
 CRUD operations for GenerationRun.
 """
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from backend.app.db.models.generation_run import GenerationRun
 
@@ -21,6 +21,7 @@ class GenerationRunRepository:
     ) -> list[GenerationRun]:
         return (
             self._db.query(GenerationRun)
+            .options(joinedload(GenerationRun.tailored_documents))
             .filter(GenerationRun.user_id == user_id)
             .order_by(GenerationRun.started_at.desc())
             .limit(limit)

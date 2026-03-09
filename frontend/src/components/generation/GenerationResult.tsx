@@ -77,13 +77,21 @@ export function GenerationResult({ result }: GenerationResultProps) {
     failed: <Badge variant="danger">Failed</Badge>,
   }[phase];
 
-  const downloadHref = (part: "resume" | "cover_letter") => {
-    if (!result.tailored_document_id) return "#";
-    const userId = typeof window !== "undefined"
-      ? localStorage.getItem("art_user_id") ?? ""
-      : "";
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
-    return `${baseUrl}/documents/${result.tailored_document_id}/download?part=${part}`;
+  const handleDownload = async (part: "resume" | "cover_letter") => {
+    if (!result.tailored_document_id) return;
+    try {
+      const blob = await documents.download(result.tailored_document_id, part);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${part}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed:", err);
+    }
   };
 
   return (
@@ -131,24 +139,20 @@ export function GenerationResult({ result }: GenerationResultProps) {
               </p>
             )}
             <div className="flex gap-2 flex-wrap">
-              <a
-                href={downloadHref("resume")}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                onClick={() => handleDownload("resume")}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
               >
                 <Download className="h-4 w-4" />
                 Download resume
-              </a>
-              <a
-                href={downloadHref("cover_letter")}
-                target="_blank"
-                rel="noreferrer"
+              </button>
+              <button
+                onClick={() => handleDownload("cover_letter")}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
               >
                 <Download className="h-4 w-4" />
                 Download cover letter
-              </a>
+              </button>
             </div>
           </div>
         )}

@@ -109,9 +109,10 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("source_url", sa.Text, nullable=True),
+        sa.Column("source_type", sa.String(32), nullable=True),
         sa.Column("raw_text", sa.Text, nullable=False),
         sa.Column(
-            "parsed_metadata_jsonb",
+            "metadata_jsonb",
             postgresql.JSONB(astext_type=sa.Text()),
             nullable=True,
         ),

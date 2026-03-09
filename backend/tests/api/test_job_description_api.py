@@ -55,6 +55,54 @@ class TestManualJobDescription:
         resp = client.post(f"{API}/manual", json={})
         assert resp.status_code == 422
 
+    def test_manual_source_type_is_manual(self, client):
+        resp = client.post(f"{API}/manual", json=MANUAL_BODY)
+        assert resp.json()["source_type"] == "manual"
+
+    def test_manual_with_company_and_title(self, client):
+        body = {
+            "raw_text": "Job description text here.",
+            "company": "Acme Corp",
+            "job_title": "Senior Engineer",
+        }
+        resp = client.post(f"{API}/manual", json=body)
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["metadata"]["company"] == "Acme Corp"
+        assert data["metadata"]["job_title"] == "Senior Engineer"
+
+    def test_manual_company_only(self, client):
+        body = {"raw_text": "Some job text.", "company": "Beta Inc"}
+        resp = client.post(f"{API}/manual", json=body)
+        assert resp.status_code == 201
+        assert resp.json()["metadata"]["company"] == "Beta Inc"
+
+    def test_manual_no_metadata_when_empty(self, client):
+        resp = client.post(f"{API}/manual", json=MANUAL_BODY)
+        assert resp.json()["metadata"] is None
+
+    def test_manual_created_at_present(self, client):
+        resp = client.post(f"{API}/manual", json=MANUAL_BODY)
+        assert resp.json()["created_at"] is not None
+
+    def test_manual_raw_text_retrievable_via_get(self, client):
+        """Verify raw_text is persisted and retrievable — needed for LLM generation."""
+        jd_id = client.post(f"{API}/manual", json=MANUAL_BODY).json()["id"]
+        resp = client.get(f"{API}/{jd_id}")
+        assert resp.json()["raw_text"] == MANUAL_BODY["raw_text"]
+
+    def test_manual_metadata_retrievable_via_get(self, client):
+        """Verify metadata (company, job_title) is persisted and retrievable."""
+        body = {
+            "raw_text": "Engineer role.",
+            "company": "TestCo",
+            "job_title": "Staff Engineer",
+        }
+        jd_id = client.post(f"{API}/manual", json=body).json()["id"]
+        data = client.get(f"{API}/{jd_id}").json()
+        assert data["metadata"]["company"] == "TestCo"
+        assert data["metadata"]["job_title"] == "Staff Engineer"
+
 
 class TestScrapeJobDescription:
     def test_scrape_success_returns_201(self, client):

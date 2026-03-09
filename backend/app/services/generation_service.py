@@ -102,10 +102,13 @@ class GenerationService:
         )
         logger.info("Started generation run=%s user=%s", run.id, user_id)
 
+        meta = jd.metadata_jsonb or {}
         try:
             result, token_input, token_output, cost = self._run_pipeline(
                 run_type=run_type,
                 jd_text=jd.raw_text,
+                jd_company=meta.get("company", ""),
+                jd_job_title=meta.get("job_title", ""),
                 resume_raw_text=resume.resume_jsonb.get("raw_text", "") if resume.resume_jsonb else "",
             )
         except Exception as exc:
@@ -119,7 +122,6 @@ class GenerationService:
             raise
 
         # ── Persist tailored document ──────────────────────────────────────
-        meta = jd.metadata_jsonb or {}
         tailored_doc = self._doc_repo.create(
             user_id=user_id,
             generation_run_id=run.id,
@@ -157,6 +159,8 @@ class GenerationService:
         self,
         run_type: str,
         jd_text: str,
+        jd_company: str,
+        jd_job_title: str,
         resume_raw_text: str,
     ):
         """
@@ -171,11 +175,9 @@ class GenerationService:
         resume_template = read_docx(str(RESUME_TEMPLATE))
         cover_template = read_docx(str(COVER_TEMPLATE))
 
-        # Build a minimal JobData from the stored raw text.
-        # Metadata enrichment (company/title) was done at ingest time.
         job = JobData(
-            company="",
-            job_title="",
+            company=jd_company,
+            job_title=jd_job_title,
             description=jd_text,
         )
 
@@ -185,8 +187,8 @@ class GenerationService:
             )
         else:
             from tailor.core_generation.llm import tailor_documents
-            result, messages = tailor_documents(job, resume_template, cover_template)
-            debug_meta = {}
+            result, llm_req = tailor_documents(job, resume_template, cover_template)
+            result, messages, debug_meta = result, [llm_req], {}
 
         # Extract token usage from messages (OpenAI usage fields)
         token_input, token_output, cost = _extract_usage_from_messages(messages)
@@ -269,12 +271,12 @@ class GenerationService:
         if plan is None:
             logger.warning("Phase 1 failed after 2 attempts; falling back to single-pass")
             result, messages = tailor_documents(job, resume_template, cover_template)
-            return result, messages, {}
+            return result, [messages], {}
 
         result, p2_messages, p2_meta = tailor_documents_with_plan(
             plan, job, resume_template, cover_template
         )
-        all_messages = p1_messages + p2_messages
+        all_messages = [p1_messages, p2_messages]
         return result, all_messages, {"phase1": p1_meta, "phase2": p2_meta}
 
 

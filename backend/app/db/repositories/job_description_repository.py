@@ -28,6 +28,7 @@ class JobDescriptionRepository:
         jd = JobDescription(**kwargs)
         self._db.add(jd)
         self._db.flush()
+        self._db.refresh(jd)
         return jd
 
     def update(self, jd: JobDescription, **kwargs) -> JobDescription:

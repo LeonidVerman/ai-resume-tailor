@@ -51,6 +51,7 @@ class GenerationRunSummary(APIModel):
     started_at: datetime
     completed_at: datetime | None = None
     cost_estimate: float | None = None
+    tailored_document_id: str | None = None
 
 
 class GenerationRunDetail(APIModel):
