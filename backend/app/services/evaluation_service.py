@@ -78,9 +78,12 @@ class EvaluationService:
                 detail="Tailored document not found for this run",
             )
 
+        resume_text = (doc.resume_jsonb or {}).get("text", "") if doc.resume_jsonb else ""
+        cover_letter_text = (doc.cover_letter_jsonb or {}).get("text", "") if doc.cover_letter_jsonb else ""
+
         scores = self._run_assessment(
-            resume_text=doc.resume_text or "",
-            cover_letter_text=doc.cover_letter_text or "",
+            resume_text=resume_text,
+            cover_letter_text=cover_letter_text,
             jd_id=run.job_description_id,
         )
 
