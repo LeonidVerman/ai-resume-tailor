@@ -14,7 +14,6 @@ from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
 
 from tailor.job import JobData
 from tailor.job.linkedin import scrape_linkedin
@@ -26,6 +25,7 @@ from tailor.job.wellfound import scrape_wellfound
 # ---------------------------------------------------------------------------
 
 def get_rendered_html(url):
+    from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
