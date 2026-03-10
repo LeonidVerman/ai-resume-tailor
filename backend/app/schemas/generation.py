@@ -52,6 +52,9 @@ class GenerationRunSummary(APIModel):
     completed_at: datetime | None = None
     cost_estimate: float | None = None
     tailored_document_id: str | None = None
+    # Company / role from the linked TailoredDocument (None for older records).
+    company_name: str | None = None
+    role_title: str | None = None
 
 
 class GenerationRunDetail(APIModel):

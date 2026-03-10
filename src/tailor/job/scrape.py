@@ -16,6 +16,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from tailor.job import JobData
+from tailor.job.amazon import scrape_amazon
 from tailor.job.linkedin import scrape_linkedin
 from tailor.job.wellfound import scrape_wellfound
 
@@ -93,6 +94,7 @@ def extract_metadata_from_html(url):
 # Registry: map site identifier → scraper function.
 # Add new entries here when support for additional job boards is needed.
 _SITE_SCRAPERS = {
+    "amazon": scrape_amazon,
     "linkedin": scrape_linkedin,
     "wellfound": scrape_wellfound,
     # "greenhouse": scrape_greenhouse,  # future
@@ -106,6 +108,8 @@ def _detect_site(url):
         return "linkedin"
     if "wellfound.com" in host or "angel.co" in host:
         return "wellfound"
+    if "amazon.jobs" in host:
+        return "amazon"
     # Extend here as new sites are added to _SITE_SCRAPERS
     return "generic"
 

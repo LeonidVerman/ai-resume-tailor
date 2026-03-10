@@ -19,7 +19,7 @@ class StructuredResumeRepository:
     def list_by_user_id(self, user_id: str) -> list[StructuredResume]:
         return (
             self._db.query(StructuredResume)
-            .filter(StructuredResume.user_id == user_id)
+            .filter(StructuredResume.user_id == user_id, ~StructuredResume.delete_flg)
             .order_by(StructuredResume.created_at.desc())
             .all()
         )
@@ -27,7 +27,7 @@ class StructuredResumeRepository:
     def get_latest_by_user_id(self, user_id: str) -> StructuredResume | None:
         return (
             self._db.query(StructuredResume)
-            .filter(StructuredResume.user_id == user_id)
+            .filter(StructuredResume.user_id == user_id, ~StructuredResume.delete_flg)
             .order_by(StructuredResume.created_at.desc())
             .first()
         )
@@ -39,5 +39,5 @@ class StructuredResumeRepository:
         return resume
 
     def delete(self, resume: StructuredResume) -> None:
-        self._db.delete(resume)
+        resume.delete_flg = True
         self._db.flush()

@@ -86,15 +86,12 @@ class EvaluationService:
 
         existing = self._eval_repo.get_by_generation_run_id(generation_run_id)
         if existing:
-            ev = self._eval_repo.update(
-                existing,
-                scores_jsonb=scores,
-            )
+            ev = self._eval_repo.update(existing, **scores)
         else:
             ev = self._eval_repo.create(
                 generation_run_id=generation_run_id,
-                scores_jsonb=scores,
                 created_at=datetime.now(tz=timezone.utc),
+                **scores,
             )
 
         logger.info("Evaluation created/updated eval=%s run=%s", ev.id, generation_run_id)
@@ -150,16 +147,15 @@ class EvaluationService:
 
     @staticmethod
     def _to_response(ev) -> EvaluationResponse:
-        raw = ev.scores_jsonb or {}
         return EvaluationResponse(
             id=ev.id,
             generation_run_id=ev.generation_run_id,
             scores=EvaluationScores(
-                truthfulness_score=raw.get("truthfulness_score"),
-                role_fit_score=raw.get("role_fit_score"),
-                clarity_score=raw.get("clarity_score"),
-                seniority_score=raw.get("seniority_score"),
-                integrated_score=raw.get("integrated_score"),
+                truthfulness_score=float(ev.truthfulness_score) if ev.truthfulness_score is not None else None,
+                role_fit_score=float(ev.role_fit_score) if ev.role_fit_score is not None else None,
+                clarity_score=float(ev.clarity_score) if ev.clarity_score is not None else None,
+                seniority_score=float(ev.seniority_score) if ev.seniority_score is not None else None,
+                integrated_score=float(ev.integrated_score) if ev.integrated_score is not None else None,
             ),
             created_at=ev.created_at,
         )

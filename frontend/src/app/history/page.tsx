@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Clock, CheckCircle, XCircle, Loader2, Download } from "lucide-react";
+import { Clock, CheckCircle, XCircle, Loader2, Download, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -49,6 +49,7 @@ export default function HistoryPage() {
   // Expanded row id (show download panel) — null = none expanded.
   const [expanded, setExpanded] = useState<string | null>(null);
   const [docCache, setDocCache] = useState<DocCache>({});
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const PAGE_SIZE = 20;
 
   const handleDownload = async (
@@ -57,17 +58,30 @@ export default function HistoryPage() {
     format: "docx" | "pdf",
   ) => {
     try {
-      const blob = await documents.downloadFormatted(docId, part, format);
+      const { blob, filename } = await documents.downloadFormatted(docId, part, format);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${part}.${format}`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Download failed:", err);
+    }
+  };
+
+  const handleDelete = async (runId: string) => {
+    setDeletingId(runId);
+    try {
+      await generations.delete(runId);
+      setRuns((prev) => prev.filter((r) => r.id !== runId));
+      if (expanded === runId) setExpanded(null);
+    } catch {
+      // ignore
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -145,8 +159,12 @@ export default function HistoryPage() {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900 font-mono truncate">
-                          {run.id.slice(0, 8)}…
+                        <span className="text-sm font-medium text-gray-900 truncate">
+                          {run.company_name && run.role_title
+                            ? `${run.company_name} / ${run.role_title}`
+                            : run.company_name ?? run.role_title ?? (
+                                <span className="font-mono">{run.id.slice(0, 8)}…</span>
+                              )}
                         </span>
                         <Badge variant={STATUS_VARIANT[run.status] ?? "default"}>
                           {run.status}
@@ -176,6 +194,17 @@ export default function HistoryPage() {
                         </button>
                       </div>
                     )}
+
+                    {/* Delete */}
+                    <div className="shrink-0">
+                      <button
+                        onClick={() => handleDelete(run.id)}
+                        disabled={deletingId === run.id}
+                        className="p-1.5 text-gray-400 hover:text-red-600 disabled:opacity-40 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Expanded download panel — 4 artifact links */}

@@ -5,7 +5,7 @@ Structured resume — parsed representation of an uploaded resume.
 The source file is stored in object storage; the parsed JSON lives here.
 """
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import Boolean, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -29,6 +29,10 @@ class StructuredResume(Base, CreatedAtMixin):
     # Set when the uploaded file was converted from PDF to DOCX.
     # Contains the user-visible disclaimer; None for DOCX uploads.
     input_conversion_warning: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Soft-delete flag — set to True instead of hard-deleting the row.
+    delete_flg: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="structured_resumes")  # noqa: F821

@@ -106,6 +106,7 @@ export const resumes = {
       body: form,
     });
   },
+  delete: (id: string) => request<void>(`/resumes/${id}`, { method: "DELETE" }),
 };
 
 // ── Job Descriptions ──────────────────────────────────────────────────────
@@ -138,6 +139,7 @@ export const generations = {
   list: (limit = 50, offset = 0) =>
     request<GenerationRunSummary[]>(`/generations?limit=${limit}&offset=${offset}`),
   get: (id: string) => request<GenerationRunDetail>(`/generations/${id}`),
+  delete: (id: string) => request<void>(`/generations/${id}`, { method: "DELETE" }),
 };
 
 // ── Documents ─────────────────────────────────────────────────────────────
@@ -161,7 +163,7 @@ export const documents = {
     id: string,
     part: "resume" | "cover_letter",
     format: "docx" | "pdf",
-  ): Promise<Blob> => {
+  ): Promise<{ blob: Blob; filename: string }> => {
     const userId = getStoredUserId();
     const headers: Record<string, string> = {};
     if (userId) headers["X-User-Id"] = userId;
@@ -174,7 +176,10 @@ export const documents = {
       try { const body = await res.json(); detail = body.detail ?? detail; } catch { /* ignore */ }
       throw new ApiError(res.status, detail);
     }
-    return res.blob();
+    const disposition = res.headers.get("content-disposition") ?? "";
+    const match = disposition.match(/filename="([^"]+)"/);
+    const filename = match ? match[1] : `${part}.${format}`;
+    return { blob: await res.blob(), filename };
   },
 };
 

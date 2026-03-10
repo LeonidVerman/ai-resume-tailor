@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, Briefcase, Zap, AlertCircle } from "lucide-react";
+import { FileText, Briefcase, Zap, AlertCircle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ResumeCard } from "@/components/resume/ResumeCard";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -30,6 +30,8 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingResumeId, setDeletingResumeId] = useState<string | null>(null);
+  const [deletingJdId, setDeletingJdId] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -49,6 +51,32 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
     billingStatus !== null &&
     billingStatus.plan_type === "free" &&
     billingStatus.free_generations_used >= billingStatus.free_generations_limit;
+
+  async function handleDeleteResume(id: string) {
+    setDeletingResumeId(id);
+    try {
+      await resumes.delete(id);
+      setResumeList((prev) => prev.filter((r) => r.id !== id));
+      if (selectedResume === id) setSelectedResume(null);
+    } catch {
+      // ignore
+    } finally {
+      setDeletingResumeId(null);
+    }
+  }
+
+  async function handleDeleteJd(id: string) {
+    setDeletingJdId(id);
+    try {
+      await jobDescriptions.delete(id);
+      setJdList((prev) => prev.filter((j) => j.id !== id));
+      if (selectedJd === id) setSelectedJd(null);
+    } catch {
+      // ignore
+    } finally {
+      setDeletingJdId(null);
+    }
+  }
 
   async function handleGenerate() {
     if (!selectedResume || !selectedJd) {
@@ -110,6 +138,8 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
                 resume={r}
                 selected={selectedResume === r.id}
                 onSelect={setSelectedResume}
+                onDelete={handleDeleteResume}
+                deleting={deletingResumeId === r.id}
               />
             ))}
           </div>
@@ -157,6 +187,13 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
                       </svg>
                     </div>
                   )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteJd(jd.id); }}
+                    disabled={deletingJdId === jd.id}
+                    className="shrink-0 p-1 text-gray-400 hover:text-red-600 disabled:opacity-40 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </CardBody>
               </Card>
             ))}

@@ -55,7 +55,7 @@ def _run_repo(db) -> GenerationRunRepository:
 
 
 def _to_summary(run) -> GenerationRunSummary:
-    doc_id = run.tailored_documents[0].id if run.tailored_documents else None
+    doc = run.tailored_documents[0] if run.tailored_documents else None
     return GenerationRunSummary(
         id=run.id,
         status=run.status,
@@ -64,7 +64,9 @@ def _to_summary(run) -> GenerationRunSummary:
         started_at=run.started_at,
         completed_at=run.completed_at,
         cost_estimate=float(run.cost_estimate) if run.cost_estimate else None,
-        tailored_document_id=doc_id,
+        tailored_document_id=doc.id if doc else None,
+        company_name=doc.company_name if doc else None,
+        role_title=doc.role_title if doc else None,
     )
 
 
@@ -124,3 +126,15 @@ def get_generation(run_id: str, user: CurrentUserDep, db: DbDep):
     if run.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
     return _to_detail(run)
+
+
+@router.delete("/{run_id}", status_code=204)
+def delete_generation(run_id: str, user: CurrentUserDep, db: DbDep):
+    """Delete a generation run and its associated tailored documents."""
+    repo = _run_repo(db)
+    run = repo.get_by_id(run_id)
+    if run is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Generation run not found")
+    if run.user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    repo.delete(run)

@@ -95,11 +95,11 @@ export function GenerationResult({ result }: GenerationResultProps) {
   ) => {
     if (!result.tailored_document_id) return;
     try {
-      const blob = await documents.downloadFormatted(result.tailored_document_id, part, format);
+      const { blob, filename } = await documents.downloadFormatted(result.tailored_document_id, part, format);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${part}.${format}`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();

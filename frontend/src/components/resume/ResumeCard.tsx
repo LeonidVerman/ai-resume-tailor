@@ -1,5 +1,5 @@
 // frontend/src/components/resume/ResumeCard.tsx
-import { FileText, Clock } from "lucide-react";
+import { FileText, Clock, Trash2 } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { formatDate } from "@/lib/utils";
 import type { StructuredResumeSummary } from "@/types/api";
@@ -9,17 +9,20 @@ interface ResumeCardProps {
   resume: StructuredResumeSummary;
   selected?: boolean;
   onSelect?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  deleting?: boolean;
 }
 
-export function ResumeCard({ resume, selected, onSelect }: ResumeCardProps) {
+export function ResumeCard({ resume, selected, onSelect, onDelete, deleting }: ResumeCardProps) {
   return (
     <Card
       onClick={() => onSelect?.(resume.id)}
       className={cn(
-        "cursor-pointer transition-all",
+        "transition-all",
+        onSelect ? "cursor-pointer" : "",
         selected
           ? "border-indigo-500 ring-2 ring-indigo-200"
-          : "hover:border-gray-300 hover:shadow"
+          : onSelect ? "hover:border-gray-300 hover:shadow" : ""
       )}
     >
       <CardBody className="flex items-center gap-3 py-3">
@@ -39,6 +42,15 @@ export function ResumeCard({ resume, selected, onSelect }: ResumeCardProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
+        )}
+        {onDelete && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(resume.id); }}
+            disabled={deleting}
+            className="shrink-0 p-1 text-gray-400 hover:text-red-600 disabled:opacity-40 transition-colors"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
         )}
       </CardBody>
     </Card>

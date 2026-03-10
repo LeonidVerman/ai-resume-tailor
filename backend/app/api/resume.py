@@ -115,3 +115,14 @@ def get_resume(resume_id: str, user: CurrentUserDep, db: DbDep):
     if resume.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
     return _to_response(resume)
+
+
+@router.delete("/{resume_id}", status_code=204)
+def delete_resume(resume_id: str, user: CurrentUserDep, db: DbDep):
+    """Soft-delete a stored resume (sets delete_flg=true; row and files are preserved)."""
+    resume = _repo(db).get_by_id(resume_id)
+    if resume is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
+    if resume.user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    _repo(db).delete(resume)

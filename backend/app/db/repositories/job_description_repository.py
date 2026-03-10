@@ -19,7 +19,7 @@ class JobDescriptionRepository:
     def list_by_user_id(self, user_id: str) -> list[JobDescription]:
         return (
             self._db.query(JobDescription)
-            .filter(JobDescription.user_id == user_id)
+            .filter(JobDescription.user_id == user_id, ~JobDescription.delete_flg)
             .order_by(JobDescription.created_at.desc())
             .all()
         )
@@ -38,5 +38,5 @@ class JobDescriptionRepository:
         return jd
 
     def delete(self, jd: JobDescription) -> None:
-        self._db.delete(jd)
+        jd.delete_flg = True
         self._db.flush()

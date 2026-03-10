@@ -4,8 +4,10 @@ backend/app/db/models/evaluation_run.py
 Evaluation run — stores quality scores for a completed generation run.
 """
 
-from sqlalchemy import ForeignKey
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from decimal import Decimal
+
+from sqlalchemy import ForeignKey, Numeric
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base, CreatedAtMixin, new_uuid
@@ -24,8 +26,12 @@ class EvaluationRun(Base, CreatedAtMixin):
         index=True,
     )
 
-    # Scores stored as JSONB dict keyed by dimension name (0.0 – 1.0; null if not evaluated)
-    scores_jsonb: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    # Individual score columns (0.0 – 1.0; null if not evaluated)
+    truthfulness_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4), nullable=True)
+    role_fit_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4), nullable=True)
+    clarity_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4), nullable=True)
+    seniority_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4), nullable=True)
+    integrated_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4), nullable=True)
 
     # Relationships
     generation_run: Mapped["GenerationRun"] = relationship(  # noqa: F821

@@ -14,6 +14,7 @@ import type { StructuredResumeSummary, StructuredResumeResponse } from "@/types/
 export default function ResumesPage() {
   const [list, setList] = useState<StructuredResumeSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     resumes
@@ -28,6 +29,18 @@ export default function ResumesPage() {
       { id: r.id, name: r.resume.name, created_at: r.created_at },
       ...prev,
     ]);
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id);
+    try {
+      await resumes.delete(id);
+      setList((prev) => prev.filter((r) => r.id !== id));
+    } catch {
+      // ignore
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -52,7 +65,12 @@ export default function ResumesPage() {
           ) : (
             <div className="space-y-2">
               {list.map((r) => (
-                <ResumeCard key={r.id} resume={r} />
+                <ResumeCard
+                  key={r.id}
+                  resume={r}
+                  onDelete={handleDelete}
+                  deleting={deletingId === r.id}
+                />
               ))}
             </div>
           )}

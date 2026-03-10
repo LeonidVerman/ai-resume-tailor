@@ -50,3 +50,7 @@ class GenerationRunRepository:
             setattr(run, key, value)
         self._db.flush()
         return run
+
+    def delete(self, run: GenerationRun) -> None:
+        self._db.delete(run)
+        self._db.flush()

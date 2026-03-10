@@ -4,7 +4,7 @@ backend/app/db/models/job_description.py
 Job description — supports both URL-scraped and manually pasted JDs.
 """
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import Boolean, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -27,6 +27,10 @@ class JobDescription(Base, CreatedAtMixin):
     source_type: Mapped[str | None] = mapped_column(String(32), nullable=True)  # scraped | manual
     raw_text: Mapped[str] = mapped_column(Text, nullable=False)
     metadata_jsonb: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    # Soft-delete flag — set to True instead of hard-deleting the row.
+    delete_flg: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="job_descriptions")  # noqa: F821
