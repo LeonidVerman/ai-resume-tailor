@@ -679,6 +679,74 @@ def _process_one_position(
 
 
 # ---------------------------------------------------------------------------
+# Single-document scoring (used by the SaaS backend evaluation service)
+# ---------------------------------------------------------------------------
+
+def score_single(resume: str, cover_letter: str) -> dict:
+    """Score one resume+cover-letter pair without job-description context.
+
+    Returns a dict with keys:
+        truthfulness, role_fit, clarity, seniority, integrated
+    All values are floats in [0.0, 1.0] (LLM 1-10 scores divided by 10),
+    or None if the LLM call fails or a key is missing.
+    """
+    assessment_input = {
+        "position_url": "",
+        "company": "",
+        "role_title": "",
+        "job_description_text": "",
+        "master_resume_text": "",
+        "master_cover_letter_text": "",
+        "candidate_profile_json": "",
+        "generated_resume_text": resume,
+        "generated_cover_letter_text": cover_letter,
+        "writer_packet_summary": {},
+        "validator_findings": {
+            "unsafe_noun_hits": [],
+            "missing_skills": [],
+            "missing_metrics": [],
+            "validation_ok": True,
+            "error_count": 0,
+        },
+    }
+
+    raw = _call_assess_llm(assessment_input, ASSESS_MODEL, ASSESS_TEMPERATURE)
+    raw_scores = raw.get("scores", {})
+
+    def _get(key: str) -> float | None:
+        entry = raw_scores.get(key)
+        if isinstance(entry, dict):
+            val = entry.get("score")
+            if isinstance(val, (int, float)):
+                return round(float(val) / 10.0, 4)
+        return None
+
+    truthfulness = _get("truthfulness")
+    role_fit = _get("role_fit")
+    clarity = _get("clarity_impact")
+    seniority = _get("seniority_positioning")
+
+    flat = {k: v for k, v in {
+        "truthfulness": truthfulness,
+        "role_fit": role_fit,
+        "clarity": clarity,
+        "seniority": seniority,
+    }.items() if v is not None}
+
+    integrated = (
+        round(sum(flat.values()) / len(flat), 4) if flat else None
+    )
+
+    return {
+        "truthfulness": truthfulness,
+        "role_fit": role_fit,
+        "clarity": clarity,
+        "seniority": seniority,
+        "integrated": integrated,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main pipeline
 # ---------------------------------------------------------------------------
 
