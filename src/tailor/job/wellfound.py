@@ -11,7 +11,6 @@ import json
 import re
 
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
 
 _STEALTH_INIT_SCRIPT = """
 Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
@@ -70,6 +69,7 @@ def _get_rendered_html_stealth(url):
         browser.close()
         return html
 
+    from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         try:
             return _launch(p, channel="chrome")
