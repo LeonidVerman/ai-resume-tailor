@@ -41,6 +41,36 @@ _DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.doc
 _PDF_MIME = "application/pdf"
 
 
+def _artifact_filename(company_name: str, part: str, fmt: str) -> str:
+    """Build a download filename matching the CLI's naming convention.
+
+    CLI logic (cli.py):
+        safe_company = "".join(c if c.isalnum() or c in "_-" else "_" for c in job.company)
+        resume_docx  = os.path.basename(RESUME_TEMPLATE).replace("Template", safe_company)
+        cover_docx   = os.path.basename(COVER_TEMPLATE).replace("Template", safe_company)
+
+    Template basenames:
+        Leonid_Verman_Resume_Template.docx  → Leonid_Verman_Resume_{company}.docx
+        Leonid_Verman_Cover_Letter_Template.docx → Leonid_Verman_Cover_Letter_{company}.docx
+
+    Examples:
+        company="Xero", part="resume",       fmt="docx" → Leonid_Verman_Resume_Xero.docx
+        company="Xero", part="cover_letter", fmt="pdf"  → Leonid_Verman_Cover_Letter_Xero.pdf
+    """
+    import os
+    from tailor.config import RESUME_TEMPLATE, COVER_TEMPLATE
+
+    safe_company = "".join(
+        c if c.isalnum() or c in "_-" else "_"
+        for c in (company_name or "Unknown")
+    )
+
+    template = RESUME_TEMPLATE if part == "resume" else COVER_TEMPLATE
+    stem = os.path.splitext(os.path.basename(str(template)))[0]  # strip .docx
+    name = stem.replace("Template", safe_company)
+    return f"{name}.{fmt}"
+
+
 def _repo(db) -> TailoredDocumentRepository:
     return TailoredDocumentRepository(db)
 
@@ -133,12 +163,18 @@ def download_document(
 
     text = jsonb.get("text", "")
 
+    # Build the artifact filename using the same logic as the CLI:
+    #   safe_company = non-alnum/underscore/dash chars replaced with "_"
+    #   template basename with "Template" replaced by safe_company
+    #   e.g. "Leonid_Verman_Resume_Template.docx" → "Leonid_Verman_Resume_Xero.docx"
+    filename = _artifact_filename(doc.company_name, part, format)
+
     # Plain text — backward compatible default.
     if format == "txt":
         return Response(
             content=text,
             media_type="text/plain; charset=utf-8",
-            headers={"Content-Disposition": f'attachment; filename="{part}.txt"'},
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
     # DOCX or PDF — render on-demand.
@@ -156,7 +192,6 @@ def download_document(
         )
 
     if format == "docx":
-        filename = f"{part}.docx"
         return Response(
             content=docx_bytes,
             media_type=_DOCX_MIME,
@@ -176,7 +211,6 @@ def download_document(
             detail=f"PDF rendering failed: {exc}",
         )
 
-    filename = f"{part}.pdf"
     return Response(
         content=pdf_bytes,
         media_type=_PDF_MIME,
