@@ -83,10 +83,28 @@ class RenderingService:
             'docker' — LibreOffice via Docker (high fidelity, requires Docker).
             'local'  — xhtml2pdf fallback (lower fidelity, no external deps).
         """
+        return self._docx_bytes_to_pdf(resume_docx_bytes, method=method)
+
+    def render_cover_letter_pdf(self, cover_letter_docx_bytes: bytes, method: str = "local") -> bytes:
+        """
+        Convert a cover letter DOCX (bytes) to PDF bytes.
+
+        Parameters
+        ----------
+        cover_letter_docx_bytes:
+            DOCX content as bytes (typically from render_cover_letter_docx).
+        method:
+            'docker' — LibreOffice via Docker (high fidelity, requires Docker).
+            'local'  — xhtml2pdf fallback (lower fidelity, no external deps).
+        """
+        return self._docx_bytes_to_pdf(cover_letter_docx_bytes, method=method)
+
+    def _docx_bytes_to_pdf(self, docx_bytes: bytes, method: str = "local") -> bytes:
+        """Convert DOCX bytes to PDF bytes via the specified method."""
         from tailor.docx.pdf import docx_to_pdf
 
         with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp_docx:
-            tmp_docx.write(resume_docx_bytes)
+            tmp_docx.write(docx_bytes)
             docx_path = tmp_docx.name
 
         pdf_path = os.path.splitext(docx_path)[0] + ".pdf"

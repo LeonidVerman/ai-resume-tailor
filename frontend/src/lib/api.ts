@@ -156,6 +156,26 @@ export const documents = {
     }
     return res.blob();
   },
+  // Download a rendered DOCX or PDF artifact.
+  downloadFormatted: async (
+    id: string,
+    part: "resume" | "cover_letter",
+    format: "docx" | "pdf",
+  ): Promise<Blob> => {
+    const userId = getStoredUserId();
+    const headers: Record<string, string> = {};
+    if (userId) headers["X-User-Id"] = userId;
+    const res = await fetch(
+      `${BASE_URL}/documents/${id}/download?part=${part}&format=${format}`,
+      { headers },
+    );
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try { const body = await res.json(); detail = body.detail ?? detail; } catch { /* ignore */ }
+      throw new ApiError(res.status, detail);
+    }
+    return res.blob();
+  },
 };
 
 // ── Billing ───────────────────────────────────────────────────────────────

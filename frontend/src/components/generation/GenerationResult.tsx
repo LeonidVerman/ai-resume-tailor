@@ -21,6 +21,17 @@ interface GenerationResultProps {
 
 type Phase = "pending" | "polling" | "done" | "failed";
 
+const ARTIFACTS: Array<{
+  part: "resume" | "cover_letter";
+  format: "docx" | "pdf";
+  label: string;
+}> = [
+  { part: "resume",       format: "docx", label: "Resume DOCX" },
+  { part: "resume",       format: "pdf",  label: "Resume PDF"  },
+  { part: "cover_letter", format: "docx", label: "Cover Letter DOCX" },
+  { part: "cover_letter", format: "pdf",  label: "Cover Letter PDF"  },
+];
+
 export function GenerationResult({ result }: GenerationResultProps) {
   const [phase, setPhase] = useState<Phase>(
     result.status === "succeeded" ? "done" : result.status === "failed" ? "failed" : "polling"
@@ -77,20 +88,24 @@ export function GenerationResult({ result }: GenerationResultProps) {
     failed: <Badge variant="danger">Failed</Badge>,
   }[phase];
 
-  const handleDownload = async (part: "resume" | "cover_letter") => {
+  const handleDownload = async (
+    part: "resume" | "cover_letter",
+    format: "docx" | "pdf",
+    label: string,
+  ) => {
     if (!result.tailored_document_id) return;
     try {
-      const blob = await documents.download(result.tailored_document_id, part);
+      const blob = await documents.downloadFormatted(result.tailored_document_id, part, format);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${part}.txt`;
+      a.download = `${part}.${format}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Download failed:", err);
+      console.error(`Download failed (${label}):`, err);
     }
   };
 
@@ -138,21 +153,17 @@ export function GenerationResult({ result }: GenerationResultProps) {
                 {doc.role_title} @ {doc.company_name}
               </p>
             )}
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => handleDownload("resume")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
-              >
-                <Download className="h-4 w-4" />
-                Download resume
-              </button>
-              <button
-                onClick={() => handleDownload("cover_letter")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
-              >
-                <Download className="h-4 w-4" />
-                Download cover letter
-              </button>
+            <div className="grid grid-cols-2 gap-2">
+              {ARTIFACTS.map(({ part, format, label }) => (
+                <button
+                  key={`${part}-${format}`}
+                  onClick={() => handleDownload(part, format, label)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
+                >
+                  <Download className="h-4 w-4 shrink-0" />
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
         )}

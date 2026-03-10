@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { generations, documents } from "@/lib/api";
-import type { GenerationRunSummary } from "@/types/api";
+import type { GenerationRunSummary, TailoredDocumentDetail } from "@/types/api";
 import { formatDateTime } from "@/lib/utils";
 
 const STATUS_ICON = {
@@ -27,25 +27,63 @@ const STATUS_VARIANT: Record<string, "success" | "danger" | "info" | "default"> 
   pending: "default",
 };
 
+// Artifact descriptors for the 4-link download panel.
+const ARTIFACTS: Array<{
+  part: "resume" | "cover_letter";
+  format: "docx" | "pdf";
+  label: string;
+}> = [
+  { part: "resume",       format: "docx", label: "Resume DOCX" },
+  { part: "resume",       format: "pdf",  label: "Resume PDF"  },
+  { part: "cover_letter", format: "docx", label: "Cover Letter DOCX" },
+  { part: "cover_letter", format: "pdf",  label: "Cover Letter PDF"  },
+];
+
+// Cache of fetched TailoredDocumentDetail keyed by document id.
+type DocCache = Record<string, TailoredDocumentDetail | null>;
+
 export default function HistoryPage() {
   const [runs, setRuns] = useState<GenerationRunSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
+  // Expanded row id (show download panel) — null = none expanded.
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [docCache, setDocCache] = useState<DocCache>({});
   const PAGE_SIZE = 20;
 
-  const handleDownload = async (docId: string, part: "resume" | "cover_letter") => {
+  const handleDownload = async (
+    docId: string,
+    part: "resume" | "cover_letter",
+    format: "docx" | "pdf",
+  ) => {
     try {
-      const blob = await documents.download(docId, part);
+      const blob = await documents.downloadFormatted(docId, part, format);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${part}.txt`;
+      a.download = `${part}.${format}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Download failed:", err);
+    }
+  };
+
+  // When a row is expanded, fetch the TailoredDocumentDetail once (cached).
+  const handleExpand = async (run: GenerationRunSummary) => {
+    const docId = run.tailored_document_id;
+    if (!docId) return;
+    const next = expanded === run.id ? null : run.id;
+    setExpanded(next);
+    if (next && !(docId in docCache)) {
+      try {
+        const doc = await documents.get(docId);
+        setDocCache((prev) => ({ ...prev, [docId]: doc }));
+      } catch {
+        setDocCache((prev) => ({ ...prev, [docId]: null }));
+      }
     }
   };
 
@@ -81,58 +119,99 @@ export default function HistoryPage() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {runs.map((run) => (
-            <Card key={run.id}>
-              <CardBody className="flex items-center gap-4 py-4">
-                {/* Status icon */}
-                <div className="shrink-0">
-                  {STATUS_ICON[run.status] ?? STATUS_ICON.pending}
-                </div>
+          {runs.map((run) => {
+            const docId = run.tailored_document_id;
+            const isExpanded = expanded === run.id;
+            const doc = docId ? docCache[docId] : undefined;
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900 font-mono truncate">
-                      {run.id.slice(0, 8)}…
-                    </span>
-                    <Badge variant={STATUS_VARIANT[run.status] ?? "default"}>
-                      {run.status}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {formatDateTime(run.started_at)}
-                    </span>
-                    <span>{run.model_name}</span>
-                    {run.cost_estimate != null && (
-                      <span>${run.cost_estimate.toFixed(4)}</span>
+            // Determine which parts have content (for disabling unavailable links).
+            // If doc is not yet fetched, assume both parts available for new records.
+            const hasResume = doc ? Boolean(doc.resume_json) : true;
+            const hasCoverLetter = doc ? Boolean(doc.cover_letter_json) : true;
+
+            const partAvailable = (part: "resume" | "cover_letter") =>
+              part === "resume" ? hasResume : hasCoverLetter;
+
+            return (
+              <Card key={run.id}>
+                <CardBody className="py-4 space-y-3">
+                  {/* Row summary */}
+                  <div className="flex items-center gap-4">
+                    {/* Status icon */}
+                    <div className="shrink-0">
+                      {STATUS_ICON[run.status] ?? STATUS_ICON.pending}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900 font-mono truncate">
+                          {run.id.slice(0, 8)}…
+                        </span>
+                        <Badge variant={STATUS_VARIANT[run.status] ?? "default"}>
+                          {run.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatDateTime(run.started_at)}
+                        </span>
+                        <span>{run.model_name}</span>
+                        {run.cost_estimate != null && (
+                          <span>${run.cost_estimate.toFixed(4)}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Expand/collapse downloads */}
+                    {run.status === "succeeded" && docId && (
+                      <div className="shrink-0">
+                        <button
+                          onClick={() => handleExpand(run)}
+                          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          {isExpanded ? "Hide" : "Downloads"}
+                        </button>
+                      </div>
                     )}
                   </div>
-                </div>
 
-                {/* Actions */}
-                {run.status === "succeeded" && run.tailored_document_id && (
-                  <div className="shrink-0 flex items-center gap-2">
-                    <button
-                      onClick={() => handleDownload(run.tailored_document_id!, "resume")}
-                      className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      Resume
-                    </button>
-                    <button
-                      onClick={() => handleDownload(run.tailored_document_id!, "cover_letter")}
-                      className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      Cover letter
-                    </button>
-                  </div>
-                )}
-              </CardBody>
-            </Card>
-          ))}
+                  {/* Expanded download panel — 4 artifact links */}
+                  {isExpanded && docId && (
+                    <div className="pt-1 border-t border-gray-100">
+                      {doc === null ? (
+                        // Document fetch failed — graceful degradation
+                        <p className="text-xs text-gray-400">Artifact details unavailable.</p>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {ARTIFACTS.map(({ part, format, label }) => {
+                            const available = partAvailable(part);
+                            return (
+                              <button
+                                key={`${part}-${format}`}
+                                onClick={() => available && handleDownload(docId, part, format)}
+                                disabled={!available}
+                                className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-colors ${
+                                  available
+                                    ? "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 cursor-pointer"
+                                    : "bg-gray-50 text-gray-300 cursor-not-allowed"
+                                }`}
+                              >
+                                <Download className="h-3.5 w-3.5 shrink-0" />
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardBody>
+              </Card>
+            );
+          })}
 
           {/* Pagination */}
           <div className="flex justify-between items-center pt-2">

@@ -26,6 +26,9 @@ class StructuredResume(Base, CreatedAtMixin):
     )
     resume_jsonb: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     source_file_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Set when the uploaded file was converted from PDF to DOCX.
+    # Contains the user-visible disclaimer; None for DOCX uploads.
+    input_conversion_warning: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="structured_resumes")  # noqa: F821

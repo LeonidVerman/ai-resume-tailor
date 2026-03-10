@@ -38,11 +38,58 @@ logger = logging.getLogger(__name__)
 # ── Text extraction ────────────────────────────────────────────────────────
 
 def extract_text_from_docx(data: bytes) -> str:
-    """Extract plain text from a DOCX file given as bytes."""
+    """Extract plain text from a DOCX file given as bytes.
+
+    Handles both standard DOCX files and LibreOffice-converted files.
+
+    LibreOffice PDF→DOCX conversion wraps every text box inside an
+    ``<mc:AlternateContent>`` element that contains both a ``<mc:Choice>``
+    (real content) and a ``<mc:Fallback>`` (duplicate for old viewers).
+    Standard ``doc.paragraphs`` only sees body-level paragraphs and misses
+    text boxes entirely, so we collect paragraphs from the full XML tree
+    while skipping anything inside a ``<mc:Fallback>`` to avoid duplicates.
+    """
     from docx import Document
+    from docx.oxml.ns import qn
+
     doc = Document(io.BytesIO(data))
-    paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
-    return "\n".join(paragraphs)
+
+    W  = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    MC = "http://schemas.openxmlformats.org/markup-compatibility/2006"
+    _FALLBACK = "{%s}Fallback" % MC
+    _T        = "{%s}t" % W
+    _P        = "{%s}p" % W
+
+    body = doc.element.body
+
+    def _in_fallback(elem) -> bool:
+        """Return True if elem is a descendant of an mc:Fallback element.
+
+        lxml proxy objects are recreated on each iter() call so id()-based
+        sets are unreliable.  Walking the parent chain is O(depth) but
+        always correct.
+        """
+        parent = elem.getparent()
+        while parent is not None:
+            if parent.tag == _FALLBACK:
+                return True
+            parent = parent.getparent()
+        return False
+
+    # Walk all paragraphs in document order, skipping Fallback descendants.
+    lines: list[str] = []
+    for para in body.iter(_P):
+        if _in_fallback(para):
+            continue
+        text = "".join(
+            elem.text
+            for elem in para.iter(_T)
+            if elem.text and not _in_fallback(elem)
+        )
+        if text.strip():
+            lines.append(text)
+
+    return "\n".join(lines)
 
 
 def extract_text_from_pdf(data: bytes) -> str:

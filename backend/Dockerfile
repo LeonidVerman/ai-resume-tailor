@@ -8,13 +8,15 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies needed for psycopg, lxml, and xhtml2pdf (pycairo)
+# Install system dependencies needed for psycopg, lxml, xhtml2pdf (pycairo),
+# and LibreOffice (used for PDF→DOCX and DOCX→PDF conversion).
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
     libcairo2-dev \
     pkg-config \
     python3-dev \
+    libreoffice \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency manifests first (layer cache friendly)

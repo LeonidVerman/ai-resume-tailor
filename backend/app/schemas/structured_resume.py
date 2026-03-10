@@ -82,6 +82,8 @@ class StructuredResumeResponse(APIModel):
     user_id: str
     resume: StructuredResumeDocument
     source_file_url: str | None = None
+    # Non-None when the uploaded file was a PDF and was converted to DOCX.
+    input_conversion_warning: str | None = None
     created_at: datetime
 
 

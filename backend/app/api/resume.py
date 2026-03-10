@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from backend.app.dependencies import CurrentUserDep, DbDep
 from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
 from backend.app.schemas.structured_resume import StructuredResumeResponse, StructuredResumeSummary
+from backend.app.services.document_normalization_service import normalize_input_document
 from backend.app.services.resume_parser_service import ResumeParserService
 
 router = APIRouter()
@@ -42,6 +43,7 @@ def _to_response(resume) -> StructuredResumeResponse:
         user_id=resume.user_id,
         resume=doc,
         source_file_url=resume.source_file_url,
+        input_conversion_warning=resume.input_conversion_warning,
         created_at=resume.created_at,
     )
 
@@ -72,13 +74,27 @@ async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep):
         )
 
     filename = file.filename or "resume.docx"
+
+    # Normalize to DOCX (converts PDF via LibreOffice if needed).
+    try:
+        norm = normalize_input_document(data, filename)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        )
+
+    # Parse from the normalized DOCX bytes (or original bytes for other types).
     svc = ResumeParserService()
-    doc = svc.parse(data, filename)
+    # Treat the normalized file as DOCX if conversion was performed.
+    parse_filename = "resume.docx" if norm.conversion_performed else filename
+    doc = svc.parse(norm.normalized_data, parse_filename)
 
     resume = _repo(db).create(
         user_id=user.id,
         resume_jsonb=doc.model_dump(mode="json"),
         source_file_url=None,  # storage upload deferred
+        input_conversion_warning=norm.warning_message,
     )
     return _to_response(resume)
 

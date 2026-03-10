@@ -121,6 +121,7 @@ export interface StructuredResumeResponse {
   user_id: string;
   resume: StructuredResumeDocument;
   source_file_url?: string;
+  input_conversion_warning?: string;
   created_at: string;
 }
 

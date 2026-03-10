@@ -550,3 +550,167 @@ def docx_to_pdf(docx_path, method="docker", docker_image=DOCKER_IMAGE_DEFAULT):
         _docx_to_pdf_local(docx_path)
     else:
         raise ValueError(f"Unknown method {method!r}.  Use 'docker' or 'local'.")
+
+
+# ---------------------------------------------------------------------------
+# PDF → DOCX conversion
+# ---------------------------------------------------------------------------
+
+def _pdf_to_docx_subprocess(pdf_path):
+    """Convert a .pdf to .docx using libreoffice subprocess.
+
+    LibreOffice must be installed on the host system (available in PATH).
+    Produces a .docx file next to the source PDF.
+
+    Parameters
+    ----------
+    pdf_path : str
+        Absolute path to the source .pdf file.
+
+    Returns
+    -------
+    str
+        Path to the generated .docx file.
+
+    Raises
+    ------
+    RuntimeError
+        If libreoffice is not found, times out, or conversion fails.
+    """
+    import subprocess
+
+    pdf_abs = os.path.abspath(pdf_path)
+    out_dir = os.path.dirname(pdf_abs)
+    docx_dest = os.path.splitext(pdf_abs)[0] + ".docx"
+
+    # --infilter forces LibreOffice to open the PDF as a Writer document
+    # (without it, LibreOffice opens PDFs as Draw documents, which cannot
+    # be exported to DOCX format).  The filter name must be quoted as a
+    # single argument — no space between flag and value.
+    cmd = [
+        "libreoffice", "--headless",
+        "--infilter=writer_pdf_import",
+        "--convert-to", "docx:MS Word 2007 XML",
+        pdf_abs,
+        "--outdir", out_dir,
+    ]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    except FileNotFoundError:
+        raise RuntimeError(
+            "LibreOffice executable not found.  Install LibreOffice and ensure "
+            "it is available in PATH — or use method='docker' for Docker-based conversion."
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("LibreOffice PDF→DOCX conversion timed out after 120 s.")
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "(no output)").strip()
+        raise RuntimeError(
+            f"LibreOffice PDF→DOCX conversion failed (exit {result.returncode}):\n{detail}"
+        )
+
+    if not os.path.exists(docx_dest):
+        raise RuntimeError(
+            f"Conversion appeared to succeed but DOCX was not found at:\n{docx_dest}"
+        )
+
+    return docx_dest
+
+
+def _pdf_to_docx_docker(pdf_path, docker_image=DOCKER_IMAGE_DEFAULT):
+    """Convert a .pdf to .docx using LibreOffice headless inside Docker.
+
+    Mirrors the approach used by _docx_to_pdf_docker().
+
+    Parameters
+    ----------
+    pdf_path : str
+        Path to the source .pdf file.
+    docker_image : str
+        Docker image to run (must have LibreOffice installed).
+
+    Returns
+    -------
+    str
+        Path to the generated .docx file.
+    """
+    import platform
+    import shlex
+    import subprocess
+
+    pdf_abs  = os.path.abspath(pdf_path)
+    pdf_dir  = os.path.dirname(pdf_abs)
+    pdf_name = os.path.basename(pdf_abs)
+    docx_dest = os.path.splitext(pdf_abs)[0] + ".docx"
+
+    def _dp(p):
+        return p.replace("\\", "/")
+
+    volumes = [f"{_dp(pdf_dir)}:/data"]
+
+    cmd = ["docker", "run", "--rm"]
+    for v in volumes:
+        cmd += ["--volume", v]
+    cmd.append(docker_image)
+
+    quoted = shlex.quote(f"/data/{pdf_name}")
+    cmd += [
+        "libreoffice", "--headless",
+        "--infilter=writer_pdf_import",
+        "--convert-to", "docx:MS Word 2007 XML",
+        f"/data/{pdf_name}", "--outdir", "/data",
+    ]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+    except FileNotFoundError:
+        raise RuntimeError(
+            "Docker executable not found.  Install Docker Desktop, ensure it is "
+            "running, then retry — or use method='subprocess' for direct LibreOffice."
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("LibreOffice Docker PDF→DOCX conversion timed out after 180 s.")
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "(no output)").strip()
+        raise RuntimeError(
+            f"LibreOffice Docker PDF→DOCX conversion failed (exit {result.returncode}):\n{detail}"
+        )
+
+    if not os.path.exists(docx_dest):
+        raise RuntimeError(
+            f"Conversion appeared to succeed but DOCX was not found at:\n{docx_dest}"
+        )
+
+    return docx_dest
+
+
+def pdf_to_docx(pdf_path, method="subprocess", docker_image=DOCKER_IMAGE_DEFAULT):
+    """Convert a .pdf to .docx next to the source file.
+
+    Parameters
+    ----------
+    pdf_path : str
+        Path to the source .pdf file.
+    method : {'subprocess', 'docker'}
+        ``'subprocess'`` (default) — call ``libreoffice`` directly; requires
+        LibreOffice to be installed on the host system.
+
+        ``'docker'`` — LibreOffice headless inside Docker; portable but
+        requires Docker Desktop to be running.
+    docker_image : str
+        Docker image to use when *method* is ``'docker'``.
+
+    Returns
+    -------
+    str
+        Path to the generated .docx file (next to the source PDF).
+    """
+    if method == "subprocess":
+        return _pdf_to_docx_subprocess(pdf_path)
+    elif method == "docker":
+        return _pdf_to_docx_docker(pdf_path, docker_image=docker_image)
+    else:
+        raise ValueError(f"Unknown method {method!r}.  Use 'subprocess' or 'docker'.")

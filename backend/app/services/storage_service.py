@@ -62,6 +62,13 @@ class StorageService:
         logger.info("Uploaded cover_letter.docx key=%s", key)
         return key
 
+    def upload_cover_letter_pdf(self, user_id: str, run_id: str, data: bytes) -> str:
+        """Upload cover letter PDF; returns the storage object key."""
+        key = self._key(user_id, run_id, "cover_letter.pdf")
+        self._storage.upload_bytes(data, key)
+        logger.info("Uploaded cover_letter.pdf key=%s", key)
+        return key
+
     # ── Download ───────────────────────────────────────────────────────────
 
     def get_signed_url(self, key: str, expires_in: int = _URL_EXPIRY_SECONDS) -> str:
@@ -72,7 +79,7 @@ class StorageService:
 
     def delete_run_objects(self, user_id: str, run_id: str) -> None:
         """Delete all objects associated with a generation run."""
-        for filename in ("resume.docx", "resume.pdf", "cover_letter.docx"):
+        for filename in ("resume.docx", "resume.pdf", "cover_letter.docx", "cover_letter.pdf"):
             key = self._key(user_id, run_id, filename)
             try:
                 self._storage.delete_object(key)
