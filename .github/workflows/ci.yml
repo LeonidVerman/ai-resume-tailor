@@ -21,6 +21,9 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
+      - name: Install system dependencies
+        run: sudo apt-get install -y libcairo2-dev
+
       - name: Install CLI dependencies
         run: pip install -e ".[dev]"
 
@@ -58,6 +61,9 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
+
+      - name: Install system dependencies
+        run: sudo apt-get install -y libcairo2-dev
 
       - name: Install backend dependencies
         run: pip install -e "backend/[dev]"
