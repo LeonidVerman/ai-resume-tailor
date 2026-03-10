@@ -52,8 +52,8 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["app*"]
+where = [".."]
+include = ["backend*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
