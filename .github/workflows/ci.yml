@@ -65,6 +65,9 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get install -y libcairo2-dev
 
+      - name: Install tailor CLI package
+        run: pip install -e . --no-deps && pip install openai requests python-dotenv beautifulsoup4 "python-docx>=1.1" "xhtml2pdf>=0.2"
+
       - name: Install backend dependencies
         run: pip install -e "backend/[dev]"
 
