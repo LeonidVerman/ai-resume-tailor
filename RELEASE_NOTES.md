@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.5.0.BETA — 2026-03-10
+
+Initial SaaS version.
+
+---
+
 ## 0.1.8.ALPHA — 2026-03-07
 
 ### Fixed
