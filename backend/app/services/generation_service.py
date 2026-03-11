@@ -33,6 +33,7 @@ from datetime import datetime, timezone
 
 from backend.app.db.models.generation_run import GenerationRun
 from backend.app.db.repositories.admin_config_repository import AdminConfigRepository
+from backend.app.db.repositories.candidate_profile_repository import CandidateProfileRepository
 from backend.app.db.repositories.generation_run_repository import GenerationRunRepository
 from backend.app.db.repositories.job_description_repository import JobDescriptionRepository
 from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
@@ -54,6 +55,7 @@ class GenerationService:
     doc_repo:    TailoredDocumentRepository
     jd_repo:     JobDescriptionRepository
     resume_repo: StructuredResumeRepository
+    profile_repo: CandidateProfileRepository
     """
 
     def __init__(
@@ -62,11 +64,13 @@ class GenerationService:
         doc_repo: TailoredDocumentRepository,
         jd_repo: JobDescriptionRepository,
         resume_repo: StructuredResumeRepository,
+        profile_repo: CandidateProfileRepository,
     ) -> None:
         self._run_repo = run_repo
         self._doc_repo = doc_repo
         self._jd_repo = jd_repo
         self._resume_repo = resume_repo
+        self._profile_repo = profile_repo
 
     def generate(
         self, user_id: str, request: GenerationRequest
@@ -98,6 +102,11 @@ class GenerationService:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Structured resume not found")
 
+        # ── Load candidate profile from DB ─────────────────────────────────
+        candidate_profile_text = _build_candidate_profile_text(
+            self._profile_repo.get_by_user_id(user_id)
+        )
+
         # ── Create run record ──────────────────────────────────────────────
         run = self._run_repo.create(
             user_id=user_id,
@@ -120,6 +129,7 @@ class GenerationService:
                 jd_company=meta.get("company", ""),
                 jd_job_title=meta.get("job_title", ""),
                 resume_raw_text=resume.resume_jsonb.get("raw_text", "") if resume.resume_jsonb else "",
+                candidate_profile_text=candidate_profile_text,
                 simple_model=simple_model,
                 phase1_model=phase1_model,
                 phase2_model=phase2_model,
@@ -184,6 +194,7 @@ class GenerationService:
         jd_company: str,
         jd_job_title: str,
         resume_raw_text: str,
+        candidate_profile_text: str | None = None,
         simple_model: str | None = None,
         phase1_model: str | None = None,
         phase2_model: str | None = None,
@@ -213,11 +224,15 @@ class GenerationService:
         ):
             if run_type == "two_phase" and ENABLE_TWO_PHASE:
                 result, messages, debug_meta = self._run_two_phase(
-                    job, resume_template, cover_template
+                    job, resume_template, cover_template,
+                    candidate_profile=candidate_profile_text,
                 )
             else:
                 from tailor.core_generation.llm import tailor_documents
-                result, llm_req = tailor_documents(job, resume_template, cover_template)
+                result, llm_req = tailor_documents(
+                    job, resume_template, cover_template,
+                    candidate_profile=candidate_profile_text,
+                )
                 result, messages, debug_meta = result, [llm_req], {"llm_request": llm_req}
 
         # Compute resume diff and store in debug_meta (mirrors CLI behaviour).
@@ -229,7 +244,7 @@ class GenerationService:
         token_input, token_output, cost = _extract_usage_from_messages(messages)
         return result, token_input, token_output, cost, debug_meta
 
-    def _run_two_phase(self, job, resume_template, cover_template):
+    def _run_two_phase(self, job, resume_template, cover_template, candidate_profile=None):
         """
         Run Phase 1 (plan) + Phase 2 (write) with optional repair.
 
@@ -263,7 +278,8 @@ class GenerationService:
             try:
                 if not is_repair:
                     raw_plan, p1_messages, p1_meta = plan_tailoring(
-                        job, resume_template, cover_template
+                        job, resume_template, cover_template,
+                        candidate_profile=candidate_profile,
                     )
                 else:
                     can_repair = bool(prev_raw_plan)
@@ -272,10 +288,12 @@ class GenerationService:
                             prev_raw_plan,
                             schema_errors + validation_errors,
                             job, resume_template, cover_template,
+                            candidate_profile=candidate_profile,
                         )
                     else:
                         raw_plan, p1_messages, p1_meta = plan_tailoring(
-                            job, resume_template, cover_template
+                            job, resume_template, cover_template,
+                            candidate_profile=candidate_profile,
                         )
             except Exception as exc:
                 logger.warning("Phase 1 attempt %d failed: %s", attempt, exc)
@@ -318,11 +336,15 @@ class GenerationService:
 
         if plan is None:
             logger.warning("Phase 1 failed after 2 attempts; falling back to single-pass")
-            result, llm_req = tailor_documents(job, resume_template, cover_template)
+            result, llm_req = tailor_documents(
+                job, resume_template, cover_template,
+                candidate_profile=candidate_profile,
+            )
             return result, [llm_req], {"llm_request": llm_req, "phase1": phase1_debug}
 
         result, p2_messages, p2_meta = tailor_documents_with_plan(
-            plan, job, resume_template, cover_template
+            plan, job, resume_template, cover_template,
+            candidate_profile=candidate_profile,
         )
         all_messages = [p1_messages, p2_messages]
         return result, all_messages, {
@@ -367,6 +389,19 @@ def _override_models(
         _llm.SIMPLE_MODEL = orig["SIMPLE_MODEL"]
         _llm.PHASE1_MODEL = orig["PHASE1_MODEL"]
         _llm.PHASE2_MODEL = orig["PHASE2_MODEL"]
+
+
+def _build_candidate_profile_text(profile) -> str | None:
+    """
+    Serialize a CandidateProfile DB record to a JSON string for injection
+    into the LLM prompt, matching the structure of profile/candidate_profile.json.
+
+    Returns None when no profile exists (pipeline will fall back to the CLI file).
+    """
+    if profile is None or not profile.profile_jsonb:
+        return None
+    import json
+    return json.dumps(profile.profile_jsonb, ensure_ascii=False, indent=2)
 
 
 def _save_run_data(

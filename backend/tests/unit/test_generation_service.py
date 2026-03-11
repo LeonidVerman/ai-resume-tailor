@@ -74,11 +74,15 @@ def _make_service(user_id: str, jd=None, resume=None, run=None, doc=None):
     doc_repo = MagicMock()
     doc_repo.create.return_value = doc
 
+    profile_repo = MagicMock()
+    profile_repo.get_by_user_id.return_value = None  # no profile → falls back to file
+
     svc = GenerationService(
         run_repo=run_repo,
         doc_repo=doc_repo,
         jd_repo=jd_repo,
         resume_repo=resume_repo,
+        profile_repo=profile_repo,
     )
     return svc, jd, resume, run, doc, run_repo, doc_repo
 

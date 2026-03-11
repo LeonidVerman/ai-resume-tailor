@@ -26,6 +26,7 @@ the billing service and can be added here when billing is live.
 from fastapi import APIRouter, HTTPException, status
 
 from backend.app.dependencies import CurrentUserDep, DbDep
+from backend.app.db.repositories.candidate_profile_repository import CandidateProfileRepository
 from backend.app.db.repositories.generation_run_repository import GenerationRunRepository
 from backend.app.db.repositories.job_description_repository import JobDescriptionRepository
 from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
@@ -47,6 +48,7 @@ def _service(db) -> GenerationService:
         doc_repo=TailoredDocumentRepository(db),
         jd_repo=JobDescriptionRepository(db),
         resume_repo=StructuredResumeRepository(db),
+        profile_repo=CandidateProfileRepository(db),
     )
 
 

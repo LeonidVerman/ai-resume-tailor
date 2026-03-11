@@ -387,6 +387,7 @@ def plan_tailoring(
     job: JobData,
     resume_template: str,
     cover_template: str,
+    candidate_profile: str | None = None,
 ) -> tuple[dict, list, dict]:
     """Phase 1: produce a structured TailoringPlan JSON.
 
@@ -409,7 +410,7 @@ def plan_tailoring(
         Dict with ``model``, ``usage`` (token counts), ``raw_response``.
     """
     planner_instructions = _load_prompt("phase1")
-    profile = _load_candidate_profile()
+    profile = _load_candidate_profile(candidate_profile)
 
     d = date.today()
     current_date = f"{d.strftime('%B')} {d.day}, {d.year}"
@@ -488,6 +489,7 @@ def plan_repair_tailoring(
     resume_template: str,
     cover_template: str,
     raw_text: str | None = None,
+    candidate_profile: str | None = None,
 ) -> tuple[dict, list, dict]:
     """Phase 1 repair: rebuild a plan that failed schema or deep validation.
 
@@ -512,7 +514,7 @@ def plan_repair_tailoring(
         Dict with ``model``, ``usage``, ``raw_response``.
     """
     repair_instructions = _load_prompt("phase1_repair")
-    profile = _load_candidate_profile()
+    profile = _load_candidate_profile(candidate_profile)
 
     try:
         domain_rules = load_domain_translation_rules()
@@ -625,6 +627,7 @@ def tailor_documents_with_plan(
     job: JobData,
     resume_template: str,
     cover_template: str,
+    candidate_profile: str | None = None,
 ) -> tuple[TailorResult, list, dict]:
     """Phase 2: generate + validate + optionally repair tailored documents.
 
@@ -646,7 +649,7 @@ def tailor_documents_with_plan(
         Dict containing writer_packet, attempts (per-call details),
         final_validation_ok, model, usage.
     """
-    profile_str = _load_candidate_profile()
+    profile_str = _load_candidate_profile(candidate_profile)
 
     d = date.today()
     current_date = f"{d.strftime('%B')} {d.day}, {d.year}"
@@ -1056,6 +1059,7 @@ def tailor_documents(
     job: JobData,
     resume_template: str,
     cover_template: str,
+    candidate_profile: str | None = None,
 ) -> tuple[TailorResult, list]:
     """Single-pass generate a tailored resume and cover letter (fallback).
 
@@ -1074,7 +1078,7 @@ def tailor_documents(
         )
         if part
     )
-    profile = _load_candidate_profile()
+    profile = _load_candidate_profile(candidate_profile)
 
     messages: list = [
         {"role": "developer", "content": developer_instructions},
