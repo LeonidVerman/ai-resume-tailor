@@ -23,20 +23,15 @@ export interface CandidateIdentity {
   summary?: string;
 }
 
-export interface TechnicalSkills {
-  languages?: string[];
-  backend_systems?: string[];
-  datastores?: string[];
-  infra_devops?: string[];
-  api_patterns?: string[];
-  async_messaging?: string[];
-  observability?: string[];
-  other?: Record<string, string[]>;
+export interface DomainExperience {
+  primary: string[];
+  secondary: string[];
 }
 
 export interface ExperienceHighlight {
   area: string;
   market?: string;
+  employer_relationship?: string;
   impact: string[];
   team_context: string[];
   architecture_patterns: string[];
@@ -44,19 +39,50 @@ export interface ExperienceHighlight {
   skills_applied: string[];
 }
 
-export interface DomainExperience {
-  primary: string[];
-  secondary: string[];
+export interface TechnicalSkills {
+  languages: string[];
+  backend_systems: string[];
+  datastores: string[];
+  infra_devops: string[];
+  api_patterns: string[];
+  async_messaging: string[];
+  observability: string[];
+}
+
+export interface LeadershipScope {
+  team_size_max: number | null;
+  style_keywords: string[];
+}
+
+export interface Leadership {
+  scope: LeadershipScope;
+  practices: string[];
+  risk_management: string[];
+}
+
+export interface AIToolingPractice {
+  hands_on_tools: string[];
+  usage_patterns: string[];
+  principles: string[];
+  concepts_familiarity: string[];
+}
+
+export interface ConstraintsAndPreferences {
+  work_context: string[];
+  communication: string[];
+  resume_constraint: string[];
 }
 
 export interface CandidateProfileDocument {
-  candidate_profile_version: "1.0";
+  candidate_profile_version: "1.0" | "1.1";
   candidate: CandidateIdentity;
-  domains?: DomainExperience;
+  domains: DomainExperience;
   experience_highlights: ExperienceHighlight[];
-  technical_skills?: TechnicalSkills;
-  scalability_reliability_patterns?: string[];
-  role_fit_themes?: string[];
+  technical_skills: TechnicalSkills;
+  leadership: Leadership;
+  ai_tooling_practice: AIToolingPractice;
+  role_fit_themes: string[];
+  constraints_and_preferences: ConstraintsAndPreferences;
 }
 
 export interface CandidateProfileResponse {

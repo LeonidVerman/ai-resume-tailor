@@ -1,0 +1,130 @@
+{
+  "candidate.name": {
+    "description": "Candidate full name",
+    "examples": ["Leonid Verman"]
+  },
+  "candidate.headline": {
+    "description": "Short professional headline used to summarize profile",
+    "examples": ["Senior backend engineer & engineering leader", "Engineering manager, SaaS platforms"]
+  },
+  "candidate.summary": {
+    "description": "Short factual profile summary. Use real experience only.",
+    "examples": ["Senior backend engineer and engineering leader with 10-15+ years focused on high-performance, fault-tolerant distributed systems in fintech and crypto. Scaled production systems to 1M+ users under regulatory constraints."]
+  },
+  "domains.primary": {
+    "description": "Main industries or problem areas. One per line.",
+    "examples": ["fintech", "crypto_exchange", "blockchain"]
+  },
+  "domains.secondary": {
+    "description": "Related industries or adjacent areas. One per line.",
+    "examples": ["payments", "risk_controls", "regulated_systems"]
+  },
+  "experience_highlights.area": {
+    "description": "Main area or initiative this highlight represents",
+    "examples": ["crypto_exchange_platform", "ai_model_training_evaluation"]
+  },
+  "experience_highlights.impact": {
+    "description": "Key achievements or responsibilities. One per line.",
+    "examples": ["Built and launched a cryptocurrency exchange for the Japanese market", "Scaled from early stage to 1M+ users"]
+  },
+  "experience_highlights.market": {
+    "description": "Target geography, customer segment, or market context",
+    "examples": ["Japan"]
+  },
+  "experience_highlights.team_context": {
+    "description": "Team size, role in team, leadership scope. One per line.",
+    "examples": ["Initial team size: 4 engineers", "Later led teams up to 15-20 engineers"]
+  },
+  "experience_highlights.architecture_patterns": {
+    "description": "Technical mechanisms actually used in this work. One per line.",
+    "examples": ["Horizontal scaling of trading servers", "Database read replicas for read-heavy GET endpoints", "Multiple caching layers to reduce DB load"]
+  },
+  "experience_highlights.constraints_and_tradeoffs": {
+    "description": "Important constraints, deadlines, or tradeoffs. One per line.",
+    "examples": ["Fast go-live timeline due to regulatory approval timeline", "Regulatory constraints made some database partitioning/sharding approaches harder"]
+  },
+  "experience_highlights.employer_relationship": {
+    "description": "Employment type or relationship if relevant",
+    "examples": ["independent_contractor_via_platform"]
+  },
+  "experience_highlights.skills_applied": {
+    "description": "Specific skills used in this highlight. One per line.",
+    "examples": ["senior-level software engineering problem solving", "ambiguity handling", "evaluation of solution robustness and reasoning quality"]
+  },
+  "technical_skills.languages": {
+    "description": "Programming languages. One per line.",
+    "examples": ["Java", "C#", "Python", "TypeScript"]
+  },
+  "technical_skills.backend_systems": {
+    "description": "Backend engineering expertise. One per line.",
+    "examples": ["high-throughput APIs", "distributed systems", "fault tolerance", "low-latency design", "event-driven architecture"]
+  },
+  "technical_skills.datastores": {
+    "description": "Databases and storage systems. One per line.",
+    "examples": ["MySQL", "PostgreSQL", "Redis", "Oracle"]
+  },
+  "technical_skills.infra_devops": {
+    "description": "Infrastructure and DevOps tools. One per line.",
+    "examples": ["AWS", "Docker", "Kubernetes", "CI/CD"]
+  },
+  "technical_skills.api_patterns": {
+    "description": "API design patterns. One per line.",
+    "examples": ["REST", "WebSockets"]
+  },
+  "technical_skills.async_messaging": {
+    "description": "Async and messaging experience. One per line.",
+    "examples": ["message_queues", "idempotent_processing", "Kafka", "RabbitMQ"]
+  },
+  "technical_skills.observability": {
+    "description": "Observability and monitoring approach. One per line.",
+    "examples": ["metrics_logs_tracing_mindset"]
+  },
+  "leadership.scope.team_size_max": {
+    "description": "Largest team you have directly led",
+    "examples": ["20"]
+  },
+  "leadership.scope.style_keywords": {
+    "description": "Keywords describing your leadership style. One per line.",
+    "examples": ["results", "clarity", "accountability", "continuous_improvement", "ownership"]
+  },
+  "leadership.practices": {
+    "description": "Specific leadership practices you apply. One per line.",
+    "examples": ["clear_task_definition_and_expectations", "transparent_decision_making", "code_review_as_collaborative_quality_process", "mentorship_and_standards"]
+  },
+  "leadership.risk_management": {
+    "description": "Risk management approach. One per line.",
+    "examples": ["pushes_back_on_risky_changes_that_threaten_production_stability", "prefers_guardrails_for_innovation_in_regulated_systems"]
+  },
+  "ai_tooling_practice.hands_on_tools": {
+    "description": "AI tools you actively use. One per line.",
+    "examples": ["Cursor", "ChatGPT", "Claude Code", "OpenAI API"]
+  },
+  "ai_tooling_practice.usage_patterns": {
+    "description": "How you use AI tools. One per line.",
+    "examples": ["prototyping_new_modules", "investigating_problems_and_root_causes", "rapid_learning_of_new_tools_and_tech", "model_evaluation"]
+  },
+  "ai_tooling_practice.principles": {
+    "description": "Principles guiding your AI usage. One per line.",
+    "examples": ["engineer_remains_accountable", "avoid_pasting_sensitive_data", "security_and_safety_first_in_regulated_contexts"]
+  },
+  "ai_tooling_practice.concepts_familiarity": {
+    "description": "AI concepts you are familiar with. One per line.",
+    "examples": ["RAG", "vector_databases", "LLM_capabilities_and_limits"]
+  },
+  "role_fit_themes": {
+    "description": "Areas where you are especially strong or should be positioned. One per line.",
+    "examples": ["fintech_backend", "crypto_and_blockchain_infrastructure", "high_throughput_low_latency_systems", "distributed_backend_architecture", "ai_platform_or_llm_integration"]
+  },
+  "constraints_and_preferences.work_context": {
+    "description": "Work environment preferences. One per line.",
+    "examples": ["mission_critical", "highly_regulated_environments"]
+  },
+  "constraints_and_preferences.communication": {
+    "description": "Communication strengths. One per line.",
+    "examples": ["strong_written_and_verbal", "cross_functional_collaboration"]
+  },
+  "constraints_and_preferences.resume_constraint": {
+    "description": "Specific resume presentation constraints. One per line.",
+    "examples": ["when describing current contracting work, clearly mark as independent contractor", "avoid implying employee status where relevant"]
+  }
+}

@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   LogOut,
   Wand2,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +28,7 @@ const navItems = [
 const resourceItems = [
   { href: "/resumes", label: "Resumes", icon: FileText },
   { href: "/jobs", label: "Job Descriptions", icon: Briefcase },
+  { href: "/profile", label: "Profile", icon: User },
 ];
 
 export function Sidebar() {
