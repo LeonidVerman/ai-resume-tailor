@@ -39,6 +39,26 @@ const ARTIFACTS: Array<{
   { part: "cover_letter", format: "pdf",  label: "Cover Letter PDF"  },
 ];
 
+/** Displays the first 8 chars of a run ID; click copies the full UUID. */
+function RunIdBadge({ id }: { id: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(id).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+  return (
+    <button
+      onClick={copy}
+      title={`Run ID: ${id} — click to copy`}
+      className="font-mono text-gray-400 hover:text-gray-700 transition-colors"
+    >
+      {copied ? "✓ copied" : id.slice(0, 8) + "…"}
+    </button>
+  );
+}
+
 // Cache of fetched TailoredDocumentDetail keyed by document id.
 type DocCache = Record<string, TailoredDocumentDetail | null>;
 
@@ -175,6 +195,7 @@ export default function HistoryPage() {
                           <Clock className="h-3 w-3" />
                           {formatDateTime(run.started_at)}
                         </span>
+                        <RunIdBadge id={run.id} />
                         <span>{run.model_name}</span>
                         {run.cost_estimate != null && (
                           <span>${run.cost_estimate.toFixed(4)}</span>
