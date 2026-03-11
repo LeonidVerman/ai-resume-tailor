@@ -277,6 +277,28 @@ export interface EvaluationResponse {
 
 // ── Admin ─────────────────────────────────────────────────────────────────
 
+export type GenerationMode = "simple" | "two_phase";
+
+export interface GenerationConfigResponse {
+  generation_mode: GenerationMode;
+  simple_model: string;
+  phase1_model: string;
+  phase2_model: string;
+  available_models: string[];
+}
+
+export interface GenerationConfigRequest {
+  generation_mode: GenerationMode;
+  simple_model: string;
+  phase1_model: string;
+  phase2_model: string;
+}
+
+export interface AdminActionResponse {
+  ok: boolean;
+  message: string;
+}
+
 export interface SystemStats {
   total_users: number;
   total_generation_runs: number;

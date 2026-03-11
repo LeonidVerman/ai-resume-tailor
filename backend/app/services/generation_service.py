@@ -32,6 +32,7 @@ import logging
 from datetime import datetime, timezone
 
 from backend.app.db.models.generation_run import GenerationRun
+from backend.app.db.repositories.admin_config_repository import AdminConfigRepository
 from backend.app.db.repositories.generation_run_repository import GenerationRunRepository
 from backend.app.db.repositories.job_description_repository import JobDescriptionRepository
 from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
@@ -75,7 +76,16 @@ class GenerationService:
 
         Returns a GenerationResponse with the run_id and tailored_document_id.
         """
-        from tailor.config import PHASE2_MODEL, ENABLE_TWO_PHASE
+        # ── Load admin config ──────────────────────────────────────────────
+        cfg = AdminConfigRepository(self._run_repo._db).get()  # shares same session
+        admin_mode = cfg.generation_mode  # "simple" | "two_phase"
+        simple_model = cfg.simple_model
+        phase1_model = cfg.phase1_model
+        phase2_model = cfg.phase2_model
+
+        # Map admin mode to internal run_type
+        run_type = "two_phase" if admin_mode == "two_phase" else "single_pass"
+        model_name = phase2_model if admin_mode == "two_phase" else simple_model
 
         # ── Load inputs ────────────────────────────────────────────────────
         jd = self._jd_repo.get_by_id(request.job_description_id)
@@ -88,19 +98,19 @@ class GenerationService:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Structured resume not found")
 
-        run_type = request.options.mode  # "two_phase" | "single_pass"
-
         # ── Create run record ──────────────────────────────────────────────
         run = self._run_repo.create(
             user_id=user_id,
             job_description_id=jd.id,
             run_type=run_type,
             status="running",
-            model_name=PHASE2_MODEL,
+            model_name=model_name,
             prompt_version=_PROMPT_VERSION,
             started_at=datetime.now(tz=timezone.utc),
         )
-        logger.info("Started generation run=%s user=%s", run.id, user_id)
+        logger.info(
+            "Started generation run=%s user=%s mode=%s", run.id, user_id, admin_mode
+        )
 
         meta = jd.metadata_jsonb or {}
         try:
@@ -110,6 +120,9 @@ class GenerationService:
                 jd_company=meta.get("company", ""),
                 jd_job_title=meta.get("job_title", ""),
                 resume_raw_text=resume.resume_jsonb.get("raw_text", "") if resume.resume_jsonb else "",
+                simple_model=simple_model,
+                phase1_model=phase1_model,
+                phase2_model=phase2_model,
             )
         except Exception as exc:
             logger.error("Generation run=%s failed: %s", run.id, exc)
@@ -162,6 +175,9 @@ class GenerationService:
         jd_company: str,
         jd_job_title: str,
         resume_raw_text: str,
+        simple_model: str | None = None,
+        phase1_model: str | None = None,
+        phase2_model: str | None = None,
     ):
         """
         Call the existing generator pipeline.
@@ -170,7 +186,7 @@ class GenerationService:
         """
         from tailor.job import JobData
         from tailor.docx.template_fill import read_docx
-        from tailor.config import RESUME_TEMPLATE, COVER_TEMPLATE, ENABLE_TWO_PHASE, ENABLE_PLAN_REPAIR
+        from tailor.config import RESUME_TEMPLATE, COVER_TEMPLATE, ENABLE_TWO_PHASE
 
         resume_template = read_docx(str(RESUME_TEMPLATE))
         cover_template = read_docx(str(COVER_TEMPLATE))
@@ -181,14 +197,19 @@ class GenerationService:
             description=jd_text,
         )
 
-        if run_type == "two_phase" and ENABLE_TWO_PHASE:
-            result, messages, debug_meta = self._run_two_phase(
-                job, resume_template, cover_template
-            )
-        else:
-            from tailor.core_generation.llm import tailor_documents
-            result, llm_req = tailor_documents(job, resume_template, cover_template)
-            result, messages, debug_meta = result, [llm_req], {}
+        with _override_models(
+            simple_model=simple_model,
+            phase1_model=phase1_model,
+            phase2_model=phase2_model,
+        ):
+            if run_type == "two_phase" and ENABLE_TWO_PHASE:
+                result, messages, debug_meta = self._run_two_phase(
+                    job, resume_template, cover_template
+                )
+            else:
+                from tailor.core_generation.llm import tailor_documents
+                result, llm_req = tailor_documents(job, resume_template, cover_template)
+                result, messages, debug_meta = result, [llm_req], {}
 
         # Extract token usage from messages (OpenAI usage fields)
         token_input, token_output, cost = _extract_usage_from_messages(messages)
@@ -278,6 +299,43 @@ class GenerationService:
         )
         all_messages = [p1_messages, p2_messages]
         return result, all_messages, {"phase1": p1_meta, "phase2": p2_meta}
+
+
+import contextlib
+
+
+@contextlib.contextmanager
+def _override_models(
+    simple_model: str | None,
+    phase1_model: str | None,
+    phase2_model: str | None,
+):
+    """
+    Temporarily patch tailor.core_generation.llm module globals so that
+    pipeline calls use admin-configured model names.
+
+    Restores originals on exit even if an exception is raised.
+    This is safe for the synchronous request model (one request per worker).
+    """
+    import tailor.core_generation.llm as _llm
+
+    orig = {
+        "SIMPLE_MODEL": _llm.SIMPLE_MODEL,
+        "PHASE1_MODEL": _llm.PHASE1_MODEL,
+        "PHASE2_MODEL": _llm.PHASE2_MODEL,
+    }
+    if simple_model:
+        _llm.SIMPLE_MODEL = simple_model
+    if phase1_model:
+        _llm.PHASE1_MODEL = phase1_model
+    if phase2_model:
+        _llm.PHASE2_MODEL = phase2_model
+    try:
+        yield
+    finally:
+        _llm.SIMPLE_MODEL = orig["SIMPLE_MODEL"]
+        _llm.PHASE1_MODEL = orig["PHASE1_MODEL"]
+        _llm.PHASE2_MODEL = orig["PHASE2_MODEL"]
 
 
 def _extract_usage_from_messages(messages) -> tuple[int | None, int | None, float | None]:

@@ -5,7 +5,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ShieldCheck, Users, Zap, FileText, ClipboardCheck } from "lucide-react";
+import { ShieldCheck, Users, Zap, FileText, ClipboardCheck, Settings2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -14,8 +14,20 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Badge } from "@/components/ui/Badge";
 import { admin, ApiError } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
-import type { SystemStats, EvaluationResponse } from "@/types/api";
+import type {
+  SystemStats,
+  EvaluationResponse,
+  GenerationConfigResponse,
+  GenerationMode,
+} from "@/types/api";
 import { formatDateTime } from "@/lib/utils";
+
+const DEFAULT_CONFIG: Omit<GenerationConfigResponse, "available_models"> = {
+  generation_mode: "simple",
+  simple_model: "gpt-5.2",
+  phase1_model: "gpt-4.1",
+  phase2_model: "gpt-4.1",
+};
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
@@ -23,6 +35,18 @@ export default function AdminPage() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
 
+  // Generation config state
+  const [genMode, setGenMode] = useState<GenerationMode>(DEFAULT_CONFIG.generation_mode);
+  const [simpleModel, setSimpleModel] = useState(DEFAULT_CONFIG.simple_model);
+  const [phase1Model, setPhase1Model] = useState(DEFAULT_CONFIG.phase1_model);
+  const [phase2Model, setPhase2Model] = useState(DEFAULT_CONFIG.phase2_model);
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [configSaved, setConfigSaved] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
+
+  // Evaluate run state
   const [evalRunId, setEvalRunId] = useState("");
   const [evaluating, setEvaluating] = useState(false);
   const [evalResult, setEvalResult] = useState<EvaluationResponse | null>(null);
@@ -35,7 +59,43 @@ export default function AdminPage() {
       .then(setStats)
       .catch((e) => setStatsError(e instanceof ApiError ? e.detail : "Failed to load stats."))
       .finally(() => setLoadingStats(false));
+
+    admin
+      .getGenerationConfig()
+      .then((cfg) => {
+        setGenMode(cfg.generation_mode);
+        setSimpleModel(cfg.simple_model);
+        setPhase1Model(cfg.phase1_model);
+        setPhase2Model(cfg.phase2_model);
+        setAvailableModels(cfg.available_models);
+      })
+      .catch(() => {
+        // Use defaults on error; don't block the page
+        setAvailableModels(["gpt-5.2", "gpt-5.1", "gpt-4.1", "gpt-4o", "gpt-4o-mini", "gpt-4.1-mini"]);
+      })
+      .finally(() => setLoadingConfig(false));
   }, [user]);
+
+  async function handleSaveConfig(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingConfig(true);
+    setConfigError(null);
+    setConfigSaved(false);
+    try {
+      await admin.saveGenerationConfig({
+        generation_mode: genMode,
+        simple_model: simpleModel,
+        phase1_model: phase1Model,
+        phase2_model: phase2Model,
+      });
+      setConfigSaved(true);
+      setTimeout(() => setConfigSaved(false), 3000);
+    } catch (e) {
+      setConfigError(e instanceof ApiError ? e.detail : "Failed to save configuration.");
+    } finally {
+      setSavingConfig(false);
+    }
+  }
 
   async function handleEvaluate(e: React.FormEvent) {
     e.preventDefault();
@@ -73,6 +133,10 @@ export default function AdminPage() {
     );
   }
 
+  const modelOptions = availableModels.length > 0
+    ? availableModels
+    : ["gpt-5.2", "gpt-5.1", "gpt-4.1", "gpt-4o", "gpt-4o-mini", "gpt-4.1-mini"];
+
   return (
     <AppShell>
       <div className="mb-6">
@@ -101,6 +165,100 @@ export default function AdminPage() {
           </div>
         ) : null}
       </div>
+
+      {/* Generation configuration */}
+      <Card className="max-w-lg mb-8">
+        <CardHeader>
+          <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+            <Settings2 className="h-4 w-4 text-indigo-600" />
+            Generation configuration
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Choose whether resume tailoring runs use a single-pass flow or a two-phase
+            planning&nbsp;+&nbsp;generation flow, and select the OpenAI model(s) used for each mode.
+          </p>
+        </CardHeader>
+        <CardBody>
+          {loadingConfig ? (
+            <Spinner label="Loading configuration..." />
+          ) : (
+            <form onSubmit={handleSaveConfig} className="space-y-5">
+              {/* Mode radio group */}
+              <fieldset>
+                <legend className="text-sm font-medium text-gray-700 mb-2">Generation mode</legend>
+                <div className="flex gap-4">
+                  {(["simple", "two_phase"] as GenerationMode[]).map((m) => (
+                    <label
+                      key={m}
+                      className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors flex-1 ${
+                        genMode === m
+                          ? "border-indigo-500 bg-indigo-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="gen_mode"
+                        value={m}
+                        checked={genMode === m}
+                        onChange={() => setGenMode(m)}
+                        className="mt-0.5 accent-indigo-600"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-gray-900">
+                          {m === "simple" ? "Simple" : "Two-phase"}
+                        </span>
+                        <span className="block text-xs text-gray-500 mt-0.5">
+                          {m === "simple"
+                            ? "Single-pass generation"
+                            : "Planning followed by generation"}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              {/* Model selectors */}
+              <div className="space-y-3">
+                <ModelSelect
+                  label="Simple run model"
+                  value={simpleModel}
+                  onChange={setSimpleModel}
+                  options={modelOptions}
+                  disabled={genMode !== "simple"}
+                />
+                <ModelSelect
+                  label="Phase 1 model"
+                  value={phase1Model}
+                  onChange={setPhase1Model}
+                  options={modelOptions}
+                  disabled={genMode !== "two_phase"}
+                />
+                <ModelSelect
+                  label="Phase 2 model"
+                  value={phase2Model}
+                  onChange={setPhase2Model}
+                  options={modelOptions}
+                  disabled={genMode !== "two_phase"}
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button type="submit" loading={savingConfig}>
+                  Save generation settings
+                </Button>
+                {configSaved && (
+                  <span className="text-sm text-green-600">✓ Saved</span>
+                )}
+                {configError && (
+                  <span className="text-sm text-red-600">✗ {configError}</span>
+                )}
+              </div>
+            </form>
+          )}
+        </CardBody>
+      </Card>
 
       {/* Evaluate run */}
       <Card className="max-w-lg">
@@ -151,6 +309,47 @@ export default function AdminPage() {
         </CardBody>
       </Card>
     </AppShell>
+  );
+}
+
+function ModelSelect({
+  label,
+  value,
+  onChange,
+  options,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  disabled: boolean;
+}) {
+  // Ensure current value is shown even if not in the list
+  const allOptions = options.includes(value) ? options : [value, ...options];
+
+  return (
+    <div>
+      <label className={`block text-sm font-medium mb-1 ${disabled ? "text-gray-400" : "text-gray-700"}`}>
+        {label}
+      </label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className={`w-full rounded-lg border px-3 py-2 text-sm transition-colors ${
+          disabled
+            ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
+            : "border-gray-300 bg-white text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+        }`}
+      >
+        {allOptions.map((m) => (
+          <option key={m} value={m}>
+            {m}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 

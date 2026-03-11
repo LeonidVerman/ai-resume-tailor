@@ -7,6 +7,7 @@
 
 import { getStoredUserId } from "./auth";
 import type {
+  AdminActionResponse,
   AuthMeResponse,
   BillingStatus,
   CandidateProfileResponse,
@@ -14,6 +15,8 @@ import type {
   CheckoutSessionRequest,
   CheckoutSessionResponse,
   EvaluationResponse,
+  GenerationConfigRequest,
+  GenerationConfigResponse,
   GenerationRequest,
   GenerationResponse,
   GenerationRunDetail,
@@ -202,6 +205,13 @@ export const admin = {
     request<EvaluationResponse>("/admin/evaluate-run", {
       method: "POST",
       body: JSON.stringify({ generation_run_id }),
+    }),
+  getGenerationConfig: () =>
+    request<GenerationConfigResponse>("/admin/generation-config"),
+  saveGenerationConfig: (body: GenerationConfigRequest) =>
+    request<AdminActionResponse>("/admin/generation-config", {
+      method: "PUT",
+      body: JSON.stringify(body),
     }),
 };
 

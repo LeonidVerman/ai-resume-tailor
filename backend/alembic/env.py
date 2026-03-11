@@ -30,6 +30,7 @@ import backend.app.db.models.generation_run  # noqa: F401, E402
 import backend.app.db.models.tailored_document  # noqa: F401, E402
 import backend.app.db.models.evaluation_run  # noqa: F401, E402
 import backend.app.db.models.billing  # noqa: F401, E402
+import backend.app.db.models.admin_config  # noqa: F401, E402
 
 # ── Alembic config ──────────────────────────────────────────────────────────
 config = context.config
