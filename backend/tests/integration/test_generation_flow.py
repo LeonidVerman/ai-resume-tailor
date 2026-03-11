@@ -53,7 +53,7 @@ def _make_tailor_result(resume: str = "Tailored resume", cover: str = "Cover let
 def _patch_pipeline(resume="Tailored resume text", cover="Cover letter text"):
     return patch(
         "backend.app.services.generation_service.GenerationService._run_pipeline",
-        return_value=(_make_tailor_result(resume, cover), 500, 1000, 0.02),
+        return_value=(_make_tailor_result(resume, cover), 500, 1000, 0.02, {}),
     )
 
 

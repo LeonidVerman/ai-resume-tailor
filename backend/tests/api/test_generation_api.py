@@ -50,7 +50,7 @@ def _gen_request(jd_id: str, resume_id: str, mode: str = "two_phase") -> dict:
 def _patch_pipeline():
     return patch(
         "backend.app.services.generation_service.GenerationService._run_pipeline",
-        return_value=(_make_tailor_result(), 100, 200, 0.005),
+        return_value=(_make_tailor_result(), 100, 200, 0.005, {}),
     )
 
 
