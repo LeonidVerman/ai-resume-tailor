@@ -47,6 +47,17 @@ class Settings(BaseSettings):
     # ── OpenAI ────────────────────────────────────────────────────────────
     openai_api_key: str = ""
 
+    # ── Logging ───────────────────────────────────────────────────────────
+    # When set, daily rotating log files are written to this directory.
+    # Leave empty to disable file logging (stdout only).
+    log_dir: str = ""
+
+    # ── Run data ──────────────────────────────────────────────────────────
+    # When set, each SaaS generation run saves a debug JSON to this directory,
+    # using the same format and naming convention as the CLI (tmp/ folder).
+    # Leave empty to disable.
+    run_data_dir: str = ""
+
     # ── Stripe ────────────────────────────────────────────────────────────
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""

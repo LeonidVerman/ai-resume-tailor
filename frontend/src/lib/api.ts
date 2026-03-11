@@ -199,6 +199,29 @@ export const billing = {
 
 // ── Admin ─────────────────────────────────────────────────────────────────
 
+/** Fetch a binary endpoint and return the blob + filename from Content-Disposition. */
+async function downloadBlob(
+  path: string,
+  fallbackFilename: string
+): Promise<{ blob: Blob; filename: string }> {
+  const userId = getStoredUserId();
+  const headers: Record<string, string> = {};
+  if (userId) headers["X-User-Id"] = userId;
+  const res = await fetch(`${BASE_URL}${path}`, { headers });
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try {
+      const body = await res.json();
+      detail = body.detail ?? detail;
+    } catch { /* ignore */ }
+    throw new ApiError(res.status, detail);
+  }
+  const disposition = res.headers.get("content-disposition") ?? "";
+  const match = disposition.match(/filename="([^"]+)"/);
+  const filename = match ? match[1] : fallbackFilename;
+  return { blob: await res.blob(), filename };
+}
+
 export const admin = {
   stats: () => request<SystemStats>("/admin/system-stats"),
   evaluateRun: (generation_run_id: string) =>
@@ -213,6 +236,18 @@ export const admin = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
+  downloadLogs: (fromDate: string, toDate?: string) => {
+    const params = new URLSearchParams({ from_date: fromDate });
+    if (toDate) params.set("to_date", toDate);
+    return downloadBlob(`/admin/logs/download?${params}`, "logs.zip");
+  },
+  downloadRunData: (fromDate: string, toDate?: string) => {
+    const params = new URLSearchParams({ from_date: fromDate });
+    if (toDate) params.set("to_date", toDate);
+    return downloadBlob(`/admin/run-data/download?${params}`, "run-data.zip");
+  },
+  downloadRunDataById: (runId: string) =>
+    downloadBlob(`/admin/run-data/download/${runId}`, `run-data-${runId}.json`),
 };
 
 export { ApiError };

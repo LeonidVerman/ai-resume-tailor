@@ -5,20 +5,30 @@ Admin endpoints.
 
 Endpoints
 ---------
-POST /admin/evaluate-run    — score a completed generation run
-GET  /admin/system-stats    — aggregate counts for all users
+POST /admin/evaluate-run              — score a completed generation run
+GET  /admin/system-stats              — aggregate counts for all users
+GET  /admin/generation-config         — retrieve persisted generation config
+PUT  /admin/generation-config         — update generation mode / models
+GET  /admin/logs/download             — download zipped log files for a date range
+GET  /admin/run-data/download         — download zipped run-data JSONs for a date range
+GET  /admin/run-data/download/{run_id} — download a single run-data JSON by generation run ID
 
 Phase 8 status: FUNCTIONAL (admin-only via require_admin dependency)
 ---------------------------------------------------------------------
-Both endpoints require the authenticated user to have role='admin'.
-POST /admin/evaluate-run delegates to EvaluationService which wraps
-the existing generator's assess pipeline (falls back to null scores
-if tailor.assess is unavailable).
-GET /admin/system-stats returns scalar DB counts; no complex analytics.
+All endpoints require the authenticated user to have role='admin'.
 """
 
-from fastapi import APIRouter
+import io
+import json
+import re
+import zipfile
+from datetime import date, timedelta
+from pathlib import Path
 
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import Response
+
+from backend.app.config import get_settings
 from backend.app.dependencies import AdminDep, DbDep
 from backend.app.db.repositories.admin_config_repository import AdminConfigRepository
 from backend.app.db.repositories.evaluation_run_repository import EvaluationRunRepository
@@ -90,3 +100,212 @@ def save_generation_config(
         phase2_model=request.phase2_model,
     )
     return AdminActionResponse(ok=True, message="Generation configuration saved.")
+
+
+# ── Shared download helpers ────────────────────────────────────────────────
+
+
+def _validate_date_range(from_date: date, to_date: date | None) -> date:
+    """Return effective to_date (defaults to today) and raise 400 if range is invalid."""
+    effective_to = to_date or date.today()
+    if from_date > effective_to:
+        raise HTTPException(
+            status_code=400,
+            detail=f"from_date ({from_date}) must not be after to_date ({effective_to}).",
+        )
+    return effective_to
+
+
+def _build_zip(files: list[tuple[str, Path]]) -> bytes:
+    """Build an in-memory ZIP from a list of (archive_name, file_path) pairs."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for arcname, path in files:
+            zf.write(path, arcname)
+    return buf.getvalue()
+
+
+def _zip_response(zip_bytes: bytes, filename: str) -> Response:
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ── Log download ───────────────────────────────────────────────────────────
+
+
+def _log_files_for_range(log_dir: str, from_date: date, to_date: date) -> list[tuple[str, Path]]:
+    """
+    Return (archive_name, path) pairs for existing log files in [from_date, to_date].
+
+    TimedRotatingFileHandler names the current day's file 'app.log' and
+    rotated past-day files 'app.log.YYYY-MM-DD'.
+    """
+    log_path = Path(log_dir)
+    today = date.today()
+    result: list[tuple[str, Path]] = []
+    current = from_date
+    while current <= to_date:
+        if current == today:
+            candidate = log_path / "app.log"
+            arcname = f"app-{today.isoformat()}.log"
+        else:
+            candidate = log_path / f"app.log.{current.isoformat()}"
+            arcname = f"app-{current.isoformat()}.log"
+        if candidate.exists():
+            result.append((arcname, candidate))
+        current += timedelta(days=1)
+    return result
+
+
+@router.get("/logs/download")
+def download_logs(
+    _admin: AdminDep,
+    from_date: date = Query(..., description="Start date (inclusive), YYYY-MM-DD"),
+    to_date: date | None = Query(None, description="End date (inclusive), YYYY-MM-DD. Defaults to today."),
+):
+    """
+    Download a ZIP archive of daily log files for the given date range.
+
+    Requires LOG_DIR to be configured on the server.
+    Returns logs-YYYY-MM-DD-to-YYYY-MM-DD.zip containing one .log file per day.
+    """
+    settings = get_settings()
+    if not settings.log_dir:
+        raise HTTPException(
+            status_code=503,
+            detail="File logging is not enabled on this server (LOG_DIR is not set).",
+        )
+
+    effective_to = _validate_date_range(from_date, to_date)
+    files = _log_files_for_range(settings.log_dir, from_date, effective_to)
+
+    if not files:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No log files found for {from_date} – {effective_to}.",
+        )
+
+    zip_bytes = _build_zip(files)
+    filename = f"logs-{from_date.isoformat()}-to-{effective_to.isoformat()}.zip"
+    return _zip_response(zip_bytes, filename)
+
+
+# ── Run data download ──────────────────────────────────────────────────────
+
+_RUN_DATA_DATE_RE = re.compile(r"(\d{4})(\d{2})(\d{2})-\d{6}\.json$")
+
+
+def _run_data_files_for_range(
+    run_data_dir: str, from_date: date, to_date: date
+) -> list[Path]:
+    """
+    Return run-data JSON files whose filename timestamp falls in [from_date, to_date].
+
+    Filenames follow the CLI convention: {company}-{title}-{YYYYMMDD}-{HHMMSS}.json
+    """
+    run_data_path = Path(run_data_dir)
+    if not run_data_path.exists():
+        return []
+    result: list[Path] = []
+    for f in run_data_path.glob("*.json"):
+        m = _RUN_DATA_DATE_RE.search(f.name)
+        if not m:
+            continue
+        try:
+            file_date = date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        except ValueError:
+            continue
+        if from_date <= file_date <= to_date:
+            result.append(f)
+    return sorted(result)
+
+
+def _find_run_data_file(run_data_dir: str, run_id: str) -> Path | None:
+    """
+    Scan run-data files to find the one whose generation_run_id matches run_id.
+
+    Files are checked most-recently-modified first so recent runs are found quickly.
+    """
+    run_data_path = Path(run_data_dir)
+    if not run_data_path.exists():
+        return None
+    files = sorted(
+        run_data_path.glob("*.json"),
+        key=lambda f: f.stat().st_mtime,
+        reverse=True,
+    )
+    for f in files:
+        try:
+            with open(f, "r", encoding="utf-8") as fh:
+                data = json.load(fh)
+            if data.get("generation_run_id") == run_id:
+                return f
+        except Exception:
+            continue
+    return None
+
+
+@router.get("/run-data/download")
+def download_run_data(
+    _admin: AdminDep,
+    from_date: date = Query(..., description="Start date (inclusive), YYYY-MM-DD"),
+    to_date: date | None = Query(None, description="End date (inclusive), YYYY-MM-DD. Defaults to today."),
+):
+    """
+    Download a ZIP archive of run-data JSON files for the given date range.
+
+    Requires RUN_DATA_DIR to be configured on the server.
+    Returns run-data-YYYY-MM-DD-to-YYYY-MM-DD.zip containing one JSON per run.
+    """
+    settings = get_settings()
+    if not settings.run_data_dir:
+        raise HTTPException(
+            status_code=503,
+            detail="Run data storage is not enabled on this server (RUN_DATA_DIR is not set).",
+        )
+
+    effective_to = _validate_date_range(from_date, to_date)
+    files = _run_data_files_for_range(settings.run_data_dir, from_date, effective_to)
+
+    if not files:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No run data files found for {from_date} – {effective_to}.",
+        )
+
+    zip_bytes = _build_zip([(f.name, f) for f in files])
+    filename = f"run-data-{from_date.isoformat()}-to-{effective_to.isoformat()}.zip"
+    return _zip_response(zip_bytes, filename)
+
+
+@router.get("/run-data/download/{run_id}")
+def download_run_data_by_id(run_id: str, _admin: AdminDep):
+    """
+    Download the run-data JSON for a specific generation run.
+
+    Requires RUN_DATA_DIR to be configured on the server.
+    Scans files most-recent-first, so recent runs resolve quickly.
+    Returns 404 if no file is found for the given run_id.
+    """
+    settings = get_settings()
+    if not settings.run_data_dir:
+        raise HTTPException(
+            status_code=503,
+            detail="Run data storage is not enabled on this server (RUN_DATA_DIR is not set).",
+        )
+
+    f = _find_run_data_file(settings.run_data_dir, run_id)
+    if f is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No run data file found for generation_run_id={run_id}.",
+        )
+
+    return Response(
+        content=f.read_bytes(),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{f.name}"'},
+    )

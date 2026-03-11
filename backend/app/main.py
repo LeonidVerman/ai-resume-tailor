@@ -19,7 +19,10 @@ from backend.app.constants import API_PREFIX, SERVICE_NAME
 from backend.app.logging import configure_logging, get_logger
 
 settings = get_settings()
-configure_logging(level="DEBUG" if settings.is_development else "INFO")
+configure_logging(
+    level="DEBUG" if settings.is_development else "INFO",
+    log_dir=settings.log_dir,
+)
 logger = get_logger(__name__)
 
 

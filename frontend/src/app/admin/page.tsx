@@ -5,7 +5,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ShieldCheck, Users, Zap, FileText, ClipboardCheck, Settings2 } from "lucide-react";
+import { ShieldCheck, Users, Zap, FileText, ClipboardCheck, Settings2, Download } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -52,6 +52,23 @@ export default function AdminPage() {
   const [evalResult, setEvalResult] = useState<EvaluationResponse | null>(null);
   const [evalError, setEvalError] = useState<string | null>(null);
 
+  // Log download state
+  const [logFrom, setLogFrom] = useState("");
+  const [logTo, setLogTo] = useState("");
+  const [downloadingLogs, setDownloadingLogs] = useState(false);
+  const [logDownloadError, setLogDownloadError] = useState<string | null>(null);
+
+  // Run data download by date state
+  const [rdFrom, setRdFrom] = useState("");
+  const [rdTo, setRdTo] = useState("");
+  const [downloadingRd, setDownloadingRd] = useState(false);
+  const [rdDownloadError, setRdDownloadError] = useState<string | null>(null);
+
+  // Run data download by run ID state
+  const [rdRunId, setRdRunId] = useState("");
+  const [downloadingRdById, setDownloadingRdById] = useState(false);
+  const [rdByIdError, setRdByIdError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!user || user.role !== "admin") return;
     admin
@@ -94,6 +111,60 @@ export default function AdminPage() {
       setConfigError(e instanceof ApiError ? e.detail : "Failed to save configuration.");
     } finally {
       setSavingConfig(false);
+    }
+  }
+
+  function triggerDownload(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleDownloadLogs(e: React.FormEvent) {
+    e.preventDefault();
+    if (!logFrom) return;
+    setDownloadingLogs(true);
+    setLogDownloadError(null);
+    try {
+      const { blob, filename } = await admin.downloadLogs(logFrom, logTo || undefined);
+      triggerDownload(blob, filename);
+    } catch (e) {
+      setLogDownloadError(e instanceof ApiError ? e.detail : "Download failed.");
+    } finally {
+      setDownloadingLogs(false);
+    }
+  }
+
+  async function handleDownloadRunData(e: React.FormEvent) {
+    e.preventDefault();
+    if (!rdFrom) return;
+    setDownloadingRd(true);
+    setRdDownloadError(null);
+    try {
+      const { blob, filename } = await admin.downloadRunData(rdFrom, rdTo || undefined);
+      triggerDownload(blob, filename);
+    } catch (e) {
+      setRdDownloadError(e instanceof ApiError ? e.detail : "Download failed.");
+    } finally {
+      setDownloadingRd(false);
+    }
+  }
+
+  async function handleDownloadRunDataById(e: React.FormEvent) {
+    e.preventDefault();
+    if (!rdRunId.trim()) return;
+    setDownloadingRdById(true);
+    setRdByIdError(null);
+    try {
+      const { blob, filename } = await admin.downloadRunDataById(rdRunId.trim());
+      triggerDownload(blob, filename);
+    } catch (e) {
+      setRdByIdError(e instanceof ApiError ? e.detail : "Download failed.");
+    } finally {
+      setDownloadingRdById(false);
     }
   }
 
@@ -261,7 +332,7 @@ export default function AdminPage() {
       </Card>
 
       {/* Evaluate run */}
-      <Card className="max-w-lg">
+      <Card className="max-w-lg mb-8">
         <CardHeader>
           <h2 className="font-semibold text-gray-900">Evaluate a generation run</h2>
           <p className="text-sm text-gray-500 mt-0.5">
@@ -308,6 +379,90 @@ export default function AdminPage() {
           )}
         </CardBody>
       </Card>
+
+      {/* Log downloader */}
+      <Card className="max-w-lg mb-8">
+        <CardHeader>
+          <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+            <Download className="h-4 w-4 text-indigo-600" />
+            Download logs
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Download a ZIP of daily log files for the selected date range.
+            Requires <code className="text-xs bg-gray-100 px-1 rounded">LOG_DIR</code> to be configured on the server.
+          </p>
+        </CardHeader>
+        <CardBody>
+          <form onSubmit={handleDownloadLogs} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <DateField label="From date" value={logFrom} onChange={setLogFrom} required />
+              <DateField label="To date (optional)" value={logTo} onChange={setLogTo} />
+            </div>
+            <Button type="submit" loading={downloadingLogs} disabled={!logFrom}>
+              <Download className="h-4 w-4" />
+              Download logs
+            </Button>
+          </form>
+          {logDownloadError && (
+            <p className="text-sm text-red-600 mt-3">✗ {logDownloadError}</p>
+          )}
+        </CardBody>
+      </Card>
+
+      {/* Run data downloader */}
+      <Card className="max-w-lg">
+        <CardHeader>
+          <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+            <Download className="h-4 w-4 text-indigo-600" />
+            Download run data
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Download generation run debug JSON files. Requires{" "}
+            <code className="text-xs bg-gray-100 px-1 rounded">RUN_DATA_DIR</code> to be configured on the server.
+          </p>
+        </CardHeader>
+        <CardBody className="space-y-6">
+          {/* By date range */}
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-3">By date range</p>
+            <form onSubmit={handleDownloadRunData} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <DateField label="From date" value={rdFrom} onChange={setRdFrom} required />
+                <DateField label="To date (optional)" value={rdTo} onChange={setRdTo} />
+              </div>
+              <Button type="submit" loading={downloadingRd} disabled={!rdFrom}>
+                <Download className="h-4 w-4" />
+                Download run data
+              </Button>
+            </form>
+            {rdDownloadError && (
+              <p className="text-sm text-red-600 mt-3">✗ {rdDownloadError}</p>
+            )}
+          </div>
+
+          <hr className="border-gray-100" />
+
+          {/* By run ID */}
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-3">By generation run ID</p>
+            <form onSubmit={handleDownloadRunDataById} className="space-y-4">
+              <Input
+                label="Generation Run ID"
+                value={rdRunId}
+                onChange={(e) => setRdRunId(e.target.value)}
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              />
+              <Button type="submit" loading={downloadingRdById} disabled={!rdRunId.trim()}>
+                <Download className="h-4 w-4" />
+                Download run data
+              </Button>
+            </form>
+            {rdByIdError && (
+              <p className="text-sm text-red-600 mt-3">✗ {rdByIdError}</p>
+            )}
+          </div>
+        </CardBody>
+      </Card>
     </AppShell>
   );
 }
@@ -349,6 +504,31 @@ function ModelSelect({
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+function DateField({
+  label,
+  value,
+  onChange,
+  required,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  required?: boolean;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+      />
     </div>
   );
 }

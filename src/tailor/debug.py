@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+from pathlib import Path
 
 from tailor.config import TMP_DIR
 
@@ -13,6 +14,8 @@ def save_debug_data(
     diff=None,
     phase1: dict | None = None,
     phase2: dict | None = None,
+    output_dir: Path | str | None = None,
+    extra: dict | None = None,
 ):
     """Save debug artefacts for a tailoring run.
 
@@ -49,12 +52,13 @@ def save_debug_data(
                 "usage":          <token counts dict>,
             }
     """
-    os.makedirs(TMP_DIR, exist_ok=True)
+    out = Path(output_dir) if output_dir is not None else TMP_DIR
+    os.makedirs(out, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     safe_company = "".join(c if c.isalnum() or c in "_-" else "_" for c in company).strip("_")
     safe_title = "".join(c if c.isalnum() or c in "_-" else "_" for c in job_title).strip("_")
-    filename = TMP_DIR / f"{safe_company}-{safe_title}-{timestamp}.json"
+    filename = out / f"{safe_company}-{safe_title}-{timestamp}.json"
 
     data: dict = {
         "company": company,
@@ -69,6 +73,9 @@ def save_debug_data(
 
     if phase2 is not None:
         data["phase2"] = phase2
+
+    if extra:
+        data.update(extra)
 
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)

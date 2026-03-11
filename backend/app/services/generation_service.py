@@ -114,7 +114,7 @@ class GenerationService:
 
         meta = jd.metadata_jsonb or {}
         try:
-            result, token_input, token_output, cost = self._run_pipeline(
+            result, token_input, token_output, cost, debug_meta = self._run_pipeline(
                 run_type=run_type,
                 jd_text=jd.raw_text,
                 jd_company=meta.get("company", ""),
@@ -133,6 +133,15 @@ class GenerationService:
                 completed_at=datetime.now(tz=timezone.utc),
             )
             raise
+
+        # ── Save run data JSON (mirrors CLI debug output) ──────────────────
+        _save_run_data(
+            run_id=run.id,
+            company=meta.get("company", ""),
+            job_title=meta.get("job_title", ""),
+            result=result,
+            debug_meta=debug_meta,
+        )
 
         # ── Persist tailored document ──────────────────────────────────────
         tailored_doc = self._doc_repo.create(
@@ -182,7 +191,7 @@ class GenerationService:
         """
         Call the existing generator pipeline.
 
-        Returns (TailorResult, token_input, token_output, cost_estimate).
+        Returns (TailorResult, token_input, token_output, cost_estimate, debug_meta).
         """
         from tailor.job import JobData
         from tailor.docx.template_fill import read_docx
@@ -209,11 +218,16 @@ class GenerationService:
             else:
                 from tailor.core_generation.llm import tailor_documents
                 result, llm_req = tailor_documents(job, resume_template, cover_template)
-                result, messages, debug_meta = result, [llm_req], {}
+                result, messages, debug_meta = result, [llm_req], {"llm_request": llm_req}
+
+        # Compute resume diff and store in debug_meta (mirrors CLI behaviour).
+        from tailor.diff import diff_resume
+        sections = diff_resume(resume_template, result.resume) if result.resume else {}
+        debug_meta["diff"] = {"resume": sections} if sections else None
 
         # Extract token usage from messages (OpenAI usage fields)
         token_input, token_output, cost = _extract_usage_from_messages(messages)
-        return result, token_input, token_output, cost
+        return result, token_input, token_output, cost, debug_meta
 
     def _run_two_phase(self, job, resume_template, cover_template):
         """
@@ -236,6 +250,7 @@ class GenerationService:
 
         plan = None
         p1_messages = []
+        p1_meta: dict = {}
         prev_raw_plan: dict = {}
         schema_errors: list[str] = []
         validation_errors: list[str] = []
@@ -289,16 +304,32 @@ class GenerationService:
             # Phase 1 succeeded
             break
 
+        # Build phase1_debug in the same structure the CLI produces.
+        phase1_debug = {
+            "llm_request": p1_messages,
+            "llm_response_raw": p1_meta.get("raw_response") if p1_meta else None,
+            "plan_json": plan,
+            "model": p1_meta.get("model") if p1_meta else None,
+            "usage": p1_meta.get("usage") if p1_meta else None,
+            "schema_errors": schema_errors,
+            "validation_errors": validation_errors,
+            "prompt_used": p1_meta.get("prompt_used") if p1_meta else None,
+        }
+
         if plan is None:
             logger.warning("Phase 1 failed after 2 attempts; falling back to single-pass")
-            result, messages = tailor_documents(job, resume_template, cover_template)
-            return result, [messages], {}
+            result, llm_req = tailor_documents(job, resume_template, cover_template)
+            return result, [llm_req], {"llm_request": llm_req, "phase1": phase1_debug}
 
         result, p2_messages, p2_meta = tailor_documents_with_plan(
             plan, job, resume_template, cover_template
         )
         all_messages = [p1_messages, p2_messages]
-        return result, all_messages, {"phase1": p1_meta, "phase2": p2_meta}
+        return result, all_messages, {
+            "llm_request": p2_messages,
+            "phase1": phase1_debug,
+            "phase2": p2_meta,
+        }
 
 
 import contextlib
@@ -336,6 +367,40 @@ def _override_models(
         _llm.SIMPLE_MODEL = orig["SIMPLE_MODEL"]
         _llm.PHASE1_MODEL = orig["PHASE1_MODEL"]
         _llm.PHASE2_MODEL = orig["PHASE2_MODEL"]
+
+
+def _save_run_data(
+    run_id,
+    company: str,
+    job_title: str,
+    result,
+    debug_meta: dict,
+) -> None:
+    """
+    Persist a generation run debug JSON using the same mechanism as the CLI.
+
+    No-ops silently when RUN_DATA_DIR is not configured or on any error so
+    that a logging failure never breaks the generation response.
+    """
+    from backend.app.config import get_settings
+    settings = get_settings()
+    if not settings.run_data_dir:
+        return
+    try:
+        from tailor.debug import save_debug_data
+        save_debug_data(
+            company=company,
+            job_title=job_title,
+            llm_response={"resume": result.resume, "cover_letter": result.cover_letter},
+            llm_request=debug_meta.get("llm_request"),
+            diff=debug_meta.get("diff"),
+            phase1=debug_meta.get("phase1"),
+            phase2=debug_meta.get("phase2"),
+            output_dir=settings.run_data_dir,
+            extra={"generation_run_id": str(run_id)},
+        )
+    except Exception:
+        logger.warning("Failed to save run data for run=%s", run_id, exc_info=True)
 
 
 def _extract_usage_from_messages(messages) -> tuple[int | None, int | None, float | None]:
