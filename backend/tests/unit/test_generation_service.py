@@ -99,7 +99,7 @@ class TestGenerationServiceGenerate:
 
         with (
             patch("backend.app.services.generation_service.GenerationService._run_pipeline",
-                  return_value=(tailor_result, 100, 200, 0.005)),
+                  return_value=(tailor_result, 100, 200, 0.005, {})),
             patch("tailor.config.PHASE2_MODEL", "gpt-4o"),
         ):
             resp = svc.generate(user_id, request)
@@ -186,7 +186,7 @@ class TestGenerationServiceGenerate:
         with (
             patch(
                 "backend.app.services.generation_service.GenerationService._run_pipeline",
-                return_value=(tailor_result, 10, 20, None),
+                return_value=(tailor_result, 10, 20, None, {}),
             ) as mock_pipeline,
             patch("tailor.config.PHASE2_MODEL", "gpt-4o"),
         ):
@@ -213,7 +213,7 @@ class TestGenerationServiceGenerate:
         with (
             patch(
                 "backend.app.services.generation_service.GenerationService._run_pipeline",
-                return_value=(tailor_result, 10, 20, None),
+                return_value=(tailor_result, 10, 20, None, {}),
             ) as mock_pipeline,
             patch("tailor.config.PHASE2_MODEL", "gpt-4o"),
         ):
