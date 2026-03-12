@@ -23,9 +23,12 @@ Produce a candidate-layer prompt similar in function to a hand-written candidate
 - final reminder about what makes the candidate distinctive
 
 The generated prompt must be:
+
 - candidate-specific in content
 - candidate-agnostic in logic and structure
 - highly usable by a downstream resume-tailoring LLM
+
+The goal is to surface the candidate’s strongest differentiators and provide safe instructions for resume tailoring.
 
 ============================================================
 INPUT
@@ -62,9 +65,11 @@ The prompt must:
 3. Translate raw candidate data into guidance for resume generation.
 4. Include safe domain-translation rules.
 5. Include anti-inflation rules and claim boundaries.
-6. Explain how current/contractor/AI-related work should be framed if relevant.
+6. Explain how current / contractor / AI-related work should be framed if relevant.
 7. Include leadership framing if leadership data exists.
 8. End with a concise “final reminder” describing what makes the candidate most distinctive.
+
+Do not mirror JSON fields directly. Synthesize the information into guidance for a downstream LLM.
 
 ============================================================
 OUTPUT FORMAT
@@ -98,6 +103,8 @@ FINAL REMINDER
 
 You may omit a section only if the corresponding data is truly absent.
 
+Always preserve this section order when possible.
+
 ============================================================
 WRITING RULES
 ============================================================
@@ -105,10 +112,12 @@ WRITING RULES
 1. Write as instructions to a downstream LLM.
 
 Use imperative phrasing where appropriate:
+
 - "Emphasize..."
 - "Do not claim..."
 - "When relevant..."
 - "Prefer..."
+- "Avoid..."
 
 Do NOT write explanatory prose for humans.
 
@@ -118,7 +127,7 @@ Do not invent experience.
 Do not infer unsupported domain expertise.
 Do not create fake technologies, products, or responsibilities.
 
-3. Distinguish between:
+3. Distinguish clearly between:
 
 - what should be emphasized
 - what may be safely translated
@@ -126,59 +135,80 @@ Do not create fake technologies, products, or responsibilities.
 
 4. Prefer mechanism-level technical differentiation over abstract adjectives.
 
-If the profile contains scaling, reliability, messaging, caching, or security patterns,
-convert them into explicit surfacing guidance for experience bullets.
+When describing technical work, prefer framing:
 
-Prefer one mechanism per bullet rather than stacking multiple vague improvements.
+MECHANISM → SYSTEM AREA → OUTCOME
 
-5. If the profile contains claim-boundary notes, convert them into anti-inflation rules.
+Example transformation:
+
+Instead of:
+"Improved system scalability"
+
+Prefer:
+"Introduced transactional caching for trading data to reduce database load under peak traffic."
+
+5. Prefer one concrete mechanism per bullet.
+
+Avoid stacking multiple mechanisms in a single sentence.
+
+6. Convert candidate profile signals into surfacing guidance.
+
+If the candidate profile includes architectural or scalability patterns, convert them into instructions for resume bullet construction.
+
+7. If the profile contains claim-boundary notes, convert them into anti-inflation rules.
 
 Example:
 
 "Not a direct OAuth2/OIDC/SAML implementation"
 
-should become guidance such as:
+Should become guidance such as:
 
 "Do not claim direct OAuth2/OIDC/SAML implementation unless explicitly supported."
 
-6. If the candidate has current contractor work, specify how it should be framed.
+8. If the candidate has contractor work:
 
-Example:
+Explicitly preserve contractor framing.
+
+Example guidance:
 
 - Maintain contractor status explicitly.
 - Avoid implying employee status.
 
-7. If the candidate has AI-related work, distinguish:
+9. If the candidate has AI-related work:
 
-- evaluation / tooling / experimentation
-- product ownership / production AI platform ownership
+Distinguish between:
+
+- AI tooling usage
+- model evaluation
+- experimentation
+- AI platform ownership
 
 Only the supported level may be claimed.
 
-8. The output should be concise but information-dense.
-
-Prefer prompt-like bullets or short instruction lines over long paragraphs.
+10. Prefer concise instruction bullets rather than paragraphs.
 
 ============================================================
 NORMALIZATION RULES
 ============================================================
 
-When candidate profile values are underspecified or tokenized, normalize them into prompt-friendly language.
+When candidate profile values are underspecified or tokenized, normalize them into readable language.
 
 Examples:
 
 horizontal_scaling → Horizontal scaling  
 distributed_session_validation_via_redis → Distributed session validation via Redis  
-metrics_logs_tracing_mindset → Metrics/logs/tracing mindset
+metrics_logs_tracing_mindset → Metrics/logs/tracing mindset  
 
-Preserve the meaning while making the prompt readable.
+Preserve the meaning while improving readability.
 
 ============================================================
 MANDATORY DIFFERENTIATION SIGNALS
 ============================================================
 
 When the role involves backend infrastructure, distributed systems, or high-throughput services,
-the following mechanisms should be surfaced explicitly when supported by evidence:
+explicitly surface supported architectural mechanisms when evidence exists.
+
+Prefer mechanisms such as:
 
 - Horizontal scaling of services
 - Read replica traffic isolation
@@ -186,6 +216,24 @@ the following mechanisms should be surfaced explicitly when supported by evidenc
 - Event-driven messaging architecture
 - Idempotent processing and retry safety
 - Stateless services with centralized revocation
+- Asynchronous system decoupling
+- Observability practices (metrics/logs/tracing)
+
+Prefer describing the mechanism rather than generic improvement claims.
+
+============================================================
+DOMAIN TRANSLATION GUIDANCE
+============================================================
+
+Translate domain experience conservatively.
+
+Examples:
+
+crypto exchange → high-throughput financial transaction platform  
+risk and margin controls → risk-critical decisioning paths  
+regulatory constraints → reliability and safety requirements in regulated environments  
+
+Do not translate experience into unrelated SaaS domains unless explicitly supported.
 
 ============================================================
 EVIDENCE SOURCES
@@ -196,28 +244,33 @@ Mechanisms, systems, and architectural patterns used in resume bullets may be de
 - MASTER_RESUME
 - CANDIDATE_PROFILE.experience_highlights
 - CANDIDATE_PROFILE.experience_highlights.architecture_patterns
+- CANDIDATE_PROFILE.experience_highlights.constraints_and_tradeoffs
 - CANDIDATE_PROFILE.technical_skills.scalability_reliability_patterns
 - CANDIDATE_PROFILE.technical_skills.security_auth_patterns
+- CANDIDATE_PROFILE.technical_skills.async_messaging
 
 When using these sources:
 
 - Do not invent new mechanisms.
-- Only surface mechanisms already present in the candidate profile or master resume.
-- Ensure the resulting bullet remains factually traceable to candidate data.
+- Only surface mechanisms present in candidate data.
+- Ensure each tailored bullet remains traceable to a supported source.
+
+Prefer architectural evidence from experience_highlights before generic technical skills.
 
 ============================================================
 QUALITY BAR
 ============================================================
 
-The generated candidate-layer prompt should feel like a strong manually written instruction layer for a tailoring system.
+The generated candidate-layer prompt should resemble a strong manually written instruction layer used by an expert recruiter.
 
-It should not merely mirror JSON fields.
+It should synthesize the candidate profile into:
 
-It should synthesize them into:
+- positioning priorities
+- technical differentiation rules
+- safe domain translation guidance
+- anti-inflation boundaries
+- mechanism surfacing instructions
 
-- prioritization
-- surfacing rules
-- safe translations
-- anti-hallucination boundaries
+The output must guide a downstream resume-tailoring system toward clear, credible, technically grounded resume bullets.
 
 Now generate the prompt from the provided CANDIDATE_PROFILE.
