@@ -113,6 +113,9 @@ def _detect_site(url):
         return "amazon"
     if "greenhouse.io" in host:
         return "greenhouse"
+    # Embedded Greenhouse board: any site with ?gh_jid= query param
+    if "gh_jid" in urlparse(url).query:
+        return "greenhouse"
     # Extend here as new sites are added to _SITE_SCRAPERS
     return "generic"
 
