@@ -19,6 +19,7 @@ venv/
 output/
 .cache/
 tmp/
+run_data/
 
 # Job descriptions
 jobs/

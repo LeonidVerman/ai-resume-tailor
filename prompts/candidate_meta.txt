@@ -153,6 +153,20 @@ Examples:
 Preserve the meaning while making the prompt readable.
 
 ============================================================
+MANDATORY DIFFERENTIATION SIGNALS
+============================================================
+
+When the role involves backend infrastructure, distributed systems, or high-throughput services,
+the following mechanisms should be surfaced explicitly when supported by evidence:
+
+- Horizontal scaling of services
+- Read replica traffic isolation
+- Multi-layer caching strategies
+- Event-driven messaging architecture
+- Idempotent processing and retry safety
+- Stateless services with centralized revocation
+
+============================================================
 QUALITY BAR
 ============================================================
 
