@@ -34,7 +34,7 @@ class TestCandidateProfileDocument:
         )
         assert doc.candidate.name == "Alice Smith"
         assert doc.candidate.headline is None
-        assert doc.domains is None
+        assert doc.domains == DomainExperience(primary=[], secondary=[])
         assert doc.experience_highlights == []
         assert doc.role_fit_themes == []
 
@@ -53,7 +53,7 @@ class TestCandidateProfileDocument:
 
     def test_version_default(self):
         doc = CandidateProfileDocument(candidate=CandidateIdentity(name="X"))
-        assert doc.candidate_profile_version == "1.0"
+        assert doc.candidate_profile_version == "1.1"
 
     def test_upsert_request(self):
         req = CandidateProfileUpsertRequest(
