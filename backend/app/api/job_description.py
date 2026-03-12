@@ -31,6 +31,7 @@ from backend.app.schemas.job_description import (
 )
 from backend.app.services.job_normalizer_service import JobNormalizerService
 from backend.app.services.job_scraper_service import JobScraperService
+from tailor.job.scrape import get_scrape_failure_message
 
 router = APIRouter()
 
@@ -54,10 +55,10 @@ def scrape_job_description(
     scraper = JobScraperService()
     try:
         scraped = scraper.scrape(request.url)
-    except RuntimeError as exc:
+    except RuntimeError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Scraping failed: {exc}",
+            detail=get_scrape_failure_message(request.url),
         )
     return _normalizer(db).create_from_scrape(user.id, scraped)
 

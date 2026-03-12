@@ -10,6 +10,7 @@ To add support for a new site:
 """
 
 import json
+from functools import lru_cache
 from urllib.parse import urlparse
 
 import requests
@@ -86,6 +87,74 @@ def extract_metadata_from_html(url):
     company = data.get("hiringOrganization", {}).get("name", "Unknown")
     job_title = data.get("title", "Unknown")
     return {"company": company, "job_title": job_title}
+
+
+# ---------------------------------------------------------------------------
+# Protected-site helpers
+# ---------------------------------------------------------------------------
+
+@lru_cache(maxsize=1)
+def _load_protected_sites() -> list[dict]:
+    """Load config/scrape_protected_sites.json (cached after first call)."""
+    from tailor.config import CONFIG_DIR
+    path = CONFIG_DIR / "scrape_protected_sites.json"
+    with open(path, encoding="utf-8") as f:
+        return json.load(f).get("scrape_protected_sites", [])
+
+
+def _normalize_hostname(url: str) -> str:
+    """Return the lowercase hostname, stripping a leading 'www.' if present."""
+    host = urlparse(url).netloc.lower()
+    if host.startswith("www."):
+        host = host[4:]
+    return host
+
+
+def is_scrape_protected_host(hostname: str) -> bool:
+    """Return True when *hostname* matches a configured protected-site domain.
+
+    Supports exact match and common-subdomain suffix match, e.g.
+    ``www.wellfound.com`` matches ``wellfound.com``.
+    """
+    normalized = hostname.lower()
+    if normalized.startswith("www."):
+        normalized = normalized[4:]
+    for entry in _load_protected_sites():
+        domain = entry.get("domain", "").lower()
+        if normalized == domain or normalized.endswith("." + domain):
+            return True
+    return False
+
+
+def _get_site_label(hostname: str) -> str | None:
+    """Return the human-readable label for *hostname*, or None if not listed."""
+    normalized = hostname.lower()
+    if normalized.startswith("www."):
+        normalized = normalized[4:]
+    for entry in _load_protected_sites():
+        domain = entry.get("domain", "").lower()
+        if normalized == domain or normalized.endswith("." + domain):
+            return entry.get("label") or domain
+    return None
+
+
+def get_scrape_failure_message(url: str) -> str:
+    """Return the appropriate user-facing scrape-failure message for *url*.
+
+    Returns a protected-site message when the host is in the configured list,
+    otherwise a generic message.
+    """
+    hostname = _normalize_hostname(url)
+    label = _get_site_label(hostname)
+    if label:
+        return (
+            f"{label} uses bot protection, so the job description can't be "
+            f"scraped from the URL. Please copy and paste the job description manually."
+        )
+    return (
+        "Scraping the job description from the URL failed. "
+        "Please copy and paste the job description manually."
+    )
 
 
 # ---------------------------------------------------------------------------

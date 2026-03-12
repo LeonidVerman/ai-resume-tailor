@@ -175,8 +175,10 @@ def _main_tailor() -> None:
     if args.position_url:
         try:
             job = scrape_job_url(args.position_url)
-        except RuntimeError as e:
-            parser.error(str(e))
+        except Exception:
+            from tailor.job.scrape import get_scrape_failure_message
+            print(get_scrape_failure_message(args.position_url), file=sys.stderr)
+            job = JobData(company="Unknown", job_title="Unknown", description="", source_url=args.position_url)
     else:
         try:
             job_text = _read_text_file(args.position_desc)

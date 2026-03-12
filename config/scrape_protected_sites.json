@@ -1,0 +1,5 @@
+{
+  "scrape_protected_sites": [
+    { "domain": "wellfound.com", "label": "Wellfound" }
+  ]
+}
