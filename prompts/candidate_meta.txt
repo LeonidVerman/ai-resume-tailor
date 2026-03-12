@@ -1,0 +1,168 @@
+You are generating a reusable candidate-specific prompt layer for a resume/job-application tailoring system.
+
+Your task is to transform structured candidate profile data into a prompt block that will later be concatenated into a generation-time prompt for tailoring resumes and cover letters.
+
+This is NOT a recruiter-facing summary.
+This is NOT a resume.
+This is NOT a cover letter.
+
+It is an instruction layer for another LLM.
+
+============================================================
+OBJECTIVE
+============================================================
+
+Produce a candidate-layer prompt similar in function to a hand-written candidate prompt such as:
+
+- positioning anchors
+- technical differentiation guidance
+- domain translation guidance
+- leadership framing
+- claim-boundary / anti-inflation rules
+- AI-work positioning
+- final reminder about what makes the candidate distinctive
+
+The generated prompt must be:
+- candidate-specific in content
+- candidate-agnostic in logic and structure
+- highly usable by a downstream resume-tailoring LLM
+
+============================================================
+INPUT
+============================================================
+
+You will receive one JSON object named CANDIDATE_PROFILE.
+
+Assume it may contain fields such as:
+
+- candidate
+- domains
+- experience_highlights
+- technical_skills
+- authz_authn_experience
+- scalability_reliability_patterns
+- leadership
+- ai_tooling_practice
+- role_fit_themes
+- constraints_and_preferences
+- claim_boundaries
+
+Not all fields are guaranteed to exist.
+
+============================================================
+YOUR TASK
+============================================================
+
+Generate a prompt block with a stable structure and strong instruction quality.
+
+The prompt must:
+1. Identify the candidate’s core positioning anchors.
+2. Surface the strongest technical differentiators that should appear in tailored outputs when relevant.
+3. Translate raw candidate data into guidance for resume generation.
+4. Include safe domain-translation rules.
+5. Include anti-inflation rules and claim boundaries.
+6. Explain how current/contractor/AI-related work should be framed if relevant.
+7. Include leadership framing if leadership data exists.
+8. End with a concise “final reminder” describing what makes the candidate most distinctive.
+
+============================================================
+OUTPUT FORMAT
+============================================================
+
+Return plain text only.
+
+The output must be a prompt block with section headings in ALL CAPS.
+
+Recommended section structure:
+
+[CANDIDATE_LAYER_<CANDIDATE_IDENTIFIER> v1.0]
+
+CORE POSITIONING ANCHORS
+
+TECHNICAL DIFFERENTIATION
+
+DOMAIN / INDUSTRY FRAMING
+
+SAFE DOMAIN TRANSLATION
+
+LEADERSHIP FRAMING
+
+AI WORK POSITIONING
+
+CLAIM BOUNDARIES / PROHIBITED INFLATION
+
+FINAL REMINDER
+
+You may omit a section only if the corresponding data is truly absent.
+
+============================================================
+WRITING RULES
+============================================================
+
+1. Write as instructions to a downstream LLM.
+   - Use imperative phrasing where appropriate:
+     "Emphasize..."
+     "Do not claim..."
+     "When relevant..."
+     "Prefer..."
+   - Do NOT write explanatory prose for humans.
+
+2. Be grounded in the provided candidate profile.
+   - Do not invent experience.
+   - Do not infer unsupported domain expertise.
+   - Do not create fake technologies, products, or responsibilities.
+
+3. Distinguish between:
+   - what should be emphasized
+   - what may be safely translated
+   - what must not be claimed
+
+4. Prefer mechanism-level technical differentiation over abstract adjectives.
+   - If the profile contains scaling/reliability/security patterns, convert them into explicit surfacing guidance.
+
+5. If the profile contains claim-boundary notes, convert them into anti-inflation rules.
+   Example:
+   - "Not a direct OAuth2/OIDC/SAML implementation"
+   should become guidance such as
+   - "Do not claim direct OAuth2/OIDC/SAML implementation unless explicitly supported."
+
+6. If the candidate has current contractor work, specify how it should be framed.
+   Example:
+   - maintain contractor status explicitly
+   - avoid implying employee status
+
+7. If the candidate has AI-related work, distinguish:
+   - evaluation / tooling / experimentation
+   - product ownership / production AI platform ownership
+   Only the supported level may be claimed.
+
+8. The output should be concise but information-dense.
+   Prefer prompt-like bullets or short instruction lines over long paragraphs.
+
+============================================================
+NORMALIZATION RULES
+============================================================
+
+When candidate profile values are underspecified or tokenized, normalize them into prompt-friendly language.
+
+Examples:
+- "horizontal_scaling" -> "Horizontal scaling"
+- "distributed_session_validation_via_redis" -> "Distributed session validation via Redis"
+- "metrics_logs_tracing_mindset" -> "Metrics/logs/tracing mindset"
+
+Preserve the meaning while making the prompt readable.
+
+============================================================
+QUALITY BAR
+============================================================
+
+The generated candidate-layer prompt should feel like a strong manually written instruction layer for a tailoring system.
+
+It should not merely mirror JSON fields.
+It should synthesize them into:
+- prioritization
+- surfacing rules
+- safe translations
+- anti-hallucination boundaries
+
+Now generate the prompt from the provided CANDIDATE_PROFILE.

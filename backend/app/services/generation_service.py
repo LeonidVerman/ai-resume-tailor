@@ -102,9 +102,14 @@ class GenerationService:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Structured resume not found")
 
-        # ── Load candidate profile from DB ─────────────────────────────────
-        candidate_profile_text = _build_candidate_profile_text(
-            self._profile_repo.get_by_user_id(user_id)
+        # ── Load candidate profile and ensure prompt is synced ─────────────
+        # The meta model follows the same model selection rule as the generation:
+        # two_phase → phase1_model, single_pass → simple_model.
+        meta_model = phase1_model if admin_mode == "two_phase" else simple_model
+        candidate_profile_text = _ensure_candidate_prompt(
+            profile=self._profile_repo.get_by_user_id(user_id),
+            model=meta_model,
+            profile_repo=self._profile_repo,
         )
 
         # ── Create run record ──────────────────────────────────────────────
@@ -389,6 +394,22 @@ def _override_models(
         _llm.SIMPLE_MODEL = orig["SIMPLE_MODEL"]
         _llm.PHASE1_MODEL = orig["PHASE1_MODEL"]
         _llm.PHASE2_MODEL = orig["PHASE2_MODEL"]
+
+
+def _ensure_candidate_prompt(profile, model: str, profile_repo) -> str | None:
+    """
+    Return the candidate-layer prompt text for injection into the generation prompt.
+
+    - If no profile exists: return None (pipeline falls back to CLI file / empty).
+    - Otherwise: delegate to ensure_candidate_prompt_synced() which lazily generates
+      and caches the prompt.
+
+    Propagates RuntimeError on LLM failure so the caller can fail the generation run.
+    """
+    if profile is None or not profile.profile_jsonb:
+        return None
+    from backend.app.services.candidate_meta_service import ensure_candidate_prompt_synced
+    return ensure_candidate_prompt_synced(profile, model, profile_repo)
 
 
 def _build_candidate_profile_text(profile) -> str | None:

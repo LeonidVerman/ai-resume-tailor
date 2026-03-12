@@ -7,7 +7,7 @@ Stored as JSONB so the schema can evolve without migrations.
 
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import Boolean, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -28,6 +28,8 @@ class CandidateProfile(Base, TimestampMixin):
     )
     profile_version: Mapped[str] = mapped_column(String(32), nullable=False, default="1")
     profile_jsonb: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    candidate_prompt: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
+    prompt_synched: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="candidate_profiles")  # noqa: F821

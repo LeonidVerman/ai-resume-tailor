@@ -58,6 +58,7 @@ class CandidateProfileService:
             user_id=user_id,
             profile_version=request.profile_version,
             profile_jsonb=doc.model_dump(mode="json"),
+            prompt_synched=False,
         )
         logger.info("Created candidate profile id=%s user=%s", profile.id, user_id)
         return self._to_response(profile)
@@ -79,6 +80,7 @@ class CandidateProfileService:
             profile,
             profile_version=request.profile_version,
             profile_jsonb=doc.model_dump(mode="json"),
+            prompt_synched=False,
         )
         logger.info("Updated candidate profile id=%s user=%s", updated.id, user_id)
         return self._to_response(updated)
