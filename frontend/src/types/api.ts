@@ -37,6 +37,7 @@ export interface ExperienceHighlight {
   architecture_patterns: string[];
   constraints_and_tradeoffs: string[];
   skills_applied: string[];
+  security_auth_patterns: string[];
 }
 
 export interface TechnicalSkills {
@@ -47,6 +48,12 @@ export interface TechnicalSkills {
   api_patterns: string[];
   async_messaging: string[];
   observability: string[];
+  security_auth_patterns: string[];
+  scalability_reliability_patterns: string[];
+}
+
+export interface ClaimBoundaries {
+  security_auth: string[];
 }
 
 export interface LeadershipScope {
@@ -74,7 +81,7 @@ export interface ConstraintsAndPreferences {
 }
 
 export interface CandidateProfileDocument {
-  candidate_profile_version: "1.0" | "1.1";
+  candidate_profile_version: "1.0" | "1.1" | "2.0";
   candidate: CandidateIdentity;
   domains: DomainExperience;
   experience_highlights: ExperienceHighlight[];
@@ -83,6 +90,7 @@ export interface CandidateProfileDocument {
   ai_tooling_practice: AIToolingPractice;
   role_fit_themes: string[];
   constraints_and_preferences: ConstraintsAndPreferences;
+  claim_boundaries: ClaimBoundaries;
 }
 
 export interface CandidateProfileResponse {

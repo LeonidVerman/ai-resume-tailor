@@ -51,6 +51,10 @@
     "description": "Specific skills used in this highlight. One per line.",
     "examples": ["senior-level software engineering problem solving", "ambiguity handling", "evaluation of solution robustness and reasoning quality"]
   },
+  "experience_highlights.security_auth_patterns": {
+    "description": "Security or auth patterns specific to this highlight. One per line.",
+    "examples": ["Encrypted signed session tokens", "Centralized revocation via Redis"]
+  },
   "technical_skills.languages": {
     "description": "Programming languages. One per line.",
     "examples": ["Java", "C#", "Python", "TypeScript"]
@@ -77,7 +81,15 @@
   },
   "technical_skills.observability": {
     "description": "Observability and monitoring approach. One per line.",
-    "examples": ["metrics_logs_tracing_mindset"]
+    "examples": ["Metrics logs tracing mindset"]
+  },
+  "technical_skills.security_auth_patterns": {
+    "description": "Security and authentication patterns implemented. One per line.",
+    "examples": ["Encrypted signed session tokens", "API level access control RBAC style", "Distributed session validation via Redis"]
+  },
+  "technical_skills.scalability_reliability_patterns": {
+    "description": "Scalability and reliability patterns applied. One per line.",
+    "examples": ["Horizontal scaling", "Read replica traffic isolation", "Multi layer caching", "Async decoupling via queues"]
   },
   "leadership.scope.team_size_max": {
     "description": "Largest team you have directly led",
@@ -126,5 +138,9 @@
   "constraints_and_preferences.resume_constraint": {
     "description": "Specific resume presentation constraints. One per line.",
     "examples": ["when describing current contracting work, clearly mark as independent contractor", "avoid implying employee status where relevant"]
+  },
+  "claim_boundaries.security_auth": {
+    "description": "What you can and cannot claim about security/auth experience. One per line.",
+    "examples": ["Not a direct OAuth2/OIDC/SAML implementation", "Architecture aligns with JWT-style principles: cryptographic integrity, expiry enforcement, stateless identity propagation"]
   }
 }

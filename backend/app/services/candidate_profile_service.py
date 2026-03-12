@@ -20,6 +20,7 @@ from backend.app.schemas.candidate_profile import (
     CandidateProfileResponse,
     CandidateProfileUpsertRequest,
 )
+from backend.app.services.candidate_profile_normalizer import normalize_candidate_profile
 
 logger = logging.getLogger(__name__)
 
@@ -54,10 +55,11 @@ class CandidateProfileService:
     def create(self, user_id: str, request: CandidateProfileUpsertRequest) -> CandidateProfileResponse:
         """Create a new profile version for the user."""
         doc = request.profile
+        profile_jsonb = normalize_candidate_profile(doc.model_dump(mode="json"))
         profile = self._repo.create(
             user_id=user_id,
             profile_version=request.profile_version,
-            profile_jsonb=doc.model_dump(mode="json"),
+            profile_jsonb=profile_jsonb,
             prompt_synched=False,
         )
         logger.info("Created candidate profile id=%s user=%s", profile.id, user_id)
@@ -76,10 +78,11 @@ class CandidateProfileService:
         if profile is None:
             return self.create(user_id, request)
         doc = request.profile
+        profile_jsonb = normalize_candidate_profile(doc.model_dump(mode="json"))
         updated = self._repo.update(
             profile,
             profile_version=request.profile_version,
-            profile_jsonb=doc.model_dump(mode="json"),
+            profile_jsonb=profile_jsonb,
             prompt_synched=False,
         )
         logger.info("Updated candidate profile id=%s user=%s", updated.id, user_id)

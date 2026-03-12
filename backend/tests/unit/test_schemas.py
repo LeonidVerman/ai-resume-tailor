@@ -53,7 +53,7 @@ class TestCandidateProfileDocument:
 
     def test_version_default(self):
         doc = CandidateProfileDocument(candidate=CandidateIdentity(name="X"))
-        assert doc.candidate_profile_version == "1.1"
+        assert doc.candidate_profile_version == "2.0"
 
     def test_upsert_request(self):
         req = CandidateProfileUpsertRequest(

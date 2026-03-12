@@ -32,6 +32,9 @@ class CandidateProfileRepository:
             .all()
         )
 
+    def list_all(self) -> list[CandidateProfile]:
+        return self._db.query(CandidateProfile).all()
+
     def create(self, **kwargs) -> CandidateProfile:
         profile = CandidateProfile(**kwargs)
         self._db.add(profile)

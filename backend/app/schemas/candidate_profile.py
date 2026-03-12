@@ -1,12 +1,12 @@
 """
 backend/app/schemas/candidate_profile.py
 
-Candidate profile schemas — v1.1.
+Candidate profile schemas — v2.0.
 
 The profile is stored as JSONB in the DB. All sub-sections have default
-factories so that old partial profiles (v1.0, domains-only) continue to
-validate without error. Deprecated v1.0 fields (authz_authn_experience,
-scalability_reliability_patterns) are silently dropped by Pydantic on load.
+factories so that old partial profiles (v1.x) continue to validate without
+error. The normalizer service migrates v1.x structure (authz_authn_experience,
+scalability_reliability_patterns) into the v2.0 layout at save time.
 """
 
 from datetime import datetime
@@ -38,6 +38,7 @@ class ExperienceHighlight(APIModel):
     architecture_patterns: list[str] = Field(default_factory=list)
     constraints_and_tradeoffs: list[str] = Field(default_factory=list)
     skills_applied: list[str] = Field(default_factory=list)
+    security_auth_patterns: list[str] = Field(default_factory=list)
 
 
 class TechnicalSkills(APIModel):
@@ -48,6 +49,12 @@ class TechnicalSkills(APIModel):
     api_patterns: list[str] = Field(default_factory=list)
     async_messaging: list[str] = Field(default_factory=list)
     observability: list[str] = Field(default_factory=list)
+    security_auth_patterns: list[str] = Field(default_factory=list)
+    scalability_reliability_patterns: list[str] = Field(default_factory=list)
+
+
+class ClaimBoundaries(APIModel):
+    security_auth: list[str] = Field(default_factory=list)
 
 
 class LeadershipScope(APIModel):
@@ -80,11 +87,12 @@ class CandidateProfileDocument(APIModel):
     """
     Full candidate profile document stored in JSONB.
 
-    Version 1.1 — adds leadership, AI tooling, role fit themes, and
-    constraints. All sections have defaults for backward compatibility
-    with v1.0 profiles. Deprecated fields are silently ignored by Pydantic.
+    Version 2.0 — adds security_auth_patterns and scalability_reliability_patterns
+    to TechnicalSkills and ExperienceHighlight, and adds a ClaimBoundaries section.
+    All sections have defaults for backward compatibility with v1.x profiles;
+    the normalizer migrates old top-level fields at save time.
     """
-    candidate_profile_version: str = "1.1"
+    candidate_profile_version: str = "2.0"
     candidate: CandidateIdentity
     domains: DomainExperience = Field(default_factory=DomainExperience)
     experience_highlights: list[ExperienceHighlight] = Field(default_factory=list)
@@ -95,6 +103,7 @@ class CandidateProfileDocument(APIModel):
     constraints_and_preferences: ConstraintsAndPreferences = Field(
         default_factory=ConstraintsAndPreferences
     )
+    claim_boundaries: ClaimBoundaries = Field(default_factory=ClaimBoundaries)
 
 
 # ── API request/response models ────────────────────────────────────────────

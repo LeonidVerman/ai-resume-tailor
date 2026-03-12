@@ -19,6 +19,7 @@ const OPTIONAL_LIST_FIELDS: Array<[keyof ExperienceHighlight, string]> = [
   ["architecture_patterns", "Architecture patterns"],
   ["constraints_and_tradeoffs", "Constraints and tradeoffs"],
   ["skills_applied", "Skills applied"],
+  ["security_auth_patterns", "Security / auth patterns"],
 ];
 
 export function ExperienceHighlightCard({ value, index, onChange, onRemove }: Props) {

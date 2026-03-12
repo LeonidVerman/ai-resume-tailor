@@ -20,18 +20,20 @@ import type {
   ConstraintsAndPreferences,
   DomainExperience,
   CandidateIdentity,
+  ClaimBoundaries,
 } from "@/types/api";
 
-// ── Default v1.1 profile ────────────────────────────────────────────────────
+// ── Default v2.0 profile ────────────────────────────────────────────────────
 
 const DEFAULT_PROFILE: CandidateProfileDocument = {
-  candidate_profile_version: "1.1",
+  candidate_profile_version: "2.0",
   candidate: { name: "", headline: "", summary: "" },
   domains: { primary: [], secondary: [] },
   experience_highlights: [],
   technical_skills: {
     languages: [], backend_systems: [], datastores: [],
     infra_devops: [], api_patterns: [], async_messaging: [], observability: [],
+    security_auth_patterns: [], scalability_reliability_patterns: [],
   },
   leadership: {
     scope: { team_size_max: null, style_keywords: [] },
@@ -45,13 +47,14 @@ const DEFAULT_PROFILE: CandidateProfileDocument = {
   constraints_and_preferences: {
     work_context: [], communication: [], resume_constraint: [],
   },
+  claim_boundaries: { security_auth: [] },
 };
 
 function hydrateProfile(stored?: Partial<CandidateProfileDocument>): CandidateProfileDocument {
   if (!stored) return { ...DEFAULT_PROFILE };
   const d = DEFAULT_PROFILE;
   return {
-    candidate_profile_version: "1.1",
+    candidate_profile_version: "2.0",
     candidate: { ...d.candidate, ...stored.candidate },
     domains: { ...d.domains, ...stored.domains },
     experience_highlights: stored.experience_highlights ?? [],
@@ -67,6 +70,7 @@ function hydrateProfile(stored?: Partial<CandidateProfileDocument>): CandidatePr
       ...d.constraints_and_preferences,
       ...stored.constraints_and_preferences,
     },
+    claim_boundaries: { ...d.claim_boundaries, ...stored.claim_boundaries },
   };
 }
 
@@ -80,6 +84,7 @@ const toKeyed = (h: ExperienceHighlight): HighlightWithKey => ({ ...h, _key: mak
 const EMPTY_HIGHLIGHT: ExperienceHighlight = {
   area: "", impact: [], team_context: [],
   architecture_patterns: [], constraints_and_tradeoffs: [], skills_applied: [],
+  security_auth_patterns: [],
 };
 
 // ── Section helpers ─────────────────────────────────────────────────────────
@@ -152,6 +157,12 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
       constraints_and_preferences: { ...d.constraints_and_preferences, [field]: val },
     }));
   }
+  function setClaimBoundaries(field: keyof ClaimBoundaries, val: string[]) {
+    setDoc(d => ({
+      ...d,
+      claim_boundaries: { ...d.claim_boundaries, [field]: val },
+    }));
+  }
 
   // ── Validation ───────────────────────────────────────────────────────────
 
@@ -199,7 +210,7 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
   }
 
   const { candidate, domains, technical_skills: ts, leadership, ai_tooling_practice: ai,
-    role_fit_themes, constraints_and_preferences: cx } = doc;
+    role_fit_themes, constraints_and_preferences: cx, claim_boundaries: cb } = doc;
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -291,6 +302,8 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
               ["api_patterns", "API patterns"],
               ["async_messaging", "Async messaging"],
               ["observability", "Observability"],
+              ["security_auth_patterns", "Security / auth patterns"],
+              ["scalability_reliability_patterns", "Scalability / reliability patterns"],
             ] as [keyof TechnicalSkills, string][]
           ).map(([field, label]) => (
             <div key={field}>
@@ -411,6 +424,18 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
             onChange={v => setConstraints("resume_constraint", v)}
             placeholder={"when describing current contracting work, clearly mark as independent contractor\navoid implying employee status where relevant"}
             rows={3}
+          />
+        </Field>
+      </SectionCard>
+
+      {/* 9 — Claim boundaries */}
+      <SectionCard title="Claim boundaries">
+        <Field label="Security / auth boundaries" configKey="claim_boundaries.security_auth">
+          <ArrayListEditor
+            value={cb.security_auth}
+            onChange={v => setClaimBoundaries("security_auth", v)}
+            placeholder={"Not a direct OAuth2/OIDC/SAML implementation\nArchitecture aligns with JWT-style principles"}
+            rows={4}
           />
         </Field>
       </SectionCard>

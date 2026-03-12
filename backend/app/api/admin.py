@@ -31,6 +31,7 @@ from fastapi.responses import Response
 from backend.app.config import get_settings
 from backend.app.dependencies import AdminDep, DbDep
 from backend.app.db.repositories.admin_config_repository import AdminConfigRepository
+from backend.app.db.repositories.candidate_profile_repository import CandidateProfileRepository
 from backend.app.db.repositories.evaluation_run_repository import EvaluationRunRepository
 from backend.app.db.repositories.generation_run_repository import GenerationRunRepository
 from backend.app.db.repositories.tailored_document_repository import TailoredDocumentRepository
@@ -42,6 +43,7 @@ from backend.app.schemas.admin import (
     SystemStats,
 )
 from backend.app.schemas.evaluation import EvaluationRequest, EvaluationResponse
+from backend.app.services.candidate_profile_normalizer import normalize_candidate_profile
 from backend.app.services.evaluation_service import EvaluationService
 from backend.app.services.stats_service import StatsService
 
@@ -100,6 +102,32 @@ def save_generation_config(
         phase2_model=request.phase2_model,
     )
     return AdminActionResponse(ok=True, message="Generation configuration saved.")
+
+
+@router.post("/candidate-profiles/backfill", response_model=AdminActionResponse)
+def backfill_candidate_profiles(_admin: AdminDep, db: DbDep):
+    """
+    Re-normalise every stored candidate profile to v2.0 structure.
+
+    Migrates v1.x fields (authz_authn_experience, scalability_reliability_patterns)
+    into the v2.0 layout and runs token-to-readable normalisation on all list fields.
+    Sets prompt_synched=False on any profile whose JSONB was changed.
+    """
+    repo = CandidateProfileRepository(db)
+    profiles = repo.list_all()
+    updated = 0
+    for profile in profiles:
+        if not profile.profile_jsonb:
+            continue
+        normalised = normalize_candidate_profile(profile.profile_jsonb)
+        if normalised != profile.profile_jsonb:
+            repo.update(profile, profile_jsonb=normalised, prompt_synched=False)
+            updated += 1
+    db.commit()
+    return AdminActionResponse(
+        ok=True,
+        message=f"Backfill complete. {updated}/{len(profiles)} profiles updated.",
+    )
 
 
 # ── Shared download helpers ────────────────────────────────────────────────

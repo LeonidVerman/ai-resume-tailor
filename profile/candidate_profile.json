@@ -1,13 +1,13 @@
 {
-  "candidate_profile_version": "1.0",
+  "candidate_profile_version": "2.0",
   "candidate": {
     "name": "Leonid Verman",
     "headline": "Senior backend engineer & engineering leader (10-15+ yrs), high-performance distributed systems (fintech/crypto), AI model training & evaluation contractor",
     "summary": "Senior backend engineer and engineering leader with 10-15+ years focused on high-performance, fault-tolerant distributed systems in fintech and crypto. Scaled production systems to 1M+ users under regulatory constraints. Hands-on technical leader (teams up to 15-20). Currently supports world-leading AI labs by training and evaluating cutting-edge LLMs on ambiguous senior-level software engineering tasks."
   },
   "domains": {
-    "primary": ["fintech", "crypto_exchange", "blockchain"],
-    "secondary": ["payments", "risk_controls", "regulated_systems"]
+    "primary": ["fintech", "crypto exchange", "blockchain"],
+    "secondary": ["payments", "risk controls", "regulated systems"]
   },
   "experience_highlights": [
     {
@@ -30,7 +30,17 @@
       ],
       "constraints_and_tradeoffs": [
         "Fast go-live timeline due to regulatory approval timeline",
-        "Regulatory constraints made some database partitioning/sharding approaches harder"
+        "Regulatory constraints made some database partitioning/sharding approaches harder",
+        "Account migration between servers without breaking auth",
+        "Stateless services with centralized revocation",
+        "High throughput low latency validation"
+      ],
+      "skills_applied": [],
+      "security_auth_patterns": [
+        "Encrypted signed session tokens",
+        "Distributed session validation via Redis",
+        "Account context extraction from token",
+        "API level access control RBAC style"
       ]
     },
     {
@@ -41,11 +51,15 @@
         "Formulates complex and ambiguous senior-level software engineering problems for model training",
         "Contributes to meeting deadlines for training task creation"
       ],
+      "team_context": [],
+      "architecture_patterns": [],
+      "constraints_and_tradeoffs": [],
       "skills_applied": [
         "senior-level software engineering problem solving",
         "ambiguity handling",
         "evaluation of solution robustness and reasoning quality"
-      ]
+      ],
+      "security_auth_patterns": []
     }
   ],
   "technical_skills": {
@@ -61,83 +75,84 @@
     "datastores": ["MySQL", "PostgreSQL", "Redis", "Oracle"],
     "infra_devops": ["AWS", "Docker", "Kubernetes", "CI/CD"],
     "api_patterns": ["REST", "WebSockets"],
-    "async_messaging": ["message_queues", "idempotent_processing", "retry_safe_design", "Kafka", "RabbitMQ"],
-    "observability": ["metrics_logs_tracing_mindset"]
-  },
-  "authz_authn_experience": {
-    "implemented": [
-      "encrypted_signed_session_tokens",
-      "distributed_session_validation_via_redis",
-      "account_context_extraction_from_token",
-      "api_level_access_control_rbac_style"
+    "async_messaging": [
+      "Message queues",
+      "Idempotent processing",
+      "Retry safe design",
+      "Kafka",
+      "RabbitMQ"
     ],
-    "notes": [
-      "Not a direct OAuth2/OIDC/SAML implementation",
-      "Architecture aligns with JWT-style principles: cryptographic integrity, expiry enforcement, stateless identity propagation, centralized revocation via Redis"
+    "observability": ["Metrics logs tracing mindset"],
+    "security_auth_patterns": [
+      "Encrypted signed session tokens",
+      "Distributed session validation via Redis",
+      "Account context extraction from token",
+      "API level access control RBAC style"
     ],
-    "scalability_challenges": [
-      "account_migration_between_servers_without_breaking_auth",
-      "stateless_services_with_centralized_revocation",
-      "high_throughput_low_latency_validation"
+    "scalability_reliability_patterns": [
+      "Horizontal scaling",
+      "Read replica traffic isolation",
+      "Multi layer caching",
+      "Async decoupling via queues",
+      "Safe account rebalancing migration",
+      "Fail closed mindset for risk critical paths"
     ]
   },
-  "scalability_reliability_patterns": [
-    "horizontal_scaling",
-    "read_replica_traffic_isolation",
-    "multi_layer_caching",
-    "async_decoupling_via_queues",
-    "safe_account_rebalancing_migration",
-    "fail_closed_mindset_for_risk_critical_paths"
-  ],
   "leadership": {
     "scope": {
       "team_size_max": 20,
-      "style_keywords": ["results", "clarity", "accountability", "continuous_improvement", "ownership"]
+      "style_keywords": ["results", "clarity", "accountability", "Continuous improvement", "ownership"]
     },
     "practices": [
-      "clear_task_definition_and_expectations",
-      "transparent_decision_making",
-      "code_review_as_collaborative_quality_process",
-      "mentorship_and_standards"
+      "Clear task definition and expectations",
+      "Transparent decision making",
+      "Code review as collaborative quality process",
+      "Mentorship and standards"
     ],
     "risk_management": [
-      "pushes_back_on_risky_changes_that_threaten_production_stability",
-      "prefers_guardrails_for_innovation_in_regulated_systems"
+      "Pushes back on risky changes that threaten production stability",
+      "Prefers guardrails for innovation in regulated systems"
     ]
   },
   "ai_tooling_practice": {
     "hands_on_tools": ["Cursor", "ChatGPT", "Claude Code", "OpenAI API"],
     "usage_patterns": [
-      "prototyping_new_modules",
-      "investigating_problems_and_root_causes",
-      "rapid_learning_of_new_tools_and_tech",
-      "model_evaluation",
-      "A_B_tests",
-      "AI_services_integration"
+      "Prototyping new modules",
+      "Investigating problems and root causes",
+      "Rapid learning of new tools and tech",
+      "Model evaluation",
+      "A B tests",
+      "AI services integration"
     ],
     "principles": [
-      "engineer_remains_accountable",
-      "avoid_pasting_sensitive_data",
-      "security_and_safety_first_in_regulated_contexts"
+      "Engineer remains accountable",
+      "Avoid pasting sensitive data",
+      "Security and safety first in regulated contexts"
     ],
-    "concepts_familiarity": ["RAG", "vector_databases", "LLM_capabilities_and_limits"]
+    "concepts_familiarity": ["RAG", "Vector databases", "LLM capabilities and limits"]
   },
   "role_fit_themes": [
-    "fintech_backend",
-    "crypto_and_blockchain_infrastructure",
-    "payments_and_settlement",
-    "high_throughput_low_latency_systems",
-    "risk_margin_controls",
-    "distributed_backend_architecture",
-    "ai_platform_or_llm_integration",
-    "0_to_1_builder_and_scaling"
+    "Fintech backend",
+    "Crypto and blockchain infrastructure",
+    "Payments and settlement",
+    "High throughput low latency systems",
+    "Risk margin controls",
+    "Distributed backend architecture",
+    "AI platform or LLM integration",
+    "0 to 1 builder and scaling"
   ],
   "constraints_and_preferences": {
-    "work_context": ["mission_critical", "highly_regulated_environments"],
-    "communication": ["strong_written_and_verbal", "cross_functional_collaboration"],
+    "work_context": ["Mission critical", "Highly regulated environments"],
+    "communication": ["Strong written and verbal", "Cross functional collaboration"],
     "resume_constraint": [
       "when describing current contracting work, clearly mark as independent contractor",
       "avoid implying employee status where relevant"
+    ]
+  },
+  "claim_boundaries": {
+    "security_auth": [
+      "Not a direct OAuth2/OIDC/SAML implementation",
+      "Architecture aligns with JWT-style principles: cryptographic integrity, expiry enforcement, stateless identity propagation, centralized revocation via Redis"
     ]
   }
 }
