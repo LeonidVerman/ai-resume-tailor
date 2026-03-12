@@ -102,12 +102,16 @@ class GenerationService:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Structured resume not found")
 
-        # ── Load candidate profile and ensure prompt is synced ─────────────
-        # The meta model follows the same model selection rule as the generation:
-        # two_phase → phase1_model, single_pass → simple_model.
+        # ── Load candidate profile, build raw JSON + generated layer ───────
+        # raw JSON  → used by Phase 1 planner and writer_packet builder
+        # candidate_layer → injected into Phase 2 / single-pass developer
+        #                   instructions, replacing the static prompts/candidate.txt
+        # The meta model follows: two_phase → phase1_model, else → simple_model.
         meta_model = phase1_model if admin_mode == "two_phase" else simple_model
-        candidate_profile_text = _ensure_candidate_prompt(
-            profile=self._profile_repo.get_by_user_id(user_id),
+        profile = self._profile_repo.get_by_user_id(user_id)
+        candidate_profile_text = _build_candidate_profile_text(profile)
+        candidate_layer = _ensure_candidate_prompt(
+            profile=profile,
             model=meta_model,
             profile_repo=self._profile_repo,
         )
@@ -135,6 +139,7 @@ class GenerationService:
                 jd_job_title=meta.get("job_title", ""),
                 resume_raw_text=resume.resume_jsonb.get("raw_text", "") if resume.resume_jsonb else "",
                 candidate_profile_text=candidate_profile_text,
+                candidate_layer=candidate_layer,
                 simple_model=simple_model,
                 phase1_model=phase1_model,
                 phase2_model=phase2_model,
@@ -200,6 +205,7 @@ class GenerationService:
         jd_job_title: str,
         resume_raw_text: str,
         candidate_profile_text: str | None = None,
+        candidate_layer: str | None = None,
         simple_model: str | None = None,
         phase1_model: str | None = None,
         phase2_model: str | None = None,
@@ -231,12 +237,14 @@ class GenerationService:
                 result, messages, debug_meta = self._run_two_phase(
                     job, resume_template, cover_template,
                     candidate_profile=candidate_profile_text,
+                    candidate_layer=candidate_layer,
                 )
             else:
                 from tailor.core_generation.llm import tailor_documents
                 result, llm_req = tailor_documents(
                     job, resume_template, cover_template,
                     candidate_profile=candidate_profile_text,
+                    candidate_layer=candidate_layer,
                 )
                 result, messages, debug_meta = result, [llm_req], {"llm_request": llm_req}
 
@@ -249,7 +257,7 @@ class GenerationService:
         token_input, token_output, cost = _extract_usage_from_messages(messages)
         return result, token_input, token_output, cost, debug_meta
 
-    def _run_two_phase(self, job, resume_template, cover_template, candidate_profile=None):
+    def _run_two_phase(self, job, resume_template, cover_template, candidate_profile=None, candidate_layer=None):
         """
         Run Phase 1 (plan) + Phase 2 (write) with optional repair.
 
@@ -344,12 +352,14 @@ class GenerationService:
             result, llm_req = tailor_documents(
                 job, resume_template, cover_template,
                 candidate_profile=candidate_profile,
+                candidate_layer=candidate_layer,
             )
             return result, [llm_req], {"llm_request": llm_req, "phase1": phase1_debug}
 
         result, p2_messages, p2_meta = tailor_documents_with_plan(
             plan, job, resume_template, cover_template,
             candidate_profile=candidate_profile,
+            candidate_layer=candidate_layer,
         )
         all_messages = [p1_messages, p2_messages]
         return result, all_messages, {

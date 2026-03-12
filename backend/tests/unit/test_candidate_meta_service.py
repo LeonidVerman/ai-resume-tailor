@@ -199,9 +199,12 @@ class TestEnsureCandidatePromptHelper:
 
     def test_uses_candidate_prompt_not_raw_json_in_generation(self):
         """
-        GenerationService.generate() must forward candidate_prompt text
-        (not raw JSON) as candidate_profile_text to _run_pipeline.
+        GenerationService.generate() must forward:
+          - candidate_layer  → the generated candidate_prompt text
+          - candidate_profile_text → the raw profile JSON (for writer_packet / Phase 1)
+        These must be passed as SEPARATE arguments to _run_pipeline, not merged.
         """
+        import json
         import uuid
         from unittest.mock import patch
         from backend.app.schemas.generation import GenerationRequest
@@ -224,8 +227,13 @@ class TestEnsureCandidatePromptHelper:
         doc = MagicMock()
         doc.id = str(uuid.uuid4())
 
+        raw_profile_jsonb = {"candidate": {"name": "Alice"}, "domains": {"primary": ["fintech"]}}
         # Profile with synced prompt
-        profile = _make_profile(synched=True, candidate_prompt="[CANDIDATE_LAYER v1.0]\nMy prompt.")
+        profile = _make_profile(
+            synched=True,
+            candidate_prompt="[CANDIDATE_LAYER v1.0]\nMy prompt.",
+            profile_jsonb=raw_profile_jsonb,
+        )
 
         jd_repo = MagicMock(); jd_repo.get_by_id.return_value = jd
         resume_repo = MagicMock(); resume_repo.get_by_id.return_value = resume
@@ -257,8 +265,10 @@ class TestEnsureCandidatePromptHelper:
             svc.generate(user_id, request)
 
         _, kwargs = mock_pipeline.call_args
-        # Must be the candidate_prompt text, not raw JSON
-        assert kwargs.get("candidate_profile_text") == "[CANDIDATE_LAYER v1.0]\nMy prompt."
+        # candidate_layer must be the generated prompt text (for developer_instructions)
+        assert kwargs.get("candidate_layer") == "[CANDIDATE_LAYER v1.0]\nMy prompt."
+        # candidate_profile_text must be the raw profile JSON (for writer_packet / Phase 1)
+        assert kwargs.get("candidate_profile_text") == json.dumps(raw_profile_jsonb, ensure_ascii=False, indent=2)
 
 
 # ── Save flow ──────────────────────────────────────────────────────────────

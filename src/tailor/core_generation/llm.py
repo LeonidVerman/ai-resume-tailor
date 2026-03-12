@@ -628,6 +628,7 @@ def tailor_documents_with_plan(
     resume_template: str,
     cover_template: str,
     candidate_profile: str | None = None,
+    candidate_layer: str | None = None,
 ) -> tuple[TailorResult, list, dict]:
     """Phase 2: generate + validate + optionally repair tailored documents.
 
@@ -668,6 +669,7 @@ def tailor_documents_with_plan(
     result, attempt1_messages, attempt1_meta = _run_phase2_writer(
         writer_packet, plan, job, resume_template, cover_template,
         profile_str, task, current_date,
+        candidate_layer=candidate_layer,
     )
 
     current_ledger: dict | None = attempt1_meta.get("evidence_ledger")
@@ -780,7 +782,10 @@ def tailor_documents_with_plan(
 # Phase 2 internal helpers
 # ---------------------------------------------------------------------------
 
-def _build_phase2_developer_instructions(role_level: str = "senior") -> tuple[str, str]:
+def _build_phase2_developer_instructions(
+    role_level: str = "senior",
+    candidate_layer: str | None = None,
+) -> tuple[str, str]:
     """Build developer instructions for the Phase 2 writer.
 
     Prefers ``phase2.txt`` — a self-contained plan-aware writer prompt
@@ -813,9 +818,15 @@ def _build_phase2_developer_instructions(role_level: str = "senior") -> tuple[st
         ]
 
     # Optional per-candidate / per-role overlays (always appended when present).
+    # candidate_layer: if provided (web mode), use it directly; otherwise fall
+    # back to prompts/candidate.txt (CLI mode).
     # role.txt receives ROLE_LEVEL so it can highlight the active level.
+    resolved_candidate = (
+        candidate_layer.strip() if candidate_layer
+        else _load_prompt_optional("candidate").strip()
+    )
     parts += [
-        _load_prompt_optional("candidate").strip(),
+        resolved_candidate,
         _load_prompt_optional("role", ROLE_LEVEL=role_level).strip(),
     ]
 
@@ -831,10 +842,12 @@ def _run_phase2_writer(
     profile_str: str,
     task: str,
     current_date: str,
+    candidate_layer: str | None = None,
 ) -> tuple[TailorResult, list, dict]:
     """Execute a normal Phase 2 writer LLM call."""
     developer_instructions, prompt_name = _build_phase2_developer_instructions(
-        role_level=writer_packet.get("role_level", "senior")
+        role_level=writer_packet.get("role_level", "senior"),
+        candidate_layer=candidate_layer,
     )
 
     messages: list = [
@@ -1060,6 +1073,7 @@ def tailor_documents(
     resume_template: str,
     cover_template: str,
     candidate_profile: str | None = None,
+    candidate_layer: str | None = None,
 ) -> tuple[TailorResult, list]:
     """Single-pass generate a tailored resume and cover letter (fallback).
 
@@ -1070,10 +1084,16 @@ def tailor_documents(
     messages:
         The full message list sent to the LLM (useful for debug logging).
     """
+    # candidate_layer: if provided (web mode), use it in the candidate-layer slot;
+    # otherwise fall back to prompts/candidate.txt (CLI mode).
+    resolved_candidate = (
+        candidate_layer.strip() if candidate_layer
+        else _load_prompt_optional("candidate").strip()
+    )
     developer_instructions = "\n\n".join(
         part for part in (
             _load_prompt("tailor").strip(),
-            _load_prompt_optional("candidate").strip(),
+            resolved_candidate,
             _load_prompt_optional("role").strip(),
         )
         if part
