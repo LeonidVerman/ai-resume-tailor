@@ -55,6 +55,8 @@ class TechnicalSkills(APIModel):
 
 class ClaimBoundaries(APIModel):
     security_auth: list[str] = Field(default_factory=list)
+    domain_limits: list[str] = Field(default_factory=list)
+    employment_constraints: list[str] = Field(default_factory=list)
 
 
 class LeadershipScope(APIModel):

@@ -47,7 +47,7 @@ const DEFAULT_PROFILE: CandidateProfileDocument = {
   constraints_and_preferences: {
     work_context: [], communication: [], resume_constraint: [],
   },
-  claim_boundaries: { security_auth: [] },
+  claim_boundaries: { security_auth: [], domain_limits: [], employment_constraints: [] },
 };
 
 function hydrateProfile(stored?: Partial<CandidateProfileDocument>): CandidateProfileDocument {
@@ -70,7 +70,12 @@ function hydrateProfile(stored?: Partial<CandidateProfileDocument>): CandidatePr
       ...d.constraints_and_preferences,
       ...stored.constraints_and_preferences,
     },
-    claim_boundaries: { ...d.claim_boundaries, ...stored.claim_boundaries },
+    claim_boundaries: {
+      security_auth: [],
+      domain_limits: [],
+      employment_constraints: [],
+      ...stored.claim_boundaries,
+    },
   };
 }
 
@@ -436,6 +441,22 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
             onChange={v => setClaimBoundaries("security_auth", v)}
             placeholder={"Not a direct OAuth2/OIDC/SAML implementation\nArchitecture aligns with JWT-style principles"}
             rows={4}
+          />
+        </Field>
+        <Field label="Domain limits" configKey="claim_boundaries.domain_limits">
+          <ArrayListEditor
+            value={cb.domain_limits}
+            onChange={v => setClaimBoundaries("domain_limits", v)}
+            placeholder={"Do not imply direct ownership of unrelated SaaS business domains unless explicitly supported\nDo not claim unsupported protocol or compliance framework implementation"}
+            rows={4}
+          />
+        </Field>
+        <Field label="Employment constraints" configKey="claim_boundaries.employment_constraints">
+          <ArrayListEditor
+            value={cb.employment_constraints}
+            onChange={v => setClaimBoundaries("employment_constraints", v)}
+            placeholder={"Current AI-lab work must be clearly labeled as independent contractor work\nAvoid implying employee status where not applicable"}
+            rows={3}
           />
         </Field>
       </SectionCard>

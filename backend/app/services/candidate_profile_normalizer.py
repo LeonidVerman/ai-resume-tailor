@@ -1,7 +1,15 @@
 """
 backend/app/services/candidate_profile_normalizer.py
 
-Normalises candidate profile JSONB documents:
+Normalises candidate profile JSONB documents.  Two passes are applied in order:
+
+Pass 1 — sanitization (runs first, before any other processing):
+  - strips accidental boundary quotes and escaped-quote artifacts
+  - strips trailing comma artifacts left by copy/paste
+  - preserves internal (meaningful) quotes
+  - drops empty strings from list fields after sanitization
+
+Pass 2 — token normalization:
   - converts underscore-separated machine tokens to human-readable phrases
   - splits malformed combined items (several space-separated tokens each
     containing underscores) into individual list entries
@@ -14,6 +22,107 @@ from __future__ import annotations
 
 import copy
 import re
+
+# ── Pass 1: String sanitization ──────────────────────────────────────────────
+
+def sanitize_profile_string(value: str) -> str:
+    """
+    Conservative sanitization for a single candidate profile string value.
+
+    Rules applied in order:
+    1. Strip surrounding whitespace.
+    2. Strip trailing comma artifacts (e.g. "foo," → "foo").
+    3. Strip escaped-quote boundary artifacts: \"foo\", foo\", \"foo.
+    4. Strip trailing comma again (exposed after step 3).
+    5. Strip raw boundary quotes:
+       - Both ends, no internal quote: "foo" → foo   (Case C)
+       - Both ends, with internal quotes: "He said "hi"" → He said "hi"  (Case D)
+       - Leading only, no other quotes: "foo → foo   (Case A)
+       - Trailing only, no other quotes: foo" → foo  (Case B)
+       - Internal only: OAuth2 "style → preserved  (Case E)
+    6. Strip trailing comma one final time (exposed after step 5).
+    7. Strip whitespace.
+
+    Internal quotes are never removed.  Non-string values are returned
+    unchanged so this function is safe to call on any scalar.
+    """
+    if not isinstance(value, str):
+        return value
+
+    s = value.strip()
+    if not s:
+        return s
+
+    # Step 2: trailing comma artifact
+    if s.endswith(","):
+        s = s[:-1].strip()
+
+    # Step 3: escaped-quote boundary artifacts  (\")
+    changed = True
+    while changed:
+        changed = False
+        if s.startswith('\\"'):
+            s = s[2:].strip()
+            changed = True
+        if s.endswith('\\"'):
+            s = s[:-2].strip()
+            changed = True
+
+    # Step 4: trailing comma re-exposed
+    if s.endswith(","):
+        s = s[:-1].strip()
+
+    # Step 5: raw boundary quotes
+    if len(s) >= 2 and s[0] == '"' and s[-1] == '"':
+        # Remove outer wrapper; the inner content is the real value
+        s = s[1:-1].strip()
+    elif s.startswith('"') and '"' not in s[1:]:
+        # Unbalanced leading quote only
+        s = s[1:].strip()
+    elif s.endswith('"') and '"' not in s[:-1]:
+        # Unbalanced trailing quote only
+        s = s[:-1].strip()
+    # else: internal quote(s) only — preserve as-is (Case E)
+
+    # Step 6: trailing comma one last time
+    if s.endswith(","):
+        s = s[:-1].strip()
+
+    return s
+
+
+def sanitize_profile_value(value):
+    """
+    Recursively sanitize a profile value.
+
+    - str  → sanitize_profile_string; returned as-is if empty
+    - list → sanitize each element; drop empty strings; recurse into dicts
+    - dict → sanitize_profile_object
+    - other (int, bool, None, …) → pass through unchanged
+    """
+    if isinstance(value, str):
+        return sanitize_profile_string(value)
+    if isinstance(value, list):
+        result = []
+        for item in value:
+            if isinstance(item, str):
+                cleaned = sanitize_profile_string(item)
+                if cleaned:
+                    result.append(cleaned)
+            elif isinstance(item, dict):
+                result.append(sanitize_profile_object(item))
+            else:
+                result.append(item)
+        return result
+    if isinstance(value, dict):
+        return sanitize_profile_object(value)
+    return value
+
+
+def sanitize_profile_object(obj: dict) -> dict:
+    """Return a new dict with all nested string values sanitized."""
+    return {key: sanitize_profile_value(val) for key, val in obj.items()}
+
 
 # ── Proper-noun / acronym map ────────────────────────────────────────────────
 
@@ -191,7 +300,7 @@ _AI_TOOLING_LISTS = ("hands_on_tools", "usage_patterns", "principles", "concepts
 
 _CONSTRAINTS_LISTS = ("work_context", "communication", "resume_constraint")
 
-_CLAIM_BOUNDARIES_LISTS = ("security_auth",)
+_CLAIM_BOUNDARIES_LISTS = ("security_auth", "domain_limits", "employment_constraints")
 
 
 def _normalise_section(section: dict, field_names: tuple) -> None:
@@ -206,10 +315,12 @@ def normalize_candidate_profile(profile: dict) -> dict:
     """
     Main entry point.
 
-    1. Migrate v1.x → v2.0 structure (idempotent for v2.0 profiles).
-    2. Normalise all list fields (token-to-readable, split, dedup).
-    3. Return the updated dict (deep copy; original is not mutated).
+    1. Sanitize all string values (boundary quotes, escaped quotes, comma artifacts).
+    2. Migrate v1.x → v2.0 structure (idempotent for v2.0 profiles).
+    3. Normalise all list fields (token-to-readable, split, dedup).
+    4. Return the updated dict (original is not mutated).
     """
+    profile = sanitize_profile_object(profile)
     profile = _migrate_v1_to_v2(profile)
 
     for field in _TOP_LEVEL_LISTS:

@@ -142,5 +142,13 @@
   "claim_boundaries.security_auth": {
     "description": "What you can and cannot claim about security/auth experience. One per line.",
     "examples": ["Not a direct OAuth2/OIDC/SAML implementation", "Architecture aligns with JWT-style principles: cryptographic integrity, expiry enforcement, stateless identity propagation"]
+  },
+  "claim_boundaries.domain_limits": {
+    "description": "Domain areas where claims should be limited or qualified. One per line.",
+    "examples": ["Do not imply direct ownership of unrelated SaaS business domains unless explicitly supported", "Do not claim unsupported protocol or compliance framework implementation"]
+  },
+  "claim_boundaries.employment_constraints": {
+    "description": "Employment or engagement status constraints to respect in generated content. One per line.",
+    "examples": ["Current AI-lab work must be clearly labeled as independent contractor work", "Avoid implying employee status where not applicable"]
   }
 }

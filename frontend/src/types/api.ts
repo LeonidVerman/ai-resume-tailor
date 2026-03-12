@@ -54,6 +54,8 @@ export interface TechnicalSkills {
 
 export interface ClaimBoundaries {
   security_auth: string[];
+  domain_limits: string[];
+  employment_constraints: string[];
 }
 
 export interface LeadershipScope {
