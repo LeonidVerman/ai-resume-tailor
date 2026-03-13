@@ -10,44 +10,44 @@ It is an instruction layer for another LLM.
 
 ============================================================
 OBJECTIVE
-============================================================
+=========
 
 Produce a candidate-layer prompt similar in function to a carefully hand-written candidate prompt used by an expert resume strategist.
 
 The generated prompt should guide a downstream LLM to:
 
-- position the candidate correctly
-- highlight the strongest differentiators
-- surface architectural depth
-- translate domain experience safely
-- prevent claim inflation
-- produce mechanism-driven resume bullets
+* position the candidate correctly
+* highlight the strongest differentiators
+* surface architectural depth
+* translate domain experience safely
+* prevent claim inflation
+* produce mechanism-driven resume bullets
 
 The generated prompt must be:
 
-- candidate-specific in content
-- candidate-agnostic in structure
-- stable across roles
-- safe against hallucination
-- optimized for downstream resume tailoring
+* candidate-specific in content
+* candidate-agnostic in structure
+* stable across roles
+* safe against hallucination
+* optimized for downstream resume tailoring
 
 ============================================================
 INPUT
-============================================================
+=====
 
 You will receive a JSON object named CANDIDATE_PROFILE.
 
 Typical fields may include:
 
-- candidate
-- domains
-- experience_highlights
-- technical_skills
-- leadership
-- ai_tooling_practice
-- role_fit_themes
-- claim_boundaries
-- constraints_and_preferences
+* candidate
+* domains
+* experience_highlights
+* technical_skills
+* leadership
+* ai_tooling_practice
+* role_fit_themes
+* claim_boundaries
+* constraints_and_preferences
 
 Not all fields are guaranteed to exist.
 
@@ -57,7 +57,7 @@ Do NOT mirror the JSON structure directly.
 
 ============================================================
 YOUR TASK
-============================================================
+=========
 
 Generate a prompt block that instructs a downstream resume-tailoring model how to present this candidate.
 
@@ -68,10 +68,10 @@ The prompt must:
 3. Enforce distributed systems depth when relevant.
 4. Provide safe domain translation rules.
 5. Prevent domain misinterpretation or hallucinated specialization.
-6. Provide reinterpretation guidance for extensibility/integration architecture when relevant.
+6. Provide reinterpretation guidance for extensibility and integration architecture when relevant.
 7. Explain how leadership experience should be framed.
 8. Explain how AI-related work must be framed.
-9. Define claim-boundary / anti-inflation rules.
+9. Define claim-boundary and anti-inflation rules.
 10. Identify evidence sources allowed for bullet construction.
 11. End with a short reminder describing the candidate’s core differentiation.
 
@@ -79,7 +79,7 @@ The output should behave similarly to a manually written candidate prompt layer 
 
 ============================================================
 OUTPUT FORMAT
-============================================================
+=============
 
 Return plain text only.
 
@@ -107,6 +107,8 @@ EXTENSIBILITY AND INTEGRATION POSITIONING
 
 LEADERSHIP FRAMING
 
+LEADERSHIP BALANCE FOR SENIOR ROLE
+
 AI WORK POSITIONING
 
 CLAIM BOUNDARIES / PROHIBITED INFLATION
@@ -119,17 +121,17 @@ Maintain this order whenever possible.
 
 ============================================================
 WRITING STYLE
-============================================================
+=============
 
 Write instructions directed to another LLM.
 
 Use imperative guidance such as:
 
-- Emphasize...
-- Prefer...
-- Surface explicitly...
-- Avoid...
-- Do not claim...
+* Emphasize
+* Prefer
+* Surface explicitly
+* Avoid
+* Do not claim
 
 Do NOT write explanatory text for humans.
 
@@ -137,7 +139,7 @@ Prefer concise bullet points.
 
 ============================================================
 MECHANISM-FIRST WRITING RULE
-============================================================
+============================
 
 Technical bullets must prefer the following structure:
 
@@ -153,10 +155,10 @@ Introduced read replicas for read-heavy endpoints to isolate query traffic from 
 
 Avoid vague phrases such as:
 
-- scalable platform
-- robust system
-- modern architecture
-- high-performance system
+* scalable platform
+* robust system
+* modern architecture
+* high-performance system
 
 unless immediately followed by a concrete mechanism.
 
@@ -172,7 +174,7 @@ Introduced multi-layer caching to reduce database load and improve reliability u
 
 ============================================================
 ARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)
-============================================================
+===================================================
 
 If the candidate profile includes architectural patterns, they are core differentiation signals.
 
@@ -182,16 +184,20 @@ They must not remain implicit.
 
 Prefer mechanisms such as:
 
-- Horizontal scaling of services
-- Database read replicas
-- Multi-layer caching
-- Event-driven messaging
-- Asynchronous service decoupling
-- Idempotent processing
-- Retry-safe workflows
-- Stateless service architecture
-- Distributed session validation
-- Observability mechanisms (metrics, logs, tracing)
+* Horizontal scaling of services
+* Database read replicas
+* Multi-layer caching
+* Event-driven messaging
+* Asynchronous service decoupling
+* Idempotent processing
+* Retry-safe workflows
+* Stateless service architecture
+* Distributed session validation
+* Observability mechanisms (metrics, logs, tracing)
+
+If supported by evidence, also surface strong architectural optimization signals such as:
+
+* Transactional caching layers improving throughput or database pressure (for example transactional cache yielding 25 percent throughput improvement)
 
 Whenever possible:
 
@@ -199,35 +205,35 @@ Ensure that at least one architectural mechanism appears in the most recent role
 
 Mechanisms should be tied to:
 
-- system boundaries
-- scaling context
-- reliability tradeoffs
-- production constraints
+* system boundaries
+* scaling context
+* reliability tradeoffs
+* production constraints
 
 ============================================================
 DISTRIBUTED SYSTEM DEPTH
-============================================================
+========================
 
 When describing major backend roles, explicitly surface distributed system mechanics.
 
 Emphasize:
 
-- scaling strategies
-- reliability tradeoffs
-- latency constraints
-- operational safety
-- production debugging and observability
+* scaling strategies
+* reliability tradeoffs
+* latency constraints
+* operational safety
+* production debugging and observability
 
 Prefer references to mechanisms such as:
 
-- read replicas
-- caching layers
-- asynchronous message queues
-- stateless service design
-- distributed validation
-- idempotent workflows
-- retry-safe messaging
-- traffic isolation strategies
+* read replicas
+* caching layers
+* asynchronous message queues
+* stateless service design
+* distributed validation
+* idempotent workflows
+* retry-safe messaging
+* traffic isolation strategies
 
 Avoid purely descriptive architecture language.
 
@@ -235,7 +241,7 @@ Prefer concrete operational mechanics.
 
 ============================================================
 TECHNICAL DIFFERENTIATION
-============================================================
+=========================
 
 Convert candidate technical signals into surfacing instructions.
 
@@ -243,28 +249,28 @@ Prefer concrete systems mechanisms over abstract descriptions.
 
 Examples of valid differentiation signals:
 
-- distributed backend services
-- high-throughput API infrastructure
-- real-time processing pipelines
-- reliability under regulatory constraints
-- low-latency system design
-- distributed caching strategies
+* distributed backend services
+* high-throughput API infrastructure
+* real-time processing pipelines
+* reliability under regulatory constraints
+* low-latency system design
+* distributed caching strategies
 
 When relevant, surface the candidate’s primary stack components.
 
 ============================================================
 DOMAIN / INDUSTRY FRAMING
-============================================================
+=========================
 
 Identify the candidate’s core domain credibility.
 
 Example domains may include:
 
-- fintech
-- crypto exchange infrastructure
-- payments
-- regulated systems
-- distributed backend platforms
+* fintech
+* crypto exchange infrastructure
+* payments
+* regulated systems
+* distributed backend platforms
 
 Emphasize system mechanics rather than niche domain terminology.
 
@@ -274,32 +280,32 @@ crypto exchange infrastructure → high-throughput transaction systems with stri
 
 ============================================================
 SAFE DOMAIN TRANSLATION
-============================================================
+=======================
 
 Translate domain experience conservatively when roles differ.
 
 Examples:
 
-crypto exchange → high-throughput financial transaction platform  
-risk and margin controls → risk-critical decisioning paths  
-regulatory constraints → reliability and safety constraints in regulated environments  
+crypto exchange → high-throughput financial transaction platform
+risk and margin controls → risk-critical decisioning paths
+regulatory constraints → reliability and safety constraints in regulated environments
 
 Do not translate experience into unrelated SaaS domains unless explicitly supported.
 
 ============================================================
 DOMAIN MISINTERPRETATION GUARDRAILS
-============================================================
+===================================
 
 Prevent domain hallucination or incorrect specialization.
 
 Do NOT reinterpret the candidate’s experience as expertise in:
 
-- asset discovery platforms
-- SaaS asset management systems
-- networking protocol implementations
-- vendor integration platforms
-- low-code frameworks
-- ETL or data integration platforms
+* asset discovery platforms
+* SaaS asset management systems
+* networking protocol implementations
+* vendor integration platforms
+* low-code frameworks
+* ETL or data integration platforms
 
 unless explicitly supported by evidence.
 
@@ -309,27 +315,27 @@ Prefer describing the work in system architecture terms rather than product cate
 
 ============================================================
 EXTENSIBILITY AND INTEGRATION POSITIONING
-============================================================
+=========================================
 
 When interpreting enterprise or backend architecture work, prefer system-level reinterpretation patterns.
 
 Examples of safe reinterpretations:
 
-- reusable backend services → modular service architecture
-- middleware layers → extensibility-oriented service boundaries
-- caching abstractions → performance isolation layer
-- replication systems → ingestion and persistence coordination
-- asynchronous messaging → decoupled service communication
+* reusable backend services → modular service architecture
+* middleware layers → extensibility-oriented service boundaries
+* caching abstractions → performance isolation layer
+* replication systems → ingestion and persistence coordination
+* asynchronous messaging → decoupled service communication
 
 These reinterpretations should:
 
-- preserve factual accuracy
-- highlight architectural thinking
-- avoid claiming unrelated product ownership
+* preserve factual accuracy
+* highlight architectural thinking
+* avoid claiming unrelated product ownership
 
 ============================================================
 LEADERSHIP FRAMING
-============================================================
+==================
 
 If leadership experience exists:
 
@@ -337,20 +343,43 @@ Frame it as technical leadership rather than pure management.
 
 Prefer operational leadership artifacts such as:
 
-- architectural direction
-- engineering standards
-- release processes
-- mentoring engineers
-- delivery under constraints
-- incident response ownership
+* architectural direction
+* engineering standards
+* release processes
+* mentoring engineers
+* delivery under constraints
+* incident response ownership
 
 Avoid vague leadership claims.
 
 Prefer observable leadership mechanisms.
 
 ============================================================
-AI WORK POSITIONING
+LEADERSHIP BALANCE FOR SENIOR ROLE
+==================================
+
+For senior individual contributor roles:
+
+Technical execution should dominate the narrative.
+
+Leadership experience may remain visible but should be secondary.
+
+Architecture depth and distributed system mechanics should outweigh management narrative.
+
+Avoid allowing leadership language to overshadow technical differentiation.
+
+Prefer:
+
+architecture mechanisms
+system scaling decisions
+performance improvements
+operational reliability artifacts
+
+over purely managerial descriptions.
+
 ============================================================
+AI WORK POSITIONING
+===================
 
 If the candidate has AI-related work:
 
@@ -358,10 +387,10 @@ Preserve the correct scope.
 
 Distinguish between:
 
-- AI tooling usage
-- model evaluation
-- experimentation
-- platform ownership
+* AI tooling usage
+* model evaluation
+* experimentation
+* platform ownership
 
 Only claim the level supported by the candidate profile.
 
@@ -371,7 +400,7 @@ Never imply employment status if not supported.
 
 ============================================================
 CLAIM BOUNDARIES / PROHIBITED INFLATION
-============================================================
+=======================================
 
 Convert claim boundary notes into explicit anti-inflation rules.
 
@@ -387,17 +416,17 @@ Do not invent metrics, scale numbers, or performance improvements.
 
 ============================================================
 EVIDENCE SOURCES
-============================================================
+================
 
 Resume bullets may only use evidence derived from:
 
-- MASTER_RESUME
-- CANDIDATE_PROFILE.experience_highlights
-- CANDIDATE_PROFILE.experience_highlights.architecture_patterns
-- CANDIDATE_PROFILE.experience_highlights.constraints_and_tradeoffs
-- CANDIDATE_PROFILE.technical_skills.scalability_reliability_patterns
-- CANDIDATE_PROFILE.technical_skills.security_auth_patterns
-- CANDIDATE_PROFILE.technical_skills.async_messaging
+* MASTER_RESUME
+* CANDIDATE_PROFILE.experience_highlights
+* CANDIDATE_PROFILE.experience_highlights.architecture_patterns
+* CANDIDATE_PROFILE.experience_highlights.constraints_and_tradeoffs
+* CANDIDATE_PROFILE.technical_skills.scalability_reliability_patterns
+* CANDIDATE_PROFILE.technical_skills.security_auth_patterns
+* CANDIDATE_PROFILE.technical_skills.async_messaging
 
 Rules:
 
@@ -409,24 +438,24 @@ Prefer architecture patterns from experience highlights.
 
 ============================================================
 QUALITY BAR
-============================================================
+===========
 
 The generated candidate-layer prompt should resemble a high-quality manually written instruction layer created by an experienced recruiter.
 
 It should provide:
 
-- clear positioning
-- architectural differentiation
-- distributed system depth
-- domain translation guidance
-- claim-boundary protections
-- mechanism surfacing rules
+* clear positioning
+* architectural differentiation
+* distributed system depth
+* domain translation guidance
+* claim-boundary protections
+* mechanism surfacing rules
 
 The downstream LLM should use this prompt to produce resume bullets that are:
 
-- concrete
-- mechanism-driven
-- traceable to evidence
-- free of generic phrasing.
+* concrete
+* mechanism-driven
+* traceable to evidence
+* free of generic phrasing.
 
 Now generate the candidate-layer prompt from the provided CANDIDATE_PROFILE.
