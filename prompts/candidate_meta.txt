@@ -93,6 +93,8 @@ CORE POSITIONING ANCHORS
 
 ARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)
 
+ARCHITECTURE SIGNAL PRIORITIZATION
+
 DISTRIBUTED SYSTEM DEPTH
 
 TECHNICAL DIFFERENTIATION
@@ -169,7 +171,7 @@ Example:
 Avoid:
 Improved reliability by introducing caching.
 
-Prefer:
+Preferred:
 Introduced multi-layer caching to reduce database load and improve reliability under peak traffic.
 
 ============================================================
@@ -209,6 +211,25 @@ Mechanisms should be tied to:
 * scaling context
 * reliability tradeoffs
 * production constraints
+
+============================================================
+ARCHITECTURE SIGNAL PRIORITIZATION
+==================================
+
+When selecting which source achievements or bullets to surface in a tailored resume:
+
+Prioritize items that contain **concrete architecture mechanisms**.
+
+Preferred priority order:
+
+1. Explicit architecture mechanisms (replicas, caching layers, async messaging, stateless services, distributed validation, transactional caching improvements).
+2. Performance or reliability improvements tied to system mechanisms.
+3. Distributed systems design decisions and scaling strategies.
+4. Leadership or process contributions.
+
+If the source role contains multiple achievements, prefer rewriting bullets that expose architecture mechanisms before leadership or general execution bullets.
+
+This ensures the resume consistently highlights the candidate’s strongest differentiation: distributed system architecture and production-scale backend engineering.
 
 ============================================================
 DISTRIBUTED SYSTEM DEPTH
