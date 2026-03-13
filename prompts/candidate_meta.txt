@@ -65,14 +65,15 @@ The prompt must:
 
 1. Define the candidate’s core positioning anchors.
 2. Surface architectural differentiation signals.
-3. Provide safe domain translation rules.
-4. Explain how leadership experience should be framed.
-5. Explain how AI-related work must be framed.
-6. Define claim-boundary / anti-inflation rules.
-7. Identify evidence sources allowed for bullet construction.
-8. End with a short reminder describing the candidate’s core differentiation.
+3. Enforce distributed systems depth when relevant.
+4. Provide safe domain translation rules.
+5. Explain how leadership experience should be framed.
+6. Explain how AI-related work must be framed.
+7. Define claim-boundary / anti-inflation rules.
+8. Identify evidence sources allowed for bullet construction.
+9. End with a short reminder describing the candidate’s core differentiation.
 
-The output should behave similarly to a manually written candidate prompt layer.
+The output should behave similarly to a manually written candidate prompt layer used by an expert resume strategist.
 
 ============================================================
 OUTPUT FORMAT
@@ -82,13 +83,15 @@ Return plain text only.
 
 The output must contain structured sections with headings in ALL CAPS.
 
-Preferred structure:
+Required structure:
 
 [CANDIDATE_LAYER_<CANDIDATE_IDENTIFIER> v1.0]
 
 CORE POSITIONING ANCHORS
 
 ARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)
+
+DISTRIBUTED SYSTEM DEPTH
 
 TECHNICAL DIFFERENTIATION
 
@@ -127,17 +130,17 @@ Do NOT write explanatory text for humans.
 Prefer concise bullet points.
 
 ============================================================
-MECHANISM-LEVEL WRITING RULE
+MECHANISM-FIRST WRITING RULE
 ============================================================
 
-Whenever describing technical experience, prefer:
+Technical bullets must prefer the following structure:
 
 MECHANISM → SYSTEM AREA → CONTEXT / OUTCOME
 
-Example transformation:
+Example:
 
 Weak:
-Improved scalability.
+Improved scalability of backend services.
 
 Preferred:
 Introduced read replicas for read-heavy endpoints to isolate query traffic from write workloads.
@@ -147,8 +150,19 @@ Avoid vague phrases such as:
 - scalable platform
 - robust system
 - modern architecture
+- high-performance system
 
-unless followed by a concrete mechanism.
+unless immediately followed by a concrete mechanism.
+
+Prefer mechanism-first phrasing rather than outcome-first phrasing.
+
+Example:
+
+Avoid:
+Improved reliability by introducing caching.
+
+Prefer:
+Introduced multi-layer caching to reduce database load and improve reliability under peak traffic.
 
 ============================================================
 ARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)
@@ -185,6 +199,43 @@ Mechanisms should be tied to:
 - production constraints
 
 ============================================================
+DISTRIBUTED SYSTEM DEPTH
+============================================================
+
+When describing major backend roles, explicitly surface distributed system mechanics.
+
+Emphasize:
+
+- scaling strategies
+- reliability tradeoffs
+- latency constraints
+- operational safety
+- production debugging and observability
+
+Prefer references to mechanisms such as:
+
+- read replicas
+- caching layers
+- asynchronous message queues
+- stateless service design
+- distributed validation
+- idempotent workflows
+- retry-safe messaging
+- traffic isolation strategies
+
+Avoid purely descriptive architecture language.
+
+Prefer concrete operational mechanics.
+
+Example transformation:
+
+Weak:
+Built a scalable distributed system.
+
+Preferred:
+Introduced asynchronous messaging and caching layers to reduce database contention and maintain low latency under high transaction volume.
+
+============================================================
 TECHNICAL DIFFERENTIATION
 ============================================================
 
@@ -217,11 +268,11 @@ Example domains may include:
 - regulated systems
 - distributed backend platforms
 
-Emphasize the underlying system mechanics rather than niche domain terminology.
+Emphasize system mechanics rather than niche domain terminology.
 
 Example:
 
-crypto exchange infrastructure → high-throughput transaction systems
+crypto exchange infrastructure → high-throughput transaction systems with strict correctness constraints.
 
 ============================================================
 SAFE DOMAIN TRANSLATION
@@ -245,17 +296,18 @@ If leadership experience exists:
 
 Frame it as technical leadership rather than pure management.
 
-Examples of mechanisms to surface:
+Prefer operational leadership artifacts such as:
 
-- engineering standards
 - architectural direction
+- engineering standards
+- release processes
 - mentoring engineers
-- delivery under operational constraints
-- production risk management
+- delivery under constraints
+- incident response ownership
 
 Avoid vague leadership claims.
 
-Prefer operational leadership artifacts.
+Prefer observable leadership mechanisms.
 
 ============================================================
 AI WORK POSITIONING
@@ -326,6 +378,7 @@ It should provide:
 
 - clear positioning
 - architectural differentiation
+- distributed system depth
 - domain translation guidance
 - claim-boundary protections
 - mechanism surfacing rules
