@@ -67,11 +67,13 @@ The prompt must:
 2. Surface architectural differentiation signals.
 3. Enforce distributed systems depth when relevant.
 4. Provide safe domain translation rules.
-5. Explain how leadership experience should be framed.
-6. Explain how AI-related work must be framed.
-7. Define claim-boundary / anti-inflation rules.
-8. Identify evidence sources allowed for bullet construction.
-9. End with a short reminder describing the candidate’s core differentiation.
+5. Prevent domain misinterpretation or hallucinated specialization.
+6. Provide reinterpretation guidance for extensibility/integration architecture when relevant.
+7. Explain how leadership experience should be framed.
+8. Explain how AI-related work must be framed.
+9. Define claim-boundary / anti-inflation rules.
+10. Identify evidence sources allowed for bullet construction.
+11. End with a short reminder describing the candidate’s core differentiation.
 
 The output should behave similarly to a manually written candidate prompt layer used by an expert resume strategist.
 
@@ -98,6 +100,10 @@ TECHNICAL DIFFERENTIATION
 DOMAIN / INDUSTRY FRAMING
 
 SAFE DOMAIN TRANSLATION
+
+DOMAIN MISINTERPRETATION GUARDRAILS
+
+EXTENSIBILITY AND INTEGRATION POSITIONING
 
 LEADERSHIP FRAMING
 
@@ -227,14 +233,6 @@ Avoid purely descriptive architecture language.
 
 Prefer concrete operational mechanics.
 
-Example transformation:
-
-Weak:
-Built a scalable distributed system.
-
-Preferred:
-Introduced asynchronous messaging and caching layers to reduce database contention and maintain low latency under high transaction volume.
-
 ============================================================
 TECHNICAL DIFFERENTIATION
 ============================================================
@@ -287,6 +285,47 @@ risk and margin controls → risk-critical decisioning paths
 regulatory constraints → reliability and safety constraints in regulated environments  
 
 Do not translate experience into unrelated SaaS domains unless explicitly supported.
+
+============================================================
+DOMAIN MISINTERPRETATION GUARDRAILS
+============================================================
+
+Prevent domain hallucination or incorrect specialization.
+
+Do NOT reinterpret the candidate’s experience as expertise in:
+
+- asset discovery platforms
+- SaaS asset management systems
+- networking protocol implementations
+- vendor integration platforms
+- low-code frameworks
+- ETL or data integration platforms
+
+unless explicitly supported by evidence.
+
+Avoid introducing domain claims that do not exist in the candidate profile.
+
+Prefer describing the work in system architecture terms rather than product category terms.
+
+============================================================
+EXTENSIBILITY AND INTEGRATION POSITIONING
+============================================================
+
+When interpreting enterprise or backend architecture work, prefer system-level reinterpretation patterns.
+
+Examples of safe reinterpretations:
+
+- reusable backend services → modular service architecture
+- middleware layers → extensibility-oriented service boundaries
+- caching abstractions → performance isolation layer
+- replication systems → ingestion and persistence coordination
+- asynchronous messaging → decoupled service communication
+
+These reinterpretations should:
+
+- preserve factual accuracy
+- highlight architectural thinking
+- avoid claiming unrelated product ownership
 
 ============================================================
 LEADERSHIP FRAMING
