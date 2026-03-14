@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     # Leave empty to disable.
     run_data_dir: str = ""
 
+    # ── Benchmark ─────────────────────────────────────────────────────────
+    # Base directory for Web benchmark report files.
+    # Timestamped subdirectories are created inside: <benchmark_report_dir>/<YYYYMMDD_HHMMSS>/
+    benchmark_report_dir: str = "reports/benchmark"
+
     # ── Stripe ────────────────────────────────────────────────────────────
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""

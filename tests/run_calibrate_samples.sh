@@ -2,12 +2,12 @@
 # Run calibration-with-data mode for ai-resume-tailor
 # Sends pre-generated sample resume/cover letter files to assessment.
 # Usage: ./run_calibrate_samples.sh [--positions FILE] [--model MODEL] [--temperature T] [--workers N] [--max_positions N] [--out DIR] [--cache_dir DIR]
-# Defaults: positions=tests/data/positions.txt, calibrate-data=tests/samples, model=gpt-5.2, temperature=0.5
+# Defaults: positions=benchmark/positions.txt, calibrate-data=tests/samples, model=gpt-5.2, temperature=0.5
 
 set -euo pipefail
 
 # Defaults
-POSITIONS="tests/data/positions.txt"
+POSITIONS="benchmark/positions.txt"
 CALIBRATE_DATA="tests/samples"
 MODEL="gpt-5.2"
 TEMPERATURE="0.5"

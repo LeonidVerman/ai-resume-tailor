@@ -25,12 +25,14 @@ import zipfile
 from datetime import date, timedelta
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from fastapi.responses import Response
 
 from backend.app.config import get_settings
 from backend.app.dependencies import AdminDep, DbDep
 from backend.app.db.repositories.admin_config_repository import AdminConfigRepository
+from backend.app.db.repositories.benchmark_run_repository import BenchmarkRunRepository
+from backend.app.db.repositories.benchmark_run_position_repository import BenchmarkRunPositionRepository
 from backend.app.db.repositories.candidate_profile_repository import CandidateProfileRepository
 from backend.app.db.repositories.evaluation_run_repository import EvaluationRunRepository
 from backend.app.db.repositories.generation_run_repository import GenerationRunRepository
@@ -38,14 +40,24 @@ from backend.app.db.repositories.tailored_document_repository import TailoredDoc
 from backend.app.schemas.admin import (
     AVAILABLE_MODELS,
     AdminActionResponse,
+    BenchmarkRunDetail,
+    BenchmarkRunSummary,
+    BenchmarkPositionSummary,
+    BenchmarkStartRequest,
     GenerationConfigRequest,
     GenerationConfigResponse,
     SystemStats,
 )
 from backend.app.schemas.evaluation import EvaluationRequest, EvaluationResponse
+from backend.app.services.benchmark_service import BenchmarkService
 from backend.app.services.candidate_profile_normalizer import normalize_candidate_profile
 from backend.app.services.evaluation_service import EvaluationService
 from backend.app.services.stats_service import StatsService
+
+# Path to the fixed benchmark positions file.
+# benchmark/positions.txt is copied into the Docker image at /app/benchmark/positions.txt.
+# parents[3] = repo root locally and /app in the container (backend/app/api/admin.py → 3 levels up).
+_POSITIONS_FILE = str(Path(__file__).parents[3] / "benchmark" / "positions.txt")
 
 router = APIRouter()
 
@@ -127,6 +139,169 @@ def backfill_candidate_profiles(_admin: AdminDep, db: DbDep):
     return AdminActionResponse(
         ok=True,
         message=f"Backfill complete. {updated}/{len(profiles)} profiles updated.",
+    )
+
+
+# ── Benchmark runs ────────────────────────────────────────────────────────
+
+
+@router.post("/benchmark-runs", response_model=BenchmarkRunSummary, status_code=201)
+def start_benchmark_run(
+    request: BenchmarkStartRequest,
+    background_tasks: BackgroundTasks,
+    _admin: AdminDep,
+    db: DbDep,
+):
+    """
+    Start a new benchmark run for the given client_id.
+
+    Validates that the client exists, no benchmark is currently active, and
+    the positions file is present.  Creates a benchmark_runs record with
+    status=queued, then dispatches the benchmark as a background job.
+    Returns 409 if a benchmark is already active.
+    Returns 404 if client_id is not found.
+    Returns 503 if the positions file is missing or empty.
+    """
+    settings = get_settings()
+    run = BenchmarkService().start(
+        client_id=request.client_id,
+        db=db,
+        background_tasks=background_tasks,
+        database_url=settings.database_url,
+        report_base_dir=settings.benchmark_report_dir,
+        positions_file=_POSITIONS_FILE,
+    )
+    return _benchmark_run_to_summary(run)
+
+
+@router.get("/benchmark-runs", response_model=list[BenchmarkRunSummary])
+def list_benchmark_runs(
+    _admin: AdminDep,
+    db: DbDep,
+    limit: int = Query(20, ge=1, le=100),
+):
+    """Return recent benchmark runs, newest first."""
+    runs = BenchmarkRunRepository(db).list_recent(limit=limit)
+    return [_benchmark_run_to_summary(r) for r in runs]
+
+
+@router.get("/benchmark-runs/{run_id}/download")
+def download_benchmark_zip(run_id: str, _admin: AdminDep, db: DbDep):
+    """
+    Download the benchmark report directory as a ZIP archive.
+
+    Locates the report_dir from the benchmark_runs record and zips its
+    entire contents (JSON report, CSV, raw/ subfolder).
+    Returns 404 if the run or its report directory is not found.
+    """
+    run = BenchmarkRunRepository(db).get_by_id(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Benchmark run not found")
+    if not run.report_dir:
+        raise HTTPException(
+            status_code=404,
+            detail="Report directory not available for this benchmark run",
+        )
+    report_dir = Path(run.report_dir)
+    if not report_dir.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Report directory not found on disk: {run.report_dir}",
+        )
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for file_path in sorted(report_dir.rglob("*")):
+            if file_path.is_file():
+                arcname = file_path.relative_to(report_dir.parent)
+                zf.write(file_path, arcname)
+
+    ts_label = report_dir.name
+    filename = f"benchmark_{run_id}_{ts_label}.zip"
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/benchmark-runs/{run_id}", response_model=BenchmarkRunDetail)
+def get_benchmark_run(run_id: str, _admin: AdminDep, db: DbDep):
+    """Return full benchmark run details including per-position scores."""
+    run = BenchmarkRunRepository(db).get_by_id(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Benchmark run not found")
+    positions = BenchmarkRunPositionRepository(db).get_by_benchmark_run_id(run_id)
+    return _benchmark_run_to_detail(run, positions)
+
+
+# ── Benchmark schema helpers ───────────────────────────────────────────────
+
+
+def _f(v) -> float | None:
+    return float(v) if v is not None else None
+
+
+def _benchmark_run_to_summary(run) -> BenchmarkRunSummary:
+    return BenchmarkRunSummary(
+        id=run.id,
+        client_id=run.client_id,
+        status=run.status,
+        positions_count=run.positions_count,
+        completed_positions=run.completed_positions,
+        integrated_score=_f(run.integrated_score),
+        generation_mode=run.generation_mode,
+        created_at=run.created_at,
+        started_at=run.started_at,
+        completed_at=run.completed_at,
+    )
+
+
+def _benchmark_run_to_detail(run, positions) -> BenchmarkRunDetail:
+    return BenchmarkRunDetail(
+        id=run.id,
+        client_id=run.client_id,
+        status=run.status,
+        positions_count=run.positions_count,
+        completed_positions=run.completed_positions,
+        integrated_score=_f(run.integrated_score),
+        truthfulness_score=_f(run.truthfulness_score),
+        role_fit_score=_f(run.role_fit_score),
+        seniority_positioning_score=_f(run.seniority_positioning_score),
+        clarity_impact_score=_f(run.clarity_impact_score),
+        mechanism_quality_score=_f(run.mechanism_quality_score),
+        constraint_compliance_score=_f(run.constraint_compliance_score),
+        cover_letter_effectiveness_score=_f(run.cover_letter_effectiveness_score),
+        overall_readiness_score=_f(run.overall_readiness_score),
+        generation_mode=run.generation_mode,
+        simple_model=run.simple_model,
+        phase1_model=run.phase1_model,
+        phase2_model=run.phase2_model,
+        error_message=run.error_message,
+        report_dir=run.report_dir,
+        weights_json=run.weights_json,
+        created_at=run.created_at,
+        started_at=run.started_at,
+        completed_at=run.completed_at,
+        positions=[_benchmark_position_to_schema(p) for p in positions],
+    )
+
+
+def _benchmark_position_to_schema(p) -> BenchmarkPositionSummary:
+    return BenchmarkPositionSummary(
+        id=p.id,
+        position_url=p.position_url,
+        company=p.company,
+        role_title=p.role_title,
+        truthfulness_score=_f(p.truthfulness_score),
+        role_fit_score=_f(p.role_fit_score),
+        seniority_positioning_score=_f(p.seniority_positioning_score),
+        clarity_impact_score=_f(p.clarity_impact_score),
+        mechanism_quality_score=_f(p.mechanism_quality_score),
+        constraint_compliance_score=_f(p.constraint_compliance_score),
+        cover_letter_effectiveness_score=_f(p.cover_letter_effectiveness_score),
+        overall_readiness_score=_f(p.overall_readiness_score),
+        integrated_score=_f(p.integrated_score),
     )
 
 

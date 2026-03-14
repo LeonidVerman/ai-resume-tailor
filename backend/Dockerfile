@@ -40,6 +40,7 @@ COPY templates/ ./templates/
 COPY config/ ./config/
 COPY schemas/ ./schemas/
 COPY profile/ ./profile/
+COPY benchmark/ ./benchmark/
 
 EXPOSE 8000
 

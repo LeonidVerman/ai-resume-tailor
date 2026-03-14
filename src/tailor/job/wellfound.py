@@ -72,7 +72,10 @@ def _get_rendered_html_stealth(url):
         ctx.add_init_script(_STEALTH_INIT_SCRIPT)
         page = ctx.new_page()
         page.goto(url, timeout=60000)
-        page.wait_for_load_state("networkidle")
+        try:
+            page.wait_for_load_state("networkidle", timeout=15000)
+        except Exception:
+            pass
         html = page.content()
         browser.close()
         return html

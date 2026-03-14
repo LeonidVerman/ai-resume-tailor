@@ -344,6 +344,61 @@ export interface SystemStats {
   total_evaluation_runs: number;
 }
 
+// ── Benchmark ─────────────────────────────────────────────────────────────
+
+export type BenchmarkStatus = "queued" | "running" | "completed" | "failed";
+
+export interface BenchmarkStartRequest {
+  client_id: string;
+}
+
+export interface BenchmarkRunSummary {
+  id: string;
+  client_id: string;
+  status: BenchmarkStatus;
+  positions_count: number | null;
+  completed_positions: number;
+  integrated_score: number | null;
+  generation_mode: string;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface BenchmarkPositionSummary {
+  id: string;
+  position_url: string;
+  company: string | null;
+  role_title: string | null;
+  truthfulness_score: number | null;
+  role_fit_score: number | null;
+  seniority_positioning_score: number | null;
+  clarity_impact_score: number | null;
+  mechanism_quality_score: number | null;
+  constraint_compliance_score: number | null;
+  cover_letter_effectiveness_score: number | null;
+  overall_readiness_score: number | null;
+  integrated_score: number | null;
+}
+
+export interface BenchmarkRunDetail extends BenchmarkRunSummary {
+  truthfulness_score: number | null;
+  role_fit_score: number | null;
+  seniority_positioning_score: number | null;
+  clarity_impact_score: number | null;
+  mechanism_quality_score: number | null;
+  constraint_compliance_score: number | null;
+  cover_letter_effectiveness_score: number | null;
+  overall_readiness_score: number | null;
+  simple_model: string | null;
+  phase1_model: string | null;
+  phase2_model: string | null;
+  error_message: string | null;
+  report_dir: string | null;
+  weights_json: Record<string, number> | null;
+  positions: BenchmarkPositionSummary[];
+}
+
 // ── Generic ───────────────────────────────────────────────────────────────
 
 export interface ApiError {

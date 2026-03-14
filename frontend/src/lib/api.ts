@@ -9,6 +9,8 @@ import { getStoredUserId } from "./auth";
 import type {
   AdminActionResponse,
   AuthMeResponse,
+  BenchmarkRunDetail,
+  BenchmarkRunSummary,
   BillingStatus,
   CandidateProfileResponse,
   CandidateProfileUpsertRequest,
@@ -248,6 +250,19 @@ export const admin = {
   },
   downloadRunDataById: (runId: string) =>
     downloadBlob(`/admin/run-data/download/${runId}`, `run-data-${runId}.json`),
+
+  // Benchmark
+  startBenchmark: (client_id: string) =>
+    request<BenchmarkRunSummary>("/admin/benchmark-runs", {
+      method: "POST",
+      body: JSON.stringify({ client_id }),
+    }),
+  listBenchmarkRuns: (limit = 20) =>
+    request<BenchmarkRunSummary[]>(`/admin/benchmark-runs?limit=${limit}`),
+  getBenchmarkRun: (id: string) =>
+    request<BenchmarkRunDetail>(`/admin/benchmark-runs/${id}`),
+  downloadBenchmarkZip: (id: string) =>
+    downloadBlob(`/admin/benchmark-runs/${id}/download`, `benchmark-${id}.zip`),
 };
 
 export { ApiError };

@@ -29,7 +29,13 @@ from tailor.job.wellfound import scrape_wellfound
 # ---------------------------------------------------------------------------
 
 def get_rendered_html(url):
-    from playwright.sync_api import sync_playwright
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        # Playwright not installed — fall back to plain HTTP (used in Docker backend)
+        response = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+        response.raise_for_status()
+        return response.text
     from playwright_stealth import Stealth
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -260,8 +266,13 @@ def scrape_job_url(url) -> JobData:
     if scraper:
         data = scraper(url)
     else:
-        # Generic path: Playwright render + JSON-LD extraction
+        # Generic path: Playwright render + JSON-LD extraction.
+        # If the initial render is bot-blocked (Cloudflare, DataDome), retry
+        # with the stealth renderer used for Wellfound/LinkedIn.
+        from tailor.job.wellfound import _get_rendered_html_stealth, _is_bot_blocked
         html = get_rendered_html(url)
+        if _is_bot_blocked(html):
+            html = _get_rendered_html_stealth(url)
         data = extract_job_data_from_html(html)
 
     return JobData(
