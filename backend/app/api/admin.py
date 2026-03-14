@@ -165,6 +165,7 @@ def start_benchmark_run(
     settings = get_settings()
     run = BenchmarkService().start(
         client_id=request.client_id,
+        assess_model=request.assess_model,
         db=db,
         background_tasks=background_tasks,
         database_url=settings.database_url,

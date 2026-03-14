@@ -252,10 +252,10 @@ export const admin = {
     downloadBlob(`/admin/run-data/download/${runId}`, `run-data-${runId}.json`),
 
   // Benchmark
-  startBenchmark: (client_id: string) =>
+  startBenchmark: (client_id: string, assess_model: string) =>
     request<BenchmarkRunSummary>("/admin/benchmark-runs", {
       method: "POST",
-      body: JSON.stringify({ client_id }),
+      body: JSON.stringify({ client_id, assess_model }),
     }),
   listBenchmarkRuns: (limit = 20) =>
     request<BenchmarkRunSummary[]>(`/admin/benchmark-runs?limit=${limit}`),

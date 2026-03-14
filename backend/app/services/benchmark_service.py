@@ -266,6 +266,7 @@ def _run_benchmark_background(
     database_url: str,
     report_base_dir: str,
     positions_file: str,
+    assess_model: str | None = None,
 ) -> None:
     """Entry point for the FastAPI background task.
 
@@ -275,7 +276,7 @@ def _run_benchmark_background(
     factory = get_session_factory(database_url)
     db = factory()
     try:
-        _execute_benchmark(benchmark_run_id, db, report_base_dir, positions_file)
+        _execute_benchmark(benchmark_run_id, db, report_base_dir, positions_file, assess_model=assess_model)
         db.commit()
     except Exception:
         try:
@@ -292,6 +293,7 @@ def _execute_benchmark(
     db: Any,
     report_base_dir: str,
     positions_file: str,
+    assess_model: str | None = None,
 ) -> None:
     """Main benchmark execution logic — runs in the background task."""
     from backend.app.db.repositories.benchmark_run_repository import BenchmarkRunRepository
@@ -320,6 +322,9 @@ def _execute_benchmark(
     if run is None:
         logger.error("Benchmark run %s not found", benchmark_run_id)
         return
+
+    # Use assess_model from parameter (passed at enqueue time from the run record)
+    effective_assess_model = assess_model or run.assess_model or ASSESS_MODEL
 
     # Mark as running
     repo.update(run, status="running", started_at=datetime.now(tz=timezone.utc))
@@ -400,7 +405,7 @@ def _execute_benchmark(
                         url, i, len(urls),
                         resume_template, cover_template,
                         profile_str, candidate_layer,
-                        ASSESS_MODEL, ASSESS_TEMPERATURE,
+                        effective_assess_model, ASSESS_TEMPERATURE,
                         raw_dir, weights, print_lock, simple,
                         _progress_callback,
                     )
@@ -418,7 +423,7 @@ def _execute_benchmark(
         report: dict = {
             "version": "assess_report_v1",
             "generated_at": datetime.now(timezone.utc).isoformat(),
-            "model": ASSESS_MODEL,
+            "model": effective_assess_model,
             "calibrate": False,
             "calibrate_data": False,
             "positions_count": len(position_entries),
@@ -524,6 +529,7 @@ class BenchmarkService:
         database_url: str,
         report_base_dir: str,
         positions_file: str,
+        assess_model: str | None = None,
     ) -> Any:
         """Validate inputs, create a benchmark_run record, and enqueue the job.
 
@@ -584,6 +590,7 @@ class BenchmarkService:
             simple_model=cfg.simple_model if cfg.generation_mode == "simple" else None,
             phase1_model=cfg.phase1_model if cfg.generation_mode == "two_phase" else None,
             phase2_model=cfg.phase2_model if cfg.generation_mode == "two_phase" else None,
+            assess_model=assess_model,
         )
         db.commit()
 
@@ -594,6 +601,7 @@ class BenchmarkService:
             database_url,
             report_base_dir,
             positions_file,
+            assess_model,
         )
 
         logger.info(

@@ -73,6 +73,7 @@ export default function AdminPage() {
 
   // Benchmark state
   const [benchClientId, setBenchClientId] = useState("");
+  const [benchAssessModel, setBenchAssessModel] = useState("gpt-5.2");
   const [startingBenchmark, setStartingBenchmark] = useState(false);
   const [benchmarkError, setBenchmarkError] = useState<string | null>(null);
   const [benchmarkRuns, setBenchmarkRuns] = useState<BenchmarkRunSummary[]>([]);
@@ -222,7 +223,7 @@ export default function AdminPage() {
     setStartingBenchmark(true);
     setBenchmarkError(null);
     try {
-      await admin.startBenchmark(benchClientId.trim());
+      await admin.startBenchmark(benchClientId.trim(), benchAssessModel);
       setBenchClientId("");
       loadBenchmarkRuns();
     } catch (e) {
@@ -479,18 +480,33 @@ export default function AdminPage() {
             Run the assess pipeline against the fixed positions set using the current
             generation mode and model settings.
           </p>
-          <div className="mt-2 p-2 bg-gray-50 rounded-lg text-xs text-gray-600">
-            {loadingConfig ? (
-              <span>Loading config…</span>
-            ) : genMode === "simple" ? (
-              <span>Mode: <strong>Simple</strong> &nbsp;·&nbsp; Model: <strong>{simpleModel}</strong></span>
-            ) : (
-              <span>
-                Mode: <strong>Two-phase</strong> &nbsp;·&nbsp;
-                Phase&nbsp;1: <strong>{phase1Model}</strong> &nbsp;·&nbsp;
-                Phase&nbsp;2: <strong>{phase2Model}</strong>
-              </span>
-            )}
+          <div className="mt-2 flex items-center gap-3 flex-wrap">
+            <div className="p-2 bg-gray-50 rounded-lg text-xs text-gray-600 flex-1 min-w-0">
+              {loadingConfig ? (
+                <span>Loading config…</span>
+              ) : genMode === "simple" ? (
+                <span>Mode: <strong>Simple</strong> &nbsp;·&nbsp; Model: <strong>{simpleModel}</strong></span>
+              ) : (
+                <span>
+                  Mode: <strong>Two-phase</strong> &nbsp;·&nbsp;
+                  Phase&nbsp;1: <strong>{phase1Model}</strong> &nbsp;·&nbsp;
+                  Phase&nbsp;2: <strong>{phase2Model}</strong>
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-xs text-gray-500 whitespace-nowrap">Assess:</span>
+              <select
+                value={benchAssessModel}
+                onChange={(e) => setBenchAssessModel(e.target.value)}
+                disabled={hasActiveBenchmark}
+                className="text-xs border border-gray-300 rounded-md px-2 py-1 bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+              >
+                {(availableModels.length > 0 ? availableModels : ["gpt-4o", "gpt-4.1", "gpt-5.2"]).map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </CardHeader>
         <CardBody>

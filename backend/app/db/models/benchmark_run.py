@@ -56,6 +56,7 @@ class BenchmarkRun(Base, TimestampMixin):
     simple_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
     phase1_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
     phase2_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    assess_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     # Error tracking
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -60,6 +60,7 @@ class AdminActionResponse(APIModel):
 class BenchmarkStartRequest(APIModel):
     """POST /admin/benchmark-runs request body."""
     client_id: str
+    assess_model: str = "gpt-5.2"
 
 
 class BenchmarkRunSummary(APIModel):
@@ -106,6 +107,7 @@ class BenchmarkRunDetail(BenchmarkRunSummary):
     simple_model: str | None
     phase1_model: str | None
     phase2_model: str | None
+    assess_model: str | None
     error_message: str | None
     report_dir: str | None
     weights_json: dict | None
