@@ -30,7 +30,7 @@ RUN pip install --no-cache-dir -e ./backend
 # is not used in the backend; the HTTP fallback handles job URL scraping)
 COPY src/ ./src/
 RUN pip install --no-cache-dir -e . --no-deps && \
-    pip install --no-cache-dir openai requests
+    pip install --no-cache-dir openai requests curl_cffi
 
 # Copy backend source and all runtime assets tailor.config resolves at runtime
 # (BASE_DIR = /app, so prompts/templates/config/schemas/profile live at /app/*)
