@@ -176,9 +176,11 @@ def _main_tailor() -> None:
         try:
             job = scrape_job_url(args.position_url)
         except Exception:
+            import traceback
             from tailor.job.scrape import get_scrape_failure_message
+            traceback.print_exc()
             print(get_scrape_failure_message(args.position_url), file=sys.stderr)
-            job = JobData(company="Unknown", job_title="Unknown", description="", source_url=args.position_url)
+            sys.exit(1)
     else:
         try:
             job_text = _read_text_file(args.position_desc)

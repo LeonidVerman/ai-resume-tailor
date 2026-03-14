@@ -13,6 +13,7 @@ dependencies = [
     "beautifulsoup4",
     "python-docx",
     "playwright",
+    "playwright-stealth>=1.0.6",
     "curl_cffi",
     "xhtml2pdf",
 ]
