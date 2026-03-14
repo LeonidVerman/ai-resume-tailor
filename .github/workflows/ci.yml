@@ -22,7 +22,7 @@ jobs:
           cache: "pip"
 
       - name: Install system dependencies
-        run: sudo apt-get install -y libcairo2-dev
+        run: sudo apt-get update && sudo apt-get install -y libcairo2-dev
 
       - name: Install CLI dependencies
         run: pip install -e ".[dev]"
@@ -63,7 +63,7 @@ jobs:
           cache: "pip"
 
       - name: Install system dependencies
-        run: sudo apt-get install -y libcairo2-dev
+        run: sudo apt-get update && sudo apt-get install -y libcairo2-dev
 
       - name: Install tailor CLI package
         run: pip install -e . --no-deps && pip install openai requests python-dotenv beautifulsoup4 "python-docx>=1.1" "xhtml2pdf>=0.2"
