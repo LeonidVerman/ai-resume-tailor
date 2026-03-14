@@ -3,20 +3,12 @@ backend/app/dependencies.py
 
 FastAPI dependency functions for injection into route handlers.
 
-Auth strategy (Phase 8)
------------------------
-Full Supabase JWT verification is deferred to Phase 9+ when the frontend
-auth flow is complete.  For now, route handlers that need a user identity
-accept an ``X-User-Id`` header (UUID string).  This is a DEV-MODE bypass
-only — do not expose to production without replacing with real JWT auth.
+Auth modes (controlled by AUTH_MODE env var)
+--------------------------------------------
+"dev_bypass"  — trust X-User-Id header (local dev only, never production)
+"supabase"    — verify Authorization: Bearer <token> via Supabase JWT
 
-The ``get_current_user`` dependency currently:
-  1. Reads ``X-User-Id`` header
-  2. Looks up the User record in the DB
-  3. Returns the User or raises 401/404
-
-When Supabase JWT is wired, replace step 1 with JWT verification via
-SupabaseClientWrapper.verify_token() and keep steps 2–3 unchanged.
+In production only "supabase" should be used.
 """
 
 from collections.abc import Generator
@@ -36,12 +28,7 @@ SettingsDep = Annotated[Settings, Depends(get_settings)]
 # ── Database session ───────────────────────────────────────────────────────
 
 def get_db_session(settings: Settings = Depends(get_settings)) -> Generator[Session, None, None]:
-    """
-    Yield a database session for the duration of a request.
-
-    Commits on success, rolls back on exception.
-    Raises RuntimeError (→ 500) if DATABASE_URL is not configured.
-    """
+    """Yield a database session. Commits on success, rolls back on exception."""
     from backend.app.db.session import get_db
     yield from get_db(settings.database_url)
 
@@ -49,22 +36,63 @@ def get_db_session(settings: Settings = Depends(get_settings)) -> Generator[Sess
 DbDep = Annotated[Session, Depends(get_db_session)]
 
 
-# ── Current user (dev-mode bypass) ────────────────────────────────────────
+# ── Current user ──────────────────────────────────────────────────────────
 
 def get_current_user(
+    authorization: Annotated[str | None, Header(alias="Authorization")] = None,
     x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
     db: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
 ):
-    """
-    Resolve the requesting user from the ``X-User-Id`` header.
+    """Resolve the authenticated user from the request.
 
-    DEV-MODE ONLY: This is a placeholder until Supabase JWT is wired.
-    Replace with real JWT verification before any production deployment.
+    In ``supabase`` mode: reads ``Authorization: Bearer <token>``, verifies
+    the JWT via Supabase, and creates/returns the local user row.
 
-    Raises:
-        401 — header missing
-        404 — user not found
+    In ``dev_bypass`` mode: reads ``X-User-Id`` header (UUID) and looks up
+    the user directly — no token verification.
     """
+    if settings.auth_mode == "supabase":
+        return _get_user_from_bearer(authorization, db, settings)
+    else:
+        return _get_user_from_header(x_user_id, db)
+
+
+def _get_user_from_bearer(
+    authorization: str | None,
+    db: Session,
+    settings: Settings,
+):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization: Bearer <token> required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    token = authorization.split(" ", 1)[1]
+
+    from backend.app.clients.supabase_client import make_supabase_client_from_settings
+    from backend.app.db.repositories.user_repository import UserRepository
+    from backend.app.services.auth_service import AuthService
+
+    supabase = make_supabase_client_from_settings()
+    try:
+        payload = supabase.verify_token(token)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    auth_service = AuthService(UserRepository(db))
+    return auth_service.get_or_create_user(
+        email=payload["email"],
+        supabase_user_id=payload["id"],
+    )
+
+
+def _get_user_from_header(x_user_id: str | None, db: Session):
     if not x_user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

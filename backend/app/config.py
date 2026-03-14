@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     database_url: str = ""
 
     # ── Supabase (Auth) ───────────────────────────────────────────────────
+    # "dev_bypass" trusts X-User-Id header (local dev only, never production).
+    # "supabase"   verifies Supabase JWT bearer token (production).
+    auth_mode: str = "dev_bypass"
+
     supabase_url: str = ""
     supabase_anon_key: str = ""
     supabase_service_role_key: str = ""

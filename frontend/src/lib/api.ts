@@ -2,13 +2,16 @@
 //
 // Centralized API client for the AI Resume Tailor backend.
 //
-// Auth: Dev-mode uses X-User-Id header (UUID stored in localStorage).
+// Auth: sends Authorization: Bearer <token> when a token is stored.
+//       Falls back to X-User-Id header when only a dev-bypass UUID is stored.
 // Base URL: NEXT_PUBLIC_API_URL env var (default: http://localhost:8000/api/v1)
 
-import { getStoredUserId } from "./auth";
+import { getStoredToken, getStoredUserId } from "./auth";
 import type {
   AdminActionResponse,
+  AuthLoginResponse,
   AuthMeResponse,
+  AuthStatusResponse,
   BenchmarkRunDetail,
   BenchmarkRunSummary,
   BillingStatus,
@@ -52,12 +55,15 @@ async function request<T>(
   path: string,
   init: RequestInit = {}
 ): Promise<T> {
-  const userId = getStoredUserId();
+  const token = getStoredToken();
+  const userId = getStoredUserId(); // dev-bypass fallback
   const headers: Record<string, string> = {
     ...(init.headers as Record<string, string>),
   };
 
-  if (userId) {
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  } else if (userId) {
     headers["X-User-Id"] = userId;
   }
   if (!(init.body instanceof FormData)) {
@@ -84,7 +90,19 @@ async function request<T>(
 // ── Auth ──────────────────────────────────────────────────────────────────
 
 export const auth = {
+  register: (body: { email: string; password: string }) =>
+    request<AuthLoginResponse>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  login: (body: { email: string; password: string }) =>
+    request<AuthLoginResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  logout: () => request<void>("/auth/logout", { method: "POST" }),
   me: () => request<AuthMeResponse>("/auth/me"),
+  status: () => request<AuthStatusResponse>("/auth/status"),
 };
 
 // ── Candidate Profile ─────────────────────────────────────────────────────

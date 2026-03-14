@@ -7,12 +7,34 @@ export interface AuthMeResponse {
   user_id: string;
   email: string;
   role: string;
+  is_admin: boolean;
   plan_type: string;
 }
 
 export interface AuthStatusResponse {
-  auth_mode: string;
+  auth_mode: string;  // "supabase" | "dev_bypass"
   status: string;
+}
+
+export interface AuthSessionResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
+export interface AuthUserResponse {
+  id: string;
+  email: string;
+  role: string;
+  is_admin: boolean;
+  plan_type: string;
+}
+
+export interface AuthLoginResponse {
+  authenticated: boolean;
+  user: AuthUserResponse;
+  session: AuthSessionResponse;
 }
 
 // ── Candidate Profile ─────────────────────────────────────────────────────

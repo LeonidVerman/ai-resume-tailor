@@ -1,25 +1,37 @@
-// frontend/src/app/login/page.tsx
-//
-// Dev-mode login: user enters their User ID (UUID from the database).
-// The backend verifies it exists via GET /auth/me with X-User-Id header.
-//
-// Full Supabase JWT auth is deferred to a later phase.
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/hooks/useAuth";
+import { auth } from "@/lib/api";
 
 export default function LoginPage() {
+  const { login, loginDevBypass, loading, error } = useAuth();
+  const [authMode, setAuthMode] = useState<"supabase" | "dev_bypass" | null>(null);
+
+  // Email/password fields (supabase mode)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  // Dev-bypass field
   const [userId, setUserId] = useState("");
-  const { login, loading, error } = useAuth();
+
+  useEffect(() => {
+    auth.status().then((s) => setAuthMode(s.auth_mode as "supabase" | "dev_bypass")).catch(() => {});
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!userId.trim()) return;
-    await login(userId.trim());
+    if (authMode === "dev_bypass") {
+      if (!userId.trim()) return;
+      await loginDevBypass(userId.trim());
+    } else {
+      if (!email.trim() || !password) return;
+      await login(email.trim(), password);
+    }
   }
 
   return (
@@ -36,14 +48,37 @@ export default function LoginPage() {
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="User ID"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-              hint="Enter your user ID (UUID). Dev-mode auth — Supabase login coming soon."
-              required
-            />
+            {authMode === "dev_bypass" ? (
+              <Input
+                label="User ID"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                hint="Dev mode — enter your user UUID from the database."
+                required
+              />
+            ) : (
+              <>
+                <Input
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  required
+                />
+                <Input
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  required
+                />
+              </>
+            )}
 
             {error && (
               <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
@@ -57,9 +92,14 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-4">
-          Dev-mode: authentication uses X-User-Id header bypass.
-        </p>
+        {authMode !== "dev_bypass" && (
+          <p className="text-center text-sm text-gray-500 mt-4">
+            Don&apos;t have an account?{" "}
+            <Link href="/register" className="text-indigo-600 hover:underline font-medium">
+              Sign up
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );

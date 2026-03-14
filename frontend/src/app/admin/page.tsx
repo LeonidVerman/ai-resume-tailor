@@ -5,6 +5,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { ShieldCheck, Users, Zap, FileText, ClipboardCheck, Settings2, Download, BarChart2, Eye } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -33,6 +34,7 @@ const DEFAULT_CONFIG: Omit<GenerationConfigResponse, "available_models"> = {
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
@@ -95,6 +97,13 @@ export default function AdminPage() {
       .catch(() => {})
       .finally(() => setLoadingBenchmarkRuns(false));
   }
+
+  // Redirect non-admin authenticated users to dashboard
+  useEffect(() => {
+    if (!authLoading && user && user.role !== "admin") {
+      router.replace("/dashboard");
+    }
+  }, [authLoading, user, router]);
 
   useEffect(() => {
     if (!user || user.role !== "admin") return;

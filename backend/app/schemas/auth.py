@@ -21,11 +21,28 @@ class RegisterRequest(APIModel):
     password: str = Field(min_length=8)
 
 
-class TokenResponse(APIModel):
-    """Returned after successful login or register."""
+class AuthSessionResponse(APIModel):
+    """Token payload returned after login or register."""
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
     expires_in: int  # seconds
+
+
+class AuthUserResponse(APIModel):
+    """User identity returned alongside a session."""
+    id: str
+    email: str
+    role: str
+    is_admin: bool
+    plan_type: str
+
+
+class AuthLoginResponse(APIModel):
+    """Returned by POST /auth/login and POST /auth/register."""
+    authenticated: bool = True
+    user: AuthUserResponse
+    session: AuthSessionResponse
 
 
 class AuthMeResponse(APIModel):
@@ -33,4 +50,5 @@ class AuthMeResponse(APIModel):
     user_id: str
     email: str
     role: str
+    is_admin: bool
     plan_type: str

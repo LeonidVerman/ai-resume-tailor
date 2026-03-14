@@ -17,6 +17,13 @@ class UserRepository:
     def get_by_id(self, user_id: str) -> User | None:
         return self._db.get(User, user_id)
 
+    def get_by_supabase_id(self, supabase_user_id: str) -> User | None:
+        return (
+            self._db.query(User)
+            .filter(User.supabase_user_id == supabase_user_id)
+            .first()
+        )
+
     def get_by_email(self, email: str) -> User | None:
         return self._db.query(User).filter(User.email == email).first()
 

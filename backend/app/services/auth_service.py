@@ -2,15 +2,12 @@
 backend/app/services/auth_service.py
 
 Auth service — user resolution, identity helpers, role checks.
-
-Full Supabase JWT verification is wired in Phase 8 when auth endpoints
-are built.  For now this service provides the helpers future route
-handlers will call.
 """
 
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 
@@ -41,21 +38,41 @@ class AuthService:
         return self._users.get_by_email(email)
 
     def get_or_create_user(self, email: str, supabase_user_id: str) -> User:
-        """
-        Return an existing user or create one on first login.
+        """Return existing user or create a new one on first login.
 
-        Called during JWT verification flow (Phase 8).
-        ``supabase_user_id`` is used as the primary key so it matches
-        the Supabase auth UUID.
+        Lookup order:
+        1. By supabase_user_id (fast path for returning users)
+        2. By email (migration path: existing dev-bypass users get their
+           supabase_user_id backfilled on first real login)
+        3. Create new user (brand-new registration)
         """
-        user = self._users.get_by_id(supabase_user_id)
+        # Fast path: already linked to this Supabase identity
+        user = self._users.get_by_supabase_id(supabase_user_id)
         if user is not None:
             return user
+
+        # Migration path: pre-existing dev-bypass user — link Supabase identity
         user = self._users.get_by_email(email)
         if user is not None:
+            logger.info(
+                "Linking supabase_user_id=%s to existing user id=%s email=%s",
+                supabase_user_id, user.id, email,
+            )
+            self._users.update(user, supabase_user_id=supabase_user_id)
             return user
-        logger.info("Creating new user for email=%s id=%s", email, supabase_user_id)
-        return self._users.create(id=supabase_user_id, email=email)
+
+        # First login: create local user row, using Supabase UUID as primary key
+        logger.info("Creating new user email=%s supabase_user_id=%s", email, supabase_user_id)
+        return self._users.create(
+            id=supabase_user_id,
+            supabase_user_id=supabase_user_id,
+            email=email,
+        )
+
+    def record_login(self, user: User) -> None:
+        """Update last_login_at and updated_at timestamps."""
+        now = datetime.now(timezone.utc)
+        self._users.update(user, last_login_at=now, updated_at=now)
 
     # ── Role / permission checks ───────────────────────────────────────────
 

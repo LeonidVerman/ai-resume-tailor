@@ -1,18 +1,18 @@
-// frontend/src/hooks/useAuth.ts
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/api";
 import {
+  clearStoredToken,
+  getStoredToken,
   getStoredUserId,
+  setStoredToken,
   setStoredUserId,
-  clearStoredUserId,
 } from "@/lib/auth";
 import type { AuthMeResponse } from "@/types/api";
 
 interface AuthState {
-  userId: string | null;
   user: AuthMeResponse | null;
   loading: boolean;
   error: string | null;
@@ -21,44 +21,63 @@ interface AuthState {
 export function useAuth() {
   const router = useRouter();
   const [state, setState] = useState<AuthState>({
-    userId: null,
     user: null,
     loading: true,
     error: null,
   });
 
-  const fetchUser = useCallback(async (userId: string) => {
+  // On mount: check stored credentials and fetch user info
+  const bootstrap = useCallback(async () => {
+    const hasToken = Boolean(getStoredToken() || getStoredUserId());
+    if (!hasToken) {
+      setState({ user: null, loading: false, error: null });
+      return;
+    }
     try {
       const user = await auth.me();
-      setState({ userId, user, loading: false, error: null });
+      setState({ user, loading: false, error: null });
     } catch {
-      // Invalid or unknown user ID — clear and redirect
-      clearStoredUserId();
-      setState({ userId: null, user: null, loading: false, error: null });
+      clearStoredToken();
+      setState({ user: null, loading: false, error: null });
     }
   }, []);
 
   useEffect(() => {
-    const stored = getStoredUserId();
-    if (!stored) {
-      setState((s) => ({ ...s, loading: false }));
-      return;
-    }
-    fetchUser(stored);
-  }, [fetchUser]);
+    bootstrap();
+  }, [bootstrap]);
 
+  // Real auth: email + password → Supabase JWT
   const login = useCallback(
+    async (email: string, password: string) => {
+      setState((s) => ({ ...s, loading: true, error: null }));
+      try {
+        const result = await auth.login({ email, password });
+        setStoredToken(result.session.access_token);
+        const me = await auth.me();
+        setState({ user: me, loading: false, error: null });
+        router.push("/dashboard");
+      } catch (err: unknown) {
+        clearStoredToken();
+        const msg =
+          err instanceof Error ? err.message : "Invalid email or password.";
+        setState({ user: null, loading: false, error: msg });
+      }
+    },
+    [router]
+  );
+
+  // Dev-bypass: UUID entry (only used when AUTH_MODE=dev_bypass)
+  const loginDevBypass = useCallback(
     async (userId: string) => {
       setState((s) => ({ ...s, loading: true, error: null }));
       setStoredUserId(userId);
       try {
         const user = await auth.me();
-        setState({ userId, user, loading: false, error: null });
+        setState({ user, loading: false, error: null });
         router.push("/dashboard");
       } catch {
-        clearStoredUserId();
+        clearStoredToken();
         setState({
-          userId: null,
           user: null,
           loading: false,
           error: "User not found. Check your User ID.",
@@ -68,16 +87,46 @@ export function useAuth() {
     [router]
   );
 
-  const logout = useCallback(() => {
-    clearStoredUserId();
-    setState({ userId: null, user: null, loading: false, error: null });
+  const register = useCallback(
+    async (email: string, password: string) => {
+      setState((s) => ({ ...s, loading: true, error: null }));
+      try {
+        const result = await auth.register({ email, password });
+        setStoredToken(result.session.access_token);
+        const me = await auth.me();
+        setState({ user: me, loading: false, error: null });
+        router.push("/dashboard");
+      } catch (err: unknown) {
+        clearStoredToken();
+        const msg =
+          err instanceof Error ? err.message : "Registration failed.";
+        setState({ user: null, loading: false, error: msg });
+      }
+    },
+    [router]
+  );
+
+  const logout = useCallback(async () => {
+    try {
+      await auth.logout();
+    } catch {
+      // best-effort server-side invalidation
+    }
+    clearStoredToken();
+    setState({ user: null, loading: false, error: null });
     router.push("/login");
   }, [router]);
 
   return {
-    ...state,
-    isAuthenticated: Boolean(state.userId),
+    user: state.user,
+    userId: state.user?.user_id ?? null,
+    loading: state.loading,
+    error: state.error,
+    isAuthenticated: Boolean(state.user),
+    isAdmin: state.user?.role === "admin",
     login,
+    loginDevBypass,
+    register,
     logout,
   };
 }

@@ -102,6 +102,27 @@ class SupabaseClientWrapper:
             "email": response.user.email,
         }
 
+    def sign_up(self, email: str, password: str):
+        """Register a new user via Supabase Auth. Returns AuthResponse."""
+        return self._get_client().auth.sign_up({"email": email, "password": password})
+
+    def sign_in(self, email: str, password: str):
+        """Authenticate an existing user. Returns AuthResponse."""
+        return self._get_client().auth.sign_in_with_password(
+            {"email": email, "password": password}
+        )
+
+    def sign_out(self, access_token: str) -> None:
+        """Invalidate the given access token on the Supabase side."""
+        try:
+            client = self._get_client()
+            # supabase-py v2: set session so the SDK knows which token to revoke
+            client.auth.set_session(access_token, "")
+            client.auth.sign_out()
+        except Exception:
+            # Best-effort — frontend already cleared the token
+            pass
+
     def get_user_by_id(self, user_id: str) -> dict | None:
         """Look up a Supabase Auth user by UUID (admin only)."""
         client = self._get_admin_client()

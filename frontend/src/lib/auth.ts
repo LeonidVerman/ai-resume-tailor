@@ -1,29 +1,39 @@
 // frontend/src/lib/auth.ts
 //
-// Auth utilities — dev-mode implementation.
+// Auth token storage utilities.
+// The backend issues Supabase JWTs; we store the access token in localStorage
+// and send it as Authorization: Bearer on every API request.
 //
-// Current auth strategy: X-User-Id header bypass.
-// The backend accepts an X-User-Id header (UUID) and looks up the user in DB.
-// Full Supabase JWT integration is deferred to a later phase.
-//
-// For dev/demo, the "login" flow stores a user ID in localStorage.
-// The API client reads it and includes it in every request.
+// In dev_bypass mode the backend still accepts X-User-Id header — the login
+// page will use a UUID entry form in that mode (see useAuth.ts).
 
-const STORAGE_KEY = "art_user_id";
+const TOKEN_KEY = "art_access_token";
+const DEV_USER_KEY = "art_user_id"; // legacy dev-bypass key
 
+export function getStoredToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setStoredToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearStoredToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(DEV_USER_KEY); // also clear legacy key on logout
+}
+
+// Dev-bypass helpers (used when AUTH_MODE=dev_bypass)
 export function getStoredUserId(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(STORAGE_KEY);
+  return localStorage.getItem(DEV_USER_KEY);
 }
 
 export function setStoredUserId(userId: string): void {
-  localStorage.setItem(STORAGE_KEY, userId);
-}
-
-export function clearStoredUserId(): void {
-  localStorage.removeItem(STORAGE_KEY);
+  localStorage.setItem(DEV_USER_KEY, userId);
 }
 
 export function isAuthenticated(): boolean {
-  return Boolean(getStoredUserId());
+  return Boolean(getStoredToken() || getStoredUserId());
 }
