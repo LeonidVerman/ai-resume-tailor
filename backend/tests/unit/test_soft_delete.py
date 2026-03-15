@@ -148,8 +148,8 @@ def _insert_user_sql(session, user_id="u1"):
     """Insert a minimal user row via raw SQL to avoid ORM FK complexity."""
     import sqlalchemy as sa
     session.execute(sa.text(
-        "INSERT INTO users (id, email, plan_type, role, free_generations_used) "
-        "VALUES (:id, :email, 'free', 'user', 0)"
+        "INSERT INTO users (id, email, plan_type, role, free_generations_used, is_active) "
+        "VALUES (:id, :email, 'free', 'user', 0, 1)"
     ), {"id": user_id, "email": f"{user_id}@example.com"})
     session.flush()
 
