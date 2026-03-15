@@ -3,15 +3,14 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getStoredUserId } from "@/lib/auth";
+import { isAuthenticated } from "@/lib/auth";
 import { Spinner } from "@/components/ui/Spinner";
 
 export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const uid = getStoredUserId();
-    router.replace(uid ? "/dashboard" : "/login");
+    router.replace(isAuthenticated() ? "/dashboard" : "/login");
   }, [router]);
 
   return (
