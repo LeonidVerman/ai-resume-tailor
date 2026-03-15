@@ -170,9 +170,11 @@ export const generations = {
 export const documents = {
   get: (id: string) => request<TailoredDocumentDetail>(`/documents/${id}`),
   download: async (id: string, part: "resume" | "cover_letter"): Promise<Blob> => {
+    const token = getStoredToken();
     const userId = getStoredUserId();
     const headers: Record<string, string> = {};
-    if (userId) headers["X-User-Id"] = userId;
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    else if (userId) headers["X-User-Id"] = userId;
     const res = await fetch(`${BASE_URL}/documents/${id}/download?part=${part}`, { headers });
     if (!res.ok) {
       let detail = `HTTP ${res.status}`;
@@ -187,9 +189,11 @@ export const documents = {
     part: "resume" | "cover_letter",
     format: "docx" | "pdf",
   ): Promise<{ blob: Blob; filename: string }> => {
+    const token = getStoredToken();
     const userId = getStoredUserId();
     const headers: Record<string, string> = {};
-    if (userId) headers["X-User-Id"] = userId;
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    else if (userId) headers["X-User-Id"] = userId;
     const res = await fetch(
       `${BASE_URL}/documents/${id}/download?part=${part}&format=${format}`,
       { headers },
@@ -224,9 +228,11 @@ async function downloadBlob(
   path: string,
   fallbackFilename: string
 ): Promise<{ blob: Blob; filename: string }> {
+  const token = getStoredToken();
   const userId = getStoredUserId();
   const headers: Record<string, string> = {};
-  if (userId) headers["X-User-Id"] = userId;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  else if (userId) headers["X-User-Id"] = userId;
   const res = await fetch(`${BASE_URL}${path}`, { headers });
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
