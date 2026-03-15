@@ -11,11 +11,14 @@ Auth modes (controlled by AUTH_MODE env var)
 In production only "supabase" should be used.
 """
 
+import logging
 from collections.abc import Generator
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 from backend.app.config import Settings, get_settings
 from backend.app.constants import ROLE_ADMIN
@@ -78,7 +81,8 @@ def _get_user_from_bearer(
     supabase = make_supabase_client_from_settings()
     try:
         payload = supabase.verify_token(token)
-    except Exception:
+    except Exception as exc:
+        logger.warning("Token verification failed: %s", exc, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
