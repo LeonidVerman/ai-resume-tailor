@@ -217,9 +217,9 @@ class GenerationService:
         """
         from tailor.job import JobData
         from tailor.docx.template_fill import read_docx
-        from tailor.config import RESUME_TEMPLATE, COVER_TEMPLATE, ENABLE_TWO_PHASE
+        from tailor.config import COVER_TEMPLATE, ENABLE_TWO_PHASE
 
-        resume_template = read_docx(str(RESUME_TEMPLATE))
+        resume_template = resume_raw_text
         cover_template = read_docx(str(COVER_TEMPLATE))
 
         job = JobData(
