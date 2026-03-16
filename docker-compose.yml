@@ -42,7 +42,6 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-tailor}:${POSTGRES_PASSWORD:-tailor}@postgres:5432/${POSTGRES_DB:-tailor_dev}
       - APP_ENV=${APP_ENV:-development}
     ports:
       - "8000:8000"
