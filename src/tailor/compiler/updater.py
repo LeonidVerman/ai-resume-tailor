@@ -123,15 +123,13 @@ def _update_role(orig: RoleEntry, llm: LlmRole) -> RoleEntry:
 
 
 def _update_experience_section(orig: ResumeSection, llm: LlmSection) -> ResumeSection:
-    if len(llm.roles) > len(orig.roles):
-        raise ValueError(
-            f"Experience section '{orig.title}': LLM output has {len(llm.roles)} role(s) "
-            f"but the original only has {len(orig.roles)}. Cannot render extra roles "
-            f"without a format prototype."
-        )
-
-    # Match by position; if LLM has fewer roles, surplus originals are dropped.
+    # Match by position; surplus originals are dropped, extra LLM roles clone from last orig.
     updated_roles = [_update_role(o, l) for o, l in zip(orig.roles, llm.roles)]
+
+    if len(llm.roles) > len(orig.roles) and orig.roles:
+        last_orig = orig.roles[-1]
+        for extra_llm in llm.roles[len(orig.roles):]:
+            updated_roles.append(_update_role(last_orig, extra_llm))
 
     return ResumeSection(
         title=llm.heading,

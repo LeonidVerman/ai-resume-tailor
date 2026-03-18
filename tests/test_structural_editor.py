@@ -403,12 +403,11 @@ class TestUpdater:
         updated = apply_tailored(orig, llm)
         assert len(updated.all_paras) > 0
 
-    def test_more_roles_than_template_raises(self):
-        """LLM with MORE roles than template must raise ValueError (no format proto)."""
+    def test_more_roles_than_template_clones_format(self):
+        """LLM with MORE roles than template should succeed by cloning last role format."""
         orig = parse_docx(str(RESUME_TEMPLATE))
         orig_exp = next(s for s in orig.sections if s.semantic_type == "experience")
 
-        # Build LLM output with one more role than template
         extra_count = len(orig_exp.roles) + 1
         roles_text = "\n".join(
             f"Engineer {i} | Company {i}\nJan 2020 – Present\n- Did something.\n"
@@ -416,8 +415,12 @@ class TestUpdater:
         )
         llm_text = f"Professional Summary\nSummary.\n\nExperience\n{roles_text}\nTechnical Skills\nPython, Go, Kafka\n"
         llm = parse_llm_output(llm_text)
-        with pytest.raises(ValueError, match="Cannot render extra roles"):
-            apply_tailored(orig, llm)
+        updated = apply_tailored(orig, llm)
+        exp = next(s for s in updated.sections if s.semantic_type == "experience")
+        assert len(exp.roles) == extra_count
+        # Extra role must have an xml_proto (cloned from last original role)
+        for role in exp.roles:
+            assert role.header.style.xml_proto is not None
 
     def test_unmatched_llm_section_raises(self):
         """An LLM section with an unmatchable title raises ValueError."""
