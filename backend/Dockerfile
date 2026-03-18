@@ -33,12 +33,11 @@ RUN pip install --no-cache-dir -e . --no-deps && \
     pip install --no-cache-dir openai requests curl_cffi
 
 # Copy backend source and all runtime assets tailor.config resolves at runtime
-# (BASE_DIR = /app, so prompts/templates/config/schemas/profile live at /app/*)
+# (BASE_DIR = /app, so prompts/templates/config/profile live at /app/*)
 COPY backend/ ./backend/
 COPY prompts/ ./prompts/
 COPY templates/ ./templates/
 COPY config/ ./config/
-COPY schemas/ ./schemas/
 COPY profile/ ./profile/
 COPY benchmark/ ./benchmark/
 
