@@ -47,10 +47,14 @@ from tailor.compiler.models import (
 
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 _SCANNED_CHAR_THRESHOLD = 50  # fewer chars → likely scanned
+_CONT_RE = re.compile(r"\s*\(cont\.?\)\s*$", re.IGNORECASE)
 
 # Zone fractions for header/footer detection (top/bottom % of page height)
 _HF_TOP_ZONE = 0.08
 _HF_BOT_ZONE = 0.92
+# Wider zones used for pages 2+ running-header detection (Strategy 4)
+_HF_PAGE1_TOP_SCAN = 0.20   # top 20% of page 1 — collect candidate header lines
+_HF_PAGE2_PLUS_ZONE = 0.25  # top 25% of pages 2+ — match against page 1 lines
 
 
 # ---------------------------------------------------------------------------
@@ -142,6 +146,39 @@ def _detect_header_footer_texts(doc) -> set[str]:
     for i, zone_texts in enumerate(page_zone_texts):
         if i >= 1:
             hf_texts.update(zone_texts)
+
+    # Strategy 4: running header repetition — blocks in the top 25% of pages 2+
+    # that case-insensitively match any line from page 1's top 20%.
+    # Handles resumes where the candidate puts their name/contact at the top of
+    # page 2 even if it falls outside the strict 8% zone.
+    if n_pages >= 2:
+        page1 = doc[0]
+        h1 = page1.rect.height
+        page1_line_texts_lower: set[str] = set()
+        for blk in page1.get_text("dict")["blocks"]:
+            if blk.get("type") != 0:
+                continue
+            if blk["bbox"][1] >= h1 * _HF_PAGE1_TOP_SCAN:
+                continue
+            for line in blk.get("lines", []):
+                lt = "".join(s.get("text", "") for s in line.get("spans", [])).strip()
+                if lt:
+                    page1_line_texts_lower.add(lt.lower())
+
+        for page_idx in range(1, n_pages):
+            page = doc[page_idx]
+            h = page.rect.height
+            for blk in page.get_text("dict")["blocks"]:
+                if blk.get("type") != 0:
+                    continue
+                if blk["bbox"][1] >= h * _HF_PAGE2_PLUS_ZONE:
+                    continue
+                for line in blk.get("lines", []):
+                    lt = "".join(
+                        s.get("text", "") for s in line.get("spans", [])
+                    ).strip()
+                    if lt and lt.lower() in page1_line_texts_lower:
+                        hf_texts.add(lt)
 
     return hf_texts
 
@@ -243,6 +280,7 @@ def _extract_paragraphs(doc, hf_texts: set[str], margin_left: float) -> list[Par
     """Extract all content paragraphs from the document, skipping H/F text."""
     paras: list[ParaModel] = []
     prev_block_y1: float | None = None
+    hf_texts_lower = {t.lower() for t in hf_texts}
 
     for page in doc:
         page_margin_left = margin_left
@@ -260,32 +298,38 @@ def _extract_paragraphs(doc, hf_texts: set[str], margin_left: float) -> list[Par
             if blk.get("type") != 0:
                 continue
 
-            # Collect all spans and lines
+            # Collect all spans and per-line texts
             all_spans: list[dict] = []
-            line_texts: list[str] = []
+            line_entries: list[tuple[str, list[dict]]] = []  # (text, spans)
 
             for line in blk.get("lines", []):
                 spans = line.get("spans", [])
-                all_spans.extend(spans)
                 line_text = "".join(s.get("text", "") for s in spans).strip()
                 if line_text:
-                    line_texts.append(line_text)
+                    line_entries.append((line_text, spans))
+                    all_spans.extend(spans)
 
-            text = "\n".join(line_texts).strip()
-            if not text:
-                prev_block_y1 = blk["bbox"][3]
-                continue
-
-            # Skip headers/footers
-            single_line = " ".join(line_texts)
-            if single_line in hf_texts or text in hf_texts:
+            if not line_entries:
                 prev_block_y1 = blk["bbox"][3]
                 continue
 
             bbox = blk["bbox"]
             x0, y0, y1 = bbox[0], bbox[1], bbox[3]
 
-            # Space before = Y gap from previous block
+            # Skip headers/footers (check full block text and single-line join,
+            # both exact and case-insensitive)
+            full_text = "\n".join(t for t, _ in line_entries)
+            single_line = " ".join(t for t, _ in line_entries)
+            if (
+                single_line in hf_texts
+                or full_text in hf_texts
+                or single_line.lower() in hf_texts_lower
+                or full_text.lower() in hf_texts_lower
+            ):
+                prev_block_y1 = y1
+                continue
+
+            # Space before = Y gap from previous block (applied to first line only)
             space_before = 0.0
             if prev_block_y1 is not None and y0 > prev_block_y1:
                 space_before = y0 - prev_block_y1
@@ -293,23 +337,43 @@ def _extract_paragraphs(doc, hf_texts: set[str], margin_left: float) -> list[Par
 
             fi = _dominant_font_info(all_spans)
 
-            profile = ParagraphProfile(
-                font_name=fi["font_name"],
-                font_size_pt=fi["font_size_pt"],
-                bold=fi["bold"],
-                italic=fi["italic"],
-                indent_left_pt=max(0.0, x0 - page_margin_left),
-                space_before_pt=space_before,
-            )
-
-            pm = ParaModel(
-                text=text,
-                style=ParaStyle(),
-                semantic="",
-                paragraph_profile=profile,
-            )
-            pm.semantic = _infer_semantic(pm)
-            paras.append(pm)
+            # Emit one ParaModel per line.
+            # Each line within a block inherits the block's font profile;
+            # space_before is applied to the first line only.
+            for line_idx, (line_text, line_spans) in enumerate(line_entries):
+                # Skip per-line H/F matches (case-insensitive)
+                if (
+                    line_text in hf_texts
+                    or line_text.lower() in hf_texts_lower
+                ):
+                    continue
+                # Skip section continuation markers ("EXPERIENCE (cont.)")
+                if _CONT_RE.search(line_text) and len(line_text) < 80:
+                    continue
+                line_fi = _dominant_font_info(line_spans) if line_spans else fi
+                profile = ParagraphProfile(
+                    font_name=line_fi["font_name"],
+                    font_size_pt=line_fi["font_size_pt"],
+                    bold=line_fi["bold"],
+                    italic=line_fi["italic"],
+                    indent_left_pt=max(0.0, x0 - page_margin_left),
+                    space_before_pt=space_before if line_idx == 0 else 0.0,
+                )
+                pm = ParaModel(
+                    text=line_text,
+                    style=ParaStyle(),
+                    semantic="",
+                    paragraph_profile=profile,
+                )
+                pm.semantic = _infer_semantic(pm)
+                # Normalize bullet text: strip leading bullet prefix so the IR
+                # stores bare content, consistent with DOCX-parsed paragraphs.
+                if pm.semantic == "bullet":
+                    for _pfx in ("- ", "• ", "· ", "– ", "* "):
+                        if pm.text.startswith(_pfx):
+                            pm.text = pm.text[len(_pfx):]
+                            break
+                paras.append(pm)
 
     return paras
 

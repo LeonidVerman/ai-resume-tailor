@@ -521,7 +521,7 @@ def test_build_calibration_index_empty_dir(tmp_path):
 # Positions used in the calibration run; company names as returned by the
 # scraper for the five hiring.cafe URLs.
 _SAMPLE_COMPANIES = ["NEOGOV", "Plata Card", "Lillio", "Fingerprint", "League"]
-_SAMPLES_DIR = str(Path(__file__).parent / "samples")
+_SAMPLES_DIR = str(Path(__file__).parent / "samples" / "calibration")
 
 
 @pytest.mark.skipif(
