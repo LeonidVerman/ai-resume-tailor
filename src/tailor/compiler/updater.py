@@ -8,14 +8,21 @@ Matching strategy
 
 Hard-fail rules (raise ValueError)
 -----------------------------------
-- An LLM section cannot be matched to any original section.
-- For experience sections: the LLM output has a different role count than the
-  original (the LLM must preserve all roles).
+- An LLM section cannot be matched to any original section AND some original
+  sections are also unmatched (the LLM simultaneously dropped and invented
+  sections — almost certainly a structural error).
+
+Soft handling for extra LLM sections
+--------------------------------------
+If the LLM outputs extra sections not present in the original, but ALL original
+sections are matched, the extras are inserted into the output at the position
+they appear in the LLM output.  Heading style is cloned from the nearest
+existing section heading; body paragraph style is cloned from the nearest
+existing body paragraph.
 """
 from __future__ import annotations
 
-import copy
-from typing import Sequence
+from dataclasses import dataclass, field
 
 from tailor.compiler.models import (
     ParaModel,
@@ -30,19 +37,34 @@ from tailor.compiler.text_parser import LlmRole, LlmSection
 # Section matching
 # ---------------------------------------------------------------------------
 
+@dataclass
+class _MatchResult:
+    # (orig_section, llm_section_or_None) for each original, in original order
+    pairs: list[tuple[ResumeSection, LlmSection | None]] = field(default_factory=list)
+    # LLM sections that had no match in the original, in LLM output order.
+    # Only populated when all original sections were matched.
+    extras: list[LlmSection] = field(default_factory=list)
+    # llm_idx for each pair entry (None when original had no LLM match);
+    # parallel to pairs.
+    llm_indices: list[int | None] = field(default_factory=list)
+
+
 def _match_sections(
     orig: list[ResumeSection],
     llm: list[LlmSection],
-) -> list[tuple[ResumeSection, LlmSection | None]]:
-    """Return (original_section, llm_section_or_None) pairs for every original section.
+) -> _MatchResult:
+    """Match original sections to LLM sections.
 
-    Raises ValueError if an LLM section cannot be matched to any original.
+    Raises ValueError only when an unmatched LLM section coexists with an
+    unmatched original section (structural mismatch that cannot be recovered).
+    When all originals are matched and extra LLM sections remain, those extras
+    are returned in _MatchResult.extras for the caller to handle.
     """
     used_llm: set[int] = set()
     used_orig: set[int] = set()
     pairs: list[tuple[int, int]] = []   # (orig_idx, llm_idx)
 
-    # Pass 1: exact heading match
+    # Pass 1: exact heading match (case-insensitive)
     for li, ls in enumerate(llm):
         for oi, os_ in enumerate(orig):
             if oi in used_orig:
@@ -66,24 +88,34 @@ def _match_sections(
                 used_llm.add(li)
                 break
 
-    # Any LLM section still unmatched → hard fail
-    for li, ls in enumerate(llm):
-        if li not in used_llm:
-            raise ValueError(
-                f"LLM output contains section '{ls.heading}' that cannot be "
-                f"matched to any section in the original document."
-            )
+    unmatched_llm = [li for li in range(len(llm)) if li not in used_llm]
 
-    # Build result: original sections keep their order; unmatched originals kept as-is
-    result: list[tuple[ResumeSection, LlmSection | None]] = []
+    if unmatched_llm:
+        all_orig_matched = len(used_orig) == len(orig)
+        if not all_orig_matched:
+            # Hard fail: LLM both dropped and invented sections.
+            raise ValueError(
+                f"LLM output contains section '{llm[unmatched_llm[0]].heading}' "
+                f"that cannot be matched to any section in the original document."
+            )
+        # All originals matched — extras are new sections added by the LLM.
+        extras = [llm[li] for li in unmatched_llm]
+    else:
+        extras = []
+
+    # Build pairs_result in original section order
+    result_pairs: list[tuple[ResumeSection, LlmSection | None]] = []
+    llm_indices: list[int | None] = []
     for oi, os_ in enumerate(orig):
         matched = next((p for p in pairs if p[0] == oi), None)
         if matched:
-            result.append((os_, llm[matched[1]]))
+            result_pairs.append((os_, llm[matched[1]]))
+            llm_indices.append(matched[1])
         else:
-            result.append((os_, None))
+            result_pairs.append((os_, None))
+            llm_indices.append(None)
 
-    return result
+    return _MatchResult(pairs=result_pairs, extras=extras, llm_indices=llm_indices)
 
 
 # ---------------------------------------------------------------------------
@@ -173,6 +205,32 @@ def _update_body_section(orig: ResumeSection, llm: LlmSection) -> ResumeSection:
     )
 
 
+def _make_extra_section(
+    llm: LlmSection,
+    heading_arch: ParaModel,
+    body_arch: ParaModel,
+) -> ResumeSection:
+    """Create a new ResumeSection for an LLM section absent from the template.
+
+    heading_arch is cloned for the section heading (preserves heading style).
+    body_arch is cloned for each body line (preserves body paragraph style).
+    """
+    new_heading = heading_arch.clone_as(llm.heading, "section_heading")
+
+    body_paras: list[ParaModel] = []
+    for line in llm.body_lines:
+        if line.strip():
+            body_paras.append(body_arch.clone_as(line, "paragraph"))
+
+    return ResumeSection(
+        title=llm.heading,
+        heading=new_heading,
+        semantic_type=llm.semantic_type,
+        body_paras=body_paras,
+        roles=[],
+    )
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -186,24 +244,62 @@ def apply_tailored(
     Returns a new ResumeDocument with updated content; the original is not
     modified.  The all_paras flat list is rebuilt from the updated sections.
 
+    When the LLM adds sections that are absent from the original (but all
+    original sections are present), the extras are inserted at their LLM
+    output position using cloned styles from the nearest existing sections.
+
     Raises
     ------
     ValueError
-        If sections or roles cannot be matched (see module docstring).
+        If sections cannot be matched (see module docstring).
     """
-    pairs = _match_sections(original.sections, llm_sections)
+    match = _match_sections(original.sections, llm_sections)
 
-    new_sections: list[ResumeSection] = []
-    for orig_section, llm_section in pairs:
-        if llm_section is None:
-            # No LLM content for this section — keep original verbatim
-            new_sections.append(orig_section)
-            continue
+    if not match.extras:
+        # ---- Fast path: no extras, keep original section order ----
+        new_sections: list[ResumeSection] = []
+        for orig_section, llm_section in match.pairs:
+            if llm_section is None:
+                new_sections.append(orig_section)
+            elif orig_section.semantic_type == "experience":
+                new_sections.append(_update_experience_section(orig_section, llm_section))
+            else:
+                new_sections.append(_update_body_section(orig_section, llm_section))
 
-        if orig_section.semantic_type == "experience":
-            new_sections.append(_update_experience_section(orig_section, llm_section))
-        else:
-            new_sections.append(_update_body_section(orig_section, llm_section))
+    else:
+        # ---- Extras path: follow LLM output order, splicing in extras ----
+        # When extras exist, all originals are matched so llm_section is never None.
+
+        # Style archetypes for extra sections
+        heading_arch: ParaModel = match.pairs[0][0].heading  # first section heading
+        body_arch: ParaModel = heading_arch                   # fallback
+        for orig_s, _ in match.pairs:
+            for p in orig_s.body_paras:
+                if p.text.strip():
+                    body_arch = p
+                    break
+            else:
+                continue
+            break
+
+        # Map llm heading (lower) → updated section for matched pairs
+        heading_to_section: dict[str, ResumeSection] = {}
+        for orig_section, llm_section in match.pairs:
+            assert llm_section is not None  # guaranteed when extras exist
+            if orig_section.semantic_type == "experience":
+                updated = _update_experience_section(orig_section, llm_section)
+            else:
+                updated = _update_body_section(orig_section, llm_section)
+            heading_to_section[llm_section.heading.lower()] = updated
+
+        # Iterate LLM output order; emit matched or extra sections
+        new_sections = []
+        for llm_s in llm_sections:
+            key = llm_s.heading.lower()
+            if key in heading_to_section:
+                new_sections.append(heading_to_section[key])
+            else:
+                new_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
 
     # Rebuild flat para list in document order
     all_paras: list[ParaModel] = list(original.header_paras)
