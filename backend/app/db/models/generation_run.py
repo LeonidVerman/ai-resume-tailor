@@ -34,7 +34,7 @@ class GenerationRun(Base):
     )
 
     # Run metadata
-    run_type: Mapped[str] = mapped_column(String(32), nullable=False)   # two_phase | single_pass
+    run_type: Mapped[str] = mapped_column(String(32), nullable=False)   # single_pass
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")  # pending | running | succeeded | failed
     model_name: Mapped[str] = mapped_column(String(128), nullable=False, default="")
     prompt_version: Mapped[str] = mapped_column(String(64), nullable=False, default="")

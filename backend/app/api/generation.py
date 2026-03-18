@@ -97,7 +97,7 @@ def _to_detail(run) -> GenerationRunDetail:
 @router.post("", response_model=GenerationResponse, status_code=201)
 def generate(request: GenerationRequest, user: CurrentUserDep, db: DbDep):
     """
-    Run the two-phase tailoring pipeline.
+    Run the single-pass tailoring pipeline.
 
     Accepts a job_description_id and structured_resume_id previously stored
     via the job description and resume upload endpoints.

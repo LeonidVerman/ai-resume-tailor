@@ -2,28 +2,15 @@
 backend/app/schemas/generation.py
 
 Generation request/response schemas.
-
-Reflects the planned SaaS generation flow while remaining compatible
-with what the existing two-phase generator actually produces
-(TailorResult with resume: str and cover_letter: str fields).
 """
 
 from datetime import datetime
 from typing import Literal
 
-from pydantic import Field
-
 from backend.app.schemas.common import APIModel
 
 
 # ── Request ────────────────────────────────────────────────────────────────
-
-class GenerationOptions(APIModel):
-    """Optional per-request overrides."""
-    mode: Literal["two_phase", "single_pass"] = "two_phase"
-    # Custom user instruction appended to the prompt (future)
-    user_prompt: str | None = None
-
 
 class GenerationRequest(APIModel):
     """
@@ -34,7 +21,6 @@ class GenerationRequest(APIModel):
     """
     job_description_id: str
     structured_resume_id: str
-    options: GenerationOptions = Field(default_factory=GenerationOptions)
 
 
 # ── Status / result ────────────────────────────────────────────────────────

@@ -1,47 +1,11 @@
 {
-  "$comment": "Cover letter output schema. In the current pipeline the cover letter is one field within the Phase 2 writer JSON response (alongside resume, evidence_ledger, domain_translation_ledger). This schema documents the cover_letter field only.",
   "type": "object",
-  "description": "Cover letter portion of the Phase 2 writer output.",
+  "description": "Cover letter portion of the single-pass writer output.",
   "required": ["cover_letter"],
   "properties": {
     "cover_letter": {
       "type": "string",
-      "description": "Plain-text cover letter. 3–4 paragraphs, 200–350 words. Must include company name and role. If domain_mismatch=true, must include verbatim bridge sentence from the plan."
-    }
-  },
-  "$defs": {
-    "full_phase2_output": {
-      "$comment": "Full Phase 2 writer response shape for reference.",
-      "type": "object",
-      "required": ["resume", "cover_letter", "evidence_ledger", "domain_translation_ledger"],
-      "properties": {
-        "resume": {
-          "type": "string",
-          "description": "Plain-text tailored resume preserving all original role headers and dates."
-        },
-        "cover_letter": {
-          "type": "string",
-          "description": "Plain-text cover letter as described above."
-        },
-        "evidence_ledger": {
-          "type": "object",
-          "description": "Keyed by required item; each value contains exact_span and location for verifiability."
-        },
-        "domain_translation_ledger": {
-          "type": "array",
-          "description": "One entry per applied domain translation rule with rule_id, target_frame_used, exact_span, and location.",
-          "items": {
-            "type": "object",
-            "required": ["rule_id", "target_frame_used", "exact_span", "location"],
-            "properties": {
-              "rule_id": { "type": "string" },
-              "target_frame_used": { "type": "string" },
-              "exact_span": { "type": "string" },
-              "location": { "type": "string" }
-            }
-          }
-        }
-      }
+      "description": "Plain-text cover letter. 3–4 paragraphs, 200–350 words. Must include company name and role."
     }
   }
 }

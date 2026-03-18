@@ -10,9 +10,7 @@ profile is edited (at which point prompt_synched is set to False).
 
 Model selection
 ---------------
-The caller supplies the model string. Convention (enforced in GenerationService):
-  - two_phase mode  → use phase1_model
-  - single_pass     → use simple_model
+The caller supplies the model string (simple_model from admin config).
 """
 
 from __future__ import annotations

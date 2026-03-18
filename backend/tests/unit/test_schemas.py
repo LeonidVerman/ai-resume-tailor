@@ -14,7 +14,7 @@ from backend.app.schemas.candidate_profile import (
     CandidateProfileUpsertRequest,
     DomainExperience,
 )
-from backend.app.schemas.generation import GenerationOptions, GenerationRequest
+from backend.app.schemas.generation import GenerationRequest
 from backend.app.schemas.job_description import (
     JobDescriptionManualRequest,
     JobDescriptionScrapeRequest,
@@ -97,29 +97,13 @@ class TestStructuredResumeDocument:
 # ── GenerationRequest ──────────────────────────────────────────────────────
 
 class TestGenerationRequest:
-    def test_defaults(self):
+    def test_valid_request(self):
         req = GenerationRequest(
             job_description_id="jd-uuid",
             structured_resume_id="resume-uuid",
         )
-        assert req.options.mode == "two_phase"
-        assert req.options.user_prompt is None
-
-    def test_single_pass_mode(self):
-        req = GenerationRequest(
-            job_description_id="jd",
-            structured_resume_id="res",
-            options=GenerationOptions(mode="single_pass"),
-        )
-        assert req.options.mode == "single_pass"
-
-    def test_invalid_mode(self):
-        with pytest.raises(ValidationError):
-            GenerationRequest(
-                job_description_id="jd",
-                structured_resume_id="res",
-                options=GenerationOptions(mode="invalid_mode"),
-            )
+        assert req.job_description_id == "jd-uuid"
+        assert req.structured_resume_id == "resume-uuid"
 
     def test_jd_id_required(self):
         with pytest.raises(ValidationError):

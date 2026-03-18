@@ -1,12 +1,7 @@
-[PHASE2_WRITER_LAYER v9.2 — COVER LETTER SECTION]
+[COVER LETTER SECTION]
 
-NOTE: In the current two-phase pipeline, the cover letter is generated
-together with the resume in a single Phase 2 writer call. This asset
-documents the cover-letter-specific instructions from that phase.
-
-The full writer system prompt is in prompts/phase2.txt.
-The resume-specific writer context is in prompts/phase2.txt.
-This file isolates the cover letter rules for backend reference.
+This asset documents the cover-letter-specific generation instructions
+used in the single-pass tailoring pipeline (tailor_documents).
 
 ------------------------------------------------------------
 ABSOLUTE STRUCTURAL IMMUTABILITY (HARD RULES — COVER LETTER)

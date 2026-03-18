@@ -9,7 +9,7 @@ Two prompt namespaces
 ---------------------
 1. Generator prompts (prompts/*.txt at project root)
    Loaded via tailor.prompts._load_prompt().
-   Used directly by the two-phase pipeline (plan_tailoring, tailor_documents_with_plan).
+   Used directly by the single-pass pipeline (tailor_documents).
 
 2. Backend prompt assets (backend/app/prompts/<category>/)
    Loaded via load_backend_prompt_asset() / get_prompt_version().

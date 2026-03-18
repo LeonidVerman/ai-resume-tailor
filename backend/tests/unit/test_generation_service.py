@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
-from backend.app.schemas.generation import GenerationRequest, GenerationOptions
+from backend.app.schemas.generation import GenerationRequest
 from backend.app.services.generation_service import GenerationService, _extract_usage_from_messages
 
 

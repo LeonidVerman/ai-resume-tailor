@@ -155,7 +155,7 @@ NARRATIVE PLAN (MANDATORY)
 
 Purpose:
 Make domain translation narrative-level, not lexical.
-Do NOT introduce a new phase. This plan must be consumed by Phase2.
+Make domain translation narrative-level, not lexical.
 
 You MUST output narrative_plan with:
 A) anchor_role_id

@@ -69,7 +69,7 @@ Large artifacts (DOCX, PDF) are stored in S3-compatible object storage, not the 
 |---|---|---|
 | id | UUID PK | |
 | user_id | UUID FK → users | |
-| run_type | VARCHAR | two_phase \| single_pass |
+| run_type | VARCHAR | single_pass |
 | status | VARCHAR | pending \| running \| succeeded \| failed |
 | model_name | VARCHAR | |
 | prompt_version | VARCHAR | |
