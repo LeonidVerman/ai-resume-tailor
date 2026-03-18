@@ -20,7 +20,33 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import shutil
+
 import pytest
+
+# ---------------------------------------------------------------------------
+# Artefact saving
+# ---------------------------------------------------------------------------
+# Set SAVE_ARTEFACTS=1 to copy generated DOCX files to tmp/artefacts/ for
+# visual inspection.  The directory is created automatically if needed.
+
+_SAVE_ARTEFACTS: bool = os.environ.get("SAVE_ARTEFACTS", "").strip() in ("1", "true", "yes")
+_ARTEFACTS_DIR: Path = Path(__file__).parent.parent / "tmp" / "artefacts"
+
+
+def _save_artefact(src: str, name: str) -> None:
+    """Copy src to _ARTEFACTS_DIR/<name> if SAVE_ARTEFACTS is set.
+
+    Prints a warning instead of crashing when the destination is locked
+    (e.g. the file is open in Word from a previous run).
+    """
+    _ARTEFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    dst = str(_ARTEFACTS_DIR / name)
+    try:
+        shutil.copy2(src, dst)
+    except OSError as exc:
+        print(f"\n  [artefact] Could not save {name}: {exc}")
+
 
 # ---------------------------------------------------------------------------
 # Known two-column PDF failures (fundamental layout limitation)
@@ -165,7 +191,7 @@ def _compare_paras(orig_paras, rend_paras) -> tuple[list[ParaDiff], list[ParaDif
 # DOCX roundtrip core
 # ---------------------------------------------------------------------------
 
-def _docx_roundtrip(path: Path) -> RoundtripReport:
+def _docx_roundtrip(path: Path, artefact_name: str | None = None) -> RoundtripReport:
     """Parse a DOCX, identity-render, compare."""
     from tailor.compiler.docx_parser import parse_docx
     from tailor.compiler.pipeline import compile_resume
@@ -180,6 +206,8 @@ def _docx_roundtrip(path: Path) -> RoundtripReport:
             out_path = f.name
         try:
             compile_resume(str(path), llm_text, out_path)
+            if _SAVE_ARTEFACTS and artefact_name:
+                _save_artefact(out_path, artefact_name)
             rend_doc = parse_docx(out_path)
         finally:
             if os.path.exists(out_path):
@@ -243,8 +271,10 @@ def _pdf_roundtrip(path: Path) -> tuple[RoundtripReport, RoundtripReport | None]
     from tailor.config import RESUME_TEMPLATE
     from tailor.compiler.docx_parser import parse_docx
 
+    stem = path.stem
     pdf_report = RoundtripReport(name=f"{path.name} [PDF->DOCX]")
     docx_report: RoundtripReport | None = None
+    docx_out: str = ""
 
     try:
         pdf_bytes = path.read_bytes()
@@ -260,12 +290,14 @@ def _pdf_roundtrip(path: Path) -> tuple[RoundtripReport, RoundtripReport | None]
                 output_path=docx_out,
                 style_template_path=str(RESUME_TEMPLATE),
             )
+            if _SAVE_ARTEFACTS:
+                _save_artefact(docx_out, f"{stem}_from_pdf.docx")
             rend_doc = parse_docx(docx_out)
         except Exception as exc:
             pdf_report.crash = str(exc)
             return pdf_report, None
         finally:
-            # Keep docx_out alive a bit longer for the second stage
+            # Keep docx_out alive for the second stage
             pass
 
         # Stage 1: compare PDF text content vs rendered DOCX text
@@ -287,8 +319,9 @@ def _pdf_roundtrip(path: Path) -> tuple[RoundtripReport, RoundtripReport | None]
                 pdf_report.text_diffs.append(ParaDiff(i, "text", o, r))
 
         # Stage 2: DOCX roundtrip on the rendered DOCX
+        docx2_artefact = f"{stem}_from_pdf_roundtrip.docx" if _SAVE_ARTEFACTS else None
         try:
-            docx_report = _docx_roundtrip(Path(docx_out))
+            docx_report = _docx_roundtrip(Path(docx_out), artefact_name=docx2_artefact)
             docx_report.name = f"{path.name} [DOCX->DOCX after PDF render]"
         except Exception as exc:
             docx_report = RoundtripReport(
@@ -299,7 +332,7 @@ def _pdf_roundtrip(path: Path) -> tuple[RoundtripReport, RoundtripReport | None]
     except Exception as exc:
         pdf_report.crash = str(exc)
     finally:
-        if os.path.exists(docx_out):
+        if docx_out and os.path.exists(docx_out):
             os.remove(docx_out)
 
     return pdf_report, docx_report
@@ -313,7 +346,8 @@ def _pdf_roundtrip(path: Path) -> tuple[RoundtripReport, RoundtripReport | None]
 @pytest.mark.parametrize("path", _DOCX_SAMPLES, ids=[p.name for p in _DOCX_SAMPLES])
 def test_docx_roundtrip(path: Path):
     """Parse DOCX -> identity LLM pass -> render -> compare."""
-    report = _docx_roundtrip(path)
+    artefact = f"{path.stem}_roundtrip.docx" if _SAVE_ARTEFACTS else None
+    report = _docx_roundtrip(path, artefact_name=artefact)
     print("\n" + report.summary())
 
     # Hard-fail only on crash or missing text (formatting diffs are logged, not fatal)
