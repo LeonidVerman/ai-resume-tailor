@@ -821,7 +821,7 @@ function ModelSelect({
   value: string;
   onChange: (v: string) => void;
   options: string[];
-  disabled: boolean;
+  disabled?: boolean;
 }) {
   // Ensure current value is shown even if not in the list
   const allOptions = options.includes(value) ? options : [value, ...options];
