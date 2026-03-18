@@ -29,6 +29,7 @@ from tailor.compiler.models import (
     ResumeDocument,
     ResumeSection,
     RoleEntry,
+    TableBlock,
 )
 from tailor.compiler.text_parser import LlmRole, LlmSection
 
@@ -339,9 +340,45 @@ def apply_tailored(
         else:
             all_paras.extend(section.body_paras)
 
+    # When the original document uses table-based layout, carry body_items forward
+    # so the renderer re-inserts tables as opaque blobs.
+    # The TableBlock.para_models hold the ORIGINAL ParaModel objects; we update
+    # their .text in-place so the renderer reads the latest tailored text without
+    # needing index-based remapping (which breaks when apply_tailored drops
+    # trailing/middle empty spacing paragraphs, shifting positions).
+    #
+    # For flat DOCX documents (body_items has no TableBlocks), we do NOT carry
+    # body_items forward — the renderer must use all_paras so structural changes
+    # (extra bullets, dropped roles) are reflected in the output.
+    has_table_blocks = (
+        original.body_items is not None
+        and any(isinstance(i, TableBlock) for i in original.body_items)
+    )
+    if has_table_blocks and not match.extras:
+        # Fast path only — extras path is rare and table support degrades
+        # gracefully (original text kept for untracked paras).
+        for orig_section, llm_section in match.pairs:
+            if llm_section is None:
+                continue
+            orig_section.heading.text = llm_section.heading
+
+            if orig_section.semantic_type == "experience":
+                for o_role, n_role in zip(orig_section.roles, llm_section.roles):
+                    o_role.header.text = n_role.header
+                    for o_m, n_m in zip(o_role.meta_lines, n_role.meta_lines):
+                        o_m.text = n_m
+                    for o_b, n_b in zip(o_role.bullets, n_role.bullets):
+                        o_b.text = n_b
+            else:
+                non_empty_orig = [p for p in orig_section.body_paras if p.text.strip()]
+                llm_lines = [l for l in llm_section.body_lines if l.strip()]
+                for o_p, new_text in zip(non_empty_orig, llm_lines):
+                    o_p.text = new_text
+
     return ResumeDocument(
         header_paras=original.header_paras,
         sections=new_sections,
         layout=original.layout,
         all_paras=all_paras,
+        body_items=original.body_items if has_table_blocks else None,
     )

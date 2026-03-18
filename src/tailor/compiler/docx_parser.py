@@ -406,15 +406,15 @@ def parse_docx(path: str) -> ResumeDocument:
             all_paras.append(pm)
             body_items.append(pm)
         elif local == "tbl":
-            start_idx = len(all_paras)
+            table_paras: list[ParaModel] = []
             for p_elem in child.findall(f".//{{{_W}}}p"):
                 text = _get_para_text(p_elem)
                 style = _parse_para_style(p_elem, style_map)
                 pm = ParaModel(text=text, style=style, semantic="")
                 pm.semantic = _infer_semantic(pm)
                 all_paras.append(pm)
-            para_indices = list(range(start_idx, len(all_paras)))
-            body_items.append(TableBlock(xml_proto=deepcopy(child), para_indices=para_indices))
+                table_paras.append(pm)
+            body_items.append(TableBlock(xml_proto=deepcopy(child), para_models=table_paras))
         # sectPr and other elements are ignored (preserved in the body XML)
 
     # Group into sections

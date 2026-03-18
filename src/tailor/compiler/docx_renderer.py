@@ -122,10 +122,9 @@ def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> 
     clone = deepcopy(tb.xml_proto)
     clone_paras = clone.findall(f".//{{{_W}}}p")
 
-    if len(clone_paras) == len(tb.para_indices):
+    if len(clone_paras) == len(tb.para_models):
         # Happy path: counts match — update each paragraph in place.
-        for p_elem, para_idx in zip(clone_paras, tb.para_indices):
-            pm = doc.all_paras[para_idx]
+        for p_elem, pm in zip(clone_paras, tb.para_models):
             _set_para_text(p_elem, pm.text)
     # else: count mismatch (shouldn't happen unless LLM restructured the table);
     # fall through and insert the unmodified clone so the layout is preserved.
@@ -172,9 +171,15 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     if sectPr is not None:
         body.append(sectPr)
 
-    # Determine rendering order: body_items when available (preserves tables),
-    # falling back to flat all_paras for PDF-sourced / deserialised documents.
-    render_items = doc.body_items if doc.body_items is not None else doc.all_paras
+    # Use the table-aware body_items path only when the document actually has
+    # TableBlock entries.  For flat DOCX documents (no tables) body_items holds
+    # only ParaModel objects reflecting the ORIGINAL parse; structural changes
+    # made by apply_tailored (extra bullets, dropped roles) live in all_paras.
+    # PDF-sourced / deserialised documents have body_items=None.
+    has_table_blocks = doc.body_items is not None and any(
+        isinstance(item, TableBlock) for item in doc.body_items
+    )
+    render_items = doc.body_items if has_table_blocks else doc.all_paras
 
     for item in render_items:
         if isinstance(item, TableBlock):

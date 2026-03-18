@@ -323,7 +323,10 @@ def _docx_roundtrip(path: Path, artefact_name: str | None = None) -> RoundtripRe
         p for p in orig_doc.all_paras
         if p.text.strip() and p.text.strip() not in header_extra_texts
     ]
-    rend_paras = [p for p in rend_doc.all_paras if p.text.strip()]
+    rend_paras = [
+        p for p in rend_doc.all_paras
+        if p.text.strip() and p.text.strip() not in header_extra_texts
+    ]
 
     report.para_count_orig = len(orig_paras)
     report.para_count_rend = len(rend_paras)

@@ -277,15 +277,16 @@ class TableBlock:
 
     The xml_proto is a deepcopy of the original w:tbl lxml element.  The
     renderer clones it, finds all w:p elements in document order, and updates
-    each paragraph's text from the corresponding ParaModel in all_paras.
+    each paragraph's text from the corresponding ParaModel in para_models.
 
-    para_indices holds the indices (into ResumeDocument.all_paras) of every
-    paragraph extracted from this table, in the same order as the w:p elements
-    inside xml_proto.
+    para_models holds direct references to the ParaModel for every paragraph
+    extracted from this table, in the same order as the w:p elements inside
+    xml_proto.  apply_tailored remaps these references to the updated versions
+    so the renderer always writes the latest text.
     """
 
-    xml_proto: Any                 # deepcopy of the original w:tbl element
-    para_indices: list[int]        # into ResumeDocument.all_paras, same order as w:p in xml_proto
+    xml_proto: Any                      # deepcopy of the original w:tbl element
+    para_models: list[Any]              # list[ParaModel], same order as w:p in xml_proto
 
 
 @dataclass
