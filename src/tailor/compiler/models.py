@@ -272,6 +272,23 @@ class LayoutProfile:
 
 
 @dataclass
+class TableBlock:
+    """An opaque w:tbl element preserved for layout-faithful rendering.
+
+    The xml_proto is a deepcopy of the original w:tbl lxml element.  The
+    renderer clones it, finds all w:p elements in document order, and updates
+    each paragraph's text from the corresponding ParaModel in all_paras.
+
+    para_indices holds the indices (into ResumeDocument.all_paras) of every
+    paragraph extracted from this table, in the same order as the w:p elements
+    inside xml_proto.
+    """
+
+    xml_proto: Any                 # deepcopy of the original w:tbl element
+    para_indices: list[int]        # into ResumeDocument.all_paras, same order as w:p in xml_proto
+
+
+@dataclass
 class ResumeDocument:
     """Full parsed resume.
 
@@ -280,6 +297,10 @@ class ResumeDocument:
     layout        – document-level page geometry.
     all_paras     – flat ordered list mirroring doc.paragraphs; used for plain-text
                     serialisation and to drive the renderer in document order.
+    body_items    – top-level rendering order: each item is either a ParaModel
+                    (direct body paragraph) or a TableBlock (table preserved as
+                    an opaque XML blob with per-paragraph text updates).
+                    None when loaded from a serialised dict (PDF path).
     """
 
     header_paras: list[ParaModel]
@@ -288,6 +309,7 @@ class ResumeDocument:
     all_paras: list[ParaModel]
     # 'docx' for DOCX-sourced (xml_proto available); 'pdf' for PDF-sourced (para_builder path).
     source_kind: str = "docx"
+    body_items: list[Any] | None = None  # list[ParaModel | TableBlock]; None for PDF/deserialised
 
     def to_dict(self) -> dict:
         """Serialize to a JSON-compatible dict.  xml_proto is not included."""

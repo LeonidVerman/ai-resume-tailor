@@ -19,6 +19,7 @@ from tailor.compiler.models import (
     ResumeDocument,
     ResumeSection,
     RoleEntry,
+    TableBlock,
 )
 
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
@@ -393,6 +394,7 @@ def parse_docx(path: str) -> ResumeDocument:
     body = doc.element.body
 
     all_paras: list[ParaModel] = []
+    body_items: list[ParaModel | TableBlock] = []
 
     for child in body:
         local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
@@ -402,13 +404,17 @@ def parse_docx(path: str) -> ResumeDocument:
             pm = ParaModel(text=text, style=style, semantic="")
             pm.semantic = _infer_semantic(pm)
             all_paras.append(pm)
+            body_items.append(pm)
         elif local == "tbl":
+            start_idx = len(all_paras)
             for p_elem in child.findall(f".//{{{_W}}}p"):
                 text = _get_para_text(p_elem)
                 style = _parse_para_style(p_elem, style_map)
                 pm = ParaModel(text=text, style=style, semantic="")
                 pm.semantic = _infer_semantic(pm)
                 all_paras.append(pm)
+            para_indices = list(range(start_idx, len(all_paras)))
+            body_items.append(TableBlock(xml_proto=deepcopy(child), para_indices=para_indices))
         # sectPr and other elements are ignored (preserved in the body XML)
 
     # Group into sections
@@ -442,6 +448,7 @@ def parse_docx(path: str) -> ResumeDocument:
         sections=sections,
         layout=layout,
         all_paras=all_paras,
+        body_items=body_items,
     )
 
 

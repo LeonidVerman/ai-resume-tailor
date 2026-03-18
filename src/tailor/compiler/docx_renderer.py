@@ -18,7 +18,7 @@ from copy import deepcopy
 
 from docx import Document
 
-from tailor.compiler.models import ParaModel, ResumeDocument
+from tailor.compiler.models import ParaModel, ResumeDocument, TableBlock
 
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
@@ -94,6 +94,49 @@ def _set_para_text(p_elem, text: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Item renderers
+# ---------------------------------------------------------------------------
+
+def _render_para(pm: ParaModel, body, sectPr) -> None:
+    """Render a single ParaModel and insert it before sectPr (or append)."""
+    if pm.style.xml_proto is not None:
+        clone = deepcopy(pm.style.xml_proto)
+        _set_para_text(clone, pm.text)
+    elif pm.paragraph_profile is not None:
+        from tailor.compiler.para_builder import build_para_element
+        clone = build_para_element(pm)
+    else:
+        raise ValueError(
+            f"Paragraph '{pm.text[:60]}' has no xml_proto or paragraph_profile; "
+            "cannot render it.  New paragraphs must be created via "
+            "ParaModel.clone_as()."
+        )
+    if sectPr is not None:
+        sectPr.addprevious(clone)
+    else:
+        body.append(clone)
+
+
+def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> None:
+    """Clone a TableBlock's xml_proto, update paragraph text, and insert it."""
+    clone = deepcopy(tb.xml_proto)
+    clone_paras = clone.findall(f".//{{{_W}}}p")
+
+    if len(clone_paras) == len(tb.para_indices):
+        # Happy path: counts match — update each paragraph in place.
+        for p_elem, para_idx in zip(clone_paras, tb.para_indices):
+            pm = doc.all_paras[para_idx]
+            _set_para_text(p_elem, pm.text)
+    # else: count mismatch (shouldn't happen unless LLM restructured the table);
+    # fall through and insert the unmodified clone so the layout is preserved.
+
+    if sectPr is not None:
+        sectPr.addprevious(clone)
+    else:
+        body.append(clone)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -129,25 +172,14 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     if sectPr is not None:
         body.append(sectPr)
 
-    # Append cloned (or constructed) paragraphs in document order
-    for pm in doc.all_paras:
-        if pm.style.xml_proto is not None:
-            # DOCX-sourced path: clone original XML element and replace text
-            clone = deepcopy(pm.style.xml_proto)
-            _set_para_text(clone, pm.text)
-        elif pm.paragraph_profile is not None:
-            # PDF-sourced path: build a fresh w:p element from ParagraphProfile
-            from tailor.compiler.para_builder import build_para_element
-            clone = build_para_element(pm)
+    # Determine rendering order: body_items when available (preserves tables),
+    # falling back to flat all_paras for PDF-sourced / deserialised documents.
+    render_items = doc.body_items if doc.body_items is not None else doc.all_paras
+
+    for item in render_items:
+        if isinstance(item, TableBlock):
+            _render_table_block(item, doc, body, sectPr)
         else:
-            raise ValueError(
-                f"Paragraph '{pm.text[:60]}' has no xml_proto or paragraph_profile; "
-                "cannot render it.  New paragraphs must be created via "
-                "ParaModel.clone_as()."
-            )
-        if sectPr is not None:
-            sectPr.addprevious(clone)
-        else:
-            body.append(clone)
+            _render_para(item, body, sectPr)
 
     d.save(output_path)

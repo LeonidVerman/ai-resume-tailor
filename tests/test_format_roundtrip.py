@@ -69,6 +69,7 @@ def _detect_nonstandard_docx(path: Path) -> str | None:
     """
     try:
         from tailor.compiler.docx_parser import parse_docx
+        from tailor.compiler.models import TableBlock
         doc = parse_docx(str(path))
     except Exception:
         return None
@@ -76,6 +77,15 @@ def _detect_nonstandard_docx(path: Path) -> str | None:
     sections = doc.sections
     if not sections:
         return None
+
+    # If the document uses table-based layout, body_items will contain TableBlock
+    # entries.  The renderer re-inserts them as opaque XML blobs so the visual
+    # layout is preserved even when semantic parsing is imperfect.  Structural
+    # heuristics that fire on table-internal content (large "other" blocks,
+    # experience-with-no-roles) are not meaningful in that case.
+    has_table_blocks = doc.body_items is not None and any(
+        isinstance(item, TableBlock) for item in doc.body_items
+    )
 
     # No standard semantic sections at all (everything lumped in one/two "other" blocks)
     real_secs = [s for s in sections if s.semantic_type in ("experience", "summary", "skills", "education")]
@@ -88,16 +98,23 @@ def _detect_nonstandard_docx(path: Path) -> str | None:
         sample = date_sections[0].title[:40]
         return f"date strings as section headings (e.g. '{sample}') — two-column table layout"
 
-    # Large "other" sections → sidebar/column content dump from a two-column table
-    large_other = [s for s in sections if s.semantic_type == "other" and len(s.body_paras) > 20]
-    if large_other:
-        biggest = max(large_other, key=lambda s: len(s.body_paras))
-        return (
-            f"large non-semantic block '{biggest.title[:35]}' "
-            f"({len(biggest.body_paras)} paras) — two-column table layout"
-        )
+    # Large "other" sections → sidebar/column content dump from a two-column table.
+    # Skipped when the document has TableBlocks: the renderer re-inserts the table
+    # blob so the visual layout is preserved and the large "other" content is still
+    # correctly written to the output (it's in all_paras in the right order).
+    if not has_table_blocks:
+        large_other = [s for s in sections if s.semantic_type == "other" and len(s.body_paras) > 20]
+        if large_other:
+            biggest = max(large_other, key=lambda s: len(s.body_paras))
+            return (
+                f"large non-semantic block '{biggest.title[:35]}' "
+                f"({len(biggest.body_paras)} paras) — two-column table layout"
+            )
 
-    # Experience section exists but has zero parsed roles (dates not pipe-formatted)
+    # Experience section exists but has zero parsed roles.  _doc_to_llm_text
+    # emits nothing for experience sections without roles, so the content is lost
+    # in the compile pipeline and the roundtrip will always fail on text.
+    # This check runs even when TableBlocks are present.
     for s in sections:
         if s.semantic_type == "experience" and s.body_paras and not s.roles:
             return "experience section has content but no parsed roles — non-standard role format"
