@@ -30,7 +30,12 @@ class RenderingService:
     reads the results back as bytes.
     """
 
-    def render_resume_docx(self, resume_text: str, template_bytes: bytes | None = None) -> bytes:
+    def render_resume_docx(
+        self,
+        resume_text: str,
+        template_bytes: bytes | None = None,
+        template_ir_dict: dict | None = None,
+    ) -> bytes:
         """
         Fill the resume DOCX template with LLM-generated text.
 
@@ -39,12 +44,20 @@ class RenderingService:
         resume_text:
             LLM-generated resume text.
         template_bytes:
-            The user's original resume DOCX as raw bytes.  When provided this
-            is used as the template instead of the default CLI template file.
+            The user's original resume DOCX as raw bytes.  Used for DOCX
+            uploads.  Mutually exclusive with template_ir_dict.
+        template_ir_dict:
+            Serialized ResumeDocument IR dict for PDF-sourced resumes.
+            When provided, the compiler pipeline uses the IR directly and
+            renders via para_builder.
 
         Returns raw DOCX bytes.
         """
         from tailor.config import RESUME_TEMPLATE
+
+        if template_ir_dict is not None:
+            return self._render_from_ir(resume_text, template_ir_dict)
+
         from tailor.docx.template_fill import save_doc_from_template
 
         tmp_template_path = None
@@ -67,6 +80,28 @@ class RenderingService:
             _safe_remove(tmp_path)
             if tmp_template_path:
                 _safe_remove(tmp_template_path)
+
+    def _render_from_ir(self, resume_text: str, template_ir_dict: dict) -> bytes:
+        """Render a PDF-sourced resume by applying LLM text to the stored IR."""
+        from tailor.compiler.models import ResumeDocument
+        from tailor.compiler.pipeline import compile_resume_from_ir
+        from tailor.config import RESUME_TEMPLATE
+
+        template_ir = ResumeDocument.from_dict(template_ir_dict)
+
+        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
+            output_path = tmp.name
+        try:
+            compile_resume_from_ir(
+                template_ir=template_ir,
+                llm_text=resume_text,
+                output_path=output_path,
+                style_template_path=str(RESUME_TEMPLATE),
+            )
+            with open(output_path, "rb") as f:
+                return f.read()
+        finally:
+            _safe_remove(output_path)
 
     def render_cover_letter_docx(self, cover_letter_text: str) -> bytes:
         """

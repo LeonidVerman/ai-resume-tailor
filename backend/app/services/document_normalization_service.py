@@ -1,35 +1,34 @@
 """
 backend/app/services/document_normalization_service.py
 
-Input normalization — ensures all uploaded documents are in DOCX format
-before parsing and generation.
+Input normalization — prepares uploaded documents for the resume compiler.
 
 Behavior
 --------
-- DOCX uploads: passed through unchanged.
-- PDF uploads: converted to DOCX via LibreOffice (subprocess method).
-  A user-visible disclaimer is attached when conversion is performed.
+- DOCX uploads: passed through unchanged; template_ir is None.
+- PDF uploads: parsed with PyMuPDF into a ResumeDocument IR, which is
+  serialized to a dict and returned in template_ir.  normalized_data
+  contains the original PDF bytes (not converted); the compiler uses the
+  IR directly.  A user-visible notice is attached.
 - Other formats: returned as-is with no conversion flag.
 
 Failure behavior
 ----------------
-If PDF → DOCX conversion fails, a RuntimeError is raised.
-Generation must not continue with partial state.
+If PDF parsing fails (scanned PDF, corrupt file, missing PyMuPDF), a
+RuntimeError is raised.  Generation must not continue with partial state.
 """
 
 from __future__ import annotations
 
 import dataclasses
 import logging
-import os
-import tempfile
 
 logger = logging.getLogger(__name__)
 
-# Disclaimer shown to users when a PDF was converted to DOCX.
+# Notice shown to users when a PDF was uploaded.
 PDF_CONVERSION_WARNING = (
-    "PDF files are converted to DOCX for processing. "
-    "Minor formatting discrepancies may occur in the generated output."
+    "PDF files are parsed directly for processing. "
+    "Minor formatting differences may appear in the generated output."
 )
 
 
@@ -40,11 +39,17 @@ class NormalizeResult:
     source_type: str          # 'docx' | 'pdf' | 'other'
     conversion_performed: bool
     warning_message: str | None
+    # Serialized ResumeDocument IR for PDF uploads; None for DOCX.
+    template_ir: dict | None = None
 
 
 def normalize_input_document(data: bytes, filename: str) -> NormalizeResult:
     """
-    Normalize an uploaded document to DOCX format.
+    Normalize an uploaded document.
+
+    For DOCX: passes bytes through unchanged.
+    For PDF: parses into ResumeDocument IR via PyMuPDF; returns serialized IR.
+    For others: passes bytes through.
 
     Parameters
     ----------
@@ -56,15 +61,11 @@ def normalize_input_document(data: bytes, filename: str) -> NormalizeResult:
     Returns
     -------
     NormalizeResult
-        - normalized_data: DOCX bytes (converted if input was PDF).
-        - source_type: 'docx', 'pdf', or 'other'.
-        - conversion_performed: True when PDF→DOCX conversion ran.
-        - warning_message: Human-readable disclaimer, or None.
 
     Raises
     ------
     RuntimeError
-        If PDF→DOCX conversion fails.
+        If the PDF cannot be parsed (scanned, corrupt, or PyMuPDF missing).
     """
     name_lower = filename.lower()
 
@@ -75,17 +76,19 @@ def normalize_input_document(data: bytes, filename: str) -> NormalizeResult:
             source_type="docx",
             conversion_performed=False,
             warning_message=None,
+            template_ir=None,
         )
 
     if name_lower.endswith(".pdf"):
-        logger.info("normalize_input_document: PDF input, converting to DOCX via LibreOffice")
-        docx_data = _convert_pdf_to_docx(data)
-        logger.info("normalize_input_document: PDF→DOCX conversion succeeded (%d bytes)", len(docx_data))
+        logger.info("normalize_input_document: PDF input, parsing via PyMuPDF")
+        template_ir = _parse_pdf_to_ir(data)
+        logger.info("normalize_input_document: PDF parsed successfully")
         return NormalizeResult(
-            normalized_data=docx_data,
+            normalized_data=data,
             source_type="pdf",
-            conversion_performed=True,
+            conversion_performed=False,
             warning_message=PDF_CONVERSION_WARNING,
+            template_ir=template_ir,
         )
 
     # Other formats (TXT, etc.) — pass through as-is.
@@ -95,52 +98,20 @@ def normalize_input_document(data: bytes, filename: str) -> NormalizeResult:
         source_type="other",
         conversion_performed=False,
         warning_message=None,
+        template_ir=None,
     )
 
 
-def _convert_pdf_to_docx(pdf_data: bytes) -> bytes:
-    """
-    Convert PDF bytes to DOCX bytes via LibreOffice.
-
-    Uses a subprocess call to ``libreoffice --headless --convert-to docx``.
-    LibreOffice must be available in PATH (installed in the backend container).
+def _parse_pdf_to_ir(pdf_data: bytes) -> dict:
+    """Parse PDF bytes into a serialized ResumeDocument IR dict.
 
     Raises
     ------
     RuntimeError
-        If LibreOffice is not found, conversion fails, or output is missing.
+        If the PDF is scanned, corrupt, or PyMuPDF is not installed.
     """
-    from tailor.docx.pdf import pdf_to_docx
+    from tailor.compiler.pdf_parser import parse_pdf
 
-    # Write PDF to a temp file, run conversion, read back DOCX.
-    tmp_pdf = None
-    tmp_docx = None
-    try:
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-            f.write(pdf_data)
-            tmp_pdf = f.name
+    doc = parse_pdf(pdf_data)
+    return doc.to_dict()
 
-        tmp_docx = pdf_to_docx(tmp_pdf, method="subprocess")
-
-        with open(tmp_docx, "rb") as f:
-            return f.read()
-
-    except RuntimeError:
-        raise  # re-raise LibreOffice errors verbatim
-
-    except Exception as exc:
-        raise RuntimeError(f"PDF→DOCX conversion error: {exc}") from exc
-
-    finally:
-        _safe_remove(tmp_pdf)
-        _safe_remove(tmp_docx)
-
-
-def _safe_remove(path: str | None) -> None:
-    if path is None:
-        return
-    try:
-        if os.path.exists(path):
-            os.remove(path)
-    except OSError as exc:
-        logger.warning("Could not remove temp file %s: %s", path, exc)

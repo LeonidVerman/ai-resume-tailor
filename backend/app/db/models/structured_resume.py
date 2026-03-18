@@ -29,6 +29,9 @@ class StructuredResume(Base, CreatedAtMixin):
     # Set when the uploaded file was converted from PDF to DOCX.
     # Contains the user-visible disclaimer; None for DOCX uploads.
     input_conversion_warning: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Serialized ResumeDocument IR (see compiler/models.py ResumeDocument.to_dict()).
+    # Populated for PDF uploads; None for DOCX uploads.
+    template_ir_jsonb: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     # Soft-delete flag — set to True instead of hard-deleting the row.
     delete_flg: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"

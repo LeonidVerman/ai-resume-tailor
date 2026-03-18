@@ -16,6 +16,7 @@ dependencies = [
     "playwright-stealth>=1.0.6",
     "curl_cffi",
     "xhtml2pdf",
+    "pymupdf>=1.24.0",
 ]
 
 [project.optional-dependencies]

@@ -96,39 +96,41 @@ class TestNormalizeInputDocument:
         assert result.source_type == "docx"
         assert result.conversion_performed is False
 
-    def test_pdf_triggers_conversion(self):
-        """PDF files are converted to DOCX via LibreOffice (mocked)."""
+    def test_pdf_triggers_parsing(self):
+        """PDF files are parsed via PyMuPDF (mocked); IR returned in template_ir."""
         from backend.app.services.document_normalization_service import (
             normalize_input_document,
             PDF_CONVERSION_WARNING,
         )
 
-        fake_docx = _make_minimal_docx_bytes()
+        fake_ir = {"source_kind": "pdf", "sections": [], "header_paras": [], "layout": {}}
 
-        # Mock _convert_pdf_to_docx to avoid needing LibreOffice in tests.
+        # Mock _parse_pdf_to_ir to avoid needing PyMuPDF in tests.
         with mock.patch(
-            "backend.app.services.document_normalization_service._convert_pdf_to_docx",
-            return_value=fake_docx,
+            "backend.app.services.document_normalization_service._parse_pdf_to_ir",
+            return_value=fake_ir,
         ) as m:
-            result = normalize_input_document(_make_minimal_pdf_bytes(), "resume.pdf")
+            pdf_bytes = _make_minimal_pdf_bytes()
+            result = normalize_input_document(pdf_bytes, "resume.pdf")
             m.assert_called_once()
 
-        assert result.normalized_data == fake_docx
+        assert result.normalized_data == pdf_bytes  # PDF bytes pass through
         assert result.source_type == "pdf"
-        assert result.conversion_performed is True
+        assert result.conversion_performed is False
         assert result.warning_message == PDF_CONVERSION_WARNING
+        assert result.template_ir == fake_ir
 
-    def test_pdf_conversion_failure_raises(self):
-        """RuntimeError from LibreOffice propagates as RuntimeError."""
+    def test_pdf_parse_failure_raises(self):
+        """RuntimeError from PDF parser propagates as RuntimeError."""
         from backend.app.services.document_normalization_service import (
             normalize_input_document,
         )
 
         with mock.patch(
-            "backend.app.services.document_normalization_service._convert_pdf_to_docx",
-            side_effect=RuntimeError("libreoffice not found"),
+            "backend.app.services.document_normalization_service._parse_pdf_to_ir",
+            side_effect=RuntimeError("scanned PDF"),
         ):
-            with pytest.raises(RuntimeError, match="libreoffice"):
+            with pytest.raises(RuntimeError, match="scanned"):
                 normalize_input_document(_make_minimal_pdf_bytes(), "resume.pdf")
 
     def test_other_format_passthrough(self):
@@ -418,16 +420,14 @@ class TestDocumentNormalizationWarning:
             normalize_input_document,
         )
 
-        fake_docx = _make_minimal_docx_bytes()
         with mock.patch(
-            "backend.app.services.document_normalization_service._convert_pdf_to_docx",
-            return_value=fake_docx,
+            "backend.app.services.document_normalization_service._parse_pdf_to_ir",
+            return_value={},
         ):
             result = normalize_input_document(_make_minimal_pdf_bytes(), "r.pdf")
 
         assert result.warning_message is not None
         assert "PDF" in result.warning_message
-        assert "formatting" in result.warning_message.lower()
 
     def test_no_warning_for_txt(self):
         from backend.app.services.document_normalization_service import (

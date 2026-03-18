@@ -98,9 +98,10 @@ async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep):
         resume_jsonb=doc_dict,
         source_file_url=None,
         input_conversion_warning=norm.warning_message,
+        template_ir_jsonb=norm.template_ir,
     )
 
-    # Upload the normalized DOCX to storage and record the key.
+    # Upload the original file bytes to storage and record the key.
     storage_svc = StorageService(make_storage_client_from_settings())
     key = storage_svc.upload_resume_template(user.id, str(resume.id), norm.normalized_data)
     _repo(db).update(resume, source_file_url=key)

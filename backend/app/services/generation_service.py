@@ -193,10 +193,16 @@ class GenerationService:
         rendering_svc = RenderingService()
 
         template_bytes: bytes | None = None
-        if resume.input_conversion_warning:
+        template_ir_dict: dict | None = None
+
+        if resume.template_ir_jsonb:
+            # PDF-sourced resume: use the stored ResumeDocument IR directly.
+            template_ir_dict = resume.template_ir_jsonb
+            logger.info("Resume id=%s: using stored PDF IR for rendering.", resume.id)
+        elif resume.input_conversion_warning:
+            # Legacy: was converted via LibreOffice; no IR available.
             logger.warning(
-                "Resume id=%s was uploaded as PDF — LibreOffice-converted DOCX has no "
-                "Word styles; using CLI default template for rendering.",
+                "Resume id=%s was uploaded as PDF without IR — using CLI default template.",
                 resume.id,
             )
         elif resume.source_file_url:
@@ -221,7 +227,9 @@ class GenerationService:
         if result.resume:
             try:
                 resume_docx_bytes = rendering_svc.render_resume_docx(
-                    result.resume, template_bytes=template_bytes
+                    result.resume,
+                    template_bytes=template_bytes,
+                    template_ir_dict=template_ir_dict,
                 )
                 url_updates["resume_docx_url"] = self._storage_service.upload_resume_docx(
                     user_id, run_id, resume_docx_bytes

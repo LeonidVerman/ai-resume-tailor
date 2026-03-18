@@ -120,16 +120,22 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     if sectPr is not None:
         body.append(sectPr)
 
-    # Append cloned paragraphs in document order
+    # Append cloned (or constructed) paragraphs in document order
     for pm in doc.all_paras:
-        if pm.style.xml_proto is None:
+        if pm.style.xml_proto is not None:
+            # DOCX-sourced path: clone original XML element and replace text
+            clone = deepcopy(pm.style.xml_proto)
+            _set_para_text(clone, pm.text)
+        elif pm.paragraph_profile is not None:
+            # PDF-sourced path: build a fresh w:p element from ParagraphProfile
+            from tailor.compiler.para_builder import build_para_element
+            clone = build_para_element(pm)
+        else:
             raise ValueError(
-                f"Paragraph '{pm.text[:60]}' has no xml_proto; cannot render it. "
-                "This indicates a bug in the updater (new paragraphs must be "
-                "created via ParaModel.clone_as())."
+                f"Paragraph '{pm.text[:60]}' has no xml_proto or paragraph_profile; "
+                "cannot render it.  New paragraphs must be created via "
+                "ParaModel.clone_as()."
             )
-        clone = deepcopy(pm.style.xml_proto)
-        _set_para_text(clone, pm.text)
         if sectPr is not None:
             sectPr.addprevious(clone)
         else:
