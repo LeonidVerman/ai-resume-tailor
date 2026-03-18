@@ -85,12 +85,20 @@ class ParaModel:
 
 @dataclass
 class RoleEntry:
-    """One experience role: header + optional date/location lines + bullets."""
+    """One experience role: header + optional date/location lines + bullets.
+
+    header_extra holds any continuation paragraphs that Word wraps onto a
+    second line for a long role header (e.g. "Engineer | Corp, St." + "Louis").
+    They are not rendered in the output — the LLM produces a single merged
+    header string — but they must be tracked so the state machine does not
+    mis-classify them as bullets.
+    """
 
     header: ParaModel
-    meta_lines: list[ParaModel]
-    bullets: list[ParaModel]
-    role_id: str       # normalised header text; used as stable anchor for matching
+    header_extra: list[ParaModel] = field(default_factory=list)
+    meta_lines: list[ParaModel] = field(default_factory=list)
+    bullets: list[ParaModel] = field(default_factory=list)
+    role_id: str = ""   # normalised header text; used as stable anchor for matching
 
 
 @dataclass

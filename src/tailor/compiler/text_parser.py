@@ -154,7 +154,7 @@ def parse_llm_output(text: str) -> list[LlmSection]:
         if not stripped:
             continue  # blank lines are ignored
 
-        if _is_role_header(line):
+        if current.semantic_type == "experience" and _is_role_header(line):
             _finish_role()
             cur_role = LlmRole(header=stripped)
             state = "role"

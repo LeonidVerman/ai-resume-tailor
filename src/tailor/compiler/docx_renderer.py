@@ -111,14 +111,14 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     d = Document(output_path)
     body = d.element.body
 
-    # Preserve the top-level sectPr (page margins, size); remove all content elements
+    # Remove ALL body children, then re-append sectPr last.
+    # Removing only w:p and w:tbl would leave nested paragraphs inside
+    # w:sdt (content controls) which survive and produce duplicate content.
     sectPr = body.find(f"{{{_W}}}sectPr")
-    to_remove = [
-        child for child in body
-        if child.tag.split("}")[-1] in ("p", "tbl")
-    ]
-    for elem in to_remove:
-        body.remove(elem)
+    for child in list(body):
+        body.remove(child)
+    if sectPr is not None:
+        body.append(sectPr)
 
     # Append cloned paragraphs in document order
     for pm in doc.all_paras:

@@ -73,8 +73,6 @@ def _get_para_text(p_elem) -> str:
     for elem in p_elem.iter():
         if elem.tag == f"{{{_W}}}t":
             parts.append(elem.text or "")
-        elif elem.tag == f"{{{_W}}}tab":
-            parts.append("\t")
         elif elem.tag == f"{{{_W}}}br":
             parts.append("\n")
     return "".join(parts)
@@ -255,6 +253,7 @@ def _infer_semantic(pm: ParaModel) -> str:
 def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     roles: list[RoleEntry] = []
     header: ParaModel | None = None
+    header_extra: list[ParaModel] = []
     meta: list[ParaModel] = []
     bullets: list[ParaModel] = []
     state = "init"
@@ -265,11 +264,13 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             return
         roles.append(RoleEntry(
             header=header,
+            header_extra=list(header_extra),
             meta_lines=list(meta),
             bullets=list(bullets),
             role_id=header.text.strip(),
         ))
         header = None
+        header_extra.clear()
         meta.clear()
         bullets.clear()
 
@@ -282,30 +283,38 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             state = "header"
         elif state == "init":
             pass  # pre-role content; skip
-        elif state in ("header", "meta"):
+        elif state == "header":
             if s == "role_meta":
                 meta.append(pm)
                 state = "meta"
-            elif s == "bullet" or s == "paragraph":
+            elif s == "bullet":
+                bullets.append(pm)
+                state = "bullets"
+            elif s == "paragraph":
+                # Multi-line role header: Word can wrap long headers across
+                # two paragraphs.  Collect as header_extra; do not render.
+                header_extra.append(pm)
+            elif s == "empty":
+                pass
+            else:
+                meta.append(pm)
+        elif state == "meta":
+            if s == "role_meta":
+                meta.append(pm)
+            elif s in ("bullet", "paragraph"):
                 bullets.append(pm)
                 state = "bullets"
             elif s == "empty":
                 pass
             else:
-                meta.append(pm)
+                bullets.append(pm)
+                state = "bullets"
         elif state == "bullets":
             if s in ("bullet", "paragraph"):
                 bullets.append(pm)
-            elif s == "role_header":
-                _flush()
-                header = pm
-                state = "header"
-            # ignore empty/trailing in bullets state
+            # role_header handled at top; ignore empty/other
         else:
-            if s == "role_header":
-                _flush()
-                header = pm
-                state = "header"
+            pass  # unreachable
 
     _flush()
     return roles
