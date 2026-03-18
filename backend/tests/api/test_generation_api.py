@@ -55,7 +55,7 @@ def _patch_pipeline():
 
 
 def _patch_config():
-    return patch("tailor.config.PHASE2_MODEL", "gpt-4o")
+    return patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini")
 
 
 class TestCreateGeneration:

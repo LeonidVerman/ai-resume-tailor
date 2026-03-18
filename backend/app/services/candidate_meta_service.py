@@ -69,10 +69,9 @@ def _load_meta_prompt() -> str:
 
 def _call_meta_llm(meta_prompt: str, profile_json: str, model: str) -> str:
     import tailor.core_generation.llm as _llm
-    from tailor.config import PHASE1_MAX_TOKENS
 
     client = _llm.get_client()
-    kwargs = _llm._max_tokens_kwargs(model, PHASE1_MAX_TOKENS)
+    kwargs = _llm._max_tokens_kwargs(model, None)
 
     response = client.chat.completions.create(
         model=model,

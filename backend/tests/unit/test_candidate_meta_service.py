@@ -247,6 +247,7 @@ class TestEnsureCandidatePromptHelper:
             jd_repo=jd_repo,
             resume_repo=resume_repo,
             profile_repo=profile_repo,
+            storage_service=MagicMock(),
         )
 
         tailor_result = MagicMock()
@@ -260,7 +261,7 @@ class TestEnsureCandidatePromptHelper:
                 "backend.app.services.generation_service.GenerationService._run_pipeline",
                 return_value=(tailor_result, 10, 20, None, {}),
             ) as mock_pipeline,
-            patch("tailor.config.PHASE2_MODEL", "gpt-4o"),
+            patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini"),
         ):
             svc.generate(user_id, request)
 

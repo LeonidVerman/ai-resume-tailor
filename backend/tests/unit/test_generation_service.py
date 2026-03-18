@@ -77,12 +77,15 @@ def _make_service(user_id: str, jd=None, resume=None, run=None, doc=None):
     profile_repo = MagicMock()
     profile_repo.get_by_user_id.return_value = None  # no profile → falls back to file
 
+    storage_service = MagicMock()
+
     svc = GenerationService(
         run_repo=run_repo,
         doc_repo=doc_repo,
         jd_repo=jd_repo,
         resume_repo=resume_repo,
         profile_repo=profile_repo,
+        storage_service=storage_service,
     )
     return svc, jd, resume, run, doc, run_repo, doc_repo
 
@@ -104,7 +107,7 @@ class TestGenerationServiceGenerate:
         with (
             patch("backend.app.services.generation_service.GenerationService._run_pipeline",
                   return_value=(tailor_result, 100, 200, 0.005, {})),
-            patch("tailor.config.PHASE2_MODEL", "gpt-4o"),
+            patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini"),
         ):
             resp = svc.generate(user_id, request)
 
@@ -123,8 +126,8 @@ class TestGenerationServiceGenerate:
         )
 
         with (
-            patch("tailor.config.PHASE2_MODEL", "gpt-4o"),
-            patch("tailor.config.ENABLE_TWO_PHASE", True),
+            patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini"),
+            
         ):
             with pytest.raises(HTTPException) as exc_info:
                 svc.generate(user_id, request)
@@ -142,8 +145,8 @@ class TestGenerationServiceGenerate:
         )
 
         with (
-            patch("tailor.config.PHASE2_MODEL", "gpt-4o"),
-            patch("tailor.config.ENABLE_TWO_PHASE", True),
+            patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini"),
+            
         ):
             with pytest.raises(HTTPException) as exc_info:
                 svc.generate(user_id, request)
@@ -161,8 +164,8 @@ class TestGenerationServiceGenerate:
         with (
             patch("backend.app.services.generation_service.GenerationService._run_pipeline",
                   side_effect=RuntimeError("LLM error")),
-            patch("tailor.config.PHASE2_MODEL", "gpt-4o"),
-            patch("tailor.config.ENABLE_TWO_PHASE", True),
+            patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini"),
+            
         ):
             with pytest.raises(RuntimeError):
                 svc.generate(user_id, request)
@@ -192,7 +195,7 @@ class TestGenerationServiceGenerate:
                 "backend.app.services.generation_service.GenerationService._run_pipeline",
                 return_value=(tailor_result, 10, 20, None, {}),
             ) as mock_pipeline,
-            patch("tailor.config.PHASE2_MODEL", "gpt-4o"),
+            patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini"),
         ):
             svc.generate(user_id, request)
 
@@ -219,7 +222,7 @@ class TestGenerationServiceGenerate:
                 "backend.app.services.generation_service.GenerationService._run_pipeline",
                 return_value=(tailor_result, 10, 20, None, {}),
             ) as mock_pipeline,
-            patch("tailor.config.PHASE2_MODEL", "gpt-4o"),
+            patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini"),
         ):
             svc.generate(user_id, request)
 

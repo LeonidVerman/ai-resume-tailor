@@ -58,7 +58,7 @@ def _patch_pipeline(resume="Tailored resume text", cover="Cover letter text"):
 
 
 def _patch_model():
-    return patch("tailor.config.PHASE2_MODEL", "gpt-4o")
+    return patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini")
 
 
 class TestFullGenerationFlow:
