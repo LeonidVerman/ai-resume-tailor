@@ -91,14 +91,22 @@ def _match_sections(
     unmatched_llm = [li for li in range(len(llm)) if li not in used_llm]
 
     if unmatched_llm:
-        all_orig_matched = len(used_orig) == len(orig)
+        # 'other'-type originals that the LLM omits (e.g. the name/contact header
+        # block "Leonid Verman") are kept verbatim and don't count as "dropped".
+        # Only real content sections (summary, experience, skills, education) must
+        # be present for all_orig_matched to be True.
+        unmatched_content_orig = [
+            oi for oi in range(len(orig))
+            if oi not in used_orig and orig[oi].semantic_type != "other"
+        ]
+        all_orig_matched = len(unmatched_content_orig) == 0
         if not all_orig_matched:
-            # Hard fail: LLM both dropped and invented sections.
+            # Hard fail: LLM both dropped a real content section and invented one.
             raise ValueError(
                 f"LLM output contains section '{llm[unmatched_llm[0]].heading}' "
                 f"that cannot be matched to any section in the original document."
             )
-        # All originals matched — extras are new sections added by the LLM.
+        # All content originals matched — extras are new sections added by the LLM.
         extras = [llm[li] for li in unmatched_llm]
     else:
         extras = []
@@ -275,7 +283,9 @@ def apply_tailored(
 
     else:
         # ---- Extras path: follow LLM output order, splicing in extras ----
-        # When extras exist, all originals are matched so llm_section is never None.
+        # Content originals are all matched; 'other'-type originals (e.g. the
+        # name/contact header block) may still have llm_section=None and are
+        # kept verbatim, prepended before the LLM-ordered sections.
 
         # Style archetypes for extra sections
         heading_arch: ParaModel = match.pairs[0][0].heading  # first section heading
@@ -289,24 +299,33 @@ def apply_tailored(
                 continue
             break
 
-        # Map llm heading (lower) → updated section for matched pairs
+        # Map llm heading (lower) → updated section; collect verbatim unmatched.
         heading_to_section: dict[str, ResumeSection] = {}
+        verbatim_sections: list[ResumeSection] = []
         for orig_section, llm_section in match.pairs:
-            assert llm_section is not None  # guaranteed when extras exist
-            if orig_section.semantic_type == "experience":
-                updated = _update_experience_section(orig_section, llm_section)
+            if llm_section is None:
+                # 'other'-type section not output by LLM — keep verbatim
+                verbatim_sections.append(orig_section)
+            elif orig_section.semantic_type == "experience":
+                heading_to_section[llm_section.heading.lower()] = (
+                    _update_experience_section(orig_section, llm_section)
+                )
             else:
-                updated = _update_body_section(orig_section, llm_section)
-            heading_to_section[llm_section.heading.lower()] = updated
+                heading_to_section[llm_section.heading.lower()] = (
+                    _update_body_section(orig_section, llm_section)
+                )
 
         # Iterate LLM output order; emit matched or extra sections
-        new_sections = []
+        llm_order_sections: list[ResumeSection] = []
         for llm_s in llm_sections:
             key = llm_s.heading.lower()
             if key in heading_to_section:
-                new_sections.append(heading_to_section[key])
+                llm_order_sections.append(heading_to_section[key])
             else:
-                new_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
+                llm_order_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
+
+        # Verbatim sections (name/contact block etc.) always precede the body.
+        new_sections = verbatim_sections + llm_order_sections
 
     # Rebuild flat para list in document order
     all_paras: list[ParaModel] = list(original.header_paras)
