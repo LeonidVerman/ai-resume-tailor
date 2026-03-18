@@ -504,6 +504,47 @@ def _docx_to_pdf_docker(docx_path, docker_image=DOCKER_IMAGE_DEFAULT):
     print(f"PDF saved to {pdf_dest}")
 
 
+def _docx_to_pdf_subprocess(docx_path):
+    """Convert a .docx to .pdf using LibreOffice headless as a local subprocess.
+
+    LibreOffice must be available in PATH (installed in the backend container).
+    Produces a .pdf file next to the source DOCX.
+    """
+    import subprocess
+
+    docx_abs = os.path.abspath(docx_path)
+    out_dir   = os.path.dirname(docx_abs)
+    pdf_dest  = os.path.splitext(docx_abs)[0] + ".pdf"
+
+    cmd = [
+        "libreoffice", "--headless",
+        "--convert-to", "pdf",
+        docx_abs,
+        "--outdir", out_dir,
+    ]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    except FileNotFoundError:
+        raise RuntimeError(
+            "LibreOffice executable not found. Install LibreOffice and ensure "
+            "it is available in PATH — or use method='local' for the built-in converter."
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("LibreOffice DOCX→PDF conversion timed out after 120 s.")
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "(no output)").strip()
+        raise RuntimeError(
+            f"LibreOffice DOCX→PDF conversion failed (exit {result.returncode}):\n{detail}"
+        )
+
+    if not os.path.exists(pdf_dest):
+        raise RuntimeError(
+            f"Conversion appeared to succeed but PDF was not found at:\n{pdf_dest}"
+        )
+
+
 def _docx_to_pdf_local(docx_path):
     """Convert a .docx to .pdf using xhtml2pdf (no external dependencies).
 
@@ -535,9 +576,13 @@ def docx_to_pdf(docx_path, method="docker", docker_image=DOCKER_IMAGE_DEFAULT):
     ----------
     docx_path : str
         Path to the source .docx file.
-    method : {'docker', 'local'}
+    method : {'docker', 'subprocess', 'local'}
         ``'docker'`` (default) — high-fidelity conversion via LibreOffice
         headless in Docker.  Requires Docker Desktop to be running.
+
+        ``'subprocess'`` — call ``libreoffice`` directly as a subprocess;
+        requires LibreOffice installed in PATH (available in the backend
+        container).
 
         ``'local'`` — built-in Python conversion via xhtml2pdf; no external
         dependencies but formatting fidelity is lower.
@@ -546,10 +591,12 @@ def docx_to_pdf(docx_path, method="docker", docker_image=DOCKER_IMAGE_DEFAULT):
     """
     if method == "docker":
         _docx_to_pdf_docker(docx_path, docker_image=docker_image)
+    elif method == "subprocess":
+        _docx_to_pdf_subprocess(docx_path)
     elif method == "local":
         _docx_to_pdf_local(docx_path)
     else:
-        raise ValueError(f"Unknown method {method!r}.  Use 'docker' or 'local'.")
+        raise ValueError(f"Unknown method {method!r}.  Use 'docker', 'subprocess', or 'local'.")
 
 
 # ---------------------------------------------------------------------------

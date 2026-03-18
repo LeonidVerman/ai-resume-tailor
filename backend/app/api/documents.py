@@ -11,14 +11,11 @@ GET /documents/{id}/download  — return rendered DOCX or PDF, or plain text
 Download behavior
 -----------------
 The ``format`` query parameter controls the output:
-  format=docx  — render the template DOCX and return as application/vnd.openxmlformats-
-                 officedocument.wordprocessingml.document
-  format=pdf   — render the template DOCX and convert to PDF; return as application/pdf
+  format=docx  — serve pre-rendered DOCX bytes from storage (if available),
+                 or render on-demand as fallback
+  format=pdf   — serve pre-rendered PDF bytes from storage (if available),
+                 or render on-demand as fallback
   format=txt   — return plain generated text (default; backward compatible)
-
-Rendering is performed on-demand via RenderingService.  If the artifact
-URLs in the DB are already populated (S3-backed), the signed URL is
-redirected to directly (future enhancement).
 
 Legacy records that have no resume_jsonb / cover_letter_jsonb will return
 404 for those parts regardless of format.
@@ -28,10 +25,12 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Response, status
 
+from backend.app.clients.storage_client import make_storage_client_from_settings
 from backend.app.dependencies import CurrentUserDep, DbDep
 from backend.app.db.repositories.tailored_document_repository import TailoredDocumentRepository
 from backend.app.schemas.tailored_document import ArtifactURLs, TailoredDocumentDetail
 from backend.app.services.rendering_service import RenderingService
+from backend.app.services.storage_service import StorageService
 
 logger = logging.getLogger(__name__)
 
@@ -41,38 +40,47 @@ _DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.doc
 _PDF_MIME = "application/pdf"
 
 
-def _artifact_filename(company_name: str, part: str, fmt: str) -> str:
-    """Build a download filename matching the CLI's naming convention.
+def _artifact_filename(doc, part: str, fmt: str) -> str:
+    """Build a download filename for the artifact.
 
-    CLI logic (cli.py):
-        safe_company = "".join(c if c.isalnum() or c in "_-" else "_" for c in job.company)
-        resume_docx  = os.path.basename(RESUME_TEMPLATE).replace("Template", safe_company)
-        cover_docx   = os.path.basename(COVER_TEMPLATE).replace("Template", safe_company)
-
-    Template basenames:
-        Leonid_Verman_Resume_Template.docx  → Leonid_Verman_Resume_{company}.docx
-        Leonid_Verman_Cover_Letter_Template.docx → Leonid_Verman_Cover_Letter_{company}.docx
+    For resume: uses template_original_filename from resume_jsonb when available,
+    deriving the stem from the original upload filename.  Falls back to the CLI
+    template basename pattern when not available.
 
     Examples:
-        company="Xero", part="resume",       fmt="docx" → Leonid_Verman_Resume_Xero.docx
-        company="Xero", part="cover_letter", fmt="pdf"  → Leonid_Verman_Cover_Letter_Xero.pdf
+        original_filename="My_Resume.docx", company="Xero", part="resume", fmt="docx"
+            → My_Resume_Xero.docx
+        fallback: Leonid_Verman_Resume_Xero.docx
     """
     import os
     from tailor.config import RESUME_TEMPLATE, COVER_TEMPLATE
 
+    company_name = doc.company_name or "Unknown"
     safe_company = "".join(
         c if c.isalnum() or c in "_-" else "_"
-        for c in (company_name or "Unknown")
+        for c in company_name
     )
 
-    template = RESUME_TEMPLATE if part == "resume" else COVER_TEMPLATE
-    stem = os.path.splitext(os.path.basename(str(template)))[0]  # strip .docx
+    if part == "resume":
+        original_filename = (doc.resume_jsonb or {}).get("template_original_filename", "")
+        if original_filename:
+            base_stem = os.path.splitext(os.path.basename(original_filename))[0]
+            return f"{base_stem}_{safe_company}.{fmt}"
+        template = RESUME_TEMPLATE
+    else:
+        template = COVER_TEMPLATE
+
+    stem = os.path.splitext(os.path.basename(str(template)))[0]
     name = stem.replace("Template", safe_company)
     return f"{name}.{fmt}"
 
 
 def _repo(db) -> TailoredDocumentRepository:
     return TailoredDocumentRepository(db)
+
+
+def _storage_svc() -> StorageService:
+    return StorageService(make_storage_client_from_settings())
 
 
 def _artifacts(doc) -> ArtifactURLs:
@@ -162,12 +170,7 @@ def download_document(
         )
 
     text = jsonb.get("text", "")
-
-    # Build the artifact filename using the same logic as the CLI:
-    #   safe_company = non-alnum/underscore/dash chars replaced with "_"
-    #   template basename with "Template" replaced by safe_company
-    #   e.g. "Leonid_Verman_Resume_Template.docx" → "Leonid_Verman_Resume_Xero.docx"
-    filename = _artifact_filename(doc.company_name, part, format)
+    filename = _artifact_filename(doc, part, format)
 
     # Plain text — backward compatible default.
     if format == "txt":
@@ -177,7 +180,58 @@ def download_document(
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
-    # DOCX or PDF — render on-demand.
+    # DOCX — serve from storage if available, else render on-demand.
+    if format == "docx":
+        storage_key = doc.resume_docx_url if part == "resume" else doc.cover_letter_docx_url
+        if storage_key:
+            try:
+                docx_bytes = _storage_svc().get_bytes(storage_key)
+                return Response(
+                    content=docx_bytes,
+                    media_type=_DOCX_MIME,
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Storage fetch failed for doc=%s part=%s key=%s: %s; falling back to render",
+                    doc_id, part, storage_key, exc,
+                )
+        # Fallback: on-demand render.
+        svc = RenderingService()
+        try:
+            if part == "resume":
+                docx_bytes = svc.render_resume_docx(text)
+            else:
+                docx_bytes = svc.render_cover_letter_docx(text)
+        except Exception as exc:
+            logger.error("DOCX rendering failed for doc=%s part=%s: %s", doc_id, part, exc)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"DOCX rendering failed: {exc}",
+            )
+        return Response(
+            content=docx_bytes,
+            media_type=_DOCX_MIME,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    # PDF — serve from storage if available, else render on-demand.
+    assert format == "pdf"
+    storage_key = doc.resume_pdf_url if part == "resume" else doc.cover_letter_pdf_url
+    if storage_key:
+        try:
+            pdf_bytes = _storage_svc().get_bytes(storage_key)
+            return Response(
+                content=pdf_bytes,
+                media_type=_PDF_MIME,
+                headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            )
+        except Exception as exc:
+            logger.warning(
+                "Storage fetch failed for doc=%s part=%s key=%s: %s; falling back to render",
+                doc_id, part, storage_key, exc,
+            )
+    # Fallback: on-demand render.
     svc = RenderingService()
     try:
         if part == "resume":
@@ -190,15 +244,6 @@ def download_document(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"DOCX rendering failed: {exc}",
         )
-
-    if format == "docx":
-        return Response(
-            content=docx_bytes,
-            media_type=_DOCX_MIME,
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-        )
-
-    # PDF — convert DOCX bytes to PDF.
     try:
         if part == "resume":
             pdf_bytes = svc.render_resume_pdf(docx_bytes, method="local")
@@ -210,7 +255,6 @@ def download_document(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"PDF rendering failed: {exc}",
         )
-
     return Response(
         content=pdf_bytes,
         media_type=_PDF_MIME,

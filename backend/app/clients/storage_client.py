@@ -167,6 +167,14 @@ class StorageClient:
         s3.delete_object(Bucket=resolved_bucket, Key=key)
         logger.debug("Deleted s3://%s/%s", resolved_bucket, key)
 
+    def get_bytes(self, key: str, *, bucket: str | None = None) -> bytes:
+        """Download an object and return its raw bytes."""
+        resolved_bucket = self._resolve_bucket(bucket)
+        s3 = self._get_s3()
+        logger.debug("Downloading s3://%s/%s", resolved_bucket, key)
+        response = s3.get_object(Bucket=resolved_bucket, Key=key)
+        return response["Body"].read()
+
     def object_exists(self, key: str, *, bucket: str | None = None) -> bool:
         """Return True if an object with the given key exists."""
         import botocore.exceptions
@@ -181,12 +189,88 @@ class StorageClient:
             raise
 
 
+# ── Local filesystem client ────────────────────────────────────────────────
+
+class LocalStorageClient:
+    """
+    Local filesystem storage backend with the same public API as StorageClient.
+
+    Stores files under ``root_path/{key}``.  Parent directories are created
+    automatically on upload.  Intended for development and testing only.
+    """
+
+    def __init__(self, root_path: str) -> None:
+        import os
+        self._root = os.path.abspath(root_path)
+
+    def _full_path(self, key: str) -> str:
+        import os
+        # Normalise forward slashes on Windows.
+        return os.path.join(self._root, *key.split("/"))
+
+    def upload_bytes(
+        self,
+        data: bytes,
+        key: str,
+        *,
+        content_type: str = "application/octet-stream",
+        bucket: str | None = None,
+    ) -> UploadResult:
+        """Write bytes to the local filesystem."""
+        import io
+        return self.upload_fileobj(io.BytesIO(data), key, content_type=content_type, bucket=bucket)
+
+    def upload_fileobj(
+        self,
+        fileobj: BinaryIO,
+        key: str,
+        *,
+        content_type: str = "application/octet-stream",
+        bucket: str | None = None,
+    ) -> UploadResult:
+        """Write a file-like object to the local filesystem."""
+        import os
+        path = self._full_path(key)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as f:
+            f.write(fileobj.read())
+        logger.debug("LocalStorage: wrote %s", path)
+        return UploadResult(bucket="local", key=key, url="", etag="")
+
+    def get_bytes(self, key: str, *, bucket: str | None = None) -> bytes:
+        """Read an object from the local filesystem and return its raw bytes."""
+        path = self._full_path(key)
+        with open(path, "rb") as f:
+            return f.read()
+
+    def get_signed_url(self, key: str, *, expires_in: int = 3600, bucket: str | None = None) -> str:
+        """Not supported for local storage."""
+        raise NotImplementedError("Signed URLs are not supported by LocalStorageClient")
+
+    def delete_object(self, key: str, *, bucket: str | None = None) -> None:
+        """Delete a file from the local filesystem (no-op if missing)."""
+        import os
+        path = self._full_path(key)
+        try:
+            os.remove(path)
+            logger.debug("LocalStorage: deleted %s", path)
+        except FileNotFoundError:
+            pass
+
+    def object_exists(self, key: str, *, bucket: str | None = None) -> bool:
+        """Return True if the file exists on the local filesystem."""
+        import os
+        return os.path.isfile(self._full_path(key))
+
+
 # ── Factory ────────────────────────────────────────────────────────────────
 
-def make_storage_client_from_settings() -> StorageClient:
-    """Create a StorageClient from application settings."""
+def make_storage_client_from_settings() -> "StorageClient | LocalStorageClient":
+    """Create a storage client from application settings."""
     from backend.app.config import get_settings
     s = get_settings()
+    if s.storage_type == "local":
+        return LocalStorageClient(root_path=s.storage_local_path)
     return StorageClient(
         endpoint_url=s.storage_endpoint,
         access_key_id=s.storage_access_key_id,

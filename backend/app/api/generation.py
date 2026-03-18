@@ -25,6 +25,7 @@ the billing service and can be added here when billing is live.
 
 from fastapi import APIRouter, HTTPException, status
 
+from backend.app.clients.storage_client import make_storage_client_from_settings
 from backend.app.dependencies import CurrentUserDep, DbDep
 from backend.app.db.repositories.candidate_profile_repository import CandidateProfileRepository
 from backend.app.db.repositories.generation_run_repository import GenerationRunRepository
@@ -38,17 +39,20 @@ from backend.app.schemas.generation import (
     GenerationRunSummary,
 )
 from backend.app.services.generation_service import GenerationService
+from backend.app.services.storage_service import StorageService
 
 router = APIRouter()
 
 
 def _service(db) -> GenerationService:
+    storage_svc = StorageService(make_storage_client_from_settings())
     return GenerationService(
         run_repo=GenerationRunRepository(db),
         doc_repo=TailoredDocumentRepository(db),
         jd_repo=JobDescriptionRepository(db),
         resume_repo=StructuredResumeRepository(db),
         profile_repo=CandidateProfileRepository(db),
+        storage_service=storage_svc,
     )
 
 

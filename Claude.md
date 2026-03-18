@@ -6,3 +6,13 @@ Rules for coding agent:
 4. Do not modify unrelated files
 5. Commit frequently
 6. Run tests before finishing tasks
+
+## Skill System
+
+Follow the guidelines defined in SKILL.md for:
+- Writing style
+- Decision making
+- Code quality standards
+- Resume tailoring rules (if applicable)
+
+SKILL.md is authoritative for execution behavior.

@@ -8,13 +8,6 @@ Endpoints
 POST /resumes/upload     — upload a DOCX or PDF resume; parse and store it
 GET  /resumes            — list the authenticated user's stored resumes
 GET  /resumes/{id}       — return a specific resume record
-
-Phase 8 status: FUNCTIONAL (file storage URL not persisted — deferred)
------------------------------------------------------------------------
-The resume is parsed and stored as structured JSONB.  The uploaded file
-itself is not currently persisted to object storage (that requires a
-configured StorageClient).  source_file_url will be None until storage
-is wired in a future phase.
 """
 
 from fastapi import APIRouter, HTTPException, UploadFile, status
@@ -49,7 +42,10 @@ def _to_response(resume) -> StructuredResumeResponse:
 
 
 def _to_summary(resume) -> StructuredResumeSummary:
-    name = (resume.resume_jsonb or {}).get("name", "Unknown")
+    jsonb = resume.resume_jsonb or {}
+    # Prefer original_filename (the user's actual upload filename) over the
+    # heuristic-parsed name, which can be garbled for LibreOffice-converted PDFs.
+    name = jsonb.get("original_filename") or jsonb.get("name", "Unknown")
     return StructuredResumeSummary(
         id=resume.id,
         name=name,
@@ -64,8 +60,12 @@ async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep):
     Upload a DOCX or PDF resume.
 
     The file is parsed into a StructuredResumeDocument and stored in the DB.
-    The raw file is not persisted to object storage in this phase.
+    The normalized DOCX is uploaded to object storage and the key is stored
+    in source_file_url.
     """
+    from backend.app.clients.storage_client import make_storage_client_from_settings
+    from backend.app.services.storage_service import StorageService
+
     data = await file.read()
     if len(data) > _MAX_UPLOAD_BYTES:
         raise HTTPException(
@@ -90,12 +90,21 @@ async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep):
     parse_filename = "resume.docx" if norm.conversion_performed else filename
     doc = svc.parse(norm.normalized_data, parse_filename)
 
+    doc_dict = doc.model_dump(mode="json")
+    doc_dict["original_filename"] = filename
+
     resume = _repo(db).create(
         user_id=user.id,
-        resume_jsonb=doc.model_dump(mode="json"),
-        source_file_url=None,  # storage upload deferred
+        resume_jsonb=doc_dict,
+        source_file_url=None,
         input_conversion_warning=norm.warning_message,
     )
+
+    # Upload the normalized DOCX to storage and record the key.
+    storage_svc = StorageService(make_storage_client_from_settings())
+    key = storage_svc.upload_resume_template(user.id, str(resume.id), norm.normalized_data)
+    _repo(db).update(resume, source_file_url=key)
+
     return _to_response(resume)
 
 

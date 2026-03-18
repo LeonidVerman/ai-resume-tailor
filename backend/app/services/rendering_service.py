@@ -30,24 +30,43 @@ class RenderingService:
     reads the results back as bytes.
     """
 
-    def render_resume_docx(self, resume_text: str) -> bytes:
+    def render_resume_docx(self, resume_text: str, template_bytes: bytes | None = None) -> bytes:
         """
         Fill the resume DOCX template with LLM-generated text.
+
+        Parameters
+        ----------
+        resume_text:
+            LLM-generated resume text.
+        template_bytes:
+            The user's original resume DOCX as raw bytes.  When provided this
+            is used as the template instead of the default CLI template file.
 
         Returns raw DOCX bytes.
         """
         from tailor.config import RESUME_TEMPLATE
         from tailor.docx.template_fill import save_doc_from_template
 
+        tmp_template_path = None
         with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
             tmp_path = tmp.name
 
         try:
-            save_doc_from_template(str(RESUME_TEMPLATE), tmp_path, resume_text)
+            if template_bytes is not None:
+                with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp_tpl:
+                    tmp_tpl.write(template_bytes)
+                    tmp_template_path = tmp_tpl.name
+                template_path = tmp_template_path
+            else:
+                template_path = str(RESUME_TEMPLATE)
+
+            save_doc_from_template(template_path, tmp_path, resume_text)
             with open(tmp_path, "rb") as f:
                 return f.read()
         finally:
             _safe_remove(tmp_path)
+            if tmp_template_path:
+                _safe_remove(tmp_template_path)
 
     def render_cover_letter_docx(self, cover_letter_text: str) -> bytes:
         """
@@ -71,7 +90,7 @@ class RenderingService:
         finally:
             _safe_remove(tmp_path)
 
-    def render_resume_pdf(self, resume_docx_bytes: bytes, method: str = "local") -> bytes:
+    def render_resume_pdf(self, resume_docx_bytes: bytes, method: str = "subprocess") -> bytes:
         """
         Convert a resume DOCX (bytes) to PDF bytes.
 

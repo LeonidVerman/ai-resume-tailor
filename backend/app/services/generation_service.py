@@ -39,6 +39,7 @@ from backend.app.db.repositories.job_description_repository import JobDescriptio
 from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
 from backend.app.db.repositories.tailored_document_repository import TailoredDocumentRepository
 from backend.app.schemas.generation import GenerationRequest, GenerationResponse
+from backend.app.services.storage_service import StorageService
 
 logger = logging.getLogger(__name__)
 
@@ -51,11 +52,12 @@ class GenerationService:
 
     Dependencies
     ------------
-    run_repo:    GenerationRunRepository
-    doc_repo:    TailoredDocumentRepository
-    jd_repo:     JobDescriptionRepository
-    resume_repo: StructuredResumeRepository
-    profile_repo: CandidateProfileRepository
+    run_repo:       GenerationRunRepository
+    doc_repo:       TailoredDocumentRepository
+    jd_repo:        JobDescriptionRepository
+    resume_repo:    StructuredResumeRepository
+    profile_repo:   CandidateProfileRepository
+    storage_service: StorageService
     """
 
     def __init__(
@@ -65,12 +67,14 @@ class GenerationService:
         jd_repo: JobDescriptionRepository,
         resume_repo: StructuredResumeRepository,
         profile_repo: CandidateProfileRepository,
+        storage_service: StorageService,
     ) -> None:
         self._run_repo = run_repo
         self._doc_repo = doc_repo
         self._jd_repo = jd_repo
         self._resume_repo = resume_repo
         self._profile_repo = profile_repo
+        self._storage_service = storage_service
 
     def generate(
         self, user_id: str, request: GenerationRequest
@@ -164,15 +168,26 @@ class GenerationService:
         )
 
         # ── Persist tailored document ──────────────────────────────────────
+        template_original_filename = (resume.resume_jsonb or {}).get("original_filename", "")
         tailored_doc = self._doc_repo.create(
             user_id=user_id,
             generation_run_id=run.id,
             company_name=meta.get("company", ""),
             role_title=meta.get("job_title", ""),
-            # Store plain text in JSONB so it can be retrieved for rendering/download.
-            # Extended structured parsing is a future enhancement.
-            resume_jsonb={"text": result.resume} if result.resume else None,
+            resume_jsonb={
+                "text": result.resume,
+                "template_original_filename": template_original_filename,
+            } if result.resume else None,
             cover_letter_jsonb={"text": result.cover_letter} if result.cover_letter else None,
+        )
+
+        # ── Render and upload artifacts ────────────────────────────────────
+        self._render_and_upload(
+            user_id=user_id,
+            run_id=str(run.id),
+            tailored_doc=tailored_doc,
+            resume=resume,
+            result=result,
         )
 
         # ── Finalize run record ────────────────────────────────────────────
@@ -194,6 +209,103 @@ class GenerationService:
             status="succeeded",
             tailored_document_id=tailored_doc.id,
         )
+
+    # ── Render & upload ────────────────────────────────────────────────────
+
+    def _render_and_upload(self, user_id, run_id, tailored_doc, resume, result) -> None:
+        """Render the 4 artifacts and upload them to storage.
+
+        Updates tailored_doc URL columns with the resulting storage keys.
+        Logs and continues on any rendering/upload failure — the text content
+        is always available as fallback.
+        """
+        from backend.app.services.rendering_service import RenderingService
+
+        rendering_svc = RenderingService()
+
+        # Fetch the user's original resume template from storage.
+        # Skip PDF-converted templates: LibreOffice DOCX output lacks proper
+        # Word styles (Heading 1/2, List Paragraph) so the structural editor
+        # cannot produce a well-formatted document from it.
+        template_bytes: bytes | None = None
+        if resume.input_conversion_warning:
+            logger.warning(
+                "Resume id=%s was uploaded as PDF — LibreOffice-converted DOCX has no "
+                "Word styles; using CLI default template for rendering.",
+                resume.id,
+            )
+        elif resume.source_file_url:
+            try:
+                template_bytes = self._storage_service.get_bytes(resume.source_file_url)
+                logger.info("Loaded resume template from storage key=%s (%d bytes)",
+                            resume.source_file_url, len(template_bytes))
+            except Exception as exc:
+                logger.error(
+                    "TEMPLATE FETCH FAILED — falling back to CLI default. "
+                    "key=%s error=%s", resume.source_file_url, exc, exc_info=True,
+                )
+        else:
+            logger.warning(
+                "Resume id=%s has no source_file_url — template was uploaded before "
+                "storage was enabled. Re-upload the resume to use the correct template.",
+                resume.id,
+            )
+
+        url_updates: dict = {}
+
+        # Resume DOCX
+        if result.resume:
+            try:
+                resume_docx_bytes = rendering_svc.render_resume_docx(
+                    result.resume, template_bytes=template_bytes
+                )
+                url_updates["resume_docx_url"] = self._storage_service.upload_resume_docx(
+                    user_id, run_id, resume_docx_bytes
+                )
+            except Exception as exc:
+                logger.warning("Failed to render/upload resume.docx run=%s: %s", run_id, exc)
+                resume_docx_bytes = None
+        else:
+            resume_docx_bytes = None
+
+        # Resume PDF
+        if resume_docx_bytes:
+            try:
+                resume_pdf_bytes = rendering_svc.render_resume_pdf(resume_docx_bytes)
+                url_updates["resume_pdf_url"] = self._storage_service.upload_resume_pdf(
+                    user_id, run_id, resume_pdf_bytes
+                )
+            except Exception as exc:
+                logger.warning("Failed to render/upload resume.pdf run=%s: %s", run_id, exc)
+
+        # Cover letter DOCX
+        cover_letter_docx_bytes: bytes | None = None
+        if result.cover_letter:
+            try:
+                cover_letter_docx_bytes = rendering_svc.render_cover_letter_docx(result.cover_letter)
+                url_updates["cover_letter_docx_url"] = self._storage_service.upload_cover_letter_docx(
+                    user_id, run_id, cover_letter_docx_bytes
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Failed to render/upload cover_letter.docx run=%s: %s", run_id, exc
+                )
+
+        # Cover letter PDF
+        if cover_letter_docx_bytes:
+            try:
+                cover_letter_pdf_bytes = rendering_svc.render_cover_letter_pdf(cover_letter_docx_bytes)
+                url_updates["cover_letter_pdf_url"] = self._storage_service.upload_cover_letter_pdf(
+                    user_id, run_id, cover_letter_pdf_bytes
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Failed to render/upload cover_letter.pdf run=%s: %s", run_id, exc
+                )
+
+        if url_updates:
+            self._doc_repo.update(tailored_doc, **url_updates)
+            logger.info("Artifact URLs updated for doc=%s: %s", tailored_doc.id, list(url_updates))
 
     # ── Pipeline ───────────────────────────────────────────────────────────
 

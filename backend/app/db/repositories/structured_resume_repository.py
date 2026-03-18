@@ -38,6 +38,12 @@ class StructuredResumeRepository:
         self._db.flush()
         return resume
 
+    def update(self, resume: StructuredResume, **kwargs) -> StructuredResume:
+        for k, v in kwargs.items():
+            setattr(resume, k, v)
+        self._db.flush()
+        return resume
+
     def delete(self, resume: StructuredResume) -> None:
         resume.delete_flg = True
         self._db.flush()

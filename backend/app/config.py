@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = ""
 
     # ── Object storage ────────────────────────────────────────────────────
+    storage_type: str = "local"          # "s3" | "local"
+    storage_local_path: str = "storage"  # root dir for local backend
     storage_endpoint: str = ""
     storage_access_key_id: str = ""
     storage_secret_access_key: str = ""

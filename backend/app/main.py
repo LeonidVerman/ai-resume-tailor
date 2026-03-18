@@ -54,8 +54,37 @@ def create_app() -> FastAPI:
             settings.app_env,
             settings.app_version,
         )
+        _validate_storage(settings)
 
     return app
+
+
+def _validate_storage(s) -> None:
+    """Validate storage configuration and prepare the storage backend.
+
+    Raises RuntimeError if required settings are missing.
+    """
+    import os
+    if s.storage_type == "s3":
+        missing = [
+            name for name, val in (
+                ("storage_endpoint", s.storage_endpoint),
+                ("storage_access_key_id", s.storage_access_key_id),
+                ("storage_secret_access_key", s.storage_secret_access_key),
+            )
+            if not val
+        ]
+        if missing:
+            raise RuntimeError(
+                f"S3 storage is configured but the following settings are missing: "
+                f"{', '.join(missing)}"
+            )
+        logger.info("Storage: s3 endpoint=%s bucket=%s", s.storage_endpoint, s.storage_bucket)
+    else:
+        if not s.storage_local_path:
+            raise RuntimeError("storage_local_path must be non-empty when storage_type='local'")
+        os.makedirs(s.storage_local_path, exist_ok=True)
+        logger.info("Storage: local path=%s", s.storage_local_path)
 
 
 app = create_app()

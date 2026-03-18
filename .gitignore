@@ -53,6 +53,9 @@ Thumbs.db
 # Reports
 reports/
 
+# Local object storage (dev)
+storage/
+
 # Docker
 *.log
 frontend/tsconfig.tsbuildinfo
