@@ -418,14 +418,8 @@ export default function AdminPage() {
             <div className="p-2 bg-gray-50 rounded-lg text-xs text-gray-600 flex-1 min-w-0">
               {loadingConfig ? (
                 <span>Loading config…</span>
-              ) : genMode === "simple" ? (
-                <span>Mode: <strong>Simple</strong> &nbsp;·&nbsp; Model: <strong>{simpleModel}</strong></span>
               ) : (
-                <span>
-                  Mode: <strong>Two-phase</strong> &nbsp;·&nbsp;
-                  Phase&nbsp;1: <strong>{phase1Model}</strong> &nbsp;·&nbsp;
-                  Phase&nbsp;2: <strong>{phase2Model}</strong>
-                </span>
+                <span>Model: <strong>{simpleModel}</strong></span>
               )}
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
