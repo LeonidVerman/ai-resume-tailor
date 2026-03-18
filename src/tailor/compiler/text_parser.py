@@ -1,0 +1,193 @@
+"""Parse LLM plain-text resume output into structured sections.
+
+The LLM is expected to output:
+  - Section headings (e.g. "Experience", "Technical Skills")
+  - Role headers with pipes (e.g. "Senior Engineer | Acme Corp")
+  - Date/location meta lines (e.g. "Jan 2022 – Present")
+  - Bullet lines prefixed with "- "
+  - Plain body lines for non-experience sections
+
+These are stable anchors the LLM is instructed not to change.
+"""
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, field
+
+_YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
+
+_EXPERIENCE_NAMES: frozenset[str] = frozenset({
+    "experience", "work experience", "professional experience",
+    "employment history", "employment", "career history",
+    "work history", "professional background",
+})
+_SUMMARY_NAMES: frozenset[str] = frozenset({
+    "professional summary", "summary", "objective", "career objective",
+    "profile", "professional profile", "about me", "career summary",
+    "executive summary",
+})
+_SKILLS_NAMES: frozenset[str] = frozenset({
+    "technical skills", "skills", "core competencies", "competencies",
+    "technical expertise", "expertise", "key skills", "areas of expertise",
+    "technologies", "tech stack",
+})
+_EDUCATION_NAMES: frozenset[str] = frozenset({
+    "education", "academic background", "academic credentials",
+    "educational background", "degrees",
+})
+_ALL_KNOWN: frozenset[str] = (
+    _EXPERIENCE_NAMES | _SUMMARY_NAMES | _SKILLS_NAMES | _EDUCATION_NAMES | frozenset({
+        "certifications", "certification", "licenses", "publications",
+        "projects", "volunteer", "volunteering", "awards", "honors",
+        "references", "languages", "interests", "activities",
+        "leadership", "leadership experience", "additional information",
+    })
+)
+
+
+def _classify(heading: str) -> str:
+    t = heading.strip().lower()
+    if t in _EXPERIENCE_NAMES:
+        return "experience"
+    if t in _SUMMARY_NAMES:
+        return "summary"
+    if t in _SKILLS_NAMES:
+        return "skills"
+    if t in _EDUCATION_NAMES:
+        return "education"
+    return "other"
+
+
+def _is_section_heading(line: str) -> bool:
+    s = line.strip()
+    if not s:
+        return False
+    if s.startswith(("-", "•", "·", "–", "*")):
+        return False
+    if "|" in s:
+        return False
+    if len(s) > 60:
+        return False
+    if s.lower() in _ALL_KNOWN:
+        return True
+    # Tight title-case fallback for 2–3 word lines (single words like "Python" excluded)
+    if any(c in s for c in (",", ";", ":")):
+        return False
+    if s[-1] in ".!?":
+        return False
+    words = s.split()
+    if len(words) < 2 or len(words) > 3:
+        return False
+    if not all(w[0].isupper() for w in words if w):
+        return False
+    if _YEAR_RE.search(s):
+        return False
+    return True
+
+
+def _is_role_header(line: str) -> bool:
+    s = line.strip()
+    return bool(s) and "|" in s and not s.startswith(("-", "•"))
+
+
+def _is_meta_line(line: str) -> bool:
+    s = line.strip()
+    return bool(s) and bool(_YEAR_RE.search(s)) and "|" not in s and not s.startswith("-")
+
+
+# ---------------------------------------------------------------------------
+# Data classes for parsed LLM output
+# ---------------------------------------------------------------------------
+
+@dataclass
+class LlmRole:
+    header: str
+    meta_lines: list[str] = field(default_factory=list)
+    bullets: list[str] = field(default_factory=list)
+
+
+@dataclass
+class LlmSection:
+    heading: str
+    semantic_type: str
+    body_lines: list[str] = field(default_factory=list)   # non-experience
+    roles: list[LlmRole] = field(default_factory=list)    # experience only
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+def parse_llm_output(text: str) -> list[LlmSection]:
+    """Parse LLM plain-text resume output into a list of LlmSection objects."""
+    lines = text.split("\n")
+    sections: list[LlmSection] = []
+    current: LlmSection | None = None
+    cur_role: LlmRole | None = None
+    state = "pre"
+
+    def _finish_role() -> None:
+        nonlocal cur_role
+        if cur_role is not None and current is not None:
+            current.roles.append(cur_role)
+            cur_role = None
+
+    def _finish_section() -> None:
+        if current is not None:
+            sections.append(current)
+
+    for line in lines:
+        stripped = line.strip()
+
+        if _is_section_heading(line):
+            _finish_role()
+            _finish_section()
+            sem = _classify(stripped)
+            current = LlmSection(heading=stripped, semantic_type=sem)
+            cur_role = None
+            state = "body"
+            continue
+
+        if current is None:
+            continue  # text before first section heading
+
+        if not stripped:
+            continue  # blank lines are ignored
+
+        if _is_role_header(line):
+            _finish_role()
+            cur_role = LlmRole(header=stripped)
+            state = "role"
+            continue
+
+        if state == "body" or cur_role is None:
+            text_val = stripped[2:] if stripped.startswith("- ") else stripped
+            current.body_lines.append(text_val)
+        elif state == "role":
+            if stripped.startswith("- "):
+                cur_role.bullets.append(stripped[2:])
+                state = "bullets"
+            elif _is_meta_line(line):
+                cur_role.meta_lines.append(stripped)
+                state = "meta"
+            else:
+                cur_role.meta_lines.append(stripped)
+                state = "meta"
+        elif state == "meta":
+            if stripped.startswith("- "):
+                cur_role.bullets.append(stripped[2:])
+                state = "bullets"
+            elif _is_meta_line(line):
+                cur_role.meta_lines.append(stripped)
+            else:
+                cur_role.bullets.append(stripped)
+                state = "bullets"
+        elif state == "bullets":
+            if stripped.startswith("- "):
+                cur_role.bullets.append(stripped[2:])
+            else:
+                cur_role.bullets.append(stripped)
+
+    _finish_role()
+    _finish_section()
+    return sections

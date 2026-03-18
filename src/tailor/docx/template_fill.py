@@ -255,20 +255,33 @@ def read_docx(file_path):
 
 
 def save_doc_from_template(template_path, output_path, new_text):
-    """Modify a copy of the template document, replacing text while preserving formatting.
+    """Render a tailored DOCX from a master resume template and LLM output text.
 
-    Uses a structure-aware DOCX editing model:
-    - Parses the template into a DocumentModel (sections, roles, bullets)
-    - Parses the LLM text into LlmSections
-    - Matches sections semantically (not by fixed name or position)
-    - For experience sections: edits role blocks individually (clone/reuse/delete)
-    - For other sections: uses blank-line grouping
-    - Preserves all paragraph/run formatting; never rebuilds paragraphs from scratch
+    For resume documents the compiler pipeline is used:
+    - Parses the template into a ResumeDocument IR
+    - Parses the LLM plain text into structured sections
+    - Matches sections/roles and applies tailored content
+    - Renders a fresh DOCX preserving all paragraph formatting
 
-    Falls back to the original _apply_groups algorithm for templates without a
-    detectable experience section (e.g. cover letters).
+    For cover letters (no experience section detected) the original
+    _apply_groups algorithm is used as a fallback.
     """
     new_text = _sanitize_xml_text(new_text)
-    # Import here to avoid a circular import (editor imports _apply_groups from here)
-    from tailor.docx.editor import apply_tailored_content
-    apply_tailored_content(template_path, output_path, new_text)
+
+    # Detect whether this is a resume (has an experience section) or a cover letter.
+    # We inspect the template quickly before deciding which path to take.
+    from tailor.compiler.docx_parser import parse_docx
+    try:
+        parsed = parse_docx(template_path)
+        has_experience = any(s.semantic_type == "experience" for s in parsed.sections)
+    except Exception:
+        has_experience = False
+
+    if has_experience:
+        from tailor.compiler.pipeline import compile_resume
+        compile_resume(template_path, new_text, output_path)
+    else:
+        # Cover letter path: use blank-line group filling
+        doc = Document(template_path)
+        _apply_groups(doc.paragraphs, new_text, doc)
+        doc.save(output_path)
