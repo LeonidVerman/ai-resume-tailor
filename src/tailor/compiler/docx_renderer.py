@@ -51,6 +51,15 @@ def _set_para_text(p_elem, text: str) -> None:
         elif tag == f"{{{_W}}}hyperlink":
             for r in child.findall(f"{{{_W}}}r"):
                 all_runs.append(r)
+        elif tag == f"{{{_W}}}sdt":
+            # Content controls (w:sdt) wrap runs in w:sdtContent.
+            # Include them so their text gets cleared and replaced rather
+            # than surviving alongside a newly-appended run (which would
+            # cause the text to appear doubled when the output is read back).
+            sdt_content = child.find(f"{{{_W}}}sdtContent")
+            if sdt_content is not None:
+                for r in sdt_content.findall(f".//{{{_W}}}r"):
+                    all_runs.append(r)
 
     if not all_runs:
         # No runs — create a minimal one
