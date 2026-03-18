@@ -125,6 +125,7 @@ def parse_llm_output(text: str) -> list[LlmSection]:
     current: LlmSection | None = None
     cur_role: LlmRole | None = None
     state = "pre"
+    found_section = False  # True once the first known heading has been seen
 
     def _finish_role() -> None:
         nonlocal cur_role
@@ -139,7 +140,19 @@ def parse_llm_output(text: str) -> list[LlmSection]:
     for line in lines:
         stripped = line.strip()
 
-        if _is_section_heading(line):
+        # Before the first real section, accept only _ALL_KNOWN headings.
+        # The title-case fallback is suppressed here to avoid false positives
+        # on the candidate name or job title that appear at the top of the
+        # resume (e.g. "Oli Treadwell", "Senior Software Engineer").
+        # After the first section is found, use the full heuristic so that
+        # unusual section names (e.g. "Additional Experience") are recognised.
+        if found_section:
+            is_heading = _is_section_heading(line)
+        else:
+            is_heading = bool(stripped) and stripped.lower() in _ALL_KNOWN
+
+        if is_heading:
+            found_section = True
             _finish_role()
             _finish_section()
             sem = _classify(stripped)
