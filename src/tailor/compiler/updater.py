@@ -128,9 +128,16 @@ def _update_role(orig: RoleEntry, llm: LlmRole) -> RoleEntry:
     # Header: update text, keep style proto
     new_header = orig.header.with_text(llm.header)
 
+    # If the template had a multi-line role header (e.g. "..., St." / "Petersburg"),
+    # the LLM input included the continuation line as a separate paragraph, so the
+    # LLM may echo it back as a meta line.  Strip any meta line whose text matches
+    # a header_extra fragment so it doesn't appear in the rendered output.
+    header_extra_texts = {pm.text.strip().lower() for pm in orig.header_extra}
+    llm_meta = [m for m in llm.meta_lines if m.strip().lower() not in header_extra_texts]
+
     # Meta lines: reuse original protos, clone extra if needed
     new_meta: list[ParaModel] = []
-    for i, meta_text in enumerate(llm.meta_lines):
+    for i, meta_text in enumerate(llm_meta):
         if i < len(orig.meta_lines):
             new_meta.append(orig.meta_lines[i].with_text(meta_text))
         else:

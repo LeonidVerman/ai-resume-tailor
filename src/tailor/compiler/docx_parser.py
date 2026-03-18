@@ -213,7 +213,10 @@ def _infer_semantic(pm: ParaModel) -> str:
     if style_name.lower() in {"title", "subtitle"}:
         return "section_heading"
 
-    # Heuristic: bold, short, title-case, no bullets, has spacing
+    # Heuristic: bold, short (≥2 words), title-case, no bullets, has spacing.
+    # Single-word bold lines are excluded: they are almost always role-header
+    # continuations (e.g. a city name split onto its own line by Word) or
+    # location fragments, not section headings.
     if (
         not pm.style.numbering
         and "|" not in text
@@ -226,9 +229,10 @@ def _infer_semantic(pm: ParaModel) -> str:
         )
     ):
         words = text.split()
-        cap_ratio = sum(1 for w in words if w and w[0].isupper()) / max(len(words), 1)
-        if cap_ratio >= 0.7:
-            return "section_heading"
+        if len(words) >= 2:
+            cap_ratio = sum(1 for w in words if w and w[0].isupper()) / max(len(words), 1)
+            if cap_ratio >= 0.7:
+                return "section_heading"
 
     if "|" in text and not text.startswith(("-", "•")):
         return "role_header"
