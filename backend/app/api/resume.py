@@ -43,9 +43,9 @@ def _to_response(resume) -> StructuredResumeResponse:
 
 def _to_summary(resume) -> StructuredResumeSummary:
     jsonb = resume.resume_jsonb or {}
-    # Prefer original_filename (the user's actual upload filename) over the
-    # heuristic-parsed name, which can be garbled for LibreOffice-converted PDFs.
-    name = jsonb.get("original_filename") or jsonb.get("name", "Unknown")
+    # Prefer the parsed name; fall back to original_filename if parsing produced
+    # nothing (e.g. an empty DOCX or a LibreOffice-converted PDF with no text).
+    name = jsonb.get("name") or jsonb.get("original_filename") or "Unknown"
     return StructuredResumeSummary(
         id=resume.id,
         name=name,
