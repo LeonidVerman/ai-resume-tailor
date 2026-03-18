@@ -5,7 +5,6 @@ Admin API schemas.
 """
 
 from datetime import datetime
-from typing import Literal
 
 from backend.app.schemas.common import APIModel
 
@@ -19,23 +18,15 @@ AVAILABLE_MODELS: list[str] = [
     "gpt-4.1-mini",
 ]
 
-GenerationMode = Literal["simple", "two_phase"]
-
 
 class GenerationConfigRequest(APIModel):
     """PUT /admin/generation-config request body."""
-    generation_mode: GenerationMode
     simple_model: str
-    phase1_model: str
-    phase2_model: str
 
 
 class GenerationConfigResponse(APIModel):
     """GET /admin/generation-config response."""
-    generation_mode: GenerationMode
     simple_model: str
-    phase1_model: str
-    phase2_model: str
     available_models: list[str]
 
 
@@ -71,7 +62,6 @@ class BenchmarkRunSummary(APIModel):
     positions_count: int | None
     completed_positions: int
     integrated_score: float | None
-    generation_mode: str
     created_at: datetime
     started_at: datetime | None
     completed_at: datetime | None
@@ -105,8 +95,6 @@ class BenchmarkRunDetail(BenchmarkRunSummary):
     cover_letter_effectiveness_score: float | None
     overall_readiness_score: float | None
     simple_model: str | None
-    phase1_model: str | None
-    phase2_model: str | None
     assess_model: str | None
     error_message: str | None
     report_dir: str | None

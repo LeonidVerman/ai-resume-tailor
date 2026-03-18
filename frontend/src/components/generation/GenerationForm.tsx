@@ -211,7 +211,7 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
         className="w-full"
       >
         <Zap className="h-4 w-4" />
-        {loading ? "Generating… (this takes 30–90 seconds)" : "Generate tailored documents"}
+        {loading ? "Generating… (this takes 15–30 seconds)" : "Generate tailored documents"}
       </Button>
     </div>
   );

@@ -94,10 +94,7 @@ def get_generation_config(_admin: AdminDep, db: DbDep):
     """Return the persisted admin generation configuration."""
     cfg = AdminConfigRepository(db).get()
     return GenerationConfigResponse(
-        generation_mode=cfg.generation_mode,
         simple_model=cfg.simple_model,
-        phase1_model=cfg.phase1_model,
-        phase2_model=cfg.phase2_model,
         available_models=AVAILABLE_MODELS,
     )
 
@@ -107,12 +104,7 @@ def save_generation_config(
     request: GenerationConfigRequest, _admin: AdminDep, db: DbDep
 ):
     """Persist admin generation configuration."""
-    AdminConfigRepository(db).upsert(
-        generation_mode=request.generation_mode,
-        simple_model=request.simple_model,
-        phase1_model=request.phase1_model,
-        phase2_model=request.phase2_model,
-    )
+    AdminConfigRepository(db).upsert(simple_model=request.simple_model)
     return AdminActionResponse(ok=True, message="Generation configuration saved.")
 
 
@@ -251,7 +243,6 @@ def _benchmark_run_to_summary(run) -> BenchmarkRunSummary:
         positions_count=run.positions_count,
         completed_positions=run.completed_positions,
         integrated_score=_f(run.integrated_score),
-        generation_mode=run.generation_mode,
         created_at=run.created_at,
         started_at=run.started_at,
         completed_at=run.completed_at,
@@ -274,10 +265,7 @@ def _benchmark_run_to_detail(run, positions) -> BenchmarkRunDetail:
         constraint_compliance_score=_f(run.constraint_compliance_score),
         cover_letter_effectiveness_score=_f(run.cover_letter_effectiveness_score),
         overall_readiness_score=_f(run.overall_readiness_score),
-        generation_mode=run.generation_mode,
         simple_model=run.simple_model,
-        phase1_model=run.phase1_model,
-        phase2_model=run.phase2_model,
         error_message=run.error_message,
         report_dir=run.report_dir,
         weights_json=run.weights_json,

@@ -52,10 +52,7 @@ class BenchmarkRun(Base, TimestampMixin):
     report_csv_path: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Generation config captured at run time
-    generation_mode: Mapped[str] = mapped_column(String(32), nullable=False, default="simple")
     simple_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    phase1_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    phase2_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
     assess_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     # Error tracking

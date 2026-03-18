@@ -18,19 +18,10 @@ import { useAuth } from "@/hooks/useAuth";
 import type {
   SystemStats,
   EvaluationResponse,
-  GenerationConfigResponse,
-  GenerationMode,
   BenchmarkRunSummary,
   BenchmarkRunDetail,
 } from "@/types/api";
 import { formatDateTime } from "@/lib/utils";
-
-const DEFAULT_CONFIG: Omit<GenerationConfigResponse, "available_models"> = {
-  generation_mode: "simple",
-  simple_model: "gpt-5.2",
-  phase1_model: "gpt-4.1",
-  phase2_model: "gpt-4.1",
-};
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
@@ -40,10 +31,7 @@ export default function AdminPage() {
   const [statsError, setStatsError] = useState<string | null>(null);
 
   // Generation config state
-  const [genMode, setGenMode] = useState<GenerationMode>(DEFAULT_CONFIG.generation_mode);
-  const [simpleModel, setSimpleModel] = useState(DEFAULT_CONFIG.simple_model);
-  const [phase1Model, setPhase1Model] = useState(DEFAULT_CONFIG.phase1_model);
-  const [phase2Model, setPhase2Model] = useState(DEFAULT_CONFIG.phase2_model);
+  const [simpleModel, setSimpleModel] = useState("gpt-5.2");
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [savingConfig, setSavingConfig] = useState(false);
@@ -116,10 +104,7 @@ export default function AdminPage() {
     admin
       .getGenerationConfig()
       .then((cfg) => {
-        setGenMode(cfg.generation_mode);
         setSimpleModel(cfg.simple_model);
-        setPhase1Model(cfg.phase1_model);
-        setPhase2Model(cfg.phase2_model);
         setAvailableModels(cfg.available_models);
       })
       .catch(() => {
@@ -157,12 +142,7 @@ export default function AdminPage() {
     setConfigError(null);
     setConfigSaved(false);
     try {
-      await admin.saveGenerationConfig({
-        generation_mode: genMode,
-        simple_model: simpleModel,
-        phase1_model: phase1Model,
-        phase2_model: phase2Model,
-      });
+      await admin.saveGenerationConfig({ simple_model: simpleModel });
       setConfigSaved(true);
       setTimeout(() => setConfigSaved(false), 3000);
     } catch (e) {
@@ -343,8 +323,7 @@ export default function AdminPage() {
             Generation configuration
           </h2>
           <p className="text-sm text-gray-500 mt-0.5">
-            Choose whether resume tailoring runs use a single-pass flow or a two-phase
-            planning&nbsp;+&nbsp;generation flow, and select the OpenAI model(s) used for each mode.
+            Select the OpenAI model used for single-pass resume tailoring.
           </p>
         </CardHeader>
         <CardBody>
@@ -352,66 +331,12 @@ export default function AdminPage() {
             <Spinner label="Loading configuration..." />
           ) : (
             <form onSubmit={handleSaveConfig} className="space-y-5">
-              {/* Mode radio group */}
-              <fieldset>
-                <legend className="text-sm font-medium text-gray-700 mb-2">Generation mode</legend>
-                <div className="flex gap-4">
-                  {(["simple", "two_phase"] as GenerationMode[]).map((m) => (
-                    <label
-                      key={m}
-                      className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors flex-1 ${
-                        genMode === m
-                          ? "border-indigo-500 bg-indigo-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="gen_mode"
-                        value={m}
-                        checked={genMode === m}
-                        onChange={() => setGenMode(m)}
-                        className="mt-0.5 accent-indigo-600"
-                      />
-                      <span>
-                        <span className="block text-sm font-medium text-gray-900">
-                          {m === "simple" ? "Simple" : "Two-phase"}
-                        </span>
-                        <span className="block text-xs text-gray-500 mt-0.5">
-                          {m === "simple"
-                            ? "Single-pass generation"
-                            : "Planning followed by generation"}
-                        </span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-
-              {/* Model selectors */}
-              <div className="space-y-3">
-                <ModelSelect
-                  label="Simple run model"
-                  value={simpleModel}
-                  onChange={setSimpleModel}
-                  options={modelOptions}
-                  disabled={genMode !== "simple"}
-                />
-                <ModelSelect
-                  label="Phase 1 model"
-                  value={phase1Model}
-                  onChange={setPhase1Model}
-                  options={modelOptions}
-                  disabled={genMode !== "two_phase"}
-                />
-                <ModelSelect
-                  label="Phase 2 model"
-                  value={phase2Model}
-                  onChange={setPhase2Model}
-                  options={modelOptions}
-                  disabled={genMode !== "two_phase"}
-                />
-              </div>
+              <ModelSelect
+                label="Generation model"
+                value={simpleModel}
+                onChange={setSimpleModel}
+                options={modelOptions}
+              />
 
               <div className="flex items-center gap-3">
                 <Button type="submit" loading={savingConfig}>
@@ -799,10 +724,7 @@ function BenchmarkDetailModal({
             <div><span className="text-gray-500">ID:</span> <code className="text-xs">{run.id}</code></div>
             <div><span className="text-gray-500">Client:</span> <code className="text-xs">{run.client_id}</code></div>
             <div><span className="text-gray-500">Status:</span> <BenchmarkStatusBadge status={run.status} /></div>
-            <div><span className="text-gray-500">Mode:</span> {run.generation_mode}</div>
             {run.simple_model && <div><span className="text-gray-500">Model:</span> {run.simple_model}</div>}
-            {run.phase1_model && <div><span className="text-gray-500">Phase 1:</span> {run.phase1_model}</div>}
-            {run.phase2_model && <div><span className="text-gray-500">Phase 2:</span> {run.phase2_model}</div>}
             <div><span className="text-gray-500">Positions:</span> {run.completed_positions} / {run.positions_count ?? "?"}</div>
           </div>
 

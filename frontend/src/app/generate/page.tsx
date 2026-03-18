@@ -78,7 +78,7 @@ export default function GeneratePage() {
 
           <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
             <p className="font-medium mb-1">Generation time</p>
-            <p>The two-phase pipeline typically takes 30–90 seconds. Please keep this tab open.</p>
+            <p>Generation typically takes 15–30 seconds. Please keep this tab open.</p>
           </div>
         </div>
       </div>

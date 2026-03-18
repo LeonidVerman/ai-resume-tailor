@@ -55,9 +55,8 @@ _SCORE_KEY_TO_COL: dict[str, str] = {
 
 
 # ---------------------------------------------------------------------------
-# Web-aware tailoring (mirrors _tailor_position from assess.py but uses
-# Web candidate profile and the tailor.core_generation.llm module so that
-# _override_models() in generation_service.py patches the right globals)
+# Web-aware tailoring (uses the tailor.core_generation.llm module so that
+# _override_simple_model() in generation_service.py patches the right globals)
 # ---------------------------------------------------------------------------
 
 def _web_tailor_position(
@@ -66,92 +65,18 @@ def _web_tailor_position(
     cover_template: str,
     candidate_profile_text: str | None,
     candidate_layer: str | None,
-    simple: bool = False,
-) -> tuple[Any, dict | None, dict | None, dict | None]:
-    """Run Phase 1 → Phase 2 for one position using the Web generation stack.
+) -> Any:
+    """Run single-pass tailoring for one position using the Web generation stack.
 
-    Returns (TailorResult, plan, phase2_debug, phase1_debug).
-    On any Phase 1 failure, falls back to single-pass.
+    Returns TailorResult.
     """
-    from tailor.core_generation.llm import (
-        PlanValidationError,
-        _run_schema_gate,
-        plan_tailoring,
-        tailor_documents,
-        tailor_documents_with_plan,
-        validate_plan,
-    )
-    from tailor.plan_validator import validate_plan_extended
-
-    if simple:
-        result, _ = tailor_documents(
-            job, resume_template, cover_template,
-            candidate_profile=candidate_profile_text,
-            candidate_layer=candidate_layer,
-        )
-        return result, None, None, None
-
-    try:
-        raw_plan, p1_messages, p1_meta = plan_tailoring(
-            job, resume_template, cover_template,
-            candidate_profile=candidate_profile_text,
-        )
-    except Exception as exc:
-        logger.warning("Phase 1 failed for %s: %s", job.source_url, exc)
-        result, _ = tailor_documents(
-            job, resume_template, cover_template,
-            candidate_profile=candidate_profile_text,
-            candidate_layer=candidate_layer,
-        )
-        return result, None, None, None
-
-    gate_errors = _run_schema_gate(raw_plan)
-    if gate_errors:
-        logger.warning("Phase 1 schema invalid for %s: %s", job.source_url, gate_errors[0])
-        result, _ = tailor_documents(
-            job, resume_template, cover_template,
-            candidate_profile=candidate_profile_text,
-            candidate_layer=candidate_layer,
-        )
-        return result, None, None, None
-
-    try:
-        validate_plan(raw_plan)
-    except PlanValidationError as exc:
-        logger.warning("Phase 1 validation failed for %s: %s", job.source_url, exc)
-        result, _ = tailor_documents(
-            job, resume_template, cover_template,
-            candidate_profile=candidate_profile_text,
-            candidate_layer=candidate_layer,
-        )
-        return result, None, None, None
-
-    extended_errors = validate_plan_extended(raw_plan)
-    if extended_errors:
-        logger.info(
-            "Phase 1 extended validation warnings (%d) for %s",
-            len(extended_errors), job.source_url,
-        )
-
-    plan = raw_plan
-    result, _, phase2_debug = tailor_documents_with_plan(
-        plan, job, resume_template, cover_template,
+    from tailor.core_generation.llm import tailor_documents
+    result, _ = tailor_documents(
+        job, resume_template, cover_template,
         candidate_profile=candidate_profile_text,
         candidate_layer=candidate_layer,
     )
-
-    phase1_debug = {
-        "llm_request": p1_messages,
-        "llm_response_raw": p1_meta.get("raw_response") if p1_meta else None,
-        "plan_json": plan,
-        "model": p1_meta.get("model") if p1_meta else None,
-        "usage": p1_meta.get("usage") if p1_meta else None,
-        "schema_errors": [],
-        "validation_errors": [],
-        "prompt_used": p1_meta.get("prompt_used") if p1_meta else None,
-    }
-
-    return result, plan, phase2_debug, phase1_debug
+    return result
 
 
 def _web_process_one_position(
@@ -167,7 +92,6 @@ def _web_process_one_position(
     raw_dir: Path,
     weights: dict[str, float],
     print_lock: threading.Lock,
-    simple: bool,
     progress_callback,
 ) -> dict | None:
     """Scrape → tailor (Web profile) → assess one position URL.
@@ -201,11 +125,10 @@ def _web_process_one_position(
     _print("[%d] Company: %s | Role: %s", idx, job.company, job.job_title)
 
     try:
-        result, plan, phase2_debug, phase1_debug = _web_tailor_position(
+        result = _web_tailor_position(
             job, resume_template, cover_template,
             candidate_profile_text=profile_str,
             candidate_layer=candidate_layer,
-            simple=simple,
         )
     except Exception as exc:
         _print("[%d] Skipping — tailoring failed: %s", idx, exc)
@@ -220,7 +143,7 @@ def _web_process_one_position(
     )
 
     assessment_input = build_assessment_input(
-        job, result, resume_template, cover_template, profile_str, phase2_debug, plan
+        job, result, resume_template, cover_template, profile_str
     )
     try:
         raw_assessment = _call_assess_llm(assessment_input, assess_model, assess_temperature)
@@ -302,8 +225,8 @@ def _execute_benchmark(
     from backend.app.services.generation_service import (
         _build_candidate_profile_text,
         _ensure_candidate_prompt,
+        _override_simple_model,
     )
-    from backend.app.services.generation_service import _override_models
     from tailor.assess import (
         load_positions,
         _aggregate,
@@ -347,12 +270,8 @@ def _execute_benchmark(
         csv_path = run_dir / f"assess_{ts}.csv"
         run_dir.mkdir(parents=True, exist_ok=True)
 
-        # Determine mode/models from the stored run config
-        admin_mode = run.generation_mode
-        simple = (admin_mode != "two_phase")
+        # Load model config from the stored run record
         simple_model = run.simple_model
-        phase1_model = run.phase1_model
-        phase2_model = run.phase2_model
 
         # Load shared resources
         resume_template = read_docx(str(RESUME_TEMPLATE))
@@ -362,11 +281,9 @@ def _execute_benchmark(
         profile_repo = CandidateProfileRepository(db)
         profile = profile_repo.get_by_user_id(run.client_id)
         candidate_profile_text = _build_candidate_profile_text(profile)
-        # Use phase1_model for meta-prompt (matches generation_service.py convention)
-        meta_model = phase1_model if admin_mode == "two_phase" else simple_model
         candidate_layer = _ensure_candidate_prompt(
             profile=profile,
-            model=meta_model or ASSESS_MODEL,
+            model=simple_model or ASSESS_MODEL,
             profile_repo=profile_repo,
         )
         db.commit()
@@ -392,12 +309,8 @@ def _execute_benchmark(
             # Each commit in background is its own transaction
             _update_progress(repo, db, run, count)
 
-        # Run benchmark with model overrides
-        with _override_models(
-            simple_model=simple_model,
-            phase1_model=phase1_model,
-            phase2_model=phase2_model,
-        ):
+        # Run benchmark with model override
+        with _override_simple_model(simple_model):
             with ThreadPoolExecutor(max_workers=effective_workers) as executor:
                 futures = [
                     executor.submit(
@@ -406,7 +319,7 @@ def _execute_benchmark(
                         resume_template, cover_template,
                         profile_str, candidate_layer,
                         effective_assess_model, ASSESS_TEMPERATURE,
-                        raw_dir, weights, print_lock, simple,
+                        raw_dir, weights, print_lock,
                         _progress_callback,
                     )
                     for i, url in enumerate(urls, 1)
@@ -586,10 +499,7 @@ class BenchmarkService:
             status="queued",
             positions_count=len(urls),
             completed_positions=0,
-            generation_mode=cfg.generation_mode,
-            simple_model=cfg.simple_model if cfg.generation_mode == "simple" else None,
-            phase1_model=cfg.phase1_model if cfg.generation_mode == "two_phase" else None,
-            phase2_model=cfg.phase2_model if cfg.generation_mode == "two_phase" else None,
+            simple_model=cfg.simple_model,
             assess_model=assess_model,
         )
         db.commit()
@@ -605,7 +515,7 @@ class BenchmarkService:
         )
 
         logger.info(
-            "Benchmark run %s queued for client=%s mode=%s positions=%d",
-            run.id, client_id, cfg.generation_mode, len(urls),
+            "Benchmark run %s queued for client=%s positions=%d",
+            run.id, client_id, len(urls),
         )
         return run

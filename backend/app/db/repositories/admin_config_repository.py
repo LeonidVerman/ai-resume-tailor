@@ -10,10 +10,7 @@ from backend.app.db.models.admin_config import AdminConfig
 
 
 _DEFAULTS = {
-    "generation_mode": "simple",
     "simple_model": "gpt-5.2",
-    "phase1_model": "gpt-4.1",
-    "phase2_model": "gpt-4.1",
 }
 
 

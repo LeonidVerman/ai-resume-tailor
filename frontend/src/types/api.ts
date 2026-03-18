@@ -237,7 +237,6 @@ export type GenerationStatus = "pending" | "running" | "succeeded" | "failed";
 export interface GenerationRequest {
   job_description_id: string;
   structured_resume_id: string;
-  options?: { mode?: "two_phase" | "single_pass" };
 }
 
 export interface GenerationResponse {
@@ -335,21 +334,13 @@ export interface EvaluationResponse {
 
 // ── Admin ─────────────────────────────────────────────────────────────────
 
-export type GenerationMode = "simple" | "two_phase";
-
 export interface GenerationConfigResponse {
-  generation_mode: GenerationMode;
   simple_model: string;
-  phase1_model: string;
-  phase2_model: string;
   available_models: string[];
 }
 
 export interface GenerationConfigRequest {
-  generation_mode: GenerationMode;
   simple_model: string;
-  phase1_model: string;
-  phase2_model: string;
 }
 
 export interface AdminActionResponse {
@@ -381,7 +372,6 @@ export interface BenchmarkRunSummary {
   positions_count: number | null;
   completed_positions: number;
   integrated_score: number | null;
-  generation_mode: string;
   created_at: string;
   started_at: string | null;
   completed_at: string | null;
@@ -413,8 +403,6 @@ export interface BenchmarkRunDetail extends BenchmarkRunSummary {
   cover_letter_effectiveness_score: number | null;
   overall_readiness_score: number | null;
   simple_model: string | null;
-  phase1_model: string | null;
-  phase2_model: string | null;
   error_message: string | null;
   report_dir: string | null;
   weights_json: Record<string, number> | null;

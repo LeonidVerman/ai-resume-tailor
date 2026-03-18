@@ -1,23 +1,13 @@
 """
 backend/app/services/generation_service.py
 
-Generation service — orchestrates the full two-phase tailoring pipeline
-for the SaaS backend.
-
-This service wraps the existing generator's plan_tailoring(),
-plan_repair_tailoring(), tailor_documents_with_plan(), and
-tailor_documents() functions (in tailor.core_generation.llm), adding:
-  - DB lifecycle (GenerationRun + TailoredDocument records)
-  - Token / cost accounting
-  - Error surfacing
-
-The generator pipeline itself is NOT modified.
+Generation service — orchestrates single-pass tailoring for the SaaS backend.
 
 Flow
 ----
 1. Load inputs from DB (structured resume, job description, candidate profile)
 2. Create a GenerationRun record with status="running"
-3. Call the existing two-phase pipeline
+3. Call tailor_documents() with admin-configured model
 4. Persist TailoredDocument record with text output
 5. Update GenerationRun with status="succeeded" + token counts
 6. On any error: update status="failed", re-raise
@@ -28,6 +18,7 @@ Rendering to DOCX/PDF and storage upload are handled by separate services
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from datetime import datetime, timezone
 
@@ -43,20 +34,20 @@ from backend.app.services.storage_service import StorageService
 
 logger = logging.getLogger(__name__)
 
-_PROMPT_VERSION = "v2.1"   # reflects the current tailor_plan.txt version
+_PROMPT_VERSION = "v2.1"
 
 
 class GenerationService:
     """
-    Orchestrate document tailoring using the existing generator pipeline.
+    Orchestrate document tailoring using the single-pass generator pipeline.
 
     Dependencies
     ------------
-    run_repo:       GenerationRunRepository
-    doc_repo:       TailoredDocumentRepository
-    jd_repo:        JobDescriptionRepository
-    resume_repo:    StructuredResumeRepository
-    profile_repo:   CandidateProfileRepository
+    run_repo:        GenerationRunRepository
+    doc_repo:        TailoredDocumentRepository
+    jd_repo:         JobDescriptionRepository
+    resume_repo:     StructuredResumeRepository
+    profile_repo:    CandidateProfileRepository
     storage_service: StorageService
     """
 
@@ -80,20 +71,13 @@ class GenerationService:
         self, user_id: str, request: GenerationRequest
     ) -> GenerationResponse:
         """
-        Run the full tailoring pipeline and persist the results.
+        Run the tailoring pipeline and persist the results.
 
         Returns a GenerationResponse with the run_id and tailored_document_id.
         """
         # ── Load admin config ──────────────────────────────────────────────
-        cfg = AdminConfigRepository(self._run_repo._db).get()  # shares same session
-        admin_mode = cfg.generation_mode  # "simple" | "two_phase"
+        cfg = AdminConfigRepository(self._run_repo._db).get()
         simple_model = cfg.simple_model
-        phase1_model = cfg.phase1_model
-        phase2_model = cfg.phase2_model
-
-        # Map admin mode to internal run_type
-        run_type = "two_phase" if admin_mode == "two_phase" else "single_pass"
-        model_name = phase2_model if admin_mode == "two_phase" else simple_model
 
         # ── Load inputs ────────────────────────────────────────────────────
         jd = self._jd_repo.get_by_id(request.job_description_id)
@@ -106,17 +90,12 @@ class GenerationService:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Structured resume not found")
 
-        # ── Load candidate profile, build raw JSON + generated layer ───────
-        # raw JSON  → used by Phase 1 planner and writer_packet builder
-        # candidate_layer → injected into Phase 2 / single-pass developer
-        #                   instructions, replacing the static prompts/candidate.txt
-        # The meta model follows: two_phase → phase1_model, else → simple_model.
-        meta_model = phase1_model if admin_mode == "two_phase" else simple_model
+        # ── Build candidate prompt ─────────────────────────────────────────
         profile = self._profile_repo.get_by_user_id(user_id)
         candidate_profile_text = _build_candidate_profile_text(profile)
         candidate_layer = _ensure_candidate_prompt(
             profile=profile,
-            model=meta_model,
+            model=simple_model,
             profile_repo=self._profile_repo,
         )
 
@@ -124,20 +103,17 @@ class GenerationService:
         run = self._run_repo.create(
             user_id=user_id,
             job_description_id=jd.id,
-            run_type=run_type,
+            run_type="single_pass",
             status="running",
-            model_name=model_name,
+            model_name=simple_model,
             prompt_version=_PROMPT_VERSION,
             started_at=datetime.now(tz=timezone.utc),
         )
-        logger.info(
-            "Started generation run=%s user=%s mode=%s", run.id, user_id, admin_mode
-        )
+        logger.info("Started generation run=%s user=%s", run.id, user_id)
 
         meta = jd.metadata_jsonb or {}
         try:
             result, token_input, token_output, cost, debug_meta = self._run_pipeline(
-                run_type=run_type,
                 jd_text=jd.raw_text,
                 jd_company=meta.get("company", ""),
                 jd_job_title=meta.get("job_title", ""),
@@ -145,8 +121,6 @@ class GenerationService:
                 candidate_profile_text=candidate_profile_text,
                 candidate_layer=candidate_layer,
                 simple_model=simple_model,
-                phase1_model=phase1_model,
-                phase2_model=phase2_model,
             )
         except Exception as exc:
             logger.error("Generation run=%s failed: %s", run.id, exc)
@@ -158,7 +132,7 @@ class GenerationService:
             )
             raise
 
-        # ── Save run data JSON (mirrors CLI debug output) ──────────────────
+        # ── Save run data JSON ─────────────────────────────────────────────
         _save_run_data(
             run_id=run.id,
             company=meta.get("company", ""),
@@ -213,20 +187,11 @@ class GenerationService:
     # ── Render & upload ────────────────────────────────────────────────────
 
     def _render_and_upload(self, user_id, run_id, tailored_doc, resume, result) -> None:
-        """Render the 4 artifacts and upload them to storage.
-
-        Updates tailored_doc URL columns with the resulting storage keys.
-        Logs and continues on any rendering/upload failure — the text content
-        is always available as fallback.
-        """
+        """Render the 4 artifacts and upload them to storage."""
         from backend.app.services.rendering_service import RenderingService
 
         rendering_svc = RenderingService()
 
-        # Fetch the user's original resume template from storage.
-        # Skip PDF-converted templates: LibreOffice DOCX output lacks proper
-        # Word styles (Heading 1/2, List Paragraph) so the structural editor
-        # cannot produce a well-formatted document from it.
         template_bytes: bytes | None = None
         if resume.input_conversion_warning:
             logger.warning(
@@ -253,7 +218,6 @@ class GenerationService:
 
         url_updates: dict = {}
 
-        # Resume DOCX
         if result.resume:
             try:
                 resume_docx_bytes = rendering_svc.render_resume_docx(
@@ -268,7 +232,6 @@ class GenerationService:
         else:
             resume_docx_bytes = None
 
-        # Resume PDF
         if resume_docx_bytes:
             try:
                 resume_pdf_bytes = rendering_svc.render_resume_pdf(resume_docx_bytes)
@@ -278,7 +241,6 @@ class GenerationService:
             except Exception as exc:
                 logger.warning("Failed to render/upload resume.pdf run=%s: %s", run_id, exc)
 
-        # Cover letter DOCX
         cover_letter_docx_bytes: bytes | None = None
         if result.cover_letter:
             try:
@@ -291,7 +253,6 @@ class GenerationService:
                     "Failed to render/upload cover_letter.docx run=%s: %s", run_id, exc
                 )
 
-        # Cover letter PDF
         if cover_letter_docx_bytes:
             try:
                 cover_letter_pdf_bytes = rendering_svc.render_cover_letter_pdf(cover_letter_docx_bytes)
@@ -311,7 +272,6 @@ class GenerationService:
 
     def _run_pipeline(
         self,
-        run_type: str,
         jd_text: str,
         jd_company: str,
         jd_job_title: str,
@@ -319,17 +279,16 @@ class GenerationService:
         candidate_profile_text: str | None = None,
         candidate_layer: str | None = None,
         simple_model: str | None = None,
-        phase1_model: str | None = None,
-        phase2_model: str | None = None,
     ):
-        """
-        Call the existing generator pipeline.
+        """Call single-pass tailor_documents().
 
         Returns (TailorResult, token_input, token_output, cost_estimate, debug_meta).
         """
+        from tailor.core_generation.llm import tailor_documents
         from tailor.job import JobData
         from tailor.docx.template_fill import read_docx
-        from tailor.config import COVER_TEMPLATE, ENABLE_TWO_PHASE
+        from tailor.config import COVER_TEMPLATE
+        from tailor.diff import diff_resume
 
         resume_template = resume_raw_text
         cover_template = read_docx(str(COVER_TEMPLATE))
@@ -340,194 +299,39 @@ class GenerationService:
             description=jd_text,
         )
 
-        with _override_models(
-            simple_model=simple_model,
-            phase1_model=phase1_model,
-            phase2_model=phase2_model,
-        ):
-            if run_type == "two_phase" and ENABLE_TWO_PHASE:
-                result, messages, debug_meta = self._run_two_phase(
-                    job, resume_template, cover_template,
-                    candidate_profile=candidate_profile_text,
-                    candidate_layer=candidate_layer,
-                )
-            else:
-                from tailor.core_generation.llm import tailor_documents
-                result, llm_req = tailor_documents(
-                    job, resume_template, cover_template,
-                    candidate_profile=candidate_profile_text,
-                    candidate_layer=candidate_layer,
-                )
-                result, messages, debug_meta = result, [llm_req], {"llm_request": llm_req}
-
-        # Compute resume diff and store in debug_meta (mirrors CLI behaviour).
-        from tailor.diff import diff_resume
-        sections = diff_resume(resume_template, result.resume) if result.resume else {}
-        debug_meta["diff"] = {"resume": sections} if sections else None
-
-        # Extract token usage from messages (OpenAI usage fields)
-        token_input, token_output, cost = _extract_usage_from_messages(messages)
-        return result, token_input, token_output, cost, debug_meta
-
-    def _run_two_phase(self, job, resume_template, cover_template, candidate_profile=None, candidate_layer=None):
-        """
-        Run Phase 1 (plan) + Phase 2 (write) with optional repair.
-
-        Mirrors the logic from cli._run_two_phase without interactive I/O.
-        Returns (TailorResult, p1_messages + p2_messages, debug_meta).
-        """
-        from tailor.core_generation.llm import (
-            PlanValidationError,
-            _run_schema_gate,
-            plan_tailoring,
-            plan_repair_tailoring,
-            tailor_documents,
-            tailor_documents_with_plan,
-            validate_plan,
-        )
-        from tailor.plan_validator import validate_plan_extended
-        from tailor.config import ENABLE_PLAN_REPAIR
-
-        plan = None
-        p1_messages = []
-        p1_meta: dict = {}
-        prev_raw_plan: dict = {}
-        schema_errors: list[str] = []
-        validation_errors: list[str] = []
-
-        for attempt in range(1, 3):
-            is_repair = attempt > 1
-            if is_repair and not ENABLE_PLAN_REPAIR:
-                break
-
-            try:
-                if not is_repair:
-                    raw_plan, p1_messages, p1_meta = plan_tailoring(
-                        job, resume_template, cover_template,
-                        candidate_profile=candidate_profile,
-                    )
-                else:
-                    can_repair = bool(prev_raw_plan)
-                    if can_repair:
-                        raw_plan, p1_messages, p1_meta = plan_repair_tailoring(
-                            prev_raw_plan,
-                            schema_errors + validation_errors,
-                            job, resume_template, cover_template,
-                            candidate_profile=candidate_profile,
-                        )
-                    else:
-                        raw_plan, p1_messages, p1_meta = plan_tailoring(
-                            job, resume_template, cover_template,
-                            candidate_profile=candidate_profile,
-                        )
-            except Exception as exc:
-                logger.warning("Phase 1 attempt %d failed: %s", attempt, exc)
-                continue
-
-            # Validate
-            gate_errors = _run_schema_gate(raw_plan)
-            if gate_errors:
-                schema_errors = gate_errors
-                prev_raw_plan = raw_plan if isinstance(raw_plan, dict) else {}
-                continue
-
-            try:
-                plan = validate_plan(raw_plan)
-            except PlanValidationError as exc:
-                validation_errors = exc.errors if hasattr(exc, "errors") else [str(exc)]
-                prev_raw_plan = raw_plan
-                continue
-
-            ext_errors = validate_plan_extended(plan)
-            if ext_errors:
-                validation_errors = ext_errors
-                prev_raw_plan = raw_plan
-                continue
-
-            # Phase 1 succeeded
-            break
-
-        # Build phase1_debug in the same structure the CLI produces.
-        phase1_debug = {
-            "llm_request": p1_messages,
-            "llm_response_raw": p1_meta.get("raw_response") if p1_meta else None,
-            "plan_json": plan,
-            "model": p1_meta.get("model") if p1_meta else None,
-            "usage": p1_meta.get("usage") if p1_meta else None,
-            "schema_errors": schema_errors,
-            "validation_errors": validation_errors,
-            "prompt_used": p1_meta.get("prompt_used") if p1_meta else None,
-        }
-
-        if plan is None:
-            logger.warning("Phase 1 failed after 2 attempts; falling back to single-pass")
+        with _override_simple_model(simple_model):
             result, llm_req = tailor_documents(
                 job, resume_template, cover_template,
-                candidate_profile=candidate_profile,
+                candidate_profile=candidate_profile_text,
                 candidate_layer=candidate_layer,
             )
-            return result, [llm_req], {"llm_request": llm_req, "phase1": phase1_debug}
 
-        result, p2_messages, p2_meta = tailor_documents_with_plan(
-            plan, job, resume_template, cover_template,
-            candidate_profile=candidate_profile,
-            candidate_layer=candidate_layer,
-        )
-        all_messages = [p1_messages, p2_messages]
-        return result, all_messages, {
-            "llm_request": p2_messages,
-            "phase1": phase1_debug,
-            "phase2": p2_meta,
+        sections = diff_resume(resume_template, result.resume) if result.resume else {}
+        debug_meta = {
+            "llm_request": llm_req,
+            "diff": {"resume": sections} if sections else None,
         }
 
-
-import contextlib
+        token_input, token_output, cost = _extract_usage_from_messages([llm_req])
+        return result, token_input, token_output, cost, debug_meta
 
 
 @contextlib.contextmanager
-def _override_models(
-    simple_model: str | None,
-    phase1_model: str | None,
-    phase2_model: str | None,
-):
-    """
-    Temporarily patch tailor.core_generation.llm module globals so that
-    pipeline calls use admin-configured model names.
-
-    Restores originals on exit even if an exception is raised.
-    This is safe for the synchronous request model (one request per worker).
-    """
+def _override_simple_model(model: str | None):
+    """Temporarily patch SIMPLE_MODEL in tailor.core_generation.llm."""
+    if not model:
+        yield
+        return
     import tailor.core_generation.llm as _llm
-
-    orig = {
-        "SIMPLE_MODEL": _llm.SIMPLE_MODEL,
-        "PHASE1_MODEL": _llm.PHASE1_MODEL,
-        "PHASE2_MODEL": _llm.PHASE2_MODEL,
-    }
-    if simple_model:
-        _llm.SIMPLE_MODEL = simple_model
-    if phase1_model:
-        _llm.PHASE1_MODEL = phase1_model
-    if phase2_model:
-        _llm.PHASE2_MODEL = phase2_model
+    orig = _llm.SIMPLE_MODEL
+    _llm.SIMPLE_MODEL = model
     try:
         yield
     finally:
-        _llm.SIMPLE_MODEL = orig["SIMPLE_MODEL"]
-        _llm.PHASE1_MODEL = orig["PHASE1_MODEL"]
-        _llm.PHASE2_MODEL = orig["PHASE2_MODEL"]
+        _llm.SIMPLE_MODEL = orig
 
 
 def _ensure_candidate_prompt(profile, model: str, profile_repo) -> str | None:
-    """
-    Return the candidate-layer prompt text for injection into the generation prompt.
-
-    - If no profile exists: return None (pipeline falls back to CLI file / empty).
-    - Otherwise: delegate to ensure_candidate_prompt_synced() which lazily generates
-      and caches the prompt.
-
-    Propagates RuntimeError on LLM failure so the caller can fail the generation run.
-    """
     if profile is None or not profile.profile_jsonb:
         return None
     from backend.app.services.candidate_meta_service import ensure_candidate_prompt_synced
@@ -535,12 +339,6 @@ def _ensure_candidate_prompt(profile, model: str, profile_repo) -> str | None:
 
 
 def _build_candidate_profile_text(profile) -> str | None:
-    """
-    Serialize a CandidateProfile DB record to a JSON string for injection
-    into the LLM prompt, matching the structure of profile/candidate_profile.json.
-
-    Returns None when no profile exists (pipeline will fall back to the CLI file).
-    """
     if profile is None or not profile.profile_jsonb:
         return None
     import json
@@ -554,12 +352,6 @@ def _save_run_data(
     result,
     debug_meta: dict,
 ) -> None:
-    """
-    Persist a generation run debug JSON using the same mechanism as the CLI.
-
-    No-ops silently when RUN_DATA_DIR is not configured or on any error so
-    that a logging failure never breaks the generation response.
-    """
     from backend.app.config import get_settings
     settings = get_settings()
     if not settings.run_data_dir:
@@ -572,8 +364,6 @@ def _save_run_data(
             llm_response={"resume": result.resume, "cover_letter": result.cover_letter},
             llm_request=debug_meta.get("llm_request"),
             diff=debug_meta.get("diff"),
-            phase1=debug_meta.get("phase1"),
-            phase2=debug_meta.get("phase2"),
             output_dir=settings.run_data_dir,
             extra={"generation_run_id": str(run_id)},
         )
@@ -582,11 +372,6 @@ def _save_run_data(
 
 
 def _extract_usage_from_messages(messages) -> tuple[int | None, int | None, float | None]:
-    """
-    Best-effort extraction of token counts from OpenAI message objects.
-
-    Returns (token_input, token_output, cost_estimate_usd).
-    """
     token_input = token_output = None
     try:
         for msg in (messages or []):
