@@ -199,6 +199,114 @@ def _render_para(pm: ParaModel, body, sectPr) -> None:
         body.append(clone)
 
 
+def _get_text_area_width_twips(sectPr) -> int:
+    """Return the text-area width in twips from a sectPr element."""
+    pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
+    pgMar = sectPr.find(f"{{{_W}}}pgMar") if sectPr is not None else None
+    page_w = int(pgSz.get(f"{{{_W}}}w", "12240")) if pgSz is not None else 12240
+    if pgMar is not None:
+        left = int(pgMar.get(f"{{{_W}}}left", "1440"))
+        right = int(pgMar.get(f"{{{_W}}}right", "1440"))
+    else:
+        left = right = 1440
+    return max(1, page_w - left - right)
+
+
+def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr) -> None:
+    """Render a two-column PDF-sourced document as a borderless DOCX table.
+
+    Creates a single-row w:tbl with two cells whose widths are proportional to
+    the column split detected in the PDF.  The left cell receives cell shading
+    from layout.left_col_bg_color when available.  All paragraphs tagged
+    column_id='left' go into the left cell; everything else goes into the
+    right cell.
+    """
+    from lxml import etree
+    from tailor.compiler.para_builder import build_para_element
+
+    layout = doc.layout
+    text_w = _get_text_area_width_twips(sectPr)
+
+    # Compute column widths proportionally so the table fills the text area.
+    total_pdf = (layout.left_col_width_twips or 1) + (layout.right_col_width_twips or 1)
+    left_fraction = (layout.left_col_width_twips or 1) / total_pdf
+    left_w = int(text_w * left_fraction)
+    right_w = text_w - left_w
+
+    # Table element
+    tbl = etree.Element(f"{{{_W}}}tbl")
+
+    # Table properties: fixed total width, no borders, no cell margins
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW.set(f"{{{_W}}}w", str(text_w))
+    tblW.set(f"{{{_W}}}type", "dxa")
+
+    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+        brd.set(f"{{{_W}}}val", "none")
+
+    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        m = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+        m.set(f"{{{_W}}}w", "0")
+        m.set(f"{{{_W}}}type", "dxa")
+
+    # Single row
+    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+    # Left cell
+    left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
+    left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
+    left_tcW.set(f"{{{_W}}}w", str(left_w))
+    left_tcW.set(f"{{{_W}}}type", "dxa")
+    if layout.left_col_bg_color:
+        shd = etree.SubElement(left_tcPr, f"{{{_W}}}shd")
+        shd.set(f"{{{_W}}}val", "clear")
+        shd.set(f"{{{_W}}}color", "auto")
+        shd.set(f"{{{_W}}}fill", layout.left_col_bg_color)
+
+    # Right cell
+    right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
+    right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
+    right_tcW.set(f"{{{_W}}}w", str(right_w))
+    right_tcW.set(f"{{{_W}}}type", "dxa")
+    if layout.right_col_bg_color:
+        shd = etree.SubElement(right_tcPr, f"{{{_W}}}shd")
+        shd.set(f"{{{_W}}}val", "clear")
+        shd.set(f"{{{_W}}}color", "auto")
+        shd.set(f"{{{_W}}}fill", layout.right_col_bg_color)
+
+    # Distribute paragraphs into cells
+    left_paras = [
+        pm for pm in doc.all_paras
+        if pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
+    ]
+    right_paras = [
+        pm for pm in doc.all_paras
+        if not (pm.paragraph_profile and pm.paragraph_profile.column_id == "left")
+    ]
+
+    for pm in left_paras:
+        left_tc.append(build_para_element(pm))
+    # DOCX requires at least one paragraph per cell
+    if not left_paras:
+        etree.SubElement(left_tc, f"{{{_W}}}p")
+
+    for pm in right_paras:
+        right_tc.append(build_para_element(pm))
+    if not right_paras:
+        etree.SubElement(right_tc, f"{{{_W}}}p")
+
+    if sectPr is not None:
+        sectPr.addprevious(tbl)
+    else:
+        body.append(tbl)
+
+
 def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> None:
     """Clone a TableBlock's xml_proto, update paragraph text, and insert it."""
     clone = deepcopy(tb.xml_proto)
@@ -252,6 +360,14 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         body.remove(child)
     if sectPr is not None:
         body.append(sectPr)
+
+    # PDF sources with a detected two-column layout: render as a borderless
+    # two-cell table so that sidebar and main content are placed in separate
+    # columns with correct widths, indentation, and background colours.
+    if doc.source_kind == "pdf" and doc.layout.column_split_x is not None:
+        _render_pdf_two_col(doc, body, sectPr)
+        d.save(output_path)
+        return
 
     # Use the table-aware body_items path only when the document actually has
     # TableBlock entries.  For flat DOCX documents (no tables) body_items holds

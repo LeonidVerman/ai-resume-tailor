@@ -187,6 +187,87 @@ def _detect_header_footer_texts(doc) -> set[str]:
 
 
 # ---------------------------------------------------------------------------
+# Color helpers
+# ---------------------------------------------------------------------------
+
+def _fitz_color_to_hex(color) -> str | None:
+    """Convert a PyMuPDF color value to a 6-char hex string (RRGGBB, no '#').
+
+    PyMuPDF represents colors as:
+    - int: sRGB packed (r<<16 | g<<8 | b), each component 0–255
+    - float (grayscale): 0.0–1.0
+    - tuple of 3 floats (RGB): each 0.0–1.0
+    """
+    if color is None:
+        return None
+    if isinstance(color, int):
+        r = (color >> 16) & 0xFF
+        g = (color >> 8) & 0xFF
+        b = color & 0xFF
+        return f"{r:02x}{g:02x}{b:02x}"
+    if isinstance(color, float):
+        v = int(color * 255 + 0.5)
+        return f"{v:02x}{v:02x}{v:02x}"
+    if isinstance(color, (tuple, list)) and len(color) == 3:
+        r, g, b = color
+        return f"{int(r * 255 + 0.5):02x}{int(g * 255 + 0.5):02x}{int(b * 255 + 0.5):02x}"
+    return None
+
+
+def _dominant_text_color(spans: list[dict]) -> str | None:
+    """Return the most common text color across spans as hex RRGGBB."""
+    counter: Counter = Counter()
+    for span in spans:
+        color = span.get("color")
+        if color is not None:
+            counter[color] += 1
+    if not counter:
+        return None
+    return _fitz_color_to_hex(counter.most_common(1)[0][0])
+
+
+def _extract_col_bg_colors(page, split_x: float | None) -> tuple[str | None, str | None]:
+    """Detect left/right column background colors from page drawings.
+
+    Returns (left_bg_hex, right_bg_hex).  Looks for filled rectangles that
+    cover ≥ 10 % of the page area; classifies them by centre x vs. split_x.
+    """
+    try:
+        drawings = page.get_drawings()
+    except Exception:
+        return None, None
+
+    pw = page.rect.width
+    ph = page.rect.height
+    min_area = pw * ph * 0.10
+
+    left_bg: str | None = None
+    right_bg: str | None = None
+    split = split_x if split_x is not None else pw / 2
+
+    for d in drawings:
+        fill = d.get("fill")
+        if fill is None:
+            continue
+        rect = d.get("rect")
+        if rect is None:
+            continue
+        x0, y0, x1, y1 = rect
+        if (x1 - x0) * (y1 - y0) < min_area:
+            continue
+        hex_color = _fitz_color_to_hex(fill)
+        if hex_color is None:
+            continue
+        center_x = (x0 + x1) / 2
+        if center_x < split:
+            left_bg = hex_color
+        else:
+            right_bg = hex_color
+
+    return left_bg, right_bg
+
+
+# ---------------------------------------------------------------------------
 # Layout extraction
 # ---------------------------------------------------------------------------
 
@@ -224,6 +305,18 @@ def _extract_layout(doc) -> LayoutProfile:
     default_font = font_counter.most_common(1)[0][0] if font_counter else "Calibri"
     default_size = size_counter.most_common(1)[0][0] if size_counter else 11.0
 
+    # Two-column detection on the first page
+    split_x = _detect_column_split(blocks, rect.width)
+    left_col_width_twips: int | None = None
+    right_col_width_twips: int | None = None
+    left_bg: str | None = None
+    right_bg: str | None = None
+
+    if split_x is not None:
+        left_col_width_twips = int(split_x * 20)
+        right_col_width_twips = int((rect.width - split_x) * 20)
+        left_bg, right_bg = _extract_col_bg_colors(page, split_x)
+
     return LayoutProfile(
         page_width_pt=rect.width,
         page_height_pt=rect.height,
@@ -233,6 +326,11 @@ def _extract_layout(doc) -> LayoutProfile:
         margin_right_pt=margin_right_from_right,
         default_font_name=default_font,
         default_font_size_pt=default_size,
+        column_split_x=split_x,
+        left_col_width_twips=left_col_width_twips,
+        right_col_width_twips=right_col_width_twips,
+        left_col_bg_color=left_bg,
+        right_col_bg_color=right_bg,
     )
 
 
@@ -284,9 +382,14 @@ def _detect_column_split(blocks: list, page_width: float) -> float | None:
 
     Collects the distinct x0 (left-edge) positions of all text blocks, sorts
     them, and looks for a gap that is ≥ 15 % of the page width.  To qualify as
-    a column boundary the right edge of the gap must fall between 20 % and
-    70 % of the page width — this excludes spurious gaps from a narrow left
-    margin or a right-aligned page number.
+    a column boundary:
+      - the right edge of the gap must fall between 20 % and 70 % of the page width
+      - no text block may "bridge" the gap (x0 ≤ left side AND x1 ≥ right side)
+
+    The bridging check rejects false positives from single-column resumes where
+    full-width header blocks (name, summary) start near the left margin but
+    extend across the entire page — the same pattern that would be produced by a
+    centred or left-aligned full-width paragraph rather than a true sidebar.
 
     Returns the midpoint of the detected gap as the column split x-coordinate.
     """
@@ -299,15 +402,33 @@ def _detect_column_split(blocks: list, page_width: float) -> float | None:
         gap = x0s[i + 1] - x0s[i]
         right_edge = x0s[i + 1]
         if gap >= min_gap and page_width * 0.20 <= right_edge <= page_width * 0.70:
-            return (x0s[i] + x0s[i + 1]) / 2.0
+            # Reject if any block bridges the gap: starts in the left "column"
+            # and extends at least 5 % past the right edge.
+            bridge_x1_threshold = right_edge * 1.05
+            bridging = any(
+                b["bbox"][0] <= x0s[i] and b["bbox"][2] >= bridge_x1_threshold
+                for b in blocks if b.get("type") == 0
+            )
+            if not bridging:
+                return (x0s[i] + x0s[i + 1]) / 2.0
     return None
 
 
-def _extract_paragraphs(doc, hf_texts: set[str], margin_left: float) -> list[ParaModel]:
-    """Extract all content paragraphs from the document, skipping H/F text."""
+def _extract_paragraphs(
+    doc, hf_texts: set[str], margin_left: float, layout: "LayoutProfile"
+) -> list[ParaModel]:
+    """Extract all content paragraphs from the document, skipping H/F text.
+
+    When the document has a two-column layout (layout.column_split_x is not
+    None), each paragraph is tagged with column_id='left' or 'right' and its
+    indent_left_pt is measured from the column's left edge rather than the
+    page's left edge.  This prevents right-column bullets from inheriting a
+    huge page-relative indent that overflows into the left column.
+    """
     paras: list[ParaModel] = []
     prev_block_y1: float | None = None
     hf_texts_lower = {t.lower() for t in hf_texts}
+    layout_split_x = layout.column_split_x  # may be None
 
     for page in doc:
         page_margin_left = margin_left
@@ -323,6 +444,9 @@ def _extract_paragraphs(doc, hf_texts: set[str], margin_left: float) -> list[Par
         # top-to-bottom across ALL columns, interleaving sidebar content with
         # main content.  Column-aware reordering restores correct reading order.
         split_x = _detect_column_split(blocks, page.rect.width)
+        # Prefer the layout's split_x (computed on page 1) for consistency.
+        if split_x is None and layout_split_x is not None:
+            split_x = layout_split_x
         right_col_start_idx: int | None = None
         if split_x is not None:
             left_blks = sorted(
@@ -387,6 +511,23 @@ def _extract_paragraphs(doc, hf_texts: set[str], margin_left: float) -> list[Par
 
             fi = _dominant_font_info(all_spans)
 
+            # Determine column membership and column-relative indent.
+            # For right-column blocks, indent is measured from split_x so that
+            # a block starting at x=259 on a 215-wide left column gets an
+            # indent of 44pt (≈ 259-215), not 244pt (≈ 259-15).
+            if split_x is not None and x0 >= split_x:
+                col_id: str | None = "right"
+                col_origin = split_x
+            elif split_x is not None:
+                col_id = "left"
+                col_origin = page_margin_left
+            else:
+                col_id = None
+                col_origin = page_margin_left
+
+            # Dominant text color across all spans in the block
+            block_text_color = _dominant_text_color(all_spans)
+
             # Emit one ParaModel per line.
             # Each line within a block inherits the block's font profile;
             # space_before is applied to the first line only.
@@ -401,13 +542,18 @@ def _extract_paragraphs(doc, hf_texts: set[str], margin_left: float) -> list[Par
                 if _CONT_RE.search(line_text) and len(line_text) < 80:
                     continue
                 line_fi = _dominant_font_info(line_spans) if line_spans else fi
+                line_text_color = (
+                    _dominant_text_color(line_spans) if line_spans else block_text_color
+                )
                 profile = ParagraphProfile(
                     font_name=line_fi["font_name"],
                     font_size_pt=line_fi["font_size_pt"],
                     bold=line_fi["bold"],
                     italic=line_fi["italic"],
-                    indent_left_pt=max(0.0, x0 - page_margin_left),
+                    indent_left_pt=max(0.0, x0 - col_origin),
                     space_before_pt=space_before if line_idx == 0 else 0.0,
+                    text_color=line_text_color,
+                    column_id=col_id,
                 )
                 pm = ParaModel(
                     text=line_text,
@@ -735,7 +881,7 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
 
     layout = _extract_layout(doc)
     hf_texts = _detect_header_footer_texts(doc)
-    raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt)
+    raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt, layout)
     header_paras, sections = _group_sections(raw_paras)
 
     # Rebuild all_paras from the structured IR so it reflects any post-processing

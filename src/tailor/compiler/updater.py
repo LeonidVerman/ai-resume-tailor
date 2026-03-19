@@ -411,5 +411,6 @@ def apply_tailored(
         sections=new_sections,
         layout=original.layout,
         all_paras=all_paras,
+        source_kind=original.source_kind,
         body_items=original.body_items if has_table_blocks else None,
     )

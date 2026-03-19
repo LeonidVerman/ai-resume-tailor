@@ -28,10 +28,13 @@ class ParagraphProfile:
     font_size_pt: float | None = None
     bold: bool = False
     italic: bool = False
-    indent_left_pt: float = 0.0   # points from the page's left margin
+    indent_left_pt: float = 0.0   # points from the column's left edge
     space_before_pt: float = 0.0  # estimated from Y-gap to previous block
     space_after_pt: float = 0.0
     alignment: str | None = None  # 'left' | 'center' | 'right' | 'justify'
+    text_color: str | None = None        # hex RRGGBB, no '#' (e.g. 'ffffff')
+    background_color: str | None = None  # hex RRGGBB paragraph shading fill
+    column_id: str | None = None         # 'left' | 'right' | None
 
     def to_dict(self) -> dict:
         return {
@@ -43,6 +46,9 @@ class ParagraphProfile:
             "space_before_pt": self.space_before_pt,
             "space_after_pt": self.space_after_pt,
             "alignment": self.alignment,
+            "text_color": self.text_color,
+            "background_color": self.background_color,
+            "column_id": self.column_id,
         }
 
     @classmethod
@@ -56,6 +62,9 @@ class ParagraphProfile:
             space_before_pt=float(d.get("space_before_pt", 0.0)),
             space_after_pt=float(d.get("space_after_pt", 0.0)),
             alignment=d.get("alignment"),
+            text_color=d.get("text_color"),
+            background_color=d.get("background_color"),
+            column_id=d.get("column_id"),
         )
 
 
@@ -234,7 +243,7 @@ class ResumeSection:
 
 @dataclass
 class LayoutProfile:
-    """Page-level layout extracted from the source DOCX."""
+    """Page-level layout extracted from the source document."""
 
     page_width_pt: float
     page_height_pt: float
@@ -244,6 +253,12 @@ class LayoutProfile:
     margin_right_pt: float
     default_font_name: str
     default_font_size_pt: float
+    # Two-column layout (PDF-sourced only; None for single-column or DOCX sources)
+    column_split_x: float | None = None      # x-coordinate of column split (PDF pts)
+    left_col_width_twips: int | None = None  # left column width in twips
+    right_col_width_twips: int | None = None # right column width in twips
+    left_col_bg_color: str | None = None     # hex RRGGBB fill for left column
+    right_col_bg_color: str | None = None    # hex RRGGBB fill for right column
 
     def to_dict(self) -> dict:
         return {
@@ -255,6 +270,11 @@ class LayoutProfile:
             "margin_right_pt": self.margin_right_pt,
             "default_font_name": self.default_font_name,
             "default_font_size_pt": self.default_font_size_pt,
+            "column_split_x": self.column_split_x,
+            "left_col_width_twips": self.left_col_width_twips,
+            "right_col_width_twips": self.right_col_width_twips,
+            "left_col_bg_color": self.left_col_bg_color,
+            "right_col_bg_color": self.right_col_bg_color,
         }
 
     @classmethod
@@ -268,6 +288,11 @@ class LayoutProfile:
             margin_right_pt=d["margin_right_pt"],
             default_font_name=d["default_font_name"],
             default_font_size_pt=d["default_font_size_pt"],
+            column_split_x=d.get("column_split_x"),
+            left_col_width_twips=d.get("left_col_width_twips"),
+            right_col_width_twips=d.get("right_col_width_twips"),
+            left_col_bg_color=d.get("left_col_bg_color"),
+            right_col_bg_color=d.get("right_col_bg_color"),
         )
 
 

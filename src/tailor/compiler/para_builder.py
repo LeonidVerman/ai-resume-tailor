@@ -64,6 +64,13 @@ def build_para_element(pm: ParaModel) -> Any:
             ind = etree.SubElement(pPr, f"{{{_W}}}ind")
             ind.set(f"{{{_W}}}left", str(int(pp.indent_left_pt * 20)))
 
+        # Paragraph background shading
+        if pp.background_color:
+            shd = etree.SubElement(pPr, f"{{{_W}}}shd")
+            shd.set(f"{{{_W}}}val", "clear")
+            shd.set(f"{{{_W}}}color", "auto")
+            shd.set(f"{{{_W}}}fill", pp.background_color)
+
     # Run with text
     if pm.text:
         r = etree.SubElement(p, f"{{{_W}}}r")
@@ -84,6 +91,9 @@ def build_para_element(pm: ParaModel) -> Any:
                 sz.set(f"{{{_W}}}val", half)
                 szCs = etree.SubElement(rPr, f"{{{_W}}}szCs")
                 szCs.set(f"{{{_W}}}val", half)
+            if pp.text_color:
+                clr = etree.SubElement(rPr, f"{{{_W}}}color")
+                clr.set(f"{{{_W}}}val", pp.text_color)
 
         t = etree.SubElement(r, f"{{{_W}}}t")
         t.text = pm.text
