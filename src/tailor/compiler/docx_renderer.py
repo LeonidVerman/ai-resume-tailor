@@ -215,32 +215,51 @@ def _get_text_area_width_twips(sectPr) -> int:
 def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr) -> None:
     """Render a two-column PDF-sourced document as a borderless DOCX table.
 
-    Creates a single-row w:tbl with two cells whose widths are proportional to
-    the column split detected in the PDF.  The left cell receives cell shading
-    from layout.left_col_bg_color when available.  All paragraphs tagged
-    column_id='left' go into the left cell; everything else goes into the
-    right cell.
+    Creates a full-page-width single-row w:tbl pushed to the page left edge
+    via a negative w:tblInd (bypassing the left margin).  Left cell width =
+    layout.left_col_width_twips (from the visual sidebar boundary); right cell
+    fills the remainder.  The left cell receives cell shading from
+    layout.left_col_bg_color when available.  All paragraphs tagged
+    column_id='left' go into the left cell; everything else goes right.
     """
     from lxml import etree
     from tailor.compiler.para_builder import build_para_element
 
     layout = doc.layout
-    text_w = _get_text_area_width_twips(sectPr)
 
-    # Compute column widths proportionally so the table fills the text area.
-    total_pdf = (layout.left_col_width_twips or 1) + (layout.right_col_width_twips or 1)
-    left_fraction = (layout.left_col_width_twips or 1) / total_pdf
-    left_w = int(text_w * left_fraction)
-    right_w = text_w - left_w
+    # Read page geometry from sectPr
+    pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
+    pgMar = sectPr.find(f"{{{_W}}}pgMar") if sectPr is not None else None
+    page_w_twips = int(pgSz.get(f"{{{_W}}}w", "12240")) if pgSz is not None else 12240
+    left_margin_twips = (
+        int(pgMar.get(f"{{{_W}}}left", "1440")) if pgMar is not None else 1440
+    )
+
+    # Column widths: from layout (computed from visual sidebar drawing edge).
+    # Fall back to proportional split if layout widths are absent.
+    left_w = layout.left_col_width_twips or (page_w_twips // 3)
+    right_w = layout.right_col_width_twips or (page_w_twips - left_w)
+    total_w = left_w + right_w
 
     # Table element
     tbl = etree.Element(f"{{{_W}}}tbl")
 
-    # Table properties: fixed total width, no borders, no cell margins
+    # Table properties: full page width, negative indent to reach the page
+    # left edge (past the left margin), fixed layout, no borders, no cell margins.
     tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
     tblW = etree.SubElement(tblPr, f"{{{_W}}}tblW")
-    tblW.set(f"{{{_W}}}w", str(text_w))
+    tblW.set(f"{{{_W}}}w", str(total_w))
     tblW.set(f"{{{_W}}}type", "dxa")
+
+    # Negative tblInd pushes the table left by left_margin_twips so the
+    # sidebar reaches the physical page edge (matching the PDF visual).
+    tblInd = etree.SubElement(tblPr, f"{{{_W}}}tblInd")
+    tblInd.set(f"{{{_W}}}w", str(-left_margin_twips))
+    tblInd.set(f"{{{_W}}}type", "dxa")
+
+    # Fixed layout so Word honours the explicit column widths.
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
 
     tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
     for side in ("top", "left", "bottom", "right", "insideH", "insideV"):

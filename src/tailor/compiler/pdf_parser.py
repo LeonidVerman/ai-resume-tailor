@@ -226,16 +226,23 @@ def _dominant_text_color(spans: list[dict]) -> str | None:
     return _fitz_color_to_hex(counter.most_common(1)[0][0])
 
 
-def _extract_col_bg_colors(page, split_x: float | None) -> tuple[str | None, str | None]:
-    """Detect left/right column background colors from page drawings.
+def _extract_col_info(
+    page, gap_midpoint: float | None
+) -> tuple[str | None, str | None, float | None]:
+    """Detect left/right column background colors and the visual column split.
 
-    Returns (left_bg_hex, right_bg_hex).  Looks for filled rectangles that
-    cover ≥ 10 % of the page area; classifies them by centre x vs. split_x.
+    Returns (left_bg_hex, right_bg_hex, visual_split_x).
+
+    Looks for filled rectangles that cover ≥ 10 % of the page area and
+    classifies them as left or right by centre x vs. gap_midpoint.
+    visual_split_x is the right edge (x1) of the largest left-column rect —
+    i.e. the visual boundary of the sidebar, which is more accurate than the
+    text-block gap midpoint for column-width calculations.
     """
     try:
         drawings = page.get_drawings()
     except Exception:
-        return None, None
+        return None, None, None
 
     pw = page.rect.width
     ph = page.rect.height
@@ -243,7 +250,9 @@ def _extract_col_bg_colors(page, split_x: float | None) -> tuple[str | None, str
 
     left_bg: str | None = None
     right_bg: str | None = None
-    split = split_x if split_x is not None else pw / 2
+    visual_split_x: float | None = None
+    best_left_area = 0.0
+    split = gap_midpoint if gap_midpoint is not None else pw / 2
 
     for d in drawings:
         fill = d.get("fill")
@@ -253,7 +262,8 @@ def _extract_col_bg_colors(page, split_x: float | None) -> tuple[str | None, str
         if rect is None:
             continue
         x0, y0, x1, y1 = rect
-        if (x1 - x0) * (y1 - y0) < min_area:
+        area = (x1 - x0) * (y1 - y0)
+        if area < min_area:
             continue
         hex_color = _fitz_color_to_hex(fill)
         if hex_color is None:
@@ -261,10 +271,56 @@ def _extract_col_bg_colors(page, split_x: float | None) -> tuple[str | None, str
         center_x = (x0 + x1) / 2
         if center_x < split:
             left_bg = hex_color
+            if area > best_left_area:
+                best_left_area = area
+                visual_split_x = x1  # right edge of the largest sidebar rect
         else:
             right_bg = hex_color
 
-    return left_bg, right_bg
+    return left_bg, right_bg, visual_split_x
+
+
+def _extract_section_bg_rects(
+    page,
+) -> list[tuple[float, float, float, float, str]]:
+    """Return filled band rects suitable for section heading backgrounds.
+
+    Filters to rects that look like accent bands (not full-column backgrounds
+    and not thin rules): height > 8 pt, height < 20 % of page, width > 20 %
+    of page width.
+
+    Returns list of (x0, y0, x1, y1, hex_color).
+    """
+    try:
+        drawings = page.get_drawings()
+    except Exception:
+        return []
+
+    ph = page.rect.height
+    pw = page.rect.width
+    min_h = 8.0
+    max_h = ph * 0.20
+    min_w = pw * 0.20
+
+    result: list[tuple[float, float, float, float, str]] = []
+    for d in drawings:
+        fill = d.get("fill")
+        if fill is None:
+            continue
+        rect = d.get("rect")
+        if rect is None:
+            continue
+        x0, y0, x1, y1 = rect
+        h = y1 - y0
+        w = x1 - x0
+        if h < min_h or h > max_h or w < min_w:
+            continue
+        hex_color = _fitz_color_to_hex(fill)
+        if hex_color is None:
+            continue
+        result.append((x0, y0, x1, y1, hex_color))
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -313,9 +369,15 @@ def _extract_layout(doc) -> LayoutProfile:
     right_bg: str | None = None
 
     if split_x is not None:
-        left_col_width_twips = int(split_x * 20)
-        right_col_width_twips = int((rect.width - split_x) * 20)
-        left_bg, right_bg = _extract_col_bg_colors(page, split_x)
+        left_bg, right_bg, visual_split_x = _extract_col_info(page, split_x)
+        # Use the visual sidebar edge (drawing right-edge) when available;
+        # it is more accurate than the text-block gap midpoint for column widths.
+        col_boundary = visual_split_x if visual_split_x is not None else split_x
+        left_col_width_twips = int(col_boundary * 20)
+        right_col_width_twips = int((rect.width - col_boundary) * 20)
+    else:
+        left_bg = right_bg = None
+        col_boundary = None
 
     return LayoutProfile(
         page_width_pt=rect.width,
@@ -326,7 +388,7 @@ def _extract_layout(doc) -> LayoutProfile:
         margin_right_pt=margin_right_from_right,
         default_font_name=default_font,
         default_font_size_pt=default_size,
-        column_split_x=split_x,
+        column_split_x=col_boundary,
         left_col_width_twips=left_col_width_twips,
         right_col_width_twips=right_col_width_twips,
         left_col_bg_color=left_bg,
@@ -428,6 +490,8 @@ def _extract_paragraphs(
     paras: list[ParaModel] = []
     prev_block_y1: float | None = None
     hf_texts_lower = {t.lower() for t in hf_texts}
+    # layout.column_split_x is the visual sidebar boundary (drawing right-edge);
+    # used as the authoritative right-column indent origin.
     layout_split_x = layout.column_split_x  # may be None
 
     for page in doc:
@@ -439,14 +503,21 @@ def _extract_paragraphs(
         if xs0:
             page_margin_left = max(0.0, min(xs0))
 
+        # Section heading background bands on this page (for background_color).
+        section_bg_rects = _extract_section_bg_rects(page) if layout_split_x is not None else []
+
         # Two-column detection: reorder blocks so the left column is read
         # completely before the right column.  PyMuPDF's default ordering is
         # top-to-bottom across ALL columns, interleaving sidebar content with
         # main content.  Column-aware reordering restores correct reading order.
+        # split_x (gap midpoint) is used for block classification (left vs right).
         split_x = _detect_column_split(blocks, page.rect.width)
         # Prefer the layout's split_x (computed on page 1) for consistency.
         if split_x is None and layout_split_x is not None:
             split_x = layout_split_x
+        # right_col_origin: indent is measured from the visual sidebar edge
+        # (layout_split_x), which is more accurate than the gap midpoint.
+        right_col_origin = layout_split_x if layout_split_x is not None else split_x
         right_col_start_idx: int | None = None
         if split_x is not None:
             left_blks = sorted(
@@ -488,7 +559,7 @@ def _extract_paragraphs(
                 continue
 
             bbox = blk["bbox"]
-            x0, y0, y1 = bbox[0], bbox[1], bbox[3]
+            x0, y0, x1_blk, y1 = bbox[0], bbox[1], bbox[2], bbox[3]
 
             # Skip headers/footers (check full block text and single-line join,
             # both exact and case-insensitive)
@@ -512,12 +583,12 @@ def _extract_paragraphs(
             fi = _dominant_font_info(all_spans)
 
             # Determine column membership and column-relative indent.
-            # For right-column blocks, indent is measured from split_x so that
-            # a block starting at x=259 on a 215-wide left column gets an
-            # indent of 44pt (≈ 259-215), not 244pt (≈ 259-15).
+            # For right-column blocks, indent is measured from right_col_origin
+            # (the visual sidebar edge) so that a block at x=237 on a page
+            # with a 215-pt sidebar gets indent = 22 pt, not page-relative 222 pt.
             if split_x is not None and x0 >= split_x:
                 col_id: str | None = "right"
-                col_origin = split_x
+                col_origin = right_col_origin if right_col_origin is not None else split_x
             elif split_x is not None:
                 col_id = "left"
                 col_origin = page_margin_left
@@ -527,6 +598,15 @@ def _extract_paragraphs(
 
             # Dominant text color across all spans in the block
             block_text_color = _dominant_text_color(all_spans)
+
+            # Background color: match block centre-y against section band rects.
+            # Also require x-range overlap to avoid cross-column false matches.
+            block_bg_color: str | None = None
+            block_cy = (y0 + y1) / 2
+            for bx0, by0, bx1, by1, band_color in section_bg_rects:
+                if by0 <= block_cy <= by1 and bx0 < x1_blk and bx1 > x0:
+                    block_bg_color = band_color
+                    break
 
             # Emit one ParaModel per line.
             # Each line within a block inherits the block's font profile;
@@ -553,6 +633,7 @@ def _extract_paragraphs(
                     indent_left_pt=max(0.0, x0 - col_origin),
                     space_before_pt=space_before if line_idx == 0 else 0.0,
                     text_color=line_text_color,
+                    background_color=block_bg_color,
                     column_id=col_id,
                 )
                 pm = ParaModel(
