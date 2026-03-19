@@ -494,6 +494,37 @@ def _match_icon(
     return None
 
 
+def _extract_bullet_dot_ys(page) -> frozenset:
+    """Return frozenset of y0 values (rounded) for small bullet-dot drawings.
+
+    Bullet dots are small filled circles/squares (3–5 pt) with high path
+    complexity (≥ 10 items).  They mark list items that have no text prefix
+    (skills, languages, certifications) in sidebar-layout PDFs.  Distinct
+    from the larger contact icons (6–20 pt) which are handled separately.
+    """
+    result: set[int] = set()
+    for d in page.get_drawings():
+        rect = d.get("rect")
+        if rect is None:
+            continue
+        x0, y0, x1, y1 = rect
+        w, h = x1 - x0, y1 - y0
+        if not (3.0 <= w <= 5.5 and 3.0 <= h <= 5.5):
+            continue
+        if len(d.get("items", [])) < 10:
+            continue
+        if d.get("fill") is None:
+            continue
+        result.add(round(y0))
+    return frozenset(result)
+
+
+def _has_bullet_dot(bullet_dot_ys: frozenset, para_y0: float) -> bool:
+    """Return True if a bullet dot exists within 8 pt of *para_y0*."""
+    y = round(para_y0)
+    return any(abs(y - dot_y) <= 8 for dot_y in bullet_dot_ys)
+
+
 # ---------------------------------------------------------------------------
 # Layout extraction
 # ---------------------------------------------------------------------------
@@ -682,6 +713,10 @@ def _extract_paragraphs(
         # Icon drawings in the left sidebar (for inline_image_bytes).
         icon_map = _extract_icon_map(page, layout_split_x)
 
+        # Small bullet-dot drawings (3–5 pt filled circles) that mark list
+        # items without a text prefix (skills, languages, certifications).
+        bullet_dot_ys = _extract_bullet_dot_ys(page)
+
         # Two-column detection: reorder blocks so the left column is read
         # completely before the right column.  PyMuPDF's default ordering is
         # top-to-bottom across ALL columns, interleaving sidebar content with
@@ -830,6 +865,11 @@ def _extract_paragraphs(
                     paragraph_profile=profile,
                 )
                 pm.semantic = _infer_semantic(pm)
+                # Bullet dots: small filled circle drawings (3–5 pt) that mark
+                # list items lacking a text prefix (skills, languages, certs).
+                # Override paragraph → bullet when a dot aligns with this line.
+                if pm.semantic == "paragraph" and _has_bullet_dot(bullet_dot_ys, y0):
+                    pm.semantic = "bullet"
                 # Normalize bullet text: strip leading bullet prefix so the IR
                 # stores bare content, consistent with DOCX-parsed paragraphs.
                 if pm.semantic == "bullet":
