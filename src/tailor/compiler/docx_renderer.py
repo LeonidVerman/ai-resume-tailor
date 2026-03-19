@@ -95,15 +95,23 @@ def _set_para_text(p_elem, text: str) -> None:
         return
 
     # Collect original text length of each run (used for proportional split).
-    # Runs whose text is entirely whitespace/non-breaking-space are "structural
-    # spacers" (e.g. a leading '\xa0' indent run).  They keep their original text
-    # and are excluded from content distribution so they don't steal content
-    # characters from adjacent bold/styled runs.
-    # Only non-breaking / zero-width characters count as structural spacers.
-    # Regular spaces and tabs are content and must participate in distribution.
+    # Two kinds of runs are excluded from content distribution:
+    #
+    # "Structural spacers" (ws_text): runs whose direct w:t text is purely
+    #   non-breaking/zero-width whitespace (e.g. a leading '\xa0' indent run).
+    #   They keep their original text and are restored immediately after clearing.
+    #
+    # "VML text" runs (vml_indices): runs that contain a w:pict element with
+    #   nested w:t elements inside a VML text box (v:textbox → w:txbxContent).
+    #   _get_para_text reads these recursively, but we cannot clear or rewrite
+    #   them via the normal w:t path — they must be left untouched.  Their text
+    #   contribution is stripped from the front of *text* so the remaining portion
+    #   is distributed only across the plain (non-VML) runs.
     _WS = frozenset("\xa0\u00ad\u2009\u200b\u200c\u200d\ufeff")
     orig_lens: list[int] = []
     ws_text: dict[int, str] = {}   # index → original text for whitespace-only runs
+    vml_indices: set[int] = set()  # indices of runs with VML-embedded text
+    vml_text_str = ""              # concatenated text from all VML runs (in order)
     for i, r in enumerate(all_runs):
         t_elems = r.findall(f"{{{_W}}}t")
         run_text = "".join(e.text or "" for e in t_elems)
@@ -112,10 +120,22 @@ def _set_para_text(p_elem, text: str) -> None:
         if chars > 0 and all(c in _WS for c in run_text):
             ws_text[i] = run_text
             chars = 0   # exclude from proportional distribution
+        elif r.find(f"{{{_W}}}pict") is not None:
+            nested_t = r.findall(f".//{{{_W}}}t")
+            if nested_t:
+                vml_text_str += "".join(t.text or "" for t in nested_t)
+                vml_indices.add(i)
+                chars = 0   # exclude from proportional distribution
         orig_lens.append(chars)
     total_orig = sum(orig_lens)
 
-    # Clear text from all runs.
+    # Strip the VML-contributed text from the front of *text*.  The VML content
+    # is already correct and will not be rewritten, so only the remainder needs
+    # to be distributed across the plain runs.
+    if vml_text_str and text.startswith(vml_text_str):
+        text = text[len(vml_text_str):]
+
+    # Clear text from all runs (direct w:t children only; VML content is untouched).
     for r in all_runs:
         for t in r.findall(f"{{{_W}}}t"):
             t.text = ""
@@ -127,20 +147,24 @@ def _set_para_text(p_elem, text: str) -> None:
         if i in ws_text:
             _set_run_text(r, ws_text[i])
 
-    if total_orig == 0 or len(all_runs) == 1:
-        # No distribution info or single run — write everything to first run.
-        _set_run_text(all_runs[0], text)
+    # Determine which runs will receive distributed text.
+    content_indices = [i for i in range(len(all_runs)) if i not in ws_text and i not in vml_indices]
+
+    if not content_indices:
+        return  # all text is in VML boxes or structural spacers — nothing to write
+
+    if total_orig == 0 or len(content_indices) == 1:
+        _set_run_text(all_runs[content_indices[0]], text)
         return
 
     # Distribute new text proportionally across content runs only.
-    content_indices = [i for i in range(len(all_runs)) if i not in ws_text]
     last_ci = content_indices[-1]
 
     assigned = 0
     cumulative = 0
     for i, (r, olen) in enumerate(zip(all_runs, orig_lens)):
-        if i in ws_text:
-            continue   # already restored above
+        if i in ws_text or i in vml_indices:
+            continue   # already handled above
         if i == last_ci:
             portion = text[assigned:]
         else:

@@ -86,44 +86,6 @@ def _detect_nonstandard_docx(path: Path) -> str | None:
         isinstance(item, TableBlock) for item in doc.body_items
     )
 
-    # VML text boxes: paragraphs that contain w:pict with nested w:t elements.
-    # _set_para_text cannot clear text inside w:pict (it's not a direct-child w:r),
-    # so the original VML text survives and a second copy is appended — doubling content.
-    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-    for pm in doc.all_paras:
-        pict = pm.style.xml_proto.find(f".//{{{_W_NS}}}pict")
-        if pict is not None and pict.findall(f".//{{{_W_NS}}}t"):
-            return "VML text boxes in paragraphs — content doubles on render"
-
-    # Year numbers or placeholder dates appear in section titles → table column read as heading.
-    # Skip this check for table-based templates: the renderer re-inserts the table blob as-is,
-    # so dates-as-headings don't cause layout problems.
-    if not has_table_blocks:
-        date_sections = [s for s in sections if _YEAR_IN_TITLE_RE.search(s.title)]
-        if date_sections:
-            sample = date_sections[0].title[:40]
-            return f"date strings as section headings (e.g. '{sample}') — two-column table layout"
-
-    # Experience section whose body paragraphs contain a recognized section name
-    # (e.g. "Education" as a body line of "Professional Experience").  This happens
-    # in two-column templates where the sidebar column's section labels are read
-    # into the main column's body content.
-    # Skip for table-based templates: the renderer uses the blob path which is unaffected.
-    if not has_table_blocks:
-        _KNOWN_SECTION_NAMES = frozenset({
-            "experience", "work experience", "professional experience",
-            "education", "skills", "technical skills", "summary", "professional summary",
-            "certifications", "projects", "awards", "languages",
-        })
-        for s in sections:
-            if s.semantic_type == "experience" and not s.roles:
-                for p in s.body_paras:
-                    if p.text.strip().lower() in _KNOWN_SECTION_NAMES:
-                        return (
-                            f"experience body contains section name '{p.text.strip()}' "
-                            "— two-column table layout"
-                        )
-
     return None
 
 
@@ -195,9 +157,11 @@ def _doc_to_llm_text(doc) -> str:
             elif not has_table_blocks:
                 # No parsed roles — emit body_paras so the content survives the roundtrip.
                 # Only do this for non-table docs; TableBlock docs preserve content via blob.
+                # Prefix every line with "- " so that recognized section names (e.g.
+                # "Education") are not misdetected as headings by parse_llm_output.
                 for p in section.body_paras:
                     if p.text.strip():
-                        lines.append(p.text)
+                        lines.append(f"- {p.text.strip()}")
         else:
             for p in section.body_paras:
                 if p.text.strip():
