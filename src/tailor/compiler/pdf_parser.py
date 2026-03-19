@@ -21,9 +21,12 @@ Strategy
 
 Note on multi-column layouts
 -----------------------------
-PyMuPDF returns blocks in reading order (left-to-right, top-to-bottom) for
-single-column documents.  Multi-column PDFs may have interleaved block order.
-For resume PDFs (overwhelmingly single-column) this is not a concern.
+PyMuPDF returns blocks top-to-bottom across ALL columns simultaneously.
+Two-column resumes (sidebar + main content) are detected per page by looking
+for a gap ≥ 15 % of the page width in the distribution of block left-edge
+(x0) positions.  When detected, blocks are reordered: left column (sorted by
+y) followed by right column (sorted by y).  This ensures sidebar content is
+not interleaved with main-column content.
 """
 from __future__ import annotations
 
@@ -276,6 +279,30 @@ def _dominant_font_info(spans: list[dict]) -> dict:
     }
 
 
+def _detect_column_split(blocks: list, page_width: float) -> float | None:
+    """Return the x-split between two columns, or None for single-column pages.
+
+    Collects the distinct x0 (left-edge) positions of all text blocks, sorts
+    them, and looks for a gap that is ≥ 15 % of the page width.  To qualify as
+    a column boundary the right edge of the gap must fall between 20 % and
+    70 % of the page width — this excludes spurious gaps from a narrow left
+    margin or a right-aligned page number.
+
+    Returns the midpoint of the detected gap as the column split x-coordinate.
+    """
+    x0s = sorted({round(blk["bbox"][0]) for blk in blocks if blk.get("type") == 0})
+    if len(x0s) < 4:
+        return None
+
+    min_gap = page_width * 0.15
+    for i in range(len(x0s) - 1):
+        gap = x0s[i + 1] - x0s[i]
+        right_edge = x0s[i + 1]
+        if gap >= min_gap and page_width * 0.20 <= right_edge <= page_width * 0.70:
+            return (x0s[i] + x0s[i + 1]) / 2.0
+    return None
+
+
 def _extract_paragraphs(doc, hf_texts: set[str], margin_left: float) -> list[ParaModel]:
     """Extract all content paragraphs from the document, skipping H/F text."""
     paras: list[ParaModel] = []
@@ -291,10 +318,33 @@ def _extract_paragraphs(doc, hf_texts: set[str], margin_left: float) -> list[Par
         if xs0:
             page_margin_left = max(0.0, min(xs0))
 
+        # Two-column detection: reorder blocks so the left column is read
+        # completely before the right column.  PyMuPDF's default ordering is
+        # top-to-bottom across ALL columns, interleaving sidebar content with
+        # main content.  Column-aware reordering restores correct reading order.
+        split_x = _detect_column_split(blocks, page.rect.width)
+        right_col_start_idx: int | None = None
+        if split_x is not None:
+            left_blks = sorted(
+                [b for b in blocks if b.get("type") == 0 and b["bbox"][0] < split_x],
+                key=lambda b: b["bbox"][1],
+            )
+            right_blks = sorted(
+                [b for b in blocks if b.get("type") == 0 and b["bbox"][0] >= split_x],
+                key=lambda b: b["bbox"][1],
+            )
+            blocks = left_blks + right_blks
+            right_col_start_idx = len(left_blks)
+
         # Reset inter-page spacing
         prev_block_y1 = None
 
-        for blk in blocks:
+        for blk_idx, blk in enumerate(blocks):
+            # Reset spacing at the left→right column transition so the first
+            # right-column block doesn't inherit a huge space_before from the
+            # last left-column block (which can be much lower on the page).
+            if right_col_start_idx is not None and blk_idx == right_col_start_idx:
+                prev_block_y1 = None
             if blk.get("type") != 0:
                 continue
 
@@ -526,7 +576,10 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
         elif state == "bullets":
-            if s in ("bullet", "paragraph"):
+            if s in ("bullet", "paragraph", "role_meta"):
+                # role_meta can appear mid-bullet-list when a line contains a year
+                # (e.g. "Resolved 150 bugs since June 2023 for apps post-launch to")
+                # but is clearly a continuation bullet, not a date/meta line.
                 bullets.append(pm)
         else:
             pass

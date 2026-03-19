@@ -332,7 +332,10 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
         elif state == "bullets":
-            if s in ("bullet", "paragraph"):
+            if s in ("bullet", "paragraph", "role_meta"):
+                # role_meta can appear mid-bullet-list when a bullet line contains a
+                # year (e.g. "Resolved 150 bugs since 2023 for apps post-launch to")
+                # but is semantically a continuation bullet, not a date/meta line.
                 bullets.append(pm)
             # role_header handled at top; ignore empty/other
         else:
