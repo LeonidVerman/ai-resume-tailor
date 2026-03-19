@@ -444,6 +444,13 @@ def _infer_semantic(pm: ParaModel) -> str:
     space_before = pp.space_before_pt if pp else 0.0
     indent = pp.indent_left_pt if pp else 0.0
 
+    # Known section names: bold + exact match → section heading regardless of
+    # font size or spacing.  Mirrors docx_parser._infer_semantic so that
+    # sidebar-layout PDFs (small bold labels like "PROFESSIONAL EXPERIENCE")
+    # are classified correctly.
+    if bold and text.lower() in _ALL_HEADING_NAMES:
+        return "section_heading"
+
     # Section heading: bold, short, title-case, 2+ words, larger or spaced
     if (
         bold
@@ -504,6 +511,15 @@ _ALL_KNOWN: frozenset[str] = (
     _EXPERIENCE_NAMES | _SUMMARY_NAMES | _SKILLS_NAMES | _EDUCATION_NAMES
 )
 
+_ALL_HEADING_NAMES: frozenset[str] = (
+    _ALL_KNOWN | frozenset({
+        "projects", "certifications", "certification", "publications",
+        "awards", "honors", "languages", "references", "activities",
+        "volunteer", "volunteering", "leadership", "interests",
+        "additional information",
+    })
+)
+
 
 def _classify_section(heading_text: str) -> str:
     t = heading_text.strip().lower()
@@ -559,7 +575,13 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
             elif s == "paragraph":
-                header_extra.append(pm)
+                # PDF bullets often lack prefix characters — treat plain
+                # paragraphs immediately after a role header as bullets so
+                # build_para_element adds "ListBullet" and the DOCX roundtrip
+                # re-classifies them correctly.
+                pm.semantic = "bullet"
+                bullets.append(pm)
+                state = "bullets"
             elif s == "empty":
                 pass
             else:
@@ -567,7 +589,11 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
         elif state == "meta":
             if s == "role_meta":
                 meta.append(pm)
-            elif s in ("bullet", "paragraph"):
+            elif s == "bullet":
+                bullets.append(pm)
+                state = "bullets"
+            elif s == "paragraph":
+                pm.semantic = "bullet"
                 bullets.append(pm)
                 state = "bullets"
             elif s == "empty":
@@ -576,10 +602,13 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
         elif state == "bullets":
-            if s in ("bullet", "paragraph", "role_meta"):
+            if s in ("bullet", "role_meta"):
                 # role_meta can appear mid-bullet-list when a line contains a year
                 # (e.g. "Resolved 150 bugs since June 2023 for apps post-launch to")
                 # but is clearly a continuation bullet, not a date/meta line.
+                bullets.append(pm)
+            elif s == "paragraph":
+                pm.semantic = "bullet"
                 bullets.append(pm)
         else:
             pass
@@ -601,7 +630,7 @@ def _group_sections(
         if pm.semantic == "section_heading":
             # Before the first known section, only accept known headings
             # to avoid treating names / job titles as sections.
-            if not found_section and pm.text.strip().lower() not in _ALL_KNOWN:
+            if not found_section and pm.text.strip().lower() not in _ALL_HEADING_NAMES:
                 header_paras.append(pm)
                 continue
 
