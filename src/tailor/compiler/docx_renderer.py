@@ -345,6 +345,39 @@ def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> 
 
 
 # ---------------------------------------------------------------------------
+# Numbering patch helpers
+# ---------------------------------------------------------------------------
+
+def _patch_bullet_numbering(d) -> None:
+    """Replace Symbol-font \\uf0b7 bullet chars with Unicode '•' in numbering defs.
+
+    The default python-docx template (and many DOCX templates) defines its bullet
+    list using the Symbol private-use character \\uf0b7 with w:rFonts=Symbol.
+    LibreOffice lacks Symbol font, so the bullet is invisible.  This patches all
+    such lvlText entries to use the standard Unicode bullet U+2022 with Calibri
+    font so every renderer shows a visible bullet marker.
+    """
+    try:
+        num_part = d.part.numbering_part
+    except Exception:
+        return
+    elem = num_part._element
+    for lvlText in elem.findall(f".//{{{_W}}}lvlText"):
+        if lvlText.get(f"{{{_W}}}val", "") == "\uf0b7":
+            lvlText.set(f"{{{_W}}}val", "\u2022")
+            lvl = lvlText.getparent()
+            if lvl is None:
+                continue
+            rPr = lvl.find(f"{{{_W}}}rPr")
+            if rPr is None:
+                continue
+            for fonts in rPr.findall(f"{{{_W}}}rFonts"):
+                for attr in (f"{{{_W}}}ascii", f"{{{_W}}}hAnsi", f"{{{_W}}}cs", f"{{{_W}}}eastAsia"):
+                    if fonts.get(attr, "").lower() in ("symbol", "wingdings"):
+                        fonts.set(attr, "Calibri")
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -369,6 +402,10 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     # Start from a copy of the template so styles and document settings are preserved
     shutil.copy(template_path, output_path)
     d = Document(output_path)
+    # PDF-sourced docs use numPr-based bullets; patch Symbol \uf0b7 → Unicode •
+    # so LibreOffice (which lacks Symbol font) renders the bullet marker.
+    if doc.source_kind == "pdf":
+        _patch_bullet_numbering(d)
     body = d.element.body
 
     # Remove ALL body children, then re-append sectPr last.
