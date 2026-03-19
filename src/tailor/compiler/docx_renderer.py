@@ -35,10 +35,29 @@ def _strip_section_break(p_elem) -> None:
             pPr.remove(sectPr)
 
 
-def _set_para_text(p_elem, text: str) -> None:
-    """Set text on p_elem in-place, preserving all formatting.
+def _set_run_text(r_elem, portion: str) -> None:
+    """Write *portion* into the first w:t of *r_elem* (already cleared)."""
+    from lxml import etree
+    t_elems = r_elem.findall(f"{{{_W}}}t")
+    if t_elems:
+        t_elems[0].text = portion
+        if portion and (portion[0] == " " or portion[-1] == " "):
+            t_elems[0].set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+    elif portion:
+        t = etree.SubElement(r_elem, f"{{{_W}}}t")
+        t.text = portion
+        if portion[0] == " " or portion[-1] == " ":
+            t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
 
-    Clears run text from every run, then writes text on the first run.
+
+def _set_para_text(p_elem, text: str) -> None:
+    """Set text on p_elem in-place, preserving all per-run formatting.
+
+    Text is distributed across runs proportionally to their original character
+    lengths.  This preserves per-run formatting differences (e.g. bold on the
+    first word only, w:caps on a trailing institution name) when the new text
+    has a similar structure to the original.
+
     If no runs exist a minimal w:r/w:t structure is created.
     """
     _strip_section_break(p_elem)
@@ -71,26 +90,40 @@ def _set_para_text(p_elem, text: str) -> None:
             t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
         return
 
-    # Clear text from all runs
+    # Collect original text length of each run (used for proportional split).
+    orig_lens: list[int] = []
+    for r in all_runs:
+        chars = sum(len(e.text or "") for e in r.findall(f"{{{_W}}}t"))
+        chars += sum(len(e.text or "") for e in r.findall(f"{{{_W}}}delText"))
+        orig_lens.append(chars)
+    total_orig = sum(orig_lens)
+
+    # Clear text from all runs.
     for r in all_runs:
         for t in r.findall(f"{{{_W}}}t"):
             t.text = ""
         for t in r.findall(f"{{{_W}}}delText"):
             t.text = ""
 
-    # Write new text on first run
-    first = all_runs[0]
-    t_elems = first.findall(f"{{{_W}}}t")
-    if t_elems:
-        t_elems[0].text = text
-        if text and (text[0] == " " or text[-1] == " "):
-            t_elems[0].set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
-    else:
-        from lxml import etree
-        t = etree.SubElement(first, f"{{{_W}}}t")
-        t.text = text
-        if text and (text[0] == " " or text[-1] == " "):
-            t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+    if total_orig == 0 or len(all_runs) == 1:
+        # No distribution info or single run — write everything to first run.
+        _set_run_text(all_runs[0], text)
+        return
+
+    # Distribute new text proportionally across runs, matching the original
+    # character-length ratios.  This preserves per-run formatting (bold, caps,
+    # colour, etc.) for paragraphs whose text structure resembles the original.
+    assigned = 0
+    cumulative = 0
+    for i, (r, olen) in enumerate(zip(all_runs, orig_lens)):
+        if i == len(all_runs) - 1:
+            portion = text[assigned:]
+        else:
+            cumulative += olen
+            end = round(len(text) * cumulative / total_orig)
+            portion = text[assigned:end]
+            assigned = end
+        _set_run_text(r, portion)
 
 
 # ---------------------------------------------------------------------------
