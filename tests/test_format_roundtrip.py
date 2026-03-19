@@ -31,17 +31,20 @@ import pytest
 # visual inspection.  The directory is created automatically if needed.
 
 _SAVE_ARTEFACTS: bool = os.environ.get("SAVE_ARTEFACTS", "").strip() in ("1", "true", "yes")
-_ARTEFACTS_DIR: Path = Path(__file__).parent.parent / "tmp" / "artefacts"
+_ARTEFACTS_ROOT: Path = Path(__file__).parent.parent / "tmp" / "artefacts"
+_ARTEFACTS_DOCX: Path = _ARTEFACTS_ROOT / "docx"
+_ARTEFACTS_PDF:  Path = _ARTEFACTS_ROOT / "pdf"
 
 
-def _save_artefact(src: str, name: str) -> None:
-    """Copy src to _ARTEFACTS_DIR/<name> if SAVE_ARTEFACTS is set.
+def _save_artefact(src: str, name: str, subdir: Path | None = None) -> None:
+    """Copy src to <subdir>/<name> (or _ARTEFACTS_ROOT/<name>) if SAVE_ARTEFACTS is set.
 
     Prints a warning instead of crashing when the destination is locked
     (e.g. the file is open in Word from a previous run).
     """
-    _ARTEFACTS_DIR.mkdir(parents=True, exist_ok=True)
-    dst = str(_ARTEFACTS_DIR / name)
+    dest_dir = subdir if subdir is not None else _ARTEFACTS_ROOT
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dst = str(dest_dir / name)
     try:
         shutil.copy2(src, dst)
     except OSError as exc:
@@ -225,6 +228,90 @@ class RoundtripReport:
         return "\n".join(lines)
 
 
+@dataclass
+class PdfLayoutReport:
+    """Comparison of input PDF vs output PDF for a PDF roundtrip test."""
+    name: str
+    crash: str | None = None
+    page_count_orig: int = 0
+    page_count_out: int = 0
+    sections_missing: list[str] = field(default_factory=list)
+    text_coverage: float = 0.0          # fraction of input tokens found in output
+    token_count_orig: int = 0
+    token_count_out: int = 0
+
+    @property
+    def ok(self) -> bool:
+        return self.crash is None and not self.sections_missing
+
+    def summary(self) -> str:
+        lines = [f"=== {self.name} ==="]
+        if self.crash:
+            lines.append(f"  CRASH: {self.crash}")
+            return "\n".join(lines)
+        lines.append(
+            f"  pages: {self.page_count_orig} -> {self.page_count_out}"
+            f"  |  tokens: {self.token_count_orig} -> {self.token_count_out}"
+            f"  |  coverage: {self.text_coverage:.0%}"
+        )
+        if self.sections_missing:
+            lines.append(f"  MISSING sections ({len(self.sections_missing)}): "
+                         + ", ".join(repr(s) for s in self.sections_missing))
+        else:
+            lines.append("  All sections present")
+        return "\n".join(lines)
+
+
+def _tokenize_pdf_text(text: str) -> set[str]:
+    """Return a set of lowercase word tokens (≥3 chars) from PDF text."""
+    return {w.lower() for w in re.findall(r"[A-Za-z]{3,}", text)}
+
+
+def _extract_pdf_text(pdf_path: str) -> tuple[int, str]:
+    """Return (page_count, full_text) for a PDF file using PyMuPDF."""
+    import fitz  # PyMuPDF
+    doc = fitz.open(pdf_path)
+    pages = doc.page_count
+    text = "\n".join(page.get_text() for page in doc)
+    doc.close()
+    return pages, text
+
+
+def _compare_pdf_layout(
+    input_pdf_path: str,
+    output_pdf_path: str,
+    section_titles: list[str],
+    name: str,
+) -> PdfLayoutReport:
+    """Compare input PDF vs output PDF for text coverage and section presence."""
+    report = PdfLayoutReport(name=name)
+    try:
+        in_pages, in_text = _extract_pdf_text(input_pdf_path)
+        out_pages, out_text = _extract_pdf_text(output_pdf_path)
+    except Exception as exc:
+        report.crash = str(exc)
+        return report
+
+    report.page_count_orig = in_pages
+    report.page_count_out = out_pages
+
+    # Token-level coverage: what fraction of input words appear in output
+    in_tokens = _tokenize_pdf_text(in_text)
+    out_tokens = _tokenize_pdf_text(out_text)
+    report.token_count_orig = len(in_tokens)
+    report.token_count_out = len(out_tokens)
+    if in_tokens:
+        report.text_coverage = len(in_tokens & out_tokens) / len(in_tokens)
+
+    # Section presence: check every known section title appears in output text
+    out_lower = out_text.lower()
+    for title in section_titles:
+        if title.lower() not in out_lower:
+            report.sections_missing.append(title)
+
+    return report
+
+
 def _compare_paras(orig_paras, rend_paras) -> tuple[list[ParaDiff], list[ParaDiff]]:
     """Compare two flat paragraph lists; return (text_diffs, style_diffs)."""
     text_diffs: list[ParaDiff] = []
@@ -254,7 +341,11 @@ def _compare_paras(orig_paras, rend_paras) -> tuple[list[ParaDiff], list[ParaDif
 # DOCX roundtrip core
 # ---------------------------------------------------------------------------
 
-def _docx_roundtrip(path: Path, artefact_name: str | None = None) -> RoundtripReport:
+def _docx_roundtrip(
+    path: Path,
+    artefact_name: str | None = None,
+    artefact_subdir: Path | None = None,
+) -> RoundtripReport:
     """Parse a DOCX, identity-render, compare."""
     from tailor.compiler.docx_parser import parse_docx
     from tailor.compiler.pipeline import compile_resume
@@ -270,7 +361,7 @@ def _docx_roundtrip(path: Path, artefact_name: str | None = None) -> RoundtripRe
         try:
             compile_resume(str(path), llm_text, out_path)
             if _SAVE_ARTEFACTS and artefact_name:
-                _save_artefact(out_path, artefact_name)
+                _save_artefact(out_path, artefact_name, subdir=artefact_subdir)
             rend_doc = parse_docx(out_path)
         finally:
             if os.path.exists(out_path):
@@ -343,24 +434,30 @@ def _docx_roundtrip(path: Path, artefact_name: str | None = None) -> RoundtripRe
 # PDF roundtrip core
 # ---------------------------------------------------------------------------
 
-def _pdf_roundtrip(path: Path) -> tuple[RoundtripReport, RoundtripReport | None]:
-    """Parse a PDF, identity-render to DOCX, then run DOCX roundtrip on result.
+def _pdf_roundtrip(
+    path: Path,
+) -> tuple[RoundtripReport, RoundtripReport | None, PdfLayoutReport | None]:
+    """Parse a PDF, identity-render to DOCX (+PDF), then run DOCX roundtrip on result.
 
-    Returns (pdf_report, docx_of_docx_report).
-    pdf_report:           PDF parse -> DOCX render; compares text content.
+    Returns (pdf_report, docx_of_docx_report, pdf_layout_report).
+    pdf_report:           PDF parse -> DOCX render; compares paragraph text content.
     docx_of_docx_report:  Takes the rendered DOCX as a new 'template',
-                          re-renders identically, compares - shows DOCX IR
-                          stability (should be near-perfect).
+                          re-renders identically — shows DOCX IR stability.
+    pdf_layout_report:    Renders the output DOCX to PDF and compares it against
+                          the input PDF (page count, section presence, token coverage).
     """
     from tailor.compiler.pdf_parser import parse_pdf
     from tailor.compiler.pipeline import compile_resume_from_ir
     from tailor.config import RESUME_TEMPLATE
     from tailor.compiler.docx_parser import parse_docx
+    from tailor.docx.pdf import docx_to_pdf
 
     stem = path.stem
     pdf_report = RoundtripReport(name=f"{path.name} [PDF->DOCX]")
     docx_report: RoundtripReport | None = None
+    layout_report: PdfLayoutReport | None = None
     docx_out: str = ""
+    pdf_out: str = ""
 
     try:
         pdf_bytes = path.read_bytes()
@@ -377,13 +474,13 @@ def _pdf_roundtrip(path: Path) -> tuple[RoundtripReport, RoundtripReport | None]
                 style_template_path=str(RESUME_TEMPLATE),
             )
             if _SAVE_ARTEFACTS:
-                _save_artefact(docx_out, f"{stem}_from_pdf.docx")
+                _save_artefact(docx_out, f"{stem}_from_pdf.docx", subdir=_ARTEFACTS_DOCX)
             rend_doc = parse_docx(docx_out)
         except Exception as exc:
             pdf_report.crash = str(exc)
-            return pdf_report, None
+            return pdf_report, None, None
         finally:
-            # Keep docx_out alive for the second stage
+            # Keep docx_out alive for stages 2 and 3
             pass
 
         # Stage 1: compare PDF text content vs rendered DOCX text.
@@ -423,7 +520,11 @@ def _pdf_roundtrip(path: Path) -> tuple[RoundtripReport, RoundtripReport | None]
         # Stage 2: DOCX roundtrip on the rendered DOCX
         docx2_artefact = f"{stem}_from_pdf_roundtrip.docx" if _SAVE_ARTEFACTS else None
         try:
-            docx_report = _docx_roundtrip(Path(docx_out), artefact_name=docx2_artefact)
+            docx_report = _docx_roundtrip(
+                Path(docx_out),
+                artefact_name=docx2_artefact,
+                artefact_subdir=_ARTEFACTS_DOCX if _SAVE_ARTEFACTS else None,
+            )
             docx_report.name = f"{path.name} [DOCX->DOCX after PDF render]"
         except Exception as exc:
             docx_report = RoundtripReport(
@@ -431,13 +532,42 @@ def _pdf_roundtrip(path: Path) -> tuple[RoundtripReport, RoundtripReport | None]
                 crash=str(exc),
             )
 
+        # Stage 3: render DOCX → PDF and compare against input PDF.
+        # Uses xhtml2pdf (local, no external deps) so this works in all environments.
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
+                pdf_out = f.name.replace(".docx", ".pdf")
+            shutil.copy2(docx_out, f.name)
+            docx_to_pdf(f.name, method="local")
+            os.remove(f.name)
+
+            if _SAVE_ARTEFACTS and os.path.exists(pdf_out):
+                _save_artefact(pdf_out, f"{stem}_from_pdf.pdf", subdir=_ARTEFACTS_PDF)
+                _save_artefact(str(path), path.name, subdir=_ARTEFACTS_PDF)
+
+            section_titles = [s.title for s in orig_ir.sections]
+            layout_report = _compare_pdf_layout(
+                input_pdf_path=str(path),
+                output_pdf_path=pdf_out,
+                section_titles=section_titles,
+                name=f"{path.name} [PDF layout]",
+            )
+        except Exception as exc:
+            layout_report = PdfLayoutReport(
+                name=f"{path.name} [PDF layout]",
+                crash=f"PDF generation failed: {exc}",
+            )
+        finally:
+            if pdf_out and os.path.exists(pdf_out):
+                os.remove(pdf_out)
+
     except Exception as exc:
         pdf_report.crash = str(exc)
     finally:
         if docx_out and os.path.exists(docx_out):
             os.remove(docx_out)
 
-    return pdf_report, docx_report
+    return pdf_report, docx_report, layout_report
 
 
 # ---------------------------------------------------------------------------
@@ -453,7 +583,7 @@ def test_docx_roundtrip(path: Path):
         pytest.xfail(reason)
 
     artefact = f"{path.stem}_roundtrip.docx" if _SAVE_ARTEFACTS else None
-    report = _docx_roundtrip(path, artefact_name=artefact)
+    report = _docx_roundtrip(path, artefact_name=artefact, artefact_subdir=_ARTEFACTS_DOCX)
     print("\n" + report.summary())
 
     # Hard-fail only on crash or missing text (formatting diffs are logged, not fatal)
@@ -479,10 +609,12 @@ def test_pdf_roundtrip(path: Path):
             "(PyMuPDF reads blocks left-to-right/top-to-bottom)."
         )
 
-    pdf_report, docx_report = _pdf_roundtrip(path)
+    pdf_report, docx_report, layout_report = _pdf_roundtrip(path)
     print("\n" + pdf_report.summary())
     if docx_report:
         print(docx_report.summary())
+    if layout_report:
+        print(layout_report.summary())
 
     assert pdf_report.crash is None, f"Crash during PDF roundtrip: {pdf_report.crash}"
     assert not pdf_report.text_diffs, (
@@ -494,4 +626,12 @@ def test_pdf_roundtrip(path: Path):
         assert not docx_report.text_diffs, (
             f"{len(docx_report.text_diffs)} text difference(s) in DOCX-of-DOCX for "
             f"{path.name}:\n" + "\n".join(str(d) for d in docx_report.text_diffs[:5])
+        )
+    if layout_report:
+        assert layout_report.crash is None, (
+            f"PDF generation/comparison failed for {path.name}: {layout_report.crash}"
+        )
+        assert not layout_report.sections_missing, (
+            f"Sections missing from output PDF for {path.name}: "
+            + ", ".join(repr(s) for s in layout_report.sections_missing)
         )
