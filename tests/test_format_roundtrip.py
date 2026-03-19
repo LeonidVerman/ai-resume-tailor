@@ -491,7 +491,7 @@ def test_pdf_roundtrip(path: Path):
     )
     if docx_report:
         assert docx_report.crash is None, f"Crash in DOCX-of-DOCX: {docx_report.crash}"
-        # Stage 2 text diffs are informational only: rendered-from-PDF DOCXs may
-        # re-parse with different section classification (e.g. bold "PROFESSIONAL
-        # EXPERIENCE" triggers heading detection in docx_parser but not pdf_parser),
-        # making the DOCX->DOCX roundtrip inherently unstable for some PDF layouts.
+        assert not docx_report.text_diffs, (
+            f"{len(docx_report.text_diffs)} text difference(s) in DOCX-of-DOCX for "
+            f"{path.name}:\n" + "\n".join(str(d) for d in docx_report.text_diffs[:5])
+        )

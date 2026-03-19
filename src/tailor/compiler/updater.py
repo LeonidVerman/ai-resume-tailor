@@ -353,6 +353,17 @@ def apply_tailored(
     for section in new_sections:
         all_paras.append(section.heading)
         if section.semantic_type == "experience" and section.roles:
+            # Emit pre-role orphan body_paras: paragraphs that appear before
+            # the first role_header in body_paras and were skipped by
+            # _group_roles (state "init").  These arise when a bold line such
+            # as "Senior Software Engineer" is downgraded to "paragraph" by
+            # Approach A in docx_parser (non-recognised heading inside an
+            # experience section) and ends up in body_paras before any role.
+            for bp in section.body_paras:
+                if bp.semantic == "role_header":
+                    break  # reached first role; stop collecting orphans
+                if bp.text.strip():
+                    all_paras.append(bp)
             for role in section.roles:
                 all_paras.append(role.header)
                 all_paras.extend(role.meta_lines)

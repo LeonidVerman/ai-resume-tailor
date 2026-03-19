@@ -34,6 +34,15 @@ def build_para_element(pm: ParaModel) -> Any:
     p = etree.Element(f"{{{_W}}}p")
     pPr = etree.SubElement(p, f"{{{_W}}}pPr")
 
+    # Bullet paragraphs must carry a "ListBullet" pStyle so that docx_parser
+    # can re-classify them as "bullet" semantic when the rendered DOCX is
+    # re-parsed.  docx_parser._infer_semantic checks 'list' in style_name, and
+    # style_map.get(sid, sid) falls back to the raw ID when the style is absent
+    # from the template — so "ListBullet" → style_name="ListBullet" → matches.
+    if pm.semantic == "bullet":
+        pStyle_elem = etree.SubElement(pPr, f"{{{_W}}}pStyle")
+        pStyle_elem.set(f"{{{_W}}}val", "ListBullet")
+
     pp: ParagraphProfile | None = pm.paragraph_profile
 
     if pp is not None:
