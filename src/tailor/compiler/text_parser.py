@@ -169,7 +169,17 @@ def parse_llm_output(text: str) -> list[LlmSection]:
                 and cur_role is None
                 and not current.roles
             )
-            if in_roleless_experience:
+            # Inside a non-experience section that already has body_lines, suppress
+            # the 2-word title-case fallback.  Skill/body lines like "Statistical
+            # Analysis" or "Product Development" are 2 title-case words and would
+            # otherwise be misdetected as new section headings, triggering spurious
+            # extra sections and section reordering in apply_tailored.
+            in_section_with_body = (
+                current is not None
+                and cur_role is None
+                and bool(current.body_lines)
+            )
+            if in_roleless_experience or in_section_with_body:
                 is_heading = bool(stripped) and stripped.lower() in _ALL_KNOWN
             else:
                 is_heading = _is_section_heading(line)

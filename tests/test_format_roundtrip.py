@@ -81,16 +81,19 @@ def _detect_nonstandard_docx(path: Path) -> str | None:
     # If the document uses table-based layout, body_items will contain TableBlock
     # entries.  The renderer re-inserts them as opaque XML blobs so the visual
     # layout is preserved even when semantic parsing is imperfect.  Structural
-    # heuristics that fire on table-internal content (large "other" blocks,
-    # experience-with-no-roles) are not meaningful in that case.
+    # heuristics that fire on table-internal content are not meaningful in that case.
     has_table_blocks = doc.body_items is not None and any(
         isinstance(item, TableBlock) for item in doc.body_items
     )
 
-    # No standard semantic sections at all (everything lumped in one/two "other" blocks)
-    real_secs = [s for s in sections if s.semantic_type in ("experience", "summary", "skills", "education")]
-    if not real_secs:
-        return "no recognized section headings — all content in untyped blocks"
+    # VML text boxes: paragraphs that contain w:pict with nested w:t elements.
+    # _set_para_text cannot clear text inside w:pict (it's not a direct-child w:r),
+    # so the original VML text survives and a second copy is appended — doubling content.
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    for pm in doc.all_paras:
+        pict = pm.style.xml_proto.find(f".//{{{_W_NS}}}pict")
+        if pict is not None and pict.findall(f".//{{{_W_NS}}}t"):
+            return "VML text boxes in paragraphs — content doubles on render"
 
     # Year numbers or placeholder dates appear in section titles → table column read as heading.
     # Skip this check for table-based templates: the renderer re-inserts the table blob as-is,
@@ -100,19 +103,6 @@ def _detect_nonstandard_docx(path: Path) -> str | None:
         if date_sections:
             sample = date_sections[0].title[:40]
             return f"date strings as section headings (e.g. '{sample}') — two-column table layout"
-
-    # Large "other" sections → sidebar/column content dump from a two-column table.
-    # Skipped when the document has TableBlocks: the renderer re-inserts the table
-    # blob so the visual layout is preserved and the large "other" content is still
-    # correctly written to the output (it's in all_paras in the right order).
-    if not has_table_blocks:
-        large_other = [s for s in sections if s.semantic_type == "other" and len(s.body_paras) > 17]
-        if large_other:
-            biggest = max(large_other, key=lambda s: len(s.body_paras))
-            return (
-                f"large non-semantic block '{biggest.title[:35]}' "
-                f"({len(biggest.body_paras)} paras) — two-column table layout"
-            )
 
     # Experience section whose body paragraphs contain a recognized section name
     # (e.g. "Education" as a body line of "Professional Experience").  This happens
@@ -133,25 +123,6 @@ def _detect_nonstandard_docx(path: Path) -> str | None:
                             f"experience body contains section name '{p.text.strip()}' "
                             "— two-column table layout"
                         )
-
-    # Empty (or near-empty) experience section immediately followed by many small
-    # "other" sections.  This happens in two-column tables where each role occupies
-    # its own table row (job title + body), creating separate "other" sections for
-    # each role.  "Near-empty" means ≤ 2 non-empty body paragraphs: the section
-    # picked up a stray date or location line but the actual role content is
-    # elsewhere.
-    for i, s in enumerate(sections):
-        non_empty_body = [p for p in s.body_paras if p.text.strip()]
-        if s.semantic_type == "experience" and not s.roles and len(non_empty_body) <= 2:
-            following_small_other = [
-                ns for ns in sections[i + 1:]
-                if ns.semantic_type == "other" and 0 < len(ns.body_paras) <= 8
-            ]
-            if len(following_small_other) >= 3:
-                return (
-                    f"empty experience section followed by {len(following_small_other)} "
-                    "small role-like blocks — two-column table layout"
-                )
 
     return None
 
