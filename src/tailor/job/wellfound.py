@@ -105,6 +105,7 @@ def _is_bot_blocked(html):
         "just a moment",           # Cloudflare JS challenge
         "enable javascript and cookies",
         "checking your browser",
+        "blocked - indeed.com",        # Indeed custom block page
     )
     return any(s in lower for s in signals)
 

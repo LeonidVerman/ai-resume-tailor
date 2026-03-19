@@ -20,6 +20,7 @@ from bs4 import BeautifulSoup
 from tailor.job import JobData
 from tailor.job.amazon import scrape_amazon
 from tailor.job.greenhouse import scrape_greenhouse
+from tailor.job.indeed import scrape_indeed
 from tailor.job.linkedin import scrape_linkedin
 from tailor.job.wellfound import scrape_wellfound
 
@@ -229,6 +230,7 @@ _SITE_SCRAPERS = {
     "amazon": scrape_amazon,
     "greenhouse": scrape_greenhouse,
     "hiring_cafe": scrape_hiring_cafe,
+    "indeed": scrape_indeed,
     "linkedin": scrape_linkedin,
     "wellfound": scrape_wellfound,
 }
@@ -239,6 +241,8 @@ def _detect_site(url):
     host = urlparse(url).netloc.lower()
     if "hiring.cafe" in host:
         return "hiring_cafe"
+    if "indeed.com" in host:
+        return "indeed"
     if "linkedin.com" in host:
         return "linkedin"
     if "wellfound.com" in host or "angel.co" in host:
