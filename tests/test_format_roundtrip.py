@@ -92,11 +92,14 @@ def _detect_nonstandard_docx(path: Path) -> str | None:
     if not real_secs:
         return "no recognized section headings — all content in untyped blocks"
 
-    # Year numbers or placeholder dates appear in section titles → table column read as heading
-    date_sections = [s for s in sections if _YEAR_IN_TITLE_RE.search(s.title)]
-    if date_sections:
-        sample = date_sections[0].title[:40]
-        return f"date strings as section headings (e.g. '{sample}') — two-column table layout"
+    # Year numbers or placeholder dates appear in section titles → table column read as heading.
+    # Skip this check for table-based templates: the renderer re-inserts the table blob as-is,
+    # so dates-as-headings don't cause layout problems.
+    if not has_table_blocks:
+        date_sections = [s for s in sections if _YEAR_IN_TITLE_RE.search(s.title)]
+        if date_sections:
+            sample = date_sections[0].title[:40]
+            return f"date strings as section headings (e.g. '{sample}') — two-column table layout"
 
     # Large "other" sections → sidebar/column content dump from a two-column table.
     # Skipped when the document has TableBlocks: the renderer re-inserts the table
@@ -115,19 +118,21 @@ def _detect_nonstandard_docx(path: Path) -> str | None:
     # (e.g. "Education" as a body line of "Professional Experience").  This happens
     # in two-column templates where the sidebar column's section labels are read
     # into the main column's body content.
-    _KNOWN_SECTION_NAMES = frozenset({
-        "experience", "work experience", "professional experience",
-        "education", "skills", "technical skills", "summary", "professional summary",
-        "certifications", "projects", "awards", "languages",
-    })
-    for s in sections:
-        if s.semantic_type == "experience" and not s.roles:
-            for p in s.body_paras:
-                if p.text.strip().lower() in _KNOWN_SECTION_NAMES:
-                    return (
-                        f"experience body contains section name '{p.text.strip()}' "
-                        "— two-column table layout"
-                    )
+    # Skip for table-based templates: the renderer uses the blob path which is unaffected.
+    if not has_table_blocks:
+        _KNOWN_SECTION_NAMES = frozenset({
+            "experience", "work experience", "professional experience",
+            "education", "skills", "technical skills", "summary", "professional summary",
+            "certifications", "projects", "awards", "languages",
+        })
+        for s in sections:
+            if s.semantic_type == "experience" and not s.roles:
+                for p in s.body_paras:
+                    if p.text.strip().lower() in _KNOWN_SECTION_NAMES:
+                        return (
+                            f"experience body contains section name '{p.text.strip()}' "
+                            "— two-column table layout"
+                        )
 
     # Empty (or near-empty) experience section immediately followed by many small
     # "other" sections.  This happens in two-column tables where each role occupies
@@ -370,6 +375,26 @@ def _docx_roundtrip(path: Path, artefact_name: str | None = None) -> RoundtripRe
             -1, "para_count",
             f"{len(orig_paras)} non-empty paras",
             f"{len(rend_paras)} non-empty paras",
+        ))
+
+    # Check that the table structure is preserved.  Templates that use a table for
+    # layout must render back with the same number of table blocks; if the rendered
+    # document drops the table (or gains extra ones) the visual layout is broken even
+    # though the flat paragraph text may still match.
+    from tailor.compiler.models import TableBlock as _TableBlock
+    orig_table_count = (
+        sum(1 for i in orig_doc.body_items if isinstance(i, _TableBlock))
+        if orig_doc.body_items else 0
+    )
+    rend_table_count = (
+        sum(1 for i in rend_doc.body_items if isinstance(i, _TableBlock))
+        if rend_doc.body_items else 0
+    )
+    if orig_table_count != rend_table_count:
+        report.text_diffs.append(ParaDiff(
+            -2, "table_count",
+            f"{orig_table_count} table block(s)",
+            f"{rend_table_count} table block(s)",
         ))
 
     t, s = _compare_paras(orig_paras, rend_paras)
