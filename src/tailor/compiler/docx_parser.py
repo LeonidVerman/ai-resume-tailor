@@ -48,6 +48,16 @@ _EDUCATION_NAMES: frozenset[str] = frozenset({
     "educational background", "degrees",
 })
 
+_ALL_HEADING_NAMES: frozenset[str] = (
+    _EXPERIENCE_NAMES | _SUMMARY_NAMES | _SKILLS_NAMES | _EDUCATION_NAMES
+    | frozenset({
+        "projects", "certifications", "certification", "publications",
+        "awards", "honors", "languages", "references", "activities",
+        "volunteer", "volunteering", "leadership", "interests",
+        "additional information",
+    })
+)
+
 _HEADING_STYLE_RE = re.compile(r"^heading\s*\d", re.IGNORECASE)
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
@@ -214,6 +224,12 @@ def _infer_semantic(pm: ParaModel) -> str:
     if style_name.lower() in {"title", "subtitle"}:
         return "section_heading"
 
+    # Known section names: bold paragraph whose text exactly matches a recognized
+    # section name is a section heading regardless of font size or spacing.
+    # This handles templates that use small bold text (e.g. 10.5pt) for headings.
+    if pm.style.bold and text.lower() in _ALL_HEADING_NAMES:
+        return "section_heading"
+
     # Heuristic: bold, short (≥2 words), title-case, no bullets, has spacing.
     # Single-word bold lines are excluded: they are almost always role-header
     # continuations (e.g. a city name split onto its own line by Word) or
@@ -224,6 +240,7 @@ def _infer_semantic(pm: ParaModel) -> str:
         and not text.startswith(("-", "•", "·", "–"))
         and len(text) <= 60
         and pm.style.bold
+        and not _YEAR_RE.search(text)
         and (
             (pm.style.spacing_before and pm.style.spacing_before >= 80)
             or (pm.style.font_size_pt and pm.style.font_size_pt >= 12)
@@ -426,6 +443,18 @@ def parse_docx(path: str) -> ResumeDocument:
     for pm in all_paras:
         if pm.semantic == "section_heading":
             found_heading = True
+            # Approach A: absorb non-standard heading paragraphs that appear inside an
+            # experience section and are not recognised section names.  Handles templates
+            # where role titles ("Senior Software Developer" without a pipe separator)
+            # are formatted as bold headings but should remain body content.
+            if (
+                current is not None
+                and current.semantic_type == "experience"
+                and pm.text.strip().lower() not in _ALL_HEADING_NAMES
+            ):
+                pm.semantic = "paragraph"
+                current.body_paras.append(pm)
+                continue
             if current is not None:
                 _finalise(current)
                 sections.append(current)

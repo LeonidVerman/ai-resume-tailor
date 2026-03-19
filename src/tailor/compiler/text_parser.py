@@ -70,18 +70,28 @@ def _is_section_heading(line: str) -> bool:
         return False
     if s.lower() in _ALL_KNOWN:
         return True
-    # Tight title-case fallback for 2–3 word lines (single words like "Python" excluded)
+    # Tight title-case fallback for exactly 2-word lines (single words like "Python"
+    # and 3+ word role titles like "Senior Software Developer" are excluded).
     if any(c in s for c in (",", ";", ":")):
         return False
     if s[-1] in ".!?":
         return False
     words = s.split()
-    if len(words) < 2 or len(words) > 3:
+    if len(words) != 2:
         return False
     if not all(w[0].isupper() for w in words if w):
         return False
     if _YEAR_RE.search(s):
         return False
+    # Exclude lines where any word has an interior lowercase→uppercase transition
+    # (camelCase pattern), which indicates concatenated content rather than a real
+    # section heading (e.g. "OrganizationProblem-solving Management" from a template
+    # where two skill lines are merged without a separator).
+    for word in words:
+        # Split on hyphens so "Problem-Solving" isn't falsely flagged.
+        for part in word.split("-"):
+            if any(part[i].islower() and part[i + 1].isupper() for i in range(len(part) - 1)):
+                return False
     return True
 
 
@@ -140,16 +150,41 @@ def parse_llm_output(text: str) -> list[LlmSection]:
     for line in lines:
         stripped = line.strip()
 
-        # Before the first real section, accept only _ALL_KNOWN headings.
-        # The title-case fallback is suppressed here to avoid false positives
-        # on the candidate name or job title that appear at the top of the
-        # resume (e.g. "Oli Treadwell", "Senior Software Engineer").
-        # After the first section is found, use the full heuristic so that
-        # unusual section names (e.g. "Additional Experience") are recognised.
+        # Before the first real section, accept only _ALL_KNOWN headings plus
+        # ALL-CAPS 3+-word lines.  The title-case fallback is suppressed to
+        # avoid false positives on "Firstname Lastname" at the top of the
+        # resume.  ALL-CAPS lines of 3+ words (e.g. "SENIOR SOFTWARE DEVELOPER")
+        # are safe to accept: candidate names are rarely 3+ words in ALL-CAPS.
+        # After the first section, use the full heuristic so that unusual section
+        # names (e.g. "Additional Experience") are recognised.
         if found_section:
-            is_heading = _is_section_heading(line)
+            # Inside an experience section that has no role headers yet (body-only
+            # experience, e.g. non-standard format with role titles on plain lines),
+            # suppress the title-case fallback.  Only _ALL_KNOWN names end the section;
+            # this prevents 2-word role titles ("Project Coordinator") from being
+            # mis-recognised as section headings.
+            in_roleless_experience = (
+                current is not None
+                and current.semantic_type == "experience"
+                and cur_role is None
+                and not current.roles
+            )
+            if in_roleless_experience:
+                is_heading = bool(stripped) and stripped.lower() in _ALL_KNOWN
+            else:
+                is_heading = _is_section_heading(line)
         else:
-            is_heading = bool(stripped) and stripped.lower() in _ALL_KNOWN
+            s_lower = stripped.lower()
+            is_heading = bool(stripped) and (
+                s_lower in _ALL_KNOWN
+                or (
+                    stripped == stripped.upper()
+                    and stripped.replace(" ", "").replace("-", "").isalpha()
+                    and len(stripped.split()) >= 3
+                    and not _YEAR_RE.search(stripped)
+                    and len(stripped) <= 60
+                )
+            )
 
         if is_heading:
             found_section = True

@@ -59,9 +59,13 @@ def _set_para_text(p_elem, text: str) -> None:
     has a similar structure to the original.
 
     If no runs exist a minimal w:r/w:t structure is created.
-    """
-    _strip_section_break(p_elem)
 
+    Note: w:br elements in the XML proto already provide in-paragraph line
+    breaks.  Strip any '\\n' characters from *text* before distributing so
+    that the line break is not written twice (once into w:t and once via w:br).
+    """
+    # w:br elements provide the line break; avoid doubling by stripping \n from text.
+    text = text.replace("\n", "")
     all_runs: list = []
     for child in p_elem:
         tag = child.tag
@@ -91,10 +95,23 @@ def _set_para_text(p_elem, text: str) -> None:
         return
 
     # Collect original text length of each run (used for proportional split).
+    # Runs whose text is entirely whitespace/non-breaking-space are "structural
+    # spacers" (e.g. a leading '\xa0' indent run).  They keep their original text
+    # and are excluded from content distribution so they don't steal content
+    # characters from adjacent bold/styled runs.
+    # Only non-breaking / zero-width characters count as structural spacers.
+    # Regular spaces and tabs are content and must participate in distribution.
+    _WS = frozenset("\xa0\u00ad\u2009\u200b\u200c\u200d\ufeff")
     orig_lens: list[int] = []
-    for r in all_runs:
-        chars = sum(len(e.text or "") for e in r.findall(f"{{{_W}}}t"))
+    ws_text: dict[int, str] = {}   # index → original text for whitespace-only runs
+    for i, r in enumerate(all_runs):
+        t_elems = r.findall(f"{{{_W}}}t")
+        run_text = "".join(e.text or "" for e in t_elems)
+        chars = len(run_text)
         chars += sum(len(e.text or "") for e in r.findall(f"{{{_W}}}delText"))
+        if chars > 0 and all(c in _WS for c in run_text):
+            ws_text[i] = run_text
+            chars = 0   # exclude from proportional distribution
         orig_lens.append(chars)
     total_orig = sum(orig_lens)
 
@@ -105,22 +122,30 @@ def _set_para_text(p_elem, text: str) -> None:
         for t in r.findall(f"{{{_W}}}delText"):
             t.text = ""
 
+    # Restore whitespace-only runs to their original text immediately.
+    for i, r in enumerate(all_runs):
+        if i in ws_text:
+            _set_run_text(r, ws_text[i])
+
     if total_orig == 0 or len(all_runs) == 1:
         # No distribution info or single run — write everything to first run.
         _set_run_text(all_runs[0], text)
         return
 
-    # Distribute new text proportionally across runs, matching the original
-    # character-length ratios.  This preserves per-run formatting (bold, caps,
-    # colour, etc.) for paragraphs whose text structure resembles the original.
+    # Distribute new text proportionally across content runs only.
+    content_indices = [i for i in range(len(all_runs)) if i not in ws_text]
+    last_ci = content_indices[-1]
+
     assigned = 0
     cumulative = 0
     for i, (r, olen) in enumerate(zip(all_runs, orig_lens)):
-        if i == len(all_runs) - 1:
+        if i in ws_text:
+            continue   # already restored above
+        if i == last_ci:
             portion = text[assigned:]
         else:
             cumulative += olen
-            end = round(len(text) * cumulative / total_orig)
+            end = round(len(text) * cumulative / total_orig) if total_orig else 0
             portion = text[assigned:end]
             assigned = end
         _set_run_text(r, portion)

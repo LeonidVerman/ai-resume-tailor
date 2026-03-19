@@ -335,7 +335,7 @@ class ResumeDocument:
         all_paras: list[ParaModel] = list(header_paras)
         for section in sections:
             all_paras.append(section.heading)
-            if section.semantic_type == "experience":
+            if section.semantic_type == "experience" and section.roles:
                 for role in section.roles:
                     all_paras.append(role.header)
                     all_paras.extend(role.meta_lines)

@@ -103,7 +103,7 @@ def _detect_nonstandard_docx(path: Path) -> str | None:
     # blob so the visual layout is preserved and the large "other" content is still
     # correctly written to the output (it's in all_paras in the right order).
     if not has_table_blocks:
-        large_other = [s for s in sections if s.semantic_type == "other" and len(s.body_paras) > 20]
+        large_other = [s for s in sections if s.semantic_type == "other" and len(s.body_paras) > 17]
         if large_other:
             biggest = max(large_other, key=lambda s: len(s.body_paras))
             return (
@@ -111,19 +111,33 @@ def _detect_nonstandard_docx(path: Path) -> str | None:
                 f"({len(biggest.body_paras)} paras) — two-column table layout"
             )
 
-    # Experience section exists but has zero parsed roles.  _doc_to_llm_text
-    # emits nothing for experience sections without roles, so the content is lost
-    # in the compile pipeline and the roundtrip will always fail on text.
-    # This check runs even when TableBlocks are present.
+    # Experience section whose body paragraphs contain a recognized section name
+    # (e.g. "Education" as a body line of "Professional Experience").  This happens
+    # in two-column templates where the sidebar column's section labels are read
+    # into the main column's body content.
+    _KNOWN_SECTION_NAMES = frozenset({
+        "experience", "work experience", "professional experience",
+        "education", "skills", "technical skills", "summary", "professional summary",
+        "certifications", "projects", "awards", "languages",
+    })
     for s in sections:
-        if s.semantic_type == "experience" and s.body_paras and not s.roles:
-            return "experience section has content but no parsed roles — non-standard role format"
+        if s.semantic_type == "experience" and not s.roles:
+            for p in s.body_paras:
+                if p.text.strip().lower() in _KNOWN_SECTION_NAMES:
+                    return (
+                        f"experience body contains section name '{p.text.strip()}' "
+                        "— two-column table layout"
+                    )
 
-    # Empty experience section immediately followed by many small "other" sections.
-    # This happens in two-column tables where each role occupies its own table row
-    # (job title + body), creating separate "other" sections for each role.
+    # Empty (or near-empty) experience section immediately followed by many small
+    # "other" sections.  This happens in two-column tables where each role occupies
+    # its own table row (job title + body), creating separate "other" sections for
+    # each role.  "Near-empty" means ≤ 2 non-empty body paragraphs: the section
+    # picked up a stray date or location line but the actual role content is
+    # elsewhere.
     for i, s in enumerate(sections):
-        if s.semantic_type == "experience" and not s.body_paras and not s.roles:
+        non_empty_body = [p for p in s.body_paras if p.text.strip()]
+        if s.semantic_type == "experience" and not s.roles and len(non_empty_body) <= 2:
             following_small_other = [
                 ns for ns in sections[i + 1:]
                 if ns.semantic_type == "other" and 0 < len(ns.body_paras) <= 8
@@ -173,22 +187,41 @@ def _doc_to_llm_text(doc) -> str:
     This is the 'identity pass': if we feed this text back through the compiler
     we should get a document whose content matches the original exactly.
     """
-    from tailor.compiler.models import ResumeDocument
+    from tailor.compiler.models import ResumeDocument, TableBlock
+
+    has_table_blocks = (doc.body_items is not None and
+                        any(isinstance(i, TableBlock) for i in doc.body_items))
 
     lines: list[str] = []
     for section in doc.sections:
+        # Skip "other" type sections entirely.  apply_tailored keeps them verbatim
+        # (they are unmatched by semantic type and LLM heading lookup), so the
+        # identity roundtrip still produces the correct output.  Emitting them
+        # causes problems: unrecognizable titles (e.g. "Nat'l Community College",
+        # "Proficiency") are absorbed as body lines into the preceding section by
+        # parse_llm_output, producing extra cloned paragraphs.
+        if section.semantic_type == "other":
+            continue
+
         lines.append(section.title)
         if section.semantic_type == "experience":
-            for role in section.roles:
-                lines.append(role.header.text)
-                for m in role.meta_lines:
-                    lines.append(m.text)
-                for b in role.bullets:
-                    # Normalise: strip any leading "- " the template already has
-                    txt = b.text
-                    if txt.startswith("- "):
-                        txt = txt[2:]
-                    lines.append(f"- {txt}")
+            if section.roles:
+                for role in section.roles:
+                    lines.append(role.header.text)
+                    for m in role.meta_lines:
+                        lines.append(m.text)
+                    for b in role.bullets:
+                        # Normalise: strip any leading "- " the template already has
+                        txt = b.text
+                        if txt.startswith("- "):
+                            txt = txt[2:]
+                        lines.append(f"- {txt}")
+            elif not has_table_blocks:
+                # No parsed roles — emit body_paras so the content survives the roundtrip.
+                # Only do this for non-table docs; TableBlock docs preserve content via blob.
+                for p in section.body_paras:
+                    if p.text.strip():
+                        lines.append(p.text)
         else:
             for p in section.body_paras:
                 if p.text.strip():

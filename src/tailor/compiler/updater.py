@@ -197,26 +197,36 @@ def _update_body_section(orig: ResumeSection, llm: LlmSection) -> ResumeSection:
 
     arch = non_empty[0] if non_empty else orig.heading
 
-    new_body: list[ParaModel] = []
+    # Build updated versions of each non-empty para (paired by position).
+    updated: list[ParaModel] = []
     for i, line in enumerate(llm_lines):
         if i < len(non_empty):
-            new_body.append(non_empty[i].with_text(line))
+            updated.append(non_empty[i].with_text(line))
         else:
-            new_body.append(arch.clone_as(line, "paragraph"))
+            updated.append(arch.clone_as(line, "paragraph"))
 
-    # Preserve any leading/trailing empty paras from original for spacing
-    leading_empty = []
+    # Rebuild body_paras preserving empty paragraphs at their original positions.
+    # This keeps inter-role spacing intact when experience sections are treated
+    # as body sections (no parsed roles).
+    new_body: list[ParaModel] = []
+    ne_cursor = 0
     for p in orig.body_paras:
         if not p.text.strip():
-            leading_empty.append(p)
-        else:
-            break
+            new_body.append(p)
+        elif ne_cursor < len(updated):
+            new_body.append(updated[ne_cursor])
+            ne_cursor += 1
+        # else: LLM produced fewer lines — drop the trailing original paras
+
+    # Append any extra LLM lines beyond the original non-empty count.
+    for i in range(len(non_empty), len(llm_lines)):
+        new_body.append(updated[i])
 
     return ResumeSection(
         title=llm.heading,
         heading=orig.heading.with_text(llm.heading),
         semantic_type=orig.semantic_type,
-        body_paras=leading_empty + new_body,
+        body_paras=new_body,
         roles=[],
     )
 
@@ -278,7 +288,11 @@ def apply_tailored(
             if llm_section is None:
                 new_sections.append(orig_section)
             elif orig_section.semantic_type == "experience":
-                new_sections.append(_update_experience_section(orig_section, llm_section))
+                if orig_section.roles or llm_section.roles:
+                    new_sections.append(_update_experience_section(orig_section, llm_section))
+                else:
+                    # No roles on either side — treat as body section to avoid content loss
+                    new_sections.append(_update_body_section(orig_section, llm_section))
             else:
                 new_sections.append(_update_body_section(orig_section, llm_section))
 
@@ -308,9 +322,15 @@ def apply_tailored(
                 # 'other'-type section not output by LLM — keep verbatim
                 verbatim_sections.append(orig_section)
             elif orig_section.semantic_type == "experience":
-                heading_to_section[llm_section.heading.lower()] = (
-                    _update_experience_section(orig_section, llm_section)
-                )
+                if orig_section.roles or llm_section.roles:
+                    heading_to_section[llm_section.heading.lower()] = (
+                        _update_experience_section(orig_section, llm_section)
+                    )
+                else:
+                    # No roles on either side — treat as body section to avoid content loss
+                    heading_to_section[llm_section.heading.lower()] = (
+                        _update_body_section(orig_section, llm_section)
+                    )
             else:
                 heading_to_section[llm_section.heading.lower()] = (
                     _update_body_section(orig_section, llm_section)
@@ -332,7 +352,7 @@ def apply_tailored(
     all_paras: list[ParaModel] = list(original.header_paras)
     for section in new_sections:
         all_paras.append(section.heading)
-        if section.semantic_type == "experience":
+        if section.semantic_type == "experience" and section.roles:
             for role in section.roles:
                 all_paras.append(role.header)
                 all_paras.extend(role.meta_lines)
