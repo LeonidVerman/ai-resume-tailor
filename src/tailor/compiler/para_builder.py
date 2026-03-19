@@ -73,14 +73,18 @@ def build_para_element(pm: ParaModel, doc_part=None) -> Any:
     p = etree.Element(f"{{{_W}}}p")
     pPr = etree.SubElement(p, f"{{{_W}}}pPr")
 
-    # Bullet paragraphs must carry a "ListBullet" pStyle so that docx_parser
-    # can re-classify them as "bullet" semantic when the rendered DOCX is
-    # re-parsed.  docx_parser._infer_semantic checks 'list' in style_name, and
-    # style_map.get(sid, sid) falls back to the raw ID when the style is absent
-    # from the template — so "ListBullet" → style_name="ListBullet" → matches.
+    # Bullet paragraphs: add pStyle "ListBullet" so docx_parser can re-classify
+    # them on roundtrip, plus explicit w:numPr so Word/LibreOffice renders the
+    # bullet marker visually.  numId=2 maps to abstractNumId=1 (numFmt=bullet,
+    # level 0) in both RESUME_TEMPLATE and the default python-docx template.
     if pm.semantic == "bullet":
         pStyle_elem = etree.SubElement(pPr, f"{{{_W}}}pStyle")
         pStyle_elem.set(f"{{{_W}}}val", "ListBullet")
+        numPr = etree.SubElement(pPr, f"{{{_W}}}numPr")
+        ilvl_e = etree.SubElement(numPr, f"{{{_W}}}ilvl")
+        ilvl_e.set(f"{{{_W}}}val", "0")
+        numId_e = etree.SubElement(numPr, f"{{{_W}}}numId")
+        numId_e.set(f"{{{_W}}}val", "2")
 
     pp: ParagraphProfile | None = pm.paragraph_profile
 
@@ -110,6 +114,10 @@ def build_para_element(pm: ParaModel, doc_part=None) -> Any:
             shd.set(f"{{{_W}}}color", "auto")
             shd.set(f"{{{_W}}}fill", pp.background_color)
 
+    # Inline icon image BEFORE text (PDF-sourced sidebar icons like phone/email/location)
+    if pp is not None and pp.inline_image_bytes and doc_part is not None:
+        _add_image_run(p, pp.inline_image_bytes, pp.inline_image_size_pt, doc_part)
+
     # Run with text
     if pm.text:
         r = etree.SubElement(p, f"{{{_W}}}r")
@@ -138,9 +146,5 @@ def build_para_element(pm: ParaModel, doc_part=None) -> Any:
         t.text = pm.text
         if pm.text[0] == " " or pm.text[-1] == " ":
             t.set(_XML_SPACE, "preserve")
-
-    # Inline icon image (PDF-sourced sidebar icons like phone/email/location)
-    if pp is not None and pp.inline_image_bytes and doc_part is not None:
-        _add_image_run(p, pp.inline_image_bytes, pp.inline_image_size_pt, doc_part)
 
     return p
