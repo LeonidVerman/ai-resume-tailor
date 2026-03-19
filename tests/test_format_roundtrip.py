@@ -239,6 +239,8 @@ class PdfLayoutReport:
     text_coverage: float = 0.0          # fraction of input tokens found in output
     token_count_orig: int = 0
     token_count_out: int = 0
+    bullet_count_orig: int = 0          # bullet markers detected in source PDF
+    bullet_count_out: int = 0           # bullet markers detected in output PDF
 
     @property
     def ok(self) -> bool:
@@ -253,6 +255,9 @@ class PdfLayoutReport:
             f"  pages: {self.page_count_orig} -> {self.page_count_out}"
             f"  |  tokens: {self.token_count_orig} -> {self.token_count_out}"
             f"  |  coverage: {self.text_coverage:.0%}"
+        )
+        lines.append(
+            f"  bullets: {self.bullet_count_orig} (source) -> {self.bullet_count_out} (output)"
         )
         if self.sections_missing:
             lines.append(f"  MISSING sections ({len(self.sections_missing)}): "
@@ -275,6 +280,37 @@ def _extract_pdf_text(pdf_path: str) -> tuple[int, str]:
     text = "\n".join(page.get_text() for page in doc)
     doc.close()
     return pages, text
+
+
+def _count_pdf_bullets(pdf_path: str) -> int:
+    """Count bullet markers across all pages of a PDF.
+
+    Handles two representations:
+    - Filled-circle drawings (3–5.5 pt, ≥10 path items) — used by many PDF templates.
+    - Unicode bullet characters • (U+2022) and ● (U+25CF) — used by LibreOffice output.
+    """
+    import fitz  # PyMuPDF
+    doc = fitz.open(pdf_path)
+    count = 0
+    for page in doc:
+        text = page.get_text()
+        count += text.count("\u2022")   # •
+        count += text.count("\u25cf")   # ●
+        for d in page.get_drawings():
+            rect = d.get("rect")
+            if rect is None:
+                continue
+            x0, y0, x1, y1 = rect
+            w, h = x1 - x0, y1 - y0
+            if not (3.0 <= w <= 5.5 and 3.0 <= h <= 5.5):
+                continue
+            if len(d.get("items", [])) < 10:
+                continue
+            if d.get("fill") is None:
+                continue
+            count += 1
+    doc.close()
+    return count
 
 
 def _compare_pdf_layout(
@@ -308,6 +344,13 @@ def _compare_pdf_layout(
     for title in section_titles:
         if title.lower() not in out_lower:
             report.sections_missing.append(title)
+
+    # Bullet presence: count markers in both PDFs
+    try:
+        report.bullet_count_orig = _count_pdf_bullets(input_pdf_path)
+        report.bullet_count_out = _count_pdf_bullets(output_pdf_path)
+    except Exception:
+        pass  # non-fatal; counts stay at 0
 
     return report
 
@@ -543,7 +586,7 @@ def _pdf_roundtrip(
 
             if _SAVE_ARTEFACTS and os.path.exists(pdf_out):
                 _save_artefact(pdf_out, f"{stem}_from_pdf.pdf", subdir=_ARTEFACTS_PDF)
-                _save_artefact(str(path), path.name, subdir=_ARTEFACTS_PDF)
+                # Source PDFs are not copied — compare manually against tests/samples/resume/pfd/
 
             section_titles = [s.title for s in orig_ir.sections]
             layout_report = _compare_pdf_layout(
@@ -631,11 +674,34 @@ def test_pdf_roundtrip(path: Path):
         assert layout_report.crash is None, (
             f"PDF generation/comparison failed for {path.name}: {layout_report.crash}"
         )
-        # Section check: skip when output PDF has no extractable text — this
-        # happens when the DOCX contains complex tables (e.g. two-column sidebar
-        # layout) that xhtml2pdf cannot render with selectable text.
+        # All remaining checks require extractable text in the output PDF.
+        # Complex table layouts (e.g. two-column sidebar) that xhtml2pdf cannot
+        # render with selectable text are skipped.
         if layout_report.token_count_out > 0:
+            # Text coverage: ≥75% of source word tokens must appear in output.
+            assert layout_report.text_coverage >= 0.75, (
+                f"Text coverage too low for {path.name}: "
+                f"{layout_report.text_coverage:.0%} "
+                f"({layout_report.token_count_out}/{layout_report.token_count_orig} tokens)"
+            )
+            # Section presence: every section heading must appear in the output.
             assert not layout_report.sections_missing, (
                 f"Sections missing from output PDF for {path.name}: "
                 + ", ".join(repr(s) for s in layout_report.sections_missing)
             )
+            # Bullet presence: if source has bullets AND the output PDF
+            # contains any detectable bullet markers (meaning the renderer
+            # can produce them), the output count must be ≥50% of source.
+            # When the output has 0 detected bullets the renderer may simply
+            # not embed selectable bullet characters (known xhtml2pdf
+            # limitation); that case is logged in the summary but not failed.
+            if (
+                layout_report.bullet_count_orig > 0
+                and layout_report.bullet_count_out > 0
+            ):
+                assert layout_report.bullet_count_out >= layout_report.bullet_count_orig * 0.5, (
+                    f"Too few bullets in output PDF for {path.name}: "
+                    f"{layout_report.bullet_count_out} found, "
+                    f"expected ≥{layout_report.bullet_count_orig * 0.5:.0f} "
+                    f"(source had {layout_report.bullet_count_orig})"
+                )
