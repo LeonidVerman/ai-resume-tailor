@@ -73,13 +73,16 @@ def build_para_element(pm: ParaModel, doc_part=None) -> Any:
     p = etree.Element(f"{{{_W}}}p")
     pPr = etree.SubElement(p, f"{{{_W}}}pPr")
 
-    # Bullet paragraphs: add pStyle "ListBullet" so docx_parser can re-classify
-    # them on roundtrip, plus explicit w:numPr so Word/LibreOffice renders the
-    # bullet marker visually.  numId=2 maps to abstractNumId=1 (numFmt=bullet,
-    # level 0) in both RESUME_TEMPLATE and the default python-docx template.
+    # Bullet paragraphs: use "ListParagraph" (exists in RESUME_TEMPLATE, styleId
+    # maps to display-name "List Paragraph" so docx_parser detects 'list' on
+    # roundtrip) plus explicit w:numPr for the visual bullet marker.
+    # "ListBullet" is NOT defined in RESUME_TEMPLATE; LibreOffice falls back to
+    # its own built-in "List Bullet" style which overrides our w:numPr.
+    # numId=2 → abstractNumId=1 (numFmt=bullet, •, Calibri, no tabs) after
+    # _patch_bullet_numbering runs in render_docx.
     if pm.semantic == "bullet":
         pStyle_elem = etree.SubElement(pPr, f"{{{_W}}}pStyle")
-        pStyle_elem.set(f"{{{_W}}}val", "ListBullet")
+        pStyle_elem.set(f"{{{_W}}}val", "ListParagraph")
         numPr = etree.SubElement(pPr, f"{{{_W}}}numPr")
         ilvl_e = etree.SubElement(numPr, f"{{{_W}}}ilvl")
         ilvl_e.set(f"{{{_W}}}val", "0")
