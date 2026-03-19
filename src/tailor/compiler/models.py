@@ -35,6 +35,10 @@ class ParagraphProfile:
     text_color: str | None = None        # hex RRGGBB, no '#' (e.g. 'ffffff')
     background_color: str | None = None  # hex RRGGBB paragraph shading fill
     column_id: str | None = None         # 'left' | 'right' | None
+    # Inline icon image prepended to the paragraph (PDF vector drawings rendered
+    # to PNG).  Not serialised — runtime-only; ignored if None.
+    inline_image_bytes: bytes | None = None  # raw PNG bytes
+    inline_image_size_pt: float = 0.0        # icon square size in pt
 
     def to_dict(self) -> dict:
         return {
@@ -49,6 +53,7 @@ class ParagraphProfile:
             "text_color": self.text_color,
             "background_color": self.background_color,
             "column_id": self.column_id,
+            # inline_image_bytes is NOT serialised (runtime-only)
         }
 
     @classmethod

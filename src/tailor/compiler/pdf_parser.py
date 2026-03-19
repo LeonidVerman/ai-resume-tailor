@@ -61,6 +61,114 @@ _HF_PAGE2_PLUS_ZONE = 0.25  # top 25% of pages 2+ — match against page 1 lines
 
 
 # ---------------------------------------------------------------------------
+# Font normalization
+# ---------------------------------------------------------------------------
+
+# Ordered list of (normalised_key, standard_windows_font) pairs.
+# Keys are lowercase with spaces/hyphens removed.  The first match wins.
+# Purpose: map non-standard PDF fonts to the nearest standard Windows font so
+# that the rendered DOCX looks reasonable even without the original font.
+# Fonts not matched here return None → the document default font is used.
+_FONT_NORMALIZATION_MAP: list[tuple[str, str]] = [
+    # Standard fonts — pass through as-is
+    ("calibri",     "Calibri"),
+    ("arial",       "Arial"),
+    ("segoeui",     "Segoe UI"),
+    ("verdana",     "Verdana"),
+    ("tahoma",      "Tahoma"),
+    ("trebuchet",   "Trebuchet MS"),
+    ("georgia",     "Georgia"),
+    ("cambria",     "Cambria"),
+    ("constantia",  "Constantia"),
+    ("courier",     "Courier New"),
+    ("consolas",    "Consolas"),
+    ("timesnewroman", "Times New Roman"),
+    # Humanist / geometric sans-serif → Calibri (similar width metrics)
+    ("opensans",    "Calibri"),
+    ("sourcesans",  "Calibri"),
+    ("nunitosans",  "Calibri"),
+    ("nunito",      "Calibri"),
+    ("lato",        "Calibri"),
+    ("ubuntu",      "Calibri"),
+    ("overpass",    "Calibri"),
+    ("cabin",       "Calibri"),
+    ("muli",        "Calibri"),
+    ("mulish",      "Calibri"),
+    ("karla",       "Calibri"),
+    ("livvic",      "Calibri"),
+    ("outfit",      "Calibri"),
+    ("inter",       "Calibri"),
+    ("barlow",      "Calibri"),
+    ("poppins",     "Calibri"),
+    ("figtree",     "Calibri"),
+    ("dmsans",      "Calibri"),
+    ("worksans",    "Calibri"),
+    ("jost",        "Calibri"),
+    ("manrope",     "Calibri"),
+    ("rubik",       "Calibri"),
+    ("hind",        "Calibri"),
+    ("noto",        "Calibri"),
+    ("montserrat",  "Calibri"),
+    ("raleway",     "Calibri"),
+    ("josefinsans", "Calibri"),
+    ("exo",         "Calibri"),
+    ("prompt",      "Calibri"),
+    # Classic sans-serif → Arial
+    ("helvetica",   "Arial"),
+    ("arimo",       "Arial"),
+    ("myriad",      "Arial"),
+    ("franklin",    "Arial"),
+    ("gill",        "Arial"),
+    ("impact",      "Arial"),
+    # Serif → Times New Roman or Georgia
+    ("times",       "Times New Roman"),
+    ("garamond",    "Times New Roman"),
+    ("palatino",    "Times New Roman"),
+    ("merriweather","Times New Roman"),
+    ("ebgaramond",  "Times New Roman"),
+    ("cormorant",   "Times New Roman"),
+    ("lora",        "Georgia"),
+    ("playfair",    "Georgia"),
+    ("libre",       "Georgia"),
+    # Monospace
+    ("inconsolata", "Courier New"),
+    ("sourcecodepro","Consolas"),
+    ("firacode",    "Consolas"),
+    ("dejavusansmono","Courier New"),
+]
+
+# Regex to strip trailing style qualifiers like "-Bold", "_Italic", "-Regular"
+_FONT_STYLE_SUFFIX_RE = re.compile(
+    r"[-_\s]*(bold|italic|oblique|regular|medium|light|thin|condensed|"
+    r"expanded|narrow|roman|semibold|demibold|black|heavy|ultra|extra|"
+    r"pro|display|text|sc|mt|new|sans|serif).*",
+    re.IGNORECASE,
+)
+
+
+def _normalize_font_name(raw: str | None) -> str | None:
+    """Map a PDF font name to a standard Windows-compatible font name.
+
+    Strips embedded-subset prefixes (e.g. 'ABCDEF+FontName') and style
+    suffixes, then looks up the base name in _FONT_NORMALIZATION_MAP.
+    Returns None for unknown fonts so the caller can fall back to the
+    document's default font rather than using an unmapped custom name.
+    """
+    if not raw:
+        return None
+    # Strip 6-char uppercase subset prefix common in embedded PDFs
+    if len(raw) > 7 and raw[6] == "+" and raw[:6].isupper():
+        raw = raw[7:]
+    # Normalise: strip style suffixes, then lowercase and remove non-alpha
+    base = _FONT_STYLE_SUFFIX_RE.sub("", raw)
+    norm = re.sub(r"[^a-zA-Z]", "", base).lower()
+    for key, mapped in _FONT_NORMALIZATION_MAP:
+        if key in norm:
+            return mapped
+    return None  # unknown font → use document default
+
+
+# ---------------------------------------------------------------------------
 # Header/footer detection
 # ---------------------------------------------------------------------------
 
@@ -323,6 +431,69 @@ def _extract_section_bg_rects(
     return result
 
 
+def _extract_icon_map(
+    page, split_x: float | None
+) -> dict[tuple[int, int], bytes]:
+    """Detect small icon-like vector drawings in the sidebar and render to PNG.
+
+    Returns a dict mapping (y0_rounded, y1_rounded) → PNG bytes for each
+    icon found.  Only drawings in the left column (x0 < split_x) are
+    considered.  Drawings that are large (> 20pt tall or wide) or very
+    simple (≤ 3 path items — thin rules/lines) are excluded.
+
+    The PNG is rendered at 3× scale for crispness, then stored as bytes.
+    """
+    result: dict[tuple[int, int], bytes] = {}
+    if split_x is None:
+        return result
+    try:
+        drawings = page.get_drawings()
+    except Exception:
+        return result
+
+    for d in drawings:
+        rect = d.get("rect")
+        if rect is None:
+            continue
+        x0, y0, x1, y1 = rect
+        w, h = x1 - x0, y1 - y0
+        # Must be in the left column, small (icon-sized), and complex (not a rule)
+        if x0 >= split_x:
+            continue
+        if w > 20 or h > 20 or w < 6 or h < 6:
+            continue
+        if len(d.get("items", [])) <= 3:
+            continue
+        try:
+            # Render a small region of the page at 3× scale to capture the icon
+            import fitz
+            scale = 3.0
+            clip = fitz.Rect(x0 - 1, y0 - 1, x1 + 1, y1 + 1)
+            mat = fitz.Matrix(scale, scale)
+            pix = page.get_pixmap(matrix=mat, clip=clip, alpha=False)
+            png_bytes = pix.tobytes("png")
+        except Exception:
+            continue
+
+        key = (round(y0), round(y1))
+        # Keep only one icon per y-band (prefer the larger one)
+        if key not in result:
+            result[key] = png_bytes
+
+    return result
+
+
+def _match_icon(
+    icon_map: dict[tuple[int, int], bytes], para_y0: float, para_y1: float
+) -> bytes | None:
+    """Return icon PNG bytes whose y-range overlaps the paragraph's y-range."""
+    for (iy0, iy1), png in icon_map.items():
+        # Overlap check with a small tolerance
+        if iy0 <= para_y1 + 2 and iy1 >= para_y0 - 2:
+            return png
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Layout extraction
 # ---------------------------------------------------------------------------
@@ -358,7 +529,8 @@ def _extract_layout(doc) -> LayoutProfile:
                 if sz:
                     size_counter[round(sz, 1)] += 1
 
-    default_font = font_counter.most_common(1)[0][0] if font_counter else "Calibri"
+    raw_default_font = font_counter.most_common(1)[0][0] if font_counter else "Calibri"
+    default_font = _normalize_font_name(raw_default_font) or "Calibri"
     default_size = size_counter.most_common(1)[0][0] if size_counter else 11.0
 
     # Two-column detection on the first page
@@ -426,7 +598,8 @@ def _dominant_font_info(spans: list[dict]) -> dict:
             italic_votes += 1
         total += 1
 
-    font_name = font_counter.most_common(1)[0][0] if font_counter else None
+    raw_font = font_counter.most_common(1)[0][0] if font_counter else None
+    font_name = _normalize_font_name(raw_font)  # None if unrecognised → use doc default
     font_size_pt = size_counter.most_common(1)[0][0] if size_counter else None
     bold = bold_votes > total / 2 if total else False
     italic = italic_votes > total / 2 if total else False
@@ -505,6 +678,9 @@ def _extract_paragraphs(
 
         # Section heading background bands on this page (for background_color).
         section_bg_rects = _extract_section_bg_rects(page) if layout_split_x is not None else []
+
+        # Icon drawings in the left sidebar (for inline_image_bytes).
+        icon_map = _extract_icon_map(page, layout_split_x)
 
         # Two-column detection: reorder blocks so the left column is read
         # completely before the right column.  PyMuPDF's default ordering is
@@ -625,6 +801,15 @@ def _extract_paragraphs(
                 line_text_color = (
                     _dominant_text_color(line_spans) if line_spans else block_text_color
                 )
+                # Attach icon image to first line only (line_idx == 0) for
+                # left-column paragraphs that coincide with a sidebar icon.
+                icon_png: bytes | None = None
+                icon_size_pt: float = 0.0
+                if line_idx == 0 and col_id == "left" and icon_map:
+                    icon_png = _match_icon(icon_map, y0, y1)
+                    if icon_png is not None:
+                        icon_size_pt = min(y1 - y0, x1_blk - x0)
+
                 profile = ParagraphProfile(
                     font_name=line_fi["font_name"],
                     font_size_pt=line_fi["font_size_pt"],
@@ -635,6 +820,8 @@ def _extract_paragraphs(
                     text_color=line_text_color,
                     background_color=block_bg_color,
                     column_id=col_id,
+                    inline_image_bytes=icon_png,
+                    inline_image_size_pt=icon_size_pt,
                 )
                 pm = ParaModel(
                     text=line_text,
@@ -646,7 +833,12 @@ def _extract_paragraphs(
                 # Normalize bullet text: strip leading bullet prefix so the IR
                 # stores bare content, consistent with DOCX-parsed paragraphs.
                 if pm.semantic == "bullet":
-                    for _pfx in ("- ", "• ", "· ", "– ", "* "):
+                    _BULLET_STRIP_PREFIXES = (
+                        "- ", "• ", "· ", "– ", "* ", "▪ ", "▸ ", "◦ ",
+                        "→ ", "› ", "● ", "○ ", "■ ", "□ ", "◆ ", "◇ ",
+                        "✓ ", "✔ ", "✗ ", "✘ ",
+                    )
+                    for _pfx in _BULLET_STRIP_PREFIXES:
                         if pm.text.startswith(_pfx):
                             pm.text = pm.text[len(_pfx):]
                             break
@@ -699,8 +891,12 @@ def _infer_semantic(pm: ParaModel) -> str:
     if "|" in text and not text.startswith(("-", "•")):
         return "role_header"
 
-    # Bullet: starts with bullet character or is indented list item
-    if text.startswith(("- ", "• ", "· ", "– ", "* ")):
+    # Bullet: starts with a bullet/list prefix character (common and extended set)
+    _BULLET_PREFIXES = (
+        "- ", "• ", "· ", "– ", "* ", "▪ ", "▸ ", "◦ ", "→ ", "› ",
+        "● ", "○ ", "■ ", "□ ", "◆ ", "◇ ", "✓ ", "✔ ", "✗ ", "✘ ",
+    )
+    if text.startswith(_BULLET_PREFIXES):
         return "bullet"
 
     # Date/location meta line: contains a year, short, no pipe

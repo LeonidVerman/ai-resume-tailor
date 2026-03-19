@@ -118,6 +118,31 @@ def _para_spacing(para):
     return (before[0], after[0], lh[0])
 
 
+def _get_cell_bg(tc_elem) -> str | None:
+    """Return fill color (6-char hex RRGGBB) from a w:tc element, or None."""
+    tcPr = tc_elem.find(f"{{{_W}}}tcPr")
+    if tcPr is None:
+        return None
+    shd = tcPr.find(f"{{{_W}}}shd")
+    if shd is None:
+        return None
+    fill = shd.get(f"{{{_W}}}fill", "")
+    if fill and fill.lower() not in ("auto", "none") and len(fill) == 6:
+        return fill
+    return None
+
+
+def _get_tbl_col_widths_twips(tbl_elem) -> list[int]:
+    """Return per-column widths in twips from a w:tbl element's w:tblGrid."""
+    tblGrid = tbl_elem.find(f"{{{_W}}}tblGrid")
+    if tblGrid is None:
+        return []
+    return [
+        int(col.get(f"{{{_W}}}w", "1440"))
+        for col in tblGrid.findall(f"{{{_W}}}gridCol")
+    ]
+
+
 def _docx_to_html(docx_path, font_face_css=""):
     """Convert a .docx to an HTML string, preserving template paragraph styles.
 
@@ -126,11 +151,13 @@ def _docx_to_html(docx_path, font_face_css=""):
       Heading 2          → <h2>  (section headers)
       Normal + bold      → <p class="exp-header">  (experience entry headers)
       Body Text          → <p class="body-text">   (dates, contact)
-      List Paragraph     → <p class="bullet-item"> (bullet points)
+      List Paragraph / ListBullet → <p class="bullet-item"> (bullet points)
       Normal             → <p>
     Run-level bold/italic/color/size is preserved.
     Paragraph alignment, indentation, and spacing are read from the paragraph
     XML (falling back to the style chain) and applied as inline styles.
+    Table elements (e.g. two-column PDF-sourced layout) are rendered as HTML
+    tables so their content is not silently dropped.
     """
     from docx.enum.text import WD_ALIGN_PARAGRAPH
 
@@ -232,6 +259,19 @@ def _docx_to_html(docx_path, font_face_css=""):
             except Exception:
                 pass
 
+        # Paragraph background shading (used by PDF-sourced DOCX paragraphs)
+        para_bg: str | None = None
+        try:
+            pPr = para._p.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                shd = pPr.find(f"{{{_W}}}shd")
+                if shd is not None:
+                    fill = shd.get(f"{{{_W}}}fill", "")
+                    if fill and fill.lower() not in ("auto", "none") and len(fill) == 6:
+                        para_bg = fill
+        except Exception:
+            pass
+
         def _style_attr(use_padding=False):
             css = {}
             a = _ALIGN_MAP.get(align)
@@ -257,6 +297,8 @@ def _docx_to_html(docx_path, font_face_css=""):
                 css["line-height"] = (
                     str(line_h) if isinstance(line_h, str) else f"{line_h:.3f}"
                 )
+            if para_bg:
+                css["background-color"] = f"#{para_bg}"
             return (
                 ' style="' + "; ".join(f"{k}:{v}" for k, v in css.items()) + '"'
                 if css else ""
@@ -265,11 +307,13 @@ def _docx_to_html(docx_path, font_face_css=""):
         if not inner.strip():
             return f'<p class="spacer"{_style_attr()}>&nbsp;</p>'
 
+        # "list" or "bullet" anywhere in the style name → render as bullet item
+        sn_lower = style_name.lower()
         if style_name in ("Title", "Heading 1"):
             return f"<h1{_style_attr()}>{inner}</h1>"
         elif style_name == "Heading 2":
             return f"<h2{_style_attr()}>{inner}</h2>"
-        elif style_name == "List Paragraph":
+        elif "list" in sn_lower or "bullet" in sn_lower:
             return f'<p class="bullet-item"{_style_attr(use_padding=True)}>&#x2022;&#x00A0;{inner}</p>'
         elif style_name == "Body Text":
             return f'<p class="body-text"{_style_attr()}>{inner}</p>'
@@ -278,11 +322,57 @@ def _docx_to_html(docx_path, font_face_css=""):
         else:
             return f"<p{_style_attr()}>{inner}</p>"
 
+    def _render_table_html(tbl_elem, out_lines):
+        """Render a w:tbl lxml element as an HTML table into out_lines."""
+        from docx.text.paragraph import Paragraph as _Paragraph
+
+        col_twips = _get_tbl_col_widths_twips(tbl_elem)
+        total_twips = sum(col_twips) if col_twips else 1
+
+        out_lines.append(
+            '<table style="width:100%;border-collapse:collapse;border:none" '
+            'cellpadding="0" cellspacing="0">'
+        )
+        if col_twips:
+            out_lines.append("<colgroup>")
+            for cw in col_twips:
+                pct = cw / total_twips * 100
+                out_lines.append(f'<col style="width:{pct:.1f}%">')
+            out_lines.append("</colgroup>")
+
+        for tr in tbl_elem.findall(f"{{{_W}}}tr"):
+            out_lines.append("<tr>")
+            for tc in tr.findall(f"{{{_W}}}tc"):
+                bg = _get_cell_bg(tc)
+                td_style = "vertical-align:top;padding:0 3pt;"
+                if bg:
+                    td_style += f"background-color:#{bg};"
+                out_lines.append(f'<td style="{td_style}">')
+                for child in tc:
+                    c_local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+                    if c_local == "p":
+                        tag = para_html(_Paragraph(child, doc))
+                        if tag is not None:
+                            out_lines.append(tag)
+                    elif c_local == "tbl":
+                        _render_table_html(child, out_lines)
+                out_lines.append("</td>")
+            out_lines.append("</tr>")
+
+        out_lines.append("</table>")
+
+    # Iterate body children in document order so tables are not skipped.
+    # doc.paragraphs only exposes top-level paragraphs and misses table cells.
     lines = []
-    for para in doc.paragraphs:
-        tag = para_html(para)
-        if tag is not None:
-            lines.append(tag)
+    from docx.text.paragraph import Paragraph as _Paragraph
+    for child in doc.element.body:
+        c_local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+        if c_local == "p":
+            tag = para_html(_Paragraph(child, doc))
+            if tag is not None:
+                lines.append(tag)
+        elif c_local == "tbl":
+            _render_table_html(child, lines)
 
     body = "\n".join(lines)
     font_face_block = (font_face_css + "\n") if font_face_css else ""
@@ -504,10 +594,34 @@ def _docx_to_pdf_docker(docx_path, docker_image=DOCKER_IMAGE_DEFAULT):
     print(f"PDF saved to {pdf_dest}")
 
 
+def _find_libreoffice_exe() -> str:
+    """Return the LibreOffice executable path, checking PATH and Windows defaults."""
+    import platform
+    import shutil
+
+    # Check PATH first (covers Linux/macOS and Windows if in PATH)
+    for name in ("soffice", "libreoffice"):
+        found = shutil.which(name)
+        if found:
+            return found
+
+    # Windows common installation paths
+    if platform.system() == "Windows":
+        for base in (
+            r"C:\Program Files\LibreOffice\program",
+            r"C:\Program Files (x86)\LibreOffice\program",
+        ):
+            candidate = os.path.join(base, "soffice.exe")
+            if os.path.exists(candidate):
+                return candidate
+
+    return "libreoffice"  # fallback — will raise FileNotFoundError if absent
+
+
 def _docx_to_pdf_subprocess(docx_path):
     """Convert a .docx to .pdf using LibreOffice headless as a local subprocess.
 
-    LibreOffice must be available in PATH (installed in the backend container).
+    LibreOffice must be installed (in PATH or at the standard Windows location).
     Produces a .pdf file next to the source DOCX.
     """
     import subprocess
@@ -516,8 +630,9 @@ def _docx_to_pdf_subprocess(docx_path):
     out_dir   = os.path.dirname(docx_abs)
     pdf_dest  = os.path.splitext(docx_abs)[0] + ".pdf"
 
+    lo_exe = _find_libreoffice_exe()
     cmd = [
-        "libreoffice", "--headless",
+        lo_exe, "--headless",
         "--convert-to", "pdf",
         docx_abs,
         "--outdir", out_dir,

@@ -6,6 +6,7 @@ without the overhead of constructing a full python-docx Document.
 
 Points to twips: 1 pt = 20 twips.
 Points to half-points (for sz/szCs): 1 pt = 2 half-points.
+EMU (English Metric Units): 1 pt = 12700 EMU.
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ from tailor.compiler.models import ParaModel, ParagraphProfile
 
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 _XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
+_WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
 
 _ALIGN_MAP = {
     "center": "center",
@@ -24,10 +26,47 @@ _ALIGN_MAP = {
 }
 
 
-def build_para_element(pm: ParaModel) -> Any:
+def _add_image_run(p_elem, png_bytes: bytes, size_pt: float, doc_part=None) -> None:
+    """Append a run containing an inline image to *p_elem*.
+
+    Uses python-docx's Document part API (new_pic_inline) to create a
+    correct DrawingML inline element including all required relationships.
+    If *doc_part* is None the image is silently skipped (graceful degradation).
+    """
+    if doc_part is None or not png_bytes:
+        return
+    try:
+        import io
+        # Convert pt to EMU (1 pt = 12700 EMU)
+        sz_emu = int(size_pt * 12700)
+        if sz_emu <= 0:
+            sz_emu = int(10 * 12700)  # fallback 10pt
+
+        img_io = io.BytesIO(png_bytes)
+        # new_pic_inline returns a CT_Inline element with all relationships set
+        inline_elem = doc_part.new_pic_inline(img_io, width=sz_emu, height=sz_emu)
+    except Exception:
+        return  # silently skip on any failure
+
+    from lxml import etree
+    r = etree.SubElement(p_elem, f"{{{_W}}}r")
+    drawing = etree.SubElement(r, f"{{{_W}}}drawing")
+    drawing.append(inline_elem)
+
+
+def build_para_element(pm: ParaModel, doc_part=None) -> Any:
     """Return a w:p lxml element for *pm*, styled from its ParagraphProfile.
 
     If *pm* has no ParagraphProfile, a bare w:p with plain text is returned.
+
+    Parameters
+    ----------
+    pm:
+        Paragraph model to render.
+    doc_part:
+        Optional python-docx document part (Document._part).  Required to
+        embed inline images from ParagraphProfile.inline_image_bytes; silently
+        ignored when None.
     """
     from lxml import etree
 
@@ -99,5 +138,9 @@ def build_para_element(pm: ParaModel) -> Any:
         t.text = pm.text
         if pm.text[0] == " " or pm.text[-1] == " ":
             t.set(_XML_SPACE, "preserve")
+
+    # Inline icon image (PDF-sourced sidebar icons like phone/email/location)
+    if pp is not None and pp.inline_image_bytes and doc_part is not None:
+        _add_image_run(p, pp.inline_image_bytes, pp.inline_image_size_pt, doc_part)
 
     return p

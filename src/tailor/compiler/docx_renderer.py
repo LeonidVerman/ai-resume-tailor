@@ -212,7 +212,7 @@ def _get_text_area_width_twips(sectPr) -> int:
     return max(1, page_w - left - right)
 
 
-def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr) -> None:
+def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> None:
     """Render a two-column PDF-sourced document as a borderless DOCX table.
 
     Creates a full-page-width single-row w:tbl pushed to the page left edge
@@ -310,13 +310,13 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr) -> None:
     ]
 
     for pm in left_paras:
-        left_tc.append(build_para_element(pm))
+        left_tc.append(build_para_element(pm, doc_part=doc_part))
     # DOCX requires at least one paragraph per cell
     if not left_paras:
         etree.SubElement(left_tc, f"{{{_W}}}p")
 
     for pm in right_paras:
-        right_tc.append(build_para_element(pm))
+        right_tc.append(build_para_element(pm, doc_part=doc_part))
     if not right_paras:
         etree.SubElement(right_tc, f"{{{_W}}}p")
 
@@ -384,7 +384,7 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     # two-cell table so that sidebar and main content are placed in separate
     # columns with correct widths, indentation, and background colours.
     if doc.source_kind == "pdf" and doc.layout.column_split_x is not None:
-        _render_pdf_two_col(doc, body, sectPr)
+        _render_pdf_two_col(doc, body, sectPr, doc_part=d.part)
         d.save(output_path)
         return
 
