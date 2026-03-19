@@ -655,9 +655,41 @@ def _group_sections(
     return header_paras, sections
 
 
+_SENTENCE_END_RE = re.compile(r"[.?!:]\s*$")
+
+
+def _merge_bullet_continuations(bullets: list[ParaModel]) -> list[ParaModel]:
+    """Join PDF line-wrapped bullet fragments into single bullet ParaModels.
+
+    PyMuPDF emits one ParaModel per visual text line.  A long bullet that
+    wraps to the next line produces two separate paragraphs.  The second
+    line (continuation) can be identified by:
+      - the previous line does NOT end with sentence-ending punctuation
+      - the current line starts with a lowercase letter
+
+    When a continuation is detected the texts are joined with a space and
+    the first ParaModel's text is updated (the continuation is dropped).
+    """
+    if not bullets:
+        return bullets
+    result: list[ParaModel] = [bullets[0]]
+    for pm in bullets[1:]:
+        text = pm.text.strip()
+        if (not _SENTENCE_END_RE.search(result[-1].text.rstrip())
+                and text and text[0].islower()):
+            # Merge into previous bullet
+            merged_text = result[-1].text.rstrip() + " " + text
+            result[-1] = result[-1].with_text(merged_text)
+        else:
+            result.append(pm)
+    return result
+
+
 def _finalise(section: ResumeSection) -> None:
     if section.semantic_type == "experience":
         section.roles = _group_roles(section.body_paras)
+        for role in section.roles:
+            role.bullets = _merge_bullet_continuations(role.bullets)
 
 
 # ---------------------------------------------------------------------------
@@ -703,8 +735,32 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
 
     layout = _extract_layout(doc)
     hf_texts = _detect_header_footer_texts(doc)
-    all_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt)
-    header_paras, sections = _group_sections(all_paras)
+    raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt)
+    header_paras, sections = _group_sections(raw_paras)
+
+    # Rebuild all_paras from the structured IR so it reflects any post-processing
+    # done by _finalise (e.g. bullet continuation line merging).  The raw flat
+    # list is stale after merging; using the structured list keeps all_paras
+    # consistent with what _doc_to_llm_text serialises and the renderer produces.
+    all_paras: list[ParaModel] = list(header_paras)
+    for section in sections:
+        all_paras.append(section.heading)
+        if section.semantic_type == "experience" and section.roles:
+            # Emit pre-role orphan body_paras (paragraphs before the first
+            # role_header that _group_roles skips in state "init").
+            # updater.py emits these in the rendered DOCX, so all_paras must
+            # include them too to keep the roundtrip comparison consistent.
+            for bp in section.body_paras:
+                if bp.semantic == "role_header":
+                    break
+                if bp.text.strip():
+                    all_paras.append(bp)
+            for role in section.roles:
+                all_paras.append(role.header)
+                all_paras.extend(role.meta_lines)
+                all_paras.extend(role.bullets)
+        else:
+            all_paras.extend(section.body_paras)
 
     return ResumeDocument(
         header_paras=header_paras,
