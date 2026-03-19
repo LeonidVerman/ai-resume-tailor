@@ -368,13 +368,20 @@ def _patch_bullet_numbering(d) -> None:
             lvl = lvlText.getparent()
             if lvl is None:
                 continue
+            # Fix Symbol font → Calibri so all renderers can display the bullet
             rPr = lvl.find(f"{{{_W}}}rPr")
-            if rPr is None:
-                continue
-            for fonts in rPr.findall(f"{{{_W}}}rFonts"):
-                for attr in (f"{{{_W}}}ascii", f"{{{_W}}}hAnsi", f"{{{_W}}}cs", f"{{{_W}}}eastAsia"):
-                    if fonts.get(attr, "").lower() in ("symbol", "wingdings"):
-                        fonts.set(attr, "Calibri")
+            if rPr is not None:
+                for fonts in rPr.findall(f"{{{_W}}}rFonts"):
+                    for attr in (f"{{{_W}}}ascii", f"{{{_W}}}hAnsi", f"{{{_W}}}cs", f"{{{_W}}}eastAsia"):
+                        if fonts.get(attr, "").lower() in ("symbol", "wingdings"):
+                            fonts.set(attr, "Calibri")
+            # Remove the w:tabs with pos="0" from the level pPr.
+            # That tab goes backwards (past the bullet's hanging indent) and
+            # causes LibreOffice/xhtml2pdf to mis-position the bullet marker.
+            lvl_pPr = lvl.find(f"{{{_W}}}pPr")
+            if lvl_pPr is not None:
+                for tabs in lvl_pPr.findall(f"{{{_W}}}tabs"):
+                    lvl_pPr.remove(tabs)
 
 
 # ---------------------------------------------------------------------------

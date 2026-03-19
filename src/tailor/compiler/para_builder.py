@@ -106,6 +106,11 @@ def build_para_element(pm: ParaModel, doc_part=None) -> Any:
         if pp.indent_left_pt:
             ind = etree.SubElement(pPr, f"{{{_W}}}ind")
             ind.set(f"{{{_W}}}left", str(int(pp.indent_left_pt * 20)))
+            # Bullet paragraphs need w:hanging so the bullet marker is placed
+            # to the LEFT of the text rather than at the same x-position.
+            # Without hanging the marker overlaps the text and is invisible.
+            if pm.semantic == "bullet":
+                ind.set(f"{{{_W}}}hanging", "360")
 
         # Paragraph background shading
         if pp.background_color:
