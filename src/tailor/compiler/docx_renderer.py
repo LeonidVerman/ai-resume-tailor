@@ -299,14 +299,22 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         shd.set(f"{{{_W}}}color", "auto")
         shd.set(f"{{{_W}}}fill", layout.right_col_bg_color)
 
-    # Distribute paragraphs into cells
+    # header_paras (name, contact, summary before first section heading) span
+    # the full page width in the source PDF.  Render them as standalone
+    # paragraphs BEFORE the two-column table so they appear at full width,
+    # not crammed inside the narrow sidebar cell.
+    header_para_ids: set[int] = {id(pm) for pm in doc.header_paras}
+
+    # Distribute section-content paragraphs into cells (exclude header_paras)
     left_paras = [
         pm for pm in doc.all_paras
-        if pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
+        if id(pm) not in header_para_ids
+        and pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
     ]
     right_paras = [
         pm for pm in doc.all_paras
-        if not (pm.paragraph_profile and pm.paragraph_profile.column_id == "left")
+        if id(pm) not in header_para_ids
+        and not (pm.paragraph_profile and pm.paragraph_profile.column_id == "left")
     ]
 
     for pm in left_paras:
@@ -320,9 +328,14 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     if not right_paras:
         etree.SubElement(right_tc, f"{{{_W}}}p")
 
+    # Insert header paragraphs before the table, then the table itself.
     if sectPr is not None:
+        for pm in doc.header_paras:
+            sectPr.addprevious(build_para_element(pm, doc_part=doc_part))
         sectPr.addprevious(tbl)
     else:
+        for pm in doc.header_paras:
+            body.append(build_para_element(pm, doc_part=doc_part))
         body.append(tbl)
 
 

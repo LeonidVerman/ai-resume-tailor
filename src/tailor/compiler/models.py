@@ -39,6 +39,10 @@ class ParagraphProfile:
     # to PNG).  Not serialised — runtime-only; ignored if None.
     inline_image_bytes: bytes | None = None  # raw PNG bytes
     inline_image_size_pt: float = 0.0        # icon square size in pt
+    # Mixed-bold run list: list[tuple[str, bool]] — (text, bold) per run.
+    # Set by pdf_parser for role headers with non-uniform bold across spans.
+    # Not serialised to JSON (runtime-only, like inline_image_bytes).
+    text_runs: list | None = None
 
     def to_dict(self) -> dict:
         return {

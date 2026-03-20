@@ -126,33 +126,41 @@ def build_para_element(pm: ParaModel, doc_part=None) -> Any:
     if pp is not None and pp.inline_image_bytes and doc_part is not None:
         _add_image_run(p, pp.inline_image_bytes, pp.inline_image_size_pt, doc_part)
 
-    # Run with text
+    # Run(s) with text.  When pp.text_runs is set (mixed-bold role headers),
+    # emit one w:r per run with per-run bold; otherwise emit a single run.
     if pm.text:
-        r = etree.SubElement(p, f"{{{_W}}}r")
-        rPr = etree.SubElement(r, f"{{{_W}}}rPr")
+        run_list: list[tuple[str, bool | None]] = []
+        if pp is not None and pp.text_runs:
+            run_list = [(rt, rb) for rt, rb in pp.text_runs if rt]
+        if not run_list:
+            run_list = [(pm.text, pp.bold if pp is not None else None)]
 
-        if pp is not None:
-            if pp.bold:
+        for run_text, run_bold in run_list:
+            r = etree.SubElement(p, f"{{{_W}}}r")
+            rPr = etree.SubElement(r, f"{{{_W}}}rPr")
+
+            if run_bold:
                 etree.SubElement(rPr, f"{{{_W}}}b")
-            if pp.italic:
-                etree.SubElement(rPr, f"{{{_W}}}i")
-            if pp.font_name:
-                fonts = etree.SubElement(rPr, f"{{{_W}}}rFonts")
-                fonts.set(f"{{{_W}}}ascii", pp.font_name)
-                fonts.set(f"{{{_W}}}hAnsi", pp.font_name)
-            if pp.font_size_pt:
-                half = str(int(pp.font_size_pt * 2))
-                sz = etree.SubElement(rPr, f"{{{_W}}}sz")
-                sz.set(f"{{{_W}}}val", half)
-                szCs = etree.SubElement(rPr, f"{{{_W}}}szCs")
-                szCs.set(f"{{{_W}}}val", half)
-            if pp.text_color:
-                clr = etree.SubElement(rPr, f"{{{_W}}}color")
-                clr.set(f"{{{_W}}}val", pp.text_color)
+            if pp is not None:
+                if pp.italic:
+                    etree.SubElement(rPr, f"{{{_W}}}i")
+                if pp.font_name:
+                    fonts = etree.SubElement(rPr, f"{{{_W}}}rFonts")
+                    fonts.set(f"{{{_W}}}ascii", pp.font_name)
+                    fonts.set(f"{{{_W}}}hAnsi", pp.font_name)
+                if pp.font_size_pt:
+                    half = str(int(pp.font_size_pt * 2))
+                    sz = etree.SubElement(rPr, f"{{{_W}}}sz")
+                    sz.set(f"{{{_W}}}val", half)
+                    szCs = etree.SubElement(rPr, f"{{{_W}}}szCs")
+                    szCs.set(f"{{{_W}}}val", half)
+                if pp.text_color:
+                    clr = etree.SubElement(rPr, f"{{{_W}}}color")
+                    clr.set(f"{{{_W}}}val", pp.text_color)
 
-        t = etree.SubElement(r, f"{{{_W}}}t")
-        t.text = pm.text
-        if pm.text[0] == " " or pm.text[-1] == " ":
-            t.set(_XML_SPACE, "preserve")
+            t = etree.SubElement(r, f"{{{_W}}}t")
+            t.text = run_text
+            if run_text[0] == " " or run_text[-1] == " ":
+                t.set(_XML_SPACE, "preserve")
 
     return p

@@ -373,6 +373,10 @@ def _extract_col_info(
         area = (x1 - x0) * (y1 - y0)
         if area < min_area:
             continue
+        # Skip full-width bands (header/footer bars spanning >80% page width) —
+        # they are not column backgrounds.
+        if (x1 - x0) > pw * 0.80:
+            continue
         hex_color = _fitz_color_to_hex(fill)
         if hex_color is None:
             continue
@@ -421,7 +425,10 @@ def _extract_section_bg_rects(
         x0, y0, x1, y1 = rect
         h = y1 - y0
         w = x1 - x0
-        if h < min_h or h > max_h or w < min_w:
+        # Full-width top bands (page-spanning header bars) may be taller
+        # than max_h but still need their colour propagated to header paras.
+        is_header_band = w > pw * 0.80 and y0 < ph * 0.05
+        if h < min_h or (h > max_h and not is_header_band) or w < min_w:
             continue
         hex_color = _fitz_color_to_hex(fill)
         if hex_color is None:
@@ -892,16 +899,39 @@ def _extract_paragraphs(
                     paragraph_profile=profile,
                 )
                 pm.semantic = _infer_semantic(pm)
-                # Role headers can have mixed-bold lines (e.g. "Title | Company |
-                # Date" where only the title portion is bold).  _dominant_font_info
-                # uses a majority vote and may miss the bold when non-bold spans
-                # outnumber bold ones.  If ANY span on the line is bold, honour it.
-                if pm.semantic == "role_header" and pm.paragraph_profile and not pm.paragraph_profile.bold:
-                    if any(
-                        (s.get("flags", 0) & (1 << 4)) or "bold" in s.get("font", "").lower()
-                        for s in line_spans
-                    ):
-                        pm.paragraph_profile.bold = True
+                # Role headers can have mixed-bold text (e.g. "Title | Company | Date"
+                # where only the title is bold).  Build per-run (text, bold) pairs
+                # so para_builder can render each portion with the correct weight.
+                if pm.semantic == "role_header" and pm.paragraph_profile:
+                    _runs: list[tuple[str, bool]] = []
+                    _cur_text = ""
+                    _cur_bold: bool | None = None
+                    for _s in line_spans:
+                        _s_text = _s.get("text", "")
+                        if not _s_text:
+                            continue
+                        _s_bold = bool(
+                            (_s.get("flags", 0) & (1 << 4))
+                            or "bold" in _s.get("font", "").lower()
+                        )
+                        if _cur_bold is None:
+                            _cur_bold = _s_bold
+                        if _s_bold == _cur_bold:
+                            _cur_text += _s_text
+                        else:
+                            if _cur_text:
+                                _runs.append((_cur_text, _cur_bold))
+                            _cur_text = _s_text
+                            _cur_bold = _s_bold
+                    if _cur_text and _cur_bold is not None:
+                        _runs.append((_cur_text, _cur_bold))
+                    if len({b for _, b in _runs}) > 1:
+                        # Mixed bold — store runs; set profile.bold from first run
+                        pm.paragraph_profile.text_runs = _runs
+                        pm.paragraph_profile.bold = _runs[0][1]
+                    elif _runs:
+                        # Uniform bold — just update profile.bold
+                        pm.paragraph_profile.bold = _runs[0][1]
                 # Bullet dots: small filled circle drawings (3–5 pt) that mark
                 # list items lacking a text prefix (skills, languages, certs).
                 # Override paragraph → bullet when a dot aligns with this line.
@@ -919,6 +949,18 @@ def _extract_paragraphs(
                         if pm.text.startswith(_pfx):
                             pm.text = pm.text[len(_pfx):]
                             break
+                # Bullet formatting: strip PUA prefix chars (e.g. '\uf0b7 ')
+                if pm.semantic == "bullet" and pm.text and 0xE000 <= ord(pm.text[0]) <= 0xF8FF:
+                    pm.text = pm.text[2:] if len(pm.text) > 1 and pm.text[1] == " " else pm.text[1:]
+                # Bullet layout: in single-column docs let ListParagraph style
+                # control indentation (adding a PDF-based indent on top creates
+                # double indentation).  Also cap space_before to avoid excessive
+                # vertical gaps between consecutive bullet items.
+                if pm.semantic == "bullet" and pm.paragraph_profile:
+                    if col_id is None:
+                        pm.paragraph_profile.indent_left_pt = 0.0
+                    if pm.paragraph_profile.space_before_pt > 3.0:
+                        pm.paragraph_profile.space_before_pt = 3.0
                 paras.append(pm)
 
     return paras
@@ -940,6 +982,11 @@ def _infer_semantic(pm: ParaModel) -> str:
     # Dingbats) emitted as isolated text runs by some PDF generators.
     if all(0xE000 <= ord(c) <= 0xF8FF or c.isspace() for c in text):
         return "empty"
+
+    # Line starting with a Private Use Area character followed by text: treat
+    # as a bullet (e.g. '\uf0b7 Designed ...' from Symbol-font bullets).
+    if text and 0xE000 <= ord(text[0]) <= 0xF8FF and (len(text) == 1 or text[1] == " "):
+        return "bullet"
 
     bold = pp.bold if pp else False
     font_size = pp.font_size_pt if pp else None
