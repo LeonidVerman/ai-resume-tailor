@@ -33,3 +33,4 @@ testpaths = ["tests"]
 
 [project.scripts]
 tailor = "tailor.cli:main"
+pdf-eval = "tailor.eval.__main__:main"
