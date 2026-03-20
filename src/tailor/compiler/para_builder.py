@@ -54,7 +54,7 @@ def _add_image_run(p_elem, png_bytes: bytes, size_pt: float, doc_part=None) -> N
     drawing.append(inline_elem)
 
 
-def build_para_element(pm: ParaModel, doc_part=None) -> Any:
+def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) -> Any:
     """Return a w:p lxml element for *pm*, styled from its ParagraphProfile.
 
     If *pm* has no ParagraphProfile, a bare w:p with plain text is returned.
@@ -67,6 +67,11 @@ def build_para_element(pm: ParaModel, doc_part=None) -> Any:
         Optional python-docx document part (Document._part).  Required to
         embed inline images from ParagraphProfile.inline_image_bytes; silently
         ignored when None.
+    skip_bg_shd:
+        When True, suppress the per-paragraph w:shd element even if
+        ParagraphProfile.background_color is set.  Use this when the paragraph
+        is placed inside a table cell that already carries cell-level shading
+        (avoids fragmented striped blocks inside the cell).
     """
     from lxml import etree
 
@@ -115,8 +120,8 @@ def build_para_element(pm: ParaModel, doc_part=None) -> Any:
             if pm.semantic == "bullet":
                 ind.set(f"{{{_W}}}hanging", "360")
 
-        # Paragraph background shading
-        if pp.background_color:
+        # Paragraph background shading (skip when cell already carries the shading)
+        if pp.background_color and not skip_bg_shd:
             shd = etree.SubElement(pPr, f"{{{_W}}}shd")
             shd.set(f"{{{_W}}}val", "clear")
             shd.set(f"{{{_W}}}color", "auto")

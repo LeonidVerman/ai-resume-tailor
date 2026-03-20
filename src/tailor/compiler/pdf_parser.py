@@ -949,9 +949,13 @@ def _extract_paragraphs(
                         if pm.text.startswith(_pfx):
                             pm.text = pm.text[len(_pfx):]
                             break
-                # Bullet formatting: strip PUA prefix chars (e.g. '\uf0b7 ')
+                # Bullet formatting: strip PUA prefix chars (e.g. '\uf0b7 ' or '\uf0b7')
                 if pm.semantic == "bullet" and pm.text and 0xE000 <= ord(pm.text[0]) <= 0xF8FF:
-                    pm.text = pm.text[2:] if len(pm.text) > 1 and pm.text[1] == " " else pm.text[1:]
+                    # Strip PUA char + optional trailing space
+                    rest = pm.text[1:]
+                    if rest.startswith(" "):
+                        rest = rest[1:]
+                    pm.text = rest
                 # Bullet layout: in single-column docs let ListParagraph style
                 # control indentation (adding a PDF-based indent on top creates
                 # double indentation).  Also cap space_before to avoid excessive
@@ -984,9 +988,13 @@ def _infer_semantic(pm: ParaModel) -> str:
         return "empty"
 
     # Line starting with a Private Use Area character followed by text: treat
-    # as a bullet (e.g. '\uf0b7 Designed ...' from Symbol-font bullets).
-    if text and 0xE000 <= ord(text[0]) <= 0xF8FF and (len(text) == 1 or text[1] == " "):
-        return "bullet"
+    # as a bullet (e.g. '\uf0b7 Designed ...' or '\uf0b7Designed ...' from
+    # Symbol-font bullets).  Accept both spaced and unspaced PUA prefix.
+    if text and 0xE000 <= ord(text[0]) <= 0xF8FF:
+        # Single PUA char (visual icon only) already handled by all-PUA check above.
+        # Here: PUA prefix + text content — treat as bullet.
+        if len(text) == 1 or not (0xE000 <= ord(text[1]) <= 0xF8FF):
+            return "bullet"
 
     bold = pp.bold if pp else False
     font_size = pp.font_size_pt if pp else None
@@ -1004,11 +1012,14 @@ def _infer_semantic(pm: ParaModel) -> str:
     if (bold or _is_uppercase) and _text_norm in _ALL_HEADING_NAMES_NOSPACE:
         return "section_heading"
 
-    # Section heading: bold, short, title-case, 2+ words, larger or spaced
+    # Section heading: bold, short, title-case, 2+ words, larger or spaced.
+    # Exclude commas: company/location lines ("Software Inc, Vancouver") have
+    # commas; resume section headings do not.
     if (
         bold
         and len(text) <= 60
         and "|" not in text
+        and "," not in text
         and not text.startswith(("-", "•", "·", "–", "*"))
     ):
         words = text.split()
@@ -1167,13 +1178,27 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
             elif s == "paragraph":
-                # PDF bullets often lack prefix characters — treat plain
-                # paragraphs immediately after a role header as bullets so
-                # build_para_element adds "ListBullet" and the DOCX roundtrip
-                # re-classifies them correctly.
-                pm.semantic = "bullet"
-                bullets.append(pm)
-                state = "bullets"
+                # Distinguish role-header continuation lines (e.g. the wrapped
+                # second line of a long role like "| CardinalChain\nSoftware
+                # Inc, Vancouver") from the first bullet (no prefix char).
+                # Heuristic: a short paragraph without a year and without
+                # sentence-ending punctuation is more likely a header
+                # continuation than a bullet.  Add it to header_extra so it is
+                # tracked (and skipped in rendering) without being emitted as a
+                # bullet.  Longer or sentence-ending paragraphs are bullets.
+                _txt = pm.text.strip()
+                _is_continuation = (
+                    len(_txt) <= 60
+                    and not _YEAR_RE.search(_txt)
+                    and not _SENTENCE_END_RE.search(_txt)
+                )
+                if _is_continuation:
+                    pm.semantic = "role_meta"
+                    header_extra.append(pm)
+                else:
+                    pm.semantic = "bullet"
+                    bullets.append(pm)
+                    state = "bullets"
             elif s == "empty":
                 pass
             else:

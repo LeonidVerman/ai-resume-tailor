@@ -328,14 +328,61 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     if not right_paras:
         etree.SubElement(right_tc, f"{{{_W}}}p")
 
-    # Insert header paragraphs before the table, then the table itself.
-    if sectPr is not None:
+    # Build header element(s): if any header paragraph has a background colour
+    # (PDF header band), wrap all header_paras in a single-cell full-page-width
+    # table so the shading is applied at cell level and renders as one
+    # continuous band.  Individual paragraph w:shd would create fragmented
+    # striped blocks with visible gaps between paragraphs.
+    header_bg = next(
+        (pm.paragraph_profile.background_color
+         for pm in doc.header_paras
+         if pm.paragraph_profile and pm.paragraph_profile.background_color),
+        None,
+    )
+    if header_bg and doc.header_paras:
+        hdr_tbl = etree.Element(f"{{{_W}}}tbl")
+        hdr_tblPr = etree.SubElement(hdr_tbl, f"{{{_W}}}tblPr")
+        hdr_tblW = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblW")
+        hdr_tblW.set(f"{{{_W}}}w", str(total_w))
+        hdr_tblW.set(f"{{{_W}}}type", "dxa")
+        hdr_tblInd = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblInd")
+        hdr_tblInd.set(f"{{{_W}}}w", str(-left_margin_twips))
+        hdr_tblInd.set(f"{{{_W}}}type", "dxa")
+        hdr_tblLayout = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblLayout")
+        hdr_tblLayout.set(f"{{{_W}}}type", "fixed")
+        hdr_borders = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblBorders")
+        for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+            brd = etree.SubElement(hdr_borders, f"{{{_W}}}{side}")
+            brd.set(f"{{{_W}}}val", "none")
+        hdr_cellMar = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblCellMar")
+        for side in ("top", "left", "bottom", "right"):
+            m = etree.SubElement(hdr_cellMar, f"{{{_W}}}{side}")
+            m.set(f"{{{_W}}}w", "0")
+            m.set(f"{{{_W}}}type", "dxa")
+        hdr_tr = etree.SubElement(hdr_tbl, f"{{{_W}}}tr")
+        hdr_tc = etree.SubElement(hdr_tr, f"{{{_W}}}tc")
+        hdr_tcPr = etree.SubElement(hdr_tc, f"{{{_W}}}tcPr")
+        hdr_tcW = etree.SubElement(hdr_tcPr, f"{{{_W}}}tcW")
+        hdr_tcW.set(f"{{{_W}}}w", str(total_w))
+        hdr_tcW.set(f"{{{_W}}}type", "dxa")
+        hdr_shd = etree.SubElement(hdr_tcPr, f"{{{_W}}}shd")
+        hdr_shd.set(f"{{{_W}}}val", "clear")
+        hdr_shd.set(f"{{{_W}}}color", "auto")
+        hdr_shd.set(f"{{{_W}}}fill", header_bg)
         for pm in doc.header_paras:
-            sectPr.addprevious(build_para_element(pm, doc_part=doc_part))
+            hdr_tc.append(build_para_element(pm, doc_part=doc_part, skip_bg_shd=True))
+        header_elements = [hdr_tbl]
+    else:
+        header_elements = [build_para_element(pm, doc_part=doc_part) for pm in doc.header_paras]
+
+    # Insert header element(s) before the body table, then the body table itself.
+    if sectPr is not None:
+        for elem in header_elements:
+            sectPr.addprevious(elem)
         sectPr.addprevious(tbl)
     else:
-        for pm in doc.header_paras:
-            body.append(build_para_element(pm, doc_part=doc_part))
+        for elem in header_elements:
+            body.append(elem)
         body.append(tbl)
 
 
