@@ -179,7 +179,15 @@ def parse_llm_output(text: str) -> list[LlmSection]:
                 and cur_role is None
                 and bool(current.body_lines)
             )
-            if in_roleless_experience or in_section_with_body:
+            # Inside an experience role that already has meta_lines, suppress the
+            # title-case fallback.  Sub-titles like "Software Engineer" (a role
+            # promotion within a company) have 2 title-case words but are NOT
+            # new section headings — they are meta content for the current role.
+            in_experience_role_with_meta = (
+                cur_role is not None
+                and bool(cur_role.meta_lines)
+            )
+            if in_roleless_experience or in_section_with_body or in_experience_role_with_meta:
                 is_heading = bool(stripped) and stripped.lower() in _ALL_KNOWN
             else:
                 is_heading = _is_section_heading(line)
@@ -235,11 +243,13 @@ def parse_llm_output(text: str) -> list[LlmSection]:
             if stripped.startswith("- "):
                 cur_role.bullets.append(stripped[2:])
                 state = "bullets"
-            elif _is_meta_line(line):
-                cur_role.meta_lines.append(stripped)
             else:
-                cur_role.bullets.append(stripped)
-                state = "bullets"
+                # Keep as meta whether or not it looks like a date.
+                # Non-"- " content in meta state stays as meta so that
+                # plain-text paragraphs (e.g. PDF-sourced achievement lines
+                # serialised without "- " prefix) round-trip correctly.
+                # Bullets must use explicit "- " prefix to be recognised.
+                cur_role.meta_lines.append(stripped)
         elif state == "bullets":
             if stripped.startswith("- "):
                 cur_role.bullets.append(stripped[2:])

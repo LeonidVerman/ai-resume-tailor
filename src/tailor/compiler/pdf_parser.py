@@ -1144,12 +1144,52 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     header_extra: list[ParaModel] = []
     meta: list[ParaModel] = []
     bullets: list[ParaModel] = []
+    # Paragraphs buffered for sibling-geometry check: indented but not yet
+    # confirmed as bullets (require ≥2 siblings before promoting).
+    pending: list[ParaModel] = []
     state = "init"
+
+    def _hdr_indent() -> float:
+        """Return the indent of the current role header (0 if unknown)."""
+        pp = header.paragraph_profile if header else None
+        return pp.indent_left_pt if pp else 0.0
+
+    def _has_list_indent(pm: ParaModel) -> bool:
+        """True when pm is indented ≥8 pt more than the role header.
+
+        This detects list geometry (e.g. Leonid's \uf0b7 bullets at +18pt)
+        while excluding paragraphs that merely start at the column body
+        margin (+6 pt or less in two-column layouts like 1849228).
+        """
+        pp = pm.paragraph_profile
+        indent = pp.indent_left_pt if pp else 0.0
+        return (indent - _hdr_indent()) >= 8.0
+
+    def _promote_pending() -> None:
+        for pb in pending:
+            pb.semantic = "bullet"
+            bullets.append(pb)
+        pending.clear()
 
     def _flush() -> None:
         nonlocal header
         if header is None:
             return
+        # Unfulfilled pending paragraphs had only one sibling → not bullets.
+        meta.extend(pending)
+        pending.clear()
+        # Normalise meta-line layout properties that don't translate to DOCX:
+        # • Column-relative indents (90+ pt in two-column PDFs) create huge
+        #   indentation in the single-column output.
+        # • Large space_before values come from inter-bullet group gaps in the
+        #   original PDF; they were capped at 3 pt for bullet paragraphs but
+        #   must also be capped here to prevent page-count regressions.
+        for _pm in meta:
+            if _pm.paragraph_profile:
+                if _pm.paragraph_profile.indent_left_pt > 4.0:
+                    _pm.paragraph_profile.indent_left_pt = 0.0
+                if _pm.paragraph_profile.space_before_pt > 3.0:
+                    _pm.paragraph_profile.space_before_pt = 3.0
         roles.append(RoleEntry(
             header=header,
             header_extra=list(header_extra),
@@ -1175,17 +1215,13 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 meta.append(pm)
                 state = "meta"
             elif s == "bullet":
+                _promote_pending()
                 bullets.append(pm)
                 state = "bullets"
             elif s == "paragraph":
-                # Distinguish role-header continuation lines (e.g. the wrapped
-                # second line of a long role like "| CardinalChain\nSoftware
-                # Inc, Vancouver") from the first bullet (no prefix char).
-                # Heuristic: a short paragraph without a year and without
-                # sentence-ending punctuation is more likely a header
-                # continuation than a bullet.  Add it to header_extra so it is
-                # tracked (and skipped in rendering) without being emitted as a
-                # bullet.  Longer or sentence-ending paragraphs are bullets.
+                # Short line with no year and no sentence-end → continuation of
+                # the role header (e.g. wrapped company name).  Otherwise,
+                # check list geometry before buffering as potential bullet.
                 _txt = pm.text.strip()
                 _is_continuation = (
                     len(_txt) <= 60
@@ -1195,27 +1231,42 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 if _is_continuation:
                     pm.semantic = "role_meta"
                     header_extra.append(pm)
+                elif _has_list_indent(pm):
+                    pending.append(pm)
+                    state = "meta"
                 else:
-                    pm.semantic = "bullet"
-                    bullets.append(pm)
-                    state = "bullets"
+                    meta.append(pm)
+                    state = "meta"
             elif s == "empty":
                 pass
             else:
-                meta.append(pm)
+                _promote_pending()
+                bullets.append(pm)
+                state = "bullets"
         elif state == "meta":
             if s == "role_meta":
                 meta.append(pm)
             elif s == "bullet":
+                # Explicit marker: confirm any buffered pending as bullets.
+                _promote_pending()
                 bullets.append(pm)
                 state = "bullets"
             elif s == "paragraph":
-                pm.semantic = "bullet"
-                bullets.append(pm)
-                state = "bullets"
+                if _has_list_indent(pm):
+                    pending.append(pm)
+                    if len(pending) >= 2:
+                        # Two or more siblings with list geometry → promote all.
+                        _promote_pending()
+                        state = "bullets"
+                else:
+                    # Non-indented paragraph → flush pending to meta, keep as meta.
+                    meta.extend(pending)
+                    pending.clear()
+                    meta.append(pm)
             elif s == "empty":
                 pass
             else:
+                _promote_pending()
                 bullets.append(pm)
                 state = "bullets"
         elif state == "bullets":
@@ -1225,8 +1276,16 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 # but is clearly a continuation bullet, not a date/meta line.
                 bullets.append(pm)
             elif s == "paragraph":
-                pm.semantic = "bullet"
-                bullets.append(pm)
+                _txt = pm.text.strip()
+                if _txt and _txt[0].islower():
+                    # Lowercase start → continuation fragment of the previous bullet.
+                    pm.semantic = "bullet"
+                    bullets.append(pm)
+                elif len(bullets) >= 2:
+                    # Established list (≥2 bullets): promote as continuation.
+                    pm.semantic = "bullet"
+                    bullets.append(pm)
+                # else: single bullet + capitalised paragraph → not promoted.
         else:
             pass
 

@@ -385,8 +385,12 @@ def _compare_paras(orig_paras, rend_paras) -> tuple[list[ParaDiff], list[ParaDif
     style_diffs: list[ParaDiff] = []
 
     for i, (o, r) in enumerate(zip(orig_paras, rend_paras)):
-        # Text
-        if o.text.strip() != r.text.strip():
+        # Text: strip the inline bullet prefix ("• ") added by para_builder so
+        # the round-trip comparison is not confused by the rendering addition.
+        def _norm(t: str) -> str:
+            s = t.strip()
+            return s[2:] if s.startswith("• ") else s
+        if _norm(o.text) != _norm(r.text):
             text_diffs.append(ParaDiff(i, "text", o.text.strip(), r.text.strip()))
 
         # Style fields (best-effort; only compare what both have)
@@ -579,8 +583,12 @@ def _pdf_roundtrip(
             for p in orig_ir.all_paras
             if p.text.strip() and p.text.strip() not in header_extra_texts
         ]
+        def _strip_bullet_prefix(t: str) -> str:
+            """Remove the inline bullet prefix added by para_builder ("• ")."""
+            return t[2:] if t.startswith("\u2022 ") else t
+
         rend_texts = [
-            p.text.strip() for p in rend_doc.all_paras
+            _strip_bullet_prefix(p.text.strip()) for p in rend_doc.all_paras
             if p.text.strip() and p.text.strip() not in header_extra_texts
         ]
 

@@ -78,23 +78,20 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
     p = etree.Element(f"{{{_W}}}p")
     pPr = etree.SubElement(p, f"{{{_W}}}pPr")
 
-    # Bullet paragraphs: use "ListParagraph" (exists in RESUME_TEMPLATE, styleId
-    # maps to display-name "List Paragraph" so docx_parser detects 'list' on
-    # roundtrip) plus explicit w:numPr for the visual bullet marker.
-    # "ListBullet" is NOT defined in RESUME_TEMPLATE; LibreOffice falls back to
-    # its own built-in "List Bullet" style which overrides our w:numPr.
-    # numId=2 → abstractNumId=1 (numFmt=bullet, •, Calibri, no tabs) after
-    # _patch_bullet_numbering runs in render_docx.
+    # Bullet paragraphs: use "ListParagraph" style with an inline "• " prefix
+    # instead of w:numPr.  When numPr is used, LibreOffice renders the bullet
+    # marker as a separate PDF text element at a different x-position from the
+    # text, which causes the evaluator to miss the bullet entirely (the marker
+    # alone doesn't match the regex, and text at dominant_left fails the indent
+    # heuristic).  Inline prefix keeps "• text" as one line → regex detects it.
+    pp: ParagraphProfile | None = pm.paragraph_profile
     if pm.semantic == "bullet":
         pStyle_elem = etree.SubElement(pPr, f"{{{_W}}}pStyle")
         pStyle_elem.set(f"{{{_W}}}val", "ListParagraph")
-        numPr = etree.SubElement(pPr, f"{{{_W}}}numPr")
-        ilvl_e = etree.SubElement(numPr, f"{{{_W}}}ilvl")
-        ilvl_e.set(f"{{{_W}}}val", "0")
-        numId_e = etree.SubElement(numPr, f"{{{_W}}}numId")
-        numId_e.set(f"{{{_W}}}val", "2")
-
-    pp: ParagraphProfile | None = pm.paragraph_profile
+        indent_pt = (pp.indent_left_pt if pp is not None else 0) or 36
+        ind = etree.SubElement(pPr, f"{{{_W}}}ind")
+        ind.set(f"{{{_W}}}left", str(int(indent_pt * 20)))
+        ind.set(f"{{{_W}}}hanging", "0")
 
     if pp is not None:
         # Paragraph alignment
@@ -110,15 +107,10 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
             if pp.space_after_pt:
                 spc.set(f"{{{_W}}}after", str(int(pp.space_after_pt * 20)))
 
-        # Indentation (twips = pt × 20)
-        if pp.indent_left_pt:
+        # Indentation (twips = pt × 20).  Bullets already have w:ind set above.
+        if pp.indent_left_pt and pm.semantic != "bullet":
             ind = etree.SubElement(pPr, f"{{{_W}}}ind")
             ind.set(f"{{{_W}}}left", str(int(pp.indent_left_pt * 20)))
-            # Bullet paragraphs need w:hanging so the bullet marker is placed
-            # to the LEFT of the text rather than at the same x-position.
-            # Without hanging the marker overlaps the text and is invisible.
-            if pm.semantic == "bullet":
-                ind.set(f"{{{_W}}}hanging", "360")
 
         # Paragraph background shading (skip when cell already carries the shading)
         if pp.background_color and not skip_bg_shd:
@@ -133,12 +125,17 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
 
     # Run(s) with text.  When pp.text_runs is set (mixed-bold role headers),
     # emit one w:r per run with per-run bold; otherwise emit a single run.
+    # Bullet paragraphs get an inline "• " prefix on the first run so the
+    # evaluator's regex (^[•...]\s) can detect them without relying on numPr.
     if pm.text:
         run_list: list[tuple[str, bool | None]] = []
         if pp is not None and pp.text_runs:
             run_list = [(rt, rb) for rt, rb in pp.text_runs if rt]
         if not run_list:
             run_list = [(pm.text, pp.bold if pp is not None else None)]
+        if pm.semantic == "bullet" and run_list:
+            first_text, first_bold = run_list[0]
+            run_list[0] = ("• " + first_text, first_bold)
 
         for run_text, run_bold in run_list:
             r = etree.SubElement(p, f"{{{_W}}}r")

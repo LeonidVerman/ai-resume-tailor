@@ -446,7 +446,7 @@ def extract(pdf_path: str) -> ExtractedDoc:
                             headings.append(norm)
                             seen.add(norm)
 
-    # Bullet count and dominant bullet left_x
+    # Bullet count and dominant bullet left_x.
     bullet_lines = [
         ln for pg in pages for blk in pg.blocks
         for ln in blk.lines if ln.is_bullet_candidate
