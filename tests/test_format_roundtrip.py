@@ -119,6 +119,14 @@ _PDF_SAMPLES  = sorted(_PDF_DIR.glob("*.pdf"))   if _PDF_DIR.is_dir()  else []
 # Identity serializer: ResumeDocument -> LLM text
 # ---------------------------------------------------------------------------
 
+_SEMANTIC_CANONICAL_HEADING: dict[str, str] = {
+    "summary": "Professional Summary",
+    "experience": "Experience",
+    "skills": "Technical Skills",
+    "education": "Education",
+}
+
+
 def _doc_to_llm_text(doc) -> str:
     """Serialize a ResumeDocument into the text format parse_llm_output() parses.
 
@@ -141,7 +149,18 @@ def _doc_to_llm_text(doc) -> str:
         if section.semantic_type == "other":
             continue
 
-        lines.append(section.title)
+        # For letter-spaced PDF headings (e.g. "S U M M A R Y", "E D U C A T I O N")
+        # emit the canonical form instead.  parse_llm_output cannot recognise
+        # letter-spaced headings after the first section is open (the in_section_with_body
+        # guard requires strict _ALL_KNOWN membership).  Standard headings like
+        # "Objective" or "Key Skills" are emitted verbatim — they're already parseable.
+        _title_parts = re.split(r"[\s\xa0]+", section.title.strip())
+        _is_letter_spaced = bool(_title_parts) and all(len(p) <= 1 for p in _title_parts if p)
+        if _is_letter_spaced:
+            heading_line = _SEMANTIC_CANONICAL_HEADING.get(section.semantic_type, section.title)
+        else:
+            heading_line = section.title
+        lines.append(heading_line)
         if section.semantic_type == "experience":
             if section.roles:
                 for role in section.roles:
@@ -339,10 +358,15 @@ def _compare_pdf_layout(
     if in_tokens:
         report.text_coverage = len(in_tokens & out_tokens) / len(in_tokens)
 
-    # Section presence: check every known section title appears in output text
+    # Section presence: check every known section title appears in output text.
+    # Normalize letter-spaced titles (e.g. "S U M M A R Y" → "SUMMARY") so
+    # they can be matched against the rendered output which uses compact form.
     out_lower = out_text.lower()
+    out_collapsed = re.sub(r"\s+", "", out_lower)
     for title in section_titles:
-        if title.lower() not in out_lower:
+        title_lower = title.lower()
+        title_collapsed = re.sub(r"[\s\xa0]+", "", title_lower)
+        if title_lower not in out_lower and title_collapsed not in out_collapsed:
             report.sections_missing.append(title)
 
     # Bullet presence: count markers in both PDFs
@@ -537,8 +561,22 @@ def _pdf_roundtrip(
                     for p in role.header_extra:
                         if p.text.strip():
                             header_extra_texts.add(p.text.strip())
+
+        # Build a map from letter-spaced heading text → canonical heading.
+        # PDFs use "S U M M A R Y", "E D U C A T I O N" etc. that _doc_to_llm_text
+        # normalises to canonical form; the rendered DOCX therefore uses the
+        # canonical text.  Accept this difference so it doesn't count as a mismatch.
+        _heading_normalize: dict[str, str] = {}
+        for _sec in orig_ir.sections:
+            _canon = _SEMANTIC_CANONICAL_HEADING.get(_sec.semantic_type)
+            if _canon and _sec.title.strip() != _canon:
+                _parts = re.split(r"[\s\xa0]+", _sec.title.strip())
+                if all(len(_p) <= 1 for _p in _parts if _p):  # letter-spaced
+                    _heading_normalize[_sec.title.strip()] = _canon
+
         orig_texts = [
-            p.text.strip() for p in orig_ir.all_paras
+            _heading_normalize.get(p.text.strip(), p.text.strip())
+            for p in orig_ir.all_paras
             if p.text.strip() and p.text.strip() not in header_extra_texts
         ]
         rend_texts = [

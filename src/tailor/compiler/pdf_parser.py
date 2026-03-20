@@ -541,7 +541,17 @@ def _extract_layout(doc) -> LayoutProfile:
     margin_bottom_from_bottom = rect.height * 0.1
 
     blocks = page.get_text("dict")["blocks"]
-    xs0 = [blk["bbox"][0] for blk in blocks if blk.get("type") == 0]
+    # Use only blocks with non-whitespace text to avoid whitespace-only spacer
+    # glyphs (e.g. a single space at x=14) pulling the margin estimate too far left.
+    xs0 = [
+        blk["bbox"][0] for blk in blocks
+        if blk.get("type") == 0
+        and any(
+            s.get("text", "").strip()
+            for line in blk.get("lines", [])
+            for s in line.get("spans", [])
+        )
+    ]
     if xs0:
         margin_left = max(0.0, min(xs0))
 
@@ -565,7 +575,7 @@ def _extract_layout(doc) -> LayoutProfile:
     default_size = size_counter.most_common(1)[0][0] if size_counter else 11.0
 
     # Two-column detection on the first page
-    split_x = _detect_column_split(blocks, rect.width)
+    split_x = _detect_column_split(blocks, rect.width, rect.height)
     left_col_width_twips: int | None = None
     right_col_width_twips: int | None = None
     left_bg: str | None = None
@@ -643,19 +653,22 @@ def _dominant_font_info(spans: list[dict]) -> dict:
     }
 
 
-def _detect_column_split(blocks: list, page_width: float) -> float | None:
+def _detect_column_split(
+    blocks: list, page_width: float, page_height: float = 0.0
+) -> float | None:
     """Return the x-split between two columns, or None for single-column pages.
 
     Collects the distinct x0 (left-edge) positions of all text blocks, sorts
-    them, and looks for a gap that is ≥ 15 % of the page width.  To qualify as
+    them, and looks for a gap that is ≥ 9 % of the page width.  To qualify as
     a column boundary:
       - the right edge of the gap must fall between 20 % and 70 % of the page width
-      - no text block may "bridge" the gap (x0 ≤ left side AND x1 ≥ right side)
+      - no text block in the BODY (below the top 15 % of the page) may "bridge"
+        the gap (x0 ≤ left side AND x1 ≥ right side)
 
-    The bridging check rejects false positives from single-column resumes where
-    full-width header blocks (name, summary) start near the left margin but
-    extend across the entire page — the same pattern that would be produced by a
-    centred or left-aligned full-width paragraph rather than a true sidebar.
+    Ignoring the top 15 % of the page for the bridging check lets us detect
+    columns whose header banner (name, title, summary) spans both columns — a
+    common pattern where the top area is a single full-width block and the body
+    below it has a true sidebar / main-content split.
 
     Returns the midpoint of the detected gap as the column split x-coordinate.
     """
@@ -663,16 +676,21 @@ def _detect_column_split(blocks: list, page_width: float) -> float | None:
     if len(x0s) < 4:
         return None
 
-    min_gap = page_width * 0.15
+    min_gap = page_width * 0.09
+    top_cutoff = page_height * 0.15 if page_height > 0 else 0.0
+
     for i in range(len(x0s) - 1):
         gap = x0s[i + 1] - x0s[i]
         right_edge = x0s[i + 1]
         if gap >= min_gap and page_width * 0.20 <= right_edge <= page_width * 0.70:
-            # Reject if any block bridges the gap: starts in the left "column"
-            # and extends at least 5 % past the right edge.
+            # Reject if any BODY block bridges the gap: starts in the left "column"
+            # and extends at least 5 % past the right edge.  Blocks in the top
+            # 15 % (header banner) are excluded so they don't veto body columns.
             bridge_x1_threshold = right_edge * 1.05
             bridging = any(
-                b["bbox"][0] <= x0s[i] and b["bbox"][2] >= bridge_x1_threshold
+                b["bbox"][0] <= x0s[i]
+                and b["bbox"][2] >= bridge_x1_threshold
+                and b["bbox"][1] >= top_cutoff
                 for b in blocks if b.get("type") == 0
             )
             if not bridging:
@@ -702,8 +720,17 @@ def _extract_paragraphs(
         page_margin_left = margin_left
         blocks = page.get_text("dict")["blocks"]
 
-        # Re-estimate margin_left per page for accuracy
-        xs0 = [blk["bbox"][0] for blk in blocks if blk.get("type") == 0]
+        # Re-estimate margin_left per page (non-whitespace blocks only so that
+        # bare-space glyphs at a small x don't inflate the indent for real content).
+        xs0 = [
+            blk["bbox"][0] for blk in blocks
+            if blk.get("type") == 0
+            and any(
+                s.get("text", "").strip()
+                for line in blk.get("lines", [])
+                for s in line.get("spans", [])
+            )
+        ]
         if xs0:
             page_margin_left = max(0.0, min(xs0))
 
@@ -722,7 +749,7 @@ def _extract_paragraphs(
         # top-to-bottom across ALL columns, interleaving sidebar content with
         # main content.  Column-aware reordering restores correct reading order.
         # split_x (gap midpoint) is used for block classification (left vs right).
-        split_x = _detect_column_split(blocks, page.rect.width)
+        split_x = _detect_column_split(blocks, page.rect.width, page.rect.height)
         # Prefer the layout's split_x (computed on page 1) for consistency.
         if split_x is None and layout_split_x is not None:
             split_x = layout_split_x
@@ -865,6 +892,16 @@ def _extract_paragraphs(
                     paragraph_profile=profile,
                 )
                 pm.semantic = _infer_semantic(pm)
+                # Role headers can have mixed-bold lines (e.g. "Title | Company |
+                # Date" where only the title portion is bold).  _dominant_font_info
+                # uses a majority vote and may miss the bold when non-bold spans
+                # outnumber bold ones.  If ANY span on the line is bold, honour it.
+                if pm.semantic == "role_header" and pm.paragraph_profile and not pm.paragraph_profile.bold:
+                    if any(
+                        (s.get("flags", 0) & (1 << 4)) or "bold" in s.get("font", "").lower()
+                        for s in line_spans
+                    ):
+                        pm.paragraph_profile.bold = True
                 # Bullet dots: small filled circle drawings (3–5 pt) that mark
                 # list items lacking a text prefix (skills, languages, certs).
                 # Override paragraph → bullet when a dot aligns with this line.
@@ -898,16 +935,26 @@ def _infer_semantic(pm: ParaModel) -> str:
     if not text:
         return "empty"
 
+    # Lines consisting only of Private Use Area codepoints (U+E000–U+F8FF) have
+    # no semantic content — they are visual icon glyphs (Fontawesome, Symbol,
+    # Dingbats) emitted as isolated text runs by some PDF generators.
+    if all(0xE000 <= ord(c) <= 0xF8FF or c.isspace() for c in text):
+        return "empty"
+
     bold = pp.bold if pp else False
     font_size = pp.font_size_pt if pp else None
     space_before = pp.space_before_pt if pp else 0.0
     indent = pp.indent_left_pt if pp else 0.0
 
-    # Known section names: bold + exact match → section heading regardless of
-    # font size or spacing.  Mirrors docx_parser._infer_semantic so that
-    # sidebar-layout PDFs (small bold labels like "PROFESSIONAL EXPERIENCE")
-    # are classified correctly.
-    if bold and text.lower() in _ALL_HEADING_NAMES:
+    # Known section names — normalised match handles:
+    #   ALL-CAPS non-bold   : "WORK EXPERIENCE" → "workexperience"
+    #   Letter-spaced bold  : "S U M M A R Y"   → "summary"
+    #   Numbered bold/caps  : "1. Professional Summary" → "professionalsummary"
+    # Guard: require bold OR all-alpha chars are uppercase (ALL-CAPS heading).
+    _text_norm = _normalize_heading_text(text)
+    _text_alpha = re.sub(r"[^a-zA-Z]", "", text)
+    _is_uppercase = bool(_text_alpha) and _text_alpha.upper() == _text_alpha
+    if (bold or _is_uppercase) and _text_norm in _ALL_HEADING_NAMES_NOSPACE:
         return "section_heading"
 
     # Section heading: bold, short, title-case, 2+ words, larger or spaced
@@ -983,16 +1030,51 @@ _ALL_HEADING_NAMES: frozenset[str] = (
     })
 )
 
+# Space-stripped versions of the above sets for normalised heading matching.
+# Handles: ALL-CAPS ("WORK EXPERIENCE"), letter-spaced ("S U M M A R Y"),
+# and numbered-prefix ("1. Professional Summary") headings.
+_ALL_HEADING_NAMES_NOSPACE: frozenset[str] = frozenset(
+    n.replace(" ", "") for n in _ALL_HEADING_NAMES
+)
+_EXPERIENCE_NAMES_NOSPACE: frozenset[str] = frozenset(
+    n.replace(" ", "") for n in _EXPERIENCE_NAMES
+)
+_SUMMARY_NAMES_NOSPACE: frozenset[str] = frozenset(
+    n.replace(" ", "") for n in _SUMMARY_NAMES
+)
+_SKILLS_NAMES_NOSPACE: frozenset[str] = frozenset(
+    n.replace(" ", "") for n in _SKILLS_NAMES
+)
+_EDUCATION_NAMES_NOSPACE: frozenset[str] = frozenset(
+    n.replace(" ", "") for n in _EDUCATION_NAMES
+)
+# Compiled once — strips leading "1. " / "2) " list numbering.
+_NUM_PREFIX_RE = re.compile(r"^\d+[\.\)]\s*")
+
+
+def _normalize_heading_text(text: str) -> str:
+    """Return a normalised, space-stripped lowercase heading key.
+
+    Strips leading numbered-list prefixes ("1. ", "2) ") and removes all
+    whitespace and non-breaking spaces so that letter-spaced headings
+    ("S U M M A R Y"), numbered headings ("1. Professional Summary"), and
+    ALL-CAPS headings ("WORK EXPERIENCE") all map to the same key as the
+    canonical lowercase name ("summary", "professionalsummary",
+    "workexperience") stored in *_NOSPACE sets.
+    """
+    t = _NUM_PREFIX_RE.sub("", text)
+    return re.sub(r"[\s\xa0]+", "", t).lower()
+
 
 def _classify_section(heading_text: str) -> str:
-    t = heading_text.strip().lower()
-    if t in _EXPERIENCE_NAMES:
+    t = _normalize_heading_text(heading_text)
+    if t in _EXPERIENCE_NAMES_NOSPACE:
         return "experience"
-    if t in _SUMMARY_NAMES:
+    if t in _SUMMARY_NAMES_NOSPACE:
         return "summary"
-    if t in _SKILLS_NAMES:
+    if t in _SKILLS_NAMES_NOSPACE:
         return "skills"
-    if t in _EDUCATION_NAMES:
+    if t in _EDUCATION_NAMES_NOSPACE:
         return "education"
     return "other"
 
@@ -1091,9 +1173,11 @@ def _group_sections(
 
     for pm in paras:
         if pm.semantic == "section_heading":
-            # Before the first known section, only accept known headings
-            # to avoid treating names / job titles as sections.
-            if not found_section and pm.text.strip().lower() not in _ALL_HEADING_NAMES:
+            # Before the first known section, only accept known headings to
+            # avoid treating names / job titles as sections.  Use normalised
+            # comparison so ALL-CAPS, letter-spaced, and numbered headings are
+            # matched the same way as in _infer_semantic.
+            if not found_section and _normalize_heading_text(pm.text) not in _ALL_HEADING_NAMES_NOSPACE:
                 header_paras.append(pm)
                 continue
 
