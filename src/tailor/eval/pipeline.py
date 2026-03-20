@@ -48,7 +48,16 @@ def _doc_to_llm_text(doc) -> str:
         if section.semantic_type == "experience":
             if section.roles:
                 for role in section.roles:
-                    lines.append(role.header.text)
+                    if role.header_extra and "|" not in role.header.text:
+                        # PDF separate-line format: combine role title + company
+                        # (header_extra) into a single pipe-separated string so
+                        # parse_llm_output detects the role via _is_role_header.
+                        _hdr_parts = [role.header.text.strip()] + [
+                            he.text.strip() for he in role.header_extra if he.text.strip()
+                        ]
+                        lines.append(" | ".join(_hdr_parts))
+                    else:
+                        lines.append(role.header.text)
                     for m in role.meta_lines:
                         lines.append(m.text)
                     for b in role.bullets:

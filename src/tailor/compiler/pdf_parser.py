@@ -790,13 +790,19 @@ def _extract_paragraphs(
 
             # Collect all spans and per-line texts
             all_spans: list[dict] = []
-            line_entries: list[tuple[str, list[dict]]] = []  # (text, spans)
+            line_entries: list[tuple[str, list[dict], float]] = []  # (text, spans, line_y0)
 
             for line in blk.get("lines", []):
                 spans = line.get("spans", [])
                 line_text = "".join(s.get("text", "") for s in spans).strip()
                 if line_text:
-                    line_entries.append((line_text, spans))
+                    # Collect per-line y0 for accurate _has_bullet_dot matching.
+                    # Using block-level y0 for all lines causes every line in a
+                    # multi-bullet block to be flagged as a bullet when only the
+                    # first line of each item aligns with a bullet-dot drawing.
+                    _line_bbox = line.get("bbox")
+                    _line_y0 = float(_line_bbox[1]) if _line_bbox else 0.0
+                    line_entries.append((line_text, spans, _line_y0))
                     all_spans.extend(spans)
 
             if not line_entries:
@@ -808,8 +814,8 @@ def _extract_paragraphs(
 
             # Skip headers/footers (check full block text and single-line join,
             # both exact and case-insensitive)
-            full_text = "\n".join(t for t, _ in line_entries)
-            single_line = " ".join(t for t, _ in line_entries)
+            full_text = "\n".join(t for t, _, _ly in line_entries)
+            single_line = " ".join(t for t, _, _ly in line_entries)
             if (
                 single_line in hf_texts
                 or full_text in hf_texts
@@ -856,7 +862,7 @@ def _extract_paragraphs(
             # Emit one ParaModel per line.
             # Each line within a block inherits the block's font profile;
             # space_before is applied to the first line only.
-            for line_idx, (line_text, line_spans) in enumerate(line_entries):
+            for line_idx, (line_text, line_spans, line_y0) in enumerate(line_entries):
                 # Skip per-line H/F matches (case-insensitive)
                 if (
                     line_text in hf_texts
@@ -934,8 +940,10 @@ def _extract_paragraphs(
                         pm.paragraph_profile.bold = _runs[0][1]
                 # Bullet dots: small filled circle drawings (3–5 pt) that mark
                 # list items lacking a text prefix (skills, languages, certs).
-                # Override paragraph → bullet when a dot aligns with this line.
-                if pm.semantic == "paragraph" and _has_bullet_dot(bullet_dot_ys, y0):
+                # Use per-line y0 so only the first line of each bullet item is
+                # promoted; continuation lines (wrapped at a different y) are left
+                # as paragraphs and later merged by _merge_bullet_continuations.
+                if pm.semantic == "paragraph" and _has_bullet_dot(bullet_dot_ys, line_y0):
                     pm.semantic = "bullet"
                 # Normalize bullet text: strip leading bullet prefix so the IR
                 # stores bare content, consistent with DOCX-parsed paragraphs.
@@ -1149,6 +1157,21 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     pending: list[ParaModel] = []
     state = "init"
 
+    # Only use indent-based bullet promotion when the section has at least one
+    # paragraph that is already semantically a bullet (explicit marker in the
+    # PDF).  Without explicit bullets, large indent differences are layout
+    # artefacts (e.g. right column in a two-column PDF) and must not be
+    # promoted — they are kept as meta lines and round-trip as plain paragraphs.
+    has_explicit_bullets = any(p.semantic == "bullet" for p in body_paras)
+
+    # Only apply separate-line-format heuristics (init-state paragraph as role
+    # header; bullets-state indent-based new-role detection) when the section
+    # has NO pipe-format role_header paragraphs.  Resumes that do use "Title |
+    # Company" separators already have role_header semantics and must follow the
+    # standard path — otherwise a plain paragraph before the first role_header
+    # would be incorrectly treated as a standalone role entry.
+    has_pipe_role_headers = any(p.semantic == "role_header" for p in body_paras)
+
     def _hdr_indent() -> float:
         """Return the indent of the current role header (0 if unknown)."""
         pp = header.paragraph_profile if header else None
@@ -1209,7 +1232,14 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             header = pm
             state = "header"
         elif state == "init":
-            pass
+            if s == "paragraph" and not has_pipe_role_headers and has_explicit_bullets:
+                # Separate-line format with explicit bullet markers: treat the
+                # first plain paragraph as the role title (role header).  Require
+                # explicit bullets so that sections where bullet markers are
+                # rendered as empty paragraphs (e.g. \uf0b7 chars classified as
+                # "empty") are not accidentally split into spurious roles.
+                header = pm
+                state = "header"
         elif state == "header":
             if s == "role_meta":
                 meta.append(pm)
@@ -1231,7 +1261,7 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 if _is_continuation:
                     pm.semantic = "role_meta"
                     header_extra.append(pm)
-                elif _has_list_indent(pm):
+                elif _has_list_indent(pm) and has_explicit_bullets:
                     pending.append(pm)
                     state = "meta"
                 else:
@@ -1252,7 +1282,7 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
             elif s == "paragraph":
-                if _has_list_indent(pm):
+                if _has_list_indent(pm) and has_explicit_bullets:
                     pending.append(pm)
                     if len(pending) >= 2:
                         # Two or more siblings with list geometry → promote all.
@@ -1281,6 +1311,23 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                     # Lowercase start → continuation fragment of the previous bullet.
                     pm.semantic = "bullet"
                     bullets.append(pm)
+                elif (
+                    not has_pipe_role_headers
+                    and has_explicit_bullets
+                    and bullets
+                    and pm.paragraph_profile is not None
+                    and pm.paragraph_profile.indent_left_pt <= _hdr_indent() + 4.0
+                    and pm.paragraph_profile.indent_left_pt < (
+                        bullets[0].paragraph_profile.indent_left_pt
+                        if bullets[0].paragraph_profile else 0.0
+                    ) - 4.0
+                ):
+                    # Paragraph back at header-level indent (significantly less
+                    # indented than current bullets) → new role in separate-line
+                    # format.  Flush current role and start fresh.
+                    _flush()
+                    header = pm
+                    state = "header"
                 elif len(bullets) >= 2:
                     # Established list (≥2 bullets): promote as continuation.
                     pm.semantic = "bullet"
@@ -1424,17 +1471,28 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     for section in sections:
         all_paras.append(section.heading)
         if section.semantic_type == "experience" and section.roles:
-            # Emit pre-role orphan body_paras (paragraphs before the first
-            # role_header that _group_roles skips in state "init").
-            # updater.py emits these in the rendered DOCX, so all_paras must
-            # include them too to keep the roundtrip comparison consistent.
-            for bp in section.body_paras:
-                if bp.semantic == "role_header":
-                    break
-                if bp.text.strip():
-                    all_paras.append(bp)
+            # Emit pre-role orphan body_paras only when body_paras contains
+            # an actual role_header paragraph (pipe-format resumes).  For
+            # separate-line format resumes there is no role_header in
+            # body_paras; skipping the orphan loop avoids duplicating all
+            # body content that was already consumed into section.roles.
+            if any(bp.semantic == "role_header" for bp in section.body_paras):
+                for bp in section.body_paras:
+                    if bp.semantic == "role_header":
+                        break
+                    if bp.text.strip():
+                        all_paras.append(bp)
             for role in section.roles:
-                all_paras.append(role.header)
+                if role.header_extra and "|" not in role.header.text:
+                    # PDF separate-line format: combine role title + company
+                    # (header_extra) so all_paras matches what _doc_to_llm_text
+                    # emits and the renderer writes to the DOCX.
+                    _combined = role.header.text.strip() + " | " + " | ".join(
+                        he.text.strip() for he in role.header_extra if he.text.strip()
+                    )
+                    all_paras.append(role.header.with_text(_combined))
+                else:
+                    all_paras.append(role.header)
                 all_paras.extend(role.meta_lines)
                 all_paras.extend(role.bullets)
         else:

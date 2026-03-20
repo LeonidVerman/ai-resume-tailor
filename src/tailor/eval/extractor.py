@@ -446,14 +446,35 @@ def extract(pdf_path: str) -> ExtractedDoc:
                             headings.append(norm)
                             seen.add(norm)
 
-    # Bullet count and dominant bullet left_x.
+    # Bullet count: all is_bullet_candidate lines across all pages.
     bullet_lines = [
         ln for pg in pages for blk in pg.blocks
         for ln in blk.lines if ln.is_bullet_candidate
     ]
-    dominant_bullet_left_x = _dominant_value(
-        [ln.left_x for ln in bullet_lines], 2.0
-    ) if bullet_lines else None
+
+    # Dominant bullet anchor: use only the FIRST is_bullet_candidate line per
+    # block.  Wrapped continuation lines are also classified as bullet candidates
+    # (indent heuristic) but sit at a larger x than the true marker; including
+    # them inflates the anchor.  Using only the first line per block gives the
+    # actual marker position.
+    #
+    # Confidence guard: if no single position accounts for ≥ 60% of first-line
+    # bullets (e.g. two-column layouts or multi-level indentation), the anchor
+    # is ambiguous.  Set to None so the comparator skips the bullet_indent check
+    # rather than emitting a false positive.
+    first_bullet_lines = [
+        next(ln for ln in blk.lines if ln.is_bullet_candidate)
+        for pg in pages for blk in pg.blocks
+        if any(ln.is_bullet_candidate for ln in blk.lines)
+    ]
+    dominant_bullet_left_x: float | None = None
+    if first_bullet_lines:
+        _fbx = [ln.left_x for ln in first_bullet_lines]
+        _rounded = [round(x / 2.0) * 2.0 for x in _fbx]
+        _cnt = Counter(_rounded)
+        _dom_val, _dom_count = _cnt.most_common(1)[0]
+        if _dom_count / len(_fbx) >= 0.60:
+            dominant_bullet_left_x = _dom_val
 
     # Full normalized text
     full_text = " ".join(
