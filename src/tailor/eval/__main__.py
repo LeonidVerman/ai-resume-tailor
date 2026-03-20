@@ -270,8 +270,8 @@ def _build_parser() -> argparse.ArgumentParser:
         description="PDF round-trip evaluator for the resume pipeline.",
     )
     parser.add_argument(
-        "--output-dir", default="eval",
-        help="Root directory for run output (default: eval/)",
+        "--output-dir", default="tmp/artefacts/pdf/eval",
+        help="Root directory for run output (default: tmp/artefacts/pdf/eval)",
     )
 
     sub = parser.add_subparsers(dest="command")

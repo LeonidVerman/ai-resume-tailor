@@ -198,7 +198,11 @@ def _classify_line(
     if norm in _KNOWN_SECTIONS_NOSPACE:
         return True, False
 
-    # Heading candidate: heuristic (bold + short + well-spaced + no comma)
+    # Heading candidate: heuristic (bold + short + well-spaced + no comma).
+    # Requires 2+ words (single capitalized words are typically names/locations,
+    # not section headings).  Both font-size and spacing thresholds are stricter
+    # than before to reduce false positives from resume header lines (name,
+    # job title) which are bold but not section headings.
     if (
         is_bold
         and len(text) <= 60
@@ -207,11 +211,11 @@ def _classify_line(
         and not text.startswith(("-", "•", "·"))
     ):
         words = text.split()
-        if len(words) >= 1:
+        if len(words) >= 2:
             cap_ratio = sum(1 for w in words if w and w[0].isupper()) / len(words)
-            larger_font = font_size >= dominant_font_size * 1.05
-            well_spaced = space_before >= 4.0
-            if cap_ratio >= 0.7 and (larger_font or well_spaced or len(words) <= 4):
+            larger_font = font_size >= dominant_font_size * 1.10
+            well_spaced = space_before >= 6.0
+            if cap_ratio >= 0.7 and (larger_font or well_spaced):
                 return True, False
 
     return False, is_bullet

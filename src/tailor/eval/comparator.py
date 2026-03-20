@@ -30,9 +30,11 @@ THRESHOLDS: dict[str, float] = {
     "token_f1_min": 0.90,
     "bullet_indent_delta_norm_max": 0.020,
     "section_gap_delta_norm_max": 0.020,
-    "content_bbox_shift_norm_max": 0.030,
+    # content_bbox_shift is informational only (low severity, never fails).
+    # Threshold is deliberately loose — systematic page-size differences
+    # between source PDF and DOCX template will always produce some shift.
+    "content_bbox_shift_norm_informational": 0.060,
     # Wrap divergence alone doesn't fail; needs structural consequence too.
-    # Tracked here for reference.
     "wrap_divergence_escalation_min": 3,
 }
 
@@ -74,35 +76,63 @@ def _sequence_similarity(src: str, out: str) -> float:
 # Heading comparison helpers
 # ---------------------------------------------------------------------------
 
-def _normalize_heading(text: str) -> str:
-    """Lowercase, collapse whitespace, strip punctuation for fuzzy matching."""
-    text = re.sub(r"[^a-z0-9 ]", "", text.lower())
-    return re.sub(r"\s+", " ", text).strip()
+# Known section names (no spaces, lowercase) for comparison filtering.
+# Mirrors the set in extractor.py but lives here to keep comparator self-contained.
+_KNOWN_SECTIONS_NOSPACE: frozenset[str] = frozenset({
+    "summary", "professionalsummary", "objective", "careerobjective",
+    "profile", "professionalprofile", "aboutme", "careersummary",
+    "executivesummary",
+    "experience", "workexperience", "professionalexperience",
+    "employmenthistory", "employment", "careerhistory",
+    "workhistory", "professionalbackground",
+    "skills", "technicalskills", "corecompetencies", "competencies",
+    "technicalexpertise", "expertise", "keyskills", "areasofexpertise",
+    "technologies", "techstack",
+    "education", "academicbackground", "academiccredentials",
+    "educationalbackground", "degrees",
+    "projects", "certifications", "certification", "publications",
+    "awards", "honors", "languages", "references", "activities",
+    "volunteer", "volunteering", "leadership", "interests",
+    "additionalinformation",
+})
+
+
+def _heading_key(text: str) -> str:
+    """Normalize a heading to a canonical comparison key.
+
+    - Lowercase
+    - Strip leading number prefix (e.g. "1.", "2. ", "(3)")
+    - Remove all non-alphanumeric characters
+    """
+    t = text.lower().strip()
+    t = re.sub(r"^[\d\.\s\(\)]+", "", t)   # strip leading "1. " / "(2)" etc.
+    return re.sub(r"[^a-z0-9]", "", t)
+
+
+def _is_known_section(text: str) -> bool:
+    """Return True when *text* normalises to a known resume section name."""
+    return _heading_key(text) in _KNOWN_SECTIONS_NOSPACE
 
 
 def _match_headings(
     src_headings: list[str],
     out_headings: list[str],
 ) -> tuple[list[str], list[str]]:
-    """Return (missing_from_output, extra_in_output)."""
-    src_norm = {_normalize_heading(h) for h in src_headings}
-    out_norm = {_normalize_heading(h) for h in out_headings}
+    """Return (missing_from_output, extra_in_output) for KNOWN section headings only.
 
-    # Fuzzy: check if any output heading is close enough to a source heading
-    matched_src: set[str] = set()
-    matched_out: set[str] = set()
+    Filters both lists to headings that normalise to a recognised resume
+    section name before comparing.  This eliminates false positives from
+    name lines, role titles, and other bold-but-not-section text that the
+    extractor may have detected as heading candidates.
+    """
+    src_sections = [h for h in src_headings if _is_known_section(h)]
+    out_sections = [h for h in out_headings if _is_known_section(h)]
 
-    for sn in src_norm:
-        for on in out_norm:
-            if on == sn:
-                matched_src.add(sn)
-                matched_out.add(on)
-            elif sn and on and (sn in on or on in sn):
-                matched_src.add(sn)
-                matched_out.add(on)
+    src_keys = {_heading_key(h) for h in src_sections}
+    out_keys = {_heading_key(h) for h in out_sections}
 
-    missing = [h for h in src_headings if _normalize_heading(h) not in matched_src]
-    extra = [h for h in out_headings if _normalize_heading(h) not in matched_out]
+    missing = [h for h in src_sections if _heading_key(h) not in out_keys]
+    extra = [h for h in out_sections if _heading_key(h) not in src_keys]
     return missing, extra
 
 
@@ -182,10 +212,9 @@ def _compute_layout_score(lm: LayoutMetrics) -> float:
         excess = max(0.0, gap_delta - THRESHOLDS["section_gap_delta_norm_max"])
         score -= min(0.15, excess * 7.5)
 
-    bbox_shift = lm.content_bbox_shift_norm
-    if bbox_shift is not None:
-        excess = max(0.0, bbox_shift - THRESHOLDS["content_bbox_shift_norm_max"])
-        score -= min(0.10, excess * 3.0)
+    # content_bbox_shift: informational only — not penalised in score.
+    # Systematic page-size differences (source A4 vs template Letter) will
+    # always produce some shift and should not reduce the layout score.
 
     if lm.column_count_source != lm.column_count_output and lm.column_confidence == "high":
         score -= 0.20
@@ -307,16 +336,16 @@ def _generate_issues(
             ))
 
     if lm.content_bbox_shift_norm is not None:
-        if lm.content_bbox_shift_norm > THRESHOLDS["content_bbox_shift_norm_max"]:
+        if lm.content_bbox_shift_norm > THRESHOLDS["content_bbox_shift_norm_informational"]:
             issues.append(IssueModel(
                 issue_type="content_bbox_shift",
-                severity="medium",
+                severity="low",
                 page=1,
                 delta=round(lm.content_bbox_shift_norm, 4),
                 description=(
-                    f"Content bounding box shifted significantly "
-                    f"(normalized shift={lm.content_bbox_shift_norm:.4f}, "
-                    f"threshold={THRESHOLDS['content_bbox_shift_norm_max']:.3f})."
+                    f"Content bounding box shifted (informational). "
+                    f"normalized shift={lm.content_bbox_shift_norm:.4f}, "
+                    f"threshold={THRESHOLDS['content_bbox_shift_norm_informational']:.3f}."
                 ),
             ))
 
