@@ -40,15 +40,35 @@ _DEFAULT_EXCLUDES: frozenset[str] = frozenset({
     "2-Leonid_Verman_Resume_2.pdf",
 })
 
+# Project root: src/tailor/eval/__main__.py -> ../../.. -> project root
+_PROJECT_ROOT: Path = Path(__file__).parent.parent.parent.parent
+
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 def _eval_root(output_dir: str) -> str:
-    """Return the eval root directory, creating it if needed."""
-    os.makedirs(output_dir, exist_ok=True)
-    return output_dir
+    """Return the eval root directory (resolved from project root), creating it if needed."""
+    resolved = str(_resolve_path(output_dir))
+    os.makedirs(resolved, exist_ok=True)
+    return resolved
+
+
+def _resolve_path(raw: str) -> Path:
+    """Resolve *raw* relative to CWD first, then project root as fallback.
+
+    This lets users pass paths like ``tests/samples/resume/pfd`` from any
+    working directory and have them resolved against the project root when
+    they don't exist relative to CWD.
+    """
+    p = Path(raw)
+    if p.is_absolute() or p.exists():
+        return p
+    from_root = _PROJECT_ROOT / p
+    if from_root.exists():
+        return from_root
+    return p   # return as-is; error will be reported by the caller
 
 
 def _collect_pdfs(
@@ -59,13 +79,17 @@ def _collect_pdfs(
     """Return sorted list of PDF paths to evaluate."""
     paths: list[str] = []
     if directory:
-        p = Path(directory)
+        p = _resolve_path(directory)
         if not p.is_dir():
-            print(f"ERROR: --dir '{directory}' is not a directory.", file=sys.stderr)
+            print(
+                f"ERROR: --dir '{directory}' is not a directory "
+                f"(tried CWD and project root {_PROJECT_ROOT}).",
+                file=sys.stderr,
+            )
             sys.exit(1)
         paths = sorted(str(f) for f in p.glob("*.pdf") if f.name not in excludes)
     if files:
-        paths = [str(f) for f in files if Path(f).name not in excludes]
+        paths = [str(_resolve_path(f)) for f in files if Path(f).name not in excludes]
     if not paths:
         print("ERROR: No PDF files found (check --dir or --files).", file=sys.stderr)
         sys.exit(1)
