@@ -636,12 +636,18 @@ def _pdf_roundtrip(
             )
 
         # Stage 3: render DOCX → PDF and compare against input PDF.
-        # Uses xhtml2pdf (local, no external deps) so this works in all environments.
+        # Uses LibreOffice (subprocess) for production-quality rendering that
+        # matches the eval pipeline.  Falls back to xhtml2pdf (local) if
+        # LibreOffice is not available so the test still passes in CI.
         try:
             with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
                 pdf_out = f.name.replace(".docx", ".pdf")
             shutil.copy2(docx_out, f.name)
-            docx_to_pdf(f.name, method="local")
+            _pdf_method = os.environ.get("PDF_METHOD", "subprocess")
+            try:
+                docx_to_pdf(f.name, method=_pdf_method)
+            except Exception:
+                docx_to_pdf(f.name, method="local")
             os.remove(f.name)
 
             if _SAVE_ARTEFACTS and os.path.exists(pdf_out):
