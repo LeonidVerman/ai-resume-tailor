@@ -550,8 +550,8 @@ def _extract_layout(doc) -> LayoutProfile:
     blocks = page.get_text("dict")["blocks"]
     # Use only blocks with non-whitespace text to avoid whitespace-only spacer
     # glyphs (e.g. a single space at x=14) pulling the margin estimate too far left.
-    xs0 = [
-        blk["bbox"][0] for blk in blocks
+    _text_blocks = [
+        blk for blk in blocks
         if blk.get("type") == 0
         and any(
             s.get("text", "").strip()
@@ -559,8 +559,23 @@ def _extract_layout(doc) -> LayoutProfile:
             for s in line.get("spans", [])
         )
     ]
-    if xs0:
+    if _text_blocks:
+        xs0 = [blk["bbox"][0] for blk in _text_blocks]
+        xs1 = [blk["bbox"][2] for blk in _text_blocks]
+        ys1 = [blk["bbox"][3] for blk in _text_blocks]
         margin_left = max(0.0, min(xs0))
+        margin_right_from_right = max(0.0, rect.width - max(xs1))
+        margin_bottom_from_bottom = max(0.0, rect.height - max(ys1))
+
+    # Top margin: use ALL type-0 blocks (including whitespace-only ones) because
+    # decorative spacers / icon glyphs define the visual top of the page layout.
+    # Using only non-whitespace blocks overestimates the top margin when the
+    # first visible element is preceded by a spacer (e.g. Calibri-based resumes
+    # with a top spacer row).  Stray whitespace glyphs at the left edge are a
+    # concern for x (left margin) but not for y (top margin) in practice.
+    _all_type0_y0 = [blk["bbox"][1] for blk in blocks if blk.get("type") == 0]
+    if _all_type0_y0:
+        margin_top = max(0.0, min(_all_type0_y0))
 
     # Collect font stats for default font/size
     font_counter: Counter = Counter()

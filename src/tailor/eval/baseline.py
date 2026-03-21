@@ -80,4 +80,4 @@ def promote(eval_dir: str, run_id: str, allow_regressions: bool = False) -> None
     with open(baseline_path(eval_dir), "w", encoding="utf-8") as f:
         json.dump(baseline, f, indent=2, ensure_ascii=False)
 
-    print(f"Baseline promoted: '{run_id}' → {baseline_path(eval_dir)}")
+    print(f"Baseline promoted: '{run_id}' -> {baseline_path(eval_dir)}")

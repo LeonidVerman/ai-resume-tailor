@@ -199,6 +199,43 @@ def _render_para(pm: ParaModel, body, sectPr) -> None:
         body.append(clone)
 
 
+def _apply_pdf_page_geometry(sectPr, layout) -> None:
+    """Overwrite pgSz and pgMar in *sectPr* with the source PDF's page geometry.
+
+    Called for PDF-sourced documents so the output DOCX uses the same paper
+    size and margins as the source, keeping the round-trip page count stable.
+    Header/footer/gutter margins from the template are preserved.
+    """
+    from lxml import etree
+
+    if sectPr is None:
+        return
+
+    # Page size
+    pgSz = sectPr.find(f"{{{_W}}}pgSz")
+    if pgSz is None:
+        pgSz = etree.SubElement(sectPr, f"{{{_W}}}pgSz")
+    pgSz.set(f"{{{_W}}}w", str(int(layout.page_width_pt * 20)))
+    pgSz.set(f"{{{_W}}}h", str(int(layout.page_height_pt * 20)))
+
+    # Page margins (preserve header/footer/gutter attributes if present).
+    # margin_top_pt is accurate (first non-whitespace text block Y position).
+    # margin_bottom_pt can be inaccurate for non-full single-page PDFs where
+    # blank space below the last line is incorrectly measured as "margin".
+    # Clamping bottom to min(bottom, top) avoids this: for multi-page PDFs the
+    # last block on page 1 is typically near the real bottom margin so B < T is
+    # plausible; for single-page PDFs B is huge so clamping keeps it ≤ T.
+    pgMar = sectPr.find(f"{{{_W}}}pgMar")
+    if pgMar is None:
+        pgMar = etree.SubElement(sectPr, f"{{{_W}}}pgMar")
+    top_twips = int(layout.margin_top_pt * 20)
+    bot_twips = int(min(layout.margin_bottom_pt, layout.margin_top_pt) * 20)
+    pgMar.set(f"{{{_W}}}top",    str(top_twips))
+    pgMar.set(f"{{{_W}}}bottom", str(bot_twips))
+    pgMar.set(f"{{{_W}}}left",   str(int(layout.margin_left_pt * 20)))
+    pgMar.set(f"{{{_W}}}right",  str(int(layout.margin_right_pt * 20)))
+
+
 def _get_text_area_width_twips(sectPr) -> int:
     """Return the text-area width in twips from a sectPr element."""
     pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
@@ -483,6 +520,11 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         body.remove(child)
     if sectPr is not None:
         body.append(sectPr)
+
+    # For PDF-sourced documents, override the template page geometry with the
+    # source PDF's paper size and margins so the round-trip page count is stable.
+    if doc.source_kind == "pdf" and sectPr is not None:
+        _apply_pdf_page_geometry(sectPr, doc.layout)
 
     # PDF sources with a detected two-column layout: render as a borderless
     # two-cell table so that sidebar and main content are placed in separate

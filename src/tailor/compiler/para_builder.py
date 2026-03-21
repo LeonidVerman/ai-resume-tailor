@@ -99,13 +99,21 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
             jc = etree.SubElement(pPr, f"{{{_W}}}jc")
             jc.set(f"{{{_W}}}val", _ALIGN_MAP[pp.alignment])
 
-        # Spacing (twips = pt × 20)
-        if pp.space_before_pt or pp.space_after_pt:
-            spc = etree.SubElement(pPr, f"{{{_W}}}spacing")
-            if pp.space_before_pt:
-                spc.set(f"{{{_W}}}before", str(int(pp.space_before_pt * 20)))
-            if pp.space_after_pt:
-                spc.set(f"{{{_W}}}after", str(int(pp.space_after_pt * 20)))
+        # Spacing (twips = pt × 20).  Always emit w:before and w:after
+        # explicitly to override any inherited style spacing.  The
+        # ListParagraph style has w:before="238" (11.9 pt); without an
+        # explicit override every bullet with space_before_pt=0 inherits
+        # that gap, inflating the page count dramatically.
+        spc = etree.SubElement(pPr, f"{{{_W}}}spacing")
+        spc.set(f"{{{_W}}}before", str(int((pp.space_before_pt or 0) * 20)))
+        spc.set(f"{{{_W}}}after", str(int((pp.space_after_pt or 0) * 20)))
+        # Explicit line height: w:lineRule="exact" pins LibreOffice to the
+        # same ~1.1× font-size line height the source PDF uses, preventing
+        # the renderer's default 1.15× factor from adding 0.5–0.65 pt of
+        # extra height per line (≈ 37–49 pt per page for a typical resume).
+        if pp.font_size_pt:
+            spc.set(f"{{{_W}}}line", str(int(pp.font_size_pt * 1.1 * 20)))
+            spc.set(f"{{{_W}}}lineRule", "exact")
 
         # Indentation (twips = pt × 20).  Bullets already have w:ind set above.
         if pp.indent_left_pt and pm.semantic != "bullet":
