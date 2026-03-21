@@ -6,17 +6,9 @@ identity-serialize via _doc_to_llm_text, compile_resume_from_ir, docx_to_pdf.
 from __future__ import annotations
 
 import os
-import re
 import tempfile
 import shutil
 from pathlib import Path
-
-_SEMANTIC_CANONICAL_HEADING: dict[str, str] = {
-    "summary": "Professional Summary",
-    "experience": "Experience",
-    "skills": "Technical Skills",
-    "education": "Education",
-}
 
 
 def _doc_to_llm_text(doc) -> str:
@@ -37,12 +29,7 @@ def _doc_to_llm_text(doc) -> str:
         if section.semantic_type == "other":
             continue
 
-        _title_parts = re.split(r"[\s\xa0]+", section.title.strip())
-        _is_letter_spaced = bool(_title_parts) and all(len(p) <= 1 for p in _title_parts if p)
-        if _is_letter_spaced:
-            heading_line = _SEMANTIC_CANONICAL_HEADING.get(section.semantic_type, section.title)
-        else:
-            heading_line = section.title
+        heading_line = section.title
         lines.append(heading_line)
 
         if section.semantic_type == "experience":

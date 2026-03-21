@@ -593,8 +593,13 @@ def _pdf_roundtrip(
             if p.text.strip() and p.text.strip() not in header_extra_texts
         ]
         def _strip_bullet_prefix(t: str) -> str:
-            """Remove the inline bullet prefix added by para_builder ("• ")."""
-            return t[2:] if t.startswith("\u2022 ") else t
+            """Remove inline bullet prefix added by para_builder ("• " or "\\uf0b7\\t")."""
+            if t.startswith("\u2022 "):
+                return t[2:]
+            if t.startswith("\uf0b7"):
+                # Tab-bullet: strip PUA marker and any trailing whitespace/tab
+                return t[1:].lstrip("\t ")
+            return t
 
         rend_texts = [
             _strip_bullet_prefix(p.text.strip()) for p in rend_doc.all_paras

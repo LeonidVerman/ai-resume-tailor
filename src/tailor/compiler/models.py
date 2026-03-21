@@ -29,6 +29,8 @@ class ParagraphProfile:
     bold: bool = False
     italic: bool = False
     indent_left_pt: float = 0.0   # points from the column's left edge
+    hanging_indent_pt: float = 0.0  # hanging-indent (first-line outdent); used for PUA bullet pairs
+    body_text_x0_pt: float = 0.0  # raw per-line x0 (runtime only; not serialised); used by _merge_pua_bullet_pairs
     space_before_pt: float = 0.0  # estimated from Y-gap to previous block
     space_after_pt: float = 0.0
     alignment: str | None = None  # 'left' | 'center' | 'right' | 'justify'
@@ -51,13 +53,14 @@ class ParagraphProfile:
             "bold": self.bold,
             "italic": self.italic,
             "indent_left_pt": self.indent_left_pt,
+            "hanging_indent_pt": self.hanging_indent_pt,
             "space_before_pt": self.space_before_pt,
             "space_after_pt": self.space_after_pt,
             "alignment": self.alignment,
             "text_color": self.text_color,
             "background_color": self.background_color,
             "column_id": self.column_id,
-            # inline_image_bytes is NOT serialised (runtime-only)
+            # inline_image_bytes and body_text_x0_pt are NOT serialised (runtime-only)
         }
 
     @classmethod
@@ -68,6 +71,7 @@ class ParagraphProfile:
             bold=bool(d.get("bold", False)),
             italic=bool(d.get("italic", False)),
             indent_left_pt=float(d.get("indent_left_pt", 0.0)),
+            hanging_indent_pt=float(d.get("hanging_indent_pt", 0.0)),
             space_before_pt=float(d.get("space_before_pt", 0.0)),
             space_after_pt=float(d.get("space_after_pt", 0.0)),
             alignment=d.get("alignment"),

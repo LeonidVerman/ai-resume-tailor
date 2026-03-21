@@ -805,19 +805,19 @@ def _extract_paragraphs(
 
             # Collect all spans and per-line texts
             all_spans: list[dict] = []
-            line_entries: list[tuple[str, list[dict], float]] = []  # (text, spans, line_y0)
+            line_entries: list[tuple[str, list[dict], float, float, float]] = []  # (text, spans, line_y0, line_x0, line_y1)
 
             for line in blk.get("lines", []):
                 spans = line.get("spans", [])
                 line_text = "".join(s.get("text", "") for s in spans).strip()
                 if line_text:
-                    # Collect per-line y0 for accurate _has_bullet_dot matching.
-                    # Using block-level y0 for all lines causes every line in a
-                    # multi-bullet block to be flagged as a bullet when only the
-                    # first line of each item aligns with a bullet-dot drawing.
+                    # Collect per-line y0/y1 for accurate _has_bullet_dot matching
+                    # and per-line space_before computation.
                     _line_bbox = line.get("bbox")
                     _line_y0 = float(_line_bbox[1]) if _line_bbox else 0.0
-                    line_entries.append((line_text, spans, _line_y0))
+                    _line_y1 = float(_line_bbox[3]) if _line_bbox else _line_y0 + 12.0
+                    _line_x0 = float(_line_bbox[0]) if _line_bbox else float(blk["bbox"][0])
+                    line_entries.append((line_text, spans, _line_y0, _line_x0, _line_y1))
                     all_spans.extend(spans)
 
             if not line_entries:
@@ -829,8 +829,8 @@ def _extract_paragraphs(
 
             # Skip headers/footers (check full block text and single-line join,
             # both exact and case-insensitive)
-            full_text = "\n".join(t for t, _, _ly in line_entries)
-            single_line = " ".join(t for t, _, _ly in line_entries)
+            full_text = "\n".join(t for t, *_ in line_entries)
+            single_line = " ".join(t for t, *_ in line_entries)
             if (
                 single_line in hf_texts
                 or full_text in hf_texts
@@ -875,9 +875,12 @@ def _extract_paragraphs(
                     break
 
             # Emit one ParaModel per line.
-            # Each line within a block inherits the block's font profile;
-            # space_before is applied to the first line only.
-            for line_idx, (line_text, line_spans, line_y0) in enumerate(line_entries):
+            # Each line within a block inherits the block's font profile.
+            # space_before_pt is computed per-line from actual y-gaps so that
+            # inter-section spacing baked into the source PDF is preserved in
+            # the output DOCX (critical for the evaluator's block-splitting).
+            prev_line_y1_in_block: float | None = None
+            for line_idx, (line_text, line_spans, line_y0, line_x0, line_y1) in enumerate(line_entries):
                 # Skip per-line H/F matches (case-insensitive)
                 if (
                     line_text in hf_texts
@@ -900,12 +903,36 @@ def _extract_paragraphs(
                     if icon_png is not None:
                         icon_size_pt = min(y1 - y0, x1_blk - x0)
 
+                # For PUA-only lines (standalone bullet glyphs like \uf0b7),
+                # always use per-line x0 so the bullet marker's true indent is
+                # captured (e.g. 54pt vs block x0 of 36pt).
+                # For non-PUA lines with any positive line-x0 delta, also use
+                # per-line x0 to preserve indentation (e.g. body text at x=72
+                # or skills values at x=144 inside a block starting at x=36).
+                _line_pua_only = bool(line_text.strip()) and all(
+                    0xE000 <= ord(c) <= 0xF8FF or c.isspace() for c in line_text
+                )
+                if _line_pua_only or line_x0 > x0:
+                    _indent_x = line_x0
+                else:
+                    _indent_x = x0
+                # Track per-line y-gap but build profile with OLD space_before
+                # so _infer_semantic sees the same values as before (preventing
+                # reclassification of non-heading items via the well_spaced flag).
+                # We patch space_before_pt to the per-line value only AFTER
+                # semantic inference confirms the paragraph is a section_heading.
+                if prev_line_y1_in_block is not None and line_y0 > prev_line_y1_in_block:
+                    _per_line_sb = line_y0 - prev_line_y1_in_block
+                else:
+                    _per_line_sb = 0.0
+                prev_line_y1_in_block = line_y1
                 profile = ParagraphProfile(
                     font_name=line_fi["font_name"],
                     font_size_pt=line_fi["font_size_pt"],
                     bold=line_fi["bold"],
                     italic=line_fi["italic"],
-                    indent_left_pt=max(0.0, x0 - col_origin),
+                    indent_left_pt=max(0.0, _indent_x - col_origin),
+                    body_text_x0_pt=line_x0,
                     space_before_pt=space_before if line_idx == 0 else 0.0,
                     text_color=line_text_color,
                     background_color=block_bg_color,
@@ -988,6 +1015,15 @@ def _extract_paragraphs(
                         pm.paragraph_profile.indent_left_pt = 0.0
                     if pm.paragraph_profile.space_before_pt > 3.0:
                         pm.paragraph_profile.space_before_pt = 3.0
+                # Section headings: apply per-line y-gap, capped at 6 pt.
+                # This preserves inter-section spacing baked into the source PDF
+                # so the evaluator's gap-threshold block-splitter can separate
+                # sections (needs baseline_gap > ~1.4 × median_lh ≈ 16 pt;
+                # 6 pt + 11 pt line height = 17 pt clears the threshold).
+                if pm.semantic == "section_heading" and pm.paragraph_profile:
+                    _heading_sb = min(_per_line_sb, 6.0)
+                    if _heading_sb > pm.paragraph_profile.space_before_pt:
+                        pm.paragraph_profile.space_before_pt = _heading_sb
                 paras.append(pm)
 
     return paras
@@ -1425,11 +1461,64 @@ def _merge_bullet_continuations(bullets: list[ParaModel]) -> list[ParaModel]:
     return result
 
 
+def _merge_pua_bullet_pairs(paras: list[ParaModel]) -> list[ParaModel]:
+    """Merge consecutive [PUA-only 'empty'] + ['paragraph'] pairs into bullets.
+
+    Some PDF generators (e.g. Symbol/Wingdings font bullets) emit the bullet
+    glyph (e.g. '\\uf0b7') as a standalone text element on its own line at the
+    bullet x-position, followed by the bullet text on the next line.  After
+    _infer_semantic, the glyph line becomes 'empty' and the text line becomes
+    'paragraph'.  This function fuses such pairs into a single 'bullet'
+    ParaModel, transferring the glyph line's indent_left_pt so the output
+    bullet aligns with the source PDF.
+    """
+    result: list[ParaModel] = []
+    i = 0
+    while i < len(paras):
+        pm = paras[i]
+        if (
+            pm.semantic == "empty"
+            and pm.text.strip()
+            and all(0xE000 <= ord(c) <= 0xF8FF or c.isspace() for c in pm.text)
+            and i + 1 < len(paras)
+            and paras[i + 1].semantic == "paragraph"
+        ):
+            next_pm = paras[i + 1]
+            next_pm.semantic = "bullet"
+            if next_pm.paragraph_profile is not None and pm.paragraph_profile is not None:
+                # Compute hanging-indent geometry from per-line x0 values so
+                # the output DOCX uses w:left (body text anchor) + w:hanging
+                # (marker outdent) rather than w:left = marker position.
+                # Example (Resume-Sample-1): marker at x=54, text at x=72,
+                # col_origin=36  →  w:left=36pt, w:hanging=18pt.
+                pua_x0 = pm.paragraph_profile.body_text_x0_pt      # abs marker x
+                text_x0 = next_pm.paragraph_profile.body_text_x0_pt  # abs text x
+                pua_indent = pm.paragraph_profile.indent_left_pt    # marker rel to col
+                # col_origin = pua_x0 - pua_indent
+                new_indent = max(0.0, text_x0 - (pua_x0 - pua_indent))
+                hanging = max(0.0, text_x0 - pua_x0)
+                next_pm.paragraph_profile.indent_left_pt = new_indent
+                next_pm.paragraph_profile.hanging_indent_pt = hanging
+            result.append(next_pm)
+            i += 2
+        else:
+            result.append(pm)
+            i += 1
+    return result
+
+
 def _finalise(section: ResumeSection) -> None:
     if section.semantic_type == "experience":
+        # Run role grouping BEFORE PUA bullet merging so that _group_roles sees
+        # the original semantic flags (no merged bullets → has_explicit_bullets
+        # stays False for PUA-only bullet sections, preventing spurious role
+        # splits on plain paragraph lines like company names).
         section.roles = _group_roles(section.body_paras)
         for role in section.roles:
+            role.bullets = _merge_pua_bullet_pairs(role.bullets)
             role.bullets = _merge_bullet_continuations(role.bullets)
+    # Merge PUA-only+paragraph pairs in body_paras after role grouping.
+    section.body_paras = _merge_pua_bullet_pairs(section.body_paras)
 
 
 # ---------------------------------------------------------------------------

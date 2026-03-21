@@ -16,6 +16,31 @@ from dataclasses import dataclass, field
 
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
+
+def _normalize_letter_spaced(s: str) -> str:
+    """Collapse letter-spaced headings to plain lowercase words.
+
+    'S U M M A R Y'                 → 'summary'
+    'T E C H N I C A L \\xa0 S K I L L S' → 'technical skills'
+
+    Splits on NBSP (\\xa0) first to detect multi-word groups, then checks that
+    each group consists entirely of single-character tokens separated by spaces.
+    Returns s.lower() unchanged when the pattern does not match.
+    """
+    word_groups = re.split(r'\xa0+', s.strip())
+    words: list[str] = []
+    for grp in word_groups:
+        parts = [p for p in grp.strip().split() if p]
+        if not parts:
+            continue
+        if all(len(p) == 1 for p in parts):
+            words.append(''.join(parts).lower())
+        else:
+            # Not letter-spaced — bail out
+            return s.lower()
+    return ' '.join(words) if words else s.lower()
+
+
 _EXPERIENCE_NAMES: frozenset[str] = frozenset({
     "experience", "work experience", "professional experience",
     "employment history", "employment", "career history",
@@ -55,6 +80,17 @@ def _classify(heading: str) -> str:
         return "skills"
     if t in _EDUCATION_NAMES:
         return "education"
+    # Try letter-spaced form: "S U M M A R Y" → "summary"
+    tn = _normalize_letter_spaced(heading)
+    if tn != t:
+        if tn in _EXPERIENCE_NAMES:
+            return "experience"
+        if tn in _SUMMARY_NAMES:
+            return "summary"
+        if tn in _SKILLS_NAMES:
+            return "skills"
+        if tn in _EDUCATION_NAMES:
+            return "education"
     return "other"
 
 
@@ -69,6 +105,9 @@ def _is_section_heading(line: str) -> bool:
     if len(s) > 60:
         return False
     if s.lower() in _ALL_KNOWN:
+        return True
+    # Letter-spaced form: "S U M M A R Y", "T E C H N I C A L \xa0 S K I L L S"
+    if _normalize_letter_spaced(s) in _ALL_KNOWN:
         return True
     # Tight title-case fallback for exactly 2-word lines (single words like "Python"
     # and 3+ word role titles like "Senior Software Developer" are excluded).
@@ -188,13 +227,17 @@ def parse_llm_output(text: str) -> list[LlmSection]:
                 and bool(cur_role.meta_lines)
             )
             if in_roleless_experience or in_section_with_body or in_experience_role_with_meta:
-                is_heading = bool(stripped) and stripped.lower() in _ALL_KNOWN
+                is_heading = bool(stripped) and (
+                    stripped.lower() in _ALL_KNOWN
+                    or _normalize_letter_spaced(stripped) in _ALL_KNOWN
+                )
             else:
                 is_heading = _is_section_heading(line)
         else:
             s_lower = stripped.lower()
             is_heading = bool(stripped) and (
                 s_lower in _ALL_KNOWN
+                or _normalize_letter_spaced(stripped) in _ALL_KNOWN
                 or (
                     stripped == stripped.upper()
                     and stripped.replace(" ", "").replace("-", "").isalpha()

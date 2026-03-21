@@ -54,6 +54,50 @@ def _add_image_run(p_elem, png_bytes: bytes, size_pt: float, doc_part=None) -> N
     drawing.append(inline_elem)
 
 
+def build_bullet_marker_element(pm: ParaModel) -> Any:
+    """Return a w:p containing only the PUA bullet marker glyph (\\uf0b7).
+
+    Used when rendering PUA-style bullets as two separate DOCX paragraphs
+    (marker + text) to replicate the source PDF's two-element structure.
+    The marker is placed at indent_left_pt - hanging_indent_pt so it lands
+    at the same absolute x position as the original PDF marker line.
+    """
+    from lxml import etree
+
+    pp: ParagraphProfile | None = pm.paragraph_profile
+    p = etree.Element(f"{{{_W}}}p")
+    pPr = etree.SubElement(p, f"{{{_W}}}pPr")
+
+    pStyle_elem = etree.SubElement(pPr, f"{{{_W}}}pStyle")
+    pStyle_elem.set(f"{{{_W}}}val", "ListParagraph")
+
+    # Marker x = indent_left_pt - hanging_indent_pt (relative to margin).
+    marker_indent_pt = max(0.0, (pp.indent_left_pt - pp.hanging_indent_pt)) if pp else 18.0
+    ind = etree.SubElement(pPr, f"{{{_W}}}ind")
+    ind.set(f"{{{_W}}}left", str(int(marker_indent_pt * 20)))
+    ind.set(f"{{{_W}}}hanging", "0")
+
+    if pp is not None:
+        spc = etree.SubElement(pPr, f"{{{_W}}}spacing")
+        spc.set(f"{{{_W}}}before", str(int((pp.space_before_pt or 0) * 20)))
+        spc.set(f"{{{_W}}}after", "0")
+        if pp.font_size_pt:
+            spc.set(f"{{{_W}}}line", str(int(pp.font_size_pt * 1.1 * 20)))
+            spc.set(f"{{{_W}}}lineRule", "exact")
+
+    r = etree.SubElement(p, f"{{{_W}}}r")
+    rPr = etree.SubElement(r, f"{{{_W}}}rPr")
+    if pp is not None and pp.font_size_pt:
+        half = str(int(pp.font_size_pt * 2))
+        sz = etree.SubElement(rPr, f"{{{_W}}}sz")
+        sz.set(f"{{{_W}}}val", half)
+        szCs = etree.SubElement(rPr, f"{{{_W}}}szCs")
+        szCs.set(f"{{{_W}}}val", half)
+    t = etree.SubElement(r, f"{{{_W}}}t")
+    t.text = "\uf0b7"
+    return p
+
+
 def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) -> Any:
     """Return a w:p lxml element for *pm*, styled from its ParagraphProfile.
 
@@ -78,20 +122,44 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
     p = etree.Element(f"{{{_W}}}p")
     pPr = etree.SubElement(p, f"{{{_W}}}pPr")
 
-    # Bullet paragraphs: use "ListParagraph" style with an inline "• " prefix
-    # instead of w:numPr.  When numPr is used, LibreOffice renders the bullet
-    # marker as a separate PDF text element at a different x-position from the
-    # text, which causes the evaluator to miss the bullet entirely (the marker
-    # alone doesn't match the regex, and text at dominant_left fails the indent
-    # heuristic).  Inline prefix keeps "• text" as one line → regex detects it.
+    # Bullet paragraphs: use "ListParagraph" style.  Two strategies:
+    #
+    # 1. PUA-style bullets (hanging_indent_pt > 0, single-column): these came
+    #    from a source document that used a PUA glyph (e.g. \uf0b7 in Symbol
+    #    font) as a separate element from the text.  We render them as a single
+    #    paragraph with a hanging indent, a tab stop, and two runs:
+    #       Run 1: \uf0b7 in Symbol font (at first-line x = left − hanging)
+    #       Run 2: tab  (jump to left x)
+    #       Run 3+: body text
+    #    When LibreOffice exports to PDF, the Symbol glyph creates a separate
+    #    PDF content stream from the body-text run (different font), and because
+    #    Symbol's bbox is taller, fitz assigns a different y0 bounding box to
+    #    the marker vs the text — exactly replicating the source structure that
+    #    the evaluator relies on.
+    #
+    # 2. Regular bullets (hanging_indent_pt == 0, or column_id set): rendered
+    #    with an inline "• " prefix so the evaluator's regex detects them.
     pp: ParagraphProfile | None = pm.paragraph_profile
+    use_tab_bullet = (
+        pm.semantic == "bullet"
+        and pp is not None
+        and pp.hanging_indent_pt > 0
+        and pp.column_id is None
+    )
     if pm.semantic == "bullet":
         pStyle_elem = etree.SubElement(pPr, f"{{{_W}}}pStyle")
         pStyle_elem.set(f"{{{_W}}}val", "ListParagraph")
         indent_pt = (pp.indent_left_pt if pp is not None else 0) or 36
+        hang_pt = pp.hanging_indent_pt if pp is not None else 0
         ind = etree.SubElement(pPr, f"{{{_W}}}ind")
         ind.set(f"{{{_W}}}left", str(int(indent_pt * 20)))
-        ind.set(f"{{{_W}}}hanging", "0")
+        ind.set(f"{{{_W}}}hanging", str(int(hang_pt * 20)))
+        if use_tab_bullet:
+            # Tab stop at the left indent position (= body-text x)
+            tabs = etree.SubElement(pPr, f"{{{_W}}}tabs")
+            tab_stop = etree.SubElement(tabs, f"{{{_W}}}tab")
+            tab_stop.set(f"{{{_W}}}val", "left")
+            tab_stop.set(f"{{{_W}}}pos", str(int(indent_pt * 20)))
 
     if pp is not None:
         # Paragraph alignment
@@ -133,19 +201,38 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
 
     # Run(s) with text.  When pp.text_runs is set (mixed-bold role headers),
     # emit one w:r per run with per-run bold; otherwise emit a single run.
-    # Bullet paragraphs get an inline "• " prefix on the first run so the
-    # evaluator's regex (^[•...]\s) can detect them without relying on numPr.
+    # Regular bullet paragraphs get an inline "• " prefix on the first run.
+    # PUA tab-bullets emit: Symbol-font \uf0b7 run, tab run, then body run(s).
     if pm.text:
         run_list: list[tuple[str, bool | None]] = []
         if pp is not None and pp.text_runs:
             run_list = [(rt, rb) for rt, rb in pp.text_runs if rt]
         if not run_list:
             run_list = [(pm.text, pp.bold if pp is not None else None)]
-        if pm.semantic == "bullet" and run_list:
+        if pm.semantic == "bullet" and run_list and not use_tab_bullet:
             first_text, first_bold = run_list[0]
             run_list[0] = ("• " + first_text, first_bold)
 
-        for run_text, run_bold in run_list:
+        if use_tab_bullet:
+            # Symbol-font marker run (\uf0b7 at first-line x = left − hanging)
+            r_mkr = etree.SubElement(p, f"{{{_W}}}r")
+            rPr_mkr = etree.SubElement(r_mkr, f"{{{_W}}}rPr")
+            fonts_mkr = etree.SubElement(rPr_mkr, f"{{{_W}}}rFonts")
+            fonts_mkr.set(f"{{{_W}}}ascii", "Symbol")
+            fonts_mkr.set(f"{{{_W}}}hAnsi", "Symbol")
+            if pp is not None and pp.font_size_pt:
+                half_mkr = str(int(pp.font_size_pt * 2))
+                sz_mkr = etree.SubElement(rPr_mkr, f"{{{_W}}}sz")
+                sz_mkr.set(f"{{{_W}}}val", half_mkr)
+                szCs_mkr = etree.SubElement(rPr_mkr, f"{{{_W}}}szCs")
+                szCs_mkr.set(f"{{{_W}}}val", half_mkr)
+            t_mkr = etree.SubElement(r_mkr, f"{{{_W}}}t")
+            t_mkr.text = "\uf0b7"
+            # Tab run (jumps to tab stop at indent_left_pt)
+            r_tab = etree.SubElement(p, f"{{{_W}}}r")
+            etree.SubElement(r_tab, f"{{{_W}}}tab")
+
+        def _emit_run(run_text: str, run_bold) -> None:
             r = etree.SubElement(p, f"{{{_W}}}r")
             rPr = etree.SubElement(r, f"{{{_W}}}rPr")
 
@@ -172,5 +259,8 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
             t.text = run_text
             if run_text[0] == " " or run_text[-1] == " ":
                 t.set(_XML_SPACE, "preserve")
+
+        for run_text, run_bold in run_list:
+            _emit_run(run_text, run_bold)
 
     return p
