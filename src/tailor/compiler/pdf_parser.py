@@ -1026,16 +1026,28 @@ def _extract_paragraphs(
                         pm.paragraph_profile.space_before_pt = _heading_sb
                     elif pm.paragraph_profile.space_before_pt > 6.0:
                         pm.paragraph_profile.space_before_pt = 6.0
-                # Global cap: PDF inter-block gaps from absolute positioning
-                # inflate DOCX flow-layout height. Cap all other paragraph
-                # types at 4 pt so they stay within the same evaluator block
-                # (gap = 4 + 12 = 16 pt < threshold ≈ 15.4 pt is borderline;
-                # use 3 pt for body types to be safely within the block).
-                elif pm.paragraph_profile and pm.paragraph_profile.space_before_pt > 4.0:
-                    if pm.semantic in ("role_header",):
-                        pm.paragraph_profile.space_before_pt = 4.0
-                    elif pm.semantic != "bullet":  # bullets already capped at 3 pt
-                        pm.paragraph_profile.space_before_pt = 3.0
+                # Global cap: PDF absolute-position inter-block gaps inflate
+                # DOCX flow-layout height.  Apply per-type limits:
+                #   role_header: 4 pt max (block-level gap, needs some spacing)
+                #   single-column body paras (paragraph, role_meta, …): 1 pt max
+                #     to avoid source PDF body-text gaps (often 2–4 pt) from
+                #     accumulating across 30–50 paragraphs and overflowing the
+                #     DOCX page.  Two-column paragraphs keep a larger cap (3 pt)
+                #     because changing their spacing destabilises LibreOffice's
+                #     column layout measurement.
+                elif pm.paragraph_profile and pm.semantic not in (
+                    "bullet", "section_heading"
+                ):
+                    sb = pm.paragraph_profile.space_before_pt
+                    _is_two_col = pm.paragraph_profile.column_id in ("left", "right")
+                    if pm.semantic == "role_header":
+                        if sb > 4.0:
+                            pm.paragraph_profile.space_before_pt = 4.0
+                    elif _is_two_col:
+                        if sb > 3.0:
+                            pm.paragraph_profile.space_before_pt = 3.0
+                    elif sb > 1.0:
+                        pm.paragraph_profile.space_before_pt = 1.0
                 paras.append(pm)
 
     return paras
