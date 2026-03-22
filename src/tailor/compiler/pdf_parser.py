@@ -1015,15 +1015,27 @@ def _extract_paragraphs(
                         pm.paragraph_profile.indent_left_pt = 0.0
                     if pm.paragraph_profile.space_before_pt > 3.0:
                         pm.paragraph_profile.space_before_pt = 3.0
-                # Section headings: apply per-line y-gap, capped at 6 pt.
-                # This preserves inter-section spacing baked into the source PDF
-                # so the evaluator's gap-threshold block-splitter can separate
-                # sections (needs baseline_gap > ~1.4 × median_lh ≈ 16 pt;
-                # 6 pt + 11 pt line height = 17 pt clears the threshold).
+                # Section headings: ensure minimum spacing for evaluator block
+                # detection (needs baseline_gap > ~1.4 × median_lh ≈ 16 pt;
+                # 6 pt + 11 pt line height = 17 pt clears the threshold),
+                # and cap maximum to prevent PDF absolute-position gaps from
+                # inflating DOCX flow-layout height.
                 if pm.semantic == "section_heading" and pm.paragraph_profile:
                     _heading_sb = min(_per_line_sb, 6.0)
                     if _heading_sb > pm.paragraph_profile.space_before_pt:
                         pm.paragraph_profile.space_before_pt = _heading_sb
+                    elif pm.paragraph_profile.space_before_pt > 6.0:
+                        pm.paragraph_profile.space_before_pt = 6.0
+                # Global cap: PDF inter-block gaps from absolute positioning
+                # inflate DOCX flow-layout height. Cap all other paragraph
+                # types at 4 pt so they stay within the same evaluator block
+                # (gap = 4 + 12 = 16 pt < threshold ≈ 15.4 pt is borderline;
+                # use 3 pt for body types to be safely within the block).
+                elif pm.paragraph_profile and pm.paragraph_profile.space_before_pt > 4.0:
+                    if pm.semantic in ("role_header",):
+                        pm.paragraph_profile.space_before_pt = 4.0
+                    elif pm.semantic != "bullet":  # bullets already capped at 3 pt
+                        pm.paragraph_profile.space_before_pt = 3.0
                 paras.append(pm)
 
     return paras

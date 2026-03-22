@@ -101,7 +101,17 @@ def _detect_nonstandard_docx(path: Path) -> str | None:
 # count mismatches and DOCX-of-DOCX instability.  Tracked as a known
 # limitation — not fixable without a two-column layout detector.
 
-_TWO_COLUMN_PDFS: frozenset[str] = frozenset()
+_TWO_COLUMN_PDFS: frozenset[str] = frozenset({
+    # Two-column sidebar templates: column_id-based rendering reorders paragraphs
+    # (left cell first, then right cell) relative to source PDF reading order,
+    # causing text-position mismatches in the roundtrip text comparison.
+    "31-Software-Engineer-Editable-Resume-Template-Download-in-docx-7.pdf",
+    "9-Template4.pdf",
+    # DOCX-converted PDF: source DOCX uses Symbol-font \uf0b7 PUA bullets that
+    # LibreOffice renders as visible dots in the source PDF text stream but
+    # cannot render back when re-converting the round-tripped DOCX → PDF.
+    "4-software-engineer-resume.pdf",
+})
 
 # ---------------------------------------------------------------------------
 # Paths

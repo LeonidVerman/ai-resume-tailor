@@ -336,22 +336,24 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         shd.set(f"{{{_W}}}color", "auto")
         shd.set(f"{{{_W}}}fill", layout.right_col_bg_color)
 
-    # header_paras (name, contact, summary before first section heading) span
-    # the full page width in the source PDF.  Render them as standalone
-    # paragraphs BEFORE the two-column table so they appear at full width,
-    # not crammed inside the narrow sidebar cell.
-    header_para_ids: set[int] = {id(pm) for pm in doc.header_paras}
-
-    # Distribute section-content paragraphs into cells (exclude header_paras)
+    # Sort ALL paragraphs purely by column_id so that the cell contents match
+    # the source PDF columns regardless of how _group_sections classified them.
+    # Paragraphs with no column_id (column_id is None) did not belong to either
+    # column and are rendered as full-width elements ABOVE the two-column table.
+    # Using column_id directly prevents the header_paras heuristic from placing
+    # left-column employment sections above the table when their section names
+    # are not in the known-headings vocabulary.
+    above_paras = [
+        pm for pm in doc.all_paras
+        if not (pm.paragraph_profile and pm.paragraph_profile.column_id in ("left", "right"))
+    ]
     left_paras = [
         pm for pm in doc.all_paras
-        if id(pm) not in header_para_ids
-        and pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
+        if pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
     ]
     right_paras = [
         pm for pm in doc.all_paras
-        if id(pm) not in header_para_ids
-        and not (pm.paragraph_profile and pm.paragraph_profile.column_id == "left")
+        if pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
     ]
 
     for pm in left_paras:
@@ -365,18 +367,16 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     if not right_paras:
         etree.SubElement(right_tc, f"{{{_W}}}p")
 
-    # Build header element(s): if any header paragraph has a background colour
-    # (PDF header band), wrap all header_paras in a single-cell full-page-width
-    # table so the shading is applied at cell level and renders as one
-    # continuous band.  Individual paragraph w:shd would create fragmented
-    # striped blocks with visible gaps between paragraphs.
+    # Build header element(s): if any above-table paragraph has a background
+    # colour, wrap all above_paras in a single-cell full-page-width table so
+    # the shading is applied at cell level (one continuous band).
     header_bg = next(
         (pm.paragraph_profile.background_color
-         for pm in doc.header_paras
+         for pm in above_paras
          if pm.paragraph_profile and pm.paragraph_profile.background_color),
         None,
     )
-    if header_bg and doc.header_paras:
+    if header_bg and above_paras:
         hdr_tbl = etree.Element(f"{{{_W}}}tbl")
         hdr_tblPr = etree.SubElement(hdr_tbl, f"{{{_W}}}tblPr")
         hdr_tblW = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblW")
@@ -406,11 +406,11 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         hdr_shd.set(f"{{{_W}}}val", "clear")
         hdr_shd.set(f"{{{_W}}}color", "auto")
         hdr_shd.set(f"{{{_W}}}fill", header_bg)
-        for pm in doc.header_paras:
+        for pm in above_paras:
             hdr_tc.append(build_para_element(pm, doc_part=doc_part, skip_bg_shd=True))
         header_elements = [hdr_tbl]
     else:
-        header_elements = [build_para_element(pm, doc_part=doc_part) for pm in doc.header_paras]
+        header_elements = [build_para_element(pm, doc_part=doc_part) for pm in above_paras]
 
     # Insert header element(s) before the body table, then the body table itself.
     if sectPr is not None:
