@@ -107,10 +107,6 @@ _TWO_COLUMN_PDFS: frozenset[str] = frozenset({
     # causing text-position mismatches in the roundtrip text comparison.
     "31-Software-Engineer-Editable-Resume-Template-Download-in-docx-7.pdf",
     "9-Template4.pdf",
-    # DOCX-converted PDF: source DOCX uses Symbol-font \uf0b7 PUA bullets that
-    # LibreOffice renders as visible dots in the source PDF text stream but
-    # cannot render back when re-converting the round-tripped DOCX → PDF.
-    "4-software-engineer-resume.pdf",
 })
 
 # ---------------------------------------------------------------------------
@@ -606,8 +602,10 @@ def _pdf_roundtrip(
             """Remove inline bullet prefix added by para_builder ("• " or "\\uf0b7\\t")."""
             if t.startswith("\u2022 "):
                 return t[2:]
-            if t.startswith("\uf0b7"):
-                # Tab-bullet: strip PUA marker and any trailing whitespace/tab
+            if t.startswith("\uf0b7") and len(t) > 1:
+                # Tab-bullet: strip PUA marker and any trailing whitespace/tab.
+                # Only strip when there is content after the marker; a standalone
+                # "\uf0b7" paragraph is the PUA bullet marker itself (not a prefix).
                 return t[1:].lstrip("\t ")
             return t
 
