@@ -1026,6 +1026,13 @@ def _extract_paragraphs(
                         pm.paragraph_profile.space_before_pt = _heading_sb
                     elif pm.paragraph_profile.space_before_pt > 6.0:
                         pm.paragraph_profile.space_before_pt = 6.0
+                    # Left-column headings often overflow the visual column
+                    # boundary in the source PDF (PDF allows overflow; DOCX
+                    # table cells enforce width and wrap the text).  Zeroing
+                    # the indent gives the heading the full cell width so it
+                    # renders on a single line.
+                    if col_id == "left" and pm.paragraph_profile.indent_left_pt > 0:
+                        pm.paragraph_profile.indent_left_pt = 0.0
                 # Global cap: PDF absolute-position inter-block gaps inflate
                 # DOCX flow-layout height.  Apply per-type limits:
                 #   role_header: 4 pt max (block-level gap, needs some spacing)
