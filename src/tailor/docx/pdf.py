@@ -625,14 +625,21 @@ def _docx_to_pdf_subprocess(docx_path):
     Produces a .pdf file next to the source DOCX.
     """
     import subprocess
+    import tempfile
+    import uuid
 
     docx_abs = os.path.abspath(docx_path)
     out_dir   = os.path.dirname(docx_abs)
     pdf_dest  = os.path.splitext(docx_abs)[0] + ".pdf"
 
     lo_exe = _find_libreoffice_exe()
+    # Each invocation gets its own user-profile directory so that concurrent
+    # requests (e.g. multiple FastAPI workers) don't share the ~/.config/libreoffice
+    # lock and silently drop conversions.
+    profile_dir = os.path.join(tempfile.gettempdir(), f"lo_profile_{uuid.uuid4().hex}")
     cmd = [
         lo_exe, "--headless",
+        f"-env:UserInstallation=file://{profile_dir}",
         "--convert-to", "pdf",
         docx_abs,
         "--outdir", out_dir,

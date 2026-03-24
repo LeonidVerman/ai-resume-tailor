@@ -17,6 +17,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     python3-dev \
     libreoffice \
+    # Metrically-compatible MS-font substitutes for LibreOffice headless rendering.
+    # Without these, LibreOffice falls back to DejaVu (different glyph widths),
+    # causing text reflow and page-count changes on Calibri/Cambria/Arial resumes.
+    fonts-crosextra-carlito \
+    fonts-crosextra-caladea \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency manifests first (layer cache friendly)
