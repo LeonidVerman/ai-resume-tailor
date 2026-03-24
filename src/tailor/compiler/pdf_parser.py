@@ -684,8 +684,11 @@ def _detect_column_split(
     them, and looks for a gap that is ≥ 9 % of the page width.  To qualify as
     a column boundary:
       - the right edge of the gap must fall between 20 % and 70 % of the page width
-      - no text block in the BODY (below the top 15 % of the page) may "bridge"
-        the gap (x0 ≤ left side AND x1 ≥ right side)
+      - the right-side cluster must span ≥ 30 % of the page height (ensures the
+        right column has substantial content, not just a few scattered items)
+      - no NARROW body block bridges the gap; full-width design elements
+        (≥ 50 % of page width — headers, summary paragraphs that intentionally
+        span both columns) are excluded from the bridge check
 
     Ignoring the top 15 % of the page for the bridging check lets us detect
     columns whose header banner (name, title, summary) spans both columns — a
@@ -700,19 +703,51 @@ def _detect_column_split(
 
     min_gap = page_width * 0.09
     top_cutoff = page_height * 0.15 if page_height > 0 else 0.0
+    # Full-width elements that span ≥ 50 % of the page width are cross-column
+    # design elements (e.g. name banner, summary paragraph, section heading
+    # that overflows visually) and should not veto the column split.
+    wide_block_min = page_width * 0.50
 
     for i in range(len(x0s) - 1):
         gap = x0s[i + 1] - x0s[i]
         right_edge = x0s[i + 1]
         if gap >= min_gap and page_width * 0.20 <= right_edge <= page_width * 0.70:
-            # Reject if any BODY block bridges the gap: starts in the left "column"
-            # and extends at least 5 % past the right edge.  Blocks in the top
-            # 15 % (header banner) are excluded so they don't veto body columns.
+            # Require the right-side content cluster to span a meaningful
+            # fraction of the page height so that a handful of right-aligned
+            # header items (contact, date) don't trigger false column detection.
+            if page_height > 0:
+                # Use body blocks only (exclude header / footer bands) so that
+                # a single contact line + page-number footer don't create a
+                # falsely large vertical span and trigger two-column detection.
+                body_top = page_height * 0.15
+                body_bot = page_height * 0.90
+                right_cluster = [
+                    b for b in blocks
+                    if b.get("type") == 0
+                    and round(b["bbox"][0]) >= right_edge
+                    and b["bbox"][1] >= body_top
+                    and b["bbox"][3] <= body_bot
+                ]
+                if not right_cluster:
+                    continue
+                ry_span = (
+                    max(b["bbox"][3] for b in right_cluster)
+                    - min(b["bbox"][1] for b in right_cluster)
+                ) / page_height
+                if ry_span < 0.30:
+                    continue
+
+            # Reject if any BODY block bridges the gap: starts in the left
+            # "column" and extends at least 5 % past the right edge.  Blocks
+            # in the top 15 % (header banner) are excluded.  Full-width blocks
+            # (≥ 50 % page width) are also excluded — they are intentional
+            # cross-column design elements, not evidence of a single column.
             bridge_x1_threshold = right_edge * 1.05
             bridging = any(
                 b["bbox"][0] <= x0s[i]
                 and b["bbox"][2] >= bridge_x1_threshold
                 and b["bbox"][1] >= top_cutoff
+                and (b["bbox"][2] - b["bbox"][0]) < wide_block_min
                 for b in blocks if b.get("type") == 0
             )
             if not bridging:
