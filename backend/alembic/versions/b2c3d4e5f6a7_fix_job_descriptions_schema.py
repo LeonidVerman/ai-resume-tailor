@@ -24,17 +24,38 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Rename parsed_metadata_jsonb → metadata_jsonb
-    op.alter_column(
-        "job_descriptions",
-        "parsed_metadata_jsonb",
-        new_column_name="metadata_jsonb",
-    )
-    # Add missing source_type column
-    op.add_column(
-        "job_descriptions",
-        sa.Column("source_type", sa.String(32), nullable=True),
-    )
+    # The initial migration was later corrected to use the final column names
+    # directly, so on a fresh DB both operations below are already satisfied.
+    # Guard each one so the migration is idempotent whether run against an old
+    # DB (pre-correction) or a fresh one.
+
+    # Rename parsed_metadata_jsonb → metadata_jsonb if the old name still exists.
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'job_descriptions'
+                  AND column_name = 'parsed_metadata_jsonb'
+            ) THEN
+                ALTER TABLE job_descriptions
+                    RENAME COLUMN parsed_metadata_jsonb TO metadata_jsonb;
+            END IF;
+        END $$;
+    """)
+
+    # Add source_type only if it does not already exist.
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'job_descriptions'
+                  AND column_name = 'source_type'
+            ) THEN
+                ALTER TABLE job_descriptions
+                    ADD COLUMN source_type VARCHAR(32);
+            END IF;
+        END $$;
+    """)
 
 
 def downgrade() -> None:
