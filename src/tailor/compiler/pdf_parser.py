@@ -698,7 +698,7 @@ def _detect_column_split(
     Returns the midpoint of the detected gap as the column split x-coordinate.
     """
     x0s = sorted({round(blk["bbox"][0]) for blk in blocks if blk.get("type") == 0})
-    if len(x0s) < 4:
+    if len(x0s) < 2:
         return None
 
     min_gap = page_width * 0.09
@@ -751,7 +751,25 @@ def _detect_column_split(
                 for b in blocks if b.get("type") == 0
             )
             if not bridging:
-                return (x0s[i] + x0s[i + 1]) / 2.0
+                # When left-column body text extends well past its x0 start
+                # (e.g. "PROFESSIONAL EXPERIENCE" at x0=78 but x1=366) the
+                # simple x0-gap midpoint under-estimates the left column width.
+                # Use the midpoint of the *content* gap instead — but only when
+                # max_left_x1 stays strictly below right_edge (i.e. left content
+                # does not actually overlap the right column).
+                x0_mid = (x0s[i] + x0s[i + 1]) / 2.0
+                left_body_x1s = [
+                    b["bbox"][2] for b in blocks
+                    if b.get("type") == 0
+                    and b["bbox"][0] <= x0s[i]
+                    and b["bbox"][1] >= top_cutoff
+                ]
+                if left_body_x1s:
+                    max_left_x1 = max(left_body_x1s)
+                    if max_left_x1 < right_edge:
+                        content_mid = (max_left_x1 + right_edge) / 2.0
+                        return max(x0_mid, content_mid)
+                return x0_mid
     return None
 
 
