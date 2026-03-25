@@ -13,7 +13,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -22,6 +22,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ArrayListEditor } from "@/components/candidate-profile/ArrayListEditor";
 import { ExperienceHighlightCard } from "@/components/candidate-profile/ExperienceHighlightCard";
 import { candidateProfile, ApiError } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import type {
   CandidateProfileDocument,
   ExperienceHighlight,
@@ -114,6 +115,22 @@ function FieldRow({ label, required, children }: { label: string; required?: boo
 
 export default function ProfileOnboardingPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+
+  // Redirect unauthenticated users to login.
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login");
+    }
+  }, [authLoading, user, router]);
+
+  // Redirect users who have already completed onboarding.
+  useEffect(() => {
+    if (!authLoading && user?.onboarding_completed) {
+      router.replace("/generate");
+    }
+  }, [authLoading, user, router]);
+
   const [step, setStep] = useState(1);
   const [doc, setDoc] = useState<CandidateProfileDocument>(EMPTY_DOC);
   const [highlights, setHighlights] = useState<KeyedHighlight[]>([]);
@@ -204,6 +221,9 @@ export default function ProfileOnboardingPage() {
   }
 
   const { candidate, domains, technical_skills: ts, leadership, ai_tooling_practice: ai, claim_boundaries: cb } = doc;
+
+  // Show nothing while checking auth (prevents a flash of the form).
+  if (authLoading || !user) return null;
 
   // ── Step render ───────────────────────────────────────────────────────────
 

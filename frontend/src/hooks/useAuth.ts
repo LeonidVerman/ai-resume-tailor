@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/api";
+import { auth, ApiError } from "@/lib/api";
 import {
   clearStoredToken,
   getStoredToken,
@@ -36,8 +36,13 @@ export function useAuth() {
     try {
       const user = await auth.me();
       setState({ user, loading: false, error: null });
-    } catch {
-      clearStoredToken();
+    } catch (err) {
+      // Only clear the stored token on a 401 (invalid/expired JWT).
+      // Do NOT clear on 500 or network errors — that would wipe a valid
+      // token due to a transient backend failure, locking the user out.
+      if (err instanceof ApiError && err.status === 401) {
+        clearStoredToken();
+      }
       setState({ user: null, loading: false, error: null });
     }
   }, []);
