@@ -870,8 +870,40 @@ def _extract_paragraphs(
                     _line_y0 = float(_line_bbox[1]) if _line_bbox else 0.0
                     _line_y1 = float(_line_bbox[3]) if _line_bbox else _line_y0 + 12.0
                     _line_x0 = float(_line_bbox[0]) if _line_bbox else float(blk["bbox"][0])
-                    line_entries.append((line_text, spans, _line_y0, _line_x0, _line_y1))
-                    all_spans.extend(spans)
+                    # Coalesce same-y-row fragments: PDFs with font-switch mid-line
+                    # (e.g. hyperlinks, styled email addresses) produce multiple
+                    # PyMuPDF "lines" at identical y bounds for one visual text row.
+                    # Concatenating them avoids emitting one paragraph per fragment,
+                    # which multiplies line height and causes page overflow.
+                    # Guard: only coalesce if the new fragment's x0 is within 20pt
+                    # of the previous fragment's x1 (i.e. they are adjacent or
+                    # overlapping in x).  This prevents merging same-y content from
+                    # separate layout columns (e.g. a sidebar label and a main-area
+                    # value that happen to share the same y coordinate).
+                    _prev_x1 = (
+                        line_entries[-1][1][-1]["bbox"][2]  # last span's x1
+                        if line_entries and line_entries[-1][1]
+                        else -999.0
+                    )
+                    if (
+                        line_entries
+                        and abs(_line_y0 - line_entries[-1][2]) < 1.0
+                        and abs(_line_y1 - line_entries[-1][4]) < 1.0
+                        and _line_x0 - _prev_x1 < 20.0
+                    ):
+                        # Merge into the previous entry: sort by x0, concatenate.
+                        prev_text, prev_spans, prev_y0, prev_x0, prev_y1 = line_entries[-1]
+                        if _line_x0 >= prev_x0:
+                            merged_text = prev_text + " " + line_text
+                            merged_x0 = prev_x0
+                        else:
+                            merged_text = line_text + " " + prev_text
+                            merged_x0 = _line_x0
+                        line_entries[-1] = (merged_text.strip(), prev_spans + spans, prev_y0, merged_x0, prev_y1)
+                        all_spans.extend(spans)
+                    else:
+                        line_entries.append((line_text, spans, _line_y0, _line_x0, _line_y1))
+                        all_spans.extend(spans)
 
             if not line_entries:
                 prev_block_y1 = blk["bbox"][3]
