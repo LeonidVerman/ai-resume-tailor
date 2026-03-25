@@ -56,11 +56,22 @@ def _complete_onboarding(client) -> None:
     client.post("/api/v1/candidate-profile/complete-onboarding")
 
 
+from contextlib import contextmanager
+
+
+@contextmanager
 def _patch_pipeline():
-    return patch(
-        "backend.app.services.generation_service.GenerationService._run_pipeline",
-        return_value=(_make_tailor_result(), 100, 200, 0.005, {}),
-    )
+    with (
+        patch(
+            "backend.app.services.generation_service.GenerationService._run_pipeline",
+            return_value=(_make_tailor_result(), 100, 200, 0.005, {}),
+        ),
+        patch(
+            "backend.app.services.generation_service._ensure_candidate_prompt",
+            return_value="test candidate prompt",
+        ),
+    ):
+        yield
 
 
 def _patch_config():

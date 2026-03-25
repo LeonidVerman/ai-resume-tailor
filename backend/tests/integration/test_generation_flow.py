@@ -50,11 +50,22 @@ def _make_tailor_result(resume: str = "Tailored resume", cover: str = "Cover let
     return r
 
 
+from contextlib import contextmanager
+
+
+@contextmanager
 def _patch_pipeline(resume="Tailored resume text", cover="Cover letter text"):
-    return patch(
-        "backend.app.services.generation_service.GenerationService._run_pipeline",
-        return_value=(_make_tailor_result(resume, cover), 500, 1000, 0.02, {}),
-    )
+    with (
+        patch(
+            "backend.app.services.generation_service.GenerationService._run_pipeline",
+            return_value=(_make_tailor_result(resume, cover), 500, 1000, 0.02, {}),
+        ),
+        patch(
+            "backend.app.services.generation_service._ensure_candidate_prompt",
+            return_value="test candidate prompt",
+        ),
+    ):
+        yield
 
 
 def _patch_model():
