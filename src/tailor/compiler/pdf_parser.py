@@ -702,6 +702,19 @@ def _detect_column_split(
         return None
 
     min_gap = page_width * 0.08
+
+    # Count significant gaps before attempting detection.  A document with 2+
+    # significant gaps is a 3-column (or more) layout; treat it as single-column
+    # since we only model one split point.  This prevents the first gap in a
+    # 3-column layout (e.g. left | middle | right at x=[42,240,410]) from being
+    # mistaken for a two-column sidebar split.
+    significant_gaps = sum(
+        1 for i in range(len(x0s) - 1)
+        if x0s[i + 1] - x0s[i] >= min_gap
+        and page_width * 0.20 <= x0s[i + 1] <= page_width * 0.70
+    )
+    if significant_gaps >= 2:
+        return None
     top_cutoff = page_height * 0.15 if page_height > 0 else 0.0
     # Full-width elements that span ≥ 50 % of the page width are cross-column
     # design elements (e.g. name banner, summary paragraph, section heading
