@@ -30,6 +30,8 @@ from fastapi.responses import Response
 
 from backend.app.config import get_settings
 from backend.app.dependencies import AdminDep, DbDep
+from backend.app.db.repositories.billing_repository import BillingRepository
+from backend.app.schemas.billing import GrantCreditsRequest
 from backend.app.db.repositories.admin_config_repository import AdminConfigRepository
 from backend.app.db.repositories.benchmark_run_repository import BenchmarkRunRepository
 from backend.app.db.repositories.benchmark_run_position_repository import BenchmarkRunPositionRepository
@@ -501,3 +503,19 @@ def download_run_data_by_id(run_id: str, _admin: AdminDep):
         media_type="application/json",
         headers={"Content-Disposition": f'attachment; filename="{f.name}"'},
     )
+
+
+# ── Billing admin ──────────────────────────────────────────────────────────
+
+@router.post("/billing/grant-credits", status_code=200)
+def grant_credits(request: GrantCreditsRequest, _admin: AdminDep, db: DbDep):
+    """
+    Grant one-time generation credits to a user.
+
+    Admin-only. Use to award beta credits or compensate users manually.
+    Creates a billing row for the user if none exists.
+    """
+    if request.amount <= 0:
+        raise HTTPException(status_code=400, detail="amount must be > 0")
+    BillingRepository(db).add_credits(request.user_id, request.amount)
+    return {"user_id": request.user_id, "credits_granted": request.amount}

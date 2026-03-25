@@ -54,6 +54,9 @@ class User(Base, CreatedAtMixin):
     billing: Mapped["Billing | None"] = relationship(  # noqa: F821
         "Billing", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
+    monthly_usage: Mapped[list["MonthlyUsage"]] = relationship(  # noqa: F821
+        "MonthlyUsage", back_populates="user", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<User id={self.id!r} email={self.email!r} plan={self.plan_type!r}>"

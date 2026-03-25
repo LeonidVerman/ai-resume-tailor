@@ -2,9 +2,6 @@
 backend/app/schemas/billing.py
 
 Billing and subscription schemas.
-
-Intentionally thin — Stripe is the source of truth for billing events.
-These models expose what the app needs to know about a user's plan state.
 """
 
 from datetime import datetime
@@ -17,24 +14,38 @@ PlanType = Literal["free", "starter", "pro"]
 
 
 class BillingStatus(APIModel):
-    """Returned by GET /billing/status — the user's current plan state."""
+    """Returned by GET /billing/status — the user's current plan and usage state."""
     user_id: str
     plan_type: PlanType
     subscription_status: SubscriptionStatus
-    free_generations_used: int
-    free_generations_limit: int
+    # Monthly quota
+    monthly_used: int
+    monthly_limit: int
+    # One-time credit pack balance
+    extra_credits: int
     current_period_end: datetime | None = None
     stripe_customer_id: str | None = None
 
 
 class CheckoutSessionRequest(APIModel):
     """Request body for POST /billing/create-checkout-session."""
-    plan_type: Literal["starter", "pro"]
-    success_url: str
-    cancel_url: str
+    plan_type: Literal["starter", "pro", "credit_pack"]
+    success_url: str = ""
+    cancel_url: str = ""
 
 
 class CheckoutSessionResponse(APIModel):
     """Response from POST /billing/create-checkout-session."""
     checkout_url: str
     session_id: str
+
+
+class CustomerPortalResponse(APIModel):
+    """Response from POST /billing/customer-portal."""
+    portal_url: str
+
+
+class GrantCreditsRequest(APIModel):
+    """Request body for POST /admin/billing/grant-credits."""
+    user_id: str
+    amount: int

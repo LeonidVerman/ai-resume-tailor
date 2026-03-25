@@ -7,18 +7,18 @@ Endpoint
 --------
 POST /webhooks/stripe   — receive and process Stripe webhook events
 
-Phase 8 status: STRUCTURALLY CORRECT (signature validation + billing sync)
----------------------------------------------------------------------------
-Webhook signature validation is performed when STRIPE_WEBHOOK_SECRET is set.
-Unrecognised event types are silently acknowledged (200 OK) to avoid Stripe
-retry storms.
+Handled events
+--------------
+  customer.subscription.created   — sync subscription state
+  customer.subscription.updated   — sync subscription state
+  customer.subscription.deleted   — downgrade to free
+  checkout.session.completed      — grant credits (payment) or sync plan (subscription)
+  invoice.paid                    — primary subscription activation signal
+  invoice.payment_failed          — mark subscription past_due
 
-Currently handled events:
-  - customer.subscription.created
-  - customer.subscription.updated
-  - customer.subscription.deleted
+All other events are acknowledged (200 OK) without processing.
 
-All other events are acknowledged without processing.
+Idempotency: all handlers perform upsert/update operations; safe to replay.
 """
 
 import logging
@@ -27,7 +27,9 @@ from fastapi import APIRouter, Header, HTTPException, Request, status
 
 from backend.app.dependencies import DbDep, SettingsDep
 from backend.app.db.repositories.billing_repository import BillingRepository
+from backend.app.db.repositories.monthly_usage_repository import MonthlyUsageRepository
 from backend.app.services.billing_service import BillingService
+from backend.app.services.usage_policy_service import UsagePolicyService
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +39,30 @@ _HANDLED_EVENTS = {
     "customer.subscription.created",
     "customer.subscription.updated",
     "customer.subscription.deleted",
+    "checkout.session.completed",
+    "invoice.paid",
+    "invoice.payment_failed",
 }
+
+
+def _make_billing_service(db, settings) -> BillingService:
+    stripe_client = None
+    if settings.stripe_secret_key:
+        from backend.app.clients.stripe_client import StripeClient
+        stripe_client = StripeClient(
+            secret_key=settings.stripe_secret_key,
+            webhook_secret=settings.stripe_webhook_secret,
+        )
+    usage_svc = UsagePolicyService(
+        billing_repo=BillingRepository(db),
+        monthly_usage_repo=MonthlyUsageRepository(db),
+    )
+    return BillingService(
+        billing_repo=BillingRepository(db),
+        usage_service=usage_svc,
+        stripe_client=stripe_client,
+        settings=settings,
+    )
 
 
 @router.post("/stripe", status_code=200)
@@ -48,7 +73,7 @@ async def stripe_webhook(
     stripe_signature: str | None = Header(default=None, alias="Stripe-Signature"),
 ):
     """
-    Receive Stripe webhook events and update subscription state.
+    Receive Stripe webhook events and update subscription/credit state.
 
     Verifies the Stripe-Signature header when STRIPE_WEBHOOK_SECRET is set.
     Returns 400 if signature verification fails.
@@ -56,7 +81,7 @@ async def stripe_webhook(
     """
     raw_body = await request.body()
 
-    # ── Validate signature (when secret is configured) ─────────────────────
+    # ── Validate signature ─────────────────────────────────────────────────
     if settings.stripe_webhook_secret:
         if not stripe_signature:
             raise HTTPException(
@@ -65,12 +90,14 @@ async def stripe_webhook(
             )
         try:
             from backend.app.clients.stripe_client import StripeClient
-            stripe_client = StripeClient(api_key=settings.stripe_secret_key)
-            event = stripe_client.construct_webhook_event(
+            stripe_client = StripeClient(
+                secret_key=settings.stripe_secret_key,
+                webhook_secret=settings.stripe_webhook_secret,
+            )
+            event_dict = stripe_client.construct_webhook_event(
                 payload=raw_body,
                 sig_header=stripe_signature,
             )
-            event_dict = event  # StripeClient returns a dict-like event
         except Exception as exc:
             logger.warning("Stripe webhook signature validation failed: %s", exc)
             raise HTTPException(
@@ -78,7 +105,6 @@ async def stripe_webhook(
                 detail=f"Webhook signature invalid: {exc}",
             )
     else:
-        # No secret configured — accept body as-is (dev/test mode)
         import json
         try:
             event_dict = json.loads(raw_body)
@@ -95,13 +121,23 @@ async def stripe_webhook(
         logger.debug("Unhandled Stripe event type: %s — acknowledged", event_type)
         return {"received": True}
 
-    # ── Delegate to billing service ────────────────────────────────────────
-    stripe_client_for_billing = None
-    if settings.stripe_secret_key:
-        from backend.app.clients.stripe_client import StripeClient
-        stripe_client_for_billing = StripeClient(api_key=settings.stripe_secret_key)
+    # ── Dispatch to billing service ────────────────────────────────────────
+    svc = _make_billing_service(db, settings)
 
-    billing_svc = BillingService(BillingRepository(db), stripe_client_for_billing)
-    billing_svc.handle_subscription_updated(event_dict)
+    if event_type in (
+        "customer.subscription.created",
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+    ):
+        svc.handle_subscription_updated(event_dict)
+
+    elif event_type == "checkout.session.completed":
+        svc.handle_checkout_completed(event_dict)
+
+    elif event_type == "invoice.paid":
+        svc.handle_invoice_paid(event_dict)
+
+    elif event_type == "invoice.payment_failed":
+        svc.handle_invoice_payment_failed(event_dict)
 
     return {"received": True}

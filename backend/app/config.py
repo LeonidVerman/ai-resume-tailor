@@ -72,6 +72,12 @@ class Settings(BaseSettings):
     # ── Stripe ────────────────────────────────────────────────────────────
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
+    stripe_price_id_starter: str = ""
+    stripe_price_id_pro: str = ""
+    stripe_price_id_credit_pack: str = ""
+
+    # ── App base URL (used for Stripe success/cancel URL fallback) ─────────
+    app_base_url: str = "http://localhost:3000"
 
     @property
     def cors_origins(self) -> list[str]:

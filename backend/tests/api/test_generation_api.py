@@ -57,6 +57,7 @@ def _complete_onboarding(client) -> None:
 
 
 from contextlib import contextmanager
+from unittest.mock import patch
 
 
 @contextmanager
@@ -69,6 +70,9 @@ def _patch_pipeline():
         patch(
             "backend.app.services.generation_service._ensure_candidate_prompt",
             return_value="test candidate prompt",
+        ),
+        patch(
+            "backend.app.services.usage_policy_service.UsagePolicyService.check_and_consume",
         ),
     ):
         yield
@@ -140,6 +144,9 @@ class TestCreateGeneration:
                 "backend.app.services.generation_service.GenerationService._run_pipeline",
                 side_effect=RuntimeError("LLM timeout"),
             ),
+            patch(
+                "backend.app.services.usage_policy_service.UsagePolicyService.check_and_consume",
+            ),
             _patch_config(),
         ):
             resp = client.post(API, json=_gen_request(jd_id, resume_id))
@@ -207,3 +214,83 @@ class TestGetGeneration:
     def test_get_unknown_returns_404(self, client):
         resp = client.get(f"{API}/{uuid.uuid4()}")
         assert resp.status_code == 404
+
+
+# ── Quota enforcement ──────────────────────────────────────────────────────
+
+class TestGenerationQuota:
+    """Verify that UsagePolicyService.check_and_consume is called and enforced."""
+
+    def test_quota_exceeded_returns_429(self, client):
+        """When check_and_consume raises 429, the generation endpoint propagates it."""
+        from fastapi import HTTPException
+
+        _complete_onboarding(client)
+        resume_id = _upload_resume(client)
+        jd_id = _create_jd(client)
+
+        def _raise_quota(*args, **kwargs):
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "message": "Monthly generation limit reached (3/3).",
+                    "error_code": "QUOTA_EXCEEDED",
+                    "plan": "free",
+                    "monthly_used": 3,
+                    "monthly_limit": 3,
+                    "extra_credits": 0,
+                },
+            )
+
+        with (
+            patch(
+                "backend.app.services.usage_policy_service.UsagePolicyService.check_and_consume",
+                side_effect=_raise_quota,
+            ),
+            _patch_config(),
+        ):
+            resp = client.post(API, json=_gen_request(jd_id, resume_id))
+
+        assert resp.status_code == 429
+        detail = resp.json()["detail"]
+        assert detail["error_code"] == "QUOTA_EXCEEDED"
+        assert detail["monthly_limit"] == 3
+        assert detail["monthly_used"] == 3
+
+    def test_quota_check_called_on_valid_request(self, client):
+        """check_and_consume is called exactly once on a valid generation request."""
+        _complete_onboarding(client)
+        resume_id = _upload_resume(client)
+        jd_id = _create_jd(client)
+
+        with (
+            patch(
+                "backend.app.services.generation_service.GenerationService._run_pipeline",
+                return_value=(_make_tailor_result(), 100, 200, 0.005, {}),
+            ),
+            patch(
+                "backend.app.services.generation_service._ensure_candidate_prompt",
+                return_value="test candidate prompt",
+            ),
+            patch(
+                "backend.app.services.usage_policy_service.UsagePolicyService.check_and_consume"
+            ) as mock_check,
+            _patch_config(),
+        ):
+            client.post(API, json=_gen_request(jd_id, resume_id))
+            assert mock_check.call_count == 1
+
+    def test_quota_check_not_called_before_onboarding(self, client):
+        """Onboarding gate fires before quota check — 403, not 429."""
+        resume_id = _upload_resume(client)
+        jd_id = _create_jd(client)
+
+        with (
+            patch(
+                "backend.app.services.usage_policy_service.UsagePolicyService.check_and_consume"
+            ) as mock_check,
+            _patch_config(),
+        ):
+            resp = client.post(API, json=_gen_request(jd_id, resume_id))
+            assert resp.status_code == 403
+            mock_check.assert_not_called()

@@ -160,6 +160,51 @@ class StripeClient:
 
     # ── Webhooks ───────────────────────────────────────────────────────────
 
+    def create_payment_checkout_session(
+        self,
+        price_id: str,
+        *,
+        customer_id: str | None = None,
+        customer_email: str | None = None,
+        success_url: str,
+        cancel_url: str,
+        metadata: dict | None = None,
+    ) -> CheckoutSessionResult:
+        """Create a Stripe Checkout Session for a one-time payment (credit pack)."""
+        stripe = self._stripe()
+
+        params: dict[str, Any] = {
+            "mode": "payment",
+            "line_items": [{"price": price_id, "quantity": 1}],
+            "success_url": success_url,
+            "cancel_url": cancel_url,
+        }
+        if customer_id:
+            params["customer"] = customer_id
+        elif customer_email:
+            params["customer_email"] = customer_email
+        if metadata:
+            params["metadata"] = metadata
+
+        session = stripe.checkout.Session.create(**params)
+        logger.info("Created payment checkout session id=%s", session.id)
+        return CheckoutSessionResult(
+            session_id=session.id,
+            checkout_url=session.url,
+        )
+
+    def create_customer_portal_session(
+        self, customer_id: str, return_url: str
+    ) -> str:
+        """Create a Stripe Customer Portal session and return its URL."""
+        stripe = self._stripe()
+        session = stripe.billing_portal.Session.create(
+            customer=customer_id,
+            return_url=return_url,
+        )
+        logger.info("Created customer portal session for customer=%s", customer_id)
+        return session.url
+
     def construct_webhook_event(self, payload: bytes, sig_header: str) -> Any:
         """Validate and parse an incoming Stripe webhook event.
 

@@ -33,6 +33,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from backend.app.constants import PLAN_FREE, PLAN_STARTER, ROLE_ADMIN, ROLE_USER
 from backend.app.db.base import Base
 import backend.app.db.models.billing  # noqa: F401
+import backend.app.db.models.monthly_usage  # noqa: F401
 import backend.app.db.models.candidate_profile  # noqa: F401
 import backend.app.db.models.evaluation_run  # noqa: F401
 import backend.app.db.models.generation_run  # noqa: F401
@@ -41,6 +42,7 @@ import backend.app.db.models.structured_resume  # noqa: F401
 import backend.app.db.models.tailored_document  # noqa: F401
 import backend.app.db.models.user  # noqa: F401
 from backend.app.db.models.billing import Billing
+from backend.app.db.models.monthly_usage import MonthlyUsage
 from backend.app.db.models.user import User
 from backend.app.dependencies import get_current_user, get_db_session, require_admin
 from backend.app.main import app
@@ -181,3 +183,28 @@ def anon_client() -> TestClient:
 def dumps(obj) -> str:
     """Serialize dict to JSON string for SQLite TEXT columns."""
     return json.dumps(obj)
+
+
+# ── Billing helpers ─────────────────────────────────────────────────────────
+
+
+def make_billing(
+    db: Session,
+    user: User,
+    plan_type: str = PLAN_FREE,
+    subscription_status: str | None = None,
+    extra_credits: int = 0,
+    monthly_limit_override: int | None = None,
+) -> Billing:
+    """Create a Billing row for a user in the test DB."""
+    b = Billing(
+        id=str(uuid.uuid4()),
+        user_id=user.id,
+        plan_type=plan_type,
+        subscription_status=subscription_status,
+        extra_credits=extra_credits,
+        monthly_limit_override=monthly_limit_override,
+    )
+    db.add(b)
+    db.flush()
+    return b

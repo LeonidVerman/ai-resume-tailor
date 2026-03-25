@@ -40,6 +40,11 @@ from backend.app.schemas.generation import (
 )
 from backend.app.services.generation_service import GenerationService
 from backend.app.services.storage_service import StorageService
+from backend.app.services.usage_policy_service import UsagePolicyService
+from backend.app.db.repositories.billing_repository import BillingRepository
+from backend.app.db.repositories.monthly_usage_repository import MonthlyUsageRepository
+from backend.app.db.repositories.job_description_repository import JobDescriptionRepository
+from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
 
 router = APIRouter()
 
@@ -105,12 +110,30 @@ def generate(request: GenerationRequest, user: CurrentUserDep, db: DbDep):
     Returns immediately with run_id and tailored_document_id on success.
     On pipeline failure, returns 500 with the error message.
     """
+    # ── Onboarding gate ────────────────────────────────────────────────────
     profile = CandidateProfileRepository(db).get_by_user_id(user.id)
     if profile is None or not profile.onboarding_completed:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Complete your candidate profile onboarding before generating.",
         )
+
+    # ── Validate inputs before consuming quota ─────────────────────────────
+    jd = JobDescriptionRepository(db).get_by_id(request.job_description_id)
+    if jd is None or jd.user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job description not found")
+
+    resume = StructuredResumeRepository(db).get_by_id(request.structured_resume_id)
+    if resume is None or resume.user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Structured resume not found")
+
+    # ── Quota gate ─────────────────────────────────────────────────────────
+    billing = BillingRepository(db).get_by_user_id(user.id)
+    UsagePolicyService(
+        billing_repo=BillingRepository(db),
+        monthly_usage_repo=MonthlyUsageRepository(db),
+    ).check_and_consume(user.id, billing)
+
     try:
         return _service(db).generate(user.id, request)
     except HTTPException:
