@@ -15,13 +15,26 @@ from sqlalchemy.orm import Session, sessionmaker
 
 
 def _make_engine(database_url: str) -> Any:
-    """Create a synchronous SQLAlchemy engine."""
+    """Create a synchronous SQLAlchemy engine.
+
+    Pool settings are tuned for Supabase's Transaction-mode pooler (port 6543):
+      - pool_size=3 / max_overflow=2  → max 5 server connections per process
+      - prepare_threshold=None        → disables psycopg server-side prepared
+        statements, which don't survive across Transaction-mode connections
+    These settings are safe for Session mode too (port 5432), just conservative.
+    """
     if not database_url:
         raise RuntimeError(
             "DATABASE_URL is not configured. "
             "Set it in backend/.env before using the database."
         )
-    return create_engine(database_url, pool_pre_ping=True)
+    return create_engine(
+        database_url,
+        pool_pre_ping=True,
+        pool_size=3,
+        max_overflow=2,
+        connect_args={"prepare_threshold": None},
+    )
 
 
 def _make_session_factory(database_url: str) -> sessionmaker:
