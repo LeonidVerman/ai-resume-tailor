@@ -47,6 +47,15 @@ def _gen_request(jd_id: str, resume_id: str, mode: str = "two_phase") -> dict:
     }
 
 
+def _complete_onboarding(client) -> None:
+    """Create a minimal profile and mark onboarding complete."""
+    client.put(
+        "/api/v1/candidate-profile",
+        json={"profile": {"candidate": {"name": "Test User"}}, "profile_version": "1"},
+    )
+    client.post("/api/v1/candidate-profile/complete-onboarding")
+
+
 def _patch_pipeline():
     return patch(
         "backend.app.services.generation_service.GenerationService._run_pipeline",
@@ -60,6 +69,7 @@ def _patch_config():
 
 class TestCreateGeneration:
     def test_success_returns_201(self, client):
+        _complete_onboarding(client)
         resume_id = _upload_resume(client)
         jd_id = _create_jd(client)
 
@@ -69,6 +79,7 @@ class TestCreateGeneration:
         assert resp.status_code == 201
 
     def test_response_has_run_id_and_doc_id(self, client):
+        _complete_onboarding(client)
         resume_id = _upload_resume(client)
         jd_id = _create_jd(client)
 
@@ -80,6 +91,7 @@ class TestCreateGeneration:
         assert data["status"] == "succeeded"
 
     def test_unknown_jd_returns_404(self, client):
+        _complete_onboarding(client)
         resume_id = _upload_resume(client)
 
         with _patch_config():
@@ -91,6 +103,7 @@ class TestCreateGeneration:
         assert resp.status_code == 404
 
     def test_unknown_resume_returns_404(self, client):
+        _complete_onboarding(client)
         jd_id = _create_jd(client)
 
         with _patch_config():
@@ -107,6 +120,7 @@ class TestCreateGeneration:
         assert resp.status_code == 422
 
     def test_pipeline_error_returns_500(self, client):
+        _complete_onboarding(client)
         resume_id = _upload_resume(client)
         jd_id = _create_jd(client)
 
@@ -129,6 +143,7 @@ class TestListGenerations:
         assert resp.json() == []
 
     def test_list_after_generation(self, client):
+        _complete_onboarding(client)
         resume_id = _upload_resume(client)
         jd_id = _create_jd(client)
 
@@ -140,6 +155,7 @@ class TestListGenerations:
         assert len(resp.json()) == 1
 
     def test_list_summary_fields(self, client):
+        _complete_onboarding(client)
         resume_id = _upload_resume(client)
         jd_id = _create_jd(client)
 
@@ -154,6 +170,7 @@ class TestListGenerations:
 
 class TestGetGeneration:
     def test_get_by_id_returns_200(self, client):
+        _complete_onboarding(client)
         resume_id = _upload_resume(client)
         jd_id = _create_jd(client)
 
@@ -164,6 +181,7 @@ class TestGetGeneration:
         assert resp.status_code == 200
 
     def test_get_detail_fields(self, client):
+        _complete_onboarding(client)
         resume_id = _upload_resume(client)
         jd_id = _create_jd(client)
 

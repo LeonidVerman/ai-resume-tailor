@@ -156,14 +156,19 @@ def logout(
 # ── Me ────────────────────────────────────────────────────────────────────
 
 @router.get("/me", response_model=AuthMeResponse)
-def auth_me(user: CurrentUserDep):
+def auth_me(user: CurrentUserDep, db: DbDep):
     """Return basic identity info for the authenticated user."""
+    from backend.app.db.repositories.candidate_profile_repository import CandidateProfileRepository
+
+    profile = CandidateProfileRepository(db).get_by_user_id(user.id)
+    onboarding_completed = profile.onboarding_completed if profile is not None else False
     return AuthMeResponse(
         user_id=user.id,
         email=user.email,
         role=user.role,
         is_admin=(user.role == ROLE_ADMIN),
         plan_type=user.plan_type,
+        onboarding_completed=onboarding_completed,
     )
 
 

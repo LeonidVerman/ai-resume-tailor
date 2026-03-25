@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Sidebar } from "./Sidebar";
 import { Spinner } from "@/components/ui/Spinner";
@@ -11,15 +11,29 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
+// Pages exempt from the onboarding redirect (the wizard itself + profile edit).
+const ONBOARDING_EXEMPT = ["/profile-onboarding", "/profile"];
+
 export function AppShell({ children }: AppShellProps) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (loading) return;
+    if (!isAuthenticated) {
       router.replace("/login");
+      return;
     }
-  }, [loading, isAuthenticated, router]);
+    // Redirect new users to the onboarding wizard if not yet complete.
+    if (
+      user &&
+      !user.onboarding_completed &&
+      !ONBOARDING_EXEMPT.some((p) => pathname.startsWith(p))
+    ) {
+      router.replace("/profile-onboarding");
+    }
+  }, [loading, isAuthenticated, user, pathname, router]);
 
   if (loading) {
     return (

@@ -52,3 +52,14 @@ def update_candidate_profile(
 ):
     """Update (or create) the candidate profile for the authenticated user."""
     return _service(db).update(user.id, request)
+
+
+@router.post("/complete-onboarding", response_model=CandidateProfileResponse)
+def complete_onboarding(user: CurrentUserDep, db: DbDep):
+    """
+    Mark the authenticated user's candidate profile as onboarding-complete.
+
+    Sets onboarding_completed=true and invalidates the cached candidate prompt
+    so it is regenerated on the next generation run.
+    """
+    return _service(db).complete_onboarding(user.id)

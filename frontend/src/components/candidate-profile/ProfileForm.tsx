@@ -32,7 +32,7 @@ const DEFAULT_PROFILE: CandidateProfileDocument = {
   experience_highlights: [],
   technical_skills: {
     languages: [], backend_systems: [], datastores: [],
-    infra_devops: [], api_patterns: [], async_messaging: [], observability: [],
+    infra_devops: [], frontend: [], api_patterns: [], async_messaging: [], observability: [],
     security_auth_patterns: [], scalability_reliability_patterns: [],
   },
   leadership: {
@@ -304,6 +304,7 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
               ["backend_systems", "Backend systems"],
               ["datastores", "Datastores"],
               ["infra_devops", "Infra / DevOps"],
+              ["frontend", "Frontend"],
               ["api_patterns", "API patterns"],
               ["async_messaging", "Async messaging"],
               ["observability", "Observability"],

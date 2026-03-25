@@ -61,8 +61,18 @@ def _patch_model():
     return patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini")
 
 
+def _complete_onboarding(client) -> None:
+    client.put(
+        "/api/v1/candidate-profile",
+        json={"profile": {"candidate": {"name": "Test User"}}, "profile_version": "1"},
+    )
+    client.post("/api/v1/candidate-profile/complete-onboarding")
+
+
 class TestFullGenerationFlow:
     def test_happy_path(self, client):
+        _complete_onboarding(client)
+
         # Step 1 — upload resume
         resume_resp = client.post(
             f"{RESUME_API}/upload",
@@ -107,6 +117,7 @@ class TestFullGenerationFlow:
         assert doc_data["generation_run_id"] == run_id
 
     def test_generation_run_appears_in_list(self, client):
+        _complete_onboarding(client)
         resume_id = client.post(
             f"{RESUME_API}/upload",
             files={"file": ("r.txt", io.BytesIO(FAKE_RESUME), "text/plain")},

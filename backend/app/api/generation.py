@@ -105,6 +105,12 @@ def generate(request: GenerationRequest, user: CurrentUserDep, db: DbDep):
     Returns immediately with run_id and tailored_document_id on success.
     On pipeline failure, returns 500 with the error message.
     """
+    profile = CandidateProfileRepository(db).get_by_user_id(user.id)
+    if profile is None or not profile.onboarding_completed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Complete your candidate profile onboarding before generating.",
+        )
     try:
         return _service(db).generate(user.id, request)
     except HTTPException:

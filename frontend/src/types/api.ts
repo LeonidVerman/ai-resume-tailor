@@ -9,6 +9,7 @@ export interface AuthMeResponse {
   role: string;
   is_admin: boolean;
   plan_type: string;
+  onboarding_completed: boolean;
 }
 
 export interface AuthStatusResponse {
@@ -67,6 +68,7 @@ export interface TechnicalSkills {
   backend_systems: string[];
   datastores: string[];
   infra_devops: string[];
+  frontend: string[];
   api_patterns: string[];
   async_messaging: string[];
   observability: string[];
@@ -122,6 +124,7 @@ export interface CandidateProfileResponse {
   user_id: string;
   profile_version: string;
   profile: CandidateProfileDocument;
+  onboarding_completed: boolean;
   created_at: string;
   updated_at: string;
 }

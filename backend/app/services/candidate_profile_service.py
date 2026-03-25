@@ -10,6 +10,7 @@ Validates input through the Phase 4 Pydantic schema
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 
@@ -88,6 +89,23 @@ class CandidateProfileService:
         logger.info("Updated candidate profile id=%s user=%s", updated.id, user_id)
         return self._to_response(updated)
 
+    def complete_onboarding(self, user_id: str) -> CandidateProfileResponse:
+        """Mark the user's candidate profile as onboarding-complete."""
+        profile = self._repo.get_by_user_id(user_id)
+        if profile is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Candidate profile not found. Save profile data first.",
+            )
+        updated = self._repo.update(
+            profile,
+            onboarding_completed=True,
+            onboarding_completed_at=datetime.now(tz=timezone.utc),
+            prompt_synched=False,
+        )
+        logger.info("Onboarding completed for profile id=%s user=%s", updated.id, user_id)
+        return self._to_response(updated)
+
     # ── Internal ───────────────────────────────────────────────────────────
 
     @staticmethod
@@ -98,6 +116,7 @@ class CandidateProfileService:
             user_id=profile.user_id,
             profile_version=profile.profile_version,
             profile=doc,
+            onboarding_completed=profile.onboarding_completed,
             created_at=profile.created_at,
             updated_at=profile.updated_at,
         )

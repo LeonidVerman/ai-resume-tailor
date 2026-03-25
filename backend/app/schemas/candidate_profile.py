@@ -46,6 +46,7 @@ class TechnicalSkills(APIModel):
     backend_systems: list[str] = Field(default_factory=list)
     datastores: list[str] = Field(default_factory=list)
     infra_devops: list[str] = Field(default_factory=list)
+    frontend: list[str] = Field(default_factory=list)
     api_patterns: list[str] = Field(default_factory=list)
     async_messaging: list[str] = Field(default_factory=list)
     observability: list[str] = Field(default_factory=list)
@@ -122,5 +123,6 @@ class CandidateProfileResponse(APIModel):
     user_id: str
     profile_version: str
     profile: CandidateProfileDocument
+    onboarding_completed: bool
     created_at: datetime
     updated_at: datetime

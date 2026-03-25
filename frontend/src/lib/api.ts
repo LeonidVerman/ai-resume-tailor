@@ -114,6 +114,10 @@ export const candidateProfile = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
+  completeOnboarding: () =>
+    request<CandidateProfileResponse>("/candidate-profile/complete-onboarding", {
+      method: "POST",
+    }),
 };
 
 // ── Resumes ───────────────────────────────────────────────────────────────

@@ -52,3 +52,4 @@ class AuthMeResponse(APIModel):
     role: str
     is_admin: bool
     plan_type: str
+    onboarding_completed: bool
