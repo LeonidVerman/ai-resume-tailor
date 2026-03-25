@@ -627,6 +627,7 @@ def _docx_to_pdf_subprocess(docx_path):
     import subprocess
     import tempfile
     import uuid
+    from pathlib import Path
 
     docx_abs = os.path.abspath(docx_path)
     out_dir   = os.path.dirname(docx_abs)
@@ -636,10 +637,12 @@ def _docx_to_pdf_subprocess(docx_path):
     # Each invocation gets its own user-profile directory so that concurrent
     # requests (e.g. multiple FastAPI workers) don't share the ~/.config/libreoffice
     # lock and silently drop conversions.
+    # Path.as_uri() produces the correct file:/// URI on both Windows and Linux.
     profile_dir = os.path.join(tempfile.gettempdir(), f"lo_profile_{uuid.uuid4().hex}")
+    profile_uri = Path(profile_dir).as_uri()
     cmd = [
         lo_exe, "--headless",
-        f"-env:UserInstallation=file://{profile_dir}",
+        f"-env:UserInstallation={profile_uri}",
         "--convert-to", "pdf",
         docx_abs,
         "--outdir", out_dir,
