@@ -49,8 +49,8 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
 
   const quotaExhausted =
     billingStatus !== null &&
-    billingStatus.plan_type === "free" &&
-    billingStatus.free_generations_used >= billingStatus.free_generations_limit;
+    billingStatus.monthly_used >= billingStatus.monthly_limit &&
+    billingStatus.extra_credits === 0;
 
   async function handleDeleteResume(id: string) {
     setDeletingResumeId(id);
@@ -96,7 +96,11 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
       });
       onGenerated?.(result);
     } catch (e) {
-      setError(e instanceof ApiError ? e.detail : "Generation failed.");
+      if (e instanceof ApiError && e.status === 429) {
+        setError("Generation quota exhausted. Go to Billing to upgrade or buy extra credits.");
+      } else {
+        setError(e instanceof ApiError ? e.detail : "Generation failed.");
+      }
     } finally {
       setLoading(false);
     }
@@ -114,12 +118,16 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
           "flex items-center gap-2 px-4 py-3 rounded-lg text-sm",
           quotaExhausted
             ? "bg-red-50 text-red-700 border border-red-200"
+            : billingStatus.monthly_used >= billingStatus.monthly_limit
+            ? "bg-amber-50 text-amber-700 border border-amber-200"
             : "bg-blue-50 text-blue-700 border border-blue-200"
         )}>
           <AlertCircle className="h-4 w-4 shrink-0" />
           {quotaExhausted
-            ? `Free quota exhausted (${billingStatus.free_generations_used}/${billingStatus.free_generations_limit} used). Upgrade to continue.`
-            : `Free plan: ${billingStatus.free_generations_used}/${billingStatus.free_generations_limit} generations used.`}
+            ? `Quota exhausted (${billingStatus.monthly_used}/${billingStatus.monthly_limit} used, ${billingStatus.extra_credits} credits). Go to Billing to upgrade.`
+            : billingStatus.monthly_used >= billingStatus.monthly_limit
+            ? `Monthly quota reached — using extra credits (${billingStatus.extra_credits} remaining).`
+            : `${billingStatus.monthly_used}/${billingStatus.monthly_limit} generations used this month.`}
         </div>
       )}
 

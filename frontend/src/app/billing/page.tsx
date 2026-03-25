@@ -13,7 +13,9 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [upgrading, setUpgrading] = useState(false);
-  const [upgradeError, setUpgradeError] = useState<string | null>(null);
+  const [buyingCredits, setBuyingCredits] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     billing
@@ -25,7 +27,7 @@ export default function BillingPage() {
 
   async function handleUpgrade(plan: "starter" | "pro") {
     setUpgrading(true);
-    setUpgradeError(null);
+    setActionError(null);
     try {
       const origin = window.location.origin;
       const result = await billing.createCheckout({
@@ -35,12 +37,50 @@ export default function BillingPage() {
       });
       window.location.href = result.checkout_url;
     } catch (e) {
-      setUpgradeError(
+      setActionError(
         e instanceof ApiError
           ? e.detail
           : "Failed to create checkout session. Stripe may not be configured."
       );
       setUpgrading(false);
+    }
+  }
+
+  async function handleBuyCredits() {
+    setBuyingCredits(true);
+    setActionError(null);
+    try {
+      const origin = window.location.origin;
+      const result = await billing.createCheckout({
+        plan_type: "credit_pack",
+        success_url: `${origin}/billing?credits=1`,
+        cancel_url: `${origin}/billing`,
+      });
+      window.location.href = result.checkout_url;
+    } catch (e) {
+      setActionError(
+        e instanceof ApiError
+          ? e.detail
+          : "Failed to create checkout session. Stripe may not be configured."
+      );
+      setBuyingCredits(false);
+    }
+  }
+
+  async function handleManagePortal() {
+    setOpeningPortal(true);
+    setActionError(null);
+    try {
+      const origin = window.location.origin;
+      const result = await billing.customerPortal(`${origin}/billing`);
+      window.location.href = result.portal_url;
+    } catch (e) {
+      setActionError(
+        e instanceof ApiError
+          ? e.detail
+          : "Failed to open billing portal. Stripe may not be configured."
+      );
+      setOpeningPortal(false);
     }
   }
 
@@ -65,10 +105,14 @@ export default function BillingPage() {
           <BillingStatusCard
             status={status}
             onUpgrade={handleUpgrade}
+            onBuyCredits={handleBuyCredits}
+            onManagePortal={handleManagePortal}
             upgrading={upgrading}
+            buyingCredits={buyingCredits}
+            openingPortal={openingPortal}
           />
-          {upgradeError && (
-            <p className="mt-3 text-sm text-red-600">✗ {upgradeError}</p>
+          {actionError && (
+            <p className="mt-3 text-sm text-red-600">✗ {actionError}</p>
           )}
         </div>
       ) : null}

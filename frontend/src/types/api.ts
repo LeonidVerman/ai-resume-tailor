@@ -301,21 +301,26 @@ export interface BillingStatus {
   user_id: string;
   plan_type: PlanType;
   subscription_status?: SubscriptionStatus;
-  free_generations_used: number;
-  free_generations_limit: number;
+  monthly_used: number;
+  monthly_limit: number;
+  extra_credits: number;
   current_period_end?: string;
   stripe_customer_id?: string;
 }
 
 export interface CheckoutSessionRequest {
-  plan_type: "starter" | "pro";
-  success_url: string;
-  cancel_url: string;
+  plan_type: "starter" | "pro" | "credit_pack";
+  success_url?: string;
+  cancel_url?: string;
 }
 
 export interface CheckoutSessionResponse {
   checkout_url: string;
   session_id: string;
+}
+
+export interface CustomerPortalResponse {
+  portal_url: string;
 }
 
 // ── Evaluation ────────────────────────────────────────────────────────────

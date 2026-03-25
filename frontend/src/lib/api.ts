@@ -19,6 +19,7 @@ import type {
   CandidateProfileUpsertRequest,
   CheckoutSessionRequest,
   CheckoutSessionResponse,
+  CustomerPortalResponse,
   EvaluationResponse,
   GenerationConfigRequest,
   GenerationConfigResponse,
@@ -222,6 +223,11 @@ export const billing = {
     request<CheckoutSessionResponse>("/billing/create-checkout-session", {
       method: "POST",
       body: JSON.stringify(body),
+    }),
+  customerPortal: (return_url?: string) =>
+    request<CustomerPortalResponse>("/billing/customer-portal", {
+      method: "POST",
+      body: JSON.stringify(return_url ? { return_url } : {}),
     }),
 };
 

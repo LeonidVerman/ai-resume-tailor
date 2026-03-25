@@ -118,14 +118,14 @@ export default function DashboardPage() {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-700">Free plan quota</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {billingStatus.free_generations_used} / {billingStatus.free_generations_limit} generations used
+                    {billingStatus.monthly_used} / {billingStatus.monthly_limit} generations used
                   </p>
                 </div>
                 <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-indigo-500 rounded-full"
                     style={{
-                      width: `${Math.min(100, (billingStatus.free_generations_used / billingStatus.free_generations_limit) * 100)}%`,
+                      width: `${Math.min(100, billingStatus.monthly_limit > 0 ? (billingStatus.monthly_used / billingStatus.monthly_limit) * 100 : 0)}%`,
                     }}
                   />
                 </div>
