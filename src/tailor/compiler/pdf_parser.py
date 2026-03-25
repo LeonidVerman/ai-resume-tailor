@@ -703,17 +703,27 @@ def _detect_column_split(
 
     min_gap = page_width * 0.08
 
-    # Count significant gaps before attempting detection.  A document with 2+
-    # significant gaps is a 3-column (or more) layout; treat it as single-column
-    # since we only model one split point.  This prevents the first gap in a
-    # 3-column layout (e.g. left | middle | right at x=[42,240,410]) from being
-    # mistaken for a two-column sidebar split.
-    significant_gaps = sum(
-        1 for i in range(len(x0s) - 1)
-        if x0s[i + 1] - x0s[i] >= min_gap
-        and page_width * 0.20 <= x0s[i + 1] <= page_width * 0.70
-    )
-    if significant_gaps >= 2:
+    # Guard against 3-column (or more) layouts: count significant gaps that are
+    # ADJACENT to each other (i.e. the second gap starts at or before the first
+    # gap's right edge).  This distinguishes a true 3-col layout like
+    # x=[42,240,410] (gaps at 42→240 and 240→410, adjacent) from a 2-col
+    # sidebar where the right column contains varying indent levels that happen
+    # to produce a large secondary gap further to the right (e.g. x=[55,237,…]
+    # with a gap at 55→237 and an unrelated indent gap at 271→389, which is
+    # entirely within the right column and should not veto the sidebar split).
+    _first_right: int | None = None
+    _adjacent_sig = 0
+    for _j in range(len(x0s) - 1):
+        if (
+            x0s[_j + 1] - x0s[_j] >= min_gap
+            and page_width * 0.20 <= x0s[_j + 1] <= page_width * 0.70
+        ):
+            if _first_right is None:
+                _first_right = x0s[_j + 1]
+                _adjacent_sig = 1
+            elif x0s[_j] <= _first_right:
+                _adjacent_sig += 1
+    if _adjacent_sig >= 2:
         return None
     top_cutoff = page_height * 0.15 if page_height > 0 else 0.0
     # Full-width elements that span ≥ 50 % of the page width are cross-column
