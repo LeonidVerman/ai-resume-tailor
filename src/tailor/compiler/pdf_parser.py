@@ -701,7 +701,7 @@ def _detect_column_split(
     if len(x0s) < 2:
         return None
 
-    min_gap = page_width * 0.09
+    min_gap = page_width * 0.08
     top_cutoff = page_height * 0.15 if page_height > 0 else 0.0
     # Full-width elements that span ≥ 50 % of the page width are cross-column
     # design elements (e.g. name banner, summary paragraph, section heading
