@@ -21,7 +21,7 @@ API_EVAL = "/api/v1/admin/evaluate-run"
 
 def _fake_eval_response(run_id: str) -> EvaluationResponse:
     return EvaluationResponse(
-        id=str(uuid.uuid4()),
+        id=1,
         generation_run_id=run_id,
         scores=EvaluationScores(
             truthfulness_score=0.9,

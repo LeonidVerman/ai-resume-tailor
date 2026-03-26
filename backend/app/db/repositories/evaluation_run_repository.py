@@ -13,7 +13,7 @@ class EvaluationRunRepository:
     def __init__(self, db: Session) -> None:
         self._db = db
 
-    def get_by_id(self, eval_id: str) -> EvaluationRun | None:
+    def get_by_id(self, eval_id: int) -> EvaluationRun | None:
         return self._db.get(EvaluationRun, eval_id)
 
     def get_by_generation_run_id(self, run_id: str) -> EvaluationRun | None:

@@ -30,7 +30,7 @@ class EvaluationRequest(APIModel):
 
 class EvaluationResponse(APIModel):
     """Full evaluation result returned after scoring."""
-    id: str
+    id: int
     generation_run_id: str
     scores: EvaluationScores
     created_at: datetime

@@ -6,19 +6,18 @@ Evaluation run — stores quality scores for a completed generation run.
 
 from decimal import Decimal
 
-from sqlalchemy import ForeignKey, Numeric
+from sqlalchemy import BigInteger, ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.db.base import Base, CreatedAtMixin, new_uuid
+from backend.app.db.base import Base, CreatedAtMixin
 
 
 class EvaluationRun(Base, CreatedAtMixin):
     __tablename__ = "evaluation_runs"
 
-    id: Mapped[str] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=new_uuid
-    )
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    uuid_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True, unique=True)
     generation_run_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("generation_runs.id", ondelete="CASCADE"),
