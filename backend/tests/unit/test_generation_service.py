@@ -28,9 +28,9 @@ def _make_jd(user_id: str, jd_id: int | None = None):
     return jd
 
 
-def _make_resume(user_id: str, resume_id: str | None = None):
+def _make_resume(user_id: str, resume_id: int | None = None):
     res = MagicMock()
-    res.id = resume_id or str(uuid.uuid4())
+    res.id = resume_id if resume_id is not None else 1
     res.user_id = user_id
     res.resume_jsonb = {"raw_text": "My resume text", "name": "Alice"}
     return res

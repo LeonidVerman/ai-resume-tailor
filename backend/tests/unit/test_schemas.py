@@ -100,10 +100,10 @@ class TestGenerationRequest:
     def test_valid_request(self):
         req = GenerationRequest(
             job_description_id=42,
-            structured_resume_id="resume-uuid",
+            structured_resume_id=7,
         )
         assert req.job_description_id == 42
-        assert req.structured_resume_id == "resume-uuid"
+        assert req.structured_resume_id == 7
 
     def test_jd_id_required(self):
         with pytest.raises(ValidationError):

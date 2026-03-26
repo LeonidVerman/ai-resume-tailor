@@ -85,7 +85,7 @@ class TestGetResume:
         assert resp.status_code == 200
 
     def test_get_unknown_id_returns_404(self, client):
-        resp = client.get(f"{API}/{uuid.uuid4()}")
+        resp = client.get(f"{API}/99999")
         assert resp.status_code == 404
 
     def test_get_returns_resume_doc(self, client):

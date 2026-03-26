@@ -178,7 +178,7 @@ export interface StructuredResumeDocument {
 }
 
 export interface StructuredResumeResponse {
-  id: string;
+  id: number;
   user_id: string;
   resume: StructuredResumeDocument;
   source_file_url?: string;
@@ -187,7 +187,7 @@ export interface StructuredResumeResponse {
 }
 
 export interface StructuredResumeSummary {
-  id: string;
+  id: number;
   name: string;
   created_at: string;
   source_file_url?: string;
@@ -239,7 +239,7 @@ export type GenerationStatus = "pending" | "running" | "succeeded" | "failed";
 
 export interface GenerationRequest {
   job_description_id: number;
-  structured_resume_id: string;
+  structured_resume_id: number;
 }
 
 export interface GenerationResponse {

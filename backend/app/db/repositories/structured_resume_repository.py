@@ -13,7 +13,7 @@ class StructuredResumeRepository:
     def __init__(self, db: Session) -> None:
         self._db = db
 
-    def get_by_id(self, resume_id: str) -> StructuredResume | None:
+    def get_by_id(self, resume_id: int) -> StructuredResume | None:
         return self._db.get(StructuredResume, resume_id)
 
     def list_by_user_id(self, user_id: str) -> list[StructuredResume]:

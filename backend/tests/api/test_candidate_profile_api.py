@@ -150,7 +150,7 @@ class TestGenerationOnboardingGate:
         # No profile at all → 403
         resp = client.post("/api/v1/generations", json={
             "job_description_id": 1,
-            "structured_resume_id": "00000000-0000-0000-0000-000000000002",
+            "structured_resume_id": 2,
         })
         assert resp.status_code == 403
         assert "onboarding" in resp.json()["detail"].lower()
@@ -160,6 +160,6 @@ class TestGenerationOnboardingGate:
         client.put(API, json=MINIMAL_PROFILE_BODY)
         resp = client.post("/api/v1/generations", json={
             "job_description_id": 1,
-            "structured_resume_id": "00000000-0000-0000-0000-000000000002",
+            "structured_resume_id": 2,
         })
         assert resp.status_code == 403

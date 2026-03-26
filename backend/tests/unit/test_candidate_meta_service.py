@@ -218,7 +218,7 @@ class TestEnsureCandidatePromptHelper:
         jd.metadata_jsonb = {"company": "Acme", "job_title": "SWE"}
 
         resume = MagicMock()
-        resume.id = str(uuid.uuid4())
+        resume.id = 1
         resume.user_id = user_id
         resume.resume_jsonb = {"raw_text": "Resume"}
 

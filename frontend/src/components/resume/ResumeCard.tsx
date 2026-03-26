@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 interface ResumeCardProps {
   resume: StructuredResumeSummary;
   selected?: boolean;
-  onSelect?: (id: string) => void;
-  onDelete?: (id: string) => void;
+  onSelect?: (id: number) => void;
+  onDelete?: (id: number) => void;
   deleting?: boolean;
 }
 

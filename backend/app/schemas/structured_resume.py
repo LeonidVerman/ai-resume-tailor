@@ -78,7 +78,7 @@ class StructuredResumeDocument(APIModel):
 
 class StructuredResumeResponse(APIModel):
     """Returned by GET /resumes/{id}."""
-    id: str
+    id: int
     user_id: str
     resume: StructuredResumeDocument
     source_file_url: str | None = None
@@ -89,7 +89,7 @@ class StructuredResumeResponse(APIModel):
 
 class StructuredResumeSummary(APIModel):
     """Lightweight listing item for GET /resumes."""
-    id: str
+    id: int
     name: str
     created_at: datetime
     source_file_url: str | None = None

@@ -25,12 +25,12 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
   const [resumeList, setResumeList] = useState<StructuredResumeSummary[]>([]);
   const [jdList, setJdList] = useState<JobDescriptionSummary[]>([]);
   const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
-  const [selectedResume, setSelectedResume] = useState<string | null>(null);
+  const [selectedResume, setSelectedResume] = useState<number | null>(null);
   const [selectedJd, setSelectedJd] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deletingResumeId, setDeletingResumeId] = useState<string | null>(null);
+  const [deletingResumeId, setDeletingResumeId] = useState<number | null>(null);
   const [deletingJdId, setDeletingJdId] = useState<number | null>(null);
 
   useEffect(() => {

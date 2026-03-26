@@ -165,9 +165,9 @@ class TestSoftDeleteFiltering:
         _insert_user_sql(sqlite_session, uid)
         repo = StructuredResumeRepository(sqlite_session)
 
-        r1 = repo.create(id=_uuid(), user_id=uid, resume_jsonb={"name": "Alice"},
+        r1 = repo.create(user_id=uid, resume_jsonb={"name": "Alice"},
                          source_file_url=None, input_conversion_warning=None)
-        r2 = repo.create(id=_uuid(), user_id=uid, resume_jsonb={"name": "Bob"},
+        r2 = repo.create(user_id=uid, resume_jsonb={"name": "Bob"},
                          source_file_url=None, input_conversion_warning=None)
 
         repo.delete(r1)
@@ -183,7 +183,7 @@ class TestSoftDeleteFiltering:
         _insert_user_sql(sqlite_session, uid)
         repo = StructuredResumeRepository(sqlite_session)
 
-        r = repo.create(id=_uuid(), user_id=uid, resume_jsonb={"name": "Carol"},
+        r = repo.create(user_id=uid, resume_jsonb={"name": "Carol"},
                         source_file_url=None, input_conversion_warning=None)
         rid = r.id
         repo.delete(r)
@@ -198,9 +198,9 @@ class TestSoftDeleteFiltering:
         _insert_user_sql(sqlite_session, uid)
         repo = StructuredResumeRepository(sqlite_session)
 
-        r1 = repo.create(id=_uuid(), user_id=uid, resume_jsonb={"name": "Dave"},
+        r1 = repo.create(user_id=uid, resume_jsonb={"name": "Dave"},
                          source_file_url=None, input_conversion_warning=None)
-        r2 = repo.create(id=_uuid(), user_id=uid, resume_jsonb={"name": "Eve"},
+        r2 = repo.create(user_id=uid, resume_jsonb={"name": "Eve"},
                          source_file_url=None, input_conversion_warning=None)
 
         # Soft-delete r2 (most recent); r1 should become latest.

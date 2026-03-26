@@ -124,7 +124,7 @@ class TestCreateGeneration:
         with _patch_config():
             resp = client.post(
                 API,
-                json=_gen_request(jd_id, str(uuid.uuid4())),
+                json=_gen_request(jd_id, 99999),
             )
 
         assert resp.status_code == 404

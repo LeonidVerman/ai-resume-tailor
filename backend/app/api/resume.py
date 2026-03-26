@@ -117,7 +117,7 @@ def list_resumes(user: CurrentUserDep, db: DbDep):
 
 
 @router.get("/{resume_id}", response_model=StructuredResumeResponse)
-def get_resume(resume_id: str, user: CurrentUserDep, db: DbDep):
+def get_resume(resume_id: int, user: CurrentUserDep, db: DbDep):
     """Return a specific resume record."""
     resume = _repo(db).get_by_id(resume_id)
     if resume is None:
@@ -128,7 +128,7 @@ def get_resume(resume_id: str, user: CurrentUserDep, db: DbDep):
 
 
 @router.delete("/{resume_id}", status_code=204)
-def delete_resume(resume_id: str, user: CurrentUserDep, db: DbDep):
+def delete_resume(resume_id: int, user: CurrentUserDep, db: DbDep):
     """Soft-delete a stored resume (sets delete_flg=true; row and files are preserved)."""
     resume = _repo(db).get_by_id(resume_id)
     if resume is None:

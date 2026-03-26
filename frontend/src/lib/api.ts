@@ -125,7 +125,7 @@ export const candidateProfile = {
 
 export const resumes = {
   list: () => request<StructuredResumeSummary[]>("/resumes"),
-  get: (id: string) => request<StructuredResumeResponse>(`/resumes/${id}`),
+  get: (id: number) => request<StructuredResumeResponse>(`/resumes/${id}`),
   upload: (file: File) => {
     const form = new FormData();
     form.append("file", file);
@@ -134,7 +134,7 @@ export const resumes = {
       body: form,
     });
   },
-  delete: (id: string) => request<void>(`/resumes/${id}`, { method: "DELETE" }),
+  delete: (id: number) => request<void>(`/resumes/${id}`, { method: "DELETE" }),
 };
 
 // ── Job Descriptions ──────────────────────────────────────────────────────

@@ -20,7 +20,7 @@ class GenerationRequest(APIModel):
     Candidate profile is always loaded from the user's current profile.
     """
     job_description_id: int
-    structured_resume_id: str
+    structured_resume_id: int
 
 
 # ── Status / result ────────────────────────────────────────────────────────
