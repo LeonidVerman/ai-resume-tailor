@@ -2,6 +2,8 @@
 
 AI-powered resume tailoring tool — generates tailored resumes and cover letters for specific job descriptions using a two-phase LLM pipeline.
 
+**Version 0.5.2.BETA** — Added payment plans
+
 ---
 
 ## Current System (CLI Generator)
