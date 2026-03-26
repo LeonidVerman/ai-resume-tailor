@@ -82,6 +82,7 @@ def upgrade() -> None:
         "generation_runs",
         ["job_description_id"],
     )
+    op.alter_column("job_descriptions", "uuid_id", nullable=True)
 
 
 def downgrade() -> None:

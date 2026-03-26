@@ -42,6 +42,7 @@ def upgrade() -> None:
     op.execute("ALTER TABLE structured_resumes RENAME COLUMN id TO uuid_id")
     op.execute("ALTER TABLE structured_resumes RENAME COLUMN new_id TO id")
     op.create_primary_key("structured_resumes_pkey", "structured_resumes", ["id"])
+    op.alter_column("structured_resumes", "uuid_id", nullable=True)
 
 
 def downgrade() -> None:
