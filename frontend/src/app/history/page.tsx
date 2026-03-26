@@ -60,7 +60,7 @@ function RunIdBadge({ id }: { id: string }) {
 }
 
 // Cache of fetched TailoredDocumentDetail keyed by document id.
-type DocCache = Record<string, TailoredDocumentDetail | null>;
+type DocCache = Record<number, TailoredDocumentDetail | null>;
 
 export default function HistoryPage() {
   const [runs, setRuns] = useState<GenerationRunSummary[]>([]);
@@ -73,7 +73,7 @@ export default function HistoryPage() {
   const PAGE_SIZE = 20;
 
   const handleDownload = async (
-    docId: string,
+    docId: number,
     part: "resume" | "cover_letter",
     format: "docx" | "pdf",
   ) => {

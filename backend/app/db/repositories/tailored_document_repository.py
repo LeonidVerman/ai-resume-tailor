@@ -13,7 +13,7 @@ class TailoredDocumentRepository:
     def __init__(self, db: Session) -> None:
         self._db = db
 
-    def get_by_id(self, doc_id: str) -> TailoredDocument | None:
+    def get_by_id(self, doc_id: int) -> TailoredDocument | None:
         return self._db.get(TailoredDocument, doc_id)
 
     def list_by_user_id(

@@ -173,8 +173,8 @@ export const generations = {
 // ── Documents ─────────────────────────────────────────────────────────────
 
 export const documents = {
-  get: (id: string) => request<TailoredDocumentDetail>(`/documents/${id}`),
-  download: async (id: string, part: "resume" | "cover_letter"): Promise<Blob> => {
+  get: (id: number) => request<TailoredDocumentDetail>(`/documents/${id}`),
+  download: async (id: number, part: "resume" | "cover_letter"): Promise<Blob> => {
     const token = getStoredToken();
     const userId = getStoredUserId();
     const headers: Record<string, string> = {};
@@ -190,7 +190,7 @@ export const documents = {
   },
   // Download a rendered DOCX or PDF artifact.
   downloadFormatted: async (
-    id: string,
+    id: number,
     part: "resume" | "cover_letter",
     format: "docx" | "pdf",
   ): Promise<{ blob: Blob; filename: string }> => {

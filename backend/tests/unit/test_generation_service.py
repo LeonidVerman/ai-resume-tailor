@@ -42,9 +42,9 @@ def _make_run(run_id: str | None = None):
     return run
 
 
-def _make_doc(doc_id: str | None = None):
+def _make_doc(doc_id: int | None = None):
     doc = MagicMock()
-    doc.id = doc_id or str(uuid.uuid4())
+    doc.id = doc_id or 1
     return doc
 
 

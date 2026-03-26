@@ -107,7 +107,7 @@ def _to_detail(doc) -> TailoredDocumentDetail:
 
 
 @router.get("/{doc_id}", response_model=TailoredDocumentDetail)
-def get_document(doc_id: str, user: CurrentUserDep, db: DbDep):
+def get_document(doc_id: int, user: CurrentUserDep, db: DbDep):
     """
     Return the full tailored document record including structured content.
 
@@ -124,7 +124,7 @@ def get_document(doc_id: str, user: CurrentUserDep, db: DbDep):
 
 @router.get("/{doc_id}/download")
 def download_document(
-    doc_id: str,
+    doc_id: int,
     user: CurrentUserDep,
     db: DbDep,
     part: str = "resume",

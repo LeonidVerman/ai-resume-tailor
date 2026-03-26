@@ -37,7 +37,7 @@ class GenerationRunSummary(APIModel):
     started_at: datetime
     completed_at: datetime | None = None
     cost_estimate: float | None = None
-    tailored_document_id: str | None = None
+    tailored_document_id: int | None = None
     # Company / role from the linked TailoredDocument (None for older records).
     company_name: str | None = None
     role_title: str | None = None
@@ -69,5 +69,5 @@ class GenerationResponse(APIModel):
     """
     run_id: str
     status: GenerationStatus
-    tailored_document_id: str | None = None
+    tailored_document_id: int | None = None
     message: str | None = None

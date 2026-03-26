@@ -5,19 +5,18 @@ Tailored document — the user-facing saved output of a generation run.
 Stores both structured JSON and URLs to rendered DOCX/PDF artifacts.
 """
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import BigInteger, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.db.base import Base, CreatedAtMixin, new_uuid
+from backend.app.db.base import Base, CreatedAtMixin
 
 
 class TailoredDocument(Base, CreatedAtMixin):
     __tablename__ = "tailored_documents"
 
-    id: Mapped[str] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=new_uuid
-    )
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    uuid_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True, unique=True)
     user_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("users.id", ondelete="CASCADE"),

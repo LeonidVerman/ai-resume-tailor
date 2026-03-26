@@ -26,7 +26,7 @@ class ArtifactURLs(APIModel):
 
 class TailoredDocumentSummary(APIModel):
     """Lightweight listing item for history views."""
-    id: str
+    id: int
     company_name: str
     role_title: str
     generation_run_id: str
@@ -43,7 +43,7 @@ class TailoredDocumentDetail(APIModel):
     existing generator). resume_json / cover_letter_json are the
     structured representations if parsed.
     """
-    id: str
+    id: int
     user_id: str
     generation_run_id: str
     company_name: str

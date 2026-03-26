@@ -225,7 +225,7 @@ class TestEnsureCandidatePromptHelper:
         run = MagicMock()
         run.id = str(uuid.uuid4())
         doc = MagicMock()
-        doc.id = str(uuid.uuid4())
+        doc.id = 1
 
         raw_profile_jsonb = {"candidate": {"name": "Alice"}, "domains": {"primary": ["fintech"]}}
         # Profile with synced prompt

@@ -245,7 +245,7 @@ export interface GenerationRequest {
 export interface GenerationResponse {
   run_id: string;
   status: GenerationStatus;
-  tailored_document_id?: string;
+  tailored_document_id?: number;
   message?: string;
 }
 
@@ -257,7 +257,7 @@ export interface GenerationRunSummary {
   started_at: string;
   completed_at?: string;
   cost_estimate?: number;
-  tailored_document_id?: string;
+  tailored_document_id?: number;
   company_name?: string;
   role_title?: string;
 }
@@ -281,7 +281,7 @@ export interface ArtifactURLs {
 }
 
 export interface TailoredDocumentDetail {
-  id: string;
+  id: number;
   user_id: string;
   generation_run_id: string;
   company_name: string;
