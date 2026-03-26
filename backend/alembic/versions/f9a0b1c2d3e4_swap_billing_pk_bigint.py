@@ -21,7 +21,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.drop_constraint("billing_pkey", "billing", type_="primary_key")
+    op.drop_constraint("billing_pkey", "billing", type_="primary")
     op.alter_column("billing", "id", new_column_name="uuid_id")
     op.alter_column("billing", "new_id", new_column_name="id")
     op.drop_constraint("uq_billing_new_id", "billing", type_="unique")
@@ -30,7 +30,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint("billing_pkey", "billing", type_="primary_key")
+    op.drop_constraint("billing_pkey", "billing", type_="primary")
     op.alter_column("billing", "id", new_column_name="new_id")
     op.alter_column("billing", "uuid_id", new_column_name="id")
     op.create_unique_constraint("uq_billing_new_id", "billing", ["new_id"])

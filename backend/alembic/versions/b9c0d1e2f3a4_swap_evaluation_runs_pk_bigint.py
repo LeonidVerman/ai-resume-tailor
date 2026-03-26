@@ -24,7 +24,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Drop old UUID primary key
-    op.drop_constraint("evaluation_runs_pkey", "evaluation_runs", type_="primary_key")
+    op.drop_constraint("evaluation_runs_pkey", "evaluation_runs", type_="primary")
 
     # Rename id → uuid_id (preserve for rollback)
     op.alter_column("evaluation_runs", "id", new_column_name="uuid_id")
@@ -43,7 +43,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint("evaluation_runs_pkey", "evaluation_runs", type_="primary_key")
+    op.drop_constraint("evaluation_runs_pkey", "evaluation_runs", type_="primary")
     op.alter_column("evaluation_runs", "id", new_column_name="new_id")
     op.alter_column("evaluation_runs", "uuid_id", new_column_name="id")
     op.create_unique_constraint("uq_evaluation_runs_new_id", "evaluation_runs", ["new_id"])

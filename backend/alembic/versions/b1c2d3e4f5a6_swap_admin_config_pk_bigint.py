@@ -21,7 +21,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.drop_constraint("admin_config_pkey", "admin_config", type_="primary_key")
+    op.drop_constraint("admin_config_pkey", "admin_config", type_="primary")
     op.alter_column("admin_config", "id", new_column_name="uuid_id")
     op.alter_column("admin_config", "new_id", new_column_name="id")
     op.drop_constraint("uq_admin_config_new_id", "admin_config", type_="unique")
@@ -30,7 +30,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint("admin_config_pkey", "admin_config", type_="primary_key")
+    op.drop_constraint("admin_config_pkey", "admin_config", type_="primary")
     op.alter_column("admin_config", "id", new_column_name="new_id")
     op.alter_column("admin_config", "uuid_id", new_column_name="id")
     op.create_unique_constraint("uq_admin_config_new_id", "admin_config", ["new_id"])

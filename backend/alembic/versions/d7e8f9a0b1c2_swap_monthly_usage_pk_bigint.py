@@ -22,7 +22,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.drop_constraint("monthly_usage_pkey", "monthly_usage", type_="primary_key")
+    op.drop_constraint("monthly_usage_pkey", "monthly_usage", type_="primary")
     op.alter_column("monthly_usage", "id", new_column_name="uuid_id")
     op.alter_column("monthly_usage", "new_id", new_column_name="id")
     op.drop_constraint("uq_monthly_usage_new_id", "monthly_usage", type_="unique")
@@ -31,7 +31,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint("monthly_usage_pkey", "monthly_usage", type_="primary_key")
+    op.drop_constraint("monthly_usage_pkey", "monthly_usage", type_="primary")
     op.alter_column("monthly_usage", "id", new_column_name="new_id")
     op.alter_column("monthly_usage", "uuid_id", new_column_name="id")
     op.create_unique_constraint("uq_monthly_usage_new_id", "monthly_usage", ["new_id"])

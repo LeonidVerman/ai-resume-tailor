@@ -28,7 +28,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Drop old UUID primary key
-    op.drop_constraint("tailored_documents_pkey", "tailored_documents", type_="primary_key")
+    op.drop_constraint("tailored_documents_pkey", "tailored_documents", type_="primary")
 
     # Rename id → uuid_id
     op.alter_column("tailored_documents", "id", new_column_name="uuid_id")
@@ -47,7 +47,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint("tailored_documents_pkey", "tailored_documents", type_="primary_key")
+    op.drop_constraint("tailored_documents_pkey", "tailored_documents", type_="primary")
     op.alter_column("tailored_documents", "id", new_column_name="new_id")
     op.alter_column("tailored_documents", "uuid_id", new_column_name="id")
     op.create_unique_constraint("uq_tailored_documents_new_id", "tailored_documents", ["new_id"])

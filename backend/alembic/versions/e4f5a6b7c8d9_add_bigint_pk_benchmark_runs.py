@@ -37,7 +37,7 @@ def upgrade() -> None:
         "UPDATE benchmark_run_positions p "
         "SET new_benchmark_run_id = r.new_id "
         "FROM benchmark_runs r "
-        "WHERE p.benchmark_run_id = r.uuid_id"
+        "WHERE p.benchmark_run_id = r.id"
     )
 
 

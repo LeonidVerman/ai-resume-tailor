@@ -23,7 +23,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.drop_constraint("candidate_profiles_pkey", "candidate_profiles", type_="primary_key")
+    op.drop_constraint("candidate_profiles_pkey", "candidate_profiles", type_="primary")
     op.alter_column("candidate_profiles", "id", new_column_name="uuid_id")
     op.alter_column("candidate_profiles", "new_id", new_column_name="id")
     op.drop_constraint("uq_candidate_profiles_new_id", "candidate_profiles", type_="unique")
@@ -32,7 +32,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint("candidate_profiles_pkey", "candidate_profiles", type_="primary_key")
+    op.drop_constraint("candidate_profiles_pkey", "candidate_profiles", type_="primary")
     op.alter_column("candidate_profiles", "id", new_column_name="new_id")
     op.alter_column("candidate_profiles", "uuid_id", new_column_name="id")
     op.create_unique_constraint("uq_candidate_profiles_new_id", "candidate_profiles", ["new_id"])

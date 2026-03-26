@@ -24,7 +24,7 @@ depends_on = None
 
 def upgrade() -> None:
     op.drop_constraint(
-        "benchmark_run_positions_pkey", "benchmark_run_positions", type_="primary_key"
+        "benchmark_run_positions_pkey", "benchmark_run_positions", type_="primary"
     )
     op.alter_column(
         "benchmark_run_positions", "id", new_column_name="uuid_id"
@@ -43,7 +43,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_constraint(
-        "benchmark_run_positions_pkey", "benchmark_run_positions", type_="primary_key"
+        "benchmark_run_positions_pkey", "benchmark_run_positions", type_="primary"
     )
     op.alter_column(
         "benchmark_run_positions", "id", new_column_name="new_id"

@@ -36,14 +36,20 @@ def upgrade() -> None:
     op.alter_column("benchmark_run_positions", "benchmark_run_uuid_id", nullable=True)
 
     # ── benchmark_runs: swap PK ───────────────────────────────────────────────
-    op.drop_constraint("benchmark_runs_pkey", "benchmark_runs", type_="primary_key")
+    op.drop_constraint("benchmark_runs_pkey", "benchmark_runs", type_="primary")
     op.alter_column("benchmark_runs", "id", new_column_name="uuid_id")
     op.alter_column("benchmark_runs", "new_id", new_column_name="id")
     op.drop_constraint("uq_benchmark_runs_new_id", "benchmark_runs", type_="unique")
     op.create_primary_key("benchmark_runs_pkey", "benchmark_runs", ["id"])
     op.alter_column("benchmark_runs", "uuid_id", nullable=True)
 
-    # ── benchmark_run_positions: create new FK and index ─────────────────────
+    # ── benchmark_run_positions: drop old index, create new FK and index ──────
+    # The index was created by the initial schema on the varchar column;
+    # drop it before recreating on the new bigint column.
+    op.drop_index(
+        "ix_benchmark_run_positions_benchmark_run_id",
+        table_name="benchmark_run_positions",
+    )
     op.create_foreign_key(
         "benchmark_run_positions_benchmark_run_id_fkey",
         "benchmark_run_positions",
@@ -71,7 +77,7 @@ def downgrade() -> None:
     )
 
     # Restore benchmark_runs PK
-    op.drop_constraint("benchmark_runs_pkey", "benchmark_runs", type_="primary_key")
+    op.drop_constraint("benchmark_runs_pkey", "benchmark_runs", type_="primary")
     op.alter_column("benchmark_runs", "id", new_column_name="new_id")
     op.alter_column("benchmark_runs", "uuid_id", new_column_name="id")
     op.create_unique_constraint("uq_benchmark_runs_new_id", "benchmark_runs", ["new_id"])

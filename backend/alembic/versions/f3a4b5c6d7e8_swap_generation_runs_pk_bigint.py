@@ -48,7 +48,7 @@ def upgrade() -> None:
     op.alter_column("evaluation_runs", "generation_run_uuid_id", nullable=True)
 
     # ── generation_runs: drop old UUID PK, swap columns ───────────────────
-    op.drop_constraint("generation_runs_pkey", "generation_runs", type_="primary_key")
+    op.drop_constraint("generation_runs_pkey", "generation_runs", type_="primary")
     op.alter_column("generation_runs", "id", new_column_name="uuid_id")
     op.alter_column("generation_runs", "new_id", new_column_name="id")
     op.drop_constraint("uq_generation_runs_new_id", "generation_runs", type_="unique")
@@ -74,7 +74,7 @@ def downgrade() -> None:
     op.drop_constraint("evaluation_runs_generation_run_id_fkey", "evaluation_runs", type_="foreignkey")
     op.drop_constraint("tailored_documents_generation_run_id_fkey", "tailored_documents", type_="foreignkey")
 
-    op.drop_constraint("generation_runs_pkey", "generation_runs", type_="primary_key")
+    op.drop_constraint("generation_runs_pkey", "generation_runs", type_="primary")
     op.alter_column("generation_runs", "id", new_column_name="new_id")
     op.alter_column("generation_runs", "uuid_id", new_column_name="id")
     op.create_unique_constraint("uq_generation_runs_new_id", "generation_runs", ["new_id"])
