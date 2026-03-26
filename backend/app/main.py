@@ -13,6 +13,7 @@ Both coexist in the same repository without interference.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import backend.app.db.models  # noqa: F401 — ensures all ORM models are registered before any mapper is used
 from backend.app.api.router import api_router
 from backend.app.config import get_settings
 from backend.app.constants import API_PREFIX, SERVICE_NAME
