@@ -5,18 +5,17 @@ Admin configuration — single-row settings table for admin-controlled
 generation behaviour (model selection).
 """
 
-from sqlalchemy import String
+from sqlalchemy import BigInteger, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from backend.app.db.base import Base, TimestampMixin, new_uuid
+from backend.app.db.base import Base, TimestampMixin
 
 
 class AdminConfig(Base, TimestampMixin):
     __tablename__ = "admin_config"
 
-    id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=new_uuid
-    )
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    uuid_id: Mapped[str | None] = mapped_column(String(36), nullable=True, unique=True)
 
     simple_model: Mapped[str] = mapped_column(
         String(128), nullable=False, default="gpt-5.2"
