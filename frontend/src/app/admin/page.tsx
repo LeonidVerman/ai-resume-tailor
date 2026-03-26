@@ -253,7 +253,7 @@ export default function AdminPage() {
     setEvalError(null);
     setEvalResult(null);
     try {
-      const result = await admin.evaluateRun(evalRunId.trim());
+      const result = await admin.evaluateRun(Number(evalRunId.trim()));
       setEvalResult(result);
     } catch (e) {
       setEvalError(e instanceof ApiError ? e.detail : "Evaluation failed.");
