@@ -288,7 +288,7 @@ class TestSaveFlowSetsPromptUnsynced:
 
         repo = MagicMock()
         stored = MagicMock()
-        stored.id = str(uuid.uuid4())
+        stored.id = 1
         stored.user_id = "u1"
         stored.profile_version = "1"
         stored.profile_jsonb = {"candidate": {"name": "Alice"}}
@@ -321,7 +321,7 @@ class TestSaveFlowSetsPromptUnsynced:
         existing.prompt_synched = True  # was synced before edit
 
         updated = MagicMock()
-        updated.id = str(uuid.uuid4())
+        updated.id = 1
         updated.user_id = "u1"
         updated.profile_version = "1"
         updated.profile_jsonb = {"candidate": {"name": "Alice Updated"}}

@@ -119,7 +119,7 @@ class CandidateProfileUpsertRequest(APIModel):
 
 class CandidateProfileResponse(APIModel):
     """Full profile response returned by the API."""
-    id: str
+    id: int
     user_id: str
     profile_version: str
     profile: CandidateProfileDocument

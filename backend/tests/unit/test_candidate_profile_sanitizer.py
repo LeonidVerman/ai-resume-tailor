@@ -299,7 +299,7 @@ class TestSaveFlowSanitizesAndSyncs:
     def _make_service(self):
         from backend.app.services.candidate_profile_service import CandidateProfileService
         stored = MagicMock()
-        stored.id = str(uuid.uuid4())
+        stored.id = 1
         stored.user_id = "u1"
         stored.profile_version = "1"
         stored.profile_jsonb = {"candidate_profile_version": "2.0", "candidate": {"name": "Alice"}}
@@ -340,7 +340,7 @@ class TestSaveFlowSanitizesAndSyncs:
         existing.prompt_synched = True
 
         updated = MagicMock()
-        updated.id = str(uuid.uuid4())
+        updated.id = 1
         updated.user_id = "u1"
         updated.profile_version = "1"
         updated.profile_jsonb = {"candidate_profile_version": "2.0", "candidate": {"name": "Alice"}}

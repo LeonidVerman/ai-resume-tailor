@@ -120,7 +120,7 @@ export interface CandidateProfileDocument {
 }
 
 export interface CandidateProfileResponse {
-  id: string;
+  id: number;
   user_id: string;
   profile_version: string;
   profile: CandidateProfileDocument;

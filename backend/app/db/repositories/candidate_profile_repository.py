@@ -13,7 +13,7 @@ class CandidateProfileRepository:
     def __init__(self, db: Session) -> None:
         self._db = db
 
-    def get_by_id(self, profile_id: str) -> CandidateProfile | None:
+    def get_by_id(self, profile_id: int) -> CandidateProfile | None:
         return self._db.get(CandidateProfile, profile_id)
 
     def get_by_user_id(self, user_id: str) -> CandidateProfile | None:

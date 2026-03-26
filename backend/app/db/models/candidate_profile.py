@@ -7,19 +7,18 @@ Stored as JSONB so the schema can evolve without migrations.
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.db.base import Base, TimestampMixin, new_uuid
+from backend.app.db.base import Base, TimestampMixin
 
 
 class CandidateProfile(Base, TimestampMixin):
     __tablename__ = "candidate_profiles"
 
-    id: Mapped[str] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=new_uuid
-    )
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    uuid_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True, unique=True)
     user_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("users.id", ondelete="CASCADE"),
