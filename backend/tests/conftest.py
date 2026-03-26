@@ -201,7 +201,6 @@ def make_billing(
 ) -> Billing:
     """Create a Billing row for a user in the test DB."""
     b = Billing(
-        id=str(uuid.uuid4()),
         user_id=user.id,
         plan_type=plan_type,
         subscription_status=subscription_status,
