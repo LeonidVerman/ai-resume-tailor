@@ -14,7 +14,7 @@ import type { StructuredResumeSummary, StructuredResumeResponse } from "@/types/
 export default function ResumesPage() {
   const [list, setList] = useState<StructuredResumeSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     resumes
@@ -31,7 +31,7 @@ export default function ResumesPage() {
     ]);
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: number) {
     setDeletingId(id);
     try {
       await resumes.delete(id);

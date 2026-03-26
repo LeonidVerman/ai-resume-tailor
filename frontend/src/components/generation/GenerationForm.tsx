@@ -52,7 +52,7 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
     billingStatus.monthly_used >= billingStatus.monthly_limit &&
     billingStatus.extra_credits === 0;
 
-  async function handleDeleteResume(id: string) {
+  async function handleDeleteResume(id: number) {
     setDeletingResumeId(id);
     try {
       await resumes.delete(id);

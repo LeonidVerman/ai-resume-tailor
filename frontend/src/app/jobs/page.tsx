@@ -16,7 +16,7 @@ import { formatDate } from "@/lib/utils";
 export default function JobsPage() {
   const [list, setList] = useState<JobDescriptionSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     jobDescriptions
@@ -39,7 +39,7 @@ export default function JobsPage() {
     ]);
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: number) {
     setDeletingId(id);
     try {
       await jobDescriptions.delete(id);
