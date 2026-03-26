@@ -15,10 +15,6 @@ class JobDescription(Base, CreatedAtMixin):
     __tablename__ = "job_descriptions"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    # Original UUID preserved for rollback; None for rows created after migration.
-    uuid_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=False), nullable=True, unique=True
-    )
     user_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("users.id", ondelete="CASCADE"),

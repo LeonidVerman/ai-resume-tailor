@@ -15,7 +15,6 @@ class AdminConfig(Base, TimestampMixin):
     __tablename__ = "admin_config"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    uuid_id: Mapped[str | None] = mapped_column(String(36), nullable=True, unique=True)
 
     simple_model: Mapped[str] = mapped_column(
         String(128), nullable=False, default="gpt-5.2"

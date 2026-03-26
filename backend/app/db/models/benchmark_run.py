@@ -20,7 +20,6 @@ class BenchmarkRun(Base, TimestampMixin):
     __tablename__ = "benchmark_runs"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    uuid_id: Mapped[str | None] = mapped_column(String(36), nullable=True, unique=True)
 
     # User/client who the benchmark is run against
     client_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)

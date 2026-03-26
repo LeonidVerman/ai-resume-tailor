@@ -16,7 +16,6 @@ class TailoredDocument(Base, CreatedAtMixin):
     __tablename__ = "tailored_documents"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    uuid_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True, unique=True)
     user_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -28,9 +27,6 @@ class TailoredDocument(Base, CreatedAtMixin):
         ForeignKey("generation_runs.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-    )
-    generation_run_uuid_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=False), nullable=True, index=True
     )
 
     company_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")

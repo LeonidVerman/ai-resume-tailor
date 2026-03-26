@@ -18,7 +18,6 @@ class GenerationRun(Base):
     __tablename__ = "generation_runs"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    uuid_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True, unique=True)
     user_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -30,10 +29,6 @@ class GenerationRun(Base):
         ForeignKey("job_descriptions.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
-    )
-    # Original UUID FK preserved for rollback; None for rows created after migration.
-    job_description_uuid_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=False), nullable=True, index=True
     )
 
     # Run metadata
