@@ -123,6 +123,8 @@ def sqlite_session():
 
     if not hasattr(SQLiteTypeCompiler, "visit_JSONB"):
         SQLiteTypeCompiler.visit_JSONB = SQLiteTypeCompiler.visit_JSON
+    # Render BigInteger as INTEGER so SQLite treats it as a rowid-alias autoincrement PK.
+    SQLiteTypeCompiler.visit_BIGINT = lambda self, type_, **kw: "INTEGER"
 
     engine = create_engine("sqlite:///:memory:")
 
@@ -214,9 +216,9 @@ class TestSoftDeleteFiltering:
         _insert_user_sql(sqlite_session, uid)
         repo = JobDescriptionRepository(sqlite_session)
 
-        j1 = repo.create(id=_uuid(), user_id=uid, source_url=None,
+        j1 = repo.create(user_id=uid, source_url=None,
                          source_type="manual", raw_text="JD one", metadata_jsonb=None)
-        j2 = repo.create(id=_uuid(), user_id=uid, source_url=None,
+        j2 = repo.create(user_id=uid, source_url=None,
                          source_type="manual", raw_text="JD two", metadata_jsonb=None)
 
         repo.delete(j1)
@@ -232,7 +234,7 @@ class TestSoftDeleteFiltering:
         _insert_user_sql(sqlite_session, uid)
         repo = JobDescriptionRepository(sqlite_session)
 
-        j = repo.create(id=_uuid(), user_id=uid, source_url=None,
+        j = repo.create(user_id=uid, source_url=None,
                         source_type="manual", raw_text="JD", metadata_jsonb=None)
         jid = j.id
         repo.delete(j)

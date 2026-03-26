@@ -20,6 +20,9 @@ from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
 
 SQLiteTypeCompiler.visit_JSONB = lambda self, type_, **kw: "TEXT"
 SQLiteTypeCompiler.visit_UUID = lambda self, type_, **kw: "VARCHAR(36)"
+# SQLite only auto-increments INTEGER PRIMARY KEY (exact token); BIGINT doesn't get the
+# rowid-alias treatment.  Compile BigInteger as INTEGER so autoincrement works in tests.
+SQLiteTypeCompiler.visit_BIGINT = lambda self, type_, **kw: "INTEGER"
 
 # ── Standard imports ──────────────────────────────────────────────────────
 import json

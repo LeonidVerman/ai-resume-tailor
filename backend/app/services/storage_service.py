@@ -91,10 +91,16 @@ class StorageService:
 
     # ── Delete ─────────────────────────────────────────────────────────────
 
-    def delete_run_objects(self, user_id: str, run_id: str) -> None:
-        """Delete all generated objects associated with a generation run."""
-        for filename in ("resume.docx", "resume.pdf", "cover_letter.docx", "cover_letter.pdf"):
-            key = self._generated_key(user_id, run_id, filename)
+    def delete_run_objects(self, keys: list[str]) -> None:
+        """Delete generated objects by their explicit storage keys.
+
+        Accepts the keys stored in tailored_document.*_url columns rather than
+        recomputing them from IDs — this keeps deletion correct regardless of
+        whether the table's PK type has changed since the objects were uploaded.
+        """
+        for key in keys:
+            if not key:
+                continue
             try:
                 self._storage.delete_object(key)
             except Exception as exc:

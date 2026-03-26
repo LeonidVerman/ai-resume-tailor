@@ -141,7 +141,7 @@ export const resumes = {
 
 export const jobDescriptions = {
   list: () => request<JobDescriptionSummary[]>("/job-descriptions"),
-  get: (id: string) => request<JobDescriptionResponse>(`/job-descriptions/${id}`),
+  get: (id: number) => request<JobDescriptionResponse>(`/job-descriptions/${id}`),
   scrape: (body: JobDescriptionScrapeRequest) =>
     request<JobDescriptionResponse>("/job-descriptions/scrape", {
       method: "POST",
@@ -152,7 +152,7 @@ export const jobDescriptions = {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  delete: (id: string) =>
+  delete: (id: number) =>
     request<void>(`/job-descriptions/${id}`, { method: "DELETE" }),
 };
 

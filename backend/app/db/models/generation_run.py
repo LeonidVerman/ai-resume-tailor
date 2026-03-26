@@ -7,7 +7,7 @@ Tracks inputs, outputs, token usage, cost, and status for traceability.
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -26,11 +26,15 @@ class GenerationRun(Base):
         nullable=False,
         index=True,
     )
-    job_description_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=False),
+    job_description_id: Mapped[int | None] = mapped_column(
+        BigInteger,
         ForeignKey("job_descriptions.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
+    )
+    # Original UUID FK preserved for rollback; None for rows created after migration.
+    job_description_uuid_id: Mapped[str | None] = mapped_column(
+        UUID(as_uuid=False), nullable=True, index=True
     )
 
     # Run metadata

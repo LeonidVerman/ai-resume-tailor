@@ -212,7 +212,7 @@ class TestEnsureCandidatePromptHelper:
 
         user_id = str(uuid.uuid4())
         jd = MagicMock()
-        jd.id = str(uuid.uuid4())
+        jd.id = 1
         jd.user_id = user_id
         jd.raw_text = "JD text"
         jd.metadata_jsonb = {"company": "Acme", "job_title": "SWE"}

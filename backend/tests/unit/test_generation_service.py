@@ -19,9 +19,9 @@ from backend.app.services.generation_service import GenerationService, _extract_
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 
-def _make_jd(user_id: str, jd_id: str | None = None):
+def _make_jd(user_id: str, jd_id: int | None = None):
     jd = MagicMock()
-    jd.id = jd_id or str(uuid.uuid4())
+    jd.id = jd_id if jd_id is not None else 1
     jd.user_id = user_id
     jd.raw_text = "Looking for a senior engineer."
     jd.metadata_jsonb = {"company": "Acme", "job_title": "Engineer"}
@@ -121,7 +121,7 @@ class TestGenerationServiceGenerate:
         svc._jd_repo.get_by_id.return_value = None
 
         request = GenerationRequest(
-            job_description_id=str(uuid.uuid4()),
+            job_description_id=99999,
             structured_resume_id=resume.id,
         )
 

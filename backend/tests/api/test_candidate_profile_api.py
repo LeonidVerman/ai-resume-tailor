@@ -149,7 +149,7 @@ class TestGenerationOnboardingGate:
     def test_generate_blocked_without_onboarding(self, client):
         # No profile at all → 403
         resp = client.post("/api/v1/generations", json={
-            "job_description_id": "00000000-0000-0000-0000-000000000001",
+            "job_description_id": 1,
             "structured_resume_id": "00000000-0000-0000-0000-000000000002",
         })
         assert resp.status_code == 403
@@ -159,7 +159,7 @@ class TestGenerationOnboardingGate:
         # Profile exists but onboarding_completed=False → 403
         client.put(API, json=MINIMAL_PROFILE_BODY)
         resp = client.post("/api/v1/generations", json={
-            "job_description_id": "00000000-0000-0000-0000-000000000001",
+            "job_description_id": 1,
             "structured_resume_id": "00000000-0000-0000-0000-000000000002",
         })
         assert resp.status_code == 403

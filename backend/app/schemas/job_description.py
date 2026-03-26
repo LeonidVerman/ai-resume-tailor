@@ -47,7 +47,7 @@ class JobDescriptionManualRequest(APIModel):
 
 class JobDescriptionResponse(APIModel):
     """Full JD response returned by GET /job-descriptions/{id}."""
-    id: str
+    id: int
     user_id: str
     source_url: str | None = None
     source_type: Literal["scraped", "manual"] | None = None
@@ -58,7 +58,7 @@ class JobDescriptionResponse(APIModel):
 
 class JobDescriptionSummary(APIModel):
     """Lightweight listing item for GET /job-descriptions."""
-    id: str
+    id: int
     company: str | None = None
     job_title: str | None = None
     source_url: str | None = None

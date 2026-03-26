@@ -84,7 +84,7 @@ class JobNormalizerService:
 
     # ── Read ───────────────────────────────────────────────────────────────
 
-    def get_by_id(self, jd_id: str, user_id: str) -> JobDescriptionResponse:
+    def get_by_id(self, jd_id: int, user_id: str) -> JobDescriptionResponse:
         jd = self._repo.get_by_id(jd_id)
         if jd is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job description not found")
@@ -96,7 +96,7 @@ class JobNormalizerService:
         jds = self._repo.list_by_user_id(user_id)
         return [self._to_summary(jd) for jd in jds]
 
-    def delete(self, jd_id: str, user_id: str) -> None:
+    def delete(self, jd_id: int, user_id: str) -> None:
         jd = self._repo.get_by_id(jd_id)
         if jd is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job description not found")

@@ -6,7 +6,6 @@ The scrape endpoint is tested with a mocked JobScraperService so we don't
 need Playwright or a live network connection.
 """
 
-import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -155,7 +154,7 @@ class TestGetJobDescription:
         assert resp.status_code == 200
 
     def test_get_unknown_returns_404(self, client):
-        resp = client.get(f"{API}/{uuid.uuid4()}")
+        resp = client.get(f"{API}/99999")
         assert resp.status_code == 404
 
 
@@ -172,5 +171,5 @@ class TestDeleteJobDescription:
         assert all(j["id"] != jd_id for j in remaining)
 
     def test_delete_unknown_returns_404(self, client):
-        resp = client.delete(f"{API}/{uuid.uuid4()}")
+        resp = client.delete(f"{API}/99999")
         assert resp.status_code == 404

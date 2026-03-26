@@ -80,12 +80,12 @@ def list_job_descriptions(user: CurrentUserDep, db: DbDep):
 
 
 @router.get("/{jd_id}", response_model=JobDescriptionResponse)
-def get_job_description(jd_id: str, user: CurrentUserDep, db: DbDep):
+def get_job_description(jd_id: int, user: CurrentUserDep, db: DbDep):
     """Return a specific job description record."""
     return _normalizer(db).get_by_id(jd_id, user.id)
 
 
 @router.delete("/{jd_id}", status_code=204)
-def delete_job_description(jd_id: str, user: CurrentUserDep, db: DbDep):
+def delete_job_description(jd_id: int, user: CurrentUserDep, db: DbDep):
     """Delete a stored job description."""
     _normalizer(db).delete(jd_id, user.id)

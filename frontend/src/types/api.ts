@@ -216,7 +216,7 @@ export interface JobDescriptionManualRequest {
 }
 
 export interface JobDescriptionResponse {
-  id: string;
+  id: number;
   user_id: string;
   source_url?: string;
   source_type?: "scraped" | "manual";
@@ -226,7 +226,7 @@ export interface JobDescriptionResponse {
 }
 
 export interface JobDescriptionSummary {
-  id: string;
+  id: number;
   company?: string;
   job_title?: string;
   source_url?: string;
@@ -238,7 +238,7 @@ export interface JobDescriptionSummary {
 export type GenerationStatus = "pending" | "running" | "succeeded" | "failed";
 
 export interface GenerationRequest {
-  job_description_id: string;
+  job_description_id: number;
   structured_resume_id: string;
 }
 
@@ -264,7 +264,7 @@ export interface GenerationRunSummary {
 
 export interface GenerationRunDetail extends GenerationRunSummary {
   user_id: string;
-  job_description_id?: string;
+  job_description_id?: number;
   prompt_version: string;
   token_input?: number;
   token_output?: number;

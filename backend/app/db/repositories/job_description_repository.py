@@ -13,7 +13,7 @@ class JobDescriptionRepository:
     def __init__(self, db: Session) -> None:
         self._db = db
 
-    def get_by_id(self, jd_id: str) -> JobDescription | None:
+    def get_by_id(self, jd_id: int) -> JobDescription | None:
         return self._db.get(JobDescription, jd_id)
 
     def list_by_user_id(self, user_id: str) -> list[JobDescription]:

@@ -19,7 +19,7 @@ class GenerationRequest(APIModel):
     The user selects which stored resume and job description to use.
     Candidate profile is always loaded from the user's current profile.
     """
-    job_description_id: str
+    job_description_id: int
     structured_resume_id: str
 
 
@@ -47,7 +47,7 @@ class GenerationRunDetail(APIModel):
     """Full run detail including token usage and error info."""
     id: str
     user_id: str
-    job_description_id: str | None = None
+    job_description_id: int | None = None
     status: GenerationStatus
     run_type: str
     model_name: str

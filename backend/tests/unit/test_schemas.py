@@ -99,10 +99,10 @@ class TestStructuredResumeDocument:
 class TestGenerationRequest:
     def test_valid_request(self):
         req = GenerationRequest(
-            job_description_id="jd-uuid",
+            job_description_id=42,
             structured_resume_id="resume-uuid",
         )
-        assert req.job_description_id == "jd-uuid"
+        assert req.job_description_id == 42
         assert req.structured_resume_id == "resume-uuid"
 
     def test_jd_id_required(self):

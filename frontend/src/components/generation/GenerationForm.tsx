@@ -26,12 +26,12 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
   const [jdList, setJdList] = useState<JobDescriptionSummary[]>([]);
   const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
   const [selectedResume, setSelectedResume] = useState<string | null>(null);
-  const [selectedJd, setSelectedJd] = useState<string | null>(null);
+  const [selectedJd, setSelectedJd] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingResumeId, setDeletingResumeId] = useState<string | null>(null);
-  const [deletingJdId, setDeletingJdId] = useState<string | null>(null);
+  const [deletingJdId, setDeletingJdId] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -65,7 +65,7 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
     }
   }
 
-  async function handleDeleteJd(id: string) {
+  async function handleDeleteJd(id: number) {
     setDeletingJdId(id);
     try {
       await jobDescriptions.delete(id);

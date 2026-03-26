@@ -4,18 +4,20 @@ backend/app/db/models/job_description.py
 Job description — supports both URL-scraped and manually pasted JDs.
 """
 
-from sqlalchemy import Boolean, ForeignKey, String, Text
+from sqlalchemy import BigInteger, Boolean, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.db.base import Base, CreatedAtMixin, new_uuid
+from backend.app.db.base import Base, CreatedAtMixin
 
 
 class JobDescription(Base, CreatedAtMixin):
     __tablename__ = "job_descriptions"
 
-    id: Mapped[str] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=new_uuid
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    # Original UUID preserved for rollback; None for rows created after migration.
+    uuid_id: Mapped[str | None] = mapped_column(
+        UUID(as_uuid=False), nullable=True, unique=True
     )
     user_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),

@@ -39,7 +39,7 @@ def _create_jd(client):
     return client.post(f"{JD_API}/manual", json=JD_BODY).json()["id"]
 
 
-def _gen_request(jd_id: str, resume_id: str, mode: str = "two_phase") -> dict:
+def _gen_request(jd_id, resume_id: str, mode: str = "two_phase") -> dict:
     return {
         "job_description_id": jd_id,
         "structured_resume_id": resume_id,
@@ -112,7 +112,7 @@ class TestCreateGeneration:
         with _patch_config():
             resp = client.post(
                 API,
-                json=_gen_request(str(uuid.uuid4()), resume_id),
+                json=_gen_request(99999, resume_id),
             )
 
         assert resp.status_code == 404
