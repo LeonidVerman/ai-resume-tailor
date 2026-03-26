@@ -12,8 +12,6 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from backend.app.db.base import new_uuid
-
 
 class MonthlyUsageRepository:
     def __init__(self, db: Session) -> None:
@@ -43,15 +41,14 @@ class MonthlyUsageRepository:
         result = self._db.execute(
             text(
                 """
-                INSERT INTO monthly_usage (id, user_id, year, month, count)
-                VALUES (:id, :user_id, :year, :month, 1)
+                INSERT INTO monthly_usage (user_id, year, month, count)
+                VALUES (:user_id, :year, :month, 1)
                 ON CONFLICT (user_id, year, month)
                 DO UPDATE SET count = monthly_usage.count + 1
                 WHERE monthly_usage.count < :limit
                 """
             ),
             {
-                "id": new_uuid(),
                 "user_id": user_id,
                 "year": year,
                 "month": month,

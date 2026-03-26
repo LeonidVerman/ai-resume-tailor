@@ -7,18 +7,19 @@ Written exclusively via atomic INSERT … ON CONFLICT DO UPDATE; never
 updated via ORM setattr to avoid races.
 """
 
-from sqlalchemy import ForeignKey, Integer, UniqueConstraint
+from sqlalchemy import BigInteger, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.db.base import Base, new_uuid
+from backend.app.db.base import Base
 
 
 class MonthlyUsage(Base):
     __tablename__ = "monthly_usage"
     __table_args__ = (UniqueConstraint("user_id", "year", "month", name="uq_monthly_usage"),)
 
-    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=new_uuid)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    uuid_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True, unique=True)
     user_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("users.id", ondelete="CASCADE"),
