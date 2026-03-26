@@ -70,7 +70,7 @@ export default function AdminPage() {
   const [loadingBenchmarkRuns, setLoadingBenchmarkRuns] = useState(false);
   const [selectedBenchmarkRun, setSelectedBenchmarkRun] = useState<BenchmarkRunDetail | null>(null);
   const [loadingBenchmarkDetail, setLoadingBenchmarkDetail] = useState(false);
-  const [downloadingBenchmarkZip, setDownloadingBenchmarkZip] = useState<string | null>(null);
+  const [downloadingBenchmarkZip, setDownloadingBenchmarkZip] = useState<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const hasActiveBenchmark = benchmarkRuns.some(
@@ -222,7 +222,7 @@ export default function AdminPage() {
     }
   }
 
-  async function handleViewBenchmark(id: string) {
+  async function handleViewBenchmark(id: number) {
     setLoadingBenchmarkDetail(true);
     try {
       const detail = await admin.getBenchmarkRun(id);
@@ -234,7 +234,7 @@ export default function AdminPage() {
     }
   }
 
-  async function handleDownloadBenchmarkZip(id: string) {
+  async function handleDownloadBenchmarkZip(id: number) {
     setDownloadingBenchmarkZip(id);
     try {
       const { blob, filename } = await admin.downloadBenchmarkZip(id);
@@ -701,8 +701,8 @@ function BenchmarkDetailModal({
 }: {
   run: BenchmarkRunDetail;
   onClose: () => void;
-  onDownload: (id: string) => void;
-  downloading: string | null;
+  onDownload: (id: number) => void;
+  downloading: number | null;
 }) {
   const scoreKeys = Object.keys(_SCORE_LABELS);
   return (

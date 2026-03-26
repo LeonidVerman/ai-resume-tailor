@@ -181,7 +181,7 @@ def list_benchmark_runs(
 
 
 @router.get("/benchmark-runs/{run_id}/download")
-def download_benchmark_zip(run_id: str, _admin: AdminDep, db: DbDep):
+def download_benchmark_zip(run_id: int, _admin: AdminDep, db: DbDep):
     """
     Download the benchmark report directory as a ZIP archive.
 
@@ -221,7 +221,7 @@ def download_benchmark_zip(run_id: str, _admin: AdminDep, db: DbDep):
 
 
 @router.get("/benchmark-runs/{run_id}", response_model=BenchmarkRunDetail)
-def get_benchmark_run(run_id: str, _admin: AdminDep, db: DbDep):
+def get_benchmark_run(run_id: int, _admin: AdminDep, db: DbDep):
     """Return full benchmark run details including per-position scores."""
     run = BenchmarkRunRepository(db).get_by_id(run_id)
     if run is None:

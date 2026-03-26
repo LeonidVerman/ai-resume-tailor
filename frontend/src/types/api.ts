@@ -374,7 +374,7 @@ export interface BenchmarkStartRequest {
 }
 
 export interface BenchmarkRunSummary {
-  id: string;
+  id: number;
   client_id: string;
   status: BenchmarkStatus;
   positions_count: number | null;
@@ -386,7 +386,7 @@ export interface BenchmarkRunSummary {
 }
 
 export interface BenchmarkPositionSummary {
-  id: string;
+  id: number;
   position_url: string;
   company: string | null;
   role_title: string | null;

@@ -56,7 +56,7 @@ class BenchmarkStartRequest(APIModel):
 
 class BenchmarkRunSummary(APIModel):
     """Compact benchmark run row for the dashboard history table."""
-    id: str
+    id: int
     client_id: str
     status: str
     positions_count: int | None
@@ -69,7 +69,7 @@ class BenchmarkRunSummary(APIModel):
 
 class BenchmarkPositionSummary(APIModel):
     """Per-position result for the details modal."""
-    id: str
+    id: int
     position_url: str
     company: str | None
     role_title: str | None

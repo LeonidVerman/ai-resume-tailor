@@ -293,9 +293,9 @@ export const admin = {
     }),
   listBenchmarkRuns: (limit = 20) =>
     request<BenchmarkRunSummary[]>(`/admin/benchmark-runs?limit=${limit}`),
-  getBenchmarkRun: (id: string) =>
+  getBenchmarkRun: (id: number) =>
     request<BenchmarkRunDetail>(`/admin/benchmark-runs/${id}`),
-  downloadBenchmarkZip: (id: string) =>
+  downloadBenchmarkZip: (id: number) =>
     downloadBlob(`/admin/benchmark-runs/${id}/download`, `benchmark-${id}.zip`),
 };
 

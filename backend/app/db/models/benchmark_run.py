@@ -9,17 +9,18 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import DateTime, Integer, Numeric, String, Text
+from sqlalchemy import BigInteger, DateTime, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.db.base import Base, TimestampMixin, new_uuid
+from backend.app.db.base import Base, TimestampMixin
 
 
 class BenchmarkRun(Base, TimestampMixin):
     __tablename__ = "benchmark_runs"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    uuid_id: Mapped[str | None] = mapped_column(String(36), nullable=True, unique=True)
 
     # User/client who the benchmark is run against
     client_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)

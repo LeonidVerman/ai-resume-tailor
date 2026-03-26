@@ -6,23 +6,25 @@ Per-position assessment result for a benchmark run.
 
 from decimal import Decimal
 
-from sqlalchemy import ForeignKey, Numeric, String, Text
+from sqlalchemy import BigInteger, ForeignKey, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.db.base import Base, CreatedAtMixin, new_uuid
+from backend.app.db.base import Base, CreatedAtMixin
 
 
 class BenchmarkRunPosition(Base, CreatedAtMixin):
     __tablename__ = "benchmark_run_positions"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
-    benchmark_run_id: Mapped[str] = mapped_column(
-        String(36),
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    uuid_id: Mapped[str | None] = mapped_column(String(36), nullable=True, unique=True)
+    benchmark_run_id: Mapped[int] = mapped_column(
+        BigInteger,
         ForeignKey("benchmark_runs.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
+    benchmark_run_uuid_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
     position_url: Mapped[str] = mapped_column(Text, nullable=False)
     company: Mapped[str | None] = mapped_column(Text, nullable=True)

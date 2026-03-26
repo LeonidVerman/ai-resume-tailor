@@ -13,7 +13,7 @@ class BenchmarkRunPositionRepository:
     def __init__(self, db: Session) -> None:
         self._db = db
 
-    def get_by_benchmark_run_id(self, benchmark_run_id: str) -> list[BenchmarkRunPosition]:
+    def get_by_benchmark_run_id(self, benchmark_run_id: int) -> list[BenchmarkRunPosition]:
         return (
             self._db.query(BenchmarkRunPosition)
             .filter(BenchmarkRunPosition.benchmark_run_id == benchmark_run_id)

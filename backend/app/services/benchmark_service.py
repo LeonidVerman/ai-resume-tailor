@@ -185,7 +185,7 @@ def _web_process_one_position(
 # ---------------------------------------------------------------------------
 
 def _run_benchmark_background(
-    benchmark_run_id: str,
+    benchmark_run_id: int,
     database_url: str,
     report_base_dir: str,
     positions_file: str,
@@ -212,7 +212,7 @@ def _run_benchmark_background(
 
 
 def _execute_benchmark(
-    benchmark_run_id: str,
+    benchmark_run_id: int,
     db: Any,
     report_base_dir: str,
     positions_file: str,
