@@ -36,9 +36,9 @@ def _make_resume(user_id: str, resume_id: int | None = None):
     return res
 
 
-def _make_run(run_id: str | None = None):
+def _make_run(run_id: int | None = None):
     run = MagicMock()
-    run.id = run_id or str(uuid.uuid4())
+    run.id = run_id or 1
     return run
 
 

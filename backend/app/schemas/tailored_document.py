@@ -29,7 +29,7 @@ class TailoredDocumentSummary(APIModel):
     id: int
     company_name: str
     role_title: str
-    generation_run_id: str
+    generation_run_id: int
     artifacts: ArtifactURLs
     created_at: datetime
 
@@ -45,7 +45,7 @@ class TailoredDocumentDetail(APIModel):
     """
     id: int
     user_id: str
-    generation_run_id: str
+    generation_run_id: int
     company_name: str
     role_title: str
     # Structured content (may be None if not parsed)

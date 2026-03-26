@@ -53,7 +53,7 @@ class EvaluationService:
         self._run_repo = run_repo
         self._doc_repo = doc_repo
 
-    def evaluate(self, generation_run_id: str) -> EvaluationResponse:
+    def evaluate(self, generation_run_id: int) -> EvaluationResponse:
         """
         Score the tailored document for the given generation run.
 
@@ -100,7 +100,7 @@ class EvaluationService:
         logger.info("Evaluation created/updated eval=%s run=%s", ev.id, generation_run_id)
         return self._to_response(ev)
 
-    def get_by_run(self, generation_run_id: str) -> EvaluationResponse:
+    def get_by_run(self, generation_run_id: int) -> EvaluationResponse:
         ev = self._eval_repo.get_by_generation_run_id(generation_run_id)
         if ev is None:
             raise HTTPException(

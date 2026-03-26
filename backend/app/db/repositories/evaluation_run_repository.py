@@ -16,7 +16,7 @@ class EvaluationRunRepository:
     def get_by_id(self, eval_id: int) -> EvaluationRun | None:
         return self._db.get(EvaluationRun, eval_id)
 
-    def get_by_generation_run_id(self, run_id: str) -> EvaluationRun | None:
+    def get_by_generation_run_id(self, run_id: int) -> EvaluationRun | None:
         return (
             self._db.query(EvaluationRun)
             .filter(EvaluationRun.generation_run_id == run_id)

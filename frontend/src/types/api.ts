@@ -243,14 +243,14 @@ export interface GenerationRequest {
 }
 
 export interface GenerationResponse {
-  run_id: string;
+  run_id: number;
   status: GenerationStatus;
   tailored_document_id?: number;
   message?: string;
 }
 
 export interface GenerationRunSummary {
-  id: string;
+  id: number;
   status: GenerationStatus;
   run_type: string;
   model_name: string;
@@ -283,7 +283,7 @@ export interface ArtifactURLs {
 export interface TailoredDocumentDetail {
   id: number;
   user_id: string;
-  generation_run_id: string;
+  generation_run_id: number;
   company_name: string;
   role_title: string;
   resume_json?: Record<string, unknown>;
@@ -334,8 +334,8 @@ export interface EvaluationScores {
 }
 
 export interface EvaluationResponse {
-  id: string;
-  generation_run_id: string;
+  id: number;
+  generation_run_id: number;
   scores: EvaluationScores;
   created_at: string;
 }

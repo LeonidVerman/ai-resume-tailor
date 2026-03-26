@@ -13,7 +13,7 @@ class GenerationRunRepository:
     def __init__(self, db: Session) -> None:
         self._db = db
 
-    def get_by_id(self, run_id: str) -> GenerationRun | None:
+    def get_by_id(self, run_id: int) -> GenerationRun | None:
         return self._db.get(GenerationRun, run_id)
 
     def list_by_user_id(

@@ -23,11 +23,14 @@ class TailoredDocument(Base, CreatedAtMixin):
         nullable=False,
         index=True,
     )
-    generation_run_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=False),
+    generation_run_id: Mapped[int] = mapped_column(
+        BigInteger,
         ForeignKey("generation_runs.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
+    )
+    generation_run_uuid_id: Mapped[str | None] = mapped_column(
+        UUID(as_uuid=False), nullable=True, index=True
     )
 
     company_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")

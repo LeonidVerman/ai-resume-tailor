@@ -212,7 +212,7 @@ class TestGetGeneration:
         assert "user_id" in data
 
     def test_get_unknown_returns_404(self, client):
-        resp = client.get(f"{API}/{uuid.uuid4()}")
+        resp = client.get(f"{API}/99999")
         assert resp.status_code == 404
 
 

@@ -30,7 +30,7 @@ GenerationStatus = Literal["pending", "running", "succeeded", "failed"]
 
 class GenerationRunSummary(APIModel):
     """Lightweight run listing item."""
-    id: str
+    id: int
     status: GenerationStatus
     run_type: str
     model_name: str
@@ -45,7 +45,7 @@ class GenerationRunSummary(APIModel):
 
 class GenerationRunDetail(APIModel):
     """Full run detail including token usage and error info."""
-    id: str
+    id: int
     user_id: str
     job_description_id: int | None = None
     status: GenerationStatus
@@ -67,7 +67,7 @@ class GenerationResponse(APIModel):
     On success: run_id links to the GenerationRun record.
     Tailored document is separately retrievable via GET /documents/{id}.
     """
-    run_id: str
+    run_id: int
     status: GenerationStatus
     tailored_document_id: int | None = None
     message: str | None = None

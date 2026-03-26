@@ -166,8 +166,8 @@ export const generations = {
     }),
   list: (limit = 50, offset = 0) =>
     request<GenerationRunSummary[]>(`/generations?limit=${limit}&offset=${offset}`),
-  get: (id: string) => request<GenerationRunDetail>(`/generations/${id}`),
-  delete: (id: string) => request<void>(`/generations/${id}`, { method: "DELETE" }),
+  get: (id: number) => request<GenerationRunDetail>(`/generations/${id}`),
+  delete: (id: number) => request<void>(`/generations/${id}`, { method: "DELETE" }),
 };
 
 // ── Documents ─────────────────────────────────────────────────────────────
@@ -260,7 +260,7 @@ async function downloadBlob(
 
 export const admin = {
   stats: () => request<SystemStats>("/admin/system-stats"),
-  evaluateRun: (generation_run_id: string) =>
+  evaluateRun: (generation_run_id: number) =>
     request<EvaluationResponse>("/admin/evaluate-run", {
       method: "POST",
       body: JSON.stringify({ generation_run_id }),

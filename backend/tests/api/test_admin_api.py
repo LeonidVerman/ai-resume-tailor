@@ -19,7 +19,7 @@ API_STATS = "/api/v1/admin/system-stats"
 API_EVAL = "/api/v1/admin/evaluate-run"
 
 
-def _fake_eval_response(run_id: str) -> EvaluationResponse:
+def _fake_eval_response(run_id: int) -> EvaluationResponse:
     return EvaluationResponse(
         id=1,
         generation_run_id=run_id,
@@ -61,7 +61,7 @@ class TestSystemStats:
 
 class TestEvaluateRun:
     def test_evaluate_run_returns_201(self, admin_client):
-        run_id = str(uuid.uuid4())
+        run_id = 42
         fake_resp = _fake_eval_response(run_id)
 
         with patch(
@@ -73,7 +73,7 @@ class TestEvaluateRun:
         assert resp.status_code == 201
 
     def test_evaluate_run_response_schema(self, admin_client):
-        run_id = str(uuid.uuid4())
+        run_id = 42
         fake_resp = _fake_eval_response(run_id)
 
         with patch(
@@ -95,7 +95,7 @@ class TestEvaluateRun:
         ):
             resp = admin_client.post(
                 API_EVAL,
-                json={"generation_run_id": str(uuid.uuid4())},
+                json={"generation_run_id": 99999},
             )
         assert resp.status_code == 404
 
@@ -104,5 +104,5 @@ class TestEvaluateRun:
         assert resp.status_code == 422
 
     def test_non_admin_evaluate_returns_403(self, client):
-        resp = client.post(API_EVAL, json={"generation_run_id": str(uuid.uuid4())})
+        resp = client.post(API_EVAL, json={"generation_run_id": 1})
         assert resp.status_code == 403

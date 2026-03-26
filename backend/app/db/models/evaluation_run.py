@@ -18,11 +18,14 @@ class EvaluationRun(Base, CreatedAtMixin):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     uuid_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True, unique=True)
-    generation_run_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=False),
+    generation_run_id: Mapped[int] = mapped_column(
+        BigInteger,
         ForeignKey("generation_runs.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
+    )
+    generation_run_uuid_id: Mapped[str | None] = mapped_column(
+        UUID(as_uuid=False), nullable=True, index=True
     )
 
     # Individual score columns (0.0 – 1.0; null if not evaluated)

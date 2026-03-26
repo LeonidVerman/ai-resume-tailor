@@ -289,7 +289,7 @@ class TestGenerationRunSummarySchema:
         from datetime import datetime, timezone
 
         s = GenerationRunSummary(
-            id="run-1", status="succeeded", run_type="two_phase",
+            id=1, status="succeeded", run_type="two_phase",
             model_name="gpt-4o", started_at=datetime.now(tz=timezone.utc),
             company_name="Dayforce", role_title="Principal AI Engineer",
         )
@@ -301,7 +301,7 @@ class TestGenerationRunSummarySchema:
         from datetime import datetime, timezone
 
         s = GenerationRunSummary(
-            id="run-2", status="failed", run_type="two_phase",
+            id=2, status="failed", run_type="two_phase",
             model_name="gpt-4o", started_at=datetime.now(tz=timezone.utc),
         )
         assert s.company_name is None

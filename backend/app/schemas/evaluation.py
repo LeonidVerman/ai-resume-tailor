@@ -25,12 +25,12 @@ class EvaluationScores(APIModel):
 
 class EvaluationRequest(APIModel):
     """Request body for POST /admin/evaluate-run."""
-    generation_run_id: str
+    generation_run_id: int
 
 
 class EvaluationResponse(APIModel):
     """Full evaluation result returned after scoring."""
     id: int
-    generation_run_id: str
+    generation_run_id: int
     scores: EvaluationScores
     created_at: datetime

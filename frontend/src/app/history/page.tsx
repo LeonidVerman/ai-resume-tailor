@@ -39,11 +39,11 @@ const ARTIFACTS: Array<{
   { part: "cover_letter", format: "pdf",  label: "Cover Letter PDF"  },
 ];
 
-/** Displays the first 8 chars of a run ID; click copies the full UUID. */
-function RunIdBadge({ id }: { id: string }) {
+/** Displays the run ID; click copies it. */
+function RunIdBadge({ id }: { id: number }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
-    navigator.clipboard.writeText(id).then(() => {
+    navigator.clipboard.writeText(String(id)).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     });
@@ -54,7 +54,7 @@ function RunIdBadge({ id }: { id: string }) {
       title={`Run ID: ${id} — click to copy`}
       className="font-mono text-gray-400 hover:text-gray-700 transition-colors"
     >
-      {copied ? "✓ copied" : id.slice(0, 8) + "…"}
+      {copied ? "✓ copied" : `#${id}`}
     </button>
   );
 }
@@ -67,9 +67,9 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   // Expanded row id (show download panel) — null = none expanded.
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<number | null>(null);
   const [docCache, setDocCache] = useState<DocCache>({});
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const PAGE_SIZE = 20;
 
   const handleDownload = async (
@@ -92,7 +92,7 @@ export default function HistoryPage() {
     }
   };
 
-  const handleDelete = async (runId: string) => {
+  const handleDelete = async (runId: number) => {
     setDeletingId(runId);
     try {
       await generations.delete(runId);
@@ -183,7 +183,7 @@ export default function HistoryPage() {
                           {run.company_name && run.role_title
                             ? `${run.company_name} / ${run.role_title}`
                             : run.company_name ?? run.role_title ?? (
-                                <span className="font-mono">{run.id.slice(0, 8)}…</span>
+                                <span className="font-mono">#{run.id}</span>
                               )}
                         </span>
                         <Badge variant={STATUS_VARIANT[run.status] ?? "default"}>

@@ -223,7 +223,7 @@ class TestEnsureCandidatePromptHelper:
         resume.resume_jsonb = {"raw_text": "Resume"}
 
         run = MagicMock()
-        run.id = str(uuid.uuid4())
+        run.id = 1
         doc = MagicMock()
         doc.id = 1
 

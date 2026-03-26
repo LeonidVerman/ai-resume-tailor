@@ -153,7 +153,7 @@ def list_generations(user: CurrentUserDep, db: DbDep, limit: int = 50, offset: i
 
 
 @router.get("/{run_id}", response_model=GenerationRunDetail)
-def get_generation(run_id: str, user: CurrentUserDep, db: DbDep):
+def get_generation(run_id: int, user: CurrentUserDep, db: DbDep):
     """Return the full detail of a generation run."""
     run = _run_repo(db).get_by_id(run_id)
     if run is None:
@@ -164,7 +164,7 @@ def get_generation(run_id: str, user: CurrentUserDep, db: DbDep):
 
 
 @router.delete("/{run_id}", status_code=204)
-def delete_generation(run_id: str, user: CurrentUserDep, db: DbDep):
+def delete_generation(run_id: int, user: CurrentUserDep, db: DbDep):
     """Delete a generation run and its associated tailored documents."""
     repo = _run_repo(db)
     run = repo.get_by_id(run_id)
