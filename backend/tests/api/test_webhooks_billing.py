@@ -172,6 +172,35 @@ class TestCheckoutSessionCompleted:
         )
         assert resp.status_code == 200
 
+    def test_subscription_mode_acknowledged(self, client, db, user):
+        """checkout.session.completed with mode=subscription is acknowledged.
+
+        When stripe_secret_key is empty the Stripe SDK is not initialised, so
+        the subscription-sync branch is skipped. The event must still return
+        200 and must not raise an AttributeError from StripeObject.get().
+        """
+        customer_id = _make_customer_id()
+        billing = make_billing(db, user, plan_type=PLAN_FREE)
+        billing.stripe_customer_id = customer_id
+        db.flush()
+
+        resp = _post_event(
+            client,
+            "checkout.session.completed",
+            {
+                "id": "cs_sub_001",
+                "mode": "subscription",
+                "customer": customer_id,
+                "subscription": "sub_abc",
+                "metadata": {"user_id": user.id},
+            },
+        )
+        assert resp.status_code == 200
+        assert resp.json() == {"received": True}
+        # Billing record is unchanged (subscription sync requires live Stripe client)
+        db.refresh(billing)
+        assert billing.plan_type == PLAN_FREE
+
     def test_idempotent_credit_grant(self, client, db, user):
         """Replaying checkout.session.completed grants credits again (Stripe deduplicates)."""
         billing = make_billing(db, user, plan_type=PLAN_FREE, extra_credits=0)

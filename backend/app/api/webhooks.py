@@ -21,6 +21,7 @@ All other events are acknowledged (200 OK) without processing.
 Idempotency: all handlers perform upsert/update operations; safe to replay.
 """
 
+import json
 import logging
 
 from fastapi import APIRouter, Header, HTTPException, Request, status
@@ -94,10 +95,13 @@ async def stripe_webhook(
                 secret_key=settings.stripe_secret_key,
                 webhook_secret=settings.stripe_webhook_secret,
             )
-            event_dict = stripe_client.construct_webhook_event(
+            # Verify signature only — construct_event returns a StripeObject,
+            # not a plain dict, so we parse raw_body ourselves after verification.
+            stripe_client.construct_webhook_event(
                 payload=raw_body,
                 sig_header=stripe_signature,
             )
+            event_dict = json.loads(raw_body)
         except Exception as exc:
             logger.warning("Stripe webhook signature validation failed: %s", exc)
             raise HTTPException(
@@ -105,7 +109,6 @@ async def stripe_webhook(
                 detail=f"Webhook signature invalid: {exc}",
             )
     else:
-        import json
         try:
             event_dict = json.loads(raw_body)
         except Exception:
