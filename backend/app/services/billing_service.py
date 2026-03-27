@@ -123,6 +123,19 @@ class BillingService:
 
         customer_id = self._stripe.get_or_create_customer(user_email, user_id)
 
+        # Upsert billing record so webhooks can find it by stripe_customer_id.
+        # Without this, checkout.session.completed / invoice.paid look up by
+        # customer_id, find nothing, and silently skip all plan/credit updates.
+        billing = self._repo.get_by_user_id(user_id)
+        if billing is None:
+            self._repo.create(
+                user_id=user_id,
+                plan_type=PLAN_FREE,
+                stripe_customer_id=customer_id,
+            )
+        elif not billing.stripe_customer_id:
+            self._repo.update(billing, stripe_customer_id=customer_id)
+
         if is_payment:
             session = self._stripe.create_payment_checkout_session(
                 price_id=price_id,

@@ -6,6 +6,7 @@ POST /billing/customer-portal, and POST /admin/billing/grant-credits.
 """
 
 import uuid
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -91,6 +92,55 @@ class TestCreateCheckoutSession:
             json={"plan_type": "starter"},
         )
         assert resp.status_code == 401
+
+    def test_creates_billing_record_with_stripe_customer_id(self, db, user):
+        """
+        create_checkout_session must upsert a billing row with stripe_customer_id
+        so that subsequent webhook events (checkout.session.completed, invoice.paid)
+        can find the record via get_by_stripe_customer_id.
+
+        This is the root cause of empty billing tables: without this upsert the
+        webhook handlers look up by customer_id, get None, and silently skip all
+        plan/credit updates.
+        """
+        from backend.app.clients.stripe_client import CheckoutSessionResult, StripeClient
+        from backend.app.db.repositories.billing_repository import BillingRepository
+        from backend.app.schemas.billing import CheckoutSessionRequest
+        from backend.app.services.billing_service import BillingService
+
+        fake_customer_id = f"cus_{uuid.uuid4().hex[:14]}"
+
+        mock_stripe = MagicMock(spec=StripeClient)
+        mock_stripe.get_or_create_customer.return_value = fake_customer_id
+        mock_stripe.create_checkout_session.return_value = CheckoutSessionResult(
+            session_id="cs_test_abc",
+            checkout_url="https://checkout.stripe.com/pay/cs_test_abc",
+        )
+
+        class _Settings:
+            stripe_price_id_starter = "price_starter_test"
+            stripe_price_id_pro = "price_pro_test"
+            stripe_price_id_credit_pack = "price_credit_test"
+            app_base_url = "http://localhost:3000"
+
+        svc = BillingService(
+            billing_repo=BillingRepository(db),
+            stripe_client=mock_stripe,
+            settings=_Settings(),
+        )
+        svc.create_checkout_session(
+            user_id=user.id,
+            user_email="user@example.com",
+            request=CheckoutSessionRequest(
+                plan_type="starter",
+                success_url="http://localhost/ok",
+                cancel_url="http://localhost/cancel",
+            ),
+        )
+
+        billing = db.query(Billing).filter(Billing.user_id == user.id).first()
+        assert billing is not None, "Billing row was not created by create_checkout_session"
+        assert billing.stripe_customer_id == fake_customer_id
 
 
 # ── POST /billing/customer-portal ─────────────────────────────────────────
