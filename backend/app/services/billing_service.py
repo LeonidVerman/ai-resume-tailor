@@ -208,6 +208,21 @@ class BillingService:
             )
 
         elif mode == "subscription":
+            # Upsert billing record from session metadata so the webhook can
+            # sync even when checkout.session.completed fires before any prior
+            # billing row exists (e.g. first-ever subscription, or replayed events).
+            user_id = session.get("metadata", {}).get("user_id")
+            if user_id:
+                billing = self._repo.get_by_user_id(user_id)
+                if billing is None:
+                    self._repo.create(
+                        user_id=user_id,
+                        plan_type=PLAN_FREE,
+                        stripe_customer_id=customer_id,
+                    )
+                elif not billing.stripe_customer_id:
+                    self._repo.update(billing, stripe_customer_id=customer_id)
+
             # Sync plan from subscription as a belt-and-suspenders measure
             sub_id = session.get("subscription")
             if sub_id and self._stripe:
@@ -215,11 +230,17 @@ class BillingService:
                     import stripe as stripe_sdk
                     stripe_sdk.api_key = self._stripe._secret_key
                     sub = stripe_sdk.Subscription.retrieve(sub_id)
-                    # Convert to dict-like structure expected by _sync
+                    # Stripe API 2025+: current_period_end moved from subscription
+                    # top-level to subscription_items. Try item first, fall back.
+                    period_end = None
+                    if sub.items.data:
+                        period_end = getattr(sub.items.data[0], "current_period_end", None)
+                    if period_end is None:
+                        period_end = getattr(sub, "current_period_end", None)
                     sub_dict = {
                         "id": sub.id,
                         "status": sub.status,
-                        "current_period_end": sub.current_period_end,
+                        "current_period_end": period_end,
                         "items": {"data": [{"price": {"id": sub.items.data[0].price.id}}]} if sub.items.data else {"data": []},
                     }
                     self._sync_subscription_to_billing(customer_id, sub_dict)
@@ -318,7 +339,12 @@ class BillingService:
             return
 
         sub_status = sub.get("status")
+        # Stripe API 2025+: current_period_end moved to subscription_items.
+        # Fall back to items when missing at the subscription top-level.
         period_end_ts = sub.get("current_period_end")
+        if period_end_ts is None:
+            items_data = sub.get("items", {}).get("data", [])
+            period_end_ts = items_data[0].get("current_period_end") if items_data else None
         period_end = (
             datetime.fromtimestamp(period_end_ts, tz=timezone.utc)
             if period_end_ts
