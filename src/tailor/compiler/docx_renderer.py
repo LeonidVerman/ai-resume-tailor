@@ -35,6 +35,22 @@ def _strip_section_break(p_elem) -> None:
             pPr.remove(sectPr)
 
 
+def _strip_last_rendered_page_breaks(p_elem) -> None:
+    """Remove w:lastRenderedPageBreak elements from a cloned paragraph.
+
+    These markers record where the page break fell during the *template's*
+    last render.  After tailoring the content changes, so the markers are
+    stale and mislead PDF converters / DOCX viewers that honour them as
+    hard breaks, producing misplaced forced page breaks in the output.
+    Word itself ignores them and recalculates, but LibreOffice, Google Docs,
+    and DOCX→PDF converters do not.
+    """
+    for el in p_elem.findall(f".//{{{_W}}}lastRenderedPageBreak"):
+        parent = el.getparent()
+        if parent is not None:
+            parent.remove(el)
+
+
 def _set_run_text(r_elem, portion: str) -> None:
     """Write *portion* into the first w:t of *r_elem* (already cleared)."""
     from lxml import etree
@@ -183,6 +199,7 @@ def _render_para(pm: ParaModel, body, sectPr) -> None:
     """Render a single ParaModel and insert it before sectPr (or append)."""
     if pm.style.xml_proto is not None:
         clone = deepcopy(pm.style.xml_proto)
+        _strip_last_rendered_page_breaks(clone)
         _set_para_text(clone, pm.text)
     elif pm.paragraph_profile is not None:
         from tailor.compiler.para_builder import build_para_element
