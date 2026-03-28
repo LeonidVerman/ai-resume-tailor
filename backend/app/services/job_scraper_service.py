@@ -88,7 +88,7 @@ class JobScraperService:
                 source="generator",
             )
         except Exception as exc:
-            logger.warning("Generator scraper failed for %s: %s", url, exc)
+            logger.warning("Generator scraper failed for %s: %s", url, exc, exc_info=True)
 
         # ── Fallback 1: plain HTTP fetch (no Playwright required) ──────────
         try:
@@ -99,7 +99,7 @@ class JobScraperService:
             )
             return result
         except Exception as exc:
-            logger.warning("HTTP fallback failed for %s: %s", url, exc)
+            logger.warning("HTTP fallback failed for %s: %s", url, exc, exc_info=True)
 
         # ── Fallback 2: optional ScrapingClient ────────────────────────────
         if self._scraping_client is not None:
