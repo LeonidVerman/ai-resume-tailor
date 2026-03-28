@@ -50,4 +50,5 @@ COPY benchmark/ ./benchmark/
 EXPOSE 8000
 
 # DATABASE_URL and other secrets are injected at runtime via environment variables.
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Render (and other PaaS) inject a PORT env var; fall back to 8000 for local runs.
+CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
