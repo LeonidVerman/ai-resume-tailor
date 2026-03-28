@@ -44,9 +44,11 @@ import backend.app.db.models.job_description  # noqa: F401
 import backend.app.db.models.structured_resume  # noqa: F401
 import backend.app.db.models.tailored_document  # noqa: F401
 import backend.app.db.models.user  # noqa: F401
+import backend.app.db.models.legal  # noqa: F401
 from backend.app.db.models.billing import Billing
 from backend.app.db.models.monthly_usage import MonthlyUsage
 from backend.app.db.models.user import User
+from backend.app.db.models.legal import LegalDocument, UserLegalStatus
 from backend.app.dependencies import get_current_user, get_db_session, require_admin
 from backend.app.main import app
 
@@ -104,7 +106,54 @@ def db(engine, session_factory):
 # ── User fixtures ──────────────────────────────────────────────────────────
 
 
+_LEGAL_DOCS_SEEDED = False
+
+
+def _seed_legal_docs(db: Session) -> tuple[LegalDocument, LegalDocument]:
+    """Ensure legal_documents rows exist; idempotent within a session."""
+    global _LEGAL_DOCS_SEEDED
+    from datetime import datetime, timezone
+    from sqlalchemy import select
+
+    terms = db.execute(
+        select(LegalDocument).where(LegalDocument.doc_type == "terms_of_service")
+    ).scalars().first()
+    if terms is None:
+        terms = LegalDocument(
+            doc_type="terms_of_service",
+            version="v1.0",
+            title="Terms of Service",
+            file_path="legal/terms/v1.0.md",
+            content_sha256="a" * 64,
+            effective_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            status="active",
+            requires_reaccept=True,
+        )
+        db.add(terms)
+
+    privacy = db.execute(
+        select(LegalDocument).where(LegalDocument.doc_type == "privacy_notice")
+    ).scalars().first()
+    if privacy is None:
+        privacy = LegalDocument(
+            doc_type="privacy_notice",
+            version="v1.0",
+            title="Privacy Notice",
+            file_path="legal/privacy/v1.0.md",
+            content_sha256="b" * 64,
+            effective_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            status="active",
+            requires_reaccept=True,
+        )
+        db.add(privacy)
+
+    db.flush()
+    return terms, privacy
+
+
 def _make_user(db: Session, email: str, role: str = ROLE_USER) -> User:
+    from datetime import datetime, timezone
+
     u = User(
         id=str(uuid.uuid4()),
         email=email,
@@ -113,6 +162,20 @@ def _make_user(db: Session, email: str, role: str = ROLE_USER) -> User:
     )
     db.add(u)
     db.flush()
+
+    # Seed legal docs and mark user as compliant so generation tests pass.
+    terms, privacy = _seed_legal_docs(db)
+    now = datetime.now(timezone.utc)
+    status = UserLegalStatus(
+        user_id=u.id,
+        accepted_terms_document_id=terms.id,
+        accepted_privacy_document_id=privacy.id,
+        accepted_terms_at=now,
+        accepted_privacy_at=now,
+    )
+    db.add(status)
+    db.flush()
+
     return u
 
 

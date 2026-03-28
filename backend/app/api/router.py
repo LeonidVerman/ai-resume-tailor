@@ -30,6 +30,7 @@ from backend.app.api import (
     generation,
     health,
     job_description,
+    legal,
     metrics,
     resume,
     webhooks,
@@ -47,4 +48,5 @@ api_router.include_router(generation.router, prefix="/generations", tags=["gener
 api_router.include_router(documents.router, prefix="/documents", tags=["documents"])
 api_router.include_router(billing.router, prefix="/billing", tags=["billing"])
 api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
+api_router.include_router(legal.router, prefix="/legal", tags=["legal"])
 api_router.include_router(admin.router, prefix="/admin", tags=["admin"])

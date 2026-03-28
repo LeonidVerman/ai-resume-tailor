@@ -167,9 +167,16 @@ def logout(
 def auth_me(user: CurrentUserDep, db: DbDep):
     """Return basic identity info for the authenticated user."""
     from backend.app.db.repositories.candidate_profile_repository import CandidateProfileRepository
+    from backend.app.services.legal_service import LegalService
 
     profile = CandidateProfileRepository(db).get_by_user_id(user.id)
     onboarding_completed = profile.onboarding_completed if profile is not None else False
+
+    try:
+        legal_accepted = LegalService(db).is_compliant(user.id)
+    except Exception:
+        legal_accepted = False
+
     return AuthMeResponse(
         user_id=user.id,
         email=user.email,
@@ -177,6 +184,7 @@ def auth_me(user: CurrentUserDep, db: DbDep):
         is_admin=(user.role == ROLE_ADMIN),
         plan_type=user.plan_type,
         onboarding_completed=onboarding_completed,
+        legal_accepted=legal_accepted,
     )
 
 

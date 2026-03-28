@@ -53,6 +53,7 @@ class AuthMeResponse(APIModel):
     is_admin: bool
     plan_type: str
     onboarding_completed: bool
+    legal_accepted: bool  # True if user has accepted all currently required legal docs
 
 
 class ForgotPasswordRequest(APIModel):

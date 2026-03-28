@@ -114,6 +114,14 @@ def generate(request: GenerationRequest, user: CurrentUserDep, db: DbDep):
     Returns immediately with run_id and tailored_document_id on success.
     On pipeline failure, returns 500 with the error message.
     """
+    # ── Legal acceptance gate ──────────────────────────────────────────────
+    from backend.app.services.legal_service import LegalService
+    if not LegalService(db).is_compliant(user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must accept the current Terms of Service and Privacy Notice before generating.",
+        )
+
     # ── Onboarding gate ────────────────────────────────────────────────────
     profile = CandidateProfileRepository(db).get_by_user_id(user.id)
     if profile is None or not profile.onboarding_completed:

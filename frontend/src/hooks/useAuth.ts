@@ -100,7 +100,8 @@ export function useAuth() {
         setStoredToken(result.session.access_token);
         const me = await auth.me();
         setState({ user: me, loading: false, error: null });
-        router.push("/dashboard");
+        // New users always need to accept legal docs before using the app.
+        router.push(me.legal_accepted ? "/dashboard" : "/legal/accept");
       } catch (err: unknown) {
         clearStoredToken();
         const msg =

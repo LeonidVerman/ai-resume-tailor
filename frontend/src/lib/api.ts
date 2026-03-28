@@ -12,6 +12,9 @@ import type {
   AuthLoginResponse,
   AuthMeResponse,
   AuthStatusResponse,
+  LegalAcceptRequest,
+  LegalCurrentResponse,
+  LegalStatusResponse,
   BenchmarkRunDetail,
   BenchmarkRunSummary,
   BillingStatus,
@@ -307,6 +310,23 @@ export const admin = {
     request<BenchmarkRunDetail>(`/admin/benchmark-runs/${id}`),
   downloadBenchmarkZip: (id: number) =>
     downloadBlob(`/admin/benchmark-runs/${id}/download`, `benchmark-${id}.zip`),
+};
+
+// ── Legal ──────────────────────────────────────────────────────────────────
+
+export const legal = {
+  current: () => request<LegalCurrentResponse>("/legal/current"),
+  status: () => request<LegalStatusResponse>("/legal/status"),
+  accept: (body: LegalAcceptRequest) =>
+    request<void>("/legal/accept", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  documentContent: async (docType: string): Promise<string> => {
+    const res = await fetch(`${BASE_URL}/legal/document/${docType}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.text();
+  },
 };
 
 export { ApiError };

@@ -11,6 +11,8 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
+// Pages exempt from the legal acceptance gate.
+const LEGAL_EXEMPT = ["/legal"];
 // Pages exempt from the onboarding redirect (the wizard itself + profile edit).
 const ONBOARDING_EXEMPT = ["/profile-onboarding", "/profile"];
 
@@ -23,6 +25,15 @@ export function AppShell({ children }: AppShellProps) {
     if (loading) return;
     if (!isAuthenticated) {
       router.replace("/login");
+      return;
+    }
+    // Require legal acceptance before full product access.
+    if (
+      user &&
+      !user.legal_accepted &&
+      !LEGAL_EXEMPT.some((p) => pathname.startsWith(p))
+    ) {
+      router.replace("/legal/accept");
       return;
     }
     // Redirect new users to the onboarding wizard if not yet complete.

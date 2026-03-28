@@ -34,6 +34,7 @@ import backend.app.db.models.monthly_usage  # noqa: F401, E402
 import backend.app.db.models.admin_config  # noqa: F401, E402
 import backend.app.db.models.benchmark_run  # noqa: F401, E402
 import backend.app.db.models.benchmark_run_position  # noqa: F401, E402
+import backend.app.db.models.legal  # noqa: F401, E402
 
 # ── Alembic config ──────────────────────────────────────────────────────────
 config = context.config

@@ -10,6 +10,45 @@ export interface AuthMeResponse {
   is_admin: boolean;
   plan_type: string;
   onboarding_completed: boolean;
+  legal_accepted: boolean;
+}
+
+// ── Legal ──────────────────────────────────────────────────────────────────
+
+export interface LegalDocumentInfo {
+  id: number;
+  doc_type: string;
+  version: string;
+  title: string;
+  file_path: string;
+  content_sha256: string;
+  effective_at: string;
+  requires_reaccept: boolean;
+}
+
+export interface LegalCurrentResponse {
+  terms: LegalDocumentInfo;
+  privacy: LegalDocumentInfo;
+}
+
+export interface LegalDocumentAcceptanceInfo {
+  accepted: boolean;
+  version: string | null;
+  accepted_at: string | null;
+  is_current: boolean;
+}
+
+export interface LegalStatusResponse {
+  compliant: boolean;
+  terms: LegalDocumentAcceptanceInfo;
+  privacy: LegalDocumentAcceptanceInfo;
+}
+
+export interface LegalAcceptRequest {
+  terms_document_id: number;
+  privacy_document_id: number;
+  acceptance_method: string;
+  source_surface: string;
 }
 
 export interface AuthStatusResponse {
