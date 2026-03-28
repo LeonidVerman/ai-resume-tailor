@@ -51,5 +51,7 @@ class TailoredDocumentDetail(APIModel):
     # Structured content (may be None if not parsed)
     resume_json: dict | None = None
     cover_letter_json: dict | None = None
+    # Section-based diff between master resume and tailored output
+    resume_diff: list[dict] | None = None
     artifacts: ArtifactURLs
     created_at: datetime

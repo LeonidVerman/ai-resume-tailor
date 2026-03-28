@@ -2,11 +2,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, Clock, Download } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Download, GitCompare } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
+import { ResumeDiffModal } from "./ResumeDiffModal";
 import { generations, documents } from "@/lib/api";
 import type {
   GenerationResponse,
@@ -38,6 +39,7 @@ export function GenerationResult({ result }: GenerationResultProps) {
   );
   const [runDetail, setRunDetail] = useState<GenerationRunDetail | null>(null);
   const [doc, setDoc] = useState<TailoredDocumentDetail | null>(null);
+  const [showDiff, setShowDiff] = useState(false);
 
   useEffect(() => {
     if (result.status === "succeeded" && result.tailored_document_id) {
@@ -165,7 +167,20 @@ export function GenerationResult({ result }: GenerationResultProps) {
                 </button>
               ))}
             </div>
+            {doc.resume_diff && doc.resume_diff.length > 0 && (
+              <button
+                onClick={() => setShowDiff(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors border border-gray-200"
+              >
+                <GitCompare className="h-4 w-4 shrink-0" />
+                View changes
+              </button>
+            )}
           </div>
+        )}
+
+        {showDiff && doc?.resume_diff && (
+          <ResumeDiffModal diff={doc.resume_diff} onClose={() => setShowDiff(false)} />
         )}
       </CardBody>
     </Card>

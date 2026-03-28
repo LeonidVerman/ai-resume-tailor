@@ -93,6 +93,7 @@ def _artifacts(doc) -> ArtifactURLs:
 
 
 def _to_detail(doc) -> TailoredDocumentDetail:
+    resume_diff = (doc.resume_jsonb or {}).get("diff") or None
     return TailoredDocumentDetail(
         id=doc.id,
         user_id=doc.user_id,
@@ -101,6 +102,7 @@ def _to_detail(doc) -> TailoredDocumentDetail:
         role_title=doc.role_title,
         resume_json=doc.resume_jsonb,
         cover_letter_json=doc.cover_letter_jsonb,
+        resume_diff=resume_diff if isinstance(resume_diff, list) else None,
         artifacts=_artifacts(doc),
         created_at=doc.created_at,
     )

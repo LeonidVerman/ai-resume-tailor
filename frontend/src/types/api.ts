@@ -319,6 +319,35 @@ export interface ArtifactURLs {
   cover_letter_pdf_url?: string;
 }
 
+// ── Resume diff ───────────────────────────────────────────────────────────
+
+export interface ResumeDiffBulletChange {
+  before: string;
+  after: string;
+}
+
+export interface ResumeDiffRole {
+  name: string;
+  added: string[];
+  removed: string[];
+  changed: ResumeDiffBulletChange[];
+}
+
+export interface ResumeDiffTextSection {
+  name: string;
+  before: string;
+  after: string;
+}
+
+export interface ResumeDiffExperienceSection {
+  name: string;
+  roles: ResumeDiffRole[];
+}
+
+export type ResumeDiffSection = ResumeDiffTextSection | ResumeDiffExperienceSection;
+
+// ── Tailored Document ─────────────────────────────────────────────────────
+
 export interface TailoredDocumentDetail {
   id: number;
   user_id: string;
@@ -327,6 +356,7 @@ export interface TailoredDocumentDetail {
   role_title: string;
   resume_json?: Record<string, unknown>;
   cover_letter_json?: Record<string, unknown>;
+  resume_diff?: ResumeDiffSection[] | null;
   artifacts: ArtifactURLs;
   created_at: string;
 }

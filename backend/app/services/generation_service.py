@@ -160,6 +160,7 @@ class GenerationService:
             resume_jsonb={
                 "text": result.resume,
                 "template_original_filename": template_original_filename,
+                "diff": (debug_meta.get("diff") or {}).get("resume") or [],
             } if result.resume else None,
             cover_letter_jsonb={"text": result.cover_letter} if result.cover_letter else None,
         )
