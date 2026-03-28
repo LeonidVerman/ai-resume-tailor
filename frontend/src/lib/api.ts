@@ -104,6 +104,16 @@ export const auth = {
   logout: () => request<void>("/auth/logout", { method: "POST" }),
   me: () => request<AuthMeResponse>("/auth/me"),
   status: () => request<AuthStatusResponse>("/auth/status"),
+  forgotPassword: (body: { email: string }) =>
+    request<void>("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  resetPassword: (body: { access_token: string; new_password: string }) =>
+    request<void>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };
 
 // ── Candidate Profile ─────────────────────────────────────────────────────

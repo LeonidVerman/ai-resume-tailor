@@ -21,8 +21,10 @@ from backend.app.schemas.auth import (
     AuthMeResponse,
     AuthSessionResponse,
     AuthUserResponse,
+    ForgotPasswordRequest,
     LoginRequest,
     RegisterRequest,
+    ResetPasswordRequest,
 )
 
 router = APIRouter()
@@ -176,6 +178,58 @@ def auth_me(user: CurrentUserDep, db: DbDep):
         plan_type=user.plan_type,
         onboarding_completed=onboarding_completed,
     )
+
+
+# ── Forgot password ───────────────────────────────────────────────────────
+
+@router.post("/forgot-password", status_code=204)
+def forgot_password(request: ForgotPasswordRequest, settings: SettingsDep):
+    """Send a password-reset email.
+
+    Always returns 204 regardless of whether the email exists, to prevent
+    user enumeration.  Only available when AUTH_MODE=supabase.
+    """
+    if settings.auth_mode != "supabase":
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Password reset is only available when AUTH_MODE=supabase",
+        )
+    from backend.app.clients.supabase_client import make_supabase_client_from_settings
+    redirect_url = f"{settings.app_base_url}/reset-password"
+    try:
+        make_supabase_client_from_settings().reset_password_request(
+            request.email, redirect_url
+        )
+    except Exception:
+        pass  # Always return 204 — don't reveal whether the email exists
+    logger.info("Password reset requested email=%s", request.email)
+
+
+# ── Reset password ────────────────────────────────────────────────────────
+
+@router.post("/reset-password", status_code=204)
+def reset_password(request: ResetPasswordRequest, settings: SettingsDep):
+    """Update the user's password using their Supabase recovery token.
+
+    The recovery token is the ``access_token`` from the URL fragment that
+    Supabase appended to the reset-password redirect URL.
+    """
+    if settings.auth_mode != "supabase":
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Password reset is only available when AUTH_MODE=supabase",
+        )
+    from backend.app.clients.supabase_client import make_supabase_client_from_settings
+    try:
+        make_supabase_client_from_settings().update_password(
+            request.access_token, request.new_password
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc) or "Invalid or expired recovery token",
+        )
+    logger.info("Password reset completed (token accepted)")
 
 
 # ── Status ────────────────────────────────────────────────────────────────

@@ -53,3 +53,14 @@ class AuthMeResponse(APIModel):
     is_admin: bool
     plan_type: str
     onboarding_completed: bool
+
+
+class ForgotPasswordRequest(APIModel):
+    """Body for POST /auth/forgot-password."""
+    email: EmailStr
+
+
+class ResetPasswordRequest(APIModel):
+    """Body for POST /auth/reset-password."""
+    access_token: str
+    new_password: str = Field(min_length=8)

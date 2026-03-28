@@ -112,6 +112,22 @@ class SupabaseClientWrapper:
             {"email": email, "password": password}
         )
 
+    def reset_password_request(self, email: str, redirect_url: str) -> None:
+        """Send a password-reset email via Supabase Auth."""
+        self._get_client().auth.reset_password_email(
+            email, options={"redirect_to": redirect_url}
+        )
+
+    def update_password(self, access_token: str, new_password: str) -> None:
+        """Update a user's password using their Supabase recovery access token."""
+        admin = self._get_admin_client()
+        user_resp = admin.auth.get_user(access_token)
+        if user_resp.user is None:
+            raise ValueError("Invalid or expired recovery token")
+        admin.auth.admin.update_user_by_id(
+            user_resp.user.id, {"password": new_password}
+        )
+
     def sign_out(self, access_token: str) -> None:
         """Invalidate the given access token on the Supabase side."""
         try:
