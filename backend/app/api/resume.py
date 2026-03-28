@@ -10,10 +10,14 @@ GET  /resumes            — list the authenticated user's stored resumes
 GET  /resumes/{id}       — return a specific resume record
 """
 
+import logging
+
 from fastapi import APIRouter, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from backend.app.dependencies import CurrentUserDep, DbDep
+
+logger = logging.getLogger(__name__)
 from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
 from backend.app.schemas.structured_resume import StructuredResumeResponse, StructuredResumeSummary
 from backend.app.services.document_normalization_service import normalize_input_document
@@ -106,6 +110,10 @@ async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep):
     key = storage_svc.upload_resume_template(user.id, str(resume.id), norm.normalized_data)
     _repo(db).update(resume, source_file_url=key)
 
+    logger.info(
+        "Resume uploaded user_id=%s resume_id=%s filename=%s",
+        user.id, resume.id, key,
+    )
     return _to_response(resume)
 
 
@@ -135,4 +143,8 @@ def delete_resume(resume_id: int, user: CurrentUserDep, db: DbDep):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
     if resume.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    logger.info(
+        "Resume deleted user_id=%s resume_id=%s filename=%s",
+        user.id, resume_id, resume.source_file_url,
+    )
     _repo(db).delete(resume)

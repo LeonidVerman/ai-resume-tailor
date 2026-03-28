@@ -9,6 +9,7 @@ Validates input through the Phase 4 Pydantic schema
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timezone
 
@@ -63,7 +64,10 @@ class CandidateProfileService:
             profile_jsonb=profile_jsonb,
             prompt_synched=False,
         )
-        logger.info("Created candidate profile id=%s user=%s", profile.id, user_id)
+        logger.info(
+            "Candidate profile created profile_id=%s user_id=%s profile=%s",
+            profile.id, user_id, json.dumps(profile_jsonb, ensure_ascii=False),
+        )
         return self._to_response(profile)
 
     def update(
@@ -86,7 +90,10 @@ class CandidateProfileService:
             profile_jsonb=profile_jsonb,
             prompt_synched=False,
         )
-        logger.info("Updated candidate profile id=%s user=%s", updated.id, user_id)
+        logger.info(
+            "Candidate profile updated profile_id=%s user_id=%s profile=%s",
+            updated.id, user_id, json.dumps(profile_jsonb, ensure_ascii=False),
+        )
         return self._to_response(updated)
 
     def complete_onboarding(self, user_id: str) -> CandidateProfileResponse:

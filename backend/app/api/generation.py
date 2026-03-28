@@ -23,9 +23,13 @@ because it depends on a BillingRepository lookup — that is wired in
 the billing service and can be added here when billing is live.
 """
 
+import logging
+
 from fastapi import APIRouter, HTTPException, status
 
 from backend.app.clients.storage_client import make_storage_client_from_settings
+
+logger = logging.getLogger(__name__)
 from backend.app.dependencies import CurrentUserDep, DbDep
 from backend.app.db.repositories.candidate_profile_repository import CandidateProfileRepository
 from backend.app.db.repositories.generation_run_repository import GenerationRunRepository
@@ -172,4 +176,9 @@ def delete_generation(run_id: int, user: CurrentUserDep, db: DbDep):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Generation run not found")
     if run.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    doc_ids = [d.id for d in run.tailored_documents] if run.tailored_documents else []
+    logger.info(
+        "History deleted user_id=%s run_id=%s doc_ids=%s",
+        user.id, run_id, doc_ids,
+    )
     repo.delete(run)

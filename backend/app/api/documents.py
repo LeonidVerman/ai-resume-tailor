@@ -172,6 +172,11 @@ def download_document(
     text = jsonb.get("text", "")
     filename = _artifact_filename(doc, part, format)
 
+    logger.info(
+        "File downloaded user_id=%s run_id=%s doc_id=%s filename=%s",
+        user.id, doc.generation_run_id, doc_id, filename,
+    )
+
     # Plain text — backward compatible default.
     if format == "txt":
         return Response(

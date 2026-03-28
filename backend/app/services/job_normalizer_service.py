@@ -60,7 +60,10 @@ class JobNormalizerService:
             raw_text=scraped.raw_text,
             metadata_jsonb=metadata,
         )
-        logger.info("Created scraped JD id=%s user=%s url=%s", jd.id, user_id, scraped.url)
+        logger.info(
+            "Job description added jd_id=%s user_id=%s type=scraped company=%s title=%s url=%s",
+            jd.id, user_id, scraped.company, scraped.job_title, scraped.url,
+        )
         return self._to_response(jd)
 
     def create_from_manual(
@@ -79,7 +82,10 @@ class JobNormalizerService:
             raw_text=request.raw_text,
             metadata_jsonb=metadata or None,
         )
-        logger.info("Created manual JD id=%s user=%s", jd.id, user_id)
+        logger.info(
+            "Job description added jd_id=%s user_id=%s type=manual company=%s title=%s",
+            jd.id, user_id, metadata.get("company"), metadata.get("job_title"),
+        )
         return self._to_response(jd)
 
     # ── Read ───────────────────────────────────────────────────────────────
@@ -103,7 +109,7 @@ class JobNormalizerService:
         if jd.user_id != user_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
         self._repo.delete(jd)
-        logger.info("Deleted JD id=%s user=%s", jd_id, user_id)
+        logger.info("Job description deleted jd_id=%s user_id=%s", jd_id, user_id)
 
     # ── Internal ───────────────────────────────────────────────────────────
 

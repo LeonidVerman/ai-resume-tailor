@@ -99,6 +99,8 @@ class GenerationService:
             profile_repo=self._profile_repo,
         )
 
+        meta = jd.metadata_jsonb or {}
+
         # ── Create run record ──────────────────────────────────────────────
         run = self._run_repo.create(
             user_id=user_id,
@@ -109,9 +111,11 @@ class GenerationService:
             prompt_version=_PROMPT_VERSION,
             started_at=datetime.now(tz=timezone.utc),
         )
-        logger.info("Started generation run=%s user=%s", run.id, user_id)
+        logger.info(
+            "Generation run started run_id=%s user_id=%s jd_id=%s resume_id=%s company=%s title=%s",
+            run.id, user_id, jd.id, resume.id, meta.get("company", ""), meta.get("job_title", ""),
+        )
 
-        meta = jd.metadata_jsonb or {}
         try:
             result, token_input, token_output, cost, debug_meta = self._run_pipeline(
                 jd_text=jd.raw_text,
@@ -123,7 +127,12 @@ class GenerationService:
                 simple_model=simple_model,
             )
         except Exception as exc:
-            logger.error("Generation run=%s failed: %s", run.id, exc)
+            logger.error(
+                "Generation run finished run_id=%s status=failed user_id=%s jd_id=%s "
+                "resume_id=%s company=%s title=%s error=%s",
+                run.id, user_id, jd.id, resume.id,
+                meta.get("company", ""), meta.get("job_title", ""), exc,
+            )
             self._run_repo.update(
                 run,
                 status="failed",
@@ -174,8 +183,11 @@ class GenerationService:
             completed_at=datetime.now(tz=timezone.utc),
         )
         logger.info(
-            "Completed generation run=%s doc=%s tokens_in=%s tokens_out=%s",
-            run.id, tailored_doc.id, token_input, token_output,
+            "Generation run finished run_id=%s status=succeeded user_id=%s jd_id=%s "
+            "resume_id=%s company=%s title=%s tokens_in=%s tokens_out=%s",
+            run.id, user_id, jd.id, resume.id,
+            meta.get("company", ""), meta.get("job_title", ""),
+            token_input, token_output,
         )
 
         return GenerationResponse(

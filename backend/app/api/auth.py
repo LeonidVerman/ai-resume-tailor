@@ -7,11 +7,15 @@ Authentication provider: Supabase Auth
 Authorization source of truth: local DB user row (role field)
 """
 
+import logging
+
 from fastapi import APIRouter, Header, HTTPException, status
 from typing import Annotated
 
 from backend.app.constants import ROLE_ADMIN
 from backend.app.dependencies import CurrentUserDep, DbDep, SettingsDep
+
+logger = logging.getLogger(__name__)
 from backend.app.schemas.auth import (
     AuthLoginResponse,
     AuthMeResponse,
@@ -87,6 +91,8 @@ def register(request: RegisterRequest, db: DbDep, settings: SettingsDep):
     )
     auth_service.record_login(user)
     db.commit()
+
+    logger.info("User registered user_id=%s email=%s", user.id, user.email)
 
     return AuthLoginResponse(
         user=_user_response(user),
