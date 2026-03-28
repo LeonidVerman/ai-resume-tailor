@@ -19,9 +19,13 @@ from bs4 import BeautifulSoup
 
 from tailor.job import JobData
 from tailor.job.amazon import scrape_amazon
+from tailor.job.ashby import scrape_ashby
 from tailor.job.greenhouse import scrape_greenhouse
 from tailor.job.indeed import scrape_indeed
+from tailor.job.jobbank import scrape_jobbank
+from tailor.job.lever import scrape_lever
 from tailor.job.linkedin import scrape_linkedin
+from tailor.job.smartrecruiters import scrape_smartrecruiters
 from tailor.job.wellfound import scrape_wellfound
 
 
@@ -76,13 +80,19 @@ def extract_job_data_from_html(html):
     for tag in script_tags:
         try:
             data = json.loads(tag.string)
-            # Sometimes JSON-LD is a list
+            # Normalise to a flat list of objects to search
+            candidates: list = []
             if isinstance(data, list):
-                for item in data:
-                    if item.get("@type") == "JobPosting":
-                        return parse_jobposting(item)
-            elif data.get("@type") == "JobPosting":
-                return parse_jobposting(data)
+                candidates = data
+            elif isinstance(data, dict):
+                if data.get("@type") == "JobPosting":
+                    candidates = [data]
+                elif "@graph" in data:
+                    # JSON-LD @graph array (used by Built In, WordPress, etc.)
+                    candidates = data["@graph"] if isinstance(data["@graph"], list) else []
+            for item in candidates:
+                if isinstance(item, dict) and item.get("@type") == "JobPosting":
+                    return parse_jobposting(item)
         except Exception:
             continue
 
@@ -228,10 +238,14 @@ def scrape_hiring_cafe(url: str) -> dict:
 # Add new entries here when support for additional job boards is needed.
 _SITE_SCRAPERS = {
     "amazon": scrape_amazon,
+    "ashby": scrape_ashby,
     "greenhouse": scrape_greenhouse,
     "hiring_cafe": scrape_hiring_cafe,
     "indeed": scrape_indeed,
+    "jobbank": scrape_jobbank,
+    "lever": scrape_lever,
     "linkedin": scrape_linkedin,
+    "smartrecruiters": scrape_smartrecruiters,
     "wellfound": scrape_wellfound,
 }
 
@@ -254,6 +268,14 @@ def _detect_site(url):
     # Embedded Greenhouse board: any site with ?gh_jid= query param
     if "gh_jid" in urlparse(url).query:
         return "greenhouse"
+    if "jobs.lever.co" in host:
+        return "lever"
+    if "jobs.ashbyhq.com" in host:
+        return "ashby"
+    if "jobs.smartrecruiters.com" in host:
+        return "smartrecruiters"
+    if "jobbank.gc.ca" in host:
+        return "jobbank"
     # Extend here as new sites are added to _SITE_SCRAPERS
     return "generic"
 

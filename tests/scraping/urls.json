@@ -1,0 +1,248 @@
+[
+  {
+    "platform": "LinkedIn",
+    "url": "https://www.linkedin.com/jobs/view/summer-2026-intern-software-engineer-at-salesforce-4219017860",
+    "category": "major",
+    "scraper": "linkedin",
+    "notes": "Guest API path; may fall back to Playwright stealth if auth-walled"
+  },
+  {
+    "platform": "Indeed",
+    "url": "https://www.indeed.com/viewjob?jk=6ddb024ab2b420e1",
+    "category": "major",
+    "scraper": "indeed",
+    "notes": "curl_cffi + cookie priming"
+  },
+  {
+    "platform": "Glassdoor",
+    "url": "https://www.glassdoor.com/job-listing/2026-summer-intern-it-software-engineer-net-web-nelnet-JV_IC1133470_KO0,47_KE48,54.htm?jl=1009872158949",
+    "category": "major",
+    "scraper": "generic",
+    "notes": "Heavy bot protection; Playwright stealth fallback"
+  },
+  {
+    "platform": "ZipRecruiter",
+    "url": null,
+    "category": "major",
+    "scraper": "generic",
+    "notes": "No stable individual posting URL obtainable without site navigation; individual URLs require login to generate"
+  },
+  {
+    "platform": "Monster",
+    "url": "https://www.monster.com/job-openings/software-engineer-systems-madison-wi--a589c957-fe5e-439e-bb58-c1f2ab918bd3",
+    "category": "major",
+    "scraper": "generic",
+    "notes": "Returns 403; bot protection active on all plain HTTP requests"
+  },
+  {
+    "platform": "Dice",
+    "url": "https://www.dice.com/job-detail/26e0bd20-004e-42da-9010-acba8e6ebebb",
+    "category": "tech",
+    "scraper": "generic",
+    "notes": "JS-rendered via Playwright; JSON-LD extraction"
+  },
+  {
+    "platform": "Hacker News Jobs",
+    "url": null,
+    "category": "tech",
+    "scraper": "generic",
+    "notes": "Monthly 'Who is Hiring' HN thread is a comment aggregator, not a dedicated job posting page; no individual-posting URL format exists"
+  },
+  {
+    "platform": "Wellfound",
+    "url": "https://wellfound.com/jobs/3971838-founding-software-engineer",
+    "category": "tech",
+    "scraper": "wellfound",
+    "notes": "Multi-tier stealth rendering (curl_cffi then Playwright Chrome then Chromium)"
+  },
+  {
+    "platform": "Stack Overflow Jobs",
+    "url": null,
+    "category": "tech",
+    "scraper": null,
+    "notes": "DEPRECATED - shut down March 2022"
+  },
+  {
+    "platform": "GitHub Jobs",
+    "url": null,
+    "category": "tech",
+    "scraper": null,
+    "notes": "DEPRECATED - shut down May 2021"
+  },
+  {
+    "platform": "We Work Remotely",
+    "url": "https://weworkremotely.com/remote-jobs/stellar-ai-senior-software-engineer",
+    "category": "remote",
+    "scraper": "generic",
+    "notes": "Returns 403 on plain HTTP; Playwright needed"
+  },
+  {
+    "platform": "Remote OK",
+    "url": "https://remoteok.com/remote-jobs/remote-software-engineering-internship-summer-2026-opensesame-1129018",
+    "category": "remote",
+    "scraper": "generic",
+    "notes": "JSON-LD or structured meta"
+  },
+  {
+    "platform": "Remotive",
+    "url": "https://remotive.com/remote/jobs/software-development/senior-software-engineer-4126506",
+
+    "category": "remote",
+    "scraper": "generic",
+    "notes": "Static HTML; JSON-LD expected"
+  },
+  {
+    "platform": "Working Nomads",
+    "url": null,
+    "category": "remote",
+    "scraper": "generic",
+    "notes": "Current individual job URLs are redirect links (/job/go/ID/) that forward to the employer's own site; no parseable job content on Working Nomads itself"
+  },
+  {
+    "platform": "Jobspresso",
+    "url": null,
+    "category": "remote",
+    "scraper": "generic",
+    "notes": "No stable individual posting URL found; site active but postings require membership/login to view full details"
+  },
+  {
+    "platform": "Workopolis",
+    "url": null,
+    "category": "canada",
+    "scraper": null,
+    "notes": "DEPRECATED - acquired by Indeed Canada in 2018; no longer an independent job board"
+  },
+  {
+    "platform": "Job Bank Canada",
+    "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/49173243",
+    "category": "canada",
+    "scraper": "jobbank",
+    "notes": "Static HTML; job-posting-content div parser"
+  },
+  {
+    "platform": "BC Jobs",
+    "url": null,
+    "category": "canada",
+    "scraper": "generic",
+    "notes": "No stable individual posting URL found"
+  },
+  {
+    "platform": "Eluta",
+    "url": null,
+    "category": "canada",
+    "scraper": "generic",
+    "notes": "Aggregator; no stable individual posting URL found"
+  },
+  {
+    "platform": "Greenhouse",
+    "url": "https://job-boards.greenhouse.io/doordashusa/jobs/7262223",
+    "category": "ats",
+    "scraper": "greenhouse",
+    "notes": "Public REST API: boards-api.greenhouse.io/v1/boards/{board}/jobs/{id}"
+  },
+  {
+    "platform": "Lever",
+    "url": "https://jobs.lever.co/whoop/2654e42a-99ef-4067-8dd2-55d7a1d9b1ec",
+    "category": "ats",
+    "scraper": "lever",
+    "notes": "Public REST API: api.lever.co/v0/postings/{company}/{id}"
+  },
+  {
+    "platform": "Workday",
+    "url": "https://nvidia.wd5.myworkdayjobs.com/en-US/NVIDIAExternalCareerSite/job/NVIDIA-2026-Internships--Software-Engineering-_JR2003206",
+    "category": "ats",
+    "scraper": "generic",
+    "notes": "Heavy JS SPA; handled by Playwright generic fallback; URL pattern varies by company subdomain"
+  },
+  {
+    "platform": "SmartRecruiters",
+    "url": "https://jobs.smartrecruiters.com/LLNL/3743990012278596-full-stack-software-engineer",
+    "category": "ats",
+    "scraper": "smartrecruiters",
+    "notes": "Public REST API: api.smartrecruiters.com/v1/companies/{company}/postings/{id}"
+  },
+  {
+    "platform": "Ashby",
+    "url": "https://jobs.ashbyhq.com/benchling/b3c9b312-6e2b-4dbc-9b15-0b0310d75a7f",
+    "category": "ats",
+    "scraper": "ashby",
+    "notes": "Next.js; parses __NEXT_DATA__ JSON"
+  },
+  {
+    "platform": "AngelList / Wellfound",
+    "url": null,
+    "category": "niche",
+    "scraper": "wellfound",
+    "notes": "REBRANDED - AngelList Jobs is now Wellfound (wellfound.com); see Wellfound entry"
+  },
+  {
+    "platform": "TechCrunch Jobs / CrunchBoard",
+    "url": null,
+    "category": "niche",
+    "scraper": "generic",
+    "notes": "Operates as crunchboard.com; no stable individual posting URL found"
+  },
+  {
+    "platform": "Authentic Jobs",
+    "url": null,
+    "category": "niche",
+    "scraper": "generic",
+    "notes": "Active; design/dev focus; no stable individual posting URL found for testing"
+  },
+  {
+    "platform": "Built In",
+    "url": "https://builtin.com/job/software-engineer-new-grad-2026-start/8364651",
+    "category": "niche",
+    "scraper": "generic",
+    "notes": "JSON-LD wrapped in @graph array"
+  },
+  {
+    "platform": "SimplyHired",
+    "url": "https://www.simplyhired.com/job/UsNA06fYMTMcgNkiua9Dj-qXvonO0QAa1QbSTysfIF8wPapxyS-rHg",
+    "category": "aggregator",
+    "scraper": "generic",
+    "notes": "Aggregator; JSON-LD JobPosting or meta extraction"
+  },
+  {
+    "platform": "Jooble",
+    "url": null,
+    "category": "aggregator",
+    "scraper": "generic",
+    "notes": "Aggregator; no stable individual posting URL found; often redirects to source"
+  },
+  {
+    "platform": "CareerBuilder",
+    "url": "https://www.careerbuilder.com/job/J3V3326J1PB5712Q0D6",
+    "category": "aggregator",
+    "scraper": "generic",
+    "notes": "JS-rendered; Playwright needed"
+  },
+  {
+    "platform": "Adzuna Canada",
+    "url": "https://www.adzuna.ca/details/5596190707",
+    "category": "aggregator",
+    "scraper": "generic",
+    "notes": "Aggregator; postings expire quickly (410 Gone); re-run test with current URL from adzuna.ca"
+  },
+  {
+    "platform": "StepStone",
+    "url": null,
+    "category": "international",
+    "scraper": "generic",
+    "notes": "German job board; no stable individual posting URL found"
+  },
+  {
+    "platform": "Seek",
+    "url": null,
+    "category": "international",
+    "scraper": "generic",
+    "notes": "Australian job board; strong bot protection; no stable URL found"
+  },
+  {
+    "platform": "Naukri",
+    "url": null,
+    "category": "international",
+    "scraper": "generic",
+    "notes": "Indian job board; no stable individual posting URL found"
+  }
+]
