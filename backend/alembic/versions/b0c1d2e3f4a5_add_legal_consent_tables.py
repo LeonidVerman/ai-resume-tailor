@@ -1,6 +1,6 @@
 """add legal consent tables
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: b0c1d2e3f4a5
 Revises: f9a0b1c2d3e4
 Create Date: 2026-03-28
 
@@ -41,7 +41,7 @@ def _hash_legal_file(repo_relative_path: str) -> str:
 
 # ── Revision info ─────────────────────────────────────────────────────────────
 
-revision: str = "a1b2c3d4e5f6"
+revision: str = "b0c1d2e3f4a5"
 down_revision = "f9a0b1c2d3e4"
 branch_labels = None
 depends_on = None
