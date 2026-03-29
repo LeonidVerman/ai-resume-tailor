@@ -20,6 +20,7 @@ Strategy (tried in order)
 """
 
 import json
+import logging
 import os
 import re
 import time
@@ -27,6 +28,8 @@ import xml.etree.ElementTree as ET
 from urllib.parse import parse_qs, quote, urlparse
 
 from bs4 import BeautifulSoup
+
+logger = logging.getLogger(__name__)
 
 
 _HEADERS = {
@@ -204,12 +207,22 @@ def _try_scraperapi(clean_url: str, api_key: str) -> dict | None:
         f"https://api.scraperapi.com/"
         f"?api_key={api_key}&url={quote(clean_url, safe='')}&render=true"
     )
+    logger.info("ScraperAPI: fetching %s", clean_url)
     try:
         resp = httpx.get(proxy_url, timeout=60, follow_redirects=True)
+        logger.info("ScraperAPI: HTTP %d, html_len=%d", resp.status_code, len(resp.text))
         if resp.status_code != 200:
+            logger.warning("ScraperAPI: non-200 response %d — falling back", resp.status_code)
             return None
-        return _extract_job_data(resp.text, clean_url)
-    except Exception:
+        result = _extract_job_data(resp.text, clean_url)
+        if result is None:
+            logger.warning(
+                "ScraperAPI: 200 OK but no job data extracted; html_preview=%r",
+                resp.text[:300],
+            )
+        return result
+    except Exception as exc:
+        logger.warning("ScraperAPI: request failed: %s", exc)
         return None
 
 
@@ -228,9 +241,13 @@ def scrape_indeed(url: str) -> dict:
     # Strategy 0: ScraperAPI — residential proxies bypass Cloudflare WAF
     scraper_api_key = os.environ.get("SCRAPER_API_KEY", "").strip()
     if scraper_api_key:
+        logger.info("ScraperAPI key present — attempting Strategy 0")
         result = _try_scraperapi(clean_url, scraper_api_key)
         if result:
             return result
+        logger.warning("ScraperAPI strategy failed — falling back to RSS and session priming")
+    else:
+        logger.debug("SCRAPER_API_KEY not set — skipping ScraperAPI strategy")
 
     # Strategy 1: RSS feed — lighter bot protection; no JS/cookies required
     result = _try_rss_feed(hostname, jk)

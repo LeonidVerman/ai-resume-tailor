@@ -18,8 +18,12 @@ via JobScraperService.  If the generator environment is not available
 (e.g. missing Playwright), the endpoint returns a 503.
 """
 
+import logging
+
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 from backend.app.dependencies import CurrentUserDep, DbDep
 from backend.app.db.repositories.job_description_repository import JobDescriptionRepository
@@ -56,9 +60,11 @@ def scrape_job_description(
     try:
         scraped = scraper.scrape(request.url)
     except RuntimeError:
+        msg = get_scrape_failure_message(request.url)
+        logger.warning("Scrape failed for %s — returning: %s", request.url, msg)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=get_scrape_failure_message(request.url),
+            detail=msg,
         )
     return _normalizer(db).create_from_scrape(user.id, scraped)
 
