@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tailor.job.indeed import _clean_indeed_url, _extract_job_data, _try_rss_feed, scrape_indeed
+from tailor.job.indeed import _clean_indeed_url, _extract_job_data, _try_rss_feed, _try_scraperapi, scrape_indeed
 from tailor.job.scrape import _detect_site
 
 
@@ -270,6 +270,114 @@ class TestScrapeIndeedUnit:
              patch("curl_cffi.requests.Session", return_value=mock_session):
             with pytest.raises(ValueError, match="Could not extract"):
                 scrape_indeed("https://ca.indeed.com/viewjob?jk=abc123")
+
+
+# ---------------------------------------------------------------------------
+# _try_scraperapi — unit tests
+# ---------------------------------------------------------------------------
+
+class TestTryScraperapi:
+    def _mock_http_get(self, html: str, status: int = 200):
+        mock_resp = MagicMock()
+        mock_resp.status_code = status
+        mock_resp.text = html
+        return mock_resp
+
+    def test_returns_job_data_on_success(self):
+        with patch("httpx.get", return_value=self._mock_http_get(_JSON_LD_HTML)):
+            result = _try_scraperapi("https://ca.indeed.com/viewjob?jk=abc123", "testkey")
+        assert result is not None
+        assert result["company"] == "Acme Corp"
+        assert result["job_title"] == "Senior Backend Engineer"
+
+    def test_includes_api_key_and_render_in_url(self):
+        with patch("httpx.get", return_value=self._mock_http_get(_JSON_LD_HTML)) as mock_get:
+            _try_scraperapi("https://ca.indeed.com/viewjob?jk=abc123", "mykey123")
+        called_url = mock_get.call_args[0][0]
+        assert "api_key=mykey123" in called_url
+        assert "render=true" in called_url
+        assert "api.scraperapi.com" in called_url
+
+    def test_returns_none_on_non_200(self):
+        with patch("httpx.get", return_value=self._mock_http_get("", status=403)):
+            result = _try_scraperapi("https://ca.indeed.com/viewjob?jk=abc123", "testkey")
+        assert result is None
+
+    def test_returns_none_on_network_error(self):
+        with patch("httpx.get", side_effect=Exception("timeout")):
+            result = _try_scraperapi("https://ca.indeed.com/viewjob?jk=abc123", "testkey")
+        assert result is None
+
+    def test_returns_none_when_html_has_no_job_data(self):
+        with patch("httpx.get", return_value=self._mock_http_get("<html><body></body></html>")):
+            result = _try_scraperapi("https://ca.indeed.com/viewjob?jk=abc123", "testkey")
+        assert result is None
+
+
+class TestScrapeIndeedScraperApiFirst:
+    """ScraperAPI strategy must run before RSS and page scraping."""
+
+    def test_scraperapi_used_when_key_set(self):
+        """When SCRAPER_API_KEY is set and ScraperAPI succeeds, no other strategy runs."""
+        mock_http_resp = MagicMock()
+        mock_http_resp.status_code = 200
+        mock_http_resp.text = _JSON_LD_HTML
+
+        with patch("httpx.get", return_value=mock_http_resp) as mock_http, \
+             patch("curl_cffi.requests.Session") as mock_cf_session, \
+             patch.dict("os.environ", {"SCRAPER_API_KEY": "testkey"}):
+            result = scrape_indeed("https://ca.indeed.com/viewjob?jk=abc123")
+
+        assert result["company"] == "Acme Corp"
+        # httpx.get called once (ScraperAPI), not the RSS feed URL
+        assert mock_http.call_count == 1
+        called_url = mock_http.call_args[0][0]
+        assert "api.scraperapi.com" in called_url
+        mock_cf_session.assert_not_called()
+
+    def test_falls_back_to_rss_when_scraperapi_fails(self):
+        """When ScraperAPI returns non-200, falls back to RSS."""
+        mock_scraper_resp = MagicMock()
+        mock_scraper_resp.status_code = 403
+        mock_scraper_resp.text = ""
+
+        mock_rss_resp = MagicMock()
+        mock_rss_resp.status_code = 200
+        mock_rss_resp.text = _RSS_XML
+
+        call_count = {"n": 0}
+
+        def _side_effect(url, **kwargs):
+            call_count["n"] += 1
+            if call_count["n"] == 1:
+                return mock_scraper_resp  # ScraperAPI call
+            return mock_rss_resp  # RSS call
+
+        with patch("httpx.get", side_effect=_side_effect), \
+             patch("curl_cffi.requests.Session") as mock_cf_session, \
+             patch.dict("os.environ", {"SCRAPER_API_KEY": "testkey"}):
+            result = scrape_indeed("https://ca.indeed.com/viewjob?jk=abc123")
+
+        assert result["company"] == "Globex Inc"
+        mock_cf_session.assert_not_called()
+
+    def test_scraperapi_skipped_when_no_key(self):
+        """Without SCRAPER_API_KEY, RSS is tried first (not ScraperAPI)."""
+        import os as _os
+        env_without_key = {k: v for k, v in _os.environ.items() if k != "SCRAPER_API_KEY"}
+
+        mock_rss_resp = MagicMock()
+        mock_rss_resp.status_code = 200
+        mock_rss_resp.text = _RSS_XML
+
+        with patch("httpx.get", return_value=mock_rss_resp) as mock_http, \
+             patch.dict("os.environ", env_without_key, clear=True):
+            result = scrape_indeed("https://ca.indeed.com/viewjob?jk=abc123")
+
+        assert result["company"] == "Globex Inc"
+        # httpx.get called for RSS (not ScraperAPI URL)
+        called_url = mock_http.call_args[0][0]
+        assert "api.scraperapi.com" not in called_url
 
 
 # ---------------------------------------------------------------------------

@@ -4,6 +4,11 @@ Uses curl_cffi Chrome impersonation to bypass Indeed's bot protection.
 
 Strategy (tried in order)
 --------------------------
+0. ScraperAPI (when ``SCRAPER_API_KEY`` env var is set): routes the
+   request through residential proxies that bypass Cloudflare WAF.
+   Required on cloud servers (Render, AWS, etc.) where Indeed blocks
+   data-centre IP ranges.  Sign up at https://scraperapi.com — the
+   free tier gives 1,000 requests/month.
 1. RSS feed (``/rss?q=jobkey:<jk>``): RSS readers require no JS or
    cookies, so this endpoint has lighter bot protection than the
    rendered viewjob page.
@@ -15,6 +20,7 @@ Strategy (tried in order)
 """
 
 import json
+import os
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -185,6 +191,28 @@ def _try_rss_feed(hostname: str, jk: str) -> dict | None:
         return None
 
 
+def _try_scraperapi(clean_url: str, api_key: str) -> dict | None:
+    """Fetch the Indeed job page via ScraperAPI with JavaScript rendering.
+
+    ScraperAPI routes requests through residential proxies and handles
+    Cloudflare challenges, making it reliable from cloud-server IPs.
+    Returns ``None`` on any failure so the caller can fall back.
+    """
+    import httpx
+
+    proxy_url = (
+        f"https://api.scraperapi.com/"
+        f"?api_key={api_key}&url={quote(clean_url, safe='')}&render=true"
+    )
+    try:
+        resp = httpx.get(proxy_url, timeout=60, follow_redirects=True)
+        if resp.status_code != 200:
+            return None
+        return _extract_job_data(resp.text, clean_url)
+    except Exception:
+        return None
+
+
 def scrape_indeed(url: str) -> dict:
     """Scrape an Indeed job listing via curl_cffi Chrome impersonation.
 
@@ -196,6 +224,13 @@ def scrape_indeed(url: str) -> dict:
     clean_url, base_url = _clean_indeed_url(url)
     hostname = urlparse(clean_url).netloc
     jk = parse_qs(urlparse(clean_url).query)["jk"][0]
+
+    # Strategy 0: ScraperAPI — residential proxies bypass Cloudflare WAF
+    scraper_api_key = os.environ.get("SCRAPER_API_KEY", "").strip()
+    if scraper_api_key:
+        result = _try_scraperapi(clean_url, scraper_api_key)
+        if result:
+            return result
 
     # Strategy 1: RSS feed — lighter bot protection; no JS/cookies required
     result = _try_rss_feed(hostname, jk)
