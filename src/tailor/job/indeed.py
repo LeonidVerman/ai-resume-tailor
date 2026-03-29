@@ -1,26 +1,27 @@
 """Indeed job listing scraper.
 
 Uses curl_cffi Chrome impersonation to bypass Indeed's bot protection.
-Extracts job data from the JSON-LD JobPosting schema embedded in the page.
 
 Strategy
 --------
-1. Extract the ``jk`` job key and build a clean URL with no tracking params.
-2. Open a curl_cffi Session (maintains cookies across requests) using a
-   specific Chrome version fingerprint (chrome120).
-3. Prime the session with a homepage visit so Indeed sets its session cookie.
-4. Fetch the clean job URL and extract the JSON-LD JobPosting block.
+1. Extract the ``jk`` job key and build a clean URL.
+2. Build a three-step session: homepage → search page → job page.
+   This mirrors a real user's browsing flow and accumulates the CTK
+   session cookie that Indeed's bot-check requires on job-page requests.
+3. Try multiple extraction strategies from the rendered HTML:
+   a. JSON-LD JobPosting schema (most reliable when present)
+   b. HTML data attributes (Indeed's React/SPA markup)
+   c. OG meta tags (last-resort fallback)
 """
 
 import json
+import re
 import time
 from urllib.parse import parse_qs, urlparse
 
 from bs4 import BeautifulSoup
 
 
-# Full browser headers Chrome 120 sends on a top-level navigation.
-# Sec-Fetch-* and Sec-CH-UA headers are checked by Indeed's bot detection.
 _HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -43,13 +44,18 @@ _HEADERS = {
     "Upgrade-Insecure-Requests": "1",
 }
 
+# Headers for requests that originate from within the Indeed site.
+_SAME_ORIGIN = {
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+}
+
 
 def _clean_indeed_url(url: str) -> tuple[str, str]:
     """Return (clean_job_url, base_url) from any Indeed job URL.
 
     Strips all tracking parameters; keeps only ``jk``.
-    Normalises the hostname to ``www.indeed.com`` to avoid regional
-    redirect chains that can trigger extra bot checks.
+    Preserves the regional hostname (ca.indeed.com, uk.indeed.com, etc.).
     Raises ``ValueError`` if no ``jk`` parameter is found.
     """
     parsed = urlparse(url)
@@ -58,60 +64,109 @@ def _clean_indeed_url(url: str) -> tuple[str, str]:
     if not jk_values:
         raise ValueError(f"No 'jk' parameter found in Indeed URL: {url}")
     jk = jk_values[0]
-    # Keep the original regional hostname (ca.indeed.com, uk.indeed.com, etc.)
-    # so the response is in the right locale; fall back to www if empty.
     hostname = parsed.netloc or "www.indeed.com"
     base_url = f"https://{hostname}/"
     clean_url = f"https://{hostname}/viewjob?jk={jk}"
     return clean_url, base_url
 
 
+def _extract_job_data(html: str, url: str) -> dict | None:
+    """Try multiple extraction strategies from an Indeed page HTML.
+
+    Returns a dict with keys ``company``, ``job_title``, ``description``
+    or ``None`` if no usable data was found.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Strategy 1: JSON-LD JobPosting schema
+    for tag in soup.find_all("script", type="application/ld+json"):
+        try:
+            data = json.loads(tag.string or "")
+            if isinstance(data, list):
+                data = next((d for d in data if d.get("@type") == "JobPosting"), None)
+            if data and data.get("@type") == "JobPosting":
+                company = data.get("hiringOrganization", {}).get("name", "")
+                job_title = data.get("title", "")
+                description_html = data.get("description", "")
+                description = BeautifulSoup(description_html, "html.parser").get_text(separator="\n")
+                if description.strip():
+                    return {
+                        "company": company or "Unknown",
+                        "job_title": job_title or "Unknown",
+                        "description": description,
+                    }
+        except Exception:
+            continue
+
+    # Strategy 2: HTML data attributes (Indeed's React/SPA markup)
+    title_el = soup.find("h1", attrs={"data-testid": "jobsearch-JobInfoHeader-title"}) or \
+               soup.find("h1", class_=re.compile(r"jobsearch-JobInfoHeader"))
+    company_el = soup.find(attrs={"data-testid": "inlineHeader-companyName"}) or \
+                 soup.find(attrs={"data-testid": "jobsearch-JobInfoHeader-companyName"})
+    desc_el = soup.find("div", id="jobDescriptionText") or \
+              soup.find("div", attrs={"data-testid": "jobsearch-jobDescriptionText"})
+
+    if desc_el:
+        description = desc_el.get_text(separator="\n", strip=True)
+        if description.strip():
+            return {
+                "company": company_el.get_text(strip=True) if company_el else "Unknown",
+                "job_title": title_el.get_text(strip=True) if title_el else "Unknown",
+                "description": description,
+            }
+
+    # Strategy 3: OG / meta tags (last resort — description will be truncated)
+    og_title = soup.find("meta", property="og:title")
+    og_desc = soup.find("meta", property="og:description")
+    if og_title and og_title.get("content"):
+        return {
+            "company": "Unknown",
+            "job_title": og_title["content"],
+            "description": og_desc["content"] if og_desc else f"See full job posting at {url}",
+        }
+
+    return None
+
+
 def scrape_indeed(url: str) -> dict:
     """Scrape an Indeed job listing via curl_cffi Chrome impersonation.
 
-    Uses a persistent Session so cookies obtained from the homepage visit
-    are carried to the job-page request.  This mimics real browser behaviour
-    and satisfies Indeed's session-cookie check that causes 401 responses
-    when hitting the job URL directly without cookies.
+    Builds a three-step session (homepage → search page → job page) to
+    accumulate the cookies Indeed's bot-check requires on job-page requests.
     """
     from curl_cffi import requests as cf
 
     clean_url, base_url = _clean_indeed_url(url)
+    hostname = urlparse(clean_url).netloc
 
     session = cf.Session(impersonate="chrome131")
     session.headers.update(_HEADERS)
 
-    # Prime session cookies with a homepage visit before fetching the job page.
+    # Step 1: Homepage — sets initial session cookies
     try:
         session.get(base_url, timeout=15)
-        time.sleep(1.5)  # brief pause so Indeed treats this as a real navigation
+        time.sleep(1.0)
     except Exception:
-        pass  # cookie priming is best-effort; proceed regardless
+        pass
 
-    # Job-page request must look like navigation from within Indeed, not a cold
-    # direct visit.  A real browser would set Referer + Sec-Fetch-Site when the
-    # user clicks a result, not Sec-Fetch-Site: none (URL-bar navigation).
-    job_headers = {
-        "Referer": base_url,
-        "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-User": "?1",
-    }
-    resp = session.get(clean_url, timeout=30, headers=job_headers)
+    # Step 2: Search page — sets CTK cookie that Indeed checks on job pages
+    search_url = f"https://{hostname}/jobs?q=&l="
+    try:
+        session.get(search_url, timeout=15, headers={**_SAME_ORIGIN, "Referer": base_url})
+        time.sleep(0.5)
+    except Exception:
+        pass
+
+    # Step 3: Job page — referrer is the search page (same-origin navigation)
+    resp = session.get(
+        clean_url,
+        timeout=30,
+        headers={**_SAME_ORIGIN, "Referer": search_url},
+    )
     resp.raise_for_status()
 
-    soup = BeautifulSoup(resp.text, "html.parser")
-    for tag in soup.find_all("script", type="application/ld+json"):
-        try:
-            data = json.loads(tag.string)
-            if isinstance(data, list):
-                data = next((d for d in data if d.get("@type") == "JobPosting"), None)
-            if data and data.get("@type") == "JobPosting":
-                company = data.get("hiringOrganization", {}).get("name", "Unknown")
-                job_title = data.get("title", "Unknown")
-                description_html = data.get("description", "")
-                description = BeautifulSoup(description_html, "html.parser").get_text(separator="\n")
-                return {"company": company, "job_title": job_title, "description": description}
-        except Exception:
-            continue
+    result = _extract_job_data(resp.text, clean_url)
+    if result:
+        return result
 
     raise ValueError(f"Could not extract job data from Indeed page: {url}")
