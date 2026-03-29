@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Wand2 } from "lucide-react";
@@ -9,11 +9,19 @@ import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/hooks/useAuth";
 import { auth } from "@/lib/api";
 
+function SessionExpiredBanner() {
+  const searchParams = useSearchParams();
+  if (searchParams.get("reason") !== "session_expired") return null;
+  return (
+    <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+      Your session expired. Please sign in again to continue.
+    </p>
+  );
+}
+
 export default function LoginPage() {
   const { login, loginDevBypass, loading, error } = useAuth();
   const [authMode, setAuthMode] = useState<"supabase" | "dev_bypass" | null>(null);
-  const searchParams = useSearchParams();
-  const sessionExpired = searchParams.get("reason") === "session_expired";
 
   // Email/password fields (supabase mode)
   const [email, setEmail] = useState("");
@@ -93,11 +101,9 @@ export default function LoginPage() {
               </>
             )}
 
-            {sessionExpired && !error && (
-              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                Your session expired. Please sign in again to continue.
-              </p>
-            )}
+            <Suspense>
+              <SessionExpiredBanner />
+            </Suspense>
 
             {error && (
               <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
