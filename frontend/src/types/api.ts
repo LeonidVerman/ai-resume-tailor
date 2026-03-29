@@ -328,9 +328,9 @@ export interface ResumeDiffBulletChange {
 
 export interface ResumeDiffRole {
   name: string;
-  added: string[];
-  removed: string[];
-  changed: ResumeDiffBulletChange[];
+  added?: string[];
+  removed?: string[];
+  changed?: ResumeDiffBulletChange[];
 }
 
 export interface ResumeDiffTextSection {

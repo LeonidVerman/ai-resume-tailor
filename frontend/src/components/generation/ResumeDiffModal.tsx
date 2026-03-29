@@ -19,7 +19,7 @@ function isExperienceSection(s: ResumeDiffSection): s is ResumeDiffExperienceSec
 }
 
 function hasChanges(role: ResumeDiffRole): boolean {
-  return role.added.length > 0 || role.removed.length > 0 || role.changed.length > 0;
+  return (role.added?.length ?? 0) > 0 || (role.removed?.length ?? 0) > 0 || (role.changed?.length ?? 0) > 0;
 }
 
 function RoleBlock({ role }: { role: ResumeDiffRole }) {
@@ -38,19 +38,19 @@ function RoleBlock({ role }: { role: ResumeDiffRole }) {
 
       {open && (
         <div className="mt-1.5 space-y-1 pl-5">
-          {role.added.map((bullet, i) => (
+          {(role.added ?? []).map((bullet, i) => (
             <div key={`add-${i}`} className="flex gap-2">
               <span className="text-green-600 font-bold shrink-0 select-none">+</span>
               <span className="text-xs text-green-800 leading-snug">{bullet}</span>
             </div>
           ))}
-          {role.removed.map((bullet, i) => (
+          {(role.removed ?? []).map((bullet, i) => (
             <div key={`rm-${i}`} className="flex gap-2">
               <span className="text-red-500 font-bold shrink-0 select-none">−</span>
               <span className="text-xs text-red-700 leading-snug line-through">{bullet}</span>
             </div>
           ))}
-          {role.changed.map((change, i) => (
+          {(role.changed ?? []).map((change, i) => (
             <div key={`ch-${i}`} className="space-y-0.5">
               <div className="flex gap-2">
                 <span className="text-red-500 font-bold shrink-0 select-none">−</span>
