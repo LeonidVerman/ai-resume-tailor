@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { legal, auth } from "@/lib/api";
-import { getStoredToken, getStoredUserId } from "@/lib/auth";
+import { legal, ApiError } from "@/lib/api";
+import { clearStoredToken, getStoredToken, getStoredUserId } from "@/lib/auth";
 import type { LegalCurrentResponse } from "@/types/api";
 
 export default function LegalAcceptPage() {
@@ -43,7 +43,13 @@ export default function LegalAcceptPage() {
       });
       // Refresh user state by navigating to dashboard — AppShell will re-check
       router.push("/dashboard");
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        // Session expired — clear stale token and send to login
+        clearStoredToken();
+        router.replace("/login?reason=session_expired");
+        return;
+      }
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
     }
