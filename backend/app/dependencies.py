@@ -82,7 +82,12 @@ def _get_user_from_bearer(
     try:
         payload = supabase.verify_token(token)
     except Exception as exc:
-        logger.warning("Token verification failed: %s", exc, exc_info=True)
+        exc_lower = str(exc).lower()
+        if "expired" in exc_lower or "invalid jwt" in exc_lower:
+            # Stale session tokens are expected (e.g. after a deploy); debug only
+            logger.debug("Token verification failed: %s", exc)
+        else:
+            logger.warning("Token verification failed: %s", exc, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",

@@ -2,22 +2,23 @@
 
 Uses curl_cffi Chrome impersonation to bypass Indeed's bot protection.
 
-Strategy
---------
-1. Extract the ``jk`` job key and build a clean URL.
-2. Build a three-step session: homepage → search page → job page.
-   This mirrors a real user's browsing flow and accumulates the CTK
-   session cookie that Indeed's bot-check requires on job-page requests.
-3. Try multiple extraction strategies from the rendered HTML:
-   a. JSON-LD JobPosting schema (most reliable when present)
-   b. HTML data attributes (Indeed's React/SPA markup)
-   c. OG meta tags (last-resort fallback)
+Strategy (tried in order)
+--------------------------
+1. RSS feed (``/rss?q=jobkey:<jk>``): RSS readers require no JS or
+   cookies, so this endpoint has lighter bot protection than the
+   rendered viewjob page.
+2. Rendered viewjob page via three-step session priming:
+   homepage → search page → job page, accumulating the CTK session
+   cookie that Indeed's bot-check requires on job-page requests.
+   Multiple extraction strategies are tried: JSON-LD, HTML data
+   attributes, OG meta tags.
 """
 
 import json
 import re
 import time
-from urllib.parse import parse_qs, urlparse
+import xml.etree.ElementTree as ET
+from urllib.parse import parse_qs, quote, urlparse
 
 from bs4 import BeautifulSoup
 
@@ -128,6 +129,62 @@ def _extract_job_data(html: str, url: str) -> dict | None:
     return None
 
 
+def _try_rss_feed(hostname: str, jk: str) -> dict | None:
+    """Fetch job data via Indeed's RSS feed.
+
+    RSS feeds are consumed by simple HTTP clients with no JS or cookies,
+    so Indeed serves them with much lighter bot-protection than the
+    rendered viewjob page.  Returns None on any failure so the caller
+    can fall back to the page-scraping strategy.
+    """
+    import httpx
+
+    rss_url = f"https://{hostname}/rss?q=jobkey%3A{quote(jk)}&l="
+    try:
+        resp = httpx.get(
+            rss_url,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; RSS reader/2.0)",
+                     "Accept": "application/rss+xml, application/xml, text/xml, */*"},
+            timeout=15,
+            follow_redirects=True,
+        )
+        if resp.status_code != 200:
+            return None
+
+        root = ET.fromstring(resp.text)
+        channel = root.find("channel")
+        if channel is None:
+            return None
+        item = channel.find("item")
+        if item is None:
+            return None
+
+        # Title is usually "Job Title - Company Name (City, Province)"
+        raw_title = (item.findtext("title") or "").strip()
+        job_title = raw_title
+        company = (item.findtext("author") or "").strip()
+
+        if not company and " - " in raw_title:
+            parts = raw_title.split(" - ", 1)
+            job_title = parts[0].strip()
+            company_loc = parts[1].strip()
+            # Strip trailing "(City, Province)" if present
+            company = company_loc.split("(")[0].strip() if "(" in company_loc else company_loc
+
+        desc_html = item.findtext("description") or ""
+        description = BeautifulSoup(desc_html, "html.parser").get_text(separator="\n").strip()
+
+        if description:
+            return {
+                "company": company or "Unknown",
+                "job_title": job_title or "Unknown",
+                "description": description,
+            }
+        return None
+    except Exception:
+        return None
+
+
 def scrape_indeed(url: str) -> dict:
     """Scrape an Indeed job listing via curl_cffi Chrome impersonation.
 
@@ -138,7 +195,14 @@ def scrape_indeed(url: str) -> dict:
 
     clean_url, base_url = _clean_indeed_url(url)
     hostname = urlparse(clean_url).netloc
+    jk = parse_qs(urlparse(clean_url).query)["jk"][0]
 
+    # Strategy 1: RSS feed — lighter bot protection; no JS/cookies required
+    result = _try_rss_feed(hostname, jk)
+    if result:
+        return result
+
+    # Strategy 2: Rendered viewjob page with three-step session priming
     session = cf.Session(impersonate="chrome131")
     session.headers.update(_HEADERS)
 
