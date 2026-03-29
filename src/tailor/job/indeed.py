@@ -88,7 +88,15 @@ def scrape_indeed(url: str) -> dict:
     except Exception:
         pass  # cookie priming is best-effort; proceed regardless
 
-    resp = session.get(clean_url, timeout=30)
+    # Job-page request must look like navigation from within Indeed, not a cold
+    # direct visit.  A real browser would set Referer + Sec-Fetch-Site when the
+    # user clicks a result, not Sec-Fetch-Site: none (URL-bar navigation).
+    job_headers = {
+        "Referer": base_url,
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-User": "?1",
+    }
+    resp = session.get(clean_url, timeout=30, headers=job_headers)
     resp.raise_for_status()
 
     soup = BeautifulSoup(resp.text, "html.parser")
