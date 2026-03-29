@@ -46,9 +46,11 @@ COPY templates/ ./templates/
 COPY config/ ./config/
 COPY profile/ ./profile/
 COPY benchmark/ ./benchmark/
+COPY legal/ ./legal/
 
 EXPOSE 8000
 
 # DATABASE_URL and other secrets are injected at runtime via environment variables.
 # Render (and other PaaS) inject a PORT env var; fall back to 8000 for local runs.
-CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Run Alembic migrations before starting the server (idempotent — no-op if already current).
+CMD ["sh", "-c", "python -m alembic -c backend/alembic.ini upgrade head && uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
