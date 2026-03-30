@@ -1,5 +1,70 @@
 # Release Notes
 
+## 0.5.3.BETA — 2026-03-30
+
+### New features
+
+- **View Changes — resume diff popup** (`frontend`): history rows now show a "View Changes" button
+  that opens a modal comparing the original and tailored resume. Diff is broken down by section
+  (Professional Summary, Experience bullets, Technical Skills). Experience bullets show added,
+  removed, and changed entries.
+- **Inline word-level diff highlighting** (`ResumeDiffModal.tsx`): changed bullets render with
+  red/green word-span highlighting using an LCS-based diff algorithm. Phrase-level clustering
+  (`clusterIntoPhraseOps`) bridges small equal gaps so multi-word edits appear as single spans.
+  Word-boundary insertion (`ensureWordBoundaries`) prevents words from running together.
+- **Debug JSON persisted to object storage** (`StorageService`): after each generation run the
+  debug JSON (Phase 1 plan + Phase 2 output) is uploaded to object storage and is downloadable
+  from the admin page. `STORAGE_REGION` config var added for Supabase S3 compatibility.
+- **Forgot / reset password flow** (`auth`): users can request a password-reset email and set a
+  new password via a token link. New pages: `/forgot-password`, `/reset-password`.
+- **Structured event logging** (`logging`): 10 key user events (registration, login, generation
+  start/complete, download, etc.) emit structured `INFO` log lines for ops monitoring.
+- **4 new ATS scrapers + Indeed resilience** (`scraper`): added Greenhouse, Lever, Workday, and
+  Ashby scrapers. Indeed scraper gains multi-strategy extraction (DOM → RSS feed fallback),
+  ScraperAPI cloud proxy support, stronger session priming, and updated Chrome fingerprint.
+- **Legal consent system** (`legal`): users must accept a user agreement and privacy notice on
+  first login. Acceptance is persisted; expired sessions redirect back to the acceptance page.
+
+### Bug fixes
+
+- **DOCX compiler — singular `SKILL` heading** (`docx_parser.py`, `text_parser.py`, `diff.py`):
+  resumes using `SKILL` (singular) as the skills section heading were not recognised, causing the
+  section to be kept verbatim instead of updated. Added `"skill"` to `_SKILLS_NAMES` in both
+  parsers and to `_ALL_SECTION_HEADERS` / `_SECTION_ALIASES` in `diff.py`.
+- **DOCX compiler — stale body_items for table-based DOCX** (`updater.py`): when the LLM added
+  a section absent from a table-based template (extras path), the original `body_items` (stale
+  table XML) was incorrectly returned, causing the renderer to output the unchanged original.
+  Fixed by aligning the `body_items` return condition with the in-place update condition
+  (`has_table_blocks and not match.extras`).
+- **Diff modal crash** (`ResumeDiffModal.tsx`): `TypeError: Cannot read properties of undefined
+  (reading 'match')` when `change.before` or `change.after` was `undefined`. Fixed by making
+  `computeInlineDiff` accept `string | undefined` and adding early-return guards. `before`/`after`
+  on `ResumeDiffBulletChange` are now optional in `api.ts`.
+- **Diff modal spacing artifacts**: adjacent remove/add spans rendered without whitespace between
+  them (e.g. `withSenior 15+backend`). Fixed by `ensureWordBoundaries` post-processing pass.
+- **Indeed scraper**: fixed 401 errors, added `Referer`/`Sec-Fetch-Site` headers, improved
+  session cookie priming, added ScraperAPI proxy support for cloud deployments.
+- **Deploy**: `PORT` env var now respected in backend Dockerfile; `legal/` directory copied into
+  image; migrations run automatically on container start.
+- **Frontend**: `useSearchParams` wrapped in `Suspense` on login page; legal session redirect
+  on expired acceptance; missing role diff arrays handled gracefully.
+
+### Tests
+
+- 14 new regression tests for non-canonical heading recognition (SKILL, EMPLOYMENT HISTORY,
+  CERTIFICATIONS AND TRAINING, letter-spaced headings, etc.) in `test_structural_editor.py`.
+- 16 new tests (Tests A–D) covering table-based DOCX scenarios: extras path, no-extras path,
+  extras + semantic matches, and diff-vs-rendered sanity.
+- **373 tests passing** (up from 357 at 0.5.2).
+
+---
+
+## 0.5.2.BETA — 2026-03-25
+
+Second deployed version. Bigint PK migration complete; UUID rollback columns dropped.
+
+---
+
 ## 0.5.1.BETA — 2026-03-24
 
 First deployed version.
