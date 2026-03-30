@@ -322,8 +322,8 @@ export interface ArtifactURLs {
 // ── Resume diff ───────────────────────────────────────────────────────────
 
 export interface ResumeDiffBulletChange {
-  before: string;
-  after: string;
+  before?: string;
+  after?: string;
 }
 
 export interface ResumeDiffRole {

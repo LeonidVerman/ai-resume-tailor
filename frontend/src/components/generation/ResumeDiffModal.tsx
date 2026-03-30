@@ -25,8 +25,11 @@ type InlineOp = { type: "equal" | "remove" | "add"; text: string };
  * Tokens are whitespace-delimited words and the whitespace runs between them,
  * so spacing is preserved naturally in the output.
  */
-function computeInlineDiff(before: string, after: string): InlineOp[] {
+function computeInlineDiff(before: string | undefined, after: string | undefined): InlineOp[] {
   const tokenize = (s: string): string[] => s.match(/\S+|\s+/g) ?? [];
+  if (!before && !after) return [];
+  if (!before) return [{ type: "add", text: after! }];
+  if (!after) return [{ type: "remove", text: before }];
   const a = tokenize(before);
   const b = tokenize(after);
   const m = a.length;
@@ -163,7 +166,7 @@ function clusterIntoPhraseOps(ops: InlineOp[]): InlineOp[] {
   return result;
 }
 
-function InlineDiffView({ before, after }: { before: string; after: string }) {
+function InlineDiffView({ before, after }: { before?: string; after?: string }) {
   const ops = computeInlineDiff(before, after);
   return (
     <>
