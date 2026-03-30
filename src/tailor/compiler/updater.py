@@ -386,8 +386,11 @@ def apply_tailored(
         and any(isinstance(i, TableBlock) for i in original.body_items)
     )
     if has_table_blocks and not match.extras:
-        # Fast path only — extras path is rare and table support degrades
-        # gracefully (original text kept for untracked paras).
+        # Table in-place update: mutate ParaModel.text on the original objects
+        # so _render_table_block picks up the new text from tb.para_models.
+        # Skipped when extras exist because the extras path creates new
+        # ParaModel objects (not the original table's para_models references),
+        # so in-place mutation would have no effect.
         for orig_section, llm_section in match.pairs:
             if llm_section is None:
                 continue
@@ -412,5 +415,10 @@ def apply_tailored(
         layout=original.layout,
         all_paras=all_paras,
         source_kind=original.source_kind,
-        body_items=original.body_items if has_table_blocks else None,
+        # Return body_items only when the in-place table update actually ran
+        # (i.e. no extras).  When extras exist the in-place update was skipped,
+        # leaving body_items with stale original text.  Passing None here makes
+        # the renderer fall back to all_paras (correctly rebuilt by the extras
+        # path) instead of rendering the unchanged original table.
+        body_items=original.body_items if (has_table_blocks and not match.extras) else None,
     )
