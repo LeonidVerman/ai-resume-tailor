@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     storage_access_key_id: str = ""
     storage_secret_access_key: str = ""
     storage_bucket: str = "ai-resume-tailor"
+    # "auto" works for Cloudflare R2; Supabase Storage requires "us-east-1"
+    storage_region: str = "auto"
 
     # ── OpenAI ────────────────────────────────────────────────────────────
     openai_api_key: str = ""

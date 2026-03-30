@@ -276,4 +276,5 @@ def make_storage_client_from_settings() -> "StorageClient | LocalStorageClient":
         access_key_id=s.storage_access_key_id,
         secret_access_key=s.storage_secret_access_key,
         bucket=s.storage_bucket,
+        region=s.storage_region,
     )
