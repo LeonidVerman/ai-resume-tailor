@@ -23,7 +23,9 @@ from tailor.compiler.text_parser import (
     _is_section_heading,
     parse_llm_output,
 )
+from tailor.compiler.pipeline import compile_resume
 from tailor.compiler.updater import apply_tailored
+from tailor.diff import diff_resume
 from tailor.docx.template_fill import read_docx, save_doc_from_template
 from tailor.config import COVER_TEMPLATE, RESUME_TEMPLATE
 
@@ -533,3 +535,255 @@ class TestFormattingPreservation:
         clone2 = pm.clone_as("text 2")
         assert clone1.style.xml_proto is not clone2.style.xml_proto
         assert clone1.style.xml_proto is not pm.style.xml_proto
+
+
+# ---------------------------------------------------------------------------
+# Heading normalization — table-driven coverage (canonical + non-canonical)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("heading,expected", [
+    # Skills — canonical and variants including newly-fixed singular form
+    ("SKILL",                         "skills"),
+    ("Skill",                         "skills"),
+    ("Skills",                        "skills"),
+    ("SKILLS",                        "skills"),
+    ("Technical Skills",              "skills"),
+    ("TECHNICAL SKILLS",              "skills"),
+    ("Core Competencies",             "skills"),
+    ("CORE COMPETENCIES",             "skills"),
+    ("Technical Expertise",           "skills"),
+    # Summary — canonical and variants
+    ("SUMMARY",                       "summary"),
+    ("Summary",                       "summary"),
+    ("PROFILE",                       "summary"),
+    ("Profile",                       "summary"),
+    ("Professional Summary",          "summary"),
+    ("PROFESSIONAL SUMMARY",          "summary"),
+    # Experience — canonical and variants
+    ("Experience",                    "experience"),
+    ("EMPLOYMENT HISTORY",            "experience"),
+    ("Work Experience",               "experience"),
+    # Education
+    ("Education",                     "education"),
+    ("Academic Background",           "education"),
+    # Non-content sections → other
+    ("LANGUAGES",                     "other"),
+    ("Certifications",                "other"),
+    ("CERTIFICATIONS AND TRAINING",   "other"),
+])
+def test_classify_section_heading_normalization(heading, expected):
+    assert _classify_section(heading) == expected, (
+        f"_classify_section({heading!r}) returned {_classify_section(heading)!r}, "
+        f"expected {expected!r}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Diff — non-canonical source headings
+# ---------------------------------------------------------------------------
+
+class TestDiffNonCanonicalHeadings:
+    """diff_resume must correctly handle source resumes with non-canonical headings."""
+
+    def test_skill_heading_produces_before_and_after(self):
+        """Source with 'SKILL' heading → diff has both 'before' and 'after' for Technical Skills.
+
+        This is the regression test for the additions-only bug: when the source heading
+        was 'SKILL' (not 'Skills'), diff_resume couldn't find the source section so
+        'before' was missing and the change appeared as a pure addition.
+        """
+        source = "\n".join([
+            "SKILL",
+            "Java, Python, SQL",
+            "",
+            "Experience",
+            "Engineer | Co",
+            "2022",
+        ])
+        tailored = "\n".join([
+            "Technical Skills",
+            "Java, Python, C#",
+            "",
+            "Experience",
+            "Engineer | Co",
+            "2022",
+        ])
+        diff = diff_resume(source, tailored)
+        skills = next((d for d in diff if d["name"] == "Technical Skills"), None)
+        assert skills is not None, "No Technical Skills entry in diff"
+        assert "before" in skills, (
+            "Expected 'before' key — source had SKILL content but diff shows additions-only. "
+            "Likely cause: 'skill' not in _ALL_SECTION_HEADERS / _SECTION_ALIASES."
+        )
+        assert "after" in skills
+
+    def test_source_without_summary_heading_yields_after_only(self):
+        """Source with no summary heading → after-only is the correct/expected behaviour.
+
+        This test explicitly locks in the intended behaviour so it is not accidentally
+        'fixed' in a way that invents a spurious 'before' value.
+        """
+        source = "\n".join([
+            "John Doe",
+            "Experienced software engineer.",
+            "",
+            "Experience",
+            "Engineer | Co",
+            "2022",
+        ])
+        tailored = "\n".join([
+            "Professional Summary",
+            "Senior backend engineer with cloud expertise.",
+            "",
+            "Experience",
+            "Engineer | Co",
+            "2022",
+        ])
+        diff = diff_resume(source, tailored)
+        summary = next((d for d in diff if d["name"] == "Professional Summary"), None)
+        assert summary is not None, "No Professional Summary entry in diff"
+        # No summary heading in source → no 'before' is intentional
+        assert "before" not in summary, (
+            "Source had no summary section — 'before' should be absent (after-only is correct)"
+        )
+        assert "after" in summary
+
+
+# ---------------------------------------------------------------------------
+# Non-canonical DOCX fixture helpers
+# ---------------------------------------------------------------------------
+
+_NONCANONICAL_LLM = """\
+Professional Summary
+Senior backend engineer specialising in cloud-native infrastructure.
+
+Technical Skills
+Python, Kafka, Kubernetes
+
+Experience
+Senior Engineer | Acme Corp
+2020 – 2023
+- Built scalable cloud-native services.
+- Deployed Kubernetes clusters across three regions.
+
+Education
+BSc Computer Science | University of BC
+2019
+"""
+
+
+def _make_noncanonical_docx(tmp_path: Path) -> str:
+    """Return path to a minimal DOCX with non-canonical headings."""
+    doc = Document()
+    # Non-canonical skills heading (singular all-caps)
+    doc.add_paragraph("SKILL", style="Heading 1")
+    doc.add_paragraph("COBOL, Fortran, SQL")
+    # Other non-canonical sections
+    doc.add_paragraph("LANGUAGES", style="Heading 1")
+    doc.add_paragraph("English, French")
+    doc.add_paragraph("CERTIFICATIONS AND TRAINING", style="Heading 1")
+    doc.add_paragraph("AWS Certified 2021")
+    # Non-canonical experience heading
+    doc.add_paragraph("EMPLOYMENT HISTORY", style="Heading 1")
+    doc.add_paragraph("Senior Engineer | Acme Corp")   # role_header (pipe)
+    doc.add_paragraph("2020 – 2023")                   # role_meta  (year)
+    doc.add_paragraph("- Built legacy backend systems using COBOL.")
+    doc.add_paragraph("- Maintained Fortran codebase.")
+    # Standard education heading
+    doc.add_paragraph("Education", style="Heading 1")
+    doc.add_paragraph("BSc Computer Science | University of BC")
+    doc.add_paragraph("2019")
+    path = tmp_path / "noncanonical.docx"
+    doc.save(str(path))
+    return str(path)
+
+
+# ---------------------------------------------------------------------------
+# Updater — non-canonical source sections
+# ---------------------------------------------------------------------------
+
+class TestUpdaterNonCanonicalSections:
+    """apply_tailored must correctly bind SKILL/LANGUAGES/CERTIFICATIONS/EMPLOYMENT HISTORY."""
+
+    def _orig(self, tmp_path: Path):
+        return parse_docx(_make_noncanonical_docx(tmp_path))
+
+    def test_skill_section_classified_as_skills(self, tmp_path):
+        """SKILL heading must have semantic_type 'skills' — core regression for the fix."""
+        orig = self._orig(tmp_path)
+        skill_sections = [s for s in orig.sections if s.title.upper() == "SKILL"]
+        assert skill_sections, "SKILL section not found in parsed document"
+        assert skill_sections[0].semantic_type == "skills", (
+            f"SKILL classified as '{skill_sections[0].semantic_type}', expected 'skills'. "
+            "Check that 'skill' is in docx_parser._SKILLS_NAMES."
+        )
+
+    def test_skill_not_kept_verbatim(self, tmp_path):
+        """SKILL must be replaced by Technical Skills — not kept as a verbatim orphan."""
+        orig = self._orig(tmp_path)
+        llm = parse_llm_output(_NONCANONICAL_LLM)
+        updated = apply_tailored(orig, llm)
+        section_titles = [s.title for s in updated.sections]
+        assert "SKILL" not in section_titles, (
+            "SKILL section kept verbatim — semantic-type matching to 'Technical Skills' failed"
+        )
+
+    def test_no_duplicate_skills_sections(self, tmp_path):
+        """Technical Skills must appear exactly once — not as both kept SKILL + injected extra."""
+        orig = self._orig(tmp_path)
+        llm = parse_llm_output(_NONCANONICAL_LLM)
+        updated = apply_tailored(orig, llm)
+        skills_sections = [s for s in updated.sections if s.semantic_type == "skills"]
+        assert len(skills_sections) == 1, (
+            f"Expected 1 skills section, got {len(skills_sections)}: "
+            f"{[s.title for s in skills_sections]}"
+        )
+
+    def test_experience_and_education_matched(self, tmp_path):
+        """EMPLOYMENT HISTORY (experience) and Education must still be matched and updated."""
+        orig = self._orig(tmp_path)
+        llm = parse_llm_output(_NONCANONICAL_LLM)
+        updated = apply_tailored(orig, llm)
+        exp = next((s for s in updated.sections if s.semantic_type == "experience"), None)
+        edu = next((s for s in updated.sections if s.semantic_type == "education"), None)
+        assert exp is not None, "No experience section in updater output"
+        assert edu is not None, "No education section in updater output"
+
+
+# ---------------------------------------------------------------------------
+# Compile — end-to-end regression for non-canonical template
+# ---------------------------------------------------------------------------
+
+class TestCompileNonCanonicalTemplate:
+    """compile_resume regression: non-canonical DOCX template + canonical LLM output."""
+
+    def test_old_skill_content_replaced(self, tmp_path):
+        """Old SKILL content (COBOL, Fortran) must be absent; new skills content present."""
+        template = _make_noncanonical_docx(tmp_path)
+        output = str(tmp_path / "compiled.docx")
+        compile_resume(template, _NONCANONICAL_LLM, output)
+        text = read_docx(output)
+        assert "COBOL" not in text, "Old SKILL content (COBOL) still present in compiled output"
+        assert "Fortran" not in text, "Old SKILL content (Fortran) still present in compiled output"
+        assert "Kafka" in text or "Kubernetes" in text, "New Technical Skills content missing"
+
+    def test_no_duplicate_skills_in_output_docx(self, tmp_path):
+        """Compiled DOCX must contain exactly one skills section (no old SKILL + new duplicate)."""
+        template = _make_noncanonical_docx(tmp_path)
+        output = str(tmp_path / "compiled.docx")
+        compile_resume(template, _NONCANONICAL_LLM, output)
+        doc = parse_docx(output)
+        skills_sections = [s for s in doc.sections if s.semantic_type == "skills"]
+        assert len(skills_sections) == 1, (
+            f"Expected 1 skills section in compiled output, found {len(skills_sections)}: "
+            f"{[s.title for s in skills_sections]}"
+        )
+
+    def test_experience_updated_in_output(self, tmp_path):
+        """New experience content must appear in compiled output."""
+        template = _make_noncanonical_docx(tmp_path)
+        output = str(tmp_path / "compiled.docx")
+        compile_resume(template, _NONCANONICAL_LLM, output)
+        text = read_docx(output)
+        assert "Acme Corp" in text, "Experience role header missing from compiled output"
+        assert "cloud-native" in text, "New experience bullet missing from compiled output"
