@@ -11,7 +11,6 @@ import json
 import re
 
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
 
 _STEALTH_INIT_SCRIPT = """
 Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
@@ -37,17 +36,25 @@ _STEALTH_UA = (
 def _get_rendered_html_stealth(url):
     """Render a page with lightweight anti-bot-detection measures.
 
-    Overrides the most common JavaScript fingerprinting signals
-    (navigator.webdriver, chrome object, plugins, permissions) and uses a
-    realistic desktop user-agent.
-
-    Channel priority:
-      1. 'chrome' — the locally installed Google Chrome binary.  Chrome uses
-         BoringSSL whose TLS fingerprint (JA3) matches real-user traffic more
-         closely than the bundled Playwright Chromium, which helps against
-         TLS-level bot detection (e.g. DataDome, Cloudflare).
-      2. Default Playwright Chromium — fallback if Chrome is not installed.
+    Attempt order:
+      1. curl_cffi with Chrome TLS impersonation — fastest path; bypasses
+         DataDome (TLS/JA3 fingerprint match).  No JS execution, so only works
+         when the target page is server-side rendered.
+      2. Playwright with locally installed Google Chrome — Chrome's BoringSSL
+         TLS fingerprint also helps against TLS-level checks; JS is executed so
+         lazily-loaded content is available.
+      3. Playwright with bundled Chromium — last resort if Chrome is absent.
     """
+    # --- attempt 1: curl_cffi (no JS, but bypasses DataDome) ---
+    try:
+        from curl_cffi import requests as cffi_requests
+        html = cffi_requests.get(url, impersonate="chrome124", timeout=20).text
+        if not _is_bot_blocked(html):
+            return html
+    except Exception:
+        pass
+
+    # --- attempts 2 & 3: Playwright (JS execution, Chrome TLS or Chromium) ---
     def _launch(p, channel=None):
         launch_kwargs = dict(
             headless=True,
@@ -65,11 +72,15 @@ def _get_rendered_html_stealth(url):
         ctx.add_init_script(_STEALTH_INIT_SCRIPT)
         page = ctx.new_page()
         page.goto(url, timeout=60000)
-        page.wait_for_load_state("networkidle")
+        try:
+            page.wait_for_load_state("networkidle", timeout=15000)
+        except Exception:
+            pass
         html = page.content()
         browser.close()
         return html
 
+    from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         try:
             return _launch(p, channel="chrome")
@@ -94,6 +105,7 @@ def _is_bot_blocked(html):
         "just a moment",           # Cloudflare JS challenge
         "enable javascript and cookies",
         "checking your browser",
+        "blocked - indeed.com",        # Indeed custom block page
     )
     return any(s in lower for s in signals)
 

@@ -1,0 +1,2 @@
+# Ignore generated run artifacts (large PNGs, PDFs, DOCXs)
+runs/

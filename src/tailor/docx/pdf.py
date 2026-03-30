@@ -118,6 +118,31 @@ def _para_spacing(para):
     return (before[0], after[0], lh[0])
 
 
+def _get_cell_bg(tc_elem) -> str | None:
+    """Return fill color (6-char hex RRGGBB) from a w:tc element, or None."""
+    tcPr = tc_elem.find(f"{{{_W}}}tcPr")
+    if tcPr is None:
+        return None
+    shd = tcPr.find(f"{{{_W}}}shd")
+    if shd is None:
+        return None
+    fill = shd.get(f"{{{_W}}}fill", "")
+    if fill and fill.lower() not in ("auto", "none") and len(fill) == 6:
+        return fill
+    return None
+
+
+def _get_tbl_col_widths_twips(tbl_elem) -> list[int]:
+    """Return per-column widths in twips from a w:tbl element's w:tblGrid."""
+    tblGrid = tbl_elem.find(f"{{{_W}}}tblGrid")
+    if tblGrid is None:
+        return []
+    return [
+        int(col.get(f"{{{_W}}}w", "1440"))
+        for col in tblGrid.findall(f"{{{_W}}}gridCol")
+    ]
+
+
 def _docx_to_html(docx_path, font_face_css=""):
     """Convert a .docx to an HTML string, preserving template paragraph styles.
 
@@ -126,11 +151,13 @@ def _docx_to_html(docx_path, font_face_css=""):
       Heading 2          → <h2>  (section headers)
       Normal + bold      → <p class="exp-header">  (experience entry headers)
       Body Text          → <p class="body-text">   (dates, contact)
-      List Paragraph     → <p class="bullet-item"> (bullet points)
+      List Paragraph / ListBullet → <p class="bullet-item"> (bullet points)
       Normal             → <p>
     Run-level bold/italic/color/size is preserved.
     Paragraph alignment, indentation, and spacing are read from the paragraph
     XML (falling back to the style chain) and applied as inline styles.
+    Table elements (e.g. two-column PDF-sourced layout) are rendered as HTML
+    tables so their content is not silently dropped.
     """
     from docx.enum.text import WD_ALIGN_PARAGRAPH
 
@@ -232,6 +259,19 @@ def _docx_to_html(docx_path, font_face_css=""):
             except Exception:
                 pass
 
+        # Paragraph background shading (used by PDF-sourced DOCX paragraphs)
+        para_bg: str | None = None
+        try:
+            pPr = para._p.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                shd = pPr.find(f"{{{_W}}}shd")
+                if shd is not None:
+                    fill = shd.get(f"{{{_W}}}fill", "")
+                    if fill and fill.lower() not in ("auto", "none") and len(fill) == 6:
+                        para_bg = fill
+        except Exception:
+            pass
+
         def _style_attr(use_padding=False):
             css = {}
             a = _ALIGN_MAP.get(align)
@@ -257,6 +297,8 @@ def _docx_to_html(docx_path, font_face_css=""):
                 css["line-height"] = (
                     str(line_h) if isinstance(line_h, str) else f"{line_h:.3f}"
                 )
+            if para_bg:
+                css["background-color"] = f"#{para_bg}"
             return (
                 ' style="' + "; ".join(f"{k}:{v}" for k, v in css.items()) + '"'
                 if css else ""
@@ -265,11 +307,13 @@ def _docx_to_html(docx_path, font_face_css=""):
         if not inner.strip():
             return f'<p class="spacer"{_style_attr()}>&nbsp;</p>'
 
+        # "list" or "bullet" anywhere in the style name → render as bullet item
+        sn_lower = style_name.lower()
         if style_name in ("Title", "Heading 1"):
             return f"<h1{_style_attr()}>{inner}</h1>"
         elif style_name == "Heading 2":
             return f"<h2{_style_attr()}>{inner}</h2>"
-        elif style_name == "List Paragraph":
+        elif "list" in sn_lower or "bullet" in sn_lower:
             return f'<p class="bullet-item"{_style_attr(use_padding=True)}>&#x2022;&#x00A0;{inner}</p>'
         elif style_name == "Body Text":
             return f'<p class="body-text"{_style_attr()}>{inner}</p>'
@@ -278,11 +322,57 @@ def _docx_to_html(docx_path, font_face_css=""):
         else:
             return f"<p{_style_attr()}>{inner}</p>"
 
+    def _render_table_html(tbl_elem, out_lines):
+        """Render a w:tbl lxml element as an HTML table into out_lines."""
+        from docx.text.paragraph import Paragraph as _Paragraph
+
+        col_twips = _get_tbl_col_widths_twips(tbl_elem)
+        total_twips = sum(col_twips) if col_twips else 1
+
+        out_lines.append(
+            '<table style="width:100%;border-collapse:collapse;border:none" '
+            'cellpadding="0" cellspacing="0">'
+        )
+        if col_twips:
+            out_lines.append("<colgroup>")
+            for cw in col_twips:
+                pct = cw / total_twips * 100
+                out_lines.append(f'<col style="width:{pct:.1f}%">')
+            out_lines.append("</colgroup>")
+
+        for tr in tbl_elem.findall(f"{{{_W}}}tr"):
+            out_lines.append("<tr>")
+            for tc in tr.findall(f"{{{_W}}}tc"):
+                bg = _get_cell_bg(tc)
+                td_style = "vertical-align:top;padding:0 3pt;"
+                if bg:
+                    td_style += f"background-color:#{bg};"
+                out_lines.append(f'<td style="{td_style}">')
+                for child in tc:
+                    c_local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+                    if c_local == "p":
+                        tag = para_html(_Paragraph(child, doc))
+                        if tag is not None:
+                            out_lines.append(tag)
+                    elif c_local == "tbl":
+                        _render_table_html(child, out_lines)
+                out_lines.append("</td>")
+            out_lines.append("</tr>")
+
+        out_lines.append("</table>")
+
+    # Iterate body children in document order so tables are not skipped.
+    # doc.paragraphs only exposes top-level paragraphs and misses table cells.
     lines = []
-    for para in doc.paragraphs:
-        tag = para_html(para)
-        if tag is not None:
-            lines.append(tag)
+    from docx.text.paragraph import Paragraph as _Paragraph
+    for child in doc.element.body:
+        c_local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+        if c_local == "p":
+            tag = para_html(_Paragraph(child, doc))
+            if tag is not None:
+                lines.append(tag)
+        elif c_local == "tbl":
+            _render_table_html(child, lines)
 
     body = "\n".join(lines)
     font_face_block = (font_face_css + "\n") if font_face_css else ""
@@ -504,6 +594,82 @@ def _docx_to_pdf_docker(docx_path, docker_image=DOCKER_IMAGE_DEFAULT):
     print(f"PDF saved to {pdf_dest}")
 
 
+def _find_libreoffice_exe() -> str:
+    """Return the LibreOffice executable path, checking PATH and Windows defaults."""
+    import platform
+    import shutil
+
+    # Check PATH first (covers Linux/macOS and Windows if in PATH)
+    for name in ("soffice", "libreoffice"):
+        found = shutil.which(name)
+        if found:
+            return found
+
+    # Windows common installation paths
+    if platform.system() == "Windows":
+        for base in (
+            r"C:\Program Files\LibreOffice\program",
+            r"C:\Program Files (x86)\LibreOffice\program",
+        ):
+            candidate = os.path.join(base, "soffice.exe")
+            if os.path.exists(candidate):
+                return candidate
+
+    return "libreoffice"  # fallback — will raise FileNotFoundError if absent
+
+
+def _docx_to_pdf_subprocess(docx_path):
+    """Convert a .docx to .pdf using LibreOffice headless as a local subprocess.
+
+    LibreOffice must be installed (in PATH or at the standard Windows location).
+    Produces a .pdf file next to the source DOCX.
+    """
+    import subprocess
+    import tempfile
+    import uuid
+    from pathlib import Path
+
+    docx_abs = os.path.abspath(docx_path)
+    out_dir   = os.path.dirname(docx_abs)
+    pdf_dest  = os.path.splitext(docx_abs)[0] + ".pdf"
+
+    lo_exe = _find_libreoffice_exe()
+    # Each invocation gets its own user-profile directory so that concurrent
+    # requests (e.g. multiple FastAPI workers) don't share the ~/.config/libreoffice
+    # lock and silently drop conversions.
+    # Path.as_uri() produces the correct file:/// URI on both Windows and Linux.
+    profile_dir = os.path.join(tempfile.gettempdir(), f"lo_profile_{uuid.uuid4().hex}")
+    profile_uri = Path(profile_dir).as_uri()
+    cmd = [
+        lo_exe, "--headless",
+        f"-env:UserInstallation={profile_uri}",
+        "--convert-to", "pdf",
+        docx_abs,
+        "--outdir", out_dir,
+    ]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    except FileNotFoundError:
+        raise RuntimeError(
+            "LibreOffice executable not found. Install LibreOffice and ensure "
+            "it is available in PATH — or use method='local' for the built-in converter."
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("LibreOffice DOCX→PDF conversion timed out after 120 s.")
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "(no output)").strip()
+        raise RuntimeError(
+            f"LibreOffice DOCX→PDF conversion failed (exit {result.returncode}):\n{detail}"
+        )
+
+    if not os.path.exists(pdf_dest):
+        raise RuntimeError(
+            f"Conversion appeared to succeed but PDF was not found at:\n{pdf_dest}"
+        )
+
+
 def _docx_to_pdf_local(docx_path):
     """Convert a .docx to .pdf using xhtml2pdf (no external dependencies).
 
@@ -535,9 +701,13 @@ def docx_to_pdf(docx_path, method="docker", docker_image=DOCKER_IMAGE_DEFAULT):
     ----------
     docx_path : str
         Path to the source .docx file.
-    method : {'docker', 'local'}
+    method : {'docker', 'subprocess', 'local'}
         ``'docker'`` (default) — high-fidelity conversion via LibreOffice
         headless in Docker.  Requires Docker Desktop to be running.
+
+        ``'subprocess'`` — call ``libreoffice`` directly as a subprocess;
+        requires LibreOffice installed in PATH (available in the backend
+        container).
 
         ``'local'`` — built-in Python conversion via xhtml2pdf; no external
         dependencies but formatting fidelity is lower.
@@ -546,7 +716,173 @@ def docx_to_pdf(docx_path, method="docker", docker_image=DOCKER_IMAGE_DEFAULT):
     """
     if method == "docker":
         _docx_to_pdf_docker(docx_path, docker_image=docker_image)
+    elif method == "subprocess":
+        _docx_to_pdf_subprocess(docx_path)
     elif method == "local":
         _docx_to_pdf_local(docx_path)
     else:
-        raise ValueError(f"Unknown method {method!r}.  Use 'docker' or 'local'.")
+        raise ValueError(f"Unknown method {method!r}.  Use 'docker', 'subprocess', or 'local'.")
+
+
+# ---------------------------------------------------------------------------
+# PDF → DOCX conversion
+# ---------------------------------------------------------------------------
+
+def _pdf_to_docx_subprocess(pdf_path):
+    """Convert a .pdf to .docx using libreoffice subprocess.
+
+    LibreOffice must be installed on the host system (available in PATH).
+    Produces a .docx file next to the source PDF.
+
+    Parameters
+    ----------
+    pdf_path : str
+        Absolute path to the source .pdf file.
+
+    Returns
+    -------
+    str
+        Path to the generated .docx file.
+
+    Raises
+    ------
+    RuntimeError
+        If libreoffice is not found, times out, or conversion fails.
+    """
+    import subprocess
+
+    pdf_abs = os.path.abspath(pdf_path)
+    out_dir = os.path.dirname(pdf_abs)
+    docx_dest = os.path.splitext(pdf_abs)[0] + ".docx"
+
+    # --infilter forces LibreOffice to open the PDF as a Writer document
+    # (without it, LibreOffice opens PDFs as Draw documents, which cannot
+    # be exported to DOCX format).  The filter name must be quoted as a
+    # single argument — no space between flag and value.
+    cmd = [
+        "libreoffice", "--headless",
+        "--infilter=writer_pdf_import",
+        "--convert-to", "docx:MS Word 2007 XML",
+        pdf_abs,
+        "--outdir", out_dir,
+    ]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    except FileNotFoundError:
+        raise RuntimeError(
+            "LibreOffice executable not found.  Install LibreOffice and ensure "
+            "it is available in PATH — or use method='docker' for Docker-based conversion."
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("LibreOffice PDF→DOCX conversion timed out after 120 s.")
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "(no output)").strip()
+        raise RuntimeError(
+            f"LibreOffice PDF→DOCX conversion failed (exit {result.returncode}):\n{detail}"
+        )
+
+    if not os.path.exists(docx_dest):
+        raise RuntimeError(
+            f"Conversion appeared to succeed but DOCX was not found at:\n{docx_dest}"
+        )
+
+    return docx_dest
+
+
+def _pdf_to_docx_docker(pdf_path, docker_image=DOCKER_IMAGE_DEFAULT):
+    """Convert a .pdf to .docx using LibreOffice headless inside Docker.
+
+    Mirrors the approach used by _docx_to_pdf_docker().
+
+    Parameters
+    ----------
+    pdf_path : str
+        Path to the source .pdf file.
+    docker_image : str
+        Docker image to run (must have LibreOffice installed).
+
+    Returns
+    -------
+    str
+        Path to the generated .docx file.
+    """
+    import platform
+    import shlex
+    import subprocess
+
+    pdf_abs  = os.path.abspath(pdf_path)
+    pdf_dir  = os.path.dirname(pdf_abs)
+    pdf_name = os.path.basename(pdf_abs)
+    docx_dest = os.path.splitext(pdf_abs)[0] + ".docx"
+
+    def _dp(p):
+        return p.replace("\\", "/")
+
+    volumes = [f"{_dp(pdf_dir)}:/data"]
+
+    cmd = ["docker", "run", "--rm"]
+    for v in volumes:
+        cmd += ["--volume", v]
+    cmd.append(docker_image)
+
+    quoted = shlex.quote(f"/data/{pdf_name}")
+    cmd += [
+        "libreoffice", "--headless",
+        "--infilter=writer_pdf_import",
+        "--convert-to", "docx:MS Word 2007 XML",
+        f"/data/{pdf_name}", "--outdir", "/data",
+    ]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+    except FileNotFoundError:
+        raise RuntimeError(
+            "Docker executable not found.  Install Docker Desktop, ensure it is "
+            "running, then retry — or use method='subprocess' for direct LibreOffice."
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("LibreOffice Docker PDF→DOCX conversion timed out after 180 s.")
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "(no output)").strip()
+        raise RuntimeError(
+            f"LibreOffice Docker PDF→DOCX conversion failed (exit {result.returncode}):\n{detail}"
+        )
+
+    if not os.path.exists(docx_dest):
+        raise RuntimeError(
+            f"Conversion appeared to succeed but DOCX was not found at:\n{docx_dest}"
+        )
+
+    return docx_dest
+
+
+def pdf_to_docx(pdf_path, method="subprocess", docker_image=DOCKER_IMAGE_DEFAULT):
+    """Convert a .pdf to .docx next to the source file.
+
+    Parameters
+    ----------
+    pdf_path : str
+        Path to the source .pdf file.
+    method : {'subprocess', 'docker'}
+        ``'subprocess'`` (default) — call ``libreoffice`` directly; requires
+        LibreOffice to be installed on the host system.
+
+        ``'docker'`` — LibreOffice headless inside Docker; portable but
+        requires Docker Desktop to be running.
+    docker_image : str
+        Docker image to use when *method* is ``'docker'``.
+
+    Returns
+    -------
+    str
+        Path to the generated .docx file (next to the source PDF).
+    """
+    if method == "subprocess":
+        return _pdf_to_docx_subprocess(pdf_path)
+    elif method == "docker":
+        return _pdf_to_docx_docker(pdf_path, docker_image=docker_image)
+    else:
+        raise ValueError(f"Unknown method {method!r}.  Use 'subprocess' or 'docker'.")

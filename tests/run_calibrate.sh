@@ -2,12 +2,12 @@
 # Run calibration mode for ai-resume-tailor
 # Sends the unmodified master resume/cover letter to assessment to establish a baseline.
 # Usage: ./run_calibrate.sh [--positions FILE] [--model MODEL] [--temperature T] [--workers N] [--max_positions N] [--out DIR] [--cache_dir DIR]
-# Defaults: positions=tests/data/positions.txt, model=gpt-5.2, temperature=0.5
+# Defaults: positions=benchmark/positions.txt, model=gpt-5.2, temperature=0.5
 
 set -euo pipefail
 
 # Defaults
-POSITIONS="tests/data/positions.txt"
+POSITIONS="benchmark/positions.txt"
 MODEL="gpt-5.2"
 TEMPERATURE="0.5"
 WORKERS=""

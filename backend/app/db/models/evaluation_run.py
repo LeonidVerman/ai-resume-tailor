@@ -1,0 +1,43 @@
+"""
+backend/app/db/models/evaluation_run.py
+
+Evaluation run — stores quality scores for a completed generation run.
+"""
+
+from decimal import Decimal
+
+from sqlalchemy import BigInteger, ForeignKey, Numeric
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from backend.app.db.base import Base, CreatedAtMixin
+
+
+class EvaluationRun(Base, CreatedAtMixin):
+    __tablename__ = "evaluation_runs"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    generation_run_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("generation_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # Individual score columns (0.0 – 1.0; null if not evaluated)
+    truthfulness_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4), nullable=True)
+    role_fit_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4), nullable=True)
+    clarity_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4), nullable=True)
+    seniority_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4), nullable=True)
+    integrated_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4), nullable=True)
+
+    # Relationships
+    generation_run: Mapped["GenerationRun"] = relationship(  # noqa: F821
+        "GenerationRun", back_populates="evaluation_runs"
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<EvaluationRun id={self.id!r} "
+            f"generation_run_id={self.generation_run_id!r} "
+            f"integrated={self.integrated_score!r}>"
+        )

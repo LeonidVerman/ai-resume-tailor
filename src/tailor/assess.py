@@ -23,21 +23,11 @@ from pathlib import Path
 from typing import Any
 
 from tailor.config import ASSESS_MODEL, ASSESS_TEMPERATURE, COVER_TEMPLATE, RESUME_TEMPLATE
+from tailor.core_generation.llm import get_client, tailor_documents
 from tailor.debug import save_debug_data
 from tailor.docx.template_fill import read_docx
 from tailor.job import JobData
 from tailor.job.scrape import scrape_job_url
-from tailor.llm import (
-    PlanParseError,
-    PlanValidationError,
-    _run_schema_gate,
-    get_client,
-    plan_tailoring,
-    tailor_documents,
-    tailor_documents_with_plan,
-    validate_plan,
-)
-from tailor.plan_validator import validate_plan_extended
 from tailor.prompts import _load_candidate_profile, _load_prompt
 
 logger = logging.getLogger(__name__)
@@ -93,115 +83,27 @@ def load_positions(path: str) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
-# Per-position tailoring (Phase 1 + Phase 2, single attempt each)
+# Per-position tailoring
 # ---------------------------------------------------------------------------
 
 def _tailor_position(
     job: JobData,
     resume_template: str,
     cover_template: str,
-    simple: bool = False,
-) -> tuple[Any, dict | None, dict | None, dict | None]:
-    """Run Phase 1 → Phase 2 for one position (or single-pass when simple=True).
+) -> Any:
+    """Run single-pass tailoring for one position.
 
     Returns
     -------
     result : TailorResult
-    plan : validated plan dict, or None if Phase 1 failed / skipped
-    phase2_debug : Phase 2 debug meta dict, or None if unavailable
-    phase1_debug : Phase 1 debug dict (model, usage, raw_response, plan_json), or None
     """
-    if simple:
-        result, _ = tailor_documents(job, resume_template, cover_template)
-        return result, None, None, None
-
-    try:
-        raw_plan, p1_messages, p1_meta = plan_tailoring(job, resume_template, cover_template)
-    except (PlanParseError, Exception) as exc:
-        logger.warning("Phase 1 failed for %s: %s", job.source_url, exc)
-        result, _ = tailor_documents(job, resume_template, cover_template)
-        return result, None, None, None
-
-    gate_errors = _run_schema_gate(raw_plan)
-    if gate_errors:
-        logger.warning("Phase 1 schema invalid for %s: %s", job.source_url, gate_errors[0])
-        result, _ = tailor_documents(job, resume_template, cover_template)
-        return result, None, None, None
-
-    try:
-        validate_plan(raw_plan)
-    except PlanValidationError as exc:
-        logger.warning("Phase 1 validation failed for %s: %s", job.source_url, exc)
-        result, _ = tailor_documents(job, resume_template, cover_template)
-        return result, None, None, None
-
-    extended_errors = validate_plan_extended(raw_plan)
-    if extended_errors:
-        logger.info(
-            "Phase 1 extended validation warnings (%d) for %s",
-            len(extended_errors), job.source_url,
-        )
-
-    plan = raw_plan
-    result, _, phase2_debug = tailor_documents_with_plan(plan, job, resume_template, cover_template)
-
-    phase1_debug = {
-        "llm_request": p1_messages,
-        "llm_response_raw": p1_meta.get("raw_response") if p1_meta else None,
-        "plan_json": plan,
-        "model": p1_meta.get("model") if p1_meta else None,
-        "usage": p1_meta.get("usage") if p1_meta else None,
-        "schema_errors": [],
-        "validation_errors": [],
-        "prompt_used": p1_meta.get("prompt_used") if p1_meta else None,
-    }
-
-    return result, plan, phase2_debug, phase1_debug
+    result, _ = tailor_documents(job, resume_template, cover_template)
+    return result
 
 
 # ---------------------------------------------------------------------------
 # Assessment input construction
 # ---------------------------------------------------------------------------
-
-def _extract_validator_findings(phase2_debug: dict | None) -> dict:
-    """Pull structured constraint findings from the last Phase 2 attempt."""
-    _empty: dict = {
-        "unsafe_noun_hits": [],
-        "missing_skills": [],
-        "missing_metrics": [],
-        "validation_ok": True,
-        "error_count": 0,
-    }
-    if not phase2_debug:
-        return _empty
-    attempts = phase2_debug.get("attempts", [])
-    if not attempts:
-        return _empty
-    last_report: dict = attempts[-1].get("validation_report", {})
-    global_issues: dict = last_report.get("repair_brief", {}).get("global_issues", {})
-    return {
-        "unsafe_noun_hits": global_issues.get("unsafe_nouns_in_resume", []),
-        "missing_skills": global_issues.get("missing_skills", []),
-        "missing_metrics": global_issues.get("missing_metrics", []),
-        "validation_ok": last_report.get("ok", True),
-        "error_count": len(last_report.get("errors", [])),
-    }
-
-
-def _extract_writer_packet_summary(phase2_debug: dict | None, plan: dict | None) -> dict:
-    """Pull the writer-packet fields most useful for assessment context."""
-    wp: dict = (phase2_debug or {}).get("writer_packet", {})
-    return {
-        "role_level": (plan or {}).get("role_level"),
-        "must_include_skills": wp.get("must_include_skills", []),
-        "must_keep_metrics": wp.get("must_keep_metrics", []),
-        "unsafe_jd_nouns": wp.get("unsafe_jd_nouns", []),
-        "must_surface_arch_mechanisms": wp.get(
-            "arch_mechanisms_primary", wp.get("must_surface_mechanisms", [])
-        ),
-        "density_targets": wp.get("density_targets", {}),
-    }
-
 
 def build_assessment_input(
     job: JobData,
@@ -209,8 +111,6 @@ def build_assessment_input(
     master_resume: str,
     master_cover: str,
     profile_str: str,
-    phase2_debug: dict | None,
-    plan: dict | None,
 ) -> dict:
     """Build the structured payload sent to the assessment LLM."""
     return {
@@ -223,8 +123,14 @@ def build_assessment_input(
         "candidate_profile_json": profile_str,
         "generated_resume_text": result.resume or "",
         "generated_cover_letter_text": result.cover_letter or "",
-        "writer_packet_summary": _extract_writer_packet_summary(phase2_debug, plan),
-        "validator_findings": _extract_validator_findings(phase2_debug),
+        "writer_packet_summary": {},
+        "validator_findings": {
+            "unsafe_noun_hits": [],
+            "missing_skills": [],
+            "missing_metrics": [],
+            "validation_ok": True,
+            "error_count": 0,
+        },
     }
 
 
@@ -566,7 +472,6 @@ def _process_one_position(
     calibration_index: tuple[dict[str, str], dict[str, str]] | None = None,
     calibration_errors: list[str] | None = None,
     calibration_errors_lock: threading.Lock | None = None,
-    simple: bool = False,
 ) -> dict | None:
     """Scrape → tailor → assess one position URL.  Returns an entry dict or None on failure."""
 
@@ -585,7 +490,7 @@ def _process_one_position(
     _print(f"  [{idx}] Company: {job.company}  |  Role: {job.job_title}")
 
     try:
-        result, plan, phase2_debug, phase1_debug = _tailor_position(job, resume_template, cover_template, simple=simple)
+        result = _tailor_position(job, resume_template, cover_template)
     except Exception as exc:
         _print(f"  [{idx}] Skipping — tailoring failed: {exc}")
         return None
@@ -596,15 +501,13 @@ def _process_one_position(
         {"resume": result.resume, "cover_letter": result.cover_letter},
         llm_request=None,
         diff=None,
-        phase1=phase1_debug,
-        phase2=phase2_debug,
     )
 
     # Determine what resume/cover letter text to send to the assessor.
     # calibration_index  → use pre-generated sample docx files
     # calibrate          → use master template (existing behaviour)
     # otherwise          → use the tailored output
-    from tailor.llm import TailorResult as _TailorResult  # local to avoid circular at module level
+    from tailor.core_generation.llm import TailorResult as _TailorResult
 
     if calibration_index is not None:
         resume_idx, cover_idx = calibration_index
@@ -644,7 +547,7 @@ def _process_one_position(
         _print(f"  [{idx}] (using cached assessment)")
     else:
         assessment_input = build_assessment_input(
-            job, assessment_result, resume_template, cover_template, profile_str, phase2_debug, plan
+            job, assessment_result, resume_template, cover_template, profile_str
         )
         try:
             raw_assessment = _call_assess_llm(assessment_input, model, temperature)
@@ -679,6 +582,74 @@ def _process_one_position(
 
 
 # ---------------------------------------------------------------------------
+# Single-document scoring (used by the SaaS backend evaluation service)
+# ---------------------------------------------------------------------------
+
+def score_single(resume: str, cover_letter: str) -> dict:
+    """Score one resume+cover-letter pair without job-description context.
+
+    Returns a dict with keys:
+        truthfulness, role_fit, clarity, seniority, integrated
+    All values are floats in [0.0, 1.0] (LLM 1-10 scores divided by 10),
+    or None if the LLM call fails or a key is missing.
+    """
+    assessment_input = {
+        "position_url": "",
+        "company": "",
+        "role_title": "",
+        "job_description_text": "",
+        "master_resume_text": "",
+        "master_cover_letter_text": "",
+        "candidate_profile_json": "",
+        "generated_resume_text": resume,
+        "generated_cover_letter_text": cover_letter,
+        "writer_packet_summary": {},
+        "validator_findings": {
+            "unsafe_noun_hits": [],
+            "missing_skills": [],
+            "missing_metrics": [],
+            "validation_ok": True,
+            "error_count": 0,
+        },
+    }
+
+    raw = _call_assess_llm(assessment_input, ASSESS_MODEL, ASSESS_TEMPERATURE)
+    raw_scores = raw.get("scores", {})
+
+    def _get(key: str) -> float | None:
+        entry = raw_scores.get(key)
+        if isinstance(entry, dict):
+            val = entry.get("score")
+            if isinstance(val, (int, float)):
+                return round(float(val) / 10.0, 4)
+        return None
+
+    truthfulness = _get("truthfulness")
+    role_fit = _get("role_fit")
+    clarity = _get("clarity_impact")
+    seniority = _get("seniority_positioning")
+
+    flat = {k: v for k, v in {
+        "truthfulness": truthfulness,
+        "role_fit": role_fit,
+        "clarity": clarity,
+        "seniority": seniority,
+    }.items() if v is not None}
+
+    integrated = (
+        round(sum(flat.values()) / len(flat), 4) if flat else None
+    )
+
+    return {
+        "truthfulness": truthfulness,
+        "role_fit": role_fit,
+        "clarity": clarity,
+        "seniority": seniority,
+        "integrated": integrated,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main pipeline
 # ---------------------------------------------------------------------------
 
@@ -697,7 +668,6 @@ def run_assess_pipeline(
     weights: dict[str, float] | None = None,
     calibrate: bool = False,
     calibrate_data: str | None = None,
-    simple: bool = False,
 ) -> dict:
     """Score tailored documents for each URL in *positions_file*.
 
@@ -772,8 +742,6 @@ def run_assess_pipeline(
         )
     elif calibrate:
         print("[CALIBRATION MODE] Master resume/cover letter will be sent to assessment.")
-    if simple:
-        print("[SIMPLE MODE] Single-pass generation (no Phase 1 plan).")
     print(
         f"Assessing {len(urls)} position(s) with model {model} "
         f"using {effective_workers} parallel worker(s)..."
@@ -810,7 +778,6 @@ def run_assess_pipeline(
                 cal_index,
                 calibration_errors if cal_index is not None else None,
                 calibration_errors_lock if cal_index is not None else None,
-                simple,
             )
             for i, url in enumerate(urls, 1)
         ]

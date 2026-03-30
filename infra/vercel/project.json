@@ -1,0 +1,8 @@
+{
+  "_comment": "Vercel project configuration for the Next.js frontend. Status: PLACEHOLDER — not yet implemented (Phase 11).",
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "rootDirectory": "frontend"
+}

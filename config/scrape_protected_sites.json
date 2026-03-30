@@ -1,0 +1,7 @@
+{
+  "scrape_protected_sites": [
+    { "domain": "wellfound.com", "label": "Wellfound" },
+    { "domain": "hiring.cafe", "label": "Hiring Cafe" },
+    { "domain": "indeed.com", "label": "Indeed" }
+  ]
+}

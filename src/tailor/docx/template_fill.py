@@ -255,175 +255,33 @@ def read_docx(file_path):
 
 
 def save_doc_from_template(template_path, output_path, new_text):
-    """Modify a copy of the template document, replacing text while preserving formatting.
+    """Render a tailored DOCX from a master resume template and LLM output text.
 
-    For the Experience section, entries are matched individually by their index so that
-    extra bullets added by the LLM are inserted with the correct List Paragraph style,
-    not cloned from whatever paragraph happens to follow in the template.
+    For resume documents the compiler pipeline is used:
+    - Parses the template into a ResumeDocument IR
+    - Parses the LLM plain text into structured sections
+    - Matches sections/roles and applies tailored content
+    - Renders a fresh DOCX preserving all paragraph formatting
 
-    All other sections use blank-line grouping (same as the original algorithm).
+    For cover letters (no experience section detected) the original
+    _apply_groups algorithm is used as a fallback.
     """
     new_text = _sanitize_xml_text(new_text)
-    doc = Document(template_path)
-    paras = doc.paragraphs
 
-    def is_exp_entry_header(p):
-        """Experience entry headers use Normal style with bold text and contain '|'."""
-        return (
-            p.style.name == "Normal"
-            and bool(p.text.strip())
-            and "|" in p.text
-            and any(r.bold for r in p.runs)
-        )
+    # Detect whether this is a resume (has an experience section) or a cover letter.
+    # We inspect the template quickly before deciding which path to take.
+    from tailor.compiler.docx_parser import parse_docx
+    try:
+        parsed = parse_docx(template_path)
+        has_experience = any(s.semantic_type == "experience" for s in parsed.sections)
+    except Exception:
+        has_experience = False
 
-    # --- Find Experience section boundaries in the template ---
-    exp_h2_idx = None
-    post_exp_h2_idx = None
-    for i, p in enumerate(paras):
-        if p.style.name == "Heading 2" and "experience" in p.text.lower():
-            exp_h2_idx = i
-        elif exp_h2_idx is not None and p.style.name == "Heading 2" and post_exp_h2_idx is None:
-            post_exp_h2_idx = i
-    if post_exp_h2_idx is None:
-        post_exp_h2_idx = len(paras)
-
-    # --- Find Experience section boundaries in LLM text ---
-    llm_lines = new_text.split("\n")
-    llm_exp_idx = None
-    llm_post_exp_idx = None
-    for i, line in enumerate(llm_lines):
-        s = line.strip()
-        if s == "Experience":
-            llm_exp_idx = i
-        elif llm_exp_idx is not None and s in _SECTION_HEADERS and llm_post_exp_idx is None:
-            llm_post_exp_idx = i
-    if llm_post_exp_idx is None:
-        llm_post_exp_idx = len(llm_lines)
-
-    # --- Fall back to the original full-document algorithm if sections not found ---
-    if exp_h2_idx is None or llm_exp_idx is None:
-        _apply_groups(paras, new_text, doc)
+    if has_experience:
+        from tailor.compiler.pipeline import compile_resume
+        compile_resume(template_path, new_text, output_path)
+    else:
+        # Cover letter path: use blank-line group filling
+        doc = Document(template_path)
+        _apply_groups(doc.paragraphs, new_text, doc)
         doc.save(output_path)
-        return
-
-    # --- Pre-experience section ---
-    # Skip name + contact paragraphs (before the first Heading 2) entirely — they
-    # contain hyperlinks whose XML persists even after replace_paragraph_text, which
-    # causes email/LinkedIn to appear duplicated.  Only update the sections that
-    # follow (Professional Summary and onwards).
-    first_h2_idx = next(
-        (i for i, p in enumerate(paras) if p.style.name == "Heading 2"),
-        exp_h2_idx,
-    )
-    llm_first_h2_idx = next(
-        (
-            i for i, line in enumerate(llm_lines)
-            if line.strip() and line.strip() == paras[first_h2_idx].text.strip()
-        ),
-        0,
-    )
-    _apply_groups(
-        paras[first_h2_idx:exp_h2_idx],
-        "\n".join(llm_lines[llm_first_h2_idx:llm_exp_idx]),
-        doc,
-    )
-
-    # --- "Experience" heading ---
-    replace_paragraph_text(paras[exp_h2_idx], llm_lines[llm_exp_idx].strip())
-
-    # --- Parse template experience entries ---
-    # Each entry starts at a Normal+bold paragraph and ends just before the next one.
-    tmpl_entries = []
-    cur = None
-    for i in range(exp_h2_idx + 1, post_exp_h2_idx):
-        p = paras[i]
-        if is_exp_entry_header(p):
-            if cur is not None:
-                tmpl_entries.append(cur)
-            cur = [p]
-        elif cur is not None:
-            cur.append(p)  # date, bullets, and any blanks within the entry
-    if cur is not None:
-        tmpl_entries.append(cur)
-
-    # --- Parse LLM experience entries ---
-    def is_llm_exp_hdr(line):
-        s = line.strip()
-        return bool(s) and "|" in s and not s.startswith("-")
-
-    llm_entries = []
-    cur = None
-    for line in llm_lines[llm_exp_idx + 1:llm_post_exp_idx]:
-        s = line.strip()
-        if not s:
-            continue  # skip blank lines between entries
-        if is_llm_exp_hdr(line):
-            if cur is not None:
-                llm_entries.append(cur)
-            cur = [s]
-        elif cur is not None:
-            cur.append(s[2:] if s.startswith("- ") else s)
-    if cur is not None:
-        llm_entries.append(cur)
-
-    # --- Match and apply experience entries by index ---
-    for idx, tmpl_entry in enumerate(tmpl_entries):
-        if idx >= len(llm_entries):
-            # This template entry has no corresponding LLM entry — remove every
-            # paragraph so cleared-but-present empty paragraphs don't create a
-            # block of blank lines before the next section.
-            for p in tmpl_entry:
-                _remove_para(p)
-            continue
-
-        llm_entry = llm_entries[idx]
-
-        # Find a bullet paragraph to use as the style source for any new bullets
-        bullet_para = next(
-            (p for p in tmpl_entry if p.style.name == "List Paragraph"), None
-        )
-
-        # Replace the experience header (keep its blue/bold formatting)
-        replace_paragraph_text(tmpl_entry[0], llm_entry[0])
-        last_para = tmpl_entry[0]
-
-        content_paras = tmpl_entry[1:]   # date + bullets in template
-        content_lines = llm_entry[1:]    # date + bullets from LLM
-
-        # Some templates split a header across two paragraphs (e.g. a long company
-        # name wraps to a second Normal+bold line).  The LLM always emits a single
-        # header line, so remove those continuation paragraphs entirely.
-        skip = 0
-        for p in content_paras:
-            if p.style.name == "Normal" and any(r.bold for r in p.runs):
-                _remove_para(p)
-                skip += 1
-            else:
-                break
-        content_paras = content_paras[skip:]
-
-        for j, text in enumerate(content_lines):
-            if j < len(content_paras):
-                replace_paragraph_text(content_paras[j], text)
-                last_para = content_paras[j]
-            else:
-                # Extra bullet: clone from bullet_para to get List Paragraph style
-                last_para = insert_paragraph_after(
-                    last_para, text, style_source=bullet_para
-                )
-
-        # Remove leftover template paragraphs that the LLM didn't fill.
-        # Blank paragraphs (separators between entries) are kept so vertical
-        # spacing between entries is preserved; content paragraphs (bullets,
-        # dates) that went unused are removed to avoid blank-line artefacts.
-        for j in range(len(content_lines), len(content_paras)):
-            p = content_paras[j]
-            if p.text.strip():
-                _remove_para(p)
-            else:
-                _clear_para(p)
-
-    # --- Post-experience section ---
-    _apply_groups(paras[post_exp_h2_idx:], "\n".join(llm_lines[llm_post_exp_idx:]), doc)
-
-    doc.save(output_path)

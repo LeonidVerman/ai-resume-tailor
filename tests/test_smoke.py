@@ -5,7 +5,6 @@ These tests make no LLM calls and no network requests.  They verify that:
   - save_doc_from_template produces a valid .docx for both resume and cover letter
   - the hyperlink-concatenation bug (name + email merged) does not regress
   - normalize_cover_letter produces the expected two-group structure
-  - validate_plan accepts a well-formed minimal plan
 """
 
 import os
@@ -18,102 +17,14 @@ from tailor.config import (
     ASSESS_MODEL,
     ASSESS_TEMPERATURE,
     COVER_TEMPLATE,
-    ENABLE_PHASE2_JUDGE,
-    ENABLE_PLAN_REPAIR,
-    ENABLE_TWO_PHASE,
-    PHASE1_MAX_TOKENS,
-    PHASE1_MODEL,
-    PHASE1_TEMPERATURE,
-    PHASE2_MAX_REPAIR_ATTEMPTS,
-    PHASE2_MAX_TOKENS,
-    PHASE2_MODEL,
-    PHASE2_TEMPERATURE,
-    PHASE2_JUDGE_MODEL,
     PROMPTS_DIR,
     RESUME_TEMPLATE,
     SIMPLE_MODEL,
     SIMPLE_TEMPERATURE,
 )
 from tailor.docx.template_fill import normalize_cover_letter, read_docx, save_doc_from_template
-from tailor.llm import PlanValidationError, validate_plan
 from tailor.prompts import _load_prompt, _read_text_file
 
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
-_MINIMAL_PLAN = {
-    "role_level": "senior",
-    "resume_mode": "technical_depth",
-    "jd_domain": "b2b_saas_platform",
-    "candidate_primary_domain": "fintech_trading",
-    "domain_mismatch": False,
-    "domain_translation_rule_ids": [],
-    "jd_top_themes": [
-        {
-            "theme": f"Theme {i}",
-            "priority": "primary",
-            "why_important": "critical capability",
-            "keywords": ["distributed", "scalable"],
-        }
-        for i in range(5)
-    ],
-    "vocabulary_anchoring": {
-        "must_embed": ["distributed systems", "scalability"],
-        "optional_embed": ["cloud-native"],
-    },
-    "evidence_map": [
-        {
-            "theme": "Theme 0",
-            "evidence": [
-                {
-                    "source": "master_resume",
-                    "location": "Acme Corp",
-                    "quote": "Scaled platform to 1M+ users across distributed services",
-                    "allowed_claims": ["scaled to 1M+ users"],
-                },
-                {
-                    "source": "candidate_profile",
-                    "location": "experience_highlights",
-                    "quote": "Built horizontally scaled microservices handling 1M+ concurrent users",
-                    "allowed_claims": ["horizontal scaling"],
-                },
-                {
-                    "source": "master_resume",
-                    "location": "Acme Corp",
-                    "quote": "Implemented multi-layer caching reducing latency by 25%",
-                    "allowed_claims": ["caching", "25% latency reduction"],
-                },
-            ],
-            "gaps": [],
-        }
-    ],
-    "resume_strategy": {
-        "summary_angle": "Distributed-systems backend engineer",
-        "top_priority_roles": ["Acme Corp"],
-        "mechanisms_to_feature": ["caching", "horizontal scaling"],
-        "metrics_to_surface": ["1M+ users", "25% latency"],
-    },
-    "cover_letter_strategy": {
-        "opening_hook": "hook sentence",
-        "bridge_required": False,
-        "proof_paragraphs": [],
-        "closing_cta": "closing",
-    },
-    "risk_checks": {"inflated_claims": [], "domain_gaps": []},
-    "narrative_plan": {
-        "headline_theme": "Distributed systems",
-        "story_arc": "arc",
-        "seniority_signals": ["signals"],
-    },
-    "skill_graph": {
-        "direct_skills": ["Python", "Java"],
-        "related_skills": ["Kafka"],
-        "forbidden_skills": [],
-        "can_claim_experience": ["Kubernetes"],
-    },
-}
 
 # Minimal resume text that exercises the Experience section code path
 _RESUME_TEXT = """\
@@ -153,25 +64,12 @@ Leonid Verman
 
 class TestConfig:
     def test_config_has_model_settings(self):
-        assert isinstance(PHASE1_MODEL, str) and PHASE1_MODEL
-        assert isinstance(PHASE2_MODEL, str) and PHASE2_MODEL
         assert isinstance(SIMPLE_MODEL, str) and SIMPLE_MODEL
         assert isinstance(ASSESS_MODEL, str) and ASSESS_MODEL
-        assert isinstance(PHASE2_JUDGE_MODEL, str) and PHASE2_JUDGE_MODEL
 
     def test_config_has_numeric_settings(self):
-        assert isinstance(PHASE1_TEMPERATURE, float)
-        assert isinstance(PHASE2_TEMPERATURE, float)
         assert isinstance(SIMPLE_TEMPERATURE, float)
         assert isinstance(ASSESS_TEMPERATURE, float)
-        assert isinstance(PHASE1_MAX_TOKENS, int) and PHASE1_MAX_TOKENS > 0
-        assert isinstance(PHASE2_MAX_TOKENS, int) and PHASE2_MAX_TOKENS > 0
-        assert isinstance(PHASE2_MAX_REPAIR_ATTEMPTS, int) and PHASE2_MAX_REPAIR_ATTEMPTS >= 0
-
-    def test_config_has_boolean_flags(self):
-        assert isinstance(ENABLE_TWO_PHASE, bool)
-        assert isinstance(ENABLE_PLAN_REPAIR, bool)
-        assert isinstance(ENABLE_PHASE2_JUDGE, bool)
 
     def test_template_files_exist(self):
         assert os.path.isfile(RESUME_TEMPLATE), f"Missing: {RESUME_TEMPLATE}"
@@ -183,16 +81,11 @@ class TestConfig:
 # ---------------------------------------------------------------------------
 
 _REQUIRED_PROMPTS = [
-    "phase1",
-    "phase1_repair",
-    "phase2",
-    "phase2_repair",
     "tailor",
     "extract_metadata",
     "role",
     "task",
     "candidate",
-    "judge",
     "assess",
 ]
 
@@ -324,26 +217,3 @@ class TestNormalizeCoverLetter:
         result = normalize_cover_letter(raw)
         assert "Sincerely," in result
         assert "Leonid Verman" in result or "Leoind Verman" in result
-
-
-# ---------------------------------------------------------------------------
-# 7. validate_plan
-# ---------------------------------------------------------------------------
-
-class TestValidatePlan:
-    def test_accepts_minimal_valid_plan(self):
-        # Must not raise
-        result = validate_plan(_MINIMAL_PLAN)
-        assert isinstance(result, dict)
-
-    def test_rejects_plan_with_too_few_themes(self):
-        bad = dict(_MINIMAL_PLAN)
-        bad["jd_top_themes"] = [_MINIMAL_PLAN["jd_top_themes"][0]]  # only 1 theme
-        with pytest.raises(PlanValidationError):
-            validate_plan(bad)
-
-    def test_rejects_plan_with_missing_vocabulary_anchoring(self):
-        bad = dict(_MINIMAL_PLAN)
-        bad["vocabulary_anchoring"] = {}  # missing must_embed / optional_embed
-        with pytest.raises((PlanValidationError, KeyError, Exception)):
-            validate_plan(bad)

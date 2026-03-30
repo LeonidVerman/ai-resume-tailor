@@ -8,25 +8,14 @@ import sys
 
 logger = logging.getLogger(__name__)
 
-from tailor.config import ASSESS_MODEL, ASSESS_TEMPERATURE, COVER_TEMPLATE, ENABLE_PLAN_REPAIR, ENABLE_TWO_PHASE, OUTPUT_DIR, RESUME_TEMPLATE
+from tailor.config import ASSESS_MODEL, ASSESS_TEMPERATURE, COVER_TEMPLATE, OUTPUT_DIR, RESUME_TEMPLATE
+from tailor.core_generation.llm import extract_metadata_ai, tailor_documents
 from tailor.debug import save_debug_data
 from tailor.diff import diff_resume
 from tailor.docx.pdf import docx_to_pdf
 from tailor.docx.template_fill import normalize_cover_letter, read_docx, save_doc_from_template
 from tailor.job import JobData
 from tailor.job.scrape import scrape_job_url
-from tailor.llm import (
-    PlanParseError,
-    PlanValidationError,
-    _run_schema_gate,
-    extract_metadata_ai,
-    plan_repair_tailoring,
-    plan_tailoring,
-    tailor_documents,
-    tailor_documents_with_plan,
-    validate_plan,
-)
-from tailor.plan_validator import validate_plan_extended
 from tailor.prompts import _read_text_file
 
 
@@ -99,12 +88,6 @@ def _main_assess(argv: list[str]) -> None:
         ),
     )
     parser.add_argument(
-        "-s", "--simple",
-        action="store_true",
-        help="Use single-pass generation instead of two-phase (Phase 1 + Phase 2). "
-             "Mutually exclusive with --calibrate and --calibrate-data.",
-    )
-    parser.add_argument(
         "--calibrate-data", default=None, metavar="DIR", dest="calibrate_data",
         help=(
             "Calibration-with-data mode: assess pre-generated resume/cover letter "
@@ -120,8 +103,6 @@ def _main_assess(argv: list[str]) -> None:
 
     if args.calibrate and args.calibrate_data:
         parser.error("--calibrate and --calibrate-data are mutually exclusive.")
-    if args.simple and (args.calibrate or args.calibrate_data):
-        parser.error("--simple is not applicable with --calibrate or --calibrate-data (no generation in those modes).")
 
     run_assess_pipeline(
         positions_file=args.positions,
@@ -134,7 +115,6 @@ def _main_assess(argv: list[str]) -> None:
         workers=args.workers,
         calibrate=args.calibrate,
         calibrate_data=args.calibrate_data,
-        simple=args.simple,
     )
 
 
@@ -164,19 +144,18 @@ def _main_tailor() -> None:
         action="store_true",
         help="Save debug log only; skip docx/pdf generation.",
     )
-    parser.add_argument(
-        "-s", "--simple",
-        action="store_true",
-        help="Use single-pass mode instead of two-phase (Phase 1 + Phase 2).",
-    )
     args = parser.parse_args()
 
     # --- Acquire job data ---
     if args.position_url:
         try:
             job = scrape_job_url(args.position_url)
-        except RuntimeError as e:
-            parser.error(str(e))
+        except Exception:
+            import traceback
+            from tailor.job.scrape import get_scrape_failure_message
+            traceback.print_exc()
+            print(get_scrape_failure_message(args.position_url), file=sys.stderr)
+            sys.exit(1)
     else:
         try:
             job_text = _read_text_file(args.position_desc)
@@ -197,19 +176,9 @@ def _main_tailor() -> None:
     resume_template = read_docx(RESUME_TEMPLATE)
     cover_template  = read_docx(COVER_TEMPLATE)
 
-    # --- Tailor documents (two-phase or single-pass) ---
-    if ENABLE_TWO_PHASE and not args.simple:
-        result, llm_request, phase1_debug, phase2_debug = _run_two_phase(
-            job, resume_template, cover_template
-        )
-    else:
-        if args.simple:
-            print("Tailoring documents (single-pass, --simple)...")
-        else:
-            print("Tailoring documents (single-pass)...")
-        result, llm_request = tailor_documents(job, resume_template, cover_template)
-        phase1_debug = None
-        phase2_debug = None
+    # --- Tailor documents ---
+    print("Tailoring documents...")
+    result, llm_request = tailor_documents(job, resume_template, cover_template)
 
     diff = {}
     if result.resume:
@@ -223,8 +192,6 @@ def _main_tailor() -> None:
         {"resume": result.resume, "cover_letter": result.cover_letter},
         llm_request,
         diff=diff or None,
-        phase1=phase1_debug,
-        phase2=phase2_debug,
     )
 
     if args.debug:
@@ -265,176 +232,3 @@ def _main_tailor() -> None:
             docx_to_pdf(cover_docx)
 
     print("Documents generated successfully.")
-
-
-def _run_two_phase(
-    job: JobData,
-    resume_template: str,
-    cover_template: str,
-):
-    """Run Phase 1 (plan) then Phase 2 (write).  Exits with an error if
-    Phase 1 fails after both attempts.
-
-    Attempt 1: ALWAYS calls plan_tailoring (phase1.txt).
-    Attempt 2: ALWAYS calls plan_repair_tailoring (phase1_repair.txt),
-               passing the last parsed plan + both error lists.
-
-    Validation order per attempt:
-      A) JSON parse  — caught as json.JSONDecodeError
-      B) Schema gate — _run_schema_gate (types + required keys)
-      C) v1 content  — validate_plan (theme count, quote length, role_level)
-      D) v2.1 deep   — validate_plan_extended
-
-    Returns
-    -------
-    result, llm_request, phase1_debug, phase2_debug
-    """
-    print("Phase 1: generating tailoring plan...")
-    plan = None
-    p1_messages = None
-    p1_meta = None
-
-    # State passed to the repair attempt.
-    prev_raw_plan: dict = {}        # last successfully parsed plan dict (empty if JSON failed)
-    prev_raw_text: str | None = None  # raw LLM text when JSON parse failed
-    schema_errors: list[str] = []
-    validation_errors: list[str] = []
-
-    for attempt in range(1, 3):
-        is_repair = attempt > 1
-
-        # ------------------------------------------------------------------
-        # Step 0: call the LLM
-        # Attempt 1: ALWAYS phase1.txt (PLAN prompt)
-        # Attempt 2: phase1_repair.txt (REPAIR prompt) when we have
-        #            a broken plan or raw text to repair — otherwise rerun
-        #            phase1.txt (guardrail: repair cannot help with
-        #            an empty INVALID_PLAN and no RAW_TEXT).
-        # ------------------------------------------------------------------
-        if is_repair and not ENABLE_PLAN_REPAIR:
-            break  # repair disabled; don't try a second time
-
-        try:
-            if not is_repair:
-                logger.info("Phase 1 attempt %d: prompt=PLAN", attempt)
-                raw_plan, p1_messages, p1_meta = plan_tailoring(
-                    job, resume_template, cover_template
-                )
-            else:
-                # Repair is only useful when attempt 1 returned a valid-but-schema-invalid
-                # JSON object.  A truncated/broken JSON string (prev_raw_text only) cannot
-                # be meaningfully fixed by the repair model — rerun the planner instead.
-                can_repair = bool(prev_raw_plan)
-                if can_repair:
-                    logger.info("Phase 1 attempt %d: prompt=REPAIR", attempt)
-                    raw_plan, p1_messages, p1_meta = plan_repair_tailoring(
-                        prev_raw_plan, schema_errors, validation_errors,
-                        job, resume_template, cover_template,
-                        raw_text=prev_raw_text,
-                    )
-                else:
-                    # Guardrail: repair with empty INVALID_PLAN and no RAW_TEXT
-                    # would produce a partial plan — rerun planner instead.
-                    logger.info(
-                        "Phase 1 attempt %d: prompt=PLAN "
-                        "(repair guardrail: INVALID_PLAN={} and no RAW_TEXT)",
-                        attempt,
-                    )
-                    raw_plan, p1_messages, p1_meta = plan_tailoring(
-                        job, resume_template, cover_template
-                    )
-        except PlanParseError as exc:
-            schema_errors = [f"invalid_json: {exc}"]
-            validation_errors = []
-            prev_raw_plan = {}
-            prev_raw_text = exc.raw_content
-            print(f"Warning: Phase 1 attempt {attempt} returned invalid JSON.")
-            continue
-        except Exception as exc:
-            schema_errors = [f"api_error: {exc}"]
-            validation_errors = []
-            prev_raw_plan = {}
-            prev_raw_text = None
-            print(f"Warning: Phase 1 attempt {attempt} failed: {exc}")
-            continue
-
-        # JSON parse succeeded — clear stale raw_text (we have a proper dict now)
-        prev_raw_text = None
-
-        # ------------------------------------------------------------------
-        # Step A: schema gate (types + required keys)
-        # If this fails, deep validation would crash — skip straight to repair.
-        # ------------------------------------------------------------------
-        gate_errors = _run_schema_gate(raw_plan)
-        if gate_errors:
-            schema_errors = gate_errors
-            validation_errors = []
-            prev_raw_plan = raw_plan
-            summary = gate_errors[0] + (
-                f" (+{len(gate_errors) - 1} more)" if len(gate_errors) > 1 else ""
-            )
-            print(f"Warning: Phase 1 attempt {attempt} schema invalid: {summary}")
-            continue
-
-        # ------------------------------------------------------------------
-        # Step B: v1 content checks (theme count, quote length)
-        #         validate_plan also coerces role_level in place.
-        # ------------------------------------------------------------------
-        try:
-            validate_plan(raw_plan)
-        except PlanValidationError as exc:
-            schema_errors = []
-            validation_errors = [str(exc)]
-            prev_raw_plan = raw_plan
-            print(f"Warning: Phase 1 attempt {attempt} v1 validation error: {exc}")
-            continue
-
-        # ------------------------------------------------------------------
-        # Step C: v2.1 deep checks (evidence saturation, role intent, etc.)
-        # ------------------------------------------------------------------
-        extended_errors = validate_plan_extended(raw_plan)
-        if extended_errors:
-            schema_errors = []
-            validation_errors = extended_errors
-            prev_raw_plan = raw_plan
-            print(
-                f"Warning: Phase 1 attempt {attempt} extended validation: "
-                f"{len(extended_errors)} error(s)."
-            )
-            continue
-
-        # ------------------------------------------------------------------
-        # All checks passed.
-        # ------------------------------------------------------------------
-        plan = raw_plan
-        break
-
-    phase1_debug = {
-        "llm_request": p1_messages,
-        "llm_response_raw": p1_meta.get("raw_response") if p1_meta else None,
-        "plan_json": plan,
-        "model": p1_meta.get("model") if p1_meta else None,
-        "usage": p1_meta.get("usage") if p1_meta else None,
-        "schema_errors": schema_errors,
-        "validation_errors": validation_errors,
-        "prompt_used": p1_meta.get("prompt_used") if p1_meta else None,
-    }
-
-    if plan is None:
-        print("Error: Phase 1 failed after all attempts. Cannot produce tailored documents.")
-        sys.exit(1)
-
-    print("Phase 2: writing tailored documents...")
-    result, p2_messages, p2_meta = tailor_documents_with_plan(
-        plan, job, resume_template, cover_template
-    )
-
-    # p2_meta already contains writer_packet, attempts[], final_validation_ok
-    phase2_debug = p2_meta
-
-    if not p2_meta.get("final_validation_ok", True):
-        n = len(p2_meta.get("attempts", []))
-        print(f"Warning: Phase 2 validation failed after {n} attempt(s). "
-              "Best-effort output used. See debug file for details.")
-
-    return result, p2_messages, phase1_debug, phase2_debug

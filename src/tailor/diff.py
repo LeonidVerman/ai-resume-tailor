@@ -11,15 +11,22 @@ _SIMILARITY_THRESHOLD = 0.45
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
 _ALL_SECTION_HEADERS = {
-    "Experience", "Education", "Technical Skills", "Skills", "Certifications",
-    "Projects", "Publications", "Volunteer", "Awards", "References",
-    "Professional Summary", "Summary",
+    "Experience", "Professional Experience", "Education", "Technical Skills",
+    "Skills", "Skill", "Certifications", "Projects", "Publications", "Volunteer",
+    "Awards", "References", "Professional Summary", "Summary",
+    "Additional Information",
 }
+
+# Precomputed lowercase set for case-insensitive boundary detection.
+_ALL_SECTION_HEADERS_LOWER = {h.lower() for h in _ALL_SECTION_HEADERS}
+
+# Headers that mark the start of the Experience section (case-insensitive).
+_EXPERIENCE_HEADERS_LOWER = {"experience", "professional experience"}
 
 # Alternate header names accepted for the same logical section.
 _SECTION_ALIASES: dict[str, tuple[str, ...]] = {
     "Professional Summary": ("Professional Summary", "Summary"),
-    "Technical Skills":     ("Technical Skills", "Skills"),
+    "Technical Skills":     ("Technical Skills", "Skills", "Skill"),
 }
 
 
@@ -37,12 +44,14 @@ def _extract_section(text: str, *headers: str) -> str | None:
     end = len(lines)
     found_header: str | None = None
 
+    headers_lower = {h.lower() for h in headers}
     for i, line in enumerate(lines):
         s = line.strip()
-        if start is None and s in headers:
+        sl = s.lower()
+        if start is None and sl in headers_lower:
             start = i + 1
             found_header = s
-        elif start is not None and s in _ALL_SECTION_HEADERS and s != found_header:
+        elif start is not None and sl in _ALL_SECTION_HEADERS_LOWER and sl != found_header.lower():
             end = i
             break
 
@@ -103,9 +112,10 @@ def _parse_experience(text: str, bullets_have_dash: bool) -> list[tuple[str, lis
     exp_end = len(lines)
     for i, line in enumerate(lines):
         s = line.strip()
-        if s == "Experience":
+        sl = s.lower()
+        if sl in _EXPERIENCE_HEADERS_LOWER:
             exp_start = i
-        elif exp_start is not None and s in _ALL_SECTION_HEADERS and s != "Experience":
+        elif exp_start is not None and sl in _ALL_SECTION_HEADERS_LOWER and sl not in _EXPERIENCE_HEADERS_LOWER:
             exp_end = i
             break
 

@@ -56,12 +56,18 @@ def _load_prompt_optional(name, **kwargs):
         return ""
 
 
-def _load_candidate_profile():
-    """Load profile/candidate_profile.json and return its contents as a string.
+def _load_candidate_profile(profile_text: str | None = None) -> str:
+    """Return the candidate profile string for injection into LLM messages.
 
-    Returns an empty string if the file is absent so callers degrade
+    If *profile_text* is provided (e.g. serialized from a DB-backed profile),
+    it is returned as-is.  Otherwise falls back to reading
+    profile/candidate_profile.json (CLI behaviour).
+
+    Returns an empty string if no profile is available so callers degrade
     gracefully rather than crashing.
     """
+    if profile_text is not None:
+        return profile_text
     profile_path = PROFILE_DIR / "candidate_profile.json"
     try:
         return _read_text_file(profile_path)

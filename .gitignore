@@ -1,24 +1,61 @@
 # Environment
 .env
+.env.local
+.env.*.local
 
 # Python
 __pycache__/
 *.pyc
+*.pyo
 *.egg-info/
+*.egg
+dist/
+build/
+.venv/
+venv/
+.env/
 
-# Output files
+# Output files (CLI generator)
 output/
 .cache/
+tmp/
+run_data/
 
 # Job descriptions
 jobs/
 
-# Tmpe output files
-tmp/
-
 # Claude settings
 .claude/
 
-# Virtual environments
-venv/
-.env/
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / frontend
+node_modules/
+.next/
+out/
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Reports
+reports/
+
+# Local object storage (dev)
+storage/
+
+# Docker
+*.log
+frontend/tsconfig.tsbuildinfo

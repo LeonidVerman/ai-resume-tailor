@@ -1,0 +1,99 @@
+{
+  "$comment": "Evaluation output schema. Matches the assess_v2 output format produced by prompts/assess.txt and consumed by tailor.assess.",
+  "type": "object",
+  "required": ["version", "position", "scores", "flags", "notes"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "assess_v2",
+      "description": "Schema version identifier. Must be 'assess_v2'."
+    },
+    "position": {
+      "type": "object",
+      "required": ["position_url", "company", "role_title"],
+      "additionalProperties": false,
+      "properties": {
+        "position_url": { "type": "string" },
+        "company": { "type": "string" },
+        "role_title": { "type": "string" }
+      }
+    },
+    "scores": {
+      "type": "object",
+      "required": [
+        "truthfulness",
+        "role_fit",
+        "seniority_positioning",
+        "clarity_impact",
+        "mechanism_quality",
+        "constraint_compliance",
+        "cover_letter_effectiveness",
+        "overall_readiness"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "truthfulness": { "$ref": "#/$defs/score_with_evidence" },
+        "role_fit": { "$ref": "#/$defs/score_with_evidence" },
+        "seniority_positioning": { "$ref": "#/$defs/score_with_evidence" },
+        "clarity_impact": { "$ref": "#/$defs/score_with_evidence" },
+        "mechanism_quality": { "$ref": "#/$defs/score_with_evidence" },
+        "constraint_compliance": { "$ref": "#/$defs/score_with_evidence" },
+        "cover_letter_effectiveness": { "$ref": "#/$defs/score_with_evidence" },
+        "overall_readiness": { "$ref": "#/$defs/score_with_evidence" }
+      }
+    },
+    "flags": {
+      "type": "object",
+      "required": ["suspected_hallucinations", "most_damaging_gaps"],
+      "additionalProperties": false,
+      "properties": {
+        "suspected_hallucinations": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "most_damaging_gaps": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "notes": {
+      "type": "object",
+      "required": ["top_3_improvements"],
+      "additionalProperties": false,
+      "properties": {
+        "top_3_improvements": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "score_with_evidence": {
+      "type": "object",
+      "required": ["score", "evidence"],
+      "additionalProperties": false,
+      "properties": {
+        "score": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Score from 1 (worst) to 10 (best). Use the full range."
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "description": "Short quote (max 20 words) from the generated resume or cover letter."
+          }
+        }
+      }
+    }
+  }
+}

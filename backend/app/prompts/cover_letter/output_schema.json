@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "description": "Cover letter portion of the single-pass writer output.",
+  "required": ["cover_letter"],
+  "properties": {
+    "cover_letter": {
+      "type": "string",
+      "description": "Plain-text cover letter. 3–4 paragraphs, 200–350 words. Must include company name and role."
+    }
+  }
+}
