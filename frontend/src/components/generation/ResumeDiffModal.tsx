@@ -14,6 +14,88 @@ interface ResumeDiffModalProps {
   onClose: () => void;
 }
 
+// ---------------------------------------------------------------------------
+// Inline word-level diff
+// ---------------------------------------------------------------------------
+
+type InlineOp = { type: "equal" | "remove" | "add"; text: string };
+
+/**
+ * Compute a word-level diff between two strings using LCS.
+ * Tokens are whitespace-delimited words and the whitespace runs between them,
+ * so spacing is preserved naturally in the output.
+ */
+function computeInlineDiff(before: string, after: string): InlineOp[] {
+  const tokenize = (s: string): string[] => s.match(/\S+|\s+/g) ?? [];
+  const a = tokenize(before);
+  const b = tokenize(after);
+  const m = a.length;
+  const n = b.length;
+
+  // Build LCS DP table
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1] + 1
+          : Math.max(dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+
+  // Backtrack to reconstruct ops
+  const raw: InlineOp[] = [];
+  let i = m, j = n;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
+      raw.unshift({ type: "equal", text: a[i - 1] });
+      i--; j--;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      raw.unshift({ type: "add", text: b[j - 1] });
+      j--;
+    } else {
+      raw.unshift({ type: "remove", text: a[i - 1] });
+      i--;
+    }
+  }
+
+  // Merge adjacent ops of the same type for cleaner rendering
+  return raw.reduce<InlineOp[]>((acc, op) => {
+    if (acc.length > 0 && acc[acc.length - 1].type === op.type) {
+      acc[acc.length - 1] = { type: op.type, text: acc[acc.length - 1].text + op.text };
+    } else {
+      acc.push({ ...op });
+    }
+    return acc;
+  }, []);
+}
+
+function InlineDiffView({ before, after }: { before: string; after: string }) {
+  const ops = computeInlineDiff(before, after);
+  return (
+    <>
+      {ops.map((op, i) => {
+        if (op.type === "equal") return <span key={i}>{op.text}</span>;
+        if (op.type === "remove")
+          return (
+            <span key={i} className="bg-red-100 text-red-700 line-through rounded-sm">
+              {op.text}
+            </span>
+          );
+        return (
+          <span key={i} className="bg-green-100 text-green-800 rounded-sm">
+            {op.text}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Block components
+// ---------------------------------------------------------------------------
+
 function isExperienceSection(s: ResumeDiffSection): s is ResumeDiffExperienceSection {
   return "roles" in s;
 }
@@ -38,28 +120,29 @@ function RoleBlock({ role }: { role: ResumeDiffRole }) {
 
       {open && (
         <div className="mt-1.5 space-y-1 pl-5">
+          {/* Added bullets */}
           {(role.added ?? []).map((bullet, i) => (
             <div key={`add-${i}`} className="flex gap-2">
               <span className="text-green-600 font-bold shrink-0 select-none">+</span>
               <span className="text-xs text-green-800 leading-snug">{bullet}</span>
             </div>
           ))}
+
+          {/* Removed bullets */}
           {(role.removed ?? []).map((bullet, i) => (
             <div key={`rm-${i}`} className="flex gap-2">
               <span className="text-red-500 font-bold shrink-0 select-none">−</span>
               <span className="text-xs text-red-700 leading-snug line-through">{bullet}</span>
             </div>
           ))}
+
+          {/* Modified bullets — inline word-level diff */}
           {(role.changed ?? []).map((change, i) => (
-            <div key={`ch-${i}`} className="space-y-0.5">
-              <div className="flex gap-2">
-                <span className="text-red-500 font-bold shrink-0 select-none">−</span>
-                <span className="text-xs text-red-700 leading-snug line-through">{change.before}</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-green-600 font-bold shrink-0 select-none">+</span>
-                <span className="text-xs text-green-800 leading-snug">{change.after}</span>
-              </div>
+            <div key={`ch-${i}`} className="flex gap-2">
+              <span className="text-amber-500 font-bold shrink-0 select-none">~</span>
+              <span className="text-xs text-gray-700 leading-snug">
+                <InlineDiffView before={change.before} after={change.after} />
+              </span>
             </div>
           ))}
         </div>
@@ -68,21 +151,21 @@ function RoleBlock({ role }: { role: ResumeDiffRole }) {
   );
 }
 
-function TextSectionBlock({ name, before, after }: { name: string; before: string; after: string }) {
+function TextSectionBlock({ before, after }: { name: string; before: string; after: string }) {
   if (before === after) return null;
   return (
-    <div className="space-y-1.5">
-      <div className="flex gap-2">
-        <span className="text-red-500 font-bold shrink-0 select-none text-xs">−</span>
-        <p className="text-xs text-red-700 leading-snug line-through whitespace-pre-wrap">{before}</p>
-      </div>
-      <div className="flex gap-2">
-        <span className="text-green-600 font-bold shrink-0 select-none text-xs">+</span>
-        <p className="text-xs text-green-800 leading-snug whitespace-pre-wrap">{after}</p>
-      </div>
+    <div className="flex gap-2">
+      <span className="text-amber-500 font-bold shrink-0 select-none text-xs">~</span>
+      <p className="text-xs text-gray-700 leading-snug whitespace-pre-wrap">
+        <InlineDiffView before={before} after={after} />
+      </p>
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Modal
+// ---------------------------------------------------------------------------
 
 export function ResumeDiffModal({ diff, onClose }: ResumeDiffModalProps) {
   const hasAnything = diff.some((section) => {
