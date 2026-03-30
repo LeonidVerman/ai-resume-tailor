@@ -12,7 +12,7 @@ _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
 _ALL_SECTION_HEADERS = {
     "Experience", "Professional Experience", "Education", "Technical Skills",
-    "Skills", "Certifications", "Projects", "Publications", "Volunteer",
+    "Skills", "Skill", "Certifications", "Projects", "Publications", "Volunteer",
     "Awards", "References", "Professional Summary", "Summary",
     "Additional Information",
 }
@@ -26,7 +26,7 @@ _EXPERIENCE_HEADERS_LOWER = {"experience", "professional experience"}
 # Alternate header names accepted for the same logical section.
 _SECTION_ALIASES: dict[str, tuple[str, ...]] = {
     "Professional Summary": ("Professional Summary", "Summary"),
-    "Technical Skills":     ("Technical Skills", "Skills"),
+    "Technical Skills":     ("Technical Skills", "Skills", "Skill"),
 }
 
 

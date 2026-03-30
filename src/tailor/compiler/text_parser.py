@@ -52,7 +52,7 @@ _SUMMARY_NAMES: frozenset[str] = frozenset({
     "executive summary",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
-    "technical skills", "skills", "core competencies", "competencies",
+    "technical skills", "skills", "skill", "core competencies", "competencies",
     "technical expertise", "expertise", "key skills", "areas of expertise",
     "technologies", "tech stack",
 })
