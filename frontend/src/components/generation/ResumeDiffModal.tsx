@@ -59,8 +59,8 @@ function computeInlineDiff(before: string, after: string): InlineOp[] {
     }
   }
 
-  // Merge adjacent ops of the same type for cleaner rendering
-  return raw.reduce<InlineOp[]>((acc, op) => {
+  // Merge adjacent ops of the same type
+  const merged = raw.reduce<InlineOp[]>((acc, op) => {
     if (acc.length > 0 && acc[acc.length - 1].type === op.type) {
       acc[acc.length - 1] = { type: op.type, text: acc[acc.length - 1].text + op.text };
     } else {
@@ -68,6 +68,99 @@ function computeInlineDiff(before: string, after: string): InlineOp[] {
     }
     return acc;
   }, []);
+
+  return ensureWordBoundaries(clusterIntoPhraseOps(merged));
+}
+
+/**
+ * Final pass: when a remove and add span are directly adjacent and neither
+ * provides boundary whitespace, insert an equal " " between them.
+ *
+ * Root cause: the LCS algorithm can place the inter-word space AFTER both
+ * edits (as part of the next equal segment) rather than between them.
+ * Example: [equal "with "][remove "Senior"][add "15+"][equal " backend"]
+ * renders as "with ~~Senior~~15+ backend" — "Senior" and "15+" glue together.
+ * This pass inserts the missing separator so it reads "with ~~Senior~~ 15+".
+ */
+function ensureWordBoundaries(ops: InlineOp[]): InlineOp[] {
+  const out: InlineOp[] = [];
+  for (let i = 0; i < ops.length; i++) {
+    const op = ops[i];
+    const prev = out.length > 0 ? out[out.length - 1] : null;
+    if (
+      prev !== null &&
+      prev.type !== "equal" &&
+      op.type !== "equal" &&
+      prev.type !== op.type &&
+      /\S$/.test(prev.text) &&
+      /^\S/.test(op.text)
+    ) {
+      out.push({ type: "equal", text: " " });
+    }
+    out.push(op);
+  }
+  return out;
+}
+
+/**
+ * Bridge small equal gaps (≤ BRIDGE_MAX_CHARS) between adjacent edits so that
+ * runs like [remove "foo"][equal " ""][add "bar"] collapse into a single
+ * [remove "foo "][add "bar"] phrase span instead of token soup.
+ */
+const BRIDGE_MAX_CHARS = 3;
+
+function clusterIntoPhraseOps(ops: InlineOp[]): InlineOp[] {
+  const result: InlineOp[] = [];
+  let i = 0;
+  const n = ops.length;
+
+  while (i < n) {
+    if (ops[i].type === "equal") {
+      result.push(ops[i++]);
+      continue;
+    }
+
+    // Start of a non-equal cluster — scan forward, bridging small equal gaps
+    let j = i;
+    let clusterEndJ = i;
+
+    while (j < n) {
+      if (ops[j].type !== "equal") {
+        j++;
+        clusterEndJ = j;
+      } else {
+        // Measure how many chars until the next non-equal op
+        let gapChars = 0;
+        let k = j;
+        while (k < n && ops[k].type === "equal") {
+          gapChars += ops[k].text.length;
+          k++;
+        }
+        // Bridge only if the gap is small AND there is a non-equal op after it
+        if (gapChars <= BRIDGE_MAX_CHARS && k < n) {
+          j = k; // jump past the gap and continue extending the cluster
+        } else {
+          break; // gap too wide (or end of ops) — stop
+        }
+      }
+    }
+
+    // Build before/after text for this cluster
+    let beforeText = "";
+    let afterText = "";
+    for (let k = i; k < clusterEndJ; k++) {
+      const op = ops[k];
+      if (op.type !== "add") beforeText += op.text;
+      if (op.type !== "remove") afterText += op.text;
+    }
+
+    if (beforeText) result.push({ type: "remove", text: beforeText });
+    if (afterText) result.push({ type: "add", text: afterText });
+
+    i = clusterEndJ;
+  }
+
+  return result;
 }
 
 function InlineDiffView({ before, after }: { before: string; after: string }) {
