@@ -787,3 +787,327 @@ class TestCompileNonCanonicalTemplate:
         text = read_docx(output)
         assert "Acme Corp" in text, "Experience role header missing from compiled output"
         assert "cloud-native" in text, "New experience bullet missing from compiled output"
+
+
+# ---------------------------------------------------------------------------
+# Table-based DOCX fixtures
+# ---------------------------------------------------------------------------
+
+# LLM output that adds "Professional Summary" (absent from no-summary source)
+# and updates Skills / Experience / Education.
+_TABLE_LLM = """\
+Professional Summary
+Senior backend engineer specialising in distributed systems.
+
+Technical Skills
+Python, Kafka, Kubernetes, Redis
+
+Experience
+Senior Engineer | Acme Corp
+2020 – 2023
+- Designed distributed microservices handling 1M+ requests/day.
+- Led migration to Kubernetes across three regions.
+
+Education
+BSc Computer Science | University of BC
+2019
+"""
+
+# Table-based source WITHOUT a summary section → Professional Summary is an extra.
+_TABLE_CONTENT_NO_SUMMARY = """\
+Technical Skills
+COBOL, Fortran, SQL
+
+Employment History
+Senior Engineer | OldCorp
+2018 – 2022
+- Maintained legacy COBOL systems.
+- Wrote Fortran numerical routines.
+
+Education
+BSc Computer Science | University of BC
+2019
+"""
+
+# Table-based source WITH a summary → all LLM sections have a match (no extras).
+_TABLE_CONTENT_WITH_SUMMARY = """\
+Professional Summary
+Veteran COBOL and Fortran specialist.
+
+Technical Skills
+COBOL, Fortran, SQL
+
+Employment History
+Senior Engineer | OldCorp
+2018 – 2022
+- Maintained legacy COBOL systems.
+- Wrote Fortran numerical routines.
+
+Education
+BSc Computer Science | University of BC
+2019
+"""
+
+
+_TABLE_SECTION_NAMES = {
+    "technical skills", "employment history", "education",
+    "professional summary", "experience", "skills", "skill",
+}
+
+
+def _make_table_docx(content: str, tmp_path: Path, name: str = "table_resume.docx") -> str:
+    """Create a DOCX where all content lives inside a single-cell table.
+
+    This mirrors the layout of PDF-converted or template DOCX files that use
+    a full-page table as the document body (e.g. run-69 format).
+    Section heading lines use Heading 1 style so _infer_semantic classifies
+    them as section_heading inside the table.
+    """
+    doc = Document()
+    # Remove the default empty paragraph that Document() adds.
+    for para in doc.paragraphs:
+        p = para._element
+        p.getparent().remove(p)
+
+    table = doc.add_table(rows=1, cols=1)
+    cell = table.cell(0, 0)
+    # Remove the default empty paragraph that add_table creates in the cell.
+    for para in cell.paragraphs:
+        p = para._element
+        p.getparent().remove(p)
+
+    for line in content.splitlines():
+        if line.strip().lower() in _TABLE_SECTION_NAMES:
+            para = cell.add_paragraph(line)
+            try:
+                para.style = doc.styles["Heading 1"]
+            except KeyError:
+                pass
+        else:
+            cell.add_paragraph(line)
+
+    path = tmp_path / name
+    doc.save(str(path))
+    return str(path)
+
+
+# ---------------------------------------------------------------------------
+# Test A — table-based source + extras (Professional Summary added by LLM)
+# ---------------------------------------------------------------------------
+
+class TestTableDocxWithExtras:
+    """When LLM adds a section absent from the table source, extras path runs.
+
+    Expected: body_items=None on the result (stale table not returned),
+    compiled output contains the new LLM content.
+    """
+
+    def test_body_items_is_none_when_extras(self, tmp_path):
+        """apply_tailored must return body_items=None so renderer uses all_paras."""
+        template = _make_table_docx(_TABLE_CONTENT_NO_SUMMARY, tmp_path)
+        orig = parse_docx(template)
+        llm = parse_llm_output(_TABLE_LLM)
+        updated = apply_tailored(orig, llm)
+        assert updated.body_items is None, (
+            "body_items should be None when extras exist — returning stale table "
+            "body_items would render the original unchanged content."
+        )
+
+    def test_compiled_output_contains_new_summary(self, tmp_path):
+        """Compiled DOCX must contain the extra Professional Summary text."""
+        template = _make_table_docx(_TABLE_CONTENT_NO_SUMMARY, tmp_path)
+        output = str(tmp_path / "compiled.docx")
+        compile_resume(template, _TABLE_LLM, output)
+        doc = parse_docx(output)
+        summary = next((s for s in doc.sections if s.semantic_type == "summary"), None)
+        assert summary is not None, "Professional Summary section missing from compiled output"
+
+    def test_old_cobol_content_absent(self, tmp_path):
+        """Compiled DOCX must NOT contain the original COBOL/Fortran content."""
+        template = _make_table_docx(_TABLE_CONTENT_NO_SUMMARY, tmp_path)
+        output = str(tmp_path / "compiled.docx")
+        compile_resume(template, _TABLE_LLM, output)
+        text = read_docx(output)
+        # read_docx returns '' for table-based DOCX; check via parse_docx instead
+        doc = parse_docx(output)
+        all_text = " ".join(
+            p.text for s in doc.sections for p in s.body_paras
+        )
+        assert "COBOL" not in all_text, "Old COBOL content still present in compiled output"
+        assert "Fortran" not in all_text, "Old Fortran content still present in compiled output"
+
+    def test_new_skills_content_present(self, tmp_path):
+        """Compiled DOCX must contain the LLM-generated skills."""
+        template = _make_table_docx(_TABLE_CONTENT_NO_SUMMARY, tmp_path)
+        output = str(tmp_path / "compiled.docx")
+        compile_resume(template, _TABLE_LLM, output)
+        doc = parse_docx(output)
+        skills = next((s for s in doc.sections if s.semantic_type == "skills"), None)
+        assert skills is not None, "Skills section missing from compiled output"
+        skills_text = " ".join(p.text for p in skills.body_paras)
+        assert "Kafka" in skills_text or "Kubernetes" in skills_text, (
+            "New skills content (Kafka/Kubernetes) not found in compiled output"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Test B — table-based source with no extras (all sections match)
+# ---------------------------------------------------------------------------
+
+class TestTableDocxNoExtras:
+    """When all LLM sections match the source, the in-place table update path runs.
+
+    Expected: body_items is NOT None (table preserved for rendering),
+    in-place update correctly replaces content.
+    """
+
+    def test_body_items_not_none_when_no_extras(self, tmp_path):
+        """apply_tailored must preserve body_items when no extras exist."""
+        template = _make_table_docx(_TABLE_CONTENT_WITH_SUMMARY, tmp_path)
+        orig = parse_docx(template)
+        llm = parse_llm_output(_TABLE_LLM)
+        updated = apply_tailored(orig, llm)
+        assert updated.body_items is not None, (
+            "body_items should be preserved (not None) when no extras exist — "
+            "table in-place update path should have run."
+        )
+
+    def test_no_extra_sections_injected(self, tmp_path):
+        """No new sections should appear beyond the 4 canonical ones."""
+        template = _make_table_docx(_TABLE_CONTENT_WITH_SUMMARY, tmp_path)
+        orig = parse_docx(template)
+        llm = parse_llm_output(_TABLE_LLM)
+        updated = apply_tailored(orig, llm)
+        assert not updated.sections or len(updated.sections) <= len(orig.sections), (
+            f"Unexpected extra sections: {[s.title for s in updated.sections]}"
+        )
+
+    def test_in_place_summary_updated(self, tmp_path):
+        """In-place update must replace the summary heading and text."""
+        template = _make_table_docx(_TABLE_CONTENT_WITH_SUMMARY, tmp_path)
+        orig = parse_docx(template)
+        llm = parse_llm_output(_TABLE_LLM)
+        updated = apply_tailored(orig, llm)
+        summary = next((s for s in updated.sections if s.semantic_type == "summary"), None)
+        assert summary is not None, "Summary section missing from updated document"
+        summary_text = " ".join(p.text for p in summary.body_paras)
+        assert "distributed systems" in summary_text, (
+            "In-place update did not apply new summary text"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Test C — table-based source + extras + semantic matches
+# ---------------------------------------------------------------------------
+
+class TestTableDocxExtrasWithSemanticMatches:
+    """Extras path: matched sections still update, extras appear, stale body not returned."""
+
+    def test_matched_sections_updated_in_extras_path(self, tmp_path):
+        """Skills/Experience/Education must be updated even when extras path runs."""
+        template = _make_table_docx(_TABLE_CONTENT_NO_SUMMARY, tmp_path)
+        orig = parse_docx(template)
+        llm = parse_llm_output(_TABLE_LLM)
+        updated = apply_tailored(orig, llm)
+        skills = next((s for s in updated.sections if s.semantic_type == "skills"), None)
+        assert skills is not None, "Skills section missing"
+        skills_text = " ".join(p.text for p in skills.body_paras)
+        assert "Kafka" in skills_text or "Kubernetes" in skills_text, (
+            "Skills section not updated in extras path"
+        )
+
+    def test_extra_section_appears_in_output(self, tmp_path):
+        """The new Professional Summary section must appear in the updated document."""
+        template = _make_table_docx(_TABLE_CONTENT_NO_SUMMARY, tmp_path)
+        orig = parse_docx(template)
+        llm = parse_llm_output(_TABLE_LLM)
+        updated = apply_tailored(orig, llm)
+        summary = next((s for s in updated.sections if s.semantic_type == "summary"), None)
+        assert summary is not None, "Extra section (Professional Summary) absent from updated document"
+
+    def test_stale_body_items_not_returned(self, tmp_path):
+        """body_items must be None so the stale original table is not rendered."""
+        template = _make_table_docx(_TABLE_CONTENT_NO_SUMMARY, tmp_path)
+        orig = parse_docx(template)
+        assert orig.body_items is not None, "Precondition: table-based DOCX should have body_items"
+        llm = parse_llm_output(_TABLE_LLM)
+        updated = apply_tailored(orig, llm)
+        assert updated.body_items is None, (
+            "Stale body_items returned despite extras — renderer would show original unchanged table"
+        )
+
+    def test_experience_bullets_updated(self, tmp_path):
+        """Experience role bullets must be updated in the extras path."""
+        template = _make_table_docx(_TABLE_CONTENT_NO_SUMMARY, tmp_path)
+        orig = parse_docx(template)
+        llm = parse_llm_output(_TABLE_LLM)
+        updated = apply_tailored(orig, llm)
+        exp = next((s for s in updated.sections if s.semantic_type == "experience"), None)
+        assert exp is not None, "Experience section missing"
+        all_bullets = [b.text for role in exp.roles for b in role.bullets]
+        assert any("microservices" in b or "Kubernetes" in b for b in all_bullets), (
+            "Experience bullets not updated in extras path"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Test D — rendered result vs diff sanity
+# ---------------------------------------------------------------------------
+
+class TestDiffVsRenderedSanity:
+    """Sanity check: compiled output contains LLM content regardless of diff behavior.
+
+    Note: read_docx() uses doc.paragraphs (top-level only) and returns '' for
+    table-based DOCX — so diff may show additions-only for such templates.
+    That is a known limitation of diff_resume, not a bug in the compiler.
+    The rendered DOCX (via parse_docx) must still contain the tailored content.
+    """
+
+    def test_compiled_docx_contains_llm_experience_bullets(self, tmp_path):
+        """parse_docx on compiled output must show updated experience bullets."""
+        template = _make_table_docx(_TABLE_CONTENT_NO_SUMMARY, tmp_path)
+        output = str(tmp_path / "compiled.docx")
+        compile_resume(template, _TABLE_LLM, output)
+        doc = parse_docx(output)
+        exp = next((s for s in doc.sections if s.semantic_type == "experience"), None)
+        assert exp is not None, "Experience section missing from compiled output"
+        all_bullets = [b.text for role in exp.roles for b in role.bullets]
+        assert any("microservices" in b or "Kubernetes" in b for b in all_bullets), (
+            "LLM experience bullets not present in compiled DOCX"
+        )
+
+    def test_diff_may_show_additions_only_for_table_source(self, tmp_path):
+        """read_docx returns '' for table-based DOCX → diff shows additions-only.
+
+        This locks in the known limitation so it is not accidentally 'fixed' by
+        a change that invents a spurious 'before' value from empty source text.
+        """
+        template = _make_table_docx(_TABLE_CONTENT_NO_SUMMARY, tmp_path)
+        source_text = read_docx(template)
+        # The known limitation: read_docx returns '' for table-based DOCX
+        assert source_text == "", (
+            "Expected read_docx to return '' for table-based DOCX — if this changed, "
+            "update this test and the 'additions-only diff' limitation notes."
+        )
+        diff = diff_resume(source_text, _TABLE_LLM)
+        # Diff entries should exist (LLM content vs empty source)
+        assert diff, "Expected diff entries between empty source and LLM output"
+        for entry in diff:
+            assert "after" in entry or "roles" in entry, (
+                "Diff entry has neither 'after' nor 'roles' key"
+            )
+
+    def test_compiled_output_does_not_contain_stale_cobol(self, tmp_path):
+        """Even when diff shows additions-only, compiled output must not contain old COBOL."""
+        template = _make_table_docx(_TABLE_CONTENT_NO_SUMMARY, tmp_path)
+        output = str(tmp_path / "compiled.docx")
+        compile_resume(template, _TABLE_LLM, output)
+        doc = parse_docx(output)
+        all_text = " ".join(
+            p.text
+            for s in doc.sections
+            for p in ([s.heading] + s.body_paras + [b for r in s.roles for b in ([r.header] + r.bullets)])
+        )
+        assert "COBOL" not in all_text, (
+            "COBOL from original source still in compiled output — stale body was rendered"
+        )
