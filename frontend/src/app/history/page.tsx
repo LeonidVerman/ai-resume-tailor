@@ -3,12 +3,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Clock, CheckCircle, XCircle, Loader2, Download, Trash2 } from "lucide-react";
+import { Clock, CheckCircle, XCircle, Loader2, Download, Trash2, GitCompare } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { ResumeDiffModal } from "@/components/generation/ResumeDiffModal";
 import { generations, documents } from "@/lib/api";
 import type { GenerationRunSummary, TailoredDocumentDetail } from "@/types/api";
 import { formatDateTime } from "@/lib/utils";
@@ -70,6 +71,10 @@ export default function HistoryPage() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [docCache, setDocCache] = useState<DocCache>({});
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  // Diff modal: docId of the currently open diff (null = closed).
+  const [diffDocId, setDiffDocId] = useState<number | null>(null);
+  // docId currently being fetched for the diff (shows spinner on button).
+  const [diffFetchingId, setDiffFetchingId] = useState<number | null>(null);
   const PAGE_SIZE = 20;
 
   const handleDownload = async (
@@ -103,6 +108,23 @@ export default function HistoryPage() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleViewDiff = async (run: GenerationRunSummary) => {
+    const docId = run.tailored_document_id;
+    if (!docId) return;
+    if (!(docId in docCache)) {
+      setDiffFetchingId(docId);
+      try {
+        const doc = await documents.get(docId);
+        setDocCache((prev) => ({ ...prev, [docId]: doc }));
+      } catch {
+        setDocCache((prev) => ({ ...prev, [docId]: null }));
+      } finally {
+        setDiffFetchingId(null);
+      }
+    }
+    setDiffDocId(docId);
   };
 
   // When a row is expanded, fetch the TailoredDocumentDetail once (cached).
@@ -203,6 +225,22 @@ export default function HistoryPage() {
                       </div>
                     </div>
 
+                    {/* View changes */}
+                    {run.status === "succeeded" && docId && (
+                      <div className="shrink-0">
+                        <button
+                          onClick={() => handleViewDiff(run)}
+                          disabled={diffFetchingId === docId}
+                          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors"
+                        >
+                          {diffFetchingId === docId
+                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            : <GitCompare className="h-3.5 w-3.5" />}
+                          View changes
+                        </button>
+                      </div>
+                    )}
+
                     {/* Expand/collapse downloads */}
                     {run.status === "succeeded" && docId && (
                       <div className="shrink-0">
@@ -285,6 +323,39 @@ export default function HistoryPage() {
           </div>
         </div>
       )}
+      {/* Diff modal */}
+      {diffDocId !== null && (() => {
+        const diffDoc = docCache[diffDocId];
+        // Fetch failed or no diff was stored (run predates the diff feature)
+        if (diffDoc === null || (diffDoc && diffDoc.resume_diff == null)) {
+          return (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+              onClick={() => setDiffDocId(null)}
+            >
+              <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6 text-center space-y-4">
+                <GitCompare className="h-8 w-8 text-gray-300 mx-auto" />
+                <p className="text-sm text-gray-600">No diff available for this run.</p>
+                <button
+                  onClick={() => setDiffDocId(null)}
+                  className="px-4 py-1.5 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          );
+        }
+        if (diffDoc && diffDoc.resume_diff != null) {
+          return (
+            <ResumeDiffModal
+              diff={diffDoc.resume_diff}
+              onClose={() => setDiffDocId(null)}
+            />
+          );
+        }
+        return null;
+      })()}
     </AppShell>
   );
 }
