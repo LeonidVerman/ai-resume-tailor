@@ -79,6 +79,18 @@ class StorageService:
         logger.info("Uploaded cover_letter.pdf key=%s", key)
         return key
 
+    def upload_debug_json(self, user_id: str, run_id: str, data: bytes) -> str:
+        """Upload the generation debug JSON; returns the storage object key."""
+        key = self._generated_key(user_id, run_id, "debug.json")
+        self._storage.upload_bytes(data, key, content_type="application/json")
+        logger.info("Uploaded debug.json key=%s", key)
+        return key
+
+    def get_debug_json_bytes(self, user_id: str, run_id: str) -> bytes:
+        """Return the raw bytes of the generation debug JSON."""
+        key = self._generated_key(user_id, run_id, "debug.json")
+        return self._storage.get_bytes(key)
+
     # ── Download ───────────────────────────────────────────────────────────
 
     def get_bytes(self, key: str) -> bytes:

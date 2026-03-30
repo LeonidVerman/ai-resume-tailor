@@ -144,10 +144,12 @@ class GenerationService:
         # ── Save run data JSON ─────────────────────────────────────────────
         _save_run_data(
             run_id=run.id,
+            user_id=user_id,
             company=meta.get("company", ""),
             job_title=meta.get("job_title", ""),
             result=result,
             debug_meta=debug_meta,
+            storage_service=self._storage_service,
         )
 
         # ── Persist tailored document ──────────────────────────────────────
@@ -368,28 +370,28 @@ def _build_candidate_profile_text(profile) -> str | None:
 
 def _save_run_data(
     run_id,
+    user_id: str,
     company: str,
     job_title: str,
     result,
     debug_meta: dict,
+    storage_service: StorageService,
 ) -> None:
-    from backend.app.config import get_settings
-    settings = get_settings()
-    if not settings.run_data_dir:
-        return
+    """Persist the generation debug JSON to object storage (S3 / local)."""
+    import json as _json
     try:
-        from tailor.debug import save_debug_data
-        save_debug_data(
-            company=company,
-            job_title=job_title,
-            llm_response={"resume": result.resume, "cover_letter": result.cover_letter},
-            llm_request=debug_meta.get("llm_request"),
-            diff=debug_meta.get("diff"),
-            output_dir=settings.run_data_dir,
-            extra={"generation_run_id": str(run_id)},
-        )
+        data = {
+            "company": company,
+            "position": job_title,
+            "llm_request": debug_meta.get("llm_request"),
+            "llm_response": {"resume": result.resume, "cover_letter": result.cover_letter},
+            "diff": debug_meta.get("diff"),
+            "generation_run_id": str(run_id),
+        }
+        json_bytes = _json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
+        storage_service.upload_debug_json(user_id, str(run_id), json_bytes)
     except Exception:
-        logger.warning("Failed to save run data for run=%s", run_id, exc_info=True)
+        logger.warning("Failed to upload debug JSON for run=%s", run_id, exc_info=True)
 
 
 def _extract_usage_from_messages(messages) -> tuple[int | None, int | None, float | None]:

@@ -4,6 +4,8 @@ backend/app/db/repositories/generation_run_repository.py
 CRUD operations for GenerationRun.
 """
 
+from datetime import date, datetime, timezone
+
 from sqlalchemy.orm import Session, joinedload
 
 from backend.app.db.models.generation_run import GenerationRun
@@ -37,6 +39,23 @@ class GenerationRunRepository:
                 GenerationRun.status == "succeeded",
             )
             .count()
+        )
+
+    def list_by_date_range(
+        self, from_date: date, to_date: date
+    ) -> list[GenerationRun]:
+        """Return succeeded runs whose started_at falls within [from_date, to_date]."""
+        start = datetime(from_date.year, from_date.month, from_date.day, tzinfo=timezone.utc)
+        end = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
+        return (
+            self._db.query(GenerationRun)
+            .filter(
+                GenerationRun.started_at >= start,
+                GenerationRun.started_at <= end,
+                GenerationRun.status == "succeeded",
+            )
+            .order_by(GenerationRun.started_at)
+            .all()
         )
 
     def create(self, **kwargs) -> GenerationRun:

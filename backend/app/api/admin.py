@@ -55,6 +55,12 @@ from backend.app.services.benchmark_service import BenchmarkService
 from backend.app.services.candidate_profile_normalizer import normalize_candidate_profile
 from backend.app.services.evaluation_service import EvaluationService
 from backend.app.services.stats_service import StatsService
+from backend.app.services.storage_service import StorageService
+
+
+def _storage_service() -> StorageService:
+    from backend.app.clients.storage_client import make_storage_client_from_settings
+    return StorageService(make_storage_client_from_settings())
 
 # Path to the fixed benchmark positions file.
 # benchmark/positions.txt is copied into the Docker image at /app/benchmark/positions.txt.
@@ -319,6 +325,15 @@ def _build_zip(files: list[tuple[str, Path]]) -> bytes:
     return buf.getvalue()
 
 
+def _build_zip_from_bytes(files: list[tuple[str, bytes]]) -> bytes:
+    """Build an in-memory ZIP from a list of (archive_name, raw_bytes) pairs."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for arcname, data in files:
+            zf.writestr(arcname, data)
+    return buf.getvalue()
+
+
 def _zip_response(zip_bytes: bytes, filename: str) -> Response:
     return Response(
         content=zip_bytes,
@@ -445,24 +460,35 @@ def _find_run_data_file(run_data_dir: str, run_id: str) -> Path | None:
 @router.get("/run-data/download")
 def download_run_data(
     _admin: AdminDep,
+    db: DbDep,
     from_date: date = Query(..., description="Start date (inclusive), YYYY-MM-DD"),
     to_date: date | None = Query(None, description="End date (inclusive), YYYY-MM-DD. Defaults to today."),
 ):
     """
     Download a ZIP archive of run-data JSON files for the given date range.
 
-    Requires RUN_DATA_DIR to be configured on the server.
+    Queries the DB for succeeded runs in the range, then fetches each debug.json
+    from object storage. Runs that pre-date the storage feature are skipped silently.
     Returns run-data-YYYY-MM-DD-to-YYYY-MM-DD.zip containing one JSON per run.
     """
-    settings = get_settings()
-    if not settings.run_data_dir:
+    effective_to = _validate_date_range(from_date, to_date)
+    runs = GenerationRunRepository(db).list_by_date_range(from_date, effective_to)
+
+    if not runs:
         raise HTTPException(
-            status_code=503,
-            detail="Run data storage is not enabled on this server (RUN_DATA_DIR is not set).",
+            status_code=404,
+            detail=f"No succeeded runs found for {from_date} – {effective_to}.",
         )
 
-    effective_to = _validate_date_range(from_date, to_date)
-    files = _run_data_files_for_range(settings.run_data_dir, from_date, effective_to)
+    storage = _storage_service()
+    files: list[tuple[str, bytes]] = []
+    for run in runs:
+        try:
+            data = storage.get_debug_json_bytes(run.user_id, str(run.id))
+            files.append((f"run-{run.id}.json", data))
+        except Exception:
+            # Skip runs that have no debug file (pre-feature or failed upload)
+            continue
 
     if not files:
         raise HTTPException(
@@ -470,38 +496,44 @@ def download_run_data(
             detail=f"No run data files found for {from_date} – {effective_to}.",
         )
 
-    zip_bytes = _build_zip([(f.name, f) for f in files])
+    zip_bytes = _build_zip_from_bytes(files)
     filename = f"run-data-{from_date.isoformat()}-to-{effective_to.isoformat()}.zip"
     return _zip_response(zip_bytes, filename)
 
 
 @router.get("/run-data/download/{run_id}")
-def download_run_data_by_id(run_id: str, _admin: AdminDep):
+def download_run_data_by_id(run_id: str, _admin: AdminDep, db: DbDep):
     """
     Download the run-data JSON for a specific generation run.
 
-    Requires RUN_DATA_DIR to be configured on the server.
-    Scans files most-recent-first, so recent runs resolve quickly.
-    Returns 404 if no file is found for the given run_id.
+    Looks up the run in the DB, then fetches debug.json from object storage.
+    Returns 404 if the run does not exist or has no debug file.
     """
-    settings = get_settings()
-    if not settings.run_data_dir:
-        raise HTTPException(
-            status_code=503,
-            detail="Run data storage is not enabled on this server (RUN_DATA_DIR is not set).",
-        )
+    try:
+        run_id_int = int(run_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="run_id must be an integer.")
 
-    f = _find_run_data_file(settings.run_data_dir, run_id)
-    if f is None:
+    run = GenerationRunRepository(db).get_by_id(run_id_int)
+    if run is None:
         raise HTTPException(
             status_code=404,
-            detail=f"No run data file found for generation_run_id={run_id}.",
+            detail=f"Generation run {run_id} not found.",
+        )
+
+    storage = _storage_service()
+    try:
+        data = storage.get_debug_json_bytes(run.user_id, str(run_id_int))
+    except Exception:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No debug file found for run {run_id}.",
         )
 
     return Response(
-        content=f.read_bytes(),
+        content=data,
         media_type="application/json",
-        headers={"Content-Disposition": f'attachment; filename="{f.name}"'},
+        headers={"Content-Disposition": f'attachment; filename="run-{run_id}.json"'},
     )
 
 
