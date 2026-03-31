@@ -26,6 +26,12 @@ from tailor.eval.models import ExtractedDoc
 # Private helpers reused from comparator (owned codebase).
 from tailor.eval.comparator import _heading_key, _is_known_section  # noqa: PLC2701
 
+# Section placement module (new, additive — does not touch comparator/extractor).
+from tailor.eval.changed_content.placement import (
+    SectionPlacementResult,
+    score_placement,
+)
+
 # ---------------------------------------------------------------------------
 # Composite weights
 # ---------------------------------------------------------------------------
@@ -78,6 +84,9 @@ class LayoutScore:
     src_bullet_count: int
     out_bullet_count: int
     gen_bullet_count: int
+
+    # Per-section placement results (empty when no heading geometry available)
+    section_placement_results: list  # list[SectionPlacementResult]
 
     # Weighted composite
     composite: float
@@ -246,22 +255,37 @@ def score_layout(
             f"(confidence={col_conf})"
         )
 
-    # ── 2. Section placement: expected headings appear in output ─────────
+    # ── 2. Section placement: geometric placement + heading count ────────
     expected_headings = _extract_llm_headings(generated_text)
     out_heading_keys = {_heading_key(h) for h in out_extracted.headings}
     found_n = sum(1 for h in expected_headings if _heading_key(h) in out_heading_keys)
     expected_n = len(expected_headings)
 
-    if expected_n == 0:
-        section_placement = 1.0
+    # Geometric placement (uses block bboxes from extractor output).
+    # Returns ([], None) for synthetic/empty docs — falls back to heading count.
+    placement_results, placement_score = score_placement(src_extracted, out_extracted)
+
+    if placement_score is not None:
+        # Rich geometric score available
+        section_placement = placement_score
+        # Emit evidence for poorly placed sections
+        for pr in placement_results:
+            if pr.placement_score < 0.60 and (pr.input_found or pr.output_found):
+                for note in pr.notes:
+                    evidence.append(f"[placement:{pr.canonical_type}] {note}")
     else:
-        section_placement = found_n / expected_n
-        if found_n < expected_n:
-            missing = [h for h in expected_headings if _heading_key(h) not in out_heading_keys]
-            evidence.append(
-                f"Section headings missing from output ({found_n}/{expected_n} found): "
-                f"{missing}"
-            )
+        # Fallback: heading count ratio (no block geometry in this doc)
+        placement_results = []
+        if expected_n == 0:
+            section_placement = 1.0
+        else:
+            section_placement = found_n / expected_n
+            if found_n < expected_n:
+                missing = [h for h in expected_headings if _heading_key(h) not in out_heading_keys]
+                evidence.append(
+                    f"Section headings missing from output ({found_n}/{expected_n} found): "
+                    f"{missing}"
+                )
 
     # ── 3. Overflow: page count growth ───────────────────────────────────
     src_pages = src_extracted.features.page_count
@@ -345,6 +369,7 @@ def score_layout(
         src_bullet_count=src_extracted.bullet_count,
         out_bullet_count=out_bullets,
         gen_bullet_count=gen_bullets,
+        section_placement_results=placement_results,
         composite=round(composite, 3),
     )
     return score, evidence

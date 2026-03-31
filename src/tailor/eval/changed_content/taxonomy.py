@@ -115,21 +115,65 @@ def classify_failures(layout_score: "LayoutScore") -> FailureClassification:  # 
             ),
         )
 
-    # ── Class A: section boundary failure ───────────────────────────────
-    if layout_score.section_headings_expected > 0:
-        coverage = (
-            layout_score.section_headings_found / layout_score.section_headings_expected
-        )
-        if coverage < 0.70:
-            missing = layout_score.section_headings_expected - layout_score.section_headings_found
+    # ── Class A / B / F from per-section placement results ──────────────
+    placement_results = layout_score.section_placement_results  # list[SectionPlacementResult | dict]
+    if placement_results:
+        missing_out = [
+            r for r in placement_results
+            if _pr_get(r, "input_found") and not _pr_get(r, "output_found")
+        ]
+        region_mismatches = [
+            r for r in placement_results
+            if _pr_get(r, "input_found") and _pr_get(r, "output_found")
+            and _pr_get(r, "region_score", 1.0) == 0.0
+        ]
+        bad_vertical = [
+            r for r in placement_results
+            if _pr_get(r, "input_found") and _pr_get(r, "output_found")
+            and _pr_get(r, "vertical_score", 1.0) < 0.30
+        ]
+
+        # Class A: source sections absent from output
+        for r in missing_out:
             fc.add(
                 FailureClass.A_SECTION_BOUNDARY,
+                f"'{_pr_get(r, 'canonical_type')}' found in source but missing from output",
+            )
+
+        # Class B: sections routed to wrong region
+        for r in region_mismatches:
+            fc.add(
+                FailureClass.B_CONTAINER_ASSIGNMENT,
                 (
-                    f"Only {layout_score.section_headings_found}/"
-                    f"{layout_score.section_headings_expected} expected section "
-                    f"headings found in output ({missing} missing)"
+                    f"'{_pr_get(r, 'canonical_type')}' moved from "
+                    f"{_pr_get(r, 'input_region')} → {_pr_get(r, 'output_region')}"
                 ),
             )
+
+        # Class F: multiple sections with severe vertical displacement
+        if len(bad_vertical) >= 2:
+            types = [_pr_get(r, "canonical_type") for r in bad_vertical]
+            fc.add(
+                FailureClass.F_TOPOLOGY_COLLAPSE,
+                f"{len(bad_vertical)} sections severely displaced vertically: {types}",
+            )
+
+    else:
+        # Fallback to heading count heuristic (no geometric data)
+        if layout_score.section_headings_expected > 0:
+            coverage = (
+                layout_score.section_headings_found / layout_score.section_headings_expected
+            )
+            if coverage < 0.70:
+                missing = layout_score.section_headings_expected - layout_score.section_headings_found
+                fc.add(
+                    FailureClass.A_SECTION_BOUNDARY,
+                    (
+                        f"Only {layout_score.section_headings_found}/"
+                        f"{layout_score.section_headings_expected} expected section "
+                        f"headings found in output ({missing} missing)"
+                    ),
+                )
 
     # ── Class E: style prototype failure ────────────────────────────────
     if layout_score.style_score < 0.60:
@@ -146,3 +190,10 @@ def classify_failures(layout_score: "LayoutScore") -> FailureClassification:  # 
         )
 
     return fc
+
+
+def _pr_get(pr, key: str, default=None):
+    """Get a field from either a SectionPlacementResult or a dict."""
+    if isinstance(pr, dict):
+        return pr.get(key, default)
+    return getattr(pr, key, default)

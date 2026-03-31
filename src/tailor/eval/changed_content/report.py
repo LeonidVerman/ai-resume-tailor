@@ -13,6 +13,18 @@ from typing import Any
 from tailor.eval.changed_content.taxonomy import CLASS_LABELS
 
 
+def _serialize_placement_results(results) -> list[dict]:
+    """Convert placement results (dataclass list or dict list) to plain dicts."""
+    out = []
+    for r in results or []:
+        if isinstance(r, dict):
+            out.append(r)
+        else:
+            from dataclasses import asdict
+            out.append(asdict(r))
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Per-case report
 # ---------------------------------------------------------------------------
@@ -54,6 +66,9 @@ def build_case_report(result: "CaseResult") -> dict[str, Any]:  # noqa: F821
         "failure_classes": result.failure_classes,
         "failure_labels":  [CLASS_LABELS.get(c, c) for c in result.failure_classes],
         "evidence":        result.evidence,
+        "section_placement": _serialize_placement_results(
+            mb.get("section_placement_results", [])
+        ),
         "notes":           result.notes,
         "artifacts":       result.artifacts,
         "error":           result.error,
@@ -95,6 +110,18 @@ def _case_summary_text(r: dict) -> str:
             for ev in (r["evidence"] or []):
                 if ev.startswith(f"[{cls}]"):
                     lines.append(f"    → {ev[len(cls)+3:].strip()}")
+        lines.append("")
+    sp = r.get("section_placement") or []
+    if sp:
+        lines.append("Section placement:")
+        for pr in sp:
+            status = "OK" if pr.get("placement_score", 0) >= 0.70 else "WARN"
+            inp = f"p{pr['input_page']}@{pr['input_y']:.2f}/{pr['input_region']}" if pr.get("input_found") else "absent"
+            out = f"p{pr['output_page']}@{pr['output_y']:.2f}/{pr['output_region']}" if pr.get("output_found") else "absent"
+            lines.append(
+                f"  [{status}] {pr['canonical_type']:16s} "
+                f"src={inp}  out={out}  score={pr.get('placement_score', 0):.2f}"
+            )
         lines.append("")
     if r.get("error"):
         lines += [f"ERROR: {r['error']}", ""]

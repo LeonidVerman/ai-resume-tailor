@@ -102,6 +102,7 @@ def _make_score(**overrides) -> LayoutScore:
         src_bullet_count=5,
         out_bullet_count=5,
         gen_bullet_count=5,
+        section_placement_results=[],
         composite=1.0,
     )
     defaults.update(overrides)
@@ -423,6 +424,7 @@ def _make_case_result(**overrides) -> CaseResult:
             "src_bullet_count": 5,
             "out_bullet_count": 5,
             "gen_bullet_count": 5,
+            "section_placement_results": [],
             "composite": 0.85,
         },
         failure_classes=[],
@@ -662,3 +664,535 @@ class TestSameTextPathSafety:
         import tailor.eval.changed_content  # noqa: F401
 
         assert comparator.THRESHOLDS == original_thresholds
+
+
+# ---------------------------------------------------------------------------
+# 7. Placement: heading normalization
+# ---------------------------------------------------------------------------
+
+from tailor.eval.changed_content.placement import (
+    SECTION_ALIASES,
+    SectionAnchor,
+    SectionPlacementResult,
+    classify_region,
+    extract_section_anchors,
+    match_canonical_type,
+    normalize_heading,
+    score_placement,
+)
+
+
+class TestHeadingNormalization:
+
+    def test_lowercase_and_trim(self):
+        assert normalize_heading("  EXPERIENCE  ") == "experience"
+
+    def test_ampersand_to_and(self):
+        assert normalize_heading("Skills & Technologies") == "skills and technologies"
+
+    def test_punctuation_stripped(self):
+        assert normalize_heading("Education:") == "education"
+
+    def test_leading_number_stripped(self):
+        assert normalize_heading("1. Experience") == "experience"
+        assert normalize_heading("2. Education") == "education"
+
+    def test_whitespace_collapsed(self):
+        assert normalize_heading("Technical  Skills") == "technical skills"
+
+
+class TestMatchCanonicalType:
+
+    def test_exact_canonical_names(self):
+        assert match_canonical_type("Experience")       == "experience"
+        assert match_canonical_type("Education")        == "education"
+        assert match_canonical_type("Skills")           == "skills"
+        assert match_canonical_type("Languages")        == "languages"
+        assert match_canonical_type("Certifications")   == "certifications"
+        assert match_canonical_type("Summary")          == "summary"
+
+    def test_aliases(self):
+        assert match_canonical_type("Professional Summary") == "summary"
+        assert match_canonical_type("Employment History")   == "experience"
+        assert match_canonical_type("Work Experience")      == "experience"
+        assert match_canonical_type("Academic Background")  == "education"
+        assert match_canonical_type("Technical Skills")     == "skills"
+        assert match_canonical_type("Core Competencies")    == "skills"
+        assert match_canonical_type("Certifications and Training") == "certifications"
+        assert match_canonical_type("Spoken Languages")     == "languages"
+
+    def test_case_insensitive(self):
+        assert match_canonical_type("EXPERIENCE")          == "experience"
+        assert match_canonical_type("technical skills")    == "skills"
+
+    def test_non_section_returns_none(self):
+        assert match_canonical_type("John Smith")          is None
+        assert match_canonical_type("Senior Engineer")     is None
+        assert match_canonical_type("New York, NY")        is None
+
+    def test_all_aliases_resolve(self):
+        """Every alias in SECTION_ALIASES must resolve to its canonical type."""
+        for canonical, aliases in SECTION_ALIASES.items():
+            for alias in aliases:
+                result = match_canonical_type(alias)
+                assert result == canonical, (
+                    f"Alias '{alias}' should map to '{canonical}', got {result!r}"
+                )
+
+
+# ---------------------------------------------------------------------------
+# 8. Placement: region classification
+# ---------------------------------------------------------------------------
+
+class TestRegionClassification:
+
+    def test_wide_block_is_main(self):
+        # Full-width block
+        assert classify_region(0.10, 0.10, 0.90, 0.15) == "main"
+
+    def test_narrow_left_block_is_sidebar_left(self):
+        # 20% wide, centered at 15% → sidebar_left
+        assert classify_region(0.05, 0.20, 0.25, 0.25) == "sidebar_left"
+
+    def test_narrow_right_block_is_sidebar_right(self):
+        # 20% wide, centered at 80% → sidebar_right
+        assert classify_region(0.70, 0.20, 0.90, 0.25) == "sidebar_right"
+
+    def test_narrow_centered_block_is_main(self):
+        # Narrow but centered (e.g., narrow single-column resume)
+        assert classify_region(0.30, 0.20, 0.70, 0.25) == "main"
+
+    def test_zero_width_is_unknown(self):
+        assert classify_region(0.50, 0.20, 0.50, 0.25) == "unknown"
+
+    def test_borderline_left_sidebar(self):
+        # width=0.44 (< 0.45), center=0.22 (< 0.35)
+        assert classify_region(0.00, 0.0, 0.44, 0.1) == "sidebar_left"
+
+    def test_borderline_wide_is_main(self):
+        # width=0.46 (>= 0.45) → main regardless of position
+        assert classify_region(0.00, 0.0, 0.46, 0.1) == "main"
+
+
+# ---------------------------------------------------------------------------
+# 9. Placement: anchor extraction from ExtractedDoc
+# ---------------------------------------------------------------------------
+
+from tailor.eval.models import BlockModel, LineModel
+
+
+def _make_heading_block(
+    text: str,
+    x0: float, y0: float, x1: float, y1: float,
+    block_id: str = "b1",
+) -> BlockModel:
+    """Build a minimal heading BlockModel with normalized-equivalent pt bbox."""
+    line = LineModel(
+        text=text,
+        bbox=(x0, y0, x1, y1),
+        spans=[],
+        left_x=x0,
+        right_x=x1,
+        baseline_y=y0 + 5.0,
+        is_heading_candidate=True,
+    )
+    return BlockModel(
+        block_id=block_id,
+        block_type="heading",
+        bbox=(x0, y0, x1, y1),
+        lines=[line],
+        dominant_left_x=x0,
+    )
+
+
+def _make_extracted_with_blocks(
+    page_width: float,
+    page_height: float,
+    heading_blocks: list[tuple[str, float, float, float, float]],  # (text, x0, y0, x1, y1) in pt
+    extra_headings: list[str] | None = None,
+) -> ExtractedDoc:
+    """Build an ExtractedDoc with real block geometry for placement testing."""
+    blocks = [
+        _make_heading_block(text, x0, y0, x1, y1, block_id=f"b{i}")
+        for i, (text, x0, y0, x1, y1) in enumerate(heading_blocks)
+    ]
+    page = PageModel(
+        page_number=1,
+        width=page_width,
+        height=page_height,
+        lines=[],
+        blocks=blocks,
+    )
+    return ExtractedDoc(
+        path="synthetic",
+        pages=[page],
+        features=_make_features(page_count=1),
+        headings=(extra_headings or []) + [t for t, *_ in heading_blocks],
+        bullet_count=0,
+    )
+
+
+class TestAnchorExtraction:
+    PW = 612.0
+    PH = 792.0
+
+    def test_extracts_known_sections(self):
+        doc = _make_extracted_with_blocks(
+            self.PW, self.PH,
+            [
+                ("Summary",    72, 100, 540, 115),
+                ("Experience", 72, 200, 540, 215),
+                ("Education",  72, 400, 540, 415),
+            ],
+        )
+        anchors = extract_section_anchors(doc)
+        types = [a.canonical_type for a in anchors]
+        assert "summary"    in types
+        assert "experience" in types
+        assert "education"  in types
+
+    def test_ignores_non_section_headings(self):
+        doc = _make_extracted_with_blocks(
+            self.PW, self.PH,
+            [
+                ("John Smith",  72, 50, 540, 65),   # not a known section
+                ("Experience",  72, 200, 540, 215),
+            ],
+        )
+        anchors = extract_section_anchors(doc)
+        assert all(a.canonical_type != "johnsmith" for a in anchors)
+        assert len(anchors) == 1
+        assert anchors[0].canonical_type == "experience"
+
+    def test_bbox_normalized_to_0_1(self):
+        doc = _make_extracted_with_blocks(
+            self.PW, self.PH,
+            [("Summary", 72, 100, 540, 115)],
+        )
+        anchors = extract_section_anchors(doc)
+        assert len(anchors) == 1
+        a = anchors[0]
+        assert 0.0 <= a.nx0 <= 1.0
+        assert 0.0 <= a.ny0 <= 1.0
+        assert pytest.approx(a.nx0, abs=0.01) == 72 / self.PW
+        assert pytest.approx(a.ny0, abs=0.01) == 100 / self.PH
+
+    def test_sorted_in_reading_order(self):
+        # Experience at y=200 comes before Summary at y=100? No — sorted by y asc.
+        doc = _make_extracted_with_blocks(
+            self.PW, self.PH,
+            [
+                ("Experience", 72, 300, 540, 315),
+                ("Summary",    72, 100, 540, 115),
+                ("Education",  72, 500, 540, 515),
+            ],
+        )
+        anchors = extract_section_anchors(doc)
+        types = [a.canonical_type for a in anchors]
+        assert types == ["summary", "experience", "education"]
+
+    def test_empty_blocks_returns_empty(self):
+        doc = _make_extracted()  # no blocks
+        anchors = extract_section_anchors(doc)
+        assert anchors == []
+
+    def test_region_classified_for_main_heading(self):
+        # Wide block spanning most of the page → main
+        doc = _make_extracted_with_blocks(
+            self.PW, self.PH,
+            [("Experience", 72, 200, 540, 215)],  # wide
+        )
+        anchors = extract_section_anchors(doc)
+        assert anchors[0].region == "main"
+
+    def test_region_classified_for_sidebar_heading(self):
+        # Narrow block on the right → sidebar_right
+        doc = _make_extracted_with_blocks(
+            self.PW, self.PH,
+            [("Languages", 420, 200, 560, 215)],  # right side, narrow
+        )
+        anchors = extract_section_anchors(doc)
+        assert anchors[0].region == "sidebar_right"
+
+
+# ---------------------------------------------------------------------------
+# 10. Placement: per-section scoring
+# ---------------------------------------------------------------------------
+
+class TestSectionScoring:
+    PW = 612.0
+    PH = 792.0
+
+    def _doc_with(self, headings_pt: list[tuple[str, float, float, float, float]]) -> ExtractedDoc:
+        return _make_extracted_with_blocks(self.PW, self.PH, headings_pt)
+
+    def test_same_page_same_region_same_y_high_score(self):
+        src = self._doc_with([("Summary", 72, 80, 540, 95)])
+        out = self._doc_with([("Summary", 72, 82, 540, 97)])  # 2pt drift only
+        results, overall = score_placement(src, out)
+        summary = next(r for r in results if r.canonical_type == "summary")
+        assert summary.placement_score >= 0.85
+        assert overall is not None
+        assert overall >= 0.50
+
+    def test_wrong_region_penalised(self):
+        # Source: summary in main region; output: summary pushed to right sidebar
+        src = self._doc_with([("Summary", 72, 80, 540, 95)])    # main
+        out = self._doc_with([("Summary", 430, 80, 590, 95)])   # sidebar_right
+        results, _ = score_placement(src, out)
+        summary = next(r for r in results if r.canonical_type == "summary")
+        assert summary.region_score == 0.0
+        # region weight is 0.30; max score with region=0 is 1.0 - 0.30 = 0.70
+        assert summary.placement_score <= 0.70
+        assert summary.placement_score < 1.0
+
+    def test_large_vertical_drift_penalised(self):
+        # Source: summary at y=0.10, output: summary at y=0.60
+        src = self._doc_with([("Summary", 72, int(0.10 * self.PH), 540, int(0.10 * self.PH) + 15)])
+        out = self._doc_with([("Summary", 72, int(0.60 * self.PH), 540, int(0.60 * self.PH) + 15)])
+        results, _ = score_placement(src, out)
+        summary = next(r for r in results if r.canonical_type == "summary")
+        assert summary.vertical_score < 0.40
+
+    def test_missing_output_section_scores_zero(self):
+        src = self._doc_with([("Experience", 72, 200, 540, 215)])
+        out = self._doc_with([])  # experience missing in output
+        results, _ = score_placement(src, out)
+        exp = next(r for r in results if r.canonical_type == "experience")
+        assert exp.input_found is True
+        assert exp.output_found is False
+        assert exp.placement_score == 0.0
+
+    def test_page_drift_penalised(self):
+        # Source on page 1, output on page 2
+        page1 = PageModel(page_number=1, width=self.PW, height=self.PH, lines=[],
+                          blocks=[_make_heading_block("Experience", 72, 200, 540, 215, "b1")])
+        page2 = PageModel(page_number=2, width=self.PW, height=self.PH, lines=[],
+                          blocks=[_make_heading_block("Experience", 72, 200, 540, 215, "b2")])
+        src = ExtractedDoc("s", [page1], _make_features(), headings=["Experience"])
+        out = ExtractedDoc("o", [page2], _make_features(), headings=["Experience"])
+        results, _ = score_placement(src, out)
+        exp = next(r for r in results if r.canonical_type == "experience")
+        assert exp.page_score < 1.0
+        assert exp.input_page == 1
+        assert exp.output_page == 2
+
+    def test_order_drift_penalised(self):
+        # Source: Summary, Experience, Education
+        # Output: Education, Experience, Summary (completely reversed)
+        src = self._doc_with([
+            ("Summary",    72, 100, 540, 115),
+            ("Experience", 72, 250, 540, 265),
+            ("Education",  72, 450, 540, 465),
+        ])
+        out = self._doc_with([
+            ("Education",  72, 100, 540, 115),
+            ("Experience", 72, 250, 540, 265),
+            ("Summary",    72, 450, 540, 465),
+        ])
+        results, _ = score_placement(src, out)
+        summary = next(r for r in results if r.canonical_type == "summary")
+        # Summary moved from rank 0 to rank 2 → order_score should be < 1.0
+        assert summary.order_score < 1.0
+
+    def test_no_geometry_returns_none_overall(self):
+        # Synthetic docs with empty blocks → no anchors
+        src = _make_extracted()
+        out = _make_extracted()
+        results, overall = score_placement(src, out)
+        assert results == []
+        assert overall is None
+
+    def test_all_six_section_types_in_results(self):
+        src = self._doc_with([
+            ("Summary",        72, 80,  540, 95),
+            ("Experience",     72, 200, 540, 215),
+            ("Education",      72, 400, 540, 415),
+            ("Technical Skills", 72, 500, 540, 515),
+            ("Languages",      420, 80,  590, 95),
+            ("Certifications", 420, 200, 590, 215),
+        ])
+        out = self._doc_with([
+            ("Summary",        72, 82,  540, 97),
+            ("Experience",     72, 202, 540, 217),
+            ("Education",      72, 402, 540, 417),
+            ("Technical Skills", 72, 502, 540, 517),
+            ("Languages",      420, 82,  590, 97),
+            ("Certifications", 420, 202, 590, 217),
+        ])
+        results, overall = score_placement(src, out)
+        types = {r.canonical_type for r in results}
+        assert types == {"summary", "experience", "education", "skills", "languages", "certifications"}
+        assert overall is not None
+        assert overall >= 0.80
+
+
+# ---------------------------------------------------------------------------
+# 11. Placement: missing-summary expected-zone heuristic
+# ---------------------------------------------------------------------------
+
+class TestExpectedZoneHeuristic:
+    PW = 612.0
+    PH = 792.0
+
+    def test_summary_in_expected_zone_scores_reasonably(self):
+        # Source has no summary heading; output inserts one at top of page 1
+        src = _make_extracted_with_blocks(self.PW, self.PH, [
+            ("Experience", 72, 200, 540, 215),
+        ])
+        out = _make_extracted_with_blocks(self.PW, self.PH, [
+            ("Summary",    72, 100, 540, 115),  # top 40% of page, main region
+            ("Experience", 72, 250, 540, 265),
+        ])
+        results, _ = score_placement(src, out)
+        summary = next(r for r in results if r.canonical_type == "summary")
+        assert summary.input_found is False
+        assert summary.output_found is True
+        assert summary.placement_score >= 0.60  # expected zone → not penalised heavily
+        assert any("expected zone" in n.lower() for n in summary.notes)
+
+    def test_summary_outside_expected_zone_scores_neutral(self):
+        # Output inserts summary at page 2 — not expected zone
+        page1 = PageModel(page_number=1, width=self.PW, height=self.PH, lines=[],
+                          blocks=[_make_heading_block("Experience", 72, 200, 540, 215)])
+        page2 = PageModel(page_number=2, width=self.PW, height=self.PH, lines=[],
+                          blocks=[_make_heading_block("Summary", 72, 100, 540, 115)])
+        src = ExtractedDoc("s", [page1], _make_features(), headings=["Experience"])
+        out = ExtractedDoc("o", [page1, page2], _make_features(page_count=2),
+                          headings=["Experience", "Summary"])
+        results, _ = score_placement(src, out)
+        summary = next(r for r in results if r.canonical_type == "summary")
+        assert summary.input_found is False
+        assert summary.output_found is True
+        # Page 2 summary is not the expected zone → neutral score 0.5
+        assert summary.placement_score == pytest.approx(0.5, abs=0.01)
+
+
+# ---------------------------------------------------------------------------
+# 12. Taxonomy: placement-driven failure detection
+# ---------------------------------------------------------------------------
+
+class TestTaxonomyPlacementIntegration:
+
+    def test_region_mismatch_triggers_class_B(self):
+        # section_placement_results contains a region_score=0.0 entry
+        pr = {
+            "canonical_type": "skills",
+            "input_found": True, "output_found": True,
+            "input_region": "sidebar_left", "output_region": "main",
+            "region_score": 0.0,
+            "vertical_score": 0.9, "page_score": 1.0, "order_score": 1.0,
+            "placement_score": 0.30,
+        }
+        score = _make_score(section_placement_results=[pr])
+        fc = classify_failures(score)
+        assert FailureClass.B_CONTAINER_ASSIGNMENT in fc.classes
+
+    def test_missing_section_from_placement_triggers_class_A(self):
+        pr = {
+            "canonical_type": "experience",
+            "input_found": True, "output_found": False,
+            "input_region": "main", "output_region": None,
+            "region_score": 0.0, "vertical_score": 0.0,
+            "page_score": 0.0, "order_score": 0.0,
+            "placement_score": 0.0,
+        }
+        score = _make_score(section_placement_results=[pr])
+        fc = classify_failures(score)
+        assert FailureClass.A_SECTION_BOUNDARY in fc.classes
+
+    def test_two_bad_vertical_scores_trigger_class_F(self):
+        def _bad_pr(ctype):
+            return {
+                "canonical_type": ctype,
+                "input_found": True, "output_found": True,
+                "input_region": "main", "output_region": "main",
+                "region_score": 1.0,
+                "vertical_score": 0.10,  # severely displaced
+                "page_score": 1.0, "order_score": 1.0,
+                "placement_score": 0.40,
+            }
+        score = _make_score(section_placement_results=[_bad_pr("summary"), _bad_pr("experience")])
+        fc = classify_failures(score)
+        assert FailureClass.F_TOPOLOGY_COLLAPSE in fc.classes
+
+    def test_one_bad_vertical_does_not_trigger_class_F(self):
+        pr = {
+            "canonical_type": "summary",
+            "input_found": True, "output_found": True,
+            "input_region": "main", "output_region": "main",
+            "region_score": 1.0, "vertical_score": 0.10,
+            "page_score": 1.0, "order_score": 1.0,
+            "placement_score": 0.40,
+        }
+        score = _make_score(section_placement_results=[pr])
+        fc = classify_failures(score)
+        assert FailureClass.F_TOPOLOGY_COLLAPSE not in fc.classes
+
+    def test_no_placement_results_uses_heading_count_fallback(self):
+        # No placement results → falls back to heading-count heuristic
+        score = _make_score(
+            section_placement_results=[],
+            section_headings_found=1,
+            section_headings_expected=5,
+        )
+        fc = classify_failures(score)
+        assert FailureClass.A_SECTION_BOUNDARY in fc.classes
+
+
+# ---------------------------------------------------------------------------
+# 13. Scorer integration: placement feeds section_placement field
+# ---------------------------------------------------------------------------
+
+class TestScorerPlacementIntegration:
+
+    def test_geometric_placement_used_when_blocks_present(self):
+        """With real block geometry, section_placement comes from placement module."""
+        PW, PH = 612.0, 792.0
+        src = _make_extracted_with_blocks(PW, PH, [
+            ("Summary", 72, 80, 540, 95),
+            ("Experience", 72, 200, 540, 215),
+        ])
+        out = _make_extracted_with_blocks(PW, PH, [
+            ("Summary", 72, 82, 540, 97),    # 2pt drift
+            ("Experience", 72, 202, 540, 217),
+        ])
+        llm = "Summary\n- text\nExperience\n- job"
+        score, _ = score_layout(src, out, "old text", llm)
+        # Should have placement results (geometric data available)
+        assert len(score.section_placement_results) > 0
+        # section_placement should reflect geometric score
+        assert score.section_placement > 0.70
+
+    def test_fallback_when_no_blocks(self):
+        """Without block geometry, falls back to heading count ratio."""
+        src = _make_extracted(headings=["Summary", "Experience"])
+        out = _make_extracted(headings=["Summary"])  # Experience missing
+        llm = "Summary\n- text\nExperience\n- job"
+        score, _ = score_layout(src, out, "old text", llm)
+        # No blocks → no placement results
+        assert score.section_placement_results == []
+        # Falls back to 1/2 heading count ratio
+        assert score.section_headings_found == 1
+        assert score.section_headings_expected == 2
+        assert score.section_placement == pytest.approx(0.5)
+
+    def test_placement_results_in_report(self):
+        """Placement results are serialized into the case report."""
+        PW, PH = 612.0, 792.0
+        src = _make_extracted_with_blocks(PW, PH, [("Experience", 72, 200, 540, 215)])
+        out = _make_extracted_with_blocks(PW, PH, [("Experience", 72, 202, 540, 217)])
+        llm = "Experience\n- job"
+        score, _ = score_layout(src, out, "old text", llm)
+
+        from dataclasses import asdict
+        result = _make_case_result(
+            metric_breakdown={**asdict(score)},
+            layout_score=score.composite,
+        )
+        report = build_case_report(result)
+        sp = report.get("section_placement", [])
+        assert isinstance(sp, list)
+        # Should have at least the experience section
+        types = {r.get("canonical_type") for r in sp}
+        assert "experience" in types
