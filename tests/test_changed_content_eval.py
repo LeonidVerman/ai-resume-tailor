@@ -1648,3 +1648,561 @@ class TestTopologyIntegration:
         )
         fc = classify_failures(score)
         assert FailureClass.F_TOPOLOGY_COLLAPSE in fc.classes
+
+
+# ---------------------------------------------------------------------------
+# 15. Section coherence + stale-content detection
+# ---------------------------------------------------------------------------
+
+from tailor.eval.changed_content.coherence import (
+    SectionCoherenceResult,
+    SectionFeatures,
+    _section_overlap,
+    compute_section_features,
+    score_coherence,
+    score_section_coherence,
+    _extract_section_content,
+)
+
+
+# ---------------------------------------------------------------------------
+# Helpers: synthetic section docs for coherence testing
+# ---------------------------------------------------------------------------
+
+def _make_section_doc(
+    sections: "list[tuple[str, float, list[str]]]",
+    width: float = 612.0,
+    height: float = 792.0,
+) -> ExtractedDoc:
+    """Build an ExtractedDoc with heading + body blocks.
+
+    Each entry is (heading_text, heading_ny0, content_lines).
+    Heading block is placed at heading_ny0 * height; body blocks follow.
+    """
+    blocks = []
+    for i, (heading_text, ny0, content_lines) in enumerate(sections):
+        h_y0 = ny0 * height
+        h_y1 = h_y0 + 14.0
+        h_x0, h_x1 = 72.0, 540.0
+
+        # Heading block
+        h_line = LineModel(
+            text=heading_text,
+            bbox=(h_x0, h_y0, h_x1, h_y1),
+            spans=[], left_x=h_x0, right_x=h_x1, baseline_y=h_y1,
+            is_heading_candidate=True,
+        )
+        blocks.append(BlockModel(
+            block_id=f"h{i}", block_type="heading",
+            bbox=(h_x0, h_y0, h_x1, h_y1),
+            lines=[h_line], dominant_left_x=h_x0,
+        ))
+
+        # Body block: one LineModel per content line
+        if content_lines:
+            b_y0 = h_y1 + 4.0
+            b_y1 = b_y0 + 13.0 * len(content_lines)
+            body_lines = []
+            for j, text in enumerate(content_lines):
+                ly = b_y0 + j * 13.0
+                body_lines.append(LineModel(
+                    text=text, bbox=(h_x0, ly, h_x1, ly + 11.0),
+                    spans=[], left_x=h_x0, right_x=h_x1, baseline_y=ly + 10.0,
+                ))
+            blocks.append(BlockModel(
+                block_id=f"body{i}", block_type="paragraph",
+                bbox=(h_x0, b_y0, h_x1, b_y1),
+                lines=body_lines, dominant_left_x=h_x0,
+            ))
+
+    page = PageModel(page_number=1, width=width, height=height, lines=[], blocks=blocks)
+    return ExtractedDoc(
+        path="synthetic",
+        pages=[page],
+        features=_make_features(page_count=1),
+        headings=[s[0] for s in sections],
+        bullet_count=0,
+    )
+
+
+# Content fixtures ────────────────────────────────────────────────────────────
+
+_SKILLS_LINES = [
+    "Python, JavaScript, TypeScript, React, Node.js",
+    "AWS, Docker, Kubernetes, Terraform, Jenkins",
+    "PostgreSQL, Redis, MongoDB, Kafka, Elasticsearch",
+    "Machine Learning: TensorFlow, PyTorch, scikit-learn",
+    "Agile, Scrum, DevOps, CI/CD pipelines",
+]
+
+_EXPERIENCE_LINES = [
+    "Senior Software Engineer | Google | 2020 – 2023",
+    "- Led development of microservices platform serving 10M users",
+    "- Managed team of 5 engineers improving reliability to 99.9%",
+    "- Implemented distributed caching layer reducing latency 40%",
+    "Software Engineer at Facebook | 2018 – 2020",
+    "- Built React applications for News Feed infrastructure",
+    "- Designed A/B testing framework used by 20+ product teams",
+    "- Shipped 12 major features shipped on time and on budget",
+]
+
+_EDUCATION_LINES = [
+    "Bachelor of Science in Computer Science",
+    "University of California, Berkeley | 2014 - 2018",
+    "GPA: 3.8 / 4.0  —  Dean's List 2015, 2016, 2017",
+    "Master of Science in Machine Learning",
+    "Stanford University | 2018 - 2020",
+]
+
+_LANGUAGES_LINES = [
+    "English: Native",
+    "French: B2 — Professional working proficiency",
+    "Spanish: A2 — Elementary",
+]
+
+_CERTIFICATIONS_LINES = [
+    "AWS Certified Solutions Architect – Associate  |  2022",
+    "Google Professional Cloud Architect  |  2021",
+    "Certified Kubernetes Administrator (CKA)  |  2023",
+]
+
+
+# ---------------------------------------------------------------------------
+# TestSectionFeatures — compute_section_features unit tests
+# ---------------------------------------------------------------------------
+
+class TestSectionFeatures:
+
+    def test_empty_lines_returns_zeros(self):
+        f = compute_section_features([])
+        assert f.num_lines == 0
+        assert f.char_count == 0
+        assert f.bullet_density == 0.0
+        assert f.date_density == 0.0
+
+    def test_skills_features(self):
+        f = compute_section_features(_SKILLS_LINES)
+        assert f.num_lines == 5
+        assert f.comma_density > 2.0        # many commas per line
+        assert f.tech_kw_count >= 5         # several tech keywords
+        assert f.date_density == 0.0        # no years
+        assert f.role_marker_density == 0.0 # no role separators
+
+    def test_experience_features(self):
+        f = compute_section_features(_EXPERIENCE_LINES)
+        assert f.date_count >= 4            # four years (2020, 2023, 2018, 2020)
+        assert f.date_density > 0.0
+        assert f.role_marker_count >= 2     # | and "at" markers
+        assert f.bullet_count >= 6          # dash bullets
+
+    def test_education_features(self):
+        f = compute_section_features(_EDUCATION_LINES)
+        assert f.education_kw_count >= 2    # bachelor, university, master, stanford→institute
+        assert f.date_count >= 3            # 2014, 2018, 2018, 2020
+        assert f.bullet_count == 0          # no bullet lines
+
+    def test_languages_features(self):
+        f = compute_section_features(_LANGUAGES_LINES)
+        assert f.num_lines == 3
+        assert f.date_density == 0.0
+        assert f.short_line_ratio > 0.5     # all lines are short
+
+    def test_certifications_features(self):
+        f = compute_section_features(_CERTIFICATIONS_LINES)
+        assert f.date_count >= 3            # one year per line
+        assert f.bullet_count == 0
+
+    def test_bullet_detection(self):
+        lines = ["- First point", "• Second point", "Normal line", "- Third point"]
+        f = compute_section_features(lines)
+        assert f.bullet_count == 3
+        assert f.bullet_density == pytest.approx(3 / 4)
+
+    def test_short_and_long_line_ratios(self):
+        short = "Hi"
+        long = "x" * 130
+        mid = "y" * 80
+        f = compute_section_features([short, long, mid])
+        assert f.short_line_ratio == pytest.approx(1 / 3, abs=0.001)
+        assert f.long_line_ratio == pytest.approx(1 / 3, abs=0.001)
+
+
+# ---------------------------------------------------------------------------
+# TestSectionCoherence — score_section_coherence per type
+# ---------------------------------------------------------------------------
+
+class TestSectionCoherence:
+
+    def test_skills_content_scores_high_for_skills(self):
+        f = compute_section_features(_SKILLS_LINES)
+        score, _ = score_section_coherence(f, "skills")
+        assert score >= 0.60
+
+    def test_experience_content_scores_high_for_experience(self):
+        f = compute_section_features(_EXPERIENCE_LINES)
+        score, _ = score_section_coherence(f, "experience")
+        assert score >= 0.55
+
+    def test_education_content_scores_high_for_education(self):
+        f = compute_section_features(_EDUCATION_LINES)
+        score, _ = score_section_coherence(f, "education")
+        assert score >= 0.55
+
+    def test_languages_content_scores_high_for_languages(self):
+        f = compute_section_features(_LANGUAGES_LINES)
+        score, _ = score_section_coherence(f, "languages")
+        assert score >= 0.60
+
+    def test_certifications_content_scores_high_for_certifications(self):
+        f = compute_section_features(_CERTIFICATIONS_LINES)
+        score, _ = score_section_coherence(f, "certifications")
+        assert score >= 0.55
+
+    # Cross-type mismatch tests —————————————————————————————————————————
+
+    def test_skills_content_scores_low_for_experience(self):
+        """Skills comma-lists score poorly as experience content."""
+        f = compute_section_features(_SKILLS_LINES)
+        score, _ = score_section_coherence(f, "experience")
+        # Skills content has no dates, no role markers, no bullets → low
+        assert score < 0.50
+
+    def test_experience_content_scores_low_for_skills(self):
+        """Experience bullet-list with dates scores poorly as skills content."""
+        f = compute_section_features(_EXPERIENCE_LINES)
+        score, _ = score_section_coherence(f, "skills")
+        # Experience has dates + role markers → penalised for skills type
+        assert score < 0.50
+
+    def test_experience_content_scores_low_for_education(self):
+        """Long experience section with dates/bullets scores poorly for education."""
+        f = compute_section_features(_EXPERIENCE_LINES)
+        score, _ = score_section_coherence(f, "education")
+        assert score < 0.50
+
+    def test_too_few_lines_returns_neutral(self):
+        f = compute_section_features(["Just one line"])
+        score, fs = score_section_coherence(f, "skills")
+        assert score == pytest.approx(0.5)
+
+    def test_feature_scores_returned(self):
+        f = compute_section_features(_SKILLS_LINES)
+        score, fs = score_section_coherence(f, "skills")
+        assert isinstance(fs, dict)
+        assert "comma" in fs
+        assert "tech_kw" in fs
+
+    def test_unknown_type_returns_neutral(self):
+        f = compute_section_features(_SKILLS_LINES)
+        score, fs = score_section_coherence(f, "awards")
+        assert score == pytest.approx(0.5)
+        assert fs == {}
+
+
+# ---------------------------------------------------------------------------
+# TestStaleDetection — _section_overlap
+# ---------------------------------------------------------------------------
+
+class TestStaleDetection:
+
+    def test_identical_content_high_overlap(self):
+        lines = _EXPERIENCE_LINES
+        overlap = _section_overlap(lines, lines)
+        assert overlap >= 0.90
+
+    def test_completely_different_content_low_overlap(self):
+        overlap = _section_overlap(_EXPERIENCE_LINES, _SKILLS_LINES)
+        assert overlap < 0.15
+
+    def test_partial_overlap(self):
+        src = ["Microsoft Azure experience", "Watson AI platform work", "IBM Cloud services"]
+        out = ["Microsoft Azure experience", "Watson AI platform work", "Google Cloud Platform"]
+        overlap = _section_overlap(src, out)
+        assert 0.40 < overlap < 0.90
+
+    def test_empty_source_returns_zero(self):
+        assert _section_overlap([], _SKILLS_LINES) == 0.0
+
+    def test_empty_output_returns_zero(self):
+        assert _section_overlap(_SKILLS_LINES, []) == pytest.approx(0.0)
+
+    def test_stale_threshold_triggers_flag(self):
+        """Output identical to source → stale_signal=True in full pipeline."""
+        src_doc = _make_section_doc([("Experience", 0.10, _EXPERIENCE_LINES)])
+        out_doc = _make_section_doc([("Experience", 0.10, _EXPERIENCE_LINES)])
+        results, _ = score_coherence(src_doc, out_doc)
+        assert len(results) == 1
+        assert results[0].stale_signal is True
+        assert results[0].stale_overlap >= 0.70
+
+    def test_changed_content_no_stale_flag(self):
+        """Output with different content → stale_signal=False."""
+        src_doc = _make_section_doc([("Experience", 0.10, _EXPERIENCE_LINES)])
+        out_doc = _make_section_doc([("Experience", 0.10, _SKILLS_LINES)])
+        results, _ = score_coherence(src_doc, out_doc)
+        assert len(results) == 1
+        assert results[0].stale_signal is False
+
+
+# ---------------------------------------------------------------------------
+# TestSectionContentExtraction — _extract_section_content
+# ---------------------------------------------------------------------------
+
+class TestSectionContentExtraction:
+
+    def test_extracts_body_lines_after_heading(self):
+        doc = _make_section_doc([("Technical Skills", 0.10, _SKILLS_LINES)])
+        from tailor.eval.changed_content.placement import extract_section_anchors
+        anchors = extract_section_anchors(doc)
+        assert len(anchors) == 1
+        lines = _extract_section_content(doc, anchors[0], None)
+        assert len(lines) == len(_SKILLS_LINES)
+        assert lines[0] == _SKILLS_LINES[0]
+
+    def test_stops_at_next_anchor(self):
+        doc = _make_section_doc([
+            ("Technical Skills", 0.05, _SKILLS_LINES),
+            ("Experience",       0.40, _EXPERIENCE_LINES),
+        ])
+        from tailor.eval.changed_content.placement import extract_section_anchors
+        anchors = extract_section_anchors(doc)
+        # anchors sorted by reading order: skills first, then experience
+        skills_a = next(a for a in anchors if a.canonical_type == "skills")
+        exp_a    = next(a for a in anchors if a.canonical_type == "experience")
+        skills_lines = _extract_section_content(doc, skills_a, exp_a)
+        # Should contain only skills body, not experience body
+        assert len(skills_lines) == len(_SKILLS_LINES)
+        assert not any("Google" in l or "Facebook" in l for l in skills_lines)
+
+    def test_empty_doc_returns_empty(self):
+        doc = _make_extracted()   # no blocks
+        from tailor.eval.changed_content.placement import extract_section_anchors, SectionAnchor
+        anchors = extract_section_anchors(doc)
+        assert anchors == []
+
+
+# ---------------------------------------------------------------------------
+# TestScoreCoherence — score_coherence end-to-end
+# ---------------------------------------------------------------------------
+
+class TestScoreCoherence:
+
+    def test_no_blocks_returns_empty_neutral(self):
+        src = _make_extracted()
+        out = _make_extracted()
+        results, overall = score_coherence(src, out)
+        assert results == []
+        assert overall == pytest.approx(1.0)
+
+    def test_correct_section_types_good_overall(self):
+        """When content matches section headings, overall score should be decent."""
+        src_doc = _make_section_doc([
+            ("Technical Skills", 0.05, _SKILLS_LINES),
+            ("Experience",       0.40, _EXPERIENCE_LINES),
+        ])
+        out_doc = _make_section_doc([
+            ("Technical Skills", 0.05, _SKILLS_LINES),
+            ("Experience",       0.40, _EXPERIENCE_LINES),
+        ])
+        results, overall = score_coherence(src_doc, out_doc)
+        # Both sections should score reasonably
+        assert len(results) >= 1
+        # Stale because same content used (expected in this test)
+        # But coherence scores should be OK
+        for r in results:
+            assert r.coherence_score >= 0.40
+
+    def test_misplaced_skills_under_experience_low_coherence(self):
+        """Skills content under Experience heading → low coherence for experience."""
+        src_doc = _make_section_doc([("Experience", 0.10, _EXPERIENCE_LINES)])
+        out_doc = _make_section_doc([("Experience", 0.10, _SKILLS_LINES)])
+        results, overall = score_coherence(src_doc, out_doc)
+        assert len(results) == 1
+        exp_result = results[0]
+        assert exp_result.canonical_type == "experience"
+        assert exp_result.coherence_score < 0.55
+
+    def test_stale_experience_detected(self):
+        """Source and output share same experience content → stale flag raised."""
+        old_lines = [
+            "Senior Engineer at IBM | 2015 – 2019",
+            "- Watson platform development using Python and Docker",
+            "- Led team of 8 engineers for microservices migration",
+            "Principal Engineer at Microsoft | 2019 – 2022",
+            "- Azure cloud infrastructure automation with Terraform",
+            "- Managed DevOps pipeline reducing deployment time 60%",
+        ]
+        src_doc = _make_section_doc([("Experience", 0.10, old_lines)])
+        out_doc = _make_section_doc([("Experience", 0.10, old_lines)])
+        results, _ = score_coherence(src_doc, out_doc)
+        assert any(r.stale_signal for r in results)
+        stale_r = next(r for r in results if r.stale_signal)
+        assert stale_r.canonical_type == "experience"
+        assert stale_r.stale_overlap >= 0.70
+
+    def test_mixed_case_summary_new_experience_stale(self):
+        """Summary updated, Experience still old → experience flagged stale."""
+        old_exp = [
+            "Senior Engineer at IBM | 2015 – 2019",
+            "- Watson platform development work",
+            "- Led team of 8 engineers at IBM Research",
+            "Engineer at Microsoft | 2019 – 2022",
+            "- Azure cloud DevOps automation project",
+        ]
+        new_summary = [
+            "Results-oriented engineering leader with 10+ years building scalable cloud "
+            "systems and leading distributed teams to deliver measurable business outcomes.",
+            "Proven track record in platform architecture and stakeholder alignment across "
+            "product, infrastructure, and data engineering domains.",
+        ]
+        src_doc = _make_section_doc([
+            ("Summary",    0.05, new_summary),
+            ("Experience", 0.30, old_exp),
+        ])
+        out_doc = _make_section_doc([
+            ("Summary",    0.05, new_summary),   # updated summary
+            ("Experience", 0.30, old_exp),        # stale experience
+        ])
+        results, _ = score_coherence(src_doc, out_doc)
+        by_type = {r.canonical_type: r for r in results}
+        # Experience should be flagged stale
+        assert by_type["experience"].stale_signal is True
+        # Summary — same content so also overlap, but small section → may be neutral
+        assert "summary" in by_type
+
+    def test_result_fields_complete(self):
+        src_doc = _make_section_doc([("Technical Skills", 0.10, _SKILLS_LINES)])
+        out_doc = _make_section_doc([("Technical Skills", 0.10, _SKILLS_LINES)])
+        results, overall = score_coherence(src_doc, out_doc)
+        assert len(results) == 1
+        r = results[0]
+        assert r.canonical_type == "skills"
+        assert 0.0 <= r.coherence_score <= 1.0
+        assert isinstance(r.feature_scores, dict)
+        assert isinstance(r.stale_signal, bool)
+        assert 0.0 <= r.stale_overlap <= 1.0
+        assert isinstance(r.notes, list)
+        assert 0.0 <= overall <= 1.0
+
+    def test_overall_is_mean_of_section_scores(self):
+        src_doc = _make_section_doc([
+            ("Technical Skills", 0.05, _SKILLS_LINES),
+            ("Education",        0.55, _EDUCATION_LINES),
+        ])
+        out_doc = _make_section_doc([
+            ("Technical Skills", 0.05, _SKILLS_LINES),
+            ("Education",        0.55, _EDUCATION_LINES),
+        ])
+        results, overall = score_coherence(src_doc, out_doc)
+        expected_mean = sum(r.coherence_score for r in results) / len(results)
+        assert overall == pytest.approx(expected_mean, rel=1e-3)
+
+
+# ---------------------------------------------------------------------------
+# TestCoherenceIntegration — wired into score_layout / taxonomy / report
+# ---------------------------------------------------------------------------
+
+class TestCoherenceIntegration:
+
+    def test_score_layout_exposes_coherence_fields(self):
+        """score_layout populates section_coherence_results on LayoutScore."""
+        from tailor.eval.changed_content.scorer import score_layout
+        src = _make_extracted()
+        out = _make_extracted()
+        score, _ = score_layout(src, out, "source text", "generated text")
+        assert hasattr(score, "section_coherence_results")
+        assert hasattr(score, "overall_section_coherence")
+        assert isinstance(score.section_coherence_results, list)
+        assert 0.0 <= score.overall_section_coherence <= 1.0
+
+    def test_coherence_in_case_report(self):
+        """build_case_report includes section_coherence list and metric."""
+        from dataclasses import asdict
+        from tailor.eval.changed_content.scorer import score_layout
+
+        src = _make_extracted()
+        out = _make_extracted()
+        score, _ = score_layout(src, out, "source text", "generated text")
+        result = _make_case_result(
+            metric_breakdown={**asdict(score)},
+            layout_score=score.composite,
+        )
+        report = build_case_report(result)
+        assert "section_coherence" in report
+        assert "section_coherence" in report["metric_breakdown"]
+
+    def test_stale_signal_triggers_class_d(self):
+        """Taxonomy emits Class D when a coherence result has stale_signal=True."""
+        stale_cr = SectionCoherenceResult(
+            canonical_type="experience",
+            coherence_score=0.70,
+            feature_scores={},
+            stale_signal=True,
+            stale_overlap=0.85,
+            notes=["High overlap"],
+        )
+        score = _make_score(
+            section_coherence_results=[stale_cr],
+            # Keep duplication_penalty low so we know D comes from coherence
+            duplication_penalty=0.10,
+            stale_token_ratio=0.05,
+        )
+        fc = classify_failures(score)
+        assert FailureClass.D_DUPLICATION_STALE in fc.classes
+        assert any("experience" in ev.lower() for ev in fc.evidence.get(
+            FailureClass.D_DUPLICATION_STALE, []
+        ))
+
+    def test_no_stale_no_spurious_class_d(self):
+        """Non-stale coherence results must not trigger Class D."""
+        clean_cr = SectionCoherenceResult(
+            canonical_type="skills",
+            coherence_score=0.80,
+            feature_scores={},
+            stale_signal=False,
+            stale_overlap=0.10,
+        )
+        score = _make_score(
+            section_coherence_results=[clean_cr],
+            duplication_penalty=0.05,
+            stale_token_ratio=0.02,
+        )
+        fc = classify_failures(score)
+        assert FailureClass.D_DUPLICATION_STALE not in fc.classes
+
+    def test_summary_text_includes_coherence_section(self):
+        """Case summary.txt includes a Section coherence table."""
+        from dataclasses import asdict
+        from tailor.eval.changed_content.scorer import score_layout
+        from tailor.eval.changed_content.report import _case_summary_text
+
+        src = _make_section_doc([("Technical Skills", 0.10, _SKILLS_LINES)])
+        out = _make_section_doc([("Technical Skills", 0.10, _SKILLS_LINES)])
+
+        # Use score_layout on two simple extracted docs (blocks available)
+        score, _ = score_layout(src, out, "old skills text", "new skills text")
+        result = _make_case_result(
+            metric_breakdown={**asdict(score)},
+            layout_score=score.composite,
+        )
+        report = build_case_report(result)
+        txt = _case_summary_text(report)
+        assert "Section coherence:" in txt
+
+    def test_stale_warning_appears_in_summary(self):
+        """Stale sections are called out explicitly in the summary text."""
+        from dataclasses import asdict
+        from tailor.eval.changed_content.scorer import score_layout
+        from tailor.eval.changed_content.report import _case_summary_text
+
+        # Use same content in src and out to trigger stale detection
+        src_doc = _make_section_doc([("Experience", 0.10, _EXPERIENCE_LINES)])
+        out_doc = _make_section_doc([("Experience", 0.10, _EXPERIENCE_LINES)])
+        score, _ = score_layout(src_doc, out_doc, "source", "generated")
+        result = _make_case_result(
+            metric_breakdown={**asdict(score)},
+            layout_score=score.composite,
+        )
+        report = build_case_report(result)
+        txt = _case_summary_text(report)
+        assert "Stale" in txt or "STALE" in txt

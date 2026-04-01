@@ -131,6 +131,23 @@ def classify_failures(layout_score: "LayoutScore") -> FailureClassification:  # 
             ),
         )
 
+    # Per-section stale signals from coherence module (more targeted than
+    # document-level duplication_penalty)
+    for _cr in getattr(layout_score, "section_coherence_results", []) or []:
+        if isinstance(_cr, dict):
+            _stale  = _cr.get("stale_signal", False)
+            _ctype  = _cr.get("canonical_type", "?")
+            _olap   = _cr.get("stale_overlap", 0.0)
+        else:
+            _stale  = getattr(_cr, "stale_signal", False)
+            _ctype  = getattr(_cr, "canonical_type", "?")
+            _olap   = getattr(_cr, "stale_overlap", 0.0)
+        if _stale:
+            fc.add(
+                FailureClass.D_DUPLICATION_STALE,
+                f"Section '{_ctype}' has high source overlap ({_olap:.0%}) — stale content",
+            )
+
     # ── Class A / B / F from per-section placement results ──────────────
     placement_results = layout_score.section_placement_results  # list[SectionPlacementResult | dict]
     if placement_results:

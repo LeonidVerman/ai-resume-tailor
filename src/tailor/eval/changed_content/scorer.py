@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from tailor.eval.models import ExtractedDoc
 
@@ -95,6 +95,10 @@ class LayoutScore:
     src_topology: str = "unknown"
     out_topology: str = "unknown"
     topology_confidence: float = 0.0
+
+    # Section coherence + stale-content detection
+    section_coherence_results: list = field(default_factory=list)  # list[SectionCoherenceResult]
+    overall_section_coherence: float = 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -360,6 +364,20 @@ def score_layout(
                 f"output={out_bullets} (ratio={ratio:.2f})"
             )
 
+    # ── 7. Section coherence + stale-content detection ───────────────────
+    from tailor.eval.changed_content.coherence import score_coherence as _score_coherence
+    coherence_results, overall_coherence = _score_coherence(src_extracted, out_extracted)
+    for cr in coherence_results:
+        if cr.stale_signal:
+            evidence.append(
+                f"[coherence:{cr.canonical_type}] Stale content detected "
+                f"(source overlap={cr.stale_overlap:.0%})"
+            )
+        elif cr.coherence_score < 0.50 and cr.feature_scores:
+            evidence.append(
+                f"[coherence:{cr.canonical_type}] Low coherence ({cr.coherence_score:.2f})"
+            )
+
     # ── Composite ────────────────────────────────────────────────────────
     composite = _clamp(
         topology            * _WEIGHTS["topology"]
@@ -396,5 +414,7 @@ def score_layout(
         topology_confidence=round(
             min(src_topo_cls.confidence, out_topo_cls.confidence), 3
         ),
+        section_coherence_results=coherence_results,
+        overall_section_coherence=round(overall_coherence, 3),
     )
     return score, evidence

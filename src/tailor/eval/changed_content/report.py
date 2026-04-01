@@ -13,6 +13,18 @@ from typing import Any
 from tailor.eval.changed_content.taxonomy import CLASS_LABELS
 
 
+def _serialize_result_list(results) -> list[dict]:
+    """Convert a list of dataclasses or dicts to plain dicts."""
+    out = []
+    for r in results or []:
+        if isinstance(r, dict):
+            out.append(r)
+        else:
+            from dataclasses import asdict
+            out.append(asdict(r))
+    return out
+
+
 def _serialize_placement_results(results) -> list[dict]:
     """Convert placement results (dataclass list or dict list) to plain dicts."""
     out = []
@@ -42,12 +54,13 @@ def build_case_report(result: "CaseResult") -> dict[str, Any]:  # noqa: F821
         "status": result.status,
         "layout_score": result.layout_score,
         "metric_breakdown": {
-            "topology_preservation": mb.get("topology_preservation"),
-            "section_placement":     mb.get("section_placement"),
-            "overflow_penalty":      mb.get("overflow_penalty"),
-            "duplication_penalty":   mb.get("duplication_penalty"),
-            "leakage_penalty":       mb.get("leakage_penalty"),
-            "style_score":           mb.get("style_score"),
+            "topology_preservation":   mb.get("topology_preservation"),
+            "section_placement":       mb.get("section_placement"),
+            "overflow_penalty":        mb.get("overflow_penalty"),
+            "duplication_penalty":     mb.get("duplication_penalty"),
+            "leakage_penalty":         mb.get("leakage_penalty"),
+            "style_score":             mb.get("style_score"),
+            "section_coherence":       mb.get("overall_section_coherence"),
         },
         "raw_metrics": {
             "page_count_delta":          mb.get("page_count_delta"),
@@ -71,6 +84,9 @@ def build_case_report(result: "CaseResult") -> dict[str, Any]:  # noqa: F821
         "evidence":        result.evidence,
         "section_placement": _serialize_placement_results(
             mb.get("section_placement_results", [])
+        ),
+        "section_coherence": _serialize_result_list(
+            mb.get("section_coherence_results", [])
         ),
         "notes":           result.notes,
         "artifacts":       result.artifacts,
@@ -107,6 +123,7 @@ def _case_summary_text(r: dict) -> str:
         f"  duplication_penalty   : {r['metric_breakdown'].get('duplication_penalty')}",
         f"  leakage_penalty       : {r['metric_breakdown'].get('leakage_penalty')}",
         f"  style_score           : {r['metric_breakdown'].get('style_score')}",
+        f"  section_coherence     : {r['metric_breakdown'].get('section_coherence')}",
         "",
     ]
     if r["failure_classes"]:
@@ -128,6 +145,22 @@ def _case_summary_text(r: dict) -> str:
                 f"  [{status}] {pr['canonical_type']:16s} "
                 f"src={inp}  out={out}  score={pr.get('placement_score', 0):.2f}"
             )
+        lines.append("")
+    sc = r.get("section_coherence") or []
+    if sc:
+        stale_sections = [c["canonical_type"] for c in sc if c.get("stale_signal")]
+        lines.append("Section coherence:")
+        for cr in sc:
+            status = "STALE" if cr.get("stale_signal") else (
+                "WARN" if cr.get("coherence_score", 1.0) < 0.50 else "OK"
+            )
+            olap = f"  overlap={cr.get('stale_overlap', 0.0):.0%}" if cr.get("stale_signal") else ""
+            lines.append(
+                f"  [{status}] {cr['canonical_type']:16s} "
+                f"coherence={cr.get('coherence_score', 0.0):.2f}{olap}"
+            )
+        if stale_sections:
+            lines.append(f"  ⚠ Stale content detected: {', '.join(stale_sections)}")
         lines.append("")
     if r.get("error"):
         lines += [f"ERROR: {r['error']}", ""]
