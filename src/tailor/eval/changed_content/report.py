@@ -62,6 +62,9 @@ def build_case_report(result: "CaseResult") -> dict[str, Any]:  # noqa: F821
             "src_bullet_count":          mb.get("src_bullet_count"),
             "out_bullet_count":          mb.get("out_bullet_count"),
             "gen_bullet_count":          mb.get("gen_bullet_count"),
+            "src_topology":              mb.get("src_topology"),
+            "out_topology":              mb.get("out_topology"),
+            "topology_confidence":       mb.get("topology_confidence"),
         },
         "failure_classes": result.failure_classes,
         "failure_labels":  [CLASS_LABELS.get(c, c) for c in result.failure_classes],
@@ -93,6 +96,9 @@ def _case_summary_text(r: dict) -> str:
         f"Severity:   {r['severity']}",
         f"Status:     {r['status'].upper()}",
         f"Score:      {r['layout_score']:.3f}",
+        f"Topology:   {r['raw_metrics'].get('src_topology') or '?'} → "
+        f"{r['raw_metrics'].get('out_topology') or '?'} "
+        f"(confidence={r['raw_metrics'].get('topology_confidence') or 0.0:.2f})",
         "",
         "Metric breakdown:",
         f"  topology_preservation : {r['metric_breakdown'].get('topology_preservation')}",

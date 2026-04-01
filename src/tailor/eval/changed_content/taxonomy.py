@@ -70,7 +70,23 @@ def classify_failures(layout_score: "LayoutScore") -> FailureClassification:  # 
     fc = FailureClassification()
 
     # ── Class F: topology collapse ───────────────────────────────────────
+    # Prefer rich topology-classifier result when available; fall back to
+    # raw column-count heuristic for synthetic/empty documents.
+    _AMBIG = "mixed_or_ambiguous"
+    _UNKNOWN = "unknown"
+    src_topo = getattr(layout_score, "src_topology", _UNKNOWN)
+    out_topo = getattr(layout_score, "out_topology", _UNKNOWN)
+
     if (
+        src_topo not in (_UNKNOWN, _AMBIG)
+        and out_topo not in (_UNKNOWN, _AMBIG)
+        and src_topo != out_topo
+    ):
+        fc.add(
+            FailureClass.F_TOPOLOGY_COLLAPSE,
+            f"Topology class changed: {src_topo} → {out_topo}",
+        )
+    elif (
         layout_score.src_column_count != layout_score.out_column_count
         and layout_score.column_confidence == "high"
     ):

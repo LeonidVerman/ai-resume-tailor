@@ -91,6 +91,11 @@ class LayoutScore:
     # Weighted composite
     composite: float
 
+    # Topology classifier results (added after initial placement work)
+    src_topology: str = "unknown"
+    out_topology: str = "unknown"
+    topology_confidence: float = 0.0
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -235,25 +240,40 @@ def score_layout(
     """
     evidence: list[str] = []
 
-    # ── 1. Topology: column structure ────────────────────────────────────
+    # ── 1. Topology: structure classification ────────────────────────────
+    from tailor.eval.changed_content.topology import (
+        classify_topology,
+        topology_preservation_score,
+    )
+
+    src_topo_cls = classify_topology(src_extracted)
+    out_topo_cls = classify_topology(out_extracted)
+    topology, topo_ev = topology_preservation_score(src_topo_cls, out_topo_cls)
+    evidence.extend(topo_ev)
+
+    # Keep raw column-count metrics for backward-compatible reporting
     src_cols = src_extracted.features.column_count_estimate
     out_cols = out_extracted.features.column_count_estimate
     col_conf = src_extracted.features.column_confidence
 
-    if src_cols == out_cols:
-        topology = 1.0
-    elif col_conf == "high":
-        topology = 0.0
-        evidence.append(
-            f"Column topology lost: source had {src_cols} column(s), "
-            f"output has {out_cols} (high-confidence detection)"
-        )
-    else:
-        topology = 0.5
-        evidence.append(
-            f"Column count differs: source={src_cols}, output={out_cols} "
-            f"(confidence={col_conf})"
-        )
+    # Fall back to column-count heuristic when no block geometry available
+    # (topology classifier returns "unknown" or ambiguous for synthetic/empty docs)
+    from tailor.eval.changed_content.topology import TOPOLOGY_AMBIG
+    if src_topo_cls.doc_topology == TOPOLOGY_AMBIG and out_topo_cls.doc_topology == TOPOLOGY_AMBIG:
+        if src_cols == out_cols:
+            topology = 1.0
+        elif col_conf == "high":
+            topology = 0.0
+            evidence.append(
+                f"Column topology lost: source had {src_cols} column(s), "
+                f"output has {out_cols} (high-confidence detection)"
+            )
+        else:
+            topology = 0.5
+            evidence.append(
+                f"Column count differs: source={src_cols}, output={out_cols} "
+                f"(confidence={col_conf})"
+            )
 
     # ── 2. Section placement: geometric placement + heading count ────────
     expected_headings = _extract_llm_headings(generated_text)
@@ -371,5 +391,10 @@ def score_layout(
         gen_bullet_count=gen_bullets,
         section_placement_results=placement_results,
         composite=round(composite, 3),
+        src_topology=src_topo_cls.doc_topology,
+        out_topology=out_topo_cls.doc_topology,
+        topology_confidence=round(
+            min(src_topo_cls.confidence, out_topo_cls.confidence), 3
+        ),
     )
     return score, evidence

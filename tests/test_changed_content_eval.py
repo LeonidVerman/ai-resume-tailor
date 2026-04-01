@@ -1196,3 +1196,455 @@ class TestScorerPlacementIntegration:
         # Should have at least the experience section
         types = {r.get("canonical_type") for r in sp}
         assert "experience" in types
+
+
+# ---------------------------------------------------------------------------
+# 14. Topology classifier
+# ---------------------------------------------------------------------------
+
+from tailor.eval.changed_content.topology import (
+    TOPOLOGY_AMBIG,
+    TOPOLOGY_BALANCED,
+    TOPOLOGY_LINEAR,
+    TOPOLOGY_SB_LEFT,
+    TOPOLOGY_SB_RIGHT,
+    TopologyClassification,
+    classify_page_topology,
+    classify_topology,
+    compute_horizontal_occupancy,
+    compute_sidebar_persistence,
+    topology_preservation_score,
+    _filter_and_normalize,
+    _NormBlock,
+)
+
+
+# --------------------------------------------------------------------------
+# Topology test helpers
+# --------------------------------------------------------------------------
+
+def _make_para_block(
+    text: str,
+    x0: float, y0: float, x1: float, y1: float,
+    block_id: str = "b",
+) -> "BlockModel":
+    """Build a minimal paragraph BlockModel with the given absolute bbox."""
+    line = LineModel(text=text, bbox=(x0, y0, x1, y1), spans=[],
+                     left_x=x0, right_x=x1, baseline_y=y0 + 5.0)
+    return BlockModel(block_id=block_id, block_type="paragraph",
+                      bbox=(x0, y0, x1, y1), lines=[line], dominant_left_x=x0)
+
+
+def _page_with_blocks(blocks: list, width: float = 612.0, height: float = 792.0) -> "PageModel":
+    """Return a PageModel populated with the given blocks."""
+    return PageModel(page_number=1, width=width, height=height, lines=[], blocks=blocks)
+
+
+def _doc_with_page(page: "PageModel") -> ExtractedDoc:
+    """Wrap a single PageModel in a minimal ExtractedDoc."""
+    return ExtractedDoc(
+        path="synthetic",
+        pages=[page],
+        features=_make_features(page_count=1),
+        headings=[],
+        bullet_count=0,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Synthetic layout factories (all coords in absolute pts for PW=612, PH=792)
+# ---------------------------------------------------------------------------
+
+_PW, _PH = 612.0, 792.0
+
+
+def _wide_blocks(n: int = 5) -> list:
+    """n wide blocks evenly distributed vertically — single-column layout."""
+    blocks = []
+    for i in range(n):
+        y0 = 50 + i * 130
+        y1 = y0 + 80
+        blocks.append(_make_para_block(
+            "Lorem ipsum dolor sit amet consectetur", 61, y0, 551, y1, f"w{i}",
+        ))
+    return blocks
+
+
+def _sidebar_left_blocks(n_side: int = 4, n_main: int = 4) -> list:
+    """Narrow left sidebar + wider right main body."""
+    blocks = []
+    for i in range(n_side):
+        y0 = 80 + i * 140
+        y1 = y0 + 50
+        blocks.append(_make_para_block(
+            "Skill item here", 12, y0, 160, y1, f"sl{i}",
+        ))
+    for i in range(n_main):
+        y0 = 80 + i * 140
+        y1 = y0 + 90
+        blocks.append(_make_para_block(
+            "Main body content paragraph much longer", 190, y0, 590, y1, f"ml{i}",
+        ))
+    return blocks
+
+
+def _sidebar_right_blocks(n_side: int = 4, n_main: int = 4) -> list:
+    """Wider left main body + narrow right sidebar."""
+    blocks = []
+    for i in range(n_side):
+        y0 = 80 + i * 140
+        y1 = y0 + 50
+        blocks.append(_make_para_block(
+            "Skill item here", 452, y0, 600, y1, f"sr{i}",
+        ))
+    for i in range(n_main):
+        y0 = 80 + i * 140
+        y1 = y0 + 90
+        blocks.append(_make_para_block(
+            "Main body content paragraph much longer", 22, y0, 420, y1, f"mr{i}",
+        ))
+    return blocks
+
+
+def _balanced_two_column_blocks(n: int = 4) -> list:
+    """Two medium-width columns of similar area."""
+    blocks = []
+    for i in range(n):
+        y0 = 80 + i * 150
+        y1 = y0 + 100
+        # Left column: nx0≈0.05, nx1≈0.47
+        blocks.append(_make_para_block("Left column content here", 30, y0, 288, y1, f"cl{i}"))
+        # Right column: nx0≈0.50, nx1≈0.95
+        blocks.append(_make_para_block("Right column content here", 306, y0, 582, y1, f"cr{i}"))
+    return blocks
+
+
+# ---------------------------------------------------------------------------
+# TestTopologySignals — unit tests for helper functions
+# ---------------------------------------------------------------------------
+
+class TestTopologySignals:
+
+    def test_filter_drops_empty_blocks(self):
+        block = _make_para_block("", 60, 100, 550, 120)
+        page  = _page_with_blocks([block])
+        result = _filter_and_normalize(page)
+        assert result == []
+
+    def test_filter_drops_tiny_width(self):
+        block = _make_para_block("ok", 60, 100, 62, 120)   # width = 2 pt → norm ~0.003
+        page  = _page_with_blocks([block])
+        result = _filter_and_normalize(page)
+        assert result == []
+
+    def test_filter_keeps_valid_block(self):
+        block = _make_para_block("Hello world content", 60, 100, 550, 130)
+        page  = _page_with_blocks([block])
+        result = _filter_and_normalize(page)
+        assert len(result) == 1
+        nb = result[0]
+        assert nb.nx0 == pytest.approx(60 / 612, rel=1e-3)
+        assert nb.nx1 == pytest.approx(550 / 612, rel=1e-3)
+        assert not nb.is_narrow  # ~80% wide
+
+    def test_narrow_flag(self):
+        # width = 160 pt / 612 ≈ 0.261 — narrow
+        block = _make_para_block("short", 12, 100, 172, 130)
+        page  = _page_with_blocks([block])
+        result = _filter_and_normalize(page)
+        assert len(result) == 1
+        assert result[0].is_narrow
+
+    def test_occupancy_histogram_single_wide_block(self):
+        blocks = [_NormBlock(nx0=0.1, ny0=0.0, nx1=0.9, ny1=0.1,
+                             width=0.8, height=0.1, center_x=0.5, area=0.08, is_narrow=False)]
+        hist = compute_horizontal_occupancy(blocks, bins=10)
+        assert len(hist) == 10
+        # All bins from 1 to 8 (0-indexed) should be non-zero
+        assert all(v > 0 for v in hist[1:9])
+        # Edge bins 0 and 9 partially or not covered
+        assert hist[0] == 0.0  # starts at 0.1, bin 0 is [0.0,0.1)
+        assert hist[9] == 0.0  # ends at 0.9, bin 9 is [0.9,1.0)
+
+    def test_sidebar_persistence_one_block_low(self):
+        """A single narrow left block should produce low persistence (1/6 ≈ 0.167)."""
+        blocks = [_NormBlock(nx0=0.0, ny0=0.05, nx1=0.25, ny1=0.15,
+                             width=0.25, height=0.10, center_x=0.125, area=0.025, is_narrow=True)]
+        pers = compute_sidebar_persistence(blocks, side="left")
+        assert pers == pytest.approx(1 / 6, rel=0.01)
+
+    def test_sidebar_persistence_many_blocks_high(self):
+        """Four narrow left blocks spread across four different bands → 4/6 ≈ 0.667."""
+        blocks = []
+        for i in range(4):
+            mid_y = (i * 2 + 1) / 12.0   # places in band i×2 ÷ 6
+            blocks.append(_NormBlock(
+                nx0=0.0, ny0=mid_y - 0.02, nx1=0.25, ny1=mid_y + 0.02,
+                width=0.25, height=0.04, center_x=0.125, area=0.01, is_narrow=True,
+            ))
+        pers = compute_sidebar_persistence(blocks, side="left")
+        assert pers >= 4 / 6 - 0.01
+
+    def test_sidebar_persistence_right_side(self):
+        """Narrow blocks on the right side are counted correctly."""
+        blocks = [
+            _NormBlock(nx0=0.72, ny0=0.1, nx1=0.97, ny1=0.2,
+                       width=0.25, height=0.1, center_x=0.845, area=0.025, is_narrow=True),
+            _NormBlock(nx0=0.72, ny0=0.4, nx1=0.97, ny1=0.5,
+                       width=0.25, height=0.1, center_x=0.845, area=0.025, is_narrow=True),
+            _NormBlock(nx0=0.72, ny0=0.7, nx1=0.97, ny1=0.8,
+                       width=0.25, height=0.1, center_x=0.845, area=0.025, is_narrow=True),
+        ]
+        assert compute_sidebar_persistence(blocks, side="right") >= 3 / 6
+
+    def test_persistence_empty_blocks(self):
+        assert compute_sidebar_persistence([], side="left") == 0.0
+        assert compute_sidebar_persistence([], side="right") == 0.0
+
+
+# ---------------------------------------------------------------------------
+# TestTopologyPageClassification — page-level classification
+# ---------------------------------------------------------------------------
+
+class TestTopologyPageClassification:
+
+    def test_single_column_layout(self):
+        page = _page_with_blocks(_wide_blocks())
+        result = classify_page_topology(page)
+        assert result.topology == TOPOLOGY_LINEAR
+
+    def test_sidebar_left_layout(self):
+        page = _page_with_blocks(_sidebar_left_blocks())
+        result = classify_page_topology(page)
+        assert result.topology == TOPOLOGY_SB_LEFT
+
+    def test_sidebar_right_layout(self):
+        page = _page_with_blocks(_sidebar_right_blocks())
+        result = classify_page_topology(page)
+        assert result.topology == TOPOLOGY_SB_RIGHT
+
+    def test_balanced_two_column_layout(self):
+        page = _page_with_blocks(_balanced_two_column_blocks())
+        result = classify_page_topology(page)
+        assert result.topology == TOPOLOGY_BALANCED
+
+    def test_empty_page_is_ambiguous(self):
+        page = _page_with_blocks([])
+        result = classify_page_topology(page)
+        assert result.topology == TOPOLOGY_AMBIG
+
+    def test_single_narrow_contact_block_does_not_trigger_sidebar(self):
+        """One tiny top-left block alone must NOT classify as sidebar_left."""
+        contact = _make_para_block("john@example.com", 12, 30, 160, 50)
+        page = _page_with_blocks([contact])
+        result = classify_page_topology(page)
+        assert result.topology != TOPOLOGY_SB_LEFT
+
+    def test_balanced_not_misclassified_as_sidebar(self):
+        """Medium-width columns should NOT be misclassified as sidebar."""
+        page = _page_with_blocks(_balanced_two_column_blocks())
+        result = classify_page_topology(page)
+        assert result.topology not in (TOPOLOGY_SB_LEFT, TOPOLOGY_SB_RIGHT)
+
+    def test_signals_returned_in_result(self):
+        page = _page_with_blocks(_wide_blocks())
+        result = classify_page_topology(page)
+        assert "left_persistence" in result.signals
+        assert "right_persistence" in result.signals
+        assert "wide_area_frac" in result.signals
+        assert result.signals["total_blocks"] == pytest.approx(5.0)
+
+
+# ---------------------------------------------------------------------------
+# TestTopologyDocumentClassification — document-level aggregation
+# ---------------------------------------------------------------------------
+
+class TestTopologyDocumentClassification:
+
+    def test_single_page_single_column(self):
+        doc = _doc_with_page(_page_with_blocks(_wide_blocks()))
+        tc = classify_topology(doc)
+        assert tc.doc_topology == TOPOLOGY_LINEAR
+        assert tc.confidence > 0.0
+        assert len(tc.page_topologies) == 1
+
+    def test_single_page_sidebar_left(self):
+        doc = _doc_with_page(_page_with_blocks(_sidebar_left_blocks()))
+        tc = classify_topology(doc)
+        assert tc.doc_topology == TOPOLOGY_SB_LEFT
+
+    def test_empty_doc_is_ambiguous(self):
+        doc = ExtractedDoc(
+            path="synthetic",
+            pages=[],
+            features=_make_features(page_count=0),
+            headings=[],
+            bullet_count=0,
+        )
+        tc = classify_topology(doc)
+        assert tc.doc_topology == TOPOLOGY_AMBIG
+        assert tc.confidence == 0.0
+
+    def test_no_blocks_doc_is_ambiguous(self):
+        """Doc with one page but zero blocks → ambiguous."""
+        doc = _make_extracted()   # uses _make_extracted() from above with no blocks
+        tc = classify_topology(doc)
+        assert tc.doc_topology == TOPOLOGY_AMBIG
+
+    def test_signals_aggregated(self):
+        doc = _doc_with_page(_page_with_blocks(_wide_blocks()))
+        tc = classify_topology(doc)
+        assert "left_persistence" in tc.signals
+
+    def test_page_topologies_list_length(self):
+        page1 = _page_with_blocks(_wide_blocks())
+        page2 = _page_with_blocks(_wide_blocks())
+        page2.page_number = 2
+        doc = ExtractedDoc(
+            path="synthetic",
+            pages=[page1, page2],
+            features=_make_features(page_count=2),
+            headings=[],
+            bullet_count=0,
+        )
+        tc = classify_topology(doc)
+        assert len(tc.page_topologies) == 2
+
+
+# ---------------------------------------------------------------------------
+# TestTopologyPreservation — preservation scoring
+# ---------------------------------------------------------------------------
+
+def _tc(topology: str, confidence: float = 0.80) -> TopologyClassification:
+    return TopologyClassification(
+        doc_topology=topology,
+        confidence=confidence,
+        page_topologies=[topology],
+        notes=[],
+        signals={},
+    )
+
+
+class TestTopologyPreservation:
+
+    def test_same_class_high_score(self):
+        score, _ = topology_preservation_score(_tc(TOPOLOGY_LINEAR), _tc(TOPOLOGY_LINEAR))
+        assert score >= 0.70
+
+    def test_same_class_perfect_confidence_near_one(self):
+        score, _ = topology_preservation_score(_tc(TOPOLOGY_SB_LEFT, 1.0), _tc(TOPOLOGY_SB_LEFT, 1.0))
+        assert score == pytest.approx(1.0)
+
+    def test_both_ambiguous_soft_score(self):
+        score, ev = topology_preservation_score(_tc(TOPOLOGY_AMBIG), _tc(TOPOLOGY_AMBIG))
+        assert score == pytest.approx(0.60)
+        assert any("ambiguous" in e for e in ev)
+
+    def test_one_ambiguous_neutral(self):
+        score, _ = topology_preservation_score(_tc(TOPOLOGY_LINEAR), _tc(TOPOLOGY_AMBIG))
+        assert score == pytest.approx(0.55)
+
+    def test_sidebar_flip_strong_penalty(self):
+        score, ev = topology_preservation_score(_tc(TOPOLOGY_SB_LEFT), _tc(TOPOLOGY_SB_RIGHT))
+        assert score == pytest.approx(0.25)
+        assert any("→" in e for e in ev)
+
+    def test_linear_to_sidebar_strong_penalty(self):
+        score, _ = topology_preservation_score(_tc(TOPOLOGY_LINEAR), _tc(TOPOLOGY_SB_LEFT))
+        assert score == pytest.approx(0.10)
+
+    def test_linear_to_balanced_moderate_penalty(self):
+        score, _ = topology_preservation_score(_tc(TOPOLOGY_LINEAR), _tc(TOPOLOGY_BALANCED))
+        assert score == pytest.approx(0.25)
+
+    def test_sidebar_to_balanced_moderate_penalty(self):
+        score, _ = topology_preservation_score(_tc(TOPOLOGY_SB_LEFT), _tc(TOPOLOGY_BALANCED))
+        assert score == pytest.approx(0.50)
+
+    def test_evidence_includes_topology_names(self):
+        _, ev = topology_preservation_score(_tc(TOPOLOGY_SB_LEFT), _tc(TOPOLOGY_LINEAR))
+        assert any(TOPOLOGY_SB_LEFT in e and TOPOLOGY_LINEAR in e for e in ev)
+
+
+# ---------------------------------------------------------------------------
+# TestTopologyIntegration — wired into score_layout / report
+# ---------------------------------------------------------------------------
+
+class TestTopologyIntegration:
+
+    def test_score_layout_exposes_topology_fields(self):
+        """score_layout sets src_topology / out_topology on LayoutScore."""
+        from tailor.eval.changed_content.scorer import score_layout
+
+        src = _make_extracted()
+        out = _make_extracted()
+        score, _ = score_layout(src, out, "source text here", "generated text here")
+        # Synthetic docs have no blocks → both will be ambiguous
+        assert hasattr(score, "src_topology")
+        assert hasattr(score, "out_topology")
+        assert hasattr(score, "topology_confidence")
+
+    def test_topology_fields_in_case_report(self):
+        """build_case_report includes topology raw metrics."""
+        from dataclasses import asdict
+        from tailor.eval.changed_content.scorer import score_layout
+
+        src = _make_extracted()
+        out = _make_extracted()
+        score, _ = score_layout(src, out, "source text here", "generated text here")
+
+        result = _make_case_result(
+            metric_breakdown={**asdict(score)},
+            layout_score=score.composite,
+        )
+        report = build_case_report(result)
+        rm = report["raw_metrics"]
+        assert "src_topology" in rm
+        assert "out_topology" in rm
+        assert "topology_confidence" in rm
+
+    def test_topology_fields_in_summary_text(self):
+        """Summary text includes a Topology line."""
+        from dataclasses import asdict
+        from tailor.eval.changed_content.scorer import score_layout
+
+        src = _make_extracted()
+        out = _make_extracted()
+        score, _ = score_layout(src, out, "source text here", "generated text here")
+        result = _make_case_result(
+            metric_breakdown={**asdict(score)},
+            layout_score=score.composite,
+        )
+        report = build_case_report(result)
+        from tailor.eval.changed_content.report import _case_summary_text
+        txt = _case_summary_text(report)
+        assert "Topology:" in txt
+
+    def test_taxonomy_uses_rich_topology_for_class_f(self):
+        """When src/out topology differ (non-ambiguous), taxonomy emits Class F."""
+        from tailor.eval.changed_content.taxonomy import classify_failures
+
+        score = _make_score(
+            src_topology=TOPOLOGY_SB_LEFT,
+            out_topology=TOPOLOGY_LINEAR,
+            # Keep column counts matching so old fallback would NOT trigger
+            src_column_count=1,
+            out_column_count=1,
+            column_confidence="high",
+        )
+        fc = classify_failures(score)
+        assert FailureClass.F_TOPOLOGY_COLLAPSE in fc.classes
+
+    def test_taxonomy_ambiguous_topology_falls_back_to_column_count(self):
+        """When both topologies are ambiguous, taxonomy falls back to column count."""
+        from tailor.eval.changed_content.taxonomy import classify_failures
+
+        score = _make_score(
+            src_topology=TOPOLOGY_AMBIG,
+            out_topology=TOPOLOGY_AMBIG,
+            src_column_count=2,
+            out_column_count=1,
+            column_confidence="high",
+        )
+        fc = classify_failures(score)
+        assert FailureClass.F_TOPOLOGY_COLLAPSE in fc.classes
