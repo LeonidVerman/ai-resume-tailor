@@ -61,6 +61,7 @@ def build_case_report(result: "CaseResult") -> dict[str, Any]:  # noqa: F821
             "leakage_penalty":         mb.get("leakage_penalty"),
             "style_score":             mb.get("style_score"),
             "section_coherence":       mb.get("overall_section_coherence"),
+            "container_stress":        mb.get("overall_container_stress_score"),
         },
         "raw_metrics": {
             "page_count_delta":          mb.get("page_count_delta"),
@@ -87,6 +88,9 @@ def build_case_report(result: "CaseResult") -> dict[str, Any]:  # noqa: F821
         ),
         "section_coherence": _serialize_result_list(
             mb.get("section_coherence_results", [])
+        ),
+        "section_stress": _serialize_result_list(
+            mb.get("section_stress_results", [])
         ),
         "notes":           result.notes,
         "artifacts":       result.artifacts,
@@ -124,6 +128,7 @@ def _case_summary_text(r: dict) -> str:
         f"  leakage_penalty       : {r['metric_breakdown'].get('leakage_penalty')}",
         f"  style_score           : {r['metric_breakdown'].get('style_score')}",
         f"  section_coherence     : {r['metric_breakdown'].get('section_coherence')}",
+        f"  container_stress      : {r['metric_breakdown'].get('container_stress')}",
         "",
     ]
     if r["failure_classes"]:
@@ -161,6 +166,23 @@ def _case_summary_text(r: dict) -> str:
             )
         if stale_sections:
             lines.append(f"  ⚠ Stale content detected: {', '.join(stale_sections)}")
+        lines.append("")
+    ss = r.get("section_stress") or []
+    if ss:
+        high_stress = [s["canonical_type"] for s in ss if s.get("stress_level") == "high"]
+        lines.append("Container stress:")
+        for sr in ss:
+            lvl    = sr.get("stress_level", "low").upper()
+            region = sr.get("region", "?")
+            cg     = sr.get("char_growth_ratio", 1.0)
+            hg     = sr.get("height_growth_ratio", 1.0)
+            sc     = sr.get("stress_score", 0.0)
+            lines.append(
+                f"  [{lvl}] {sr['canonical_type']:16s} "
+                f"region={region}  char×{cg:.1f}  height×{hg:.1f}  score={sc:.2f}"
+            )
+        if high_stress:
+            lines.append(f"  ⚠ High-stress sections: {', '.join(high_stress)}")
         lines.append("")
     if r.get("error"):
         lines += [f"ERROR: {r['error']}", ""]

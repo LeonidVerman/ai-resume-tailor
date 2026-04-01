@@ -106,7 +106,26 @@ def classify_failures(layout_score: "LayoutScore") -> FailureClassification:  # 
             f"Topology preservation score low: {layout_score.topology_preservation:.2f}",
         )
 
-    # ── Class C: overflow / fit ──────────────────────────────────────────
+    # ── Class C: overflow / fit — stress-based signals ──────────────────
+    for _sr in getattr(layout_score, "section_stress_results", []) or []:
+        if isinstance(_sr, dict):
+            _slevel  = _sr.get("stress_level", "low")
+            _sctype  = _sr.get("canonical_type", "?")
+            _sregion = _sr.get("region", "unknown")
+            _sscore  = _sr.get("stress_score", 0.0)
+        else:
+            _slevel  = getattr(_sr, "stress_level", "low")
+            _sctype  = getattr(_sr, "canonical_type", "?")
+            _sregion = getattr(_sr, "region", "unknown")
+            _sscore  = getattr(_sr, "stress_score", 0.0)
+        if _slevel == "high":
+            fc.add(
+                FailureClass.C_OVERFLOW_FIT,
+                f"Section '{_sctype}' container stress HIGH in {_sregion} "
+                f"(score={_sscore:.2f})",
+            )
+
+    # ── Class C: overflow / fit — page growth ───────────────────────────
     if layout_score.page_count_delta > 0:
         fc.add(
             FailureClass.C_OVERFLOW_FIT,

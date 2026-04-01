@@ -100,6 +100,10 @@ class LayoutScore:
     section_coherence_results: list = field(default_factory=list)  # list[SectionCoherenceResult]
     overall_section_coherence: float = 1.0
 
+    # Container stress / overflow-fit
+    section_stress_results: list = field(default_factory=list)     # list[SectionStressResult]
+    overall_container_stress_score: float = 0.0
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -366,6 +370,7 @@ def score_layout(
 
     # ── 7. Section coherence + stale-content detection ───────────────────
     from tailor.eval.changed_content.coherence import score_coherence as _score_coherence
+    from tailor.eval.changed_content.stress import score_stress as _score_stress
     coherence_results, overall_coherence = _score_coherence(src_extracted, out_extracted)
     for cr in coherence_results:
         if cr.stale_signal:
@@ -376,6 +381,17 @@ def score_layout(
         elif cr.coherence_score < 0.50 and cr.feature_scores:
             evidence.append(
                 f"[coherence:{cr.canonical_type}] Low coherence ({cr.coherence_score:.2f})"
+            )
+
+    # ── 8. Container stress / overflow-fit ───────────────────────────────
+    stress_results, overall_stress = _score_stress(src_extracted, out_extracted)
+    for sr in stress_results:
+        if sr.stress_level == "high":
+            evidence.append(
+                f"[stress:{sr.canonical_type}] HIGH container stress in {sr.region} "
+                f"(score={sr.stress_score:.2f}, "
+                f"char×{sr.char_growth_ratio:.1f}, "
+                f"height×{sr.height_growth_ratio:.1f})"
             )
 
     # ── Composite ────────────────────────────────────────────────────────
@@ -416,5 +432,7 @@ def score_layout(
         ),
         section_coherence_results=coherence_results,
         overall_section_coherence=round(overall_coherence, 3),
+        section_stress_results=stress_results,
+        overall_container_stress_score=overall_stress,
     )
     return score, evidence

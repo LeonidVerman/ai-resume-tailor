@@ -2206,3 +2206,588 @@ class TestCoherenceIntegration:
         report = build_case_report(result)
         txt = _case_summary_text(report)
         assert "Stale" in txt or "STALE" in txt
+
+
+# ===========================================================================
+# Section 16 — Container Stress / Overflow-Fit
+# ===========================================================================
+
+from tailor.eval.changed_content.stress import (
+    SectionStressResult,
+    _compute_section_stress,
+    _extract_section_data,
+    _growth_penalty,
+    _stress_level,
+    score_stress,
+)
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _make_stress_result(**overrides) -> SectionStressResult:
+    defaults = dict(
+        canonical_type="skills",
+        region="main",
+        input_found=True,
+        output_found=True,
+        input_char_count=200,
+        output_char_count=200,
+        input_line_count=5,
+        output_line_count=5,
+        input_height=0.10,
+        output_height=0.10,
+        char_growth_ratio=1.0,
+        line_growth_ratio=1.0,
+        height_growth_ratio=1.0,
+        text_density_score=0.0,
+        stress_score=0.0,
+        stress_level="low",
+    )
+    defaults.update(overrides)
+    return SectionStressResult(**defaults)
+
+
+def _make_sidebar_section_doc(
+    heading_text: str,
+    heading_ny0: float,
+    content_lines: list[str],
+    width: float = 612.0,
+    height: float = 792.0,
+) -> ExtractedDoc:
+    """ExtractedDoc with one section heading in the LEFT SIDEBAR region.
+
+    Heading spans x=12–160 (narrow left block → sidebar_left).
+    """
+    h_y0 = heading_ny0 * height
+    h_y1 = h_y0 + 14.0
+    # Sidebar left: x0=12, x1=160 → width≈0.24, center≈0.14 → sidebar_left
+    h_x0, h_x1 = 12.0, 160.0
+
+    h_line = LineModel(
+        text=heading_text,
+        bbox=(h_x0, h_y0, h_x1, h_y1),
+        spans=[], left_x=h_x0, right_x=h_x1, baseline_y=h_y1,
+        is_heading_candidate=True,
+    )
+    blocks = [
+        BlockModel(
+            block_id="head0", block_type="heading",
+            bbox=(h_x0, h_y0, h_x1, h_y1),
+            lines=[h_line], dominant_left_x=h_x0,
+        )
+    ]
+    if content_lines:
+        b_y0 = h_y1 + 4.0
+        b_y1 = b_y0 + 13.0 * len(content_lines)
+        body_lines = []
+        for j, text in enumerate(content_lines):
+            ly = b_y0 + j * 13.0
+            body_lines.append(LineModel(
+                text=text, bbox=(h_x0, ly, h_x1, ly + 11.0),
+                spans=[], left_x=h_x0, right_x=h_x1, baseline_y=ly + 10.0,
+            ))
+        blocks.append(BlockModel(
+            block_id="body0", block_type="paragraph",
+            bbox=(h_x0, b_y0, h_x1, b_y1),
+            lines=body_lines, dominant_left_x=h_x0,
+        ))
+
+    page = PageModel(page_number=1, width=width, height=height, lines=[], blocks=blocks)
+    return ExtractedDoc(
+        path="synthetic",
+        pages=[page],
+        features=_make_features(page_count=1),
+        headings=[heading_text],
+        bullet_count=0,
+    )
+
+
+# ---------------------------------------------------------------------------
+# TestStressRatioComputation — unit tests for growth_penalty + stress_level
+# ---------------------------------------------------------------------------
+
+class TestStressRatioComputation:
+
+    def test_growth_penalty_at_threshold_is_zero(self):
+        assert _growth_penalty(1.8, 1.8) == 0.0
+
+    def test_growth_penalty_below_threshold_is_zero(self):
+        assert _growth_penalty(1.2, 1.8) == 0.0
+
+    def test_growth_penalty_above_threshold_is_positive(self):
+        p = _growth_penalty(2.6, 1.8)
+        assert 0.0 < p <= 1.0
+
+    def test_growth_penalty_reaches_one_at_2x_threshold_minus_1(self):
+        # threshold=1.5 → full penalty when ratio = 1.5 + (1.5-1) = 2.0
+        p = _growth_penalty(2.0, 1.5)
+        assert p == pytest.approx(1.0)
+
+    def test_growth_penalty_capped_at_one(self):
+        assert _growth_penalty(100.0, 1.5) == pytest.approx(1.0)
+
+    def test_growth_penalty_zero_input_handled(self):
+        # ratio=1.0 ≤ threshold → 0
+        assert _growth_penalty(1.0, 2.0) == 0.0
+
+    def test_stress_level_low(self):
+        assert _stress_level(0.10) == "low"
+        assert _stress_level(0.29) == "low"
+
+    def test_stress_level_medium(self):
+        assert _stress_level(0.30) == "medium"
+        assert _stress_level(0.64) == "medium"
+
+    def test_stress_level_high(self):
+        assert _stress_level(0.65) == "high"
+        assert _stress_level(1.00) == "high"
+
+
+# ---------------------------------------------------------------------------
+# TestSidebarSensitivity — same growth, higher stress in sidebar
+# ---------------------------------------------------------------------------
+
+class TestSidebarSensitivity:
+
+    def test_high_growth_in_sidebar_higher_stress_than_main(self):
+        """Same growth ratios must produce higher stress in sidebar_left than main."""
+        kwargs = dict(
+            canonical_type="skills",
+            input_chars=200, output_chars=500,   # 2.5× growth
+            input_lines=5,   output_lines=14,
+            input_height=0.10, output_height=0.28,
+            input_found=True,
+        )
+        _, main_stress, _ = _compute_section_stress(region="main", **kwargs)
+        _, sidebar_stress, _ = _compute_section_stress(region="sidebar_left", **kwargs)
+        assert sidebar_stress > main_stress
+
+    def test_moderate_growth_in_sidebar_may_be_medium(self):
+        _, stress, _ = _compute_section_stress(
+            canonical_type="skills",
+            region="sidebar_left",
+            input_chars=200, output_chars=400,   # 2.0×
+            input_lines=5,   output_lines=12,
+            input_height=0.10, output_height=0.25,
+            input_found=True,
+        )
+        assert stress >= 0.30  # at least medium
+
+    def test_no_growth_main_region_is_low_stress(self):
+        _, stress, _ = _compute_section_stress(
+            canonical_type="skills",
+            region="main",
+            input_chars=300, output_chars=300,
+            input_lines=8,   output_lines=8,
+            input_height=0.15, output_height=0.15,
+            input_found=True,
+        )
+        assert stress < 0.30  # low
+
+
+# ---------------------------------------------------------------------------
+# TestSummaryStress — summary section sensitivity
+# ---------------------------------------------------------------------------
+
+class TestSummaryStress:
+
+    def test_short_summary_in_main_is_low_stress(self):
+        """A compact summary that fits in main region should be low stress."""
+        _, stress, _ = _compute_section_stress(
+            canonical_type="summary",
+            region="main",
+            input_chars=300, output_chars=350,
+            input_lines=4,   output_lines=4,
+            input_height=0.08, output_height=0.09,
+            input_found=True,
+        )
+        assert stress < 0.30
+
+    def test_long_prose_summary_in_sidebar_is_high_stress(self):
+        """A summary that is much larger than source in a sidebar = high stress."""
+        _, stress, _ = _compute_section_stress(
+            canonical_type="summary",
+            region="sidebar_left",
+            input_chars=200, output_chars=700,   # 3.5×
+            input_lines=3,   output_lines=10,
+            input_height=0.06, output_height=0.30,  # 5× height
+            input_found=True,
+        )
+        assert stress >= 0.65  # high
+
+    def test_summary_threshold_is_sensitive(self):
+        """Summary char threshold is 1.5× — crossing it produces penalty."""
+        _, below_stress, _ = _compute_section_stress(
+            canonical_type="summary",
+            region="main",
+            input_chars=200, output_chars=280,   # 1.4× — below threshold
+            input_lines=4,   output_lines=5,
+            input_height=0.08, output_height=0.10,
+            input_found=True,
+        )
+        _, above_stress, _ = _compute_section_stress(
+            canonical_type="summary",
+            region="main",
+            input_chars=200, output_chars=360,   # 1.8× — above 1.5 threshold
+            input_lines=4,   output_lines=7,
+            input_height=0.08, output_height=0.15,
+            input_found=True,
+        )
+        assert above_stress > below_stress
+
+
+# ---------------------------------------------------------------------------
+# TestSkillsStress — skills section sensitivity
+# ---------------------------------------------------------------------------
+
+class TestSkillsStress:
+
+    def test_compact_skills_block_is_low_stress(self):
+        _, stress, _ = _compute_section_stress(
+            canonical_type="skills",
+            region="main",
+            input_chars=250, output_chars=250,
+            input_lines=5,   output_lines=5,
+            input_height=0.12, output_height=0.12,
+            input_found=True,
+        )
+        assert stress < 0.30
+
+    def test_expanded_skills_in_narrow_region_is_high_stress(self):
+        """Skills block that triples in a sidebar = high stress."""
+        _, stress, _ = _compute_section_stress(
+            canonical_type="skills",
+            region="sidebar_right",
+            input_chars=150, output_chars=500,   # 3.3×
+            input_lines=4,   output_lines=15,
+            input_height=0.08, output_height=0.32,  # 4×
+            input_found=True,
+        )
+        assert stress >= 0.65
+
+
+# ---------------------------------------------------------------------------
+# TestExperienceStress — softer thresholds
+# ---------------------------------------------------------------------------
+
+class TestExperienceStress:
+
+    def test_moderate_growth_experience_is_low_stress(self):
+        """Experience allows 2.5× growth before penalty — moderate growth is low."""
+        _, stress, _ = _compute_section_stress(
+            canonical_type="experience",
+            region="main",
+            input_chars=500, output_chars=900,   # 1.8× — below 2.5 threshold
+            input_lines=10,  output_lines=18,
+            input_height=0.30, output_height=0.40,
+            input_found=True,
+        )
+        assert stress < 0.30
+
+    def test_extreme_growth_experience_is_high_stress(self):
+        """3× growth in experience in main region pushes into high stress."""
+        _, stress, _ = _compute_section_stress(
+            canonical_type="experience",
+            region="main",
+            input_chars=400, output_chars=2000,  # 5× — well above 2.5 threshold
+            input_lines=8,   output_lines=50,
+            input_height=0.25, output_height=1.50,  # spans 1.5 pages
+            input_found=True,
+        )
+        assert stress >= 0.65
+
+
+# ---------------------------------------------------------------------------
+# TestMissingSourceSection — inserted sections handled gracefully
+# ---------------------------------------------------------------------------
+
+class TestMissingSourceSection:
+
+    def test_missing_source_not_automatic_failure(self):
+        """Absent source section with low-density output → low stress, not high."""
+        _, stress, notes = _compute_section_stress(
+            canonical_type="summary",
+            region="main",
+            input_chars=0, output_chars=300,
+            input_lines=0, output_lines=4,
+            input_height=0.0, output_height=0.09,
+            input_found=False,
+        )
+        assert stress < 0.65
+        assert any("absent" in n.lower() for n in notes)
+
+    def test_missing_source_still_computes_density(self):
+        """Output density is still evaluated when source is absent."""
+        density, stress, _ = _compute_section_stress(
+            canonical_type="summary",
+            region="main",
+            input_chars=0, output_chars=5000,
+            input_lines=0, output_lines=5,
+            input_height=0.0, output_height=0.05,  # very high density
+            input_found=False,
+        )
+        assert density > 0.0  # density was computed
+
+    def test_missing_source_no_growth_note_for_chars(self):
+        """With no source, no character-growth note should appear."""
+        _, _, notes = _compute_section_stress(
+            canonical_type="skills",
+            region="main",
+            input_chars=0, output_chars=200,
+            input_lines=0, output_lines=5,
+            input_height=0.0, output_height=0.10,
+            input_found=False,
+        )
+        assert not any("Character count" in n for n in notes)
+
+
+# ---------------------------------------------------------------------------
+# TestExtractSectionData — height computation
+# ---------------------------------------------------------------------------
+
+class TestExtractSectionData:
+
+    def test_empty_doc_returns_zero_height(self):
+        from tailor.eval.changed_content.placement import SectionAnchor
+        doc = _make_extracted()
+        anchor = SectionAnchor(
+            canonical_type="skills", raw_heading="Skills",
+            page=1, bbox=(0.1, 0.1, 0.9, 0.12), region="main",
+        )
+        lines, height = _extract_section_data(doc, anchor, None)
+        assert lines == []
+        assert height == pytest.approx(0.0)
+
+    def test_section_with_body_blocks_has_positive_height(self):
+        doc = _make_section_doc([("Technical Skills", 0.10, _SKILLS_LINES)])
+        from tailor.eval.changed_content.placement import extract_section_anchors
+        anchors = extract_section_anchors(doc)
+        assert anchors, "Fixture must produce at least one anchor"
+        lines, height = _extract_section_data(doc, anchors[0], None)
+        assert len(lines) >= len(_SKILLS_LINES)
+        assert height > 0.0
+
+    def test_height_stops_at_next_anchor(self):
+        """Height computation must stop at the next section heading."""
+        doc = _make_section_doc([
+            ("Technical Skills", 0.10, _SKILLS_LINES),
+            ("Experience",       0.50, _EXPERIENCE_LINES),
+        ])
+        from tailor.eval.changed_content.placement import extract_section_anchors
+        anchors = extract_section_anchors(doc)
+        assert len(anchors) == 2
+        # Skills section: height should end before Experience heading at ny0=0.50
+        lines, height = _extract_section_data(doc, anchors[0], anchors[1])
+        assert height < 0.45   # must not include the experience section area
+
+
+# ---------------------------------------------------------------------------
+# TestScoreStress — public API
+# ---------------------------------------------------------------------------
+
+class TestScoreStress:
+
+    def test_no_anchors_returns_empty_and_zero(self):
+        doc = _make_extracted()
+        results, overall = score_stress(doc, doc)
+        assert results == []
+        assert overall == 0.0
+
+    def test_same_content_returns_low_stress(self):
+        """Identical source and output → no growth → low stress everywhere."""
+        doc = _make_section_doc([
+            ("Technical Skills", 0.10, _SKILLS_LINES),
+            ("Experience",       0.40, _EXPERIENCE_LINES),
+        ])
+        results, overall = score_stress(doc, doc)
+        assert len(results) >= 1
+        for r in results:
+            assert r.stress_level in ("low", "medium"), (
+                f"{r.canonical_type} stress={r.stress_score:.2f} — identical docs should not be high"
+            )
+
+    def test_result_fields_are_complete(self):
+        """Each SectionStressResult must have all required fields."""
+        doc = _make_section_doc([("Technical Skills", 0.10, _SKILLS_LINES)])
+        results, overall = score_stress(doc, doc)
+        assert results
+        r = results[0]
+        assert isinstance(r.canonical_type, str)
+        assert isinstance(r.region, str)
+        assert isinstance(r.stress_score, float)
+        assert r.stress_level in ("low", "medium", "high")
+        assert isinstance(r.notes, list)
+        assert 0.0 <= r.text_density_score <= 1.0
+        assert 0.0 <= r.stress_score <= 1.0
+
+    def test_massive_output_triggers_high_stress(self):
+        """Output with far more content than source should produce high stress."""
+        src = _make_section_doc([("Technical Skills", 0.05, _SKILLS_LINES)])
+        # Make output with ~5× the content
+        big_skills = _SKILLS_LINES * 6  # 30 lines
+        out = _make_section_doc([("Technical Skills", 0.05, big_skills)])
+        results, _ = score_stress(src, out)
+        stress_for_skills = next(
+            (r for r in results if r.canonical_type == "skills"), None
+        )
+        assert stress_for_skills is not None
+        assert stress_for_skills.stress_level in ("medium", "high")
+
+    def test_inserted_summary_with_no_source_section(self):
+        """Summary present in output but not source → no automatic high stress."""
+        src = _make_section_doc([("Technical Skills", 0.30, _SKILLS_LINES)])
+        out = _make_section_doc([
+            ("Professional Summary", 0.05, ["Experienced engineer with 10 years.", "Specialized in cloud infrastructure."]),
+            ("Technical Skills",     0.30, _SKILLS_LINES),
+        ])
+        results, _ = score_stress(src, out)
+        summary_r = next((r for r in results if r.canonical_type == "summary"), None)
+        if summary_r is not None:
+            assert not summary_r.input_found
+            assert summary_r.stress_level != "high"
+
+    def test_overall_is_mean_of_section_scores(self):
+        doc = _make_section_doc([
+            ("Technical Skills", 0.10, _SKILLS_LINES),
+            ("Experience",       0.40, _EXPERIENCE_LINES),
+        ])
+        results, overall = score_stress(doc, doc)
+        if results:
+            expected = sum(r.stress_score for r in results) / len(results)
+            assert overall == pytest.approx(expected, abs=0.001)
+
+
+# ---------------------------------------------------------------------------
+# TestStressIntegration — score_layout + taxonomy + report
+# ---------------------------------------------------------------------------
+
+class TestStressIntegration:
+
+    def test_score_layout_has_stress_fields(self):
+        """score_layout must populate section_stress_results and overall_container_stress_score."""
+        from tailor.eval.changed_content.scorer import score_layout
+        doc = _make_section_doc([("Technical Skills", 0.10, _SKILLS_LINES)])
+        score, _ = score_layout(doc, doc, "source text", "generated text")
+        assert hasattr(score, "section_stress_results")
+        assert hasattr(score, "overall_container_stress_score")
+        assert isinstance(score.section_stress_results, list)
+        assert isinstance(score.overall_container_stress_score, float)
+
+    def test_high_stress_triggers_class_c(self):
+        """A section_stress_results entry with stress_level='high' must raise Class C."""
+        high_sr = _make_stress_result(
+            stress_score=0.80,
+            stress_level="high",
+            canonical_type="skills",
+            region="sidebar_left",
+        )
+        score = _make_score(
+            section_stress_results=[high_sr],
+            # Keep page count stable so Class C comes only from stress
+            page_count_delta=0,
+            overflow_penalty=0.0,
+        )
+        fc = classify_failures(score)
+        assert FailureClass.C_OVERFLOW_FIT in fc.classes
+        ev = fc.evidence.get(FailureClass.C_OVERFLOW_FIT, [])
+        assert any("skills" in e.lower() for e in ev)
+
+    def test_low_stress_does_not_trigger_class_c(self):
+        """Low/medium stress alone must not add Class C."""
+        low_sr = _make_stress_result(stress_score=0.20, stress_level="low")
+        score = _make_score(
+            section_stress_results=[low_sr],
+            page_count_delta=0,
+            overflow_penalty=0.0,
+        )
+        fc = classify_failures(score)
+        assert FailureClass.C_OVERFLOW_FIT not in fc.classes
+
+    def test_case_report_includes_stress_fields(self):
+        """build_case_report must include section_stress and container_stress."""
+        from dataclasses import asdict
+        from tailor.eval.changed_content.scorer import score_layout
+        doc = _make_section_doc([("Technical Skills", 0.10, _SKILLS_LINES)])
+        score, _ = score_layout(doc, doc, "source", "generated")
+        result = _make_case_result(
+            metric_breakdown={**asdict(score)},
+            layout_score=score.composite,
+        )
+        report = build_case_report(result)
+        assert "section_stress" in report
+        assert "container_stress" in report["metric_breakdown"]
+
+    def test_stress_table_appears_in_summary_text_when_present(self):
+        """Summary text must include a Container stress block when results exist."""
+        from dataclasses import asdict
+        from tailor.eval.changed_content.scorer import score_layout
+        from tailor.eval.changed_content.report import _case_summary_text
+
+        src = _make_section_doc([("Technical Skills", 0.10, _SKILLS_LINES)])
+        out = _make_section_doc([("Technical Skills", 0.10, _SKILLS_LINES * 6)])
+        score, _ = score_layout(src, out, "old skills", "new skills")
+        result = _make_case_result(
+            metric_breakdown={**asdict(score)},
+            layout_score=score.composite,
+        )
+        report = build_case_report(result)
+        txt = _case_summary_text(report)
+        # Must mention container stress if there are results
+        if report.get("section_stress"):
+            assert "Container stress:" in txt
+
+    def test_high_stress_warning_in_summary_text(self):
+        """High-stress sections must produce a warning line in summary text."""
+        from tailor.eval.changed_content.report import _case_summary_text
+        report = {
+            "case_id": "t", "template_class": "linear", "severity": "S2",
+            "status": "fail", "layout_score": 0.5,
+            "metric_breakdown": {
+                "topology_preservation": 1.0, "section_placement": 1.0,
+                "overflow_penalty": 0.0, "duplication_penalty": 0.0,
+                "leakage_penalty": 0.0, "style_score": 1.0,
+                "section_coherence": 1.0, "container_stress": 0.75,
+            },
+            "raw_metrics": {
+                "page_count_delta": 0, "src_page_count": 1, "out_page_count": 1,
+                "src_column_count": 1, "out_column_count": 1,
+                "column_confidence": "high", "section_headings_found": 1,
+                "section_headings_expected": 1, "stale_token_ratio": 0.0,
+                "src_bullet_count": 0, "out_bullet_count": 0,
+                "gen_bullet_count": 0, "src_topology": "unknown",
+                "out_topology": "unknown", "topology_confidence": 0.0,
+            },
+            "failure_classes": [], "failure_labels": [], "evidence": [],
+            "section_placement": [],
+            "section_coherence": [],
+            "section_stress": [
+                {
+                    "canonical_type": "summary",
+                    "region": "sidebar_left",
+                    "input_found": True, "output_found": True,
+                    "input_char_count": 100, "output_char_count": 600,
+                    "input_line_count": 3, "output_line_count": 15,
+                    "input_height": 0.06, "output_height": 0.40,
+                    "char_growth_ratio": 6.0, "line_growth_ratio": 5.0,
+                    "height_growth_ratio": 6.67,
+                    "text_density_score": 0.30,
+                    "stress_score": 0.80, "stress_level": "high",
+                    "notes": [],
+                }
+            ],
+            "notes": "", "artifacts": {}, "error": "",
+        }
+        txt = _case_summary_text(report)
+        assert "Container stress:" in txt
+        assert "HIGH" in txt
+        assert "High-stress sections" in txt
+
+    def test_same_text_safety(self):
+        """stress module must not break the same-text evaluation path."""
+        from tailor.eval.comparator import compare
+        doc1 = _make_extracted("hello world", headings=["Experience"])
+        doc2 = _make_extracted("hello world", headings=["Experience"])
+        result = compare(doc1, doc2)
+        assert result is not None
