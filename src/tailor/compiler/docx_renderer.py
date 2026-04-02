@@ -200,6 +200,7 @@ def _render_para(pm: ParaModel, body, sectPr) -> None:
     if pm.style.xml_proto is not None:
         clone = deepcopy(pm.style.xml_proto)
         _strip_last_rendered_page_breaks(clone)
+        _strip_section_break(clone)
         _set_para_text(clone, pm.text)
     elif pm.paragraph_profile is not None:
         from tailor.compiler.para_builder import build_para_element
