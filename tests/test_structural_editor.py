@@ -1111,3 +1111,231 @@ class TestDiffVsRenderedSanity:
         assert "COBOL" not in all_text, (
             "COBOL from original source still in compiled output — stale body was rendered"
         )
+
+
+# ---------------------------------------------------------------------------
+# Post-processing improvements (A/B/C/D)
+# ---------------------------------------------------------------------------
+
+def _make_no_summary_template(tmp_path: Path) -> Path:
+    """DOCX template with Experience + Skills but NO summary section."""
+    doc = Document()
+    doc.add_paragraph("Experience", style="Heading 1")
+    doc.add_paragraph("Engineer | Acme Corp")
+    doc.add_paragraph("Jan 2022 – Present")
+    doc.add_paragraph("- Built distributed systems.")
+    doc.add_paragraph("Technical Skills", style="Heading 1")
+    doc.add_paragraph("Python, Go")
+    path = tmp_path / "no_summary.docx"
+    doc.save(str(path))
+    return path
+
+
+def _make_intro_prose_template(tmp_path: Path) -> Path:
+    """DOCX template with a non-canonical 'OVERVIEW' section containing intro prose,
+    followed by Experience.  No explicit summary section."""
+    doc = Document()
+    doc.add_paragraph("OVERVIEW", style="Heading 1")
+    doc.add_paragraph(
+        "Seasoned software engineer with fifteen years of backend experience "
+        "across financial services and cloud infrastructure companies."
+    )
+    doc.add_paragraph("Experience", style="Heading 1")
+    doc.add_paragraph("Engineer | Corp")
+    doc.add_paragraph("Jan 2022 – Present")
+    doc.add_paragraph("- Built things.")
+    doc.add_paragraph("Technical Skills", style="Heading 1")
+    doc.add_paragraph("Java, Python")
+    path = tmp_path / "intro_prose.docx"
+    doc.save(str(path))
+    return path
+
+
+def _make_skills_like_template(tmp_path: Path) -> Path:
+    """DOCX template whose 'skills' section uses a noncanonical heading."""
+    doc = Document()
+    doc.add_paragraph("Experience", style="Heading 1")
+    doc.add_paragraph("Engineer | Corp")
+    doc.add_paragraph("Jan 2022 – Present")
+    doc.add_paragraph("- Built things.")
+    doc.add_paragraph("Core Technologies", style="Heading 1")
+    doc.add_paragraph("Java, SQL, AWS, Docker")
+    path = tmp_path / "skills_like.docx"
+    doc.save(str(path))
+    return path
+
+
+def _make_centered_contact_template(tmp_path: Path) -> Path:
+    """DOCX template where the first 'other' section has center-aligned body paras."""
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    doc = Document()
+    # 'other' section with center-aligned body (bad prototype candidate)
+    doc.add_paragraph("Contact Info", style="Heading 1")
+    contact_p = doc.add_paragraph("john@example.com | 555-1234")
+    contact_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    # Content sections (no summary)
+    doc.add_paragraph("Experience", style="Heading 1")
+    doc.add_paragraph("Engineer | Corp")
+    doc.add_paragraph("Jan 2022 – Present")
+    doc.add_paragraph("- Built things.")
+    doc.add_paragraph("Technical Skills", style="Heading 1")
+    doc.add_paragraph("Python, Go")
+    path = tmp_path / "centered_contact.docx"
+    doc.save(str(path))
+    return path
+
+
+_LLM_WITH_SUMMARY = """\
+Professional Summary
+Expert in distributed cloud systems with a focus on reliability.
+
+Experience
+Engineer | Acme Corp
+Jan 2022 – Present
+- Built distributed systems.
+
+Technical Skills
+Python, Go
+"""
+
+
+class TestPostProcessingImprovements:
+    """Tests for A (implicit summary anchoring), B (style-safe insertion),
+    C (Education freeze), and D (skills-like section detection)."""
+
+    # ── Test 1: A — Missing summary appears before Experience ────────────
+    def test_missing_summary_inserted_before_experience(self, tmp_path):
+        """Summary must appear before Experience when the template has no summary section."""
+        tpl = _make_no_summary_template(tmp_path)
+        text = _roundtrip(tpl, _LLM_WITH_SUMMARY, tmp_path)
+        paras = [p.strip() for p in text.split("\n") if p.strip()]
+        sum_idx = next(
+            (i for i, p in enumerate(paras) if "Expert in distributed" in p), None
+        )
+        exp_idx = next(
+            (i for i, p in enumerate(paras) if "Acme Corp" in p), None
+        )
+        assert sum_idx is not None, "Generated summary text not found in output"
+        assert exp_idx is not None, "Experience content not found in output"
+        assert sum_idx < exp_idx, (
+            "Summary must appear before Experience; "
+            f"summary at para {sum_idx}, experience at {exp_idx}"
+        )
+
+    # ── Test 2: A — Intro prose block replaced by LLM summary ───────────
+    def test_intro_prose_replaced_by_summary(self, tmp_path):
+        """LLM summary must replace the template's intro-prose block (not appear alongside it)."""
+        tpl = _make_intro_prose_template(tmp_path)
+        text = _roundtrip(tpl, _LLM_WITH_SUMMARY, tmp_path)
+        assert "Expert in distributed cloud systems" in text, (
+            "LLM summary content not found in output"
+        )
+        assert "Seasoned software engineer with fifteen years" not in text, (
+            "Original intro-prose still present — should have been replaced by LLM summary"
+        )
+
+    # ── Test 3: B — Inserted body paragraphs are left-aligned ───────────
+    def test_inserted_body_paragraphs_are_left_aligned(self, tmp_path):
+        """Inserted summary body paragraphs must not inherit center alignment."""
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        tpl = _make_centered_contact_template(tmp_path)
+        out = str(tmp_path / "out_aligned.docx")
+        save_doc_from_template(str(tpl), out, _LLM_WITH_SUMMARY)
+        out_doc = Document(out)
+        summary_paras = [
+            p for p in out_doc.paragraphs
+            if "Expert in distributed" in p.text or "cloud systems" in p.text
+        ]
+        assert summary_paras, "Summary paragraph not found in output DOCX"
+        for p in summary_paras:
+            assert p.alignment not in (
+                WD_ALIGN_PARAGRAPH.CENTER,
+                WD_ALIGN_PARAGRAPH.RIGHT,
+            ), (
+                f"Inserted body paragraph has non-left alignment ({p.alignment}): "
+                f"'{p.text[:60]}'"
+            )
+
+    # ── Test 4: C — Education freeze preserves source Education ─────────
+    def test_education_freeze_preserves_source_education(self, tmp_path):
+        """FREEZE_EDUCATION=True must preserve source Education; LLM-invented content ignored."""
+        from tailor.compiler.updater import FREEZE_EDUCATION
+        assert FREEZE_EDUCATION, "FREEZE_EDUCATION must be True for this test"
+
+        llm_with_fake_edu = (
+            "Professional Summary\nExperienced engineer.\n\n"
+            "Experience\n"
+            "Senior Engineer | Acme Corp\nJan 2022 – Present\n- Built systems.\n\n"
+            "Technical Skills\nPython, Kafka\n\n"
+            "Education\nFake University of Nowhere, 2099\n"
+        )
+        text = _roundtrip(RESUME_TEMPLATE, llm_with_fake_edu, tmp_path)
+        assert "Fake University of Nowhere" not in text, (
+            "LLM-invented Education content appeared — Education freeze did not work"
+        )
+        assert "2099" not in text, "LLM-invented graduation year appeared"
+        # Source Education content must still be present
+        assert "M.Sc" in text or "Technical State" in text, (
+            "Source Education content missing from output — freeze removed it instead of preserving"
+        )
+
+    # ── Test 5: D — Skills-like canonical heading detection ─────────────
+    def test_skills_like_heading_detected_by_classifier(self):
+        """_classify_section must return 'skills' for noncanonical skills-like headings."""
+        from tailor.compiler.docx_parser import _classify_section
+        assert _classify_section("Core Technologies") == "skills"
+        assert _classify_section("Key Proficiencies") == "skills"
+        assert _classify_section("Technical Competencies") == "skills"
+        assert _classify_section(
+            "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS"
+        ) == "skills"
+        # Must not false-positive on unrelated headings
+        assert _classify_section("References") == "other"
+        assert _classify_section("Certifications") == "other"
+        assert _classify_section("Languages") == "other"
+
+    # ── Test 6: D — Skills content routed to skills-like section ────────
+    def test_skills_routed_to_skills_like_section(self, tmp_path):
+        """Generated Technical Skills must be written into a noncanonical 'Core Technologies'
+        section rather than left as an unmatched extra."""
+        tpl = _make_skills_like_template(tmp_path)
+        llm = (
+            "Experience\nEngineer | Corp\nJan 2022 – Present\n- Built things.\n\n"
+            "Technical Skills\nPython, Docker, AWS, Kubernetes\n"
+        )
+        text = _roundtrip(tpl, llm, tmp_path)
+        assert "Python" in text, "Generated skills not found in output"
+        assert "Docker" in text, "Generated skills not found in output"
+        # Old skills content should be replaced
+        assert "Java, SQL, AWS, Docker" not in text, (
+            "Old template skills content still present verbatim — skills section not updated"
+        )
+
+    # ── Test 7: Same-text roundtrip regression ───────────────────────────
+    def test_same_text_roundtrip_regression(self, tmp_path):
+        """All improvements must not disturb the same-text roundtrip on good templates."""
+        text = _roundtrip(RESUME_TEMPLATE, _RESUME_STANDARD_ORDER, tmp_path)
+        assert "Acme Corp" in text
+        assert "Python" in text
+        assert "Reduced latency by 30%" in text
+
+    # ── Test 8: Explicit-summary template not degraded ───────────────────
+    def test_explicit_summary_template_not_degraded(self, tmp_path):
+        """Templates with an explicit summary section must not be affected by A."""
+        orig = parse_docx(str(RESUME_TEMPLATE))
+        has_summary = any(s.semantic_type == "summary" for s in orig.sections)
+        if not has_summary:
+            pytest.skip("RESUME_TEMPLATE has no explicit summary section")
+        text = _roundtrip(RESUME_TEMPLATE, _RESUME_STANDARD_ORDER, tmp_path)
+        assert "Experienced engineer with 10 years" in text, (
+            "Summary content missing from output on explicit-summary template"
+        )
+        paras = [p.strip() for p in text.split("\n") if p.strip()]
+        sum_idx = next(
+            (i for i, p in enumerate(paras) if "Experienced engineer with 10 years" in p), None
+        )
+        exp_idx = next(
+            (i for i, p in enumerate(paras) if "Acme Corp" in p), None
+        )
+        if sum_idx is not None and exp_idx is not None:
+            assert sum_idx < exp_idx, "Summary must precede Experience on explicit-summary template"

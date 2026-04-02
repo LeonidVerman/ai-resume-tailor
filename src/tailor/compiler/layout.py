@@ -516,6 +516,129 @@ def validate_llm_sections(
 
 
 # ---------------------------------------------------------------------------
+# A: Implicit Summary anchoring
+# ---------------------------------------------------------------------------
+
+_YEAR_RE_LOCAL = re.compile(r"\b(19|20)\d{2}\b")
+
+
+def _has_intro_prose_content(section: "ResumeSection") -> bool:
+    """Return True when a section's body looks like a prose intro (not a skills list).
+
+    A section qualifies as an intro-prose candidate when:
+    - It has at least 30 characters of non-empty body text.
+    - Comma density is low (< 0.15 commas per character) — rules out skills lists.
+    """
+    non_empty = [p.text for p in section.body_paras if p.text.strip()]
+    if not non_empty:
+        return False
+    total_text = " ".join(non_empty)
+    if len(total_text) < 30:
+        return False
+    comma_density = total_text.count(",") / max(1, len(total_text))
+    return comma_density < 0.15
+
+
+def _find_summary_anchor(
+    original: "ResumeDocument",
+    containers: list[TemplateContainer],
+) -> "tuple[str, int] | None":
+    """Return (anchor_type, section_idx) for implicit summary placement, or None.
+
+    anchor_type values:
+    - 'intro_prose': section at section_idx should be replaced by the summary.
+    - 'hero': insert summary as first section (header_paras act as the hero block).
+
+    Sidebar sections are excluded from consideration.
+    """
+    sidebar_idxs = {c.section_idx for c in containers if c.region == "sidebar"}
+
+    # Rule 1: first 'other'-type top section that contains prose (not skills-like).
+    # Stop searching once we reach a real content section (summary/experience/etc.)
+    # so we only look at the header/intro zone.
+    for idx, section in enumerate(original.sections):
+        if idx in sidebar_idxs:
+            continue
+        if section.semantic_type != "other":
+            break  # passed the header zone into main content
+        if _has_intro_prose_content(section):
+            return ("intro_prose", idx)
+
+    # Rule 2: hero/title block exists (non-empty header_paras).
+    if original.header_paras:
+        return ("hero", -1)
+
+    return None
+
+
+def _anchor_implicit_summary(
+    llm_sections: list[LlmSection],
+    original: "ResumeDocument",
+    containers: list[TemplateContainer],
+) -> list[LlmSection]:
+    """Ensure an LLM summary is anchored to a sensible location in the template.
+
+    No-op when:
+    - The template already has an explicit summary section.
+    - The LLM output has no summary section.
+    - No suitable anchor is found in the template.
+
+    When anchor_type is 'intro_prose': the LLM summary heading is renamed to
+    match the intro-prose section's title so that _match_sections pairs them
+    via exact heading match (pass 1).  _update_body_section then replaces the
+    intro-prose body with the generated summary content.
+
+    When anchor_type is 'hero': the LLM summary is moved to position 0 in the
+    list so it appears first in LLM-output order after any verbatim sections.
+
+    Input list is never mutated; a new list is returned.
+    """
+    # No-op if template already has an explicit summary section
+    if any(s.semantic_type == "summary" for s in original.sections):
+        return llm_sections
+
+    # Find LLM summary
+    sum_idx = next(
+        (i for i, s in enumerate(llm_sections) if s.semantic_type == "summary"),
+        None,
+    )
+    if sum_idx is None:
+        return llm_sections
+
+    anchor = _find_summary_anchor(original, containers)
+    if anchor is None:
+        return llm_sections
+
+    anchor_type, section_idx = anchor
+    result = list(llm_sections)
+    llm_sum = result[sum_idx]
+
+    if anchor_type == "intro_prose":
+        # Rename the LLM summary heading to match the intro-prose section title
+        # exactly.  _match_sections will pair them in pass 1 (exact heading match),
+        # and _update_body_section will replace the prose body with the summary.
+        orig_title = original.sections[section_idx].title
+        result[sum_idx] = LlmSection(
+            heading=orig_title,
+            semantic_type=llm_sum.semantic_type,
+            body_lines=llm_sum.body_lines,
+            roles=llm_sum.roles,
+        )
+        log.debug(
+            "anchor_implicit_summary: renamed LLM summary heading to %r "
+            "(intro_prose replacement)",
+            orig_title,
+        )
+    elif anchor_type == "hero":
+        # Move summary to position 0 so it appears first after any verbatim sections.
+        result.pop(sum_idx)
+        result.insert(0, llm_sum)
+        log.debug("anchor_implicit_summary: moved summary to position 0 (hero anchor)")
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
 
@@ -576,8 +699,12 @@ def apply_layout_fitting(
     log.debug("apply_layout_fitting: template_class=%s, containers=%d",
               tpl_class, len(containers))
 
+    # Step 2.5: A — implicit summary anchoring for templates without an
+    # explicit summary section.
+    result = _anchor_implicit_summary(llm_sections, original, containers)
+
     # Step 3: Additional redistribution
-    result = redistribute_additional(llm_sections, containers)
+    result = redistribute_additional(result, containers)
 
     # Step 4: Compaction for narrow containers
     compacted: list[LlmSection] = []

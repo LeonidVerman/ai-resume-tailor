@@ -26,12 +26,20 @@ from dataclasses import dataclass, field
 
 from tailor.compiler.models import (
     ParaModel,
+    ParaStyle,
     ResumeDocument,
     ResumeSection,
     RoleEntry,
     TableBlock,
 )
 from tailor.compiler.text_parser import LlmRole, LlmSection
+
+_W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
+# C: Freeze Education — set True to preserve source Education verbatim and
+# ignore LLM-generated Education content during DOCX post-processing.
+# To re-enable LLM Education rewrites: set this to False.
+FREEZE_EDUCATION: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -231,6 +239,88 @@ def _update_body_section(orig: ResumeSection, llm: LlmSection) -> ResumeSection:
     )
 
 
+def _find_body_prototype(
+    pairs: "list[tuple[ResumeSection, LlmSection | None]]",
+) -> ParaModel:
+    """Return the best body-text prototype for inserted extra sections.
+
+    B: Selection criteria (in priority order):
+    1. Non-empty body paragraph from a non-'other' section.
+    2. Not bold (avoids cloning heading-style paragraphs).
+    3. Not explicitly center- or right-aligned (hard left-alignment rule).
+    Falls back to any non-empty body para, then to the first section heading.
+    """
+    # Preferred: non-other, non-bold, non-center/right para
+    for orig_section, _ in pairs:
+        if orig_section.semantic_type == "other":
+            continue
+        for p in orig_section.body_paras:
+            if not p.text.strip():
+                continue
+            if p.style.bold:
+                continue
+            if p.style.alignment in ("center", "right"):
+                continue
+            return p
+    # Fallback: any non-empty body para
+    for orig_section, _ in pairs:
+        for p in orig_section.body_paras:
+            if p.text.strip():
+                return p
+    return pairs[0][0].heading
+
+
+def _make_left_aligned(pm: ParaModel) -> ParaModel:
+    """Return a clone of *pm* with alignment forced to left.
+
+    B: Strips ``w:jc`` from the cloned xml_proto's ``w:pPr`` so that Word
+    defaults to left-alignment.  For PDF-sourced paragraphs (xml_proto=None),
+    sets paragraph_profile.alignment = 'left'.
+
+    This is the hard left-alignment rule for all inserted body paragraphs.
+    """
+    from copy import deepcopy
+    from tailor.compiler.models import ParagraphProfile
+
+    cloned_style = ParaStyle(
+        style_name=pm.style.style_name,
+        alignment=None,  # force left
+        indent_left=pm.style.indent_left,
+        indent_right=pm.style.indent_right,
+        hanging=pm.style.hanging,
+        spacing_before=pm.style.spacing_before,
+        spacing_after=pm.style.spacing_after,
+        line_spacing=pm.style.line_spacing,
+        keep_with_next=pm.style.keep_with_next,
+        numbering=pm.style.numbering,
+        bold=pm.style.bold,
+        italic=pm.style.italic,
+        font_name=pm.style.font_name,
+        font_size_pt=pm.style.font_size_pt,
+        color=pm.style.color,
+        xml_proto=pm.style.clone_proto(),
+    )
+    # Strip explicit alignment from XML so Word uses its default (left).
+    if cloned_style.xml_proto is not None:
+        pPr = cloned_style.xml_proto.find(f"{{{_W}}}pPr")
+        if pPr is not None:
+            jc = pPr.find(f"{{{_W}}}jc")
+            if jc is not None:
+                pPr.remove(jc)
+
+    pp_clone: "ParagraphProfile | None" = None
+    if pm.paragraph_profile is not None:
+        pp_clone = ParagraphProfile.from_dict(pm.paragraph_profile.to_dict())
+        pp_clone.alignment = "left"
+
+    return ParaModel(
+        text=pm.text,
+        style=cloned_style,
+        semantic=pm.semantic,
+        paragraph_profile=pp_clone,
+    )
+
+
 def _make_extra_section(
     llm: LlmSection,
     heading_arch: ParaModel,
@@ -287,6 +377,9 @@ def apply_tailored(
         for orig_section, llm_section in match.pairs:
             if llm_section is None:
                 new_sections.append(orig_section)
+            elif FREEZE_EDUCATION and orig_section.semantic_type == "education":
+                # C: Education freeze — preserve source Education verbatim.
+                new_sections.append(orig_section)
             elif orig_section.semantic_type == "experience":
                 if orig_section.roles or llm_section.roles:
                     new_sections.append(_update_experience_section(orig_section, llm_section))
@@ -302,17 +395,11 @@ def apply_tailored(
         # name/contact header block) may still have llm_section=None and are
         # kept verbatim, prepended before the LLM-ordered sections.
 
-        # Style archetypes for extra sections
-        heading_arch: ParaModel = match.pairs[0][0].heading  # first section heading
-        body_arch: ParaModel = heading_arch                   # fallback
-        for orig_s, _ in match.pairs:
-            for p in orig_s.body_paras:
-                if p.text.strip():
-                    body_arch = p
-                    break
-            else:
-                continue
-            break
+        # B: Style archetypes for extra sections.
+        # heading_arch: first section heading (unchanged — heading style is fine).
+        # body_arch: best left-aligned, non-bold, non-'other' body paragraph.
+        heading_arch: ParaModel = match.pairs[0][0].heading
+        body_arch: ParaModel = _make_left_aligned(_find_body_prototype(match.pairs))
 
         # Map llm heading (lower) → updated section; collect verbatim unmatched.
         heading_to_section: dict[str, ResumeSection] = {}
@@ -320,6 +407,9 @@ def apply_tailored(
         for orig_section, llm_section in match.pairs:
             if llm_section is None:
                 # 'other'-type section not output by LLM — keep verbatim
+                verbatim_sections.append(orig_section)
+            elif FREEZE_EDUCATION and orig_section.semantic_type == "education":
+                # C: Education freeze in extras path — keep source verbatim.
                 verbatim_sections.append(orig_section)
             elif orig_section.semantic_type == "experience":
                 if orig_section.roles or llm_section.roles:

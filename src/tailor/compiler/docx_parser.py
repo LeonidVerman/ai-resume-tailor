@@ -58,6 +58,16 @@ _ALL_HEADING_NAMES: frozenset[str] = (
     })
 )
 
+# D: keyword set for noncanonical skills-like section headings.
+# Applied as a word-level fallback after all exact-set checks fail.
+# Covers headings like "Core Technologies", "Key Proficiencies",
+# "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS", etc.
+_SKILLS_LIKE_WORDS: frozenset[str] = frozenset({
+    "skill", "technical", "technologies", "technology",
+    "keywords", "competencies", "competency",
+    "expertise", "proficiencies", "proficiency",
+})
+
 _HEADING_STYLE_RE = re.compile(r"^heading\s*\d", re.IGNORECASE)
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
@@ -72,6 +82,13 @@ def _classify_section(heading_text: str) -> str:
         return "skills"
     if t in _EDUCATION_NAMES:
         return "education"
+    # D: skills-like keyword detection for noncanonical headings.
+    # Split on whitespace and common delimiters so compound headings like
+    # "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS" are
+    # matched by individual words ("technologies", "keywords").
+    words = re.split(r"[\s/&,]+", t)
+    if any(w in _SKILLS_LIKE_WORDS for w in words if w):
+        return "skills"
     return "other"
 
 
