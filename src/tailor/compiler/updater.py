@@ -454,8 +454,12 @@ def apply_tailored(
                 # 'other'-type section not output by LLM — keep verbatim
                 verbatim_sections.append(orig_section)
             elif FREEZE_EDUCATION and orig_section.semantic_type == "education":
-                # C: Education freeze in extras path — keep source verbatim.
-                verbatim_sections.append(orig_section)
+                # C: Education freeze in extras path — keep original content but
+                # register under the LLM heading key so it is placed at the correct
+                # LLM output position (not prepended to verbatim_sections, which
+                # would cause the LLM's education entry to be treated as an "extra"
+                # section and duplicated in the output).
+                heading_to_section[llm_section.heading.lower()] = orig_section
             elif orig_section.semantic_type == "experience":
                 if orig_section.roles or llm_section.roles:
                     heading_to_section[llm_section.heading.lower()] = (
