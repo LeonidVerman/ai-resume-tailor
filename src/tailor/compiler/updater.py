@@ -196,38 +196,77 @@ def _update_experience_section(orig: ResumeSection, llm: LlmSection) -> ResumeSe
     )
 
 
+def _is_decorative_para(pm: ParaModel) -> bool:
+    """Return True when *pm* is a decorative divider that should be preserved verbatim.
+
+    Detection criterion: mixed run fonts (e.g. Segoe UI Symbol + Times New Roman
+    within the same paragraph).  This reliably identifies divider/ornament paragraphs
+    (such as the ◇—————————◇ separator in template 5) without false-positives on
+    normal section sub-headings that may happen to use a large font size.
+
+    Such paragraphs must never be used as LLM-text targets because _set_para_text
+    would distribute new content across the wrong font runs and produce corrupted output.
+    """
+    xml = pm.style.xml_proto
+    if xml is None:
+        return False
+    fonts: set[str] = set()
+    for r_elem in xml.findall(f"{{{_W}}}r"):
+        rPr = r_elem.find(f"{{{_W}}}rPr")
+        if rPr is None:
+            continue
+        f_elem = rPr.find(f"{{{_W}}}rFonts")
+        if f_elem is not None:
+            fname = (
+                f_elem.get(f"{{{_W}}}ascii")
+                or f_elem.get(f"{{{_W}}}cs")
+                or f_elem.get(f"{{{_W}}}hAnsi")
+            )
+            if fname:
+                fonts.add(fname)
+    return len(fonts) > 1
+
+
 def _update_body_section(orig: ResumeSection, llm: LlmSection) -> ResumeSection:
     """Update a non-experience section with LLM body lines."""
     llm_lines = [l for l in llm.body_lines if l.strip()]
 
-    # Find non-empty body paragraphs to reuse protos from
+    # Separate body paragraphs into content targets and decorative preservations.
+    # Decorative paras (mixed run fonts) are preserved verbatim and never used as
+    # LLM-text targets; they act like empty spacers in the mapping.
     non_empty = [p for p in orig.body_paras if p.text.strip()]
+    content_paras = [p for p in non_empty if not _is_decorative_para(p)]
 
-    arch = non_empty[0] if non_empty else orig.heading
+    # Derive the cloning archetype from real content paragraphs (clean font).
+    # Fall back to heading only when the section has no content paragraphs at all.
+    arch = content_paras[0] if content_paras else orig.heading
 
-    # Build updated versions of each non-empty para (paired by position).
+    # Build updated versions of each content para (paired by position with LLM lines).
     updated: list[ParaModel] = []
     for i, line in enumerate(llm_lines):
-        if i < len(non_empty):
-            updated.append(non_empty[i].with_text(line))
+        if i < len(content_paras):
+            updated.append(content_paras[i].with_text(line))
         else:
             updated.append(arch.clone_as(line, "paragraph"))
 
-    # Rebuild body_paras preserving empty paragraphs at their original positions.
-    # This keeps inter-role spacing intact when experience sections are treated
-    # as body sections (no parsed roles).
+    # Rebuild body_paras:
+    # - empty paras → preserved (spacing)
+    # - decorative paras → preserved verbatim (font integrity)
+    # - content paras → replaced with updated LLM text (in order)
     new_body: list[ParaModel] = []
-    ne_cursor = 0
+    content_cursor = 0
     for p in orig.body_paras:
         if not p.text.strip():
             new_body.append(p)
-        elif ne_cursor < len(updated):
-            new_body.append(updated[ne_cursor])
-            ne_cursor += 1
-        # else: LLM produced fewer lines — drop the trailing original paras
+        elif _is_decorative_para(p):
+            new_body.append(p)
+        elif content_cursor < len(updated):
+            new_body.append(updated[content_cursor])
+            content_cursor += 1
+        # else: LLM produced fewer lines — drop trailing content paras
 
-    # Append any extra LLM lines beyond the original non-empty count.
-    for i in range(len(non_empty), len(llm_lines)):
+    # Append extra LLM lines beyond the original content para count.
+    for i in range(len(content_paras), len(llm_lines)):
         new_body.append(updated[i])
 
     return ResumeSection(
