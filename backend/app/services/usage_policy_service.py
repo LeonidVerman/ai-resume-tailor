@@ -51,23 +51,56 @@ class UsagePolicyService:
 
     # ── Public API ─────────────────────────────────────────────────────────
 
-    def check_and_consume(self, user_id: str, billing: Billing | None) -> None:
+    def check_quota(self, user_id: str, billing: Billing | None) -> None:
         """
-        Atomically verify the user can generate, then record one unit of usage.
+        Verify the user has remaining quota without consuming it.
 
-        Called AFTER request validation passes and generation is accepted.
+        Called at the API layer before the generation pipeline starts, so
+        users get an immediate 429 rather than waiting 30-90 s for the LLM
+        to finish before discovering they are over limit.
 
-        Raises HTTP 429 with a structured body when all quota is exhausted:
-          {
-            "detail": {
-              "message": "...",
-              "error_code": "QUOTA_EXCEEDED",
-              "plan": "...",
-              "monthly_used": N,
-              "monthly_limit": N,
-              "extra_credits": N
-            }
-          }
+        Raises HTTP 429 with a structured body when all quota is exhausted.
+        Does NOT increment any counter.
+        """
+        now = _utc_now()
+        year, month = now.year, now.month
+        plan = billing.plan_type if billing else "free"
+        limit = self._resolve_limit(billing)
+        extra_credits = billing.extra_credits if billing else 0
+        monthly_used = self._usage.get_count(user_id, year, month)
+
+        if monthly_used < limit:
+            return  # monthly quota available
+        if billing is not None and extra_credits > 0:
+            return  # credit pack available
+
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "message": (
+                    f"Monthly generation limit reached ({monthly_used}/{limit}). "
+                    "Upgrade your plan or purchase a credit pack to continue."
+                ),
+                "error_code": "QUOTA_EXCEEDED",
+                "plan": plan,
+                "monthly_used": monthly_used,
+                "monthly_limit": limit,
+                "extra_credits": extra_credits,
+            },
+        )
+
+    def consume(self, user_id: str, billing: Billing | None) -> None:
+        """
+        Atomically record one unit of usage after a successful generation.
+
+        Called only when the generation pipeline has fully succeeded, so
+        failures (post-processing errors, DB write errors, etc.) do not
+        consume a generation slot.
+
+        Falls back to extra credits when the monthly quota is already full
+        (race condition: another request consumed the last slot between
+        check_quota() and consume()).  Raises HTTP 429 only in the unlikely
+        event that both quota and credits are exhausted at consume time.
         """
         now = _utc_now()
         year, month = now.year, now.month
@@ -94,7 +127,7 @@ class UsagePolicyService:
                 )
                 return
 
-        # Step 3: reject — quota and credits both exhausted
+        # Step 3: reject — quota and credits both exhausted (race condition)
         monthly_used = self._usage.get_count(user_id, year, month)
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,

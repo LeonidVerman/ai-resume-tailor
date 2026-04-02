@@ -402,7 +402,8 @@ def test_changed_content_regression(
             pytest.skip(f"Sample file not found ({label}): {path}")
 
     pdf_method = _detect_pdf_method()
-    output_dir = str(tmp_path / case_id)
+    artifacts_root = _REPO_ROOT / "tmp" / "artefacts" / "postprocessing"
+    output_dir = str(artifacts_root / case_id)
 
     result = run_regression_case(
         case_id=case_id,

@@ -177,12 +177,17 @@ def auth_me(user: CurrentUserDep, db: DbDep):
     except Exception:
         legal_accepted = False
 
+    from backend.app.db.repositories.billing_repository import BillingRepository
+    from backend.app.constants import PLAN_FREE
+    billing = BillingRepository(db).get_by_user_id(user.id)
+    plan_type = billing.plan_type if billing is not None else PLAN_FREE
+
     return AuthMeResponse(
         user_id=user.id,
         email=user.email,
         role=user.role,
         is_admin=(user.role == ROLE_ADMIN),
-        plan_type=user.plan_type,
+        plan_type=plan_type,
         onboarding_completed=onboarding_completed,
         legal_accepted=legal_accepted,
     )

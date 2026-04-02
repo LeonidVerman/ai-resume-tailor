@@ -24,13 +24,16 @@ from datetime import datetime, timezone
 
 from backend.app.db.models.generation_run import GenerationRun
 from backend.app.db.repositories.admin_config_repository import AdminConfigRepository
+from backend.app.db.repositories.billing_repository import BillingRepository
 from backend.app.db.repositories.candidate_profile_repository import CandidateProfileRepository
 from backend.app.db.repositories.generation_run_repository import GenerationRunRepository
 from backend.app.db.repositories.job_description_repository import JobDescriptionRepository
+from backend.app.db.repositories.monthly_usage_repository import MonthlyUsageRepository
 from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
 from backend.app.db.repositories.tailored_document_repository import TailoredDocumentRepository
 from backend.app.schemas.generation import GenerationRequest, GenerationResponse
 from backend.app.services.storage_service import StorageService
+from backend.app.services.usage_policy_service import UsagePolicyService
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +71,7 @@ class GenerationService:
         self._storage_service = storage_service
 
     def generate(
-        self, user_id: str, request: GenerationRequest
+        self, user_id: str, request: GenerationRequest, billing=None
     ) -> GenerationResponse:
         """
         Run the tailoring pipeline and persist the results.
@@ -180,6 +183,16 @@ class GenerationService:
                 resume=resume,
                 result=result,
             )
+
+            # ── Consume quota slot (only on full success) ──────────────────
+            # check_quota() was called earlier at the API layer for a fast
+            # pre-flight rejection; the actual counter increment happens here
+            # so that pipeline failures (post-processing, DB errors, etc.)
+            # do not consume a generation slot.
+            UsagePolicyService(
+                billing_repo=BillingRepository(self._run_repo._db),
+                monthly_usage_repo=MonthlyUsageRepository(self._run_repo._db),
+            ).consume(user_id, billing)
 
             # ── Finalize run record ────────────────────────────────────────
             self._run_repo.update(
