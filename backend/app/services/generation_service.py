@@ -153,6 +153,10 @@ class GenerationService:
         )
 
         # ── Persist tailored document ──────────────────────────────────────
+        # Strip null bytes (\u0000) which PostgreSQL rejects in text/JSONB fields.
+        resume_text = result.resume.replace("\x00", "") if result.resume else None
+        cover_letter_text = result.cover_letter.replace("\x00", "") if result.cover_letter else None
+
         template_original_filename = (resume.resume_jsonb or {}).get("original_filename", "")
         tailored_doc = self._doc_repo.create(
             user_id=user_id,
@@ -160,11 +164,11 @@ class GenerationService:
             company_name=meta.get("company", ""),
             role_title=meta.get("job_title", ""),
             resume_jsonb={
-                "text": result.resume,
+                "text": resume_text,
                 "template_original_filename": template_original_filename,
                 "diff": (debug_meta.get("diff") or {}).get("resume") or [],
-            } if result.resume else None,
-            cover_letter_jsonb={"text": result.cover_letter} if result.cover_letter else None,
+            } if resume_text else None,
+            cover_letter_jsonb={"text": cover_letter_text} if cover_letter_text else None,
         )
 
         # ── Render and upload artifacts ────────────────────────────────────
