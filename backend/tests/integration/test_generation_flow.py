@@ -65,7 +65,7 @@ def _patch_pipeline(resume="Tailored resume text", cover="Cover letter text"):
             return_value="test candidate prompt",
         ),
         patch(
-            "backend.app.services.usage_policy_service.UsagePolicyService.check_and_consume",
+            "backend.app.services.generation_service.UsagePolicyService",
         ),
     ):
         yield

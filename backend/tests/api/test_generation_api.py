@@ -72,7 +72,7 @@ def _patch_pipeline():
             return_value="test candidate prompt",
         ),
         patch(
-            "backend.app.services.usage_policy_service.UsagePolicyService.check_and_consume",
+            "backend.app.services.generation_service.UsagePolicyService",
         ),
     ):
         yield
@@ -145,7 +145,7 @@ class TestCreateGeneration:
                 side_effect=RuntimeError("LLM timeout"),
             ),
             patch(
-                "backend.app.services.usage_policy_service.UsagePolicyService.check_and_consume",
+                "backend.app.services.generation_service.UsagePolicyService",
             ),
             _patch_config(),
         ):
@@ -219,10 +219,10 @@ class TestGetGeneration:
 # ── Quota enforcement ──────────────────────────────────────────────────────
 
 class TestGenerationQuota:
-    """Verify that UsagePolicyService.check_and_consume is called and enforced."""
+    """Verify that UsagePolicyService.check_quota is called and enforced."""
 
     def test_quota_exceeded_returns_429(self, client):
-        """When check_and_consume raises 429, the generation endpoint propagates it."""
+        """When check_quota raises 429, the generation endpoint propagates it."""
         from fastapi import HTTPException
 
         _complete_onboarding(client)
@@ -244,7 +244,7 @@ class TestGenerationQuota:
 
         with (
             patch(
-                "backend.app.services.usage_policy_service.UsagePolicyService.check_and_consume",
+                "backend.app.services.usage_policy_service.UsagePolicyService.check_quota",
                 side_effect=_raise_quota,
             ),
             _patch_config(),
@@ -258,7 +258,7 @@ class TestGenerationQuota:
         assert detail["monthly_used"] == 3
 
     def test_quota_check_called_on_valid_request(self, client):
-        """check_and_consume is called exactly once on a valid generation request."""
+        """check_quota is called exactly once on a valid generation request."""
         _complete_onboarding(client)
         resume_id = _upload_resume(client)
         jd_id = _create_jd(client)
@@ -273,8 +273,11 @@ class TestGenerationQuota:
                 return_value="test candidate prompt",
             ),
             patch(
-                "backend.app.services.usage_policy_service.UsagePolicyService.check_and_consume"
+                "backend.app.services.usage_policy_service.UsagePolicyService.check_quota"
             ) as mock_check,
+            patch(
+                "backend.app.services.generation_service.UsagePolicyService",
+            ),
             _patch_config(),
         ):
             client.post(API, json=_gen_request(jd_id, resume_id))
@@ -287,7 +290,7 @@ class TestGenerationQuota:
 
         with (
             patch(
-                "backend.app.services.usage_policy_service.UsagePolicyService.check_and_consume"
+                "backend.app.services.usage_policy_service.UsagePolicyService.check_quota"
             ) as mock_check,
             _patch_config(),
         ):
