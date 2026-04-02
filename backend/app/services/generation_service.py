@@ -152,50 +152,67 @@ class GenerationService:
             storage_service=self._storage_service,
         )
 
-        # ── Persist tailored document ──────────────────────────────────────
-        # Strip null bytes (\u0000) which PostgreSQL rejects in text/JSONB fields.
-        resume_text = result.resume.replace("\x00", "") if result.resume else None
-        cover_letter_text = result.cover_letter.replace("\x00", "") if result.cover_letter else None
+        try:
+            # ── Persist tailored document ──────────────────────────────────
+            # Strip null bytes (\u0000) which PostgreSQL rejects in text/JSONB fields.
+            resume_text = result.resume.replace("\x00", "") if result.resume else None
+            cover_letter_text = result.cover_letter.replace("\x00", "") if result.cover_letter else None
 
-        template_original_filename = (resume.resume_jsonb or {}).get("original_filename", "")
-        tailored_doc = self._doc_repo.create(
-            user_id=user_id,
-            generation_run_id=run.id,
-            company_name=meta.get("company", ""),
-            role_title=meta.get("job_title", ""),
-            resume_jsonb={
-                "text": resume_text,
-                "template_original_filename": template_original_filename,
-                "diff": (debug_meta.get("diff") or {}).get("resume") or [],
-            } if resume_text else None,
-            cover_letter_jsonb={"text": cover_letter_text} if cover_letter_text else None,
-        )
+            template_original_filename = (resume.resume_jsonb or {}).get("original_filename", "")
+            tailored_doc = self._doc_repo.create(
+                user_id=user_id,
+                generation_run_id=run.id,
+                company_name=meta.get("company", ""),
+                role_title=meta.get("job_title", ""),
+                resume_jsonb={
+                    "text": resume_text,
+                    "template_original_filename": template_original_filename,
+                    "diff": (debug_meta.get("diff") or {}).get("resume") or [],
+                } if resume_text else None,
+                cover_letter_jsonb={"text": cover_letter_text} if cover_letter_text else None,
+            )
 
-        # ── Render and upload artifacts ────────────────────────────────────
-        self._render_and_upload(
-            user_id=user_id,
-            run_id=str(run.id),
-            tailored_doc=tailored_doc,
-            resume=resume,
-            result=result,
-        )
+            # ── Render and upload artifacts ────────────────────────────────
+            self._render_and_upload(
+                user_id=user_id,
+                run_id=str(run.id),
+                tailored_doc=tailored_doc,
+                resume=resume,
+                result=result,
+            )
 
-        # ── Finalize run record ────────────────────────────────────────────
-        self._run_repo.update(
-            run,
-            status="succeeded",
-            token_input=token_input,
-            token_output=token_output,
-            cost_estimate=cost,
-            completed_at=datetime.now(tz=timezone.utc),
-        )
-        logger.info(
-            "Generation run finished run_id=%s status=succeeded user_id=%s jd_id=%s "
-            "resume_id=%s company=%s title=%s tokens_in=%s tokens_out=%s",
-            run.id, user_id, jd.id, resume.id,
-            meta.get("company", ""), meta.get("job_title", ""),
-            token_input, token_output,
-        )
+            # ── Finalize run record ────────────────────────────────────────
+            self._run_repo.update(
+                run,
+                status="succeeded",
+                token_input=token_input,
+                token_output=token_output,
+                cost_estimate=cost,
+                completed_at=datetime.now(tz=timezone.utc),
+            )
+            logger.info(
+                "Generation run finished run_id=%s status=succeeded user_id=%s jd_id=%s "
+                "resume_id=%s company=%s title=%s tokens_in=%s tokens_out=%s",
+                run.id, user_id, jd.id, resume.id,
+                meta.get("company", ""), meta.get("job_title", ""),
+                token_input, token_output,
+            )
+        except Exception as exc:
+            logger.error(
+                "Generation run finished run_id=%s status=failed (post-pipeline) user_id=%s "
+                "jd_id=%s resume_id=%s company=%s title=%s error=%s",
+                run.id, user_id, jd.id, resume.id,
+                meta.get("company", ""), meta.get("job_title", ""), exc,
+                exc_info=True,
+            )
+            with contextlib.suppress(Exception):
+                self._run_repo.update(
+                    run,
+                    status="failed",
+                    error_message=str(exc)[:2000],
+                    completed_at=datetime.now(tz=timezone.utc),
+                )
+            raise
 
         return GenerationResponse(
             run_id=run.id,
