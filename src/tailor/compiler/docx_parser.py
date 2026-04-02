@@ -47,12 +47,25 @@ _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
     "educational background", "degrees",
 })
+_CERTIFICATIONS_NAMES: frozenset[str] = frozenset({
+    "certifications", "certification", "licenses", "license",
+    "certifications and training", "training and certifications",
+    "training", "courses", "professional development",
+})
+_LANGUAGES_NAMES: frozenset[str] = frozenset({
+    "languages", "language skills",
+})
+_WEBSITES_NAMES: frozenset[str] = frozenset({
+    "websites", "profiles", "social profiles", "links",
+    "portfolio", "web profiles", "online profiles",
+})
 
 _ALL_HEADING_NAMES: frozenset[str] = (
     _EXPERIENCE_NAMES | _SUMMARY_NAMES | _SKILLS_NAMES | _EDUCATION_NAMES
+    | _CERTIFICATIONS_NAMES | _LANGUAGES_NAMES | _WEBSITES_NAMES
     | frozenset({
-        "projects", "certifications", "certification", "publications",
-        "awards", "honors", "languages", "references", "activities",
+        "projects", "publications",
+        "awards", "honors", "references", "activities",
         "volunteer", "volunteering", "leadership", "interests",
         "additional information",
     })
@@ -73,6 +86,15 @@ _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
 
 def _classify_section(heading_text: str) -> str:
+    """Classify a section heading into a semantic type.
+
+    Returns one of: experience | summary | skills | education |
+    certifications | languages | websites | other.
+
+    Locked types (certifications, languages, websites) map to those specific
+    return values so apply_tailored can enforce write-protection without
+    requiring caller-side heading-name checks.
+    """
     t = heading_text.strip().lower()
     if t in _EXPERIENCE_NAMES:
         return "experience"
@@ -82,6 +104,12 @@ def _classify_section(heading_text: str) -> str:
         return "skills"
     if t in _EDUCATION_NAMES:
         return "education"
+    if t in _CERTIFICATIONS_NAMES:
+        return "certifications"
+    if t in _LANGUAGES_NAMES:
+        return "languages"
+    if t in _WEBSITES_NAMES:
+        return "websites"
     # D: skills-like keyword detection for noncanonical headings.
     # Split on whitespace and common delimiters so compound headings like
     # "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS" are

@@ -424,13 +424,17 @@ class TestUpdater:
         for role in exp.roles:
             assert role.header.style.xml_proto is not None
 
-    def test_unmatched_llm_section_raises(self):
-        """An LLM section with an unmatchable title raises ValueError."""
+    def test_unmatched_llm_section_returns_original(self):
+        """Ambiguous section mapping must return the original document verbatim (spec §9).
+
+        Previously raised ValueError; now returns original to prevent pipeline crashes.
+        """
         orig = parse_docx(str(RESUME_TEMPLATE))
         from tailor.compiler.text_parser import LlmSection
         bogus_sections = [LlmSection(heading="ZZZ Unknown Section XYZ", semantic_type="other")]
-        with pytest.raises(ValueError):
-            apply_tailored(orig, bogus_sections)
+        result = apply_tailored(orig, bogus_sections)
+        # Must return original sections unchanged
+        assert [s.title for s in result.sections] == [s.title for s in orig.sections]
 
     def test_skills_content_updated(self):
         orig, llm = self._parsed_and_llm(_RESUME_STANDARD_ORDER)
@@ -566,10 +570,10 @@ class TestFormattingPreservation:
     # Education
     ("Education",                     "education"),
     ("Academic Background",           "education"),
-    # Non-content sections → other
-    ("LANGUAGES",                     "other"),
-    ("Certifications",                "other"),
-    ("CERTIFICATIONS AND TRAINING",   "other"),
+    # Locked sections → specific types (not skills, not other)
+    ("LANGUAGES",                     "languages"),
+    ("Certifications",                "certifications"),
+    ("CERTIFICATIONS AND TRAINING",   "certifications"),
 ])
 def test_classify_section_heading_normalization(heading, expected):
     assert _classify_section(heading) == expected, (
@@ -1289,10 +1293,10 @@ class TestPostProcessingImprovements:
         assert _classify_section(
             "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS"
         ) == "skills"
-        # Must not false-positive on unrelated headings
+        # Locked headings must NOT classify as skills
         assert _classify_section("References") == "other"
-        assert _classify_section("Certifications") == "other"
-        assert _classify_section("Languages") == "other"
+        assert _classify_section("Certifications") == "certifications"
+        assert _classify_section("Languages") == "languages"
 
     # ── Test 6: D — Skills content routed to skills-like section ────────
     def test_skills_routed_to_skills_like_section(self, tmp_path):
@@ -1339,3 +1343,224 @@ class TestPostProcessingImprovements:
         )
         if sum_idx is not None and exp_idx is not None:
             assert sum_idx < exp_idx, "Summary must precede Experience on explicit-summary template"
+
+
+# ---------------------------------------------------------------------------
+# Tests for spec §1–§9 edit-scope and locking requirements
+# ---------------------------------------------------------------------------
+
+
+def _make_locked_template(tmp_path: Path) -> Path:
+    """Template with Experience, Skills, Education, Certifications, Languages."""
+    doc = Document()
+    doc.add_paragraph("Experience", style="Heading 1")
+    doc.add_paragraph("Engineer | Acme Corp")
+    doc.add_paragraph("Jan 2022 – Present")
+    doc.add_paragraph("- Original bullet one.")
+    doc.add_paragraph("Technical Skills", style="Heading 1")
+    doc.add_paragraph("Java, SQL")
+    doc.add_paragraph("Education", style="Heading 1")
+    doc.add_paragraph("B.Sc Computer Science, State University, 2015")
+    doc.add_paragraph("Certifications", style="Heading 1")
+    doc.add_paragraph("AWS Certified Solutions Architect")
+    doc.add_paragraph("Languages", style="Heading 1")
+    doc.add_paragraph("English (native), French (B2)")
+    path = tmp_path / "locked_tpl.docx"
+    doc.save(str(path))
+    return path
+
+
+class TestEditScopeAndLocking:
+    """Spec §1–§3, §5–§6, §9: only summary/experience/skills editable; rest locked."""
+
+    # ── §2 — Section classification ──────────────────────────────────────
+    def test_certifications_classified_correctly(self):
+        from tailor.compiler.docx_parser import _classify_section
+        for name in ["certifications", "Certifications", "Certification", "Training",
+                     "Certifications and Training", "Licenses"]:
+            assert _classify_section(name) == "certifications", (
+                f"_classify_section({name!r}) should return 'certifications'"
+            )
+
+    def test_languages_classified_correctly(self):
+        from tailor.compiler.docx_parser import _classify_section
+        for name in ["languages", "Languages", "Language Skills"]:
+            assert _classify_section(name) == "languages", (
+                f"_classify_section({name!r}) should return 'languages'"
+            )
+
+    def test_websites_classified_correctly(self):
+        from tailor.compiler.docx_parser import _classify_section
+        for name in ["websites", "Websites", "Profiles", "Portfolio", "Links"]:
+            assert _classify_section(name) == "websites", (
+                f"_classify_section({name!r}) should return 'websites'"
+            )
+
+    def test_editable_types_not_locked(self):
+        from tailor.compiler.docx_parser import _classify_section
+        assert _classify_section("Professional Summary") == "summary"
+        assert _classify_section("Experience") == "experience"
+        assert _classify_section("Technical Skills") == "skills"
+
+    # ── §3 — Certifications locked ────────────────────────────────────────
+    def test_certifications_section_preserved(self, tmp_path):
+        """LLM-provided certifications content must be ignored; template preserved."""
+        tpl = _make_locked_template(tmp_path)
+        llm = (
+            "Experience\nEngineer | Acme Corp\nJan 2022 – Present\n- New bullet.\n\n"
+            "Technical Skills\nPython, Rust\n\n"
+            "Education\nFake School, 2099\n\n"
+            "Certifications\nFake Cert That Should Not Appear\n\n"
+            "Languages\nKlingon (native)\n"
+        )
+        text = _roundtrip(tpl, llm, tmp_path)
+        assert "AWS Certified Solutions Architect" in text, (
+            "Original certifications content must be preserved"
+        )
+        assert "Fake Cert That Should Not Appear" not in text, (
+            "LLM certifications content must not appear"
+        )
+
+    # ── §3 — Languages locked ─────────────────────────────────────────────
+    def test_languages_section_preserved(self, tmp_path):
+        """LLM-provided languages content must be ignored; template preserved."""
+        tpl = _make_locked_template(tmp_path)
+        llm = (
+            "Experience\nEngineer | Acme Corp\nJan 2022 – Present\n- New bullet.\n\n"
+            "Technical Skills\nPython, Rust\n\n"
+            "Education\nFake School, 2099\n\n"
+            "Certifications\nFake Cert\n\n"
+            "Languages\nKlingon (native)\n"
+        )
+        text = _roundtrip(tpl, llm, tmp_path)
+        assert "English (native)" in text, "Original languages content must be preserved"
+        assert "Klingon" not in text, "LLM languages content must not appear"
+
+    # ── §1 — Experience bullets editable, header/meta preserved ──────────
+    def test_experience_bullets_replaced_header_preserved(self, tmp_path):
+        """Bullet points must be updated; company name and dates must be preserved."""
+        tpl = _make_locked_template(tmp_path)
+        llm = (
+            "Experience\nEngineer | Acme Corp\nJan 2022 – Present\n"
+            "- New tailored bullet.\n\n"
+            "Technical Skills\nPython, Rust\n\n"
+            "Education\nFake School, 2099\n\n"
+            "Certifications\nFake Cert\n\n"
+            "Languages\nKlingon\n"
+        )
+        text = _roundtrip(tpl, llm, tmp_path)
+        assert "Acme Corp" in text, "Company name must be preserved"
+        assert "New tailored bullet" in text, "LLM bullets must appear"
+        assert "Original bullet one" not in text, "Old bullets must be replaced"
+
+    # ── §5 — No new experience sections ──────────────────────────────────
+    def test_extra_experience_section_discarded(self, tmp_path):
+        """Duplicate LLM experience sections ('Work History') must be discarded.
+
+        The LLM outputs TWO experience-type sections but the template only has one.
+        The second must be silently discarded rather than appended to the output.
+        """
+        tpl = _make_locked_template(tmp_path)
+        # "Work History" is a known experience-type heading (in _EXPERIENCE_NAMES),
+        # so it parses as a second experience section rather than being absorbed
+        # into the first as a role.
+        llm = (
+            "Experience\nEngineer | Acme Corp\nJan 2022 - Present\n- Tailored bullet.\n\n"
+            "Work History\nContractor | SomeCo\n2019 - 2022\n"
+            "- This should be discarded.\n\n"
+            "Technical Skills\nPython, Rust\n\n"
+            "Education\nB.Sc Computer Science, State University, 2015\n\n"
+            "Certifications\nAWS Certified Solutions Architect\n\n"
+            "Languages\nEnglish (native), French (B2)\n"
+        )
+        text = _roundtrip(tpl, llm, tmp_path)
+        assert "This should be discarded" not in text, (
+            "Extra experience section must not be inserted (spec §5)"
+        )
+        assert "SomeCo" not in text, "Extra experience company must not appear"
+
+    # ── §6 — Skills sanitization ──────────────────────────────────────────
+    def test_skills_current_date_removed(self, tmp_path):
+        """CURRENT_DATE in skills must be filtered out before rendering."""
+        from tailor.compiler.layout import _sanitize_skills_body
+        lines = [
+            "Python, Java",
+            "CURRENT_DATE",
+            "Go, Rust",
+        ]
+        clean = _sanitize_skills_body(lines)
+        assert "CURRENT_DATE" not in "\n".join(clean)
+        assert "Python, Java" in "\n".join(clean)
+        assert "Go, Rust" in "\n".join(clean)
+
+    def test_skills_generated_on_removed(self, tmp_path):
+        """'Generated on' line in skills must be filtered out."""
+        from tailor.compiler.layout import _sanitize_skills_body
+        lines = ["Python, Java", "Generated on: 2025-01-01", "Docker"]
+        clean = _sanitize_skills_body(lines)
+        texts = "\n".join(clean)
+        assert "Generated on" not in texts
+        assert "Python, Java" in texts
+
+    def test_skills_additional_line_removed(self, tmp_path):
+        """Lines starting with 'Additional' must be filtered from skills."""
+        from tailor.compiler.layout import _sanitize_skills_body
+        lines = ["Python, Java", "Additional: Communication, Leadership", "Docker"]
+        clean = _sanitize_skills_body(lines)
+        texts = "\n".join(clean)
+        assert "Additional" not in texts
+        assert "Python, Java" in texts
+
+    def test_skills_full_sentence_removed(self, tmp_path):
+        """Full sentences (8+ words ending in '.') must be removed from skills."""
+        from tailor.compiler.layout import _sanitize_skills_body
+        lines = [
+            "Python, Java, Scala",
+            "I have extensive experience with distributed systems and cloud platforms.",
+            "Docker, Kubernetes",
+        ]
+        clean = _sanitize_skills_body(lines)
+        texts = "\n".join(clean)
+        assert "I have extensive experience" not in texts
+        assert "Python, Java, Scala" in texts
+        assert "Docker, Kubernetes" in texts
+
+    def test_skills_concise_lines_kept(self, tmp_path):
+        """Concise skill tokens must not be filtered."""
+        from tailor.compiler.layout import _sanitize_skills_body
+        lines = [
+            "Python, Java, Go, Rust, TypeScript",
+            "AWS (EC2, S3, Lambda), Docker, Kubernetes",
+            "PostgreSQL, Redis, Kafka",
+        ]
+        clean = _sanitize_skills_body(lines)
+        assert clean == lines  # nothing filtered
+
+    # ── §9 — Soft failure mode ────────────────────────────────────────────
+    def test_ambiguous_mapping_returns_template_verbatim(self):
+        """When section mapping is ambiguous, apply_tailored must return original."""
+        from tailor.compiler.updater import apply_tailored
+        from tailor.compiler.text_parser import LlmSection
+
+        # Build a minimal original document
+        doc = Document()
+        doc.add_paragraph("Experience", style="Heading 1")
+        doc.add_paragraph("Engineer | Corp")
+        doc.add_paragraph("Jan 2022 – Present")
+        doc.add_paragraph("- Bullet.")
+        buf = io.BytesIO()
+        doc.save(buf)
+        original = parse_docx(buf)
+
+        # LLM simultaneously drops Experience (real section) and invents "Invented Section"
+        llm_sections = [
+            LlmSection(heading="Invented Section", semantic_type="other", body_lines=["line"]),
+        ]
+        result = apply_tailored(original, llm_sections)
+        # Must return original verbatim — original Experience section preserved
+        orig_headings = [s.title for s in original.sections]
+        result_headings = [s.title for s in result.sections]
+        assert result_headings == orig_headings, (
+            f"Soft failure must return template verbatim; "
+            f"original={orig_headings}, result={result_headings}"
+        )

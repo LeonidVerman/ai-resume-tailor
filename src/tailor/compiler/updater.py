@@ -11,6 +11,8 @@ Hard-fail rules (raise ValueError)
 - An LLM section cannot be matched to any original section AND some original
   sections are also unmatched (the LLM simultaneously dropped and invented
   sections — almost certainly a structural error).
+  apply_tailored catches this and returns the original document verbatim
+  (spec §9 failure mode).
 
 Soft handling for extra LLM sections
 --------------------------------------
@@ -18,10 +20,18 @@ If the LLM outputs extra sections not present in the original, but ALL original
 sections are matched, the extras are inserted into the output at the position
 they appear in the LLM output.  Heading style is cloned from the nearest
 existing section heading; body paragraph style is cloned from the nearest
-existing body paragraph.
+existing body paragraph.  Extra experience sections are never created (spec §5).
+
+Locked sections
+---------------
+Sections with semantic_type in _LOCKED_SEMANTIC_TYPES are never modified
+regardless of LLM output (spec §3).  Only summary, experience (bullets), and
+skills are editable (spec §1).
 """
 from __future__ import annotations
 
+import logging
+import re
 from dataclasses import dataclass, field
 
 from tailor.compiler.models import (
@@ -35,10 +45,15 @@ from tailor.compiler.models import (
 from tailor.compiler.text_parser import LlmRole, LlmSection
 
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+_log = logging.getLogger(__name__)
 
-# C: Freeze Education — set True to preserve source Education verbatim and
-# ignore LLM-generated Education content during DOCX post-processing.
-# To re-enable LLM Education rewrites: set this to False.
+# Semantic types that are NEVER modified regardless of LLM output (spec §3).
+# Only "summary", "experience", and "skills" are editable (spec §1).
+_LOCKED_SEMANTIC_TYPES: frozenset[str] = frozenset({
+    "education", "certifications", "languages", "websites",
+})
+
+# C: Backward-compat alias — True because education is in _LOCKED_SEMANTIC_TYPES.
 FREEZE_EDUCATION: bool = True
 
 
@@ -100,13 +115,16 @@ def _match_sections(
     unmatched_llm = [li for li in range(len(llm)) if li not in used_llm]
 
     if unmatched_llm:
-        # 'other'-type originals that the LLM omits (e.g. the name/contact header
-        # block "Leonid Verman") are kept verbatim and don't count as "dropped".
-        # Only real content sections (summary, experience, skills, education) must
-        # be present for all_orig_matched to be True.
+        # 'other'-type and locked-type originals that the LLM omits are kept
+        # verbatim and don't count as "dropped".  Only the editable content
+        # sections (summary, experience, skills) plus education must be present
+        # for all_orig_matched to be True.  Locked types (certifications,
+        # languages, websites) are treated like 'other' here: the LLM is never
+        # expected to reproduce them.
+        _verbatim_only = frozenset({"other"}) | _LOCKED_SEMANTIC_TYPES
         unmatched_content_orig = [
             oi for oi in range(len(orig))
-            if oi not in used_orig and orig[oi].semantic_type != "other"
+            if oi not in used_orig and orig[oi].semantic_type not in _verbatim_only
         ]
         all_orig_matched = len(unmatched_content_orig) == 0
         if not all_orig_matched:
@@ -231,6 +249,43 @@ def _is_decorative_para(pm: ParaModel) -> bool:
             if fname:
                 fonts.add(fname)
     return len(fonts) > 1
+
+
+_SKILLS_FILTER_RE = re.compile(
+    r"CURRENT_DATE|Generated\s+on|__TEMPLATE__",
+    re.IGNORECASE,
+)
+_ADDITIONAL_RE = re.compile(r"^additional\b", re.IGNORECASE)
+
+
+def _sanitize_skills_lines(lines: list[str]) -> list[str]:
+    """Remove lines that must not appear in a rendered Skills section (spec §6).
+
+    Removes:
+    - Lines containing internal markers: CURRENT_DATE, "Generated on", etc.
+    - Lines starting with "Additional" (LLM sometimes emits "Additional: …").
+    - Full sentences: lines with 8+ whitespace-separated tokens ending in "."
+      (indicates the LLM accidentally wrote prose instead of skill tokens).
+    """
+    clean: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            clean.append(line)
+            continue
+        if _SKILLS_FILTER_RE.search(stripped):
+            _log.debug("skills sanitize: dropping marker line %r", stripped[:80])
+            continue
+        if _ADDITIONAL_RE.match(stripped):
+            _log.debug("skills sanitize: dropping 'Additional' line %r", stripped[:80])
+            continue
+        # Full-sentence detection: 8+ words AND ends with a sentence-final punct.
+        tokens = stripped.split()
+        if len(tokens) >= 8 and stripped[-1] in ".!?":
+            _log.debug("skills sanitize: dropping full-sentence line %r", stripped[:80])
+            continue
+        clean.append(line)
+    return clean
 
 
 def _update_body_section(orig: ResumeSection, llm: LlmSection) -> ResumeSection:
@@ -392,6 +447,23 @@ def _make_extra_section(
     )
 
 
+# Words that indicate a section is experience-related even when the section
+# heading wasn't matched to _EXPERIENCE_NAMES (e.g. "Additional Experience",
+# "Prior Employment").  Used to prevent spec §5 violations where the LLM
+# invents a second experience block with a slightly different heading.
+_EXPERIENCE_HEADING_WORDS: frozenset[str] = frozenset({
+    "experience", "employment", "work", "career",
+})
+
+
+def _is_experience_like(llm_s: "LlmSection") -> bool:
+    """Return True when llm_s looks like a duplicate experience section (spec §5)."""
+    if llm_s.semantic_type == "experience":
+        return True
+    words = set(llm_s.heading.lower().split())
+    return bool(words & _EXPERIENCE_HEADING_WORDS)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -414,7 +486,33 @@ def apply_tailored(
     ValueError
         If sections cannot be matched (see module docstring).
     """
-    match = _match_sections(original.sections, llm_sections)
+    try:
+        match = _match_sections(original.sections, llm_sections)
+    except ValueError as exc:
+        # Spec §9: ambiguous section mapping → do NOT modify → return template verbatim.
+        _log.warning("Section mapping failed — returning template verbatim: %s", exc)
+        return original
+
+    def _apply_section(orig_section: ResumeSection, llm_section: LlmSection) -> ResumeSection:
+        """Update orig_section with llm_section content, respecting lock rules."""
+        if orig_section.semantic_type in _LOCKED_SEMANTIC_TYPES:
+            # Spec §3: locked section — preserve source verbatim.
+            return orig_section
+        if orig_section.semantic_type == "experience":
+            if orig_section.roles or llm_section.roles:
+                return _update_experience_section(orig_section, llm_section)
+            # No roles on either side — treat as body section to avoid content loss
+            return _update_body_section(orig_section, llm_section)
+        if orig_section.semantic_type == "skills":
+            # Spec §6: sanitize skills lines before inserting.
+            sanitized = LlmSection(
+                heading=llm_section.heading,
+                semantic_type=llm_section.semantic_type,
+                body_lines=_sanitize_skills_lines(llm_section.body_lines),
+                roles=llm_section.roles,
+            )
+            return _update_body_section(orig_section, sanitized)
+        return _update_body_section(orig_section, llm_section)
 
     if not match.extras:
         # ---- Fast path: no extras, keep original section order ----
@@ -422,17 +520,8 @@ def apply_tailored(
         for orig_section, llm_section in match.pairs:
             if llm_section is None:
                 new_sections.append(orig_section)
-            elif FREEZE_EDUCATION and orig_section.semantic_type == "education":
-                # C: Education freeze — preserve source Education verbatim.
-                new_sections.append(orig_section)
-            elif orig_section.semantic_type == "experience":
-                if orig_section.roles or llm_section.roles:
-                    new_sections.append(_update_experience_section(orig_section, llm_section))
-                else:
-                    # No roles on either side — treat as body section to avoid content loss
-                    new_sections.append(_update_body_section(orig_section, llm_section))
             else:
-                new_sections.append(_update_body_section(orig_section, llm_section))
+                new_sections.append(_apply_section(orig_section, llm_section))
 
     else:
         # ---- Extras path: follow LLM output order, splicing in extras ----
@@ -453,34 +542,25 @@ def apply_tailored(
             if llm_section is None:
                 # 'other'-type section not output by LLM — keep verbatim
                 verbatim_sections.append(orig_section)
-            elif FREEZE_EDUCATION and orig_section.semantic_type == "education":
-                # C: Education freeze in extras path — keep original content but
-                # register under the LLM heading key so it is placed at the correct
-                # LLM output position (not prepended to verbatim_sections, which
-                # would cause the LLM's education entry to be treated as an "extra"
-                # section and duplicated in the output).
-                heading_to_section[llm_section.heading.lower()] = orig_section
-            elif orig_section.semantic_type == "experience":
-                if orig_section.roles or llm_section.roles:
-                    heading_to_section[llm_section.heading.lower()] = (
-                        _update_experience_section(orig_section, llm_section)
-                    )
-                else:
-                    # No roles on either side — treat as body section to avoid content loss
-                    heading_to_section[llm_section.heading.lower()] = (
-                        _update_body_section(orig_section, llm_section)
-                    )
             else:
+                # Locked sections register under LLM heading key so they are placed
+                # at the correct LLM output position, not prepended as verbatim.
                 heading_to_section[llm_section.heading.lower()] = (
-                    _update_body_section(orig_section, llm_section)
+                    _apply_section(orig_section, llm_section)
                 )
 
-        # Iterate LLM output order; emit matched or extra sections
+        # Iterate LLM output order; emit matched or extra sections.
+        # Spec §5: extra experience sections are never created.
         llm_order_sections: list[ResumeSection] = []
         for llm_s in llm_sections:
             key = llm_s.heading.lower()
             if key in heading_to_section:
                 llm_order_sections.append(heading_to_section[key])
+            elif _is_experience_like(llm_s):
+                # Spec §5: do NOT create new experience sections.
+                _log.debug(
+                    "apply_tailored: discarding extra experience section %r", llm_s.heading
+                )
             else:
                 llm_order_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
 
@@ -533,6 +613,8 @@ def apply_tailored(
         for orig_section, llm_section in match.pairs:
             if llm_section is None:
                 continue
+            if orig_section.semantic_type in _LOCKED_SEMANTIC_TYPES:
+                continue  # Spec §3: locked sections are never updated in-place either.
             orig_section.heading.text = llm_section.heading
 
             if orig_section.semantic_type == "experience":
@@ -545,6 +627,8 @@ def apply_tailored(
             else:
                 non_empty_orig = [p for p in orig_section.body_paras if p.text.strip()]
                 llm_lines = [l for l in llm_section.body_lines if l.strip()]
+                if orig_section.semantic_type == "skills":
+                    llm_lines = _sanitize_skills_lines(llm_lines)
                 for o_p, new_text in zip(non_empty_orig, llm_lines):
                     o_p.text = new_text
 

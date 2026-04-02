@@ -430,6 +430,7 @@ _INTERNAL_MARKERS: list[str] = [
     "{{",
     "}}",
     "__TEMPLATE__",
+    "Generated on",
 ]
 
 # Trigger ratio for proactive compaction (new / orig > threshold → compact)
@@ -757,9 +758,70 @@ def apply_layout_fitting(
 
         compacted.append(llm_s)
 
+    # Step 4.5: Skills content sanitization (spec §6).
+    # Remove internal-marker lines, "Additional" lines, and full-sentence lines
+    # from skills sections.  This complements the updater-level sanitization so
+    # the validation step below sees clean content.
+    compacted = _sanitize_skills_sections(compacted)
+
     # Step 5: Validation
     warnings = validate_llm_sections(compacted, containers)
     for w in warnings:
         log.warning("layout: %s", w)
 
     return compacted
+
+
+# ---------------------------------------------------------------------------
+# Skills content sanitization (spec §6)
+# ---------------------------------------------------------------------------
+
+_SKILLS_MARKER_RE = re.compile(
+    r"CURRENT_DATE|Generated\s+on|__TEMPLATE__|\{\{|\}\}",
+    re.IGNORECASE,
+)
+_SKILLS_ADDITIONAL_RE = re.compile(r"^additional\b", re.IGNORECASE)
+
+
+def _sanitize_skills_body(body_lines: list[str]) -> list[str]:
+    """Filter out lines that must not appear in a rendered Skills section (spec §6).
+
+    Removes:
+    - Lines containing internal markers (CURRENT_DATE, Generated on, etc.).
+    - Lines starting with "Additional".
+    - Full sentences: 8+ space-separated tokens ending with sentence punctuation.
+    """
+    clean: list[str] = []
+    for line in body_lines:
+        stripped = line.strip()
+        if not stripped:
+            clean.append(line)
+            continue
+        if _SKILLS_MARKER_RE.search(stripped):
+            log.debug("sanitize_skills: dropping marker line %r", stripped[:80])
+            continue
+        if _SKILLS_ADDITIONAL_RE.match(stripped):
+            log.debug("sanitize_skills: dropping 'Additional' line %r", stripped[:80])
+            continue
+        tokens = stripped.split()
+        if len(tokens) >= 8 and stripped[-1] in ".!?":
+            log.debug("sanitize_skills: dropping full-sentence line %r", stripped[:80])
+            continue
+        clean.append(line)
+    return clean
+
+
+def _sanitize_skills_sections(llm_sections: list[LlmSection]) -> list[LlmSection]:
+    """Apply _sanitize_skills_body to every skills section. Returns a new list."""
+    result: list[LlmSection] = []
+    for s in llm_sections:
+        if s.semantic_type == "skills":
+            result.append(LlmSection(
+                heading=s.heading,
+                semantic_type=s.semantic_type,
+                body_lines=_sanitize_skills_body(s.body_lines),
+                roles=s.roles,
+            ))
+        else:
+            result.append(s)
+    return result
