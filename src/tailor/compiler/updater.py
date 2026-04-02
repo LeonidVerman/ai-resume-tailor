@@ -197,16 +197,22 @@ def _update_experience_section(orig: ResumeSection, llm: LlmSection) -> ResumeSe
 
 
 def _is_decorative_para(pm: ParaModel) -> bool:
-    """Return True when *pm* is a decorative divider that should be preserved verbatim.
+    """Return True when *pm* is a decorative ornament/divider that should be preserved verbatim.
 
-    Detection criterion: mixed run fonts (e.g. Segoe UI Symbol + Times New Roman
-    within the same paragraph).  This reliably identifies divider/ornament paragraphs
-    (such as the ◇—————————◇ separator in template 5) without false-positives on
-    normal section sub-headings that may happen to use a large font size.
+    Both conditions must hold:
+    1. No alphanumeric characters in the text — the paragraph is purely ornamental
+       (e.g. the ◇—————————◇ separator in template 5).  Paragraphs with actual
+       content text (role headers, sub-headings) are never decorative even if they
+       use two fonts.
+    2. Mixed run fonts — guards against treating plain dash-separator lines with a
+       single font as decorative.
 
     Such paragraphs must never be used as LLM-text targets because _set_para_text
     would distribute new content across the wrong font runs and produce corrupted output.
     """
+    import re
+    if re.search(r"[A-Za-z0-9]", pm.text):
+        return False  # has readable content → not a decorative divider
     xml = pm.style.xml_proto
     if xml is None:
         return False
