@@ -81,6 +81,14 @@ _SKILLS_LIKE_WORDS: frozenset[str] = frozenset({
     "expertise", "proficiencies", "proficiency",
 })
 
+# E: keyword set for noncanonical websites/portfolio headings.
+# Applied as a word-level fallback so compound headings like
+# "Websites, Portfolios, Profiles" are classified as "websites".
+_WEBSITES_LIKE_WORDS: frozenset[str] = frozenset({
+    "website", "websites", "portfolio", "portfolios",
+    "profile", "profiles", "social", "links", "online",
+})
+
 _HEADING_STYLE_RE = re.compile(r"^heading\s*\d", re.IGNORECASE)
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
@@ -110,11 +118,13 @@ def _classify_section(heading_text: str) -> str:
         return "languages"
     if t in _WEBSITES_NAMES:
         return "websites"
-    # D: skills-like keyword detection for noncanonical headings.
-    # Split on whitespace and common delimiters so compound headings like
-    # "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS" are
-    # matched by individual words ("technologies", "keywords").
+    # D/E: word-level fallback for noncanonical compound headings.
+    # Split on whitespace and common delimiters so headings like
+    # "Websites, Portfolios, Profiles" or "Core Technologies" match.
     words = re.split(r"[\s/&,]+", t)
+    # E: websites check before skills — "profiles" must not fall through to "skills".
+    if any(w in _WEBSITES_LIKE_WORDS for w in words if w):
+        return "websites"
     if any(w in _SKILLS_LIKE_WORDS for w in words if w):
         return "skills"
     return "other"

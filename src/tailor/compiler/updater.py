@@ -447,6 +447,54 @@ def _make_extra_section(
     )
 
 
+# ---------------------------------------------------------------------------
+# Intro-prose paragraph detection (for implicit summary injection)
+# ---------------------------------------------------------------------------
+
+# Minimum character length for a paragraph to qualify as intro prose.
+_INTRO_PROSE_MIN_LEN = 60
+
+
+def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
+    """Find the template paragraph that looks like an intro/summary prose block.
+
+    Used to inject LLM summary text into templates that have no dedicated summary
+    section but do contain a prose-style intro paragraph (e.g. table-sidebar
+    templates where the intro sits inside the skills or 'other' section column).
+
+    Criteria:
+    - Length ≥ _INTRO_PROSE_MIN_LEN characters.
+    - Not a bullet, role_header, or role_meta semantic type.
+    - No pipe separator (|) — role headers are excluded.
+    - No URL (://).
+    - Contains at least one space (not a single-token label).
+    - Low comma density (< 0.10) — distinguishes prose from comma-separated skills.
+    - Not in a locked or experience section (only skills / 'other' searched).
+    """
+    for section in original.sections:
+        if section.semantic_type in _LOCKED_SEMANTIC_TYPES:
+            continue
+        if section.semantic_type == "experience":
+            continue
+        for p in section.body_paras:
+            text = p.text.strip()
+            if len(text) < _INTRO_PROSE_MIN_LEN:
+                continue
+            if p.semantic in ("role_header", "role_meta"):
+                continue
+            if "|" in text or "://" in text:
+                continue
+            if " " not in text:
+                continue
+            if text[0] in ("-", "•", "·", "–", "*"):
+                continue
+            comma_density = text.count(",") / max(1, len(text))
+            if comma_density >= 0.10:
+                continue
+            return p
+    return None
+
+
 # Words that indicate a section is experience-related even when the section
 # heading wasn't matched to _EXPERIENCE_NAMES (e.g. "Additional Experience",
 # "Prior Employment").  Used to prevent spec §5 violations where the LLM
@@ -604,12 +652,32 @@ def apply_tailored(
         original.body_items is not None
         and any(isinstance(i, TableBlock) for i in original.body_items)
     )
-    if has_table_blocks and not match.extras:
+
+    # Injectable extras: LLM summary sections that have no matching template section
+    # but can be placed into an existing intro-prose paragraph in-place.
+    # This handles templates where the intro sits inside an unnamed body paragraph
+    # (e.g. table-sidebar templates) rather than having an explicit summary section.
+    #
+    # A summary extra is only injectable when there is an actual intro-prose paragraph
+    # to receive the text.  When no such target exists, the extras path runs normally
+    # and creates a new structural section (old behaviour, table structure dropped).
+    injectable_extras = [
+        e for e in match.extras
+        if e.semantic_type == "summary" and any(l.strip() for l in e.body_lines)
+    ]
+    intro_para = _find_intro_prose_para(original) if injectable_extras else None
+    # Extras are unhandled (preventing table path) when they are non-summary-type,
+    # or when they are summary-type but no intro-prose target was found.
+    has_unhandled_extras = any(
+        e not in injectable_extras or intro_para is None
+        for e in match.extras
+    ) if match.extras else False
+
+    if has_table_blocks and not has_unhandled_extras:
         # Table in-place update: mutate ParaModel.text on the original objects
         # so _render_table_block picks up the new text from tb.para_models.
-        # Skipped when extras exist because the extras path creates new
-        # ParaModel objects (not the original table's para_models references),
-        # so in-place mutation would have no effect.
+        # When extras are injectable summaries with a target, we also update the
+        # intro-prose paragraph so the template's existing prose gets replaced.
         for orig_section, llm_section in match.pairs:
             if llm_section is None:
                 continue
@@ -632,16 +700,26 @@ def apply_tailored(
                 for o_p, new_text in zip(non_empty_orig, llm_lines):
                     o_p.text = new_text
 
+        # Inject summary text into the intro-prose paragraph.
+        # intro_para is guaranteed non-None here (checked in has_unhandled_extras above).
+        if intro_para is not None:
+            for extra_llm in injectable_extras:
+                summary_text = " ".join(l for l in extra_llm.body_lines if l.strip())
+                intro_para.text = summary_text
+                _log.debug(
+                    "apply_tailored: injected summary into intro-prose para "
+                    "(first 60 chars: %r)", summary_text[:60]
+                )
+
     return ResumeDocument(
         header_paras=original.header_paras,
         sections=new_sections,
         layout=original.layout,
         all_paras=all_paras,
         source_kind=original.source_kind,
-        # Return body_items only when the in-place table update actually ran
-        # (i.e. no extras).  When extras exist the in-place update was skipped,
-        # leaving body_items with stale original text.  Passing None here makes
-        # the renderer fall back to all_paras (correctly rebuilt by the extras
-        # path) instead of rendering the unchanged original table.
-        body_items=original.body_items if (has_table_blocks and not match.extras) else None,
+        # Return body_items only when the in-place table update actually ran.
+        # When unhandled extras exist the in-place update was skipped, leaving
+        # body_items with stale original text — pass None so the renderer falls
+        # back to all_paras (correctly rebuilt by the extras path).
+        body_items=original.body_items if (has_table_blocks and not has_unhandled_extras) else None,
     )

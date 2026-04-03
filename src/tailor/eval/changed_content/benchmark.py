@@ -134,6 +134,34 @@ def _read_docx_text(docx_path: str) -> str:
     return "\n".join(p.text for p in doc.all_paras if p.text.strip())
 
 
+# Semantic types that are never modified by the LLM — their content is always
+# preserved verbatim and should not count as "stale" in duplication analysis.
+_LOCKED_SECTION_TYPES: frozenset[str] = frozenset({
+    "education", "certifications", "languages", "websites",
+})
+
+
+def _read_editable_source_text(docx_path: str) -> str:
+    """Extract plain text from non-locked sections of a DOCX.
+
+    Excludes education, certifications, languages, and websites sections whose
+    content is always preserved verbatim and would otherwise inflate the stale-
+    content ratio in the duplication scorer.
+    """
+    from tailor.compiler.docx_parser import parse_docx
+
+    doc = parse_docx(docx_path)
+    lines: list[str] = []
+    lines.extend(p.text for p in doc.header_paras if p.text.strip())
+    for section in doc.sections:
+        if section.semantic_type in _LOCKED_SECTION_TYPES:
+            continue
+        if section.heading.text.strip():
+            lines.append(section.heading.text)
+        lines.extend(p.text for p in section.body_paras if p.text.strip())
+    return "\n".join(lines)
+
+
 def _convert_docx_to_pdf(src_docx: str, dest_pdf: str, lo_method: str) -> None:
     """Convert *src_docx* to PDF at *dest_pdf*.
 
@@ -229,7 +257,9 @@ def run_case(
         out_extracted = extract(out_pdf)
 
         # 5. Score layout (layout-only metrics; text F1 intentionally excluded)
-        source_text = _read_docx_text(case.source_docx)
+        # Use editable-sections-only text so locked sections (education,
+        # certifications, languages, websites) don't inflate the stale-content ratio.
+        source_text = _read_editable_source_text(case.source_docx)
         layout_score, score_evidence = score_layout(
             src_extracted, out_extracted, source_text, generated_text
         )

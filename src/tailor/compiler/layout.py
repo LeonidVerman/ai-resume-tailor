@@ -73,6 +73,11 @@ _LINK_NAMES: frozenset[str] = frozenset({
     "websites", "profiles", "links", "online", "portfolio",
     "social", "github",
 })
+# Word-level fallback for compound headings like "Websites, Portfolios, Profiles".
+_LINK_WORDS: frozenset[str] = frozenset({
+    "website", "websites", "portfolio", "portfolios",
+    "profile", "profiles", "links", "online", "social", "github",
+})
 _AWARD_NAMES: frozenset[str] = frozenset({"awards", "honors", "honours", "achievements"})
 
 
@@ -90,6 +95,10 @@ def _section_subkind(title: str) -> str:
         return "links"
     if t in _AWARD_NAMES:
         return "awards"
+    # Word-level fallback for compound headings like "Websites, Portfolios, Profiles"
+    words = re.split(r"[\s/&,;]+", t)
+    if any(w in _LINK_WORDS for w in words if w):
+        return "links"
     return ""
 
 
@@ -528,13 +537,18 @@ def _has_intro_prose_content(section: "ResumeSection") -> bool:
 
     A section qualifies as an intro-prose candidate when:
     - It has at least 30 characters of non-empty body text.
+    - Content is not exclusively URLs / short tokens (no spaces).
     - Comma density is low (< 0.15 commas per character) — rules out skills lists.
     """
-    non_empty = [p.text for p in section.body_paras if p.text.strip()]
+    non_empty = [p.text.strip() for p in section.body_paras if p.text.strip()]
     if not non_empty:
         return False
     total_text = " ".join(non_empty)
     if len(total_text) < 30:
+        return False
+    # Exclude sections whose every non-empty line is a URL or has no whitespace
+    # (e.g. a Websites section containing only "linkedin.com/in/…" links).
+    if all("://" in p or " " not in p for p in non_empty):
         return False
     comma_density = total_text.count(",") / max(1, len(total_text))
     return comma_density < 0.15
