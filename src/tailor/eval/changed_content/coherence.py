@@ -530,15 +530,17 @@ def score_coherence(
         coherence, feature_scores = score_section_coherence(features, anchor.canonical_type)
 
         # Stale detection: compare with source section by token overlap.
-        # Education is intentionally preserved verbatim (FREEZE_EDUCATION), so
-        # 100% overlap is expected and must not be flagged as stale content.
+        # Locked section types (education, certifications, languages, websites)
+        # are intentionally preserved verbatim, so 100% overlap is expected and
+        # must not be flagged as stale content.
+        _VERBATIM_TYPES = frozenset({"education", "certifications", "languages", "websites"})
         src_lines = src_content.get(anchor.canonical_type, [])
         overlap   = _section_overlap(src_lines, out_lines)
         stale     = (
             overlap >= _STALE_THRESHOLD
             and len(src_lines) >= _MIN_LINES
             and len(out_lines) >= _MIN_LINES
-            and anchor.canonical_type != "education"
+            and anchor.canonical_type not in _VERBATIM_TYPES
         )
 
         notes: list[str] = []
