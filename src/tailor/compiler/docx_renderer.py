@@ -195,12 +195,20 @@ def _set_para_text(p_elem, text: str) -> None:
 # Item renderers
 # ---------------------------------------------------------------------------
 
-def _render_para(pm: ParaModel, body, sectPr) -> None:
-    """Render a single ParaModel and insert it before sectPr (or append)."""
+def _render_para(pm: ParaModel, body, sectPr, preserve_section_break: bool = False) -> None:
+    """Render a single ParaModel and insert it before sectPr (or append).
+
+    When *preserve_section_break* is True, embedded ``w:sectPr`` elements in
+    the paragraph's ``w:pPr`` are kept intact rather than stripped.  Pass
+    True for header-section paragraphs in multi-column templates so the
+    section boundary (e.g. single-column header → two-column body) is
+    preserved in the output.
+    """
     if pm.style.xml_proto is not None:
         clone = deepcopy(pm.style.xml_proto)
         _strip_last_rendered_page_breaks(clone)
-        _strip_section_break(clone)
+        if not preserve_section_break:
+            _strip_section_break(clone)
         _set_para_text(clone, pm.text)
     elif pm.paragraph_profile is not None:
         from tailor.compiler.para_builder import build_para_element
@@ -562,10 +570,24 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     )
     render_items = doc.body_items if has_table_blocks else doc.all_paras
 
+    # For flat (non-table) DOCX documents, preserve embedded w:sectPr elements
+    # in header paragraphs.  In templates that use Word's native multi-column
+    # section formatting, the header-section boundary is encoded as a w:sectPr
+    # inside a paragraph's w:pPr.  Stripping it (the normal behaviour) would
+    # collapse the full-width merged header into the same column grid as the
+    # body, misplacing the name/title block into the narrow left column.
+    # Using object identity (id()) is safe: apply_tailored always forwards the
+    # original header_paras objects unchanged.
+    header_para_ids: frozenset[int] = (
+        frozenset(id(pm) for pm in doc.header_paras)
+        if not has_table_blocks and doc.header_paras
+        else frozenset()
+    )
+
     for item in render_items:
         if isinstance(item, TableBlock):
             _render_table_block(item, doc, body, sectPr)
         else:
-            _render_para(item, body, sectPr)
+            _render_para(item, body, sectPr, preserve_section_break=id(item) in header_para_ids)
 
     d.save(output_path)
