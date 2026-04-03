@@ -544,18 +544,26 @@ def _has_intro_prose_content(section: "ResumeSection") -> bool:
 
     A section qualifies as an intro-prose candidate when:
     - It has at least 30 characters of non-empty body text.
+    - No body paragraph is a date/location line (role_meta) or a bullet.
+      This excludes experience entries whose bullets happen to pass all other
+      heuristics (long sentences, low comma density).
     - Content is not exclusively URLs / short tokens (no spaces).
     - Comma density is low (< 0.15 commas per character) — rules out skills lists.
     """
-    non_empty = [p.text.strip() for p in section.body_paras if p.text.strip()]
+    non_empty = [p for p in section.body_paras if p.text.strip()]
     if not non_empty:
         return False
-    total_text = " ".join(non_empty)
+    # Exclude experience-like sections: date/location lines (role_meta) or bullets
+    # indicate this is a job-history block, not an intro-prose paragraph.
+    if any(p.semantic in ("role_meta", "bullet") for p in non_empty):
+        return False
+    non_empty_texts = [p.text.strip() for p in non_empty]
+    total_text = " ".join(non_empty_texts)
     if len(total_text) < 30:
         return False
     # Exclude sections whose every non-empty line is a URL or has no whitespace
     # (e.g. a Websites section containing only "linkedin.com/in/…" links).
-    if all("://" in p or " " not in p for p in non_empty):
+    if all("://" in p or " " not in p for p in non_empty_texts):
         return False
     comma_density = total_text.count(",") / max(1, len(total_text))
     return comma_density < 0.15

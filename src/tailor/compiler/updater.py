@@ -612,8 +612,26 @@ def apply_tailored(
             else:
                 llm_order_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
 
-        # Verbatim sections (name/contact block etc.) always precede the body.
-        new_sections = verbatim_sections + llm_order_sections
+        # When the LLM generates a new Professional Summary that has no match in
+        # the template (summary extra), place it BEFORE the verbatim sections so
+        # it appears at the top of the main content area.  In 2-column layouts this
+        # puts the summary at the top of the wider right column (above experience);
+        # in single-column layouts it precedes the experience entries naturally.
+        # Only applies when the template itself has no summary section — if the
+        # template already had a summary it would have been matched, not an extra.
+        template_has_summary = any(
+            s.semantic_type == "summary" for s in original.sections
+        )
+        if not template_has_summary:
+            summary_extras = [s for s in llm_order_sections if s.semantic_type == "summary"]
+            other_llm = [s for s in llm_order_sections if s.semantic_type != "summary"]
+            if summary_extras:
+                new_sections = summary_extras + verbatim_sections + other_llm
+            else:
+                new_sections = verbatim_sections + llm_order_sections
+        else:
+            # Verbatim sections (name/contact block etc.) always precede the body.
+            new_sections = verbatim_sections + llm_order_sections
 
     # Rebuild flat para list in document order
     all_paras: list[ParaModel] = list(original.header_paras)

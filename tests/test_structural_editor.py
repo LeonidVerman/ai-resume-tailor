@@ -1344,6 +1344,69 @@ class TestPostProcessingImprovements:
         if sum_idx is not None and exp_idx is not None:
             assert sum_idx < exp_idx, "Summary must precede Experience on explicit-summary template"
 
+    # ── Test 9: Experience-as-other sections not overwritten by summary ───
+    def test_experience_other_sections_not_overwritten_by_summary(self, tmp_path):
+        """When template job sections have non-canonical headings (classified 'other'),
+        the LLM-generated summary must NOT overwrite any of them.  Each original
+        experience section must survive verbatim in the output."""
+        doc = Document()
+        # Three experience entries with generic headings (classified 'other')
+        doc.add_paragraph("Software Engineer", style="Heading 1")
+        doc.add_paragraph("Embark")
+        doc.add_paragraph("January 2022 - current / New York, NY")
+        doc.add_paragraph("Architected backend services supporting logistics workflows.")
+        doc.add_paragraph("Software Engineer", style="Heading 1")
+        doc.add_paragraph("MarketSmart")
+        doc.add_paragraph("April 2019 - January 2022 / Washington, DC")
+        doc.add_paragraph("Developed lead-scoring features for a marketing platform.")
+        doc.add_paragraph("Software Engineer Intern", style="Heading 1")
+        doc.add_paragraph("Marketing Science Company")
+        doc.add_paragraph("April 2018 - March 2019 / Pittsburgh, PA")
+        doc.add_paragraph("Built internal dashboards to visualise campaign metrics.")
+        tpl = str(tmp_path / "three_other.docx")
+        doc.save(tpl)
+
+        llm = _LLM_WITH_SUMMARY  # has Professional Summary + Experience + Technical Skills
+        out = str(tmp_path / "out.docx")
+        compile_resume(tpl, llm, out)
+        out_doc = Document(out)
+        all_text = "\n".join(p.text for p in out_doc.paragraphs)
+
+        assert "Embark" in all_text, "Embark section missing — original experience was overwritten"
+        assert "MarketSmart" in all_text, "MarketSmart missing — original experience was overwritten"
+        assert "Marketing Science" in all_text, "Intern section missing"
+        assert "Expert in distributed" in all_text, "LLM-generated summary content missing"
+
+    # ── Test 10: New summary placed before 'other'-type experience sections ─
+    def test_new_summary_before_other_type_experience(self, tmp_path):
+        """When the template has only 'other'-type sections (no recognised headings),
+        a newly generated Professional Summary must appear before the experience entries."""
+        doc = Document()
+        doc.add_paragraph("Software Engineer", style="Heading 1")
+        doc.add_paragraph("Embark")
+        doc.add_paragraph("January 2022 - current / New York, NY")
+        doc.add_paragraph("Built logistics systems.")
+        tpl = str(tmp_path / "one_other.docx")
+        doc.save(tpl)
+
+        llm = _LLM_WITH_SUMMARY
+        out = str(tmp_path / "out.docx")
+        compile_resume(tpl, llm, out)
+        out_doc = Document(out)
+        paras = [p.text.strip() for p in out_doc.paragraphs if p.text.strip()]
+        sum_idx = next(
+            (i for i, p in enumerate(paras) if "Expert in distributed" in p), None
+        )
+        exp_idx = next(
+            (i for i, p in enumerate(paras) if "Embark" in p), None
+        )
+        assert sum_idx is not None, "Summary text not found in output"
+        assert exp_idx is not None, "Experience (Embark) not found in output"
+        assert sum_idx < exp_idx, (
+            "Summary must precede experience entry; "
+            f"summary at {sum_idx}, Embark at {exp_idx}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Tests for spec §1–§9 edit-scope and locking requirements
