@@ -23,6 +23,7 @@ from backend.app.schemas.auth import (
     AuthUserResponse,
     ForgotPasswordRequest,
     LoginRequest,
+    RefreshRequest,
     RegisterRequest,
     ResetPasswordRequest,
 )
@@ -243,6 +244,49 @@ def reset_password(request: ResetPasswordRequest, settings: SettingsDep):
             detail=str(exc) or "Invalid or expired recovery token",
         )
     logger.info("Password reset completed (token accepted)")
+
+
+# ── Refresh ───────────────────────────────────────────────────────────────
+
+@router.post("/refresh", response_model=AuthLoginResponse)
+def refresh(request: RefreshRequest, db: DbDep, settings: SettingsDep):
+    """Exchange a refresh token for a new session."""
+    if settings.auth_mode != "supabase":
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Token refresh is only available when AUTH_MODE=supabase",
+        )
+
+    from backend.app.clients.supabase_client import make_supabase_client_from_settings
+    from backend.app.db.repositories.user_repository import UserRepository
+    from backend.app.services.auth_service import AuthService
+
+    supabase = make_supabase_client_from_settings()
+    try:
+        response = supabase.refresh_session(request.refresh_token)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
+
+    if response.user is None or response.session is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
+
+    auth_service = AuthService(UserRepository(db))
+    user = auth_service.get_or_create_user(
+        email=response.user.email,
+        supabase_user_id=response.user.id,
+    )
+    db.commit()
+
+    return AuthLoginResponse(
+        user=_user_response(user),
+        session=_session_response(response.session),
+    )
 
 
 # ── Status ────────────────────────────────────────────────────────────────

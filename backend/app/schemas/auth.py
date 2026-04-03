@@ -65,3 +65,8 @@ class ResetPasswordRequest(APIModel):
     """Body for POST /auth/reset-password."""
     access_token: str
     new_password: str = Field(min_length=8)
+
+
+class RefreshRequest(APIModel):
+    """Body for POST /auth/refresh."""
+    refresh_token: str

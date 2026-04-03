@@ -6,7 +6,14 @@
 //       Falls back to X-User-Id header when only a dev-bypass UUID is stored.
 // Base URL: NEXT_PUBLIC_API_URL env var (default: http://localhost:8000/api/v1)
 
-import { getStoredToken, getStoredUserId } from "./auth";
+import {
+  clearStoredToken,
+  getStoredRefreshToken,
+  getStoredToken,
+  getStoredUserId,
+  setStoredRefreshToken,
+  setStoredToken,
+} from "./auth";
 import type {
   AdminActionResponse,
   AuthLoginResponse,
@@ -55,16 +62,53 @@ class ApiError extends Error {
   }
 }
 
-async function request<T>(
+let _refreshPromise: Promise<string | null> | null = null;
+
+async function _tryRefreshToken(): Promise<string | null> {
+  // Deduplicate concurrent refresh attempts
+  if (_refreshPromise) return _refreshPromise;
+  _refreshPromise = (async () => {
+    const refreshToken = getStoredRefreshToken();
+    if (!refreshToken) return null;
+    try {
+      const res = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      if (!res.ok) {
+        clearStoredToken();
+        return null;
+      }
+      const data = await res.json();
+      const newAccessToken: string = data.session?.access_token;
+      const newRefreshToken: string = data.session?.refresh_token;
+      if (!newAccessToken) {
+        clearStoredToken();
+        return null;
+      }
+      setStoredToken(newAccessToken);
+      if (newRefreshToken) setStoredRefreshToken(newRefreshToken);
+      return newAccessToken;
+    } catch {
+      clearStoredToken();
+      return null;
+    } finally {
+      _refreshPromise = null;
+    }
+  })();
+  return _refreshPromise;
+}
+
+async function _rawFetch(
   path: string,
-  init: RequestInit = {}
-): Promise<T> {
-  const token = getStoredToken();
-  const userId = getStoredUserId(); // dev-bypass fallback
+  init: RequestInit,
+  token: string | null,
+  userId: string | null
+): Promise<Response> {
   const headers: Record<string, string> = {
     ...(init.headers as Record<string, string>),
   };
-
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   } else if (userId) {
@@ -73,8 +117,25 @@ async function request<T>(
   if (!(init.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
+  return fetch(`${BASE_URL}${path}`, { ...init, headers });
+}
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+async function request<T>(
+  path: string,
+  init: RequestInit = {}
+): Promise<T> {
+  const userId = getStoredUserId(); // dev-bypass fallback
+  let token = getStoredToken();
+
+  let res = await _rawFetch(path, init, token, userId);
+
+  // On 401 with a stored refresh token, attempt one silent refresh + retry
+  if (res.status === 401 && !userId) {
+    const newToken = await _tryRefreshToken();
+    if (newToken) {
+      res = await _rawFetch(path, init, newToken, null);
+    }
+  }
 
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
@@ -105,6 +166,11 @@ export const auth = {
       body: JSON.stringify(body),
     }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
+  refresh: (body: { refresh_token: string }) =>
+    request<AuthLoginResponse>("/auth/refresh", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   me: () => request<AuthMeResponse>("/auth/me"),
   status: () => request<AuthStatusResponse>("/auth/status"),
   forgotPassword: (body: { email: string }) =>

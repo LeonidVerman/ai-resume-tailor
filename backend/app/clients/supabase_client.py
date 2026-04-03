@@ -128,6 +128,10 @@ class SupabaseClientWrapper:
             user_resp.user.id, {"password": new_password}
         )
 
+    def refresh_session(self, refresh_token: str):
+        """Exchange a refresh token for a new session. Returns AuthResponse."""
+        return self._get_client().auth.refresh_session(refresh_token)
+
     def sign_out(self, access_token: str) -> None:
         """Invalidate the given access token on the Supabase side."""
         try:

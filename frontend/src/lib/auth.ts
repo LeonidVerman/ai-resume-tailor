@@ -8,6 +8,7 @@
 // page will use a UUID entry form in that mode (see useAuth.ts).
 
 const TOKEN_KEY = "art_access_token";
+const REFRESH_TOKEN_KEY = "art_refresh_token";
 const DEV_USER_KEY = "art_user_id"; // legacy dev-bypass key
 
 export function getStoredToken(): string | null {
@@ -21,7 +22,17 @@ export function setStoredToken(token: string): void {
 
 export function clearStoredToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(DEV_USER_KEY); // also clear legacy key on logout
+}
+
+export function getStoredRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+export function setStoredRefreshToken(token: string): void {
+  localStorage.setItem(REFRESH_TOKEN_KEY, token);
 }
 
 // Dev-bypass helpers (used when AUTH_MODE=dev_bypass)
