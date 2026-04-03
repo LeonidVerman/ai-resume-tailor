@@ -390,11 +390,18 @@ def redistribute_additional(
 
     insert_after = skills_idx  # cursor for sequential inserts
 
+    # Locked section types are preserved verbatim by apply_tailored and never
+    # accept LLM content.  Routing extracted subgroup lines to a locked container
+    # would silently discard them (e.g. "Languages: Java, Python" routed to the
+    # natural-language "Languages" section which is locked).  Keep them in
+    # Technical Skills instead, exactly like the "no dedicated container" case.
+    _LOCKED_TYPES = frozenset({"education", "certifications", "languages", "websites"})
+
     for subkind, lines in subgroups.items():
         dedicated = _find_container_for_subkind(subkind, containers)
-        if dedicated is None:
-            # No dedicated container — return the content to Technical Skills
-            # as plain lines (label prefix stripped).
+        if dedicated is None or dedicated.semantic_type in _LOCKED_TYPES:
+            # No dedicated container, or the container is locked (verbatim-only).
+            # Return the content to Technical Skills as plain lines.
             cur = result[skills_idx]
             result[skills_idx] = LlmSection(
                 heading=cur.heading,

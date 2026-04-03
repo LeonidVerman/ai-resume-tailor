@@ -391,25 +391,45 @@ class TestRedistributeAdditional:
                 "Certifications line still in Technical Skills after redistribution"
             )
 
-    def test_dedicated_languages_section_injected(self, tmp_path):
+    def test_dedicated_languages_section_locked_stays_in_skills(self, tmp_path):
+        """Languages/Certs containers are locked (verbatim-only).
+        Labeled content from Technical Skills must stay there (label stripped),
+        not be routed to the locked container where it would be discarded.
+        """
         containers = self._containers(tmp_path)
         llm = parse_llm_output(_LLM_WITH_LABELED_ADDITIONAL)
         result = redistribute_additional(llm, containers)
-        lang_sections = [s for s in result if "languages" in s.heading.lower()]
-        assert lang_sections, "Expected a Languages section after redistribution"
-        # Content should contain the extracted values
-        all_text = " ".join(" ".join(s.body_lines) for s in lang_sections)
-        assert "English" in all_text or "French" in all_text
+        # No new Languages LLM section should be injected
+        injected = [s for s in result if s.semantic_type == "languages"]
+        assert not injected, (
+            "No Languages LLM section should be injected when the container is locked"
+        )
+        # Extracted value must survive in Technical Skills (label stripped)
+        skills = next(s for s in result if s.semantic_type == "skills")
+        all_text = " ".join(skills.body_lines)
+        assert "English" in all_text or "French" in all_text, (
+            "Extracted languages value must remain in Technical Skills when container is locked"
+        )
 
-    def test_dedicated_cert_section_injected(self, tmp_path):
+    def test_dedicated_cert_section_locked_stays_in_skills(self, tmp_path):
+        """Certifications container is locked; extracted value must stay in Technical Skills."""
         containers = self._containers(tmp_path)
         llm = parse_llm_output(_LLM_WITH_LABELED_ADDITIONAL)
         result = redistribute_additional(llm, containers)
-        cert_sections = [
+        # No new Certifications LLM section should be injected
+        injected = [
             s for s in result
-            if any(kw in s.heading.lower() for kw in ("certif", "training"))
+            if s.semantic_type == "certifications"
         ]
-        assert cert_sections, "Expected a Certifications section after redistribution"
+        assert not injected, (
+            "No Certifications LLM section should be injected when the container is locked"
+        )
+        # Extracted cert value must survive in Technical Skills (label stripped)
+        skills = next(s for s in result if s.semantic_type == "skills")
+        all_text = " ".join(skills.body_lines)
+        assert "AWS Certified" in all_text, (
+            "Extracted certifications value must remain in Technical Skills when container is locked"
+        )
 
     def test_no_container_for_subkind_falls_back_to_skills(self):
         """When no dedicated container exists, extracted value stays in skills."""
@@ -465,8 +485,12 @@ class TestRedistributeAdditional:
         result_skills_lines = next(s for s in result if s.semantic_type == "skills").body_lines
         assert result_skills_lines == original_skills_lines
 
-    def test_existing_languages_section_in_llm_merged(self, tmp_path):
-        """If LLM already has a Languages section, extracted content merges into it."""
+    def test_languages_label_in_skills_stays_in_skills_when_locked(self, tmp_path):
+        """When the dedicated container is locked, 'Languages: ...' stays in Technical Skills.
+
+        The LLM Languages section (if present in the LLM output) is kept as-is;
+        the labeled value from Technical Skills is NOT merged into it.
+        """
         containers = self._containers(tmp_path)
         llm = [
             LlmSection(
@@ -481,10 +505,14 @@ class TestRedistributeAdditional:
             ),
         ]
         result = redistribute_additional(llm, containers)
+        # Spanish must stay in Technical Skills (label stripped)
+        skills = next(s for s in result if s.semantic_type == "skills")
+        assert "Spanish" in " ".join(skills.body_lines), (
+            "Spanish must remain in Technical Skills when the Languages container is locked"
+        )
+        # The LLM's Languages section must be unchanged
         lang = next(s for s in result if "languages" in s.heading.lower())
-        all_text = " ".join(lang.body_lines)
-        assert "English" in all_text
-        assert "Spanish" in all_text
+        assert "English" in " ".join(lang.body_lines)
 
 
 # ---------------------------------------------------------------------------
