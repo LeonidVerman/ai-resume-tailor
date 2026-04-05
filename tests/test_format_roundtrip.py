@@ -126,6 +126,18 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "are classified as 'other' and excluded from the LLM text, so section "
         "ordering cannot round-trip correctly."
     ),
+    "3-software-engineer-doc-resume-template.docx": (
+        "Non-standard role headings: each job uses a plain job-title heading "
+        "('Software Engineer') without a pipe-separated role|company format.  "
+        "The consolidation merges them into a synthetic experience section but "
+        "the identity LLM pass cannot reconstruct pipe-formatted role headers "
+        "from plain headings, so the roundtrip cannot preserve role structure."
+    ),
+    "22-Software-Engineer-Editable-Resume-Template-Download-in-docx-4.docx": (
+        "Non-standard layout: experience content is embedded inside the Skills "
+        "section body.  Layout fitting trims one skill line, causing a one-para "
+        "count difference in the identity roundtrip."
+    ),
 }
 
 # ---------------------------------------------------------------------------

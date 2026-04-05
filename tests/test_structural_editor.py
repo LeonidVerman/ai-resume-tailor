@@ -1344,13 +1344,13 @@ class TestPostProcessingImprovements:
         if sum_idx is not None and exp_idx is not None:
             assert sum_idx < exp_idx, "Summary must precede Experience on explicit-summary template"
 
-    # ── Test 9: Experience-as-other sections not overwritten by summary ───
+    # ── Test 9: Job-title sections consolidated and updated by LLM experience ─
     def test_experience_other_sections_not_overwritten_by_summary(self, tmp_path):
-        """When template job sections have non-canonical headings (classified 'other'),
-        the LLM-generated summary must NOT overwrite any of them.  Each original
-        experience section must survive verbatim in the output."""
+        """Three 'other' sections with job-title headings are consolidated into a
+        synthetic experience section and matched to the LLM's Experience output.
+        The LLM summary appears in the output and all three jobs are updated."""
         doc = Document()
-        # Three experience entries with generic headings (classified 'other')
+        # Three experience entries with generic job-title headings
         doc.add_paragraph("Software Engineer", style="Heading 1")
         doc.add_paragraph("Embark")
         doc.add_paragraph("January 2022 - current / New York, NY")
@@ -1366,16 +1366,35 @@ class TestPostProcessingImprovements:
         tpl = str(tmp_path / "three_other.docx")
         doc.save(tpl)
 
-        llm = _LLM_WITH_SUMMARY  # has Professional Summary + Experience + Technical Skills
+        # LLM provides a summary + 3 tailored roles matching the template structure
+        llm = """\
+Professional Summary
+Expert in distributed cloud systems with a focus on reliability.
+
+Experience
+Software Engineer | Embark
+January 2022 - current / New York, NY
+- Built cloud-native logistics systems at scale.
+Software Engineer | MarketSmart
+April 2019 - January 2022 / Washington, DC
+- Developed marketing analytics features.
+Software Engineer Intern | Marketing Science Company
+April 2018 - March 2019 / Pittsburgh, PA
+- Visualised campaign performance metrics.
+
+Technical Skills
+Python, Go
+"""
         out = str(tmp_path / "out.docx")
         compile_resume(tpl, llm, out)
         out_doc = Document(out)
         all_text = "\n".join(p.text for p in out_doc.paragraphs)
 
-        assert "Embark" in all_text, "Embark section missing — original experience was overwritten"
-        assert "MarketSmart" in all_text, "MarketSmart missing — original experience was overwritten"
-        assert "Marketing Science" in all_text, "Intern section missing"
-        assert "Expert in distributed" in all_text, "LLM-generated summary content missing"
+        assert "Expert in distributed" in all_text, "LLM summary missing"
+        assert "Embark" in all_text, "First job (Embark) missing from output"
+        assert "MarketSmart" in all_text, "Second job (MarketSmart) missing from output"
+        assert "Marketing Science" in all_text, "Third job (Marketing Science) missing from output"
+        assert "cloud-native logistics" in all_text, "LLM tailored bullet not applied"
 
     # ── Test 10: New summary placed before 'other'-type experience sections ─
     def test_new_summary_before_other_type_experience(self, tmp_path):
