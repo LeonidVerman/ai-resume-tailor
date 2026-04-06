@@ -632,6 +632,43 @@ def _find_header_skills_block(
     return (start, end + 1)
 
 
+def _clear_left_indent(pm: ParaModel) -> ParaModel:
+    """Return a clone of *pm* with left/hanging/firstLine indents removed.
+
+    Skill paragraphs in narrow-column templates often carry large left indents
+    sized for the original short placeholder text (e.g. 'Java SQL').  When LLM
+    skill lines replace those placeholders with longer content the inherited
+    indent confines text to a tiny strip, producing single-character-per-line
+    wrapping.  Clearing the left constraints while keeping the right indent and
+    alignment preserves the intended right-aligned appearance without forcing
+    the text into an impossibly narrow area.
+    """
+    from copy import deepcopy as _deepcopy
+    proto = pm.style.xml_proto
+    if proto is None:
+        return pm
+    new_proto = _deepcopy(proto)
+    pPr = new_proto.find(f"{{{_W}}}pPr")
+    if pPr is not None:
+        ind = pPr.find(f"{{{_W}}}ind")
+        if ind is not None:
+            for attr in (f"{{{_W}}}left", f"{{{_W}}}hanging", f"{{{_W}}}firstLine"):
+                if ind.get(attr) is not None:
+                    del ind.attrib[attr]
+            if not ind.attrib:
+                pPr.remove(ind)
+    from dataclasses import replace as _dc_replace
+    new_style = _dc_replace(
+        pm.style,
+        indent_left=None,
+        hanging=None,
+        xml_proto=new_proto,
+    )
+    from tailor.compiler.models import ParaModel as _PM
+    return _PM(text=pm.text, style=new_style, semantic=pm.semantic,
+               paragraph_profile=pm.paragraph_profile)
+
+
 def _inject_skills_into_header(
     header_paras: list[ParaModel],
     skill_range: tuple[int, int],
@@ -643,6 +680,10 @@ def _inject_skills_into_header(
     Lines beyond the original skill-line count are appended as clones of
     the first original skill paragraph.
     Sanitization (marker / sentence filtering) is applied to the LLM lines.
+
+    Left/hanging/firstLine indents are stripped from every resulting skill
+    paragraph: original placeholders were short tokens tuned to narrow indents,
+    and LLM skill lines are typically much longer.  See _clear_left_indent.
     """
     start, end = skill_range
     orig_skill_paras = [header_paras[i] for i in range(start, end) if header_paras[i].text.strip()]
@@ -653,11 +694,11 @@ def _inject_skills_into_header(
         [line for line in llm_skills.body_lines if line.strip()]
     )
 
-    arch = orig_skill_paras[0]
+    arch = _clear_left_indent(orig_skill_paras[0])
     new_skill_paras: list[ParaModel] = []
     for i, line in enumerate(llm_lines):
         if i < len(orig_skill_paras):
-            new_skill_paras.append(orig_skill_paras[i].with_text(line))
+            new_skill_paras.append(_clear_left_indent(orig_skill_paras[i].with_text(line)))
         else:
             new_skill_paras.append(arch.clone_as(line, "paragraph"))
 
