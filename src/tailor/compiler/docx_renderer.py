@@ -587,11 +587,15 @@ def _render_docx_native_two_col(
     left_col_paras = doc.header_paras[split_after:]
     right_col_paras = doc.all_paras[len(doc.header_paras):]
 
-    # Render full-width header paras; the sectPr-bearing para preserves its
-    # embedded sectPr so the section boundary (full-width → body section) is
-    # kept intact in the output.
+    # Render full-width header paras WITHOUT preserving the embedded sectPr.
+    # In the original template the sectPr boundary separated the full-width
+    # header section from the two-column body section.  Now that the body is
+    # rendered as a table (single-column), the section break is unnecessary
+    # and causes LibreOffice to insert a blank page before the table.
+    # Stripping it collapses the entire document into one section; the body
+    # sectPr (already stripped of w:cols) governs page geometry uniformly.
     for pm in full_width_paras:
-        _render_para(pm, body, sectPr, preserve_section_break=id(pm) in header_para_ids)
+        _render_para(pm, body, sectPr, preserve_section_break=False)
 
     # Build the two-column table.
     tbl = etree.Element(f"{{{_W}}}tbl")
