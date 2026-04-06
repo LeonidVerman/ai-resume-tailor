@@ -523,6 +523,122 @@ def _patch_bullet_numbering(d) -> None:
 
 
 # ---------------------------------------------------------------------------
+# DOCX native two-column rendering
+# ---------------------------------------------------------------------------
+
+def _render_docx_native_two_col(
+    doc: "ResumeDocument",
+    body,
+    sectPr,
+    left_w: int,
+    right_w: int,
+    col_space: int,
+    header_para_ids: frozenset,
+) -> None:
+    """Render a DOCX template whose body uses native w:cols two-column layout.
+
+    Word's sequential column flow (col1→col2→page2-col1→page2-col2) causes
+    sidebar content to spill across columns and main content to jump to the
+    wrong column after a page overflow.  Converting to a table gives each
+    column an independent text stream that stays in its column across pages.
+
+    Layout:
+    - Full-width header section (paragraphs up to and including the embedded
+      sectPr boundary) is rendered normally before the table.
+    - A single-row borderless table holds the two-column body:
+        Left cell  (left_w twips)  : left-column body (contact, edu, skills)
+        Right cell (right_w twips) : section content (summary, experience …)
+
+    col_space is preserved as right padding on the left cell so the visual
+    gap between columns matches the original template.
+    """
+    from lxml import etree
+
+    # Find the embedded-sectPr boundary in header_paras.
+    # Paragraphs before (and including) it are full-width; those after are
+    # the left-column body content.
+    split_after = len(doc.header_paras)  # fallback: all header_paras are left-col
+    for i, pm in enumerate(doc.header_paras):
+        if pm.style.xml_proto is not None:
+            pPr = pm.style.xml_proto.find(f"{{{_W}}}pPr")
+            if pPr is not None and pPr.find(f"{{{_W}}}sectPr") is not None:
+                split_after = i + 1
+                break
+
+    full_width_paras = doc.header_paras[:split_after]
+    left_col_paras = doc.header_paras[split_after:]
+    right_col_paras = doc.all_paras[len(doc.header_paras):]
+
+    # Render full-width header paras; the sectPr-bearing para preserves its
+    # embedded sectPr so the section boundary (full-width → body section) is
+    # kept intact in the output.
+    for pm in full_width_paras:
+        _render_para(pm, body, sectPr, preserve_section_break=id(pm) in header_para_ids)
+
+    # Build the two-column table.
+    tbl = etree.Element(f"{{{_W}}}tbl")
+
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW.set(f"{{{_W}}}w", str(left_w + right_w))
+    tblW.set(f"{{{_W}}}type", "dxa")
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+        brd.set(f"{{{_W}}}val", "none")
+    # Zero default cell margins; left cell gets explicit right padding below.
+    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        m = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+        m.set(f"{{{_W}}}w", "0")
+        m.set(f"{{{_W}}}type", "dxa")
+
+    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+    # Left cell (narrow sidebar)
+    left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
+    left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
+    left_tcW.set(f"{{{_W}}}w", str(left_w))
+    left_tcW.set(f"{{{_W}}}type", "dxa")
+    left_vAlign = etree.SubElement(left_tcPr, f"{{{_W}}}vAlign")
+    left_vAlign.set(f"{{{_W}}}val", "top")
+    # Preserve the original inter-column space as right cell margin so the gap
+    # between sidebar and main column matches the template.
+    if col_space > 0:
+        left_tcMar = etree.SubElement(left_tcPr, f"{{{_W}}}tcMar")
+        mar_right = etree.SubElement(left_tcMar, f"{{{_W}}}right")
+        mar_right.set(f"{{{_W}}}w", str(col_space))
+        mar_right.set(f"{{{_W}}}type", "dxa")
+
+    for pm in left_col_paras:
+        _render_para(pm, left_tc, None)
+    if not left_col_paras:
+        etree.SubElement(left_tc, f"{{{_W}}}p")
+
+    # Right cell (main content)
+    right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
+    right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
+    right_tcW.set(f"{{{_W}}}w", str(right_w))
+    right_tcW.set(f"{{{_W}}}type", "dxa")
+    right_vAlign = etree.SubElement(right_tcPr, f"{{{_W}}}vAlign")
+    right_vAlign.set(f"{{{_W}}}val", "top")
+
+    for pm in right_col_paras:
+        _render_para(pm, right_tc, None)
+    if not right_col_paras:
+        etree.SubElement(right_tc, f"{{{_W}}}p")
+
+    if sectPr is not None:
+        sectPr.addprevious(tbl)
+    else:
+        body.append(tbl)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -598,6 +714,35 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         if not has_table_blocks and doc.header_paras
         else frozenset()
     )
+
+    # DOCX templates with a native two-column body (w:cols num=2): convert the
+    # column layout to a borderless table so that the left (sidebar) and right
+    # (main) columns each form independent text streams that stay in their
+    # column across page breaks.  Word's sequential w:cols flow causes sidebar
+    # content to spill into the right column and main content to jump to the
+    # wrong column after a page overflow — both are fixed by the table approach.
+    if doc.source_kind == "docx" and not has_table_blocks and doc.header_paras:
+        cols_elem = sectPr.find(f"{{{_W}}}cols") if sectPr is not None else None
+        col_elems = cols_elem.findall(f"{{{_W}}}col") if cols_elem is not None else []
+        _is_unequal_two_col = (
+            cols_elem is not None
+            and cols_elem.get(f"{{{_W}}}num") == "2"
+            and len(col_elems) == 2
+            and col_elems[0].get(f"{{{_W}}}w") is not None
+            and col_elems[1].get(f"{{{_W}}}w") is not None
+        )
+        if _is_unequal_two_col:
+            left_w = int(col_elems[0].get(f"{{{_W}}}w", "2848"))
+            right_w = int(col_elems[1].get(f"{{{_W}}}w", "7362"))
+            col_space = int(col_elems[0].get(f"{{{_W}}}space", "0"))
+            # Switch body section to single-column flow; the table provides
+            # the two-column layout instead.
+            sectPr.remove(cols_elem)
+            _render_docx_native_two_col(
+                doc, body, sectPr, left_w, right_w, col_space, header_para_ids
+            )
+            d.save(output_path)
+            return
 
     for item in render_items:
         if isinstance(item, TableBlock):

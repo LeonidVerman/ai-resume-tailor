@@ -640,12 +640,8 @@ def _inject_skills_into_header(
     """Replace skill lines in *header_paras* with LLM skill content.
 
     *skill_range* is (start, end_exclusive) from _find_header_skills_block.
-    LLM lines are capped to the original slot count so that skill content
-    never expands beyond the space the template allocated.  Templates that
-    use header_paras for skills (no dedicated skills section) place those
-    slots in a narrow fixed-width column; injecting more lines than the
-    column was designed to hold causes overflow into the adjacent column,
-    which Word's multi-column layout cannot redirect to the next page.
+    Lines beyond the original skill-line count are appended as clones of
+    the first original skill paragraph.
     Sanitization (marker / sentence filtering) is applied to the LLM lines.
     """
     start, end = skill_range
@@ -657,18 +653,13 @@ def _inject_skills_into_header(
         [line for line in llm_skills.body_lines if line.strip()]
     )
 
-    # Cap to original slot count: do not create extra paragraphs beyond what
-    # the template allocated.  Excess lines are silently dropped — the first
-    # N lines (most important per LLM ordering) fill the available slots.
-    capped_lines = llm_lines[: len(orig_skill_paras)]
-
+    arch = orig_skill_paras[0]
     new_skill_paras: list[ParaModel] = []
-    for orig_para, line in zip(orig_skill_paras, capped_lines):
-        new_skill_paras.append(orig_para.with_text(line))
-
-    # If LLM produced fewer lines than slots, keep remaining original paras.
-    remaining_orig = orig_skill_paras[len(capped_lines):]
-    new_skill_paras.extend(remaining_orig)
+    for i, line in enumerate(llm_lines):
+        if i < len(orig_skill_paras):
+            new_skill_paras.append(orig_skill_paras[i].with_text(line))
+        else:
+            new_skill_paras.append(arch.clone_as(line, "paragraph"))
 
     return list(header_paras[:start]) + new_skill_paras + list(header_paras[end:])
 
