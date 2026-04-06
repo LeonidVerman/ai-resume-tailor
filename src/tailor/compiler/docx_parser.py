@@ -624,10 +624,26 @@ def _make_experience_from_job_sections(job_secs: list[ResumeSection]) -> ResumeS
     roles: list[RoleEntry] = []
     all_body_paras: list[ParaModel] = []
     for sec in job_secs:
-        meta_lines = [p for p in sec.body_paras if p.semantic == "role_meta"]
+        # Identify the company-name paragraph: the first non-empty 'paragraph'
+        # semantic para that appears before any role_meta para.  In templates
+        # where each job is a plain heading + "Company Name" + "Date" + bullets,
+        # the company name is structurally part of the meta (it identifies the
+        # employer) and should be placed before the date in meta_lines so the
+        # rendered order matches the original template (title → company → date).
+        company_para: ParaModel | None = None
+        for p in sec.body_paras:
+            if p.semantic == "role_meta":
+                break
+            if p.semantic == "paragraph" and p.text.strip():
+                company_para = p
+                break
+
+        date_meta = [p for p in sec.body_paras if p.semantic == "role_meta"]
+        meta_lines = ([company_para] if company_para else []) + date_meta
         bullets = [
             p for p in sec.body_paras
             if p.semantic in ("bullet", "paragraph") and p.text.strip()
+            and p is not company_para
         ]
         roles.append(RoleEntry(
             header=sec.heading,

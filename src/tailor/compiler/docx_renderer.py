@@ -35,6 +35,21 @@ def _strip_section_break(p_elem) -> None:
             pPr.remove(sectPr)
 
 
+def _strip_column_break(p_elem) -> None:
+    """Remove w:br type='column' runs from a paragraph.
+
+    Column breaks in the template force content to start at the top of the
+    next column.  After tailoring, column placement is determined by content
+    volume flowing naturally through the w:cols grid — explicit column breaks
+    are not needed and produce spurious layout jumps when section headings
+    are cloned from a paragraph that happened to carry one.
+    """
+    for r_elem in list(p_elem.findall(f"{{{_W}}}r")):
+        for br in list(r_elem.findall(f"{{{_W}}}br")):
+            if br.get(f"{{{_W}}}type") == "column":
+                r_elem.remove(br)
+
+
 def _strip_last_rendered_page_breaks(p_elem) -> None:
     """Remove w:lastRenderedPageBreak elements from a cloned paragraph.
 

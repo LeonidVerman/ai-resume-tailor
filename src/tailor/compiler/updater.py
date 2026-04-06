@@ -46,6 +46,7 @@ from tailor.compiler.text_parser import LlmRole, LlmSection
 
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 _log = logging.getLogger(__name__)
+_YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
 # Semantic types that are NEVER modified regardless of LLM output (spec §3).
 # Only "summary", "experience", and "skills" are editable (spec §1).
@@ -134,7 +135,12 @@ def _match_sections(
                 f"that cannot be matched to any section in the original document."
             )
         # All content originals matched — extras are new sections added by the LLM.
-        extras = [llm[li] for li in unmatched_llm]
+        # Drop extras that belong to locked types (e.g. Education, Certifications):
+        # these are verbatim in the template and LLM output of them should be ignored.
+        extras = [
+            llm[li] for li in unmatched_llm
+            if llm[li].semantic_type not in _LOCKED_SEMANTIC_TYPES
+        ]
     else:
         extras = []
 
@@ -160,8 +166,10 @@ def _match_sections(
 def _update_role(orig: RoleEntry, llm: LlmRole) -> RoleEntry:
     """Produce an updated RoleEntry from original + LLM data."""
 
-    # Header: update text, keep style proto
-    new_header = orig.header.with_text(llm.header)
+    # Header: update text, keep style proto; strip any column break (the role
+    # header may inherit a column break from the section heading para in
+    # consolidated templates — the section heading handles column placement).
+    new_header = _strip_col_break_para(orig.header.with_text(llm.header))
 
     # If the template had a multi-line role header (e.g. "..., St." / "Petersburg"),
     # the LLM input included the continuation line as a separate paragraph, so the
@@ -197,7 +205,28 @@ def _update_role(orig: RoleEntry, llm: LlmRole) -> RoleEntry:
 
 
 def _update_experience_section(orig: ResumeSection, llm: LlmSection) -> ResumeSection:
-    # Match by position; surplus originals are dropped, extra LLM roles clone from last orig.
+    # When the LLM wrote roles in dash format (no "|"), parse_llm_output returns
+    # body_lines instead of roles.  Re-parse and update only the bullets, keeping
+    # the template's role headers and meta verbatim (dates, company, title).
+    if not llm.roles and llm.body_lines and orig.roles:
+        reparsed = _reparse_body_lines_as_roles(llm.body_lines)
+        if reparsed:
+            updated_roles: list[RoleEntry] = []
+            for o_role, r_role in zip(orig.roles, reparsed):
+                updated_roles.append(_update_role_bullets_only(o_role, r_role.bullets))
+            # Template roles with no LLM counterpart are kept verbatim
+            for o_role in orig.roles[len(reparsed):]:
+                updated_roles.append(o_role)
+            return ResumeSection(
+                title=llm.heading,
+                heading=_strip_col_break_para(orig.heading.with_text(llm.heading)),
+                semantic_type=orig.semantic_type,
+                body_paras=orig.body_paras,
+                roles=updated_roles,
+            )
+
+    # Normal path: pipe-separated LLM roles matched by position.
+    # Surplus originals are dropped, extra LLM roles clone from last orig.
     updated_roles = [_update_role(o, l) for o, l in zip(orig.roles, llm.roles)]
 
     if len(llm.roles) > len(orig.roles) and orig.roles:
@@ -207,7 +236,7 @@ def _update_experience_section(orig: ResumeSection, llm: LlmSection) -> ResumeSe
 
     return ResumeSection(
         title=llm.heading,
-        heading=orig.heading.with_text(llm.heading),
+        heading=_strip_col_break_para(orig.heading.with_text(llm.heading)),
         semantic_type=orig.semantic_type,
         body_paras=orig.body_paras,  # kept for flat-list rendering order
         roles=updated_roles,
@@ -279,9 +308,13 @@ def _sanitize_skills_lines(lines: list[str]) -> list[str]:
         if _ADDITIONAL_RE.match(stripped):
             _log.debug("skills sanitize: dropping 'Additional' line %r", stripped[:80])
             continue
-        # Full-sentence detection: 8+ words AND ends with a sentence-final punct.
+        # Full-sentence detection: 6+ words AND ends with a sentence-final punct.
+        # Threshold lowered from 8 to 6 to catch citizenship/personal-statement lines
+        # like "Canadian citizen; eligible to work in Canada." that LLMs sometimes
+        # append after the skills section.  Legitimate skill lines ending in a period
+        # are rare; most skill entries use commas or no terminal punctuation.
         tokens = stripped.split()
-        if len(tokens) >= 8 and stripped[-1] in ".!?":
+        if len(tokens) >= 6 and stripped[-1] in ".!?":
             _log.debug("skills sanitize: dropping full-sentence line %r", stripped[:80])
             continue
         clean.append(line)
@@ -430,8 +463,16 @@ def _make_extra_section(
 
     heading_arch is cloned for the section heading (preserves heading style).
     body_arch is cloned for each body line (preserves body paragraph style).
+
+    Column breaks are stripped from the cloned heading: the heading_arch may
+    have inherited a column break from a template paragraph that controlled
+    two-column layout (e.g. the first role heading in the veeva_03 template).
+    Extra sections should let natural column flow determine their position —
+    keeping the break on an injected section heading (e.g. Professional Summary)
+    causes it to jump to the wrong column when the left-column content overflows
+    due to an expanded skills section.
     """
-    new_heading = heading_arch.clone_as(llm.heading, "section_heading")
+    new_heading = _strip_col_break_para(heading_arch.clone_as(llm.heading, "section_heading"))
 
     body_paras: list[ParaModel] = []
     for line in llm.body_lines:
@@ -445,6 +486,191 @@ def _make_extra_section(
         body_paras=body_paras,
         roles=[],
     )
+
+
+# ---------------------------------------------------------------------------
+# Column-break stripping helper
+# ---------------------------------------------------------------------------
+
+def _strip_col_break_para(pm: ParaModel) -> ParaModel:
+    """Return a clone of *pm* with w:br type='column' removed from xml_proto.
+
+    Only clones when a column break is actually present (cheap no-op otherwise).
+    Used to strip spurious column breaks from Experience section headings, role
+    headers, and extra section headings that inherit their xml_proto from a para
+    that originally had a column break (e.g. the "Software Engineer" Heading 1
+    that started the right column in the veeva_03 template).  Removing the break
+    lets natural two-column flow determine column placement; this avoids the
+    heading jumping to an unexpected column when the opposite column overflows
+    due to an expanded skills section.
+    """
+    if pm.style.xml_proto is None:
+        return pm
+    has_cb = any(
+        br.get(f"{{{_W}}}type") == "column"
+        for br in pm.style.xml_proto.findall(f".//{{{_W}}}br")
+    )
+    if not has_cb:
+        return pm
+    cloned = pm.clone_as(pm.text, pm.semantic)
+    for r_elem in list(cloned.style.xml_proto.findall(f"{{{_W}}}r")):
+        for br in list(r_elem.findall(f"{{{_W}}}br")):
+            if br.get(f"{{{_W}}}type") == "column":
+                r_elem.remove(br)
+    return cloned
+
+
+# ---------------------------------------------------------------------------
+# Experience body_lines re-parser (dash-format role headers)
+# ---------------------------------------------------------------------------
+
+# LLMs sometimes format roles as "Title — Company" or "Title / Leader — Company"
+# (em/en dash) instead of the canonical "Title | Company" pipe.  parse_llm_output
+# treats these as body_lines because _is_role_header requires "|".  This re-parser
+# recovers the role structure so bullets can be matched to template roles.
+_ROLE_BODY_SEP_RE = re.compile(r'\s\u2014\s|\s\u2013\s|\s\u2012\s')  # em/en/figure dash
+
+
+def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
+    """Re-parse experience body_lines into LlmRole objects using dash separators.
+
+    Only returns a non-empty list when at least one role-boundary line is found.
+    Each role boundary is a line containing an em-dash / en-dash separator.
+    """
+    if not body_lines:
+        return []
+
+    # Locate role-boundary lines
+    boundaries: list[int] = [
+        i for i, line in enumerate(body_lines)
+        if _ROLE_BODY_SEP_RE.search(line)
+    ]
+    if not boundaries:
+        return []
+
+    roles: list[LlmRole] = []
+    for idx, boundary_i in enumerate(boundaries):
+        end_i = boundaries[idx + 1] if idx + 1 < len(boundaries) else len(body_lines)
+        header = body_lines[boundary_i]
+        meta: list[str] = []
+        bullets: list[str] = []
+        for line in body_lines[boundary_i + 1: end_i]:
+            s = line.strip()
+            if not s:
+                continue
+            if (
+                _YEAR_RE.search(s)
+                or s.lower() in ("current", "present", "dates not provided",
+                                 "date not provided", "n/a")
+            ):
+                meta.append(s)
+            else:
+                bullets.append(s)
+        roles.append(LlmRole(header=header, meta_lines=meta, bullets=bullets))
+    return roles
+
+
+def _update_role_bullets_only(orig: RoleEntry, llm_bullets: list[str]) -> RoleEntry:
+    """Return a copy of *orig* with bullets replaced by *llm_bullets*.
+
+    The role header and meta_lines are preserved verbatim from the template.
+    Used when the LLM wrote roles in dash format: the header text is unreliable
+    (formatting differs from template) so only the bullet content is used.
+    """
+    arch = orig.bullets[0] if orig.bullets else orig.header
+    new_bullets: list[ParaModel] = []
+    for i, text in enumerate(llm_bullets):
+        if i < len(orig.bullets):
+            new_bullets.append(orig.bullets[i].with_text(text))
+        else:
+            new_bullets.append(arch.clone_as(text, "bullet"))
+    return RoleEntry(
+        # Strip any column break from the role header — the section heading
+        # (or Summary heading) handles right-column placement; a second break
+        # on the first role header would cause a spurious column jump.
+        header=_strip_col_break_para(orig.header),
+        meta_lines=orig.meta_lines,
+        bullets=new_bullets,
+        role_id=orig.role_id,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Header-skills detection and injection
+# ---------------------------------------------------------------------------
+
+def _find_header_skills_block(
+    header_paras: list[ParaModel],
+) -> tuple[int, int] | None:
+    """Return (start, end_exclusive) of the last contiguous non-empty block
+    in *header_paras* as a candidate for skill lines.
+
+    This block is assumed to be the skills section in templates where skills
+    live in the left-column header area (no dedicated section heading).
+    Returns None when header_paras is empty or the last block is the very
+    first block (name/title area — we avoid clobbering the header).
+    """
+    if not header_paras:
+        return None
+
+    # Walk back from the end to find last non-empty para
+    end = len(header_paras) - 1
+    while end >= 0 and not header_paras[end].text.strip():
+        end -= 1
+    if end < 0:
+        return None
+
+    # Walk back further to find the block start (stop at empty separator)
+    start = end
+    while start > 0 and header_paras[start - 1].text.strip():
+        start -= 1
+
+    # Don't treat the very first block (name/title, index 0) as skills
+    if start == 0:
+        return None
+
+    return (start, end + 1)
+
+
+def _inject_skills_into_header(
+    header_paras: list[ParaModel],
+    skill_range: tuple[int, int],
+    llm_skills: "LlmSection",
+) -> list[ParaModel]:
+    """Replace skill lines in *header_paras* with LLM skill content.
+
+    *skill_range* is (start, end_exclusive) from _find_header_skills_block.
+    LLM lines are capped to the original slot count so that skill content
+    never expands beyond the space the template allocated.  Templates that
+    use header_paras for skills (no dedicated skills section) place those
+    slots in a narrow fixed-width column; injecting more lines than the
+    column was designed to hold causes overflow into the adjacent column,
+    which Word's multi-column layout cannot redirect to the next page.
+    Sanitization (marker / sentence filtering) is applied to the LLM lines.
+    """
+    start, end = skill_range
+    orig_skill_paras = [header_paras[i] for i in range(start, end) if header_paras[i].text.strip()]
+    if not orig_skill_paras:
+        return list(header_paras)
+
+    llm_lines = _sanitize_skills_lines(
+        [line for line in llm_skills.body_lines if line.strip()]
+    )
+
+    # Cap to original slot count: do not create extra paragraphs beyond what
+    # the template allocated.  Excess lines are silently dropped — the first
+    # N lines (most important per LLM ordering) fill the available slots.
+    capped_lines = llm_lines[: len(orig_skill_paras)]
+
+    new_skill_paras: list[ParaModel] = []
+    for orig_para, line in zip(orig_skill_paras, capped_lines):
+        new_skill_paras.append(orig_para.with_text(line))
+
+    # If LLM produced fewer lines than slots, keep remaining original paras.
+    remaining_orig = orig_skill_paras[len(capped_lines):]
+    new_skill_paras.extend(remaining_orig)
+
+    return list(header_paras[:start]) + new_skill_paras + list(header_paras[end:])
 
 
 # ---------------------------------------------------------------------------
@@ -562,6 +788,12 @@ def apply_tailored(
             return _update_body_section(orig_section, sanitized)
         return _update_body_section(orig_section, llm_section)
 
+    # injectable_skills_section is set in the extras path when skills live in
+    # header_paras.  Initialised here so the all_paras build (after both paths)
+    # can reference it unconditionally.
+    injectable_skills_section: LlmSection | None = None
+    header_skill_target: tuple[int, int] | None = None
+
     if not match.extras:
         # ---- Fast path: no extras, keep original section order ----
         new_sections: list[ResumeSection] = []
@@ -597,9 +829,22 @@ def apply_tailored(
                     _apply_section(orig_section, llm_section)
                 )
 
+        # Detect whether LLM skills extras should be injected into header_paras
+        # rather than creating a new section.  This applies to templates where the
+        # skills section lives in the left-column header area (no dedicated section
+        # heading) and there is no existing skills section to match against.
+        template_has_skills = any(s.semantic_type == "skills" for s in original.sections)
+        header_skill_target = (
+            _find_header_skills_block(original.header_paras)
+            if not template_has_skills
+            else None
+        )
+
         # Iterate LLM output order; emit matched or extra sections.
         # Spec §5: extra experience sections are never created.
+        # Skills extras that have a header target are injected there instead.
         llm_order_sections: list[ResumeSection] = []
+        injectable_skills_section: "LlmSection | None" = None
         for llm_s in llm_sections:
             key = llm_s.heading.lower()
             if key in heading_to_section:
@@ -608,6 +853,25 @@ def apply_tailored(
                 # Spec §5: do NOT create new experience sections.
                 _log.debug(
                     "apply_tailored: discarding extra experience section %r", llm_s.heading
+                )
+            elif llm_s.semantic_type in _LOCKED_SEMANTIC_TYPES:
+                # Locked type with no template section match → silently drop.
+                # The template's verbatim version (in header_paras or a locked
+                # section) is preserved; the LLM copy is discarded.
+                _log.debug(
+                    "apply_tailored: discarding unmatched locked-type section %r",
+                    llm_s.heading,
+                )
+            elif (
+                llm_s.semantic_type == "skills"
+                and header_skill_target is not None
+                and injectable_skills_section is None  # first skills extra wins
+            ):
+                # Skills live in header_paras — update there, not as a section.
+                injectable_skills_section = llm_s
+                _log.debug(
+                    "apply_tailored: routing skills extra %r to header_paras injection",
+                    llm_s.heading,
                 )
             else:
                 llm_order_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
@@ -633,8 +897,17 @@ def apply_tailored(
             # Verbatim sections (name/contact block etc.) always precede the body.
             new_sections = verbatim_sections + llm_order_sections
 
+    # Apply skills injection into header_paras when identified in the extras path.
+    # injectable_skills_section / header_skill_target are None in the fast path.
+    if injectable_skills_section is not None and header_skill_target is not None:
+        effective_header_paras: list[ParaModel] = _inject_skills_into_header(
+            original.header_paras, header_skill_target, injectable_skills_section
+        )
+    else:
+        effective_header_paras = list(original.header_paras)
+
     # Rebuild flat para list in document order
-    all_paras: list[ParaModel] = list(original.header_paras)
+    all_paras: list[ParaModel] = list(effective_header_paras)
     for section in new_sections:
         all_paras.append(section.heading)
         if section.semantic_type == "experience" and section.roles:
@@ -730,7 +1003,7 @@ def apply_tailored(
                 )
 
     return ResumeDocument(
-        header_paras=original.header_paras,
+        header_paras=effective_header_paras,
         sections=new_sections,
         layout=original.layout,
         all_paras=all_paras,
