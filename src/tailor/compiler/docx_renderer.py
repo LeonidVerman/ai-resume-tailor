@@ -526,6 +526,24 @@ def _patch_bullet_numbering(d) -> None:
 # DOCX native two-column rendering
 # ---------------------------------------------------------------------------
 
+_WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+
+
+def _fix_anchor_layout_in_cell(cell_elem) -> None:
+    """Set layoutInCell='0' on every floating anchor inside *cell_elem*.
+
+    Floating anchors with layoutInCell='1' interpret their position offsets
+    relative to the containing table cell instead of the page.  For background
+    decoration shapes that use absolute page-relative coordinates (e.g. the
+    full-page grey header/sidebar drawing group in the veeva_03 template), this
+    causes the drawing to shift down when the paragraph that owns it is placed
+    inside a table cell.  Setting layoutInCell='0' restores page-relative
+    positioning so the drawing always appears at its intended page coordinates.
+    """
+    for anchor in cell_elem.findall(f".//{{{_WP}}}anchor"):
+        anchor.set("layoutInCell", "0")
+
+
 def _render_docx_native_two_col(
     doc: "ResumeDocument",
     body,
@@ -617,6 +635,9 @@ def _render_docx_native_two_col(
         _render_para(pm, left_tc, None)
     if not left_col_paras:
         etree.SubElement(left_tc, f"{{{_W}}}p")
+    # Floating anchors positioned relative to the page must not be re-anchored
+    # to the cell origin — force page-relative layout for all anchors in the cell.
+    _fix_anchor_layout_in_cell(left_tc)
 
     # Right cell (main content)
     right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
@@ -631,6 +652,7 @@ def _render_docx_native_two_col(
         _render_para(pm, right_tc, None)
     if not right_col_paras:
         etree.SubElement(right_tc, f"{{{_W}}}p")
+    _fix_anchor_layout_in_cell(right_tc)
 
     if sectPr is not None:
         sectPr.addprevious(tbl)
