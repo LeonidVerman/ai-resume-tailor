@@ -750,16 +750,23 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     if doc.source_kind == "docx" and not has_table_blocks and doc.header_paras:
         cols_elem = sectPr.find(f"{{{_W}}}cols") if sectPr is not None else None
         col_elems = cols_elem.findall(f"{{{_W}}}col") if cols_elem is not None else []
+        _left_w_raw = int(col_elems[0].get(f"{{{_W}}}w", "0")) if len(col_elems) == 2 else 0
+        _right_w_raw = int(col_elems[1].get(f"{{{_W}}}w", "0")) if len(col_elems) == 2 else 0
+        # Only treat as a sidebar layout (and convert to table) when the left
+        # column is substantially narrower than the right — ratio < 0.6 covers
+        # typical sidebar templates (veeva_03: 2848/7362 ≈ 0.39) while leaving
+        # balanced two-column layouts (ratios 0.7–1.3) in normal w:cols flow.
         _is_unequal_two_col = (
             cols_elem is not None
             and cols_elem.get(f"{{{_W}}}num") == "2"
             and len(col_elems) == 2
-            and col_elems[0].get(f"{{{_W}}}w") is not None
-            and col_elems[1].get(f"{{{_W}}}w") is not None
+            and _left_w_raw > 0
+            and _right_w_raw > 0
+            and _left_w_raw < _right_w_raw * 0.6
         )
         if _is_unequal_two_col:
-            left_w = int(col_elems[0].get(f"{{{_W}}}w", "2848"))
-            right_w = int(col_elems[1].get(f"{{{_W}}}w", "7362"))
+            left_w = _left_w_raw
+            right_w = _right_w_raw
             col_space = int(col_elems[0].get(f"{{{_W}}}space", "0"))
             # Switch body section to single-column flow; the table provides
             # the two-column layout instead.
