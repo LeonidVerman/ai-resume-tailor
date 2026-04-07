@@ -59,6 +59,7 @@ class AuthMeResponse(APIModel):
 class ForgotPasswordRequest(APIModel):
     """Body for POST /auth/forgot-password."""
     email: EmailStr
+    redirect_to: str | None = None  # frontend passes window.location.origin + '/reset-password'
 
 
 class ResetPasswordRequest(APIModel):

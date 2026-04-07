@@ -173,7 +173,7 @@ export const auth = {
     }),
   me: () => request<AuthMeResponse>("/auth/me"),
   status: () => request<AuthStatusResponse>("/auth/status"),
-  forgotPassword: (body: { email: string }) =>
+  forgotPassword: (body: { email: string; redirect_to?: string }) =>
     request<void>("/auth/forgot-password", {
       method: "POST",
       body: JSON.stringify(body),
