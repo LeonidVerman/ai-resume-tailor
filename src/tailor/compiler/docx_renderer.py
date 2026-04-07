@@ -602,6 +602,16 @@ def _render_docx_native_two_col(
 
     tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
     tblW = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    # In native w:cols layout the inter-column space (col_space) is EXTERNAL to
+    # both columns — it sits in the gap between them and is NOT part of either
+    # column's text area.  Do NOT add col_space as a cell right margin: that
+    # would reduce the left cell content area from left_w to (left_w - col_space),
+    # causing paragraphs with ind-right values (icon gaps) and ind-left values
+    # (location indent) to wrap, shifting the sidebar sections out of alignment
+    # with their floating section-heading shapes.
+    # Keeping the cell width = left_w and adding NO cell right margin preserves
+    # the original paragraph text area exactly.  The visual inter-column gap is
+    # implicit in the right-side slack between the table and the page margin.
     tblW.set(f"{{{_W}}}w", str(left_w + right_w))
     tblW.set(f"{{{_W}}}type", "dxa")
     tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
@@ -610,7 +620,7 @@ def _render_docx_native_two_col(
     for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
         brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
         brd.set(f"{{{_W}}}val", "none")
-    # Zero default cell margins; left cell gets explicit right padding below.
+    # Zero all cell margins so no extra insets are added inside any cell.
     tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
     for side in ("top", "left", "bottom", "right"):
         m = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
@@ -619,7 +629,8 @@ def _render_docx_native_two_col(
 
     tr = etree.SubElement(tbl, f"{{{_W}}}tr")
 
-    # Left cell (narrow sidebar)
+    # Left cell (narrow sidebar).  Width = left_w, no cell margins: the usable
+    # text area equals left_w, matching the original native column width exactly.
     left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
     left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
     left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
@@ -627,13 +638,6 @@ def _render_docx_native_two_col(
     left_tcW.set(f"{{{_W}}}type", "dxa")
     left_vAlign = etree.SubElement(left_tcPr, f"{{{_W}}}vAlign")
     left_vAlign.set(f"{{{_W}}}val", "top")
-    # Preserve the original inter-column space as right cell margin so the gap
-    # between sidebar and main column matches the template.
-    if col_space > 0:
-        left_tcMar = etree.SubElement(left_tcPr, f"{{{_W}}}tcMar")
-        mar_right = etree.SubElement(left_tcMar, f"{{{_W}}}right")
-        mar_right.set(f"{{{_W}}}w", str(col_space))
-        mar_right.set(f"{{{_W}}}type", "dxa")
 
     for pm in left_col_paras:
         _render_para(pm, left_tc, None)
