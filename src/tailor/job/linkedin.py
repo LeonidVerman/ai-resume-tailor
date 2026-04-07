@@ -29,15 +29,21 @@ _REQUEST_HEADERS = {
 def _extract_job_id(url: str) -> str:
     """Extract the numeric job ID from a LinkedIn jobs URL.
 
-    Handles both formats:
-      /jobs/view/1234567890                      (ID only)
-      /jobs/view/some-title-at-company-1234567890  (slug followed by ID)
+    Handles these formats:
+      /jobs/view/1234567890                        (ID only)
+      /jobs/view/some-title-at-company-1234567890  (slug + ID)
+      /jobs/search-results/?currentJobId=1234567890 (search results page)
+      ?currentJobId=1234567890                     (any page with currentJobId param)
     """
-    # Prefer a standalone numeric segment immediately after /jobs/view/
+    # Search results / recommendations page: ?currentJobId=<id>
+    m = re.search(r"[?&]currentJobId=(\d+)", url)
+    if m:
+        return m.group(1)
+    # Standalone numeric segment immediately after /jobs/view/
     m = re.search(r"/jobs/view/(\d+)(?:[/?]|$)", url)
     if m:
         return m.group(1)
-    # Slug+ID format: the trailing run of digits after the last hyphen
+    # Slug+ID format: trailing run of digits after the last hyphen
     m = re.search(r"/jobs/view/[^/?]*?-(\d{7,})(?:[/?]|$)", url)
     if m:
         return m.group(1)
