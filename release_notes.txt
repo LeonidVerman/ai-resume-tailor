@@ -1,0 +1,6 @@
+version 0.5.4.BETA - 2025-04-06
+- Improved layout postprocessing
+- Bugfixes
+
+version 0.5.3.BETA
+- Previous release
