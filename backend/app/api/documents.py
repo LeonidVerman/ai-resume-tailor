@@ -65,6 +65,10 @@ def _artifact_filename(doc, part: str, fmt: str) -> str:
         original_filename = (doc.resume_jsonb or {}).get("template_original_filename", "")
         if original_filename:
             base_stem = os.path.splitext(os.path.basename(original_filename))[0]
+            # Strip trailing _Template (case-insensitive) before appending company.
+            # e.g. "Leonid_Verman_Resume_Template" → "Leonid_Verman_Resume"
+            import re
+            base_stem = re.sub(r"_?template$", "", base_stem, flags=re.IGNORECASE)
             return f"{base_stem}_{safe_company}.{fmt}"
         template = RESUME_TEMPLATE
     else:

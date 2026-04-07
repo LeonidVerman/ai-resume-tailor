@@ -1,0 +1,62 @@
+{
+  "_comment": [
+    "Changed-content regression test manifest.",
+    "Add a new case by placing files in the sample directories and appending",
+    "one object to the 'cases' array.  No code changes required.",
+    "",
+    "Threshold keys (all optional — missing keys fall back to 'defaults'):",
+    "  min_layout_score          float  overall composite layout score floor",
+    "  min_topology_preservation float  topology preservation score floor",
+    "  min_section_placement     float  section placement score floor",
+    "  min_section_coherence     float  overall section coherence floor",
+    "  max_high_stress_sections  int    maximum number of sections with stress_level='high'"
+  ],
+
+  "defaults": {
+    "min_layout_score":          0.40,
+    "min_topology_preservation": 0.00,
+    "min_section_placement":     0.00,
+    "min_section_coherence":     0.40,
+    "max_high_stress_sections":  6
+  },
+
+  "cases": [
+    {
+      "case_id":               "veeva_02_personal_template",
+      "template_docx":         "tests/samples/resume/docx/2-Leonid_Verman_Resume_2.docx",
+      "debug_json":            "tests/samples/generation/Leonid_Verman-Veeva_Systems-Senior_Software_Engineer__Java-74-20260401-185159.json",
+      "expected_template_class": "linear",
+      "severity":              "S3",
+      "notes":                 "Personal two-column template; sidebar left; known stale-token overlap."
+    },
+    {
+      "case_id":               "veeva_03_doc_template",
+      "template_docx":         "tests/samples/resume/docx/3-software-engineer-doc-resume-template.docx",
+      "debug_json":            "tests/samples/generation/Leonid_Verman-Veeva_Systems-Senior_Software_Engineer__Java-75-20260401-185352.json",
+      "expected_template_class": "linear",
+      "severity":              "S3",
+      "notes":                 "Standard single-column doc template."
+    },
+    {
+      "case_id":               "veeva_04_linear_simple",
+      "template_docx":         "tests/samples/resume/docx/4-software-engineer-resume.docx",
+      "debug_json":            "tests/samples/generation/Leonid_Verman-Veeva_Systems-Senior_Software_Engineer__Java-76-20260401-185506.json",
+      "expected_template_class": "linear",
+      "severity":              "S2",
+      "notes":                 "Clean single-column layout; consistently scores highest.",
+      "thresholds": {
+        "min_layout_score":         0.65,
+        "min_topology_preservation": 0.90,
+        "min_section_placement":    0.80
+      }
+    },
+    {
+      "case_id":               "veeva_05_dev_resume",
+      "template_docx":         "tests/samples/resume/docx/5-Software Development Resume.docx",
+      "debug_json":            "tests/samples/generation/Leonid_Verman-Veeva_Systems-Senior_Software_Engineer__Java-77-20260401-185700.json",
+      "expected_template_class": "linear",
+      "severity":              "S3",
+      "notes":                 "Section placement weaker due to template section-name variations."
+    }
+  ]
+}

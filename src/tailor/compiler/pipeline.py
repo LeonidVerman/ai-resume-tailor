@@ -12,6 +12,7 @@ import logging
 
 from tailor.compiler.docx_parser import parse_docx
 from tailor.compiler.docx_renderer import render_docx
+from tailor.compiler.layout import apply_layout_fitting
 from tailor.compiler.models import ResumeDocument
 from tailor.compiler.text_parser import parse_llm_output
 from tailor.compiler.updater import apply_tailored
@@ -39,6 +40,7 @@ def compile_resume(template_path: str, llm_text: str, output_path: str) -> None:
     """
     original = parse_docx(template_path)
     llm_sections = parse_llm_output(llm_text)
+    llm_sections = apply_layout_fitting(original, llm_sections)
     updated = apply_tailored(original, llm_sections)
     render_docx(updated, template_path, output_path)
     log.debug(
@@ -79,6 +81,7 @@ def compile_resume_from_ir(
         If section/role anchors in the LLM output don't match the template IR.
     """
     llm_sections = parse_llm_output(llm_text)
+    llm_sections = apply_layout_fitting(template_ir, llm_sections)
     updated = apply_tailored(template_ir, llm_sections)
     render_docx(updated, style_template_path, output_path)
     log.debug(

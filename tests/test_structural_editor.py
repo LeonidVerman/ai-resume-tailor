@@ -424,13 +424,17 @@ class TestUpdater:
         for role in exp.roles:
             assert role.header.style.xml_proto is not None
 
-    def test_unmatched_llm_section_raises(self):
-        """An LLM section with an unmatchable title raises ValueError."""
+    def test_unmatched_llm_section_returns_original(self):
+        """Ambiguous section mapping must return the original document verbatim (spec §9).
+
+        Previously raised ValueError; now returns original to prevent pipeline crashes.
+        """
         orig = parse_docx(str(RESUME_TEMPLATE))
         from tailor.compiler.text_parser import LlmSection
         bogus_sections = [LlmSection(heading="ZZZ Unknown Section XYZ", semantic_type="other")]
-        with pytest.raises(ValueError):
-            apply_tailored(orig, bogus_sections)
+        result = apply_tailored(orig, bogus_sections)
+        # Must return original sections unchanged
+        assert [s.title for s in result.sections] == [s.title for s in orig.sections]
 
     def test_skills_content_updated(self):
         orig, llm = self._parsed_and_llm(_RESUME_STANDARD_ORDER)
@@ -566,10 +570,10 @@ class TestFormattingPreservation:
     # Education
     ("Education",                     "education"),
     ("Academic Background",           "education"),
-    # Non-content sections → other
-    ("LANGUAGES",                     "other"),
-    ("Certifications",                "other"),
-    ("CERTIFICATIONS AND TRAINING",   "other"),
+    # Locked sections → specific types (not skills, not other)
+    ("LANGUAGES",                     "languages"),
+    ("Certifications",                "certifications"),
+    ("CERTIFICATIONS AND TRAINING",   "certifications"),
 ])
 def test_classify_section_heading_normalization(heading, expected):
     assert _classify_section(heading) == expected, (
@@ -1110,4 +1114,535 @@ class TestDiffVsRenderedSanity:
         )
         assert "COBOL" not in all_text, (
             "COBOL from original source still in compiled output — stale body was rendered"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Post-processing improvements (A/B/C/D)
+# ---------------------------------------------------------------------------
+
+def _make_no_summary_template(tmp_path: Path) -> Path:
+    """DOCX template with Experience + Skills but NO summary section."""
+    doc = Document()
+    doc.add_paragraph("Experience", style="Heading 1")
+    doc.add_paragraph("Engineer | Acme Corp")
+    doc.add_paragraph("Jan 2022 – Present")
+    doc.add_paragraph("- Built distributed systems.")
+    doc.add_paragraph("Technical Skills", style="Heading 1")
+    doc.add_paragraph("Python, Go")
+    path = tmp_path / "no_summary.docx"
+    doc.save(str(path))
+    return path
+
+
+def _make_intro_prose_template(tmp_path: Path) -> Path:
+    """DOCX template with a non-canonical 'OVERVIEW' section containing intro prose,
+    followed by Experience.  No explicit summary section."""
+    doc = Document()
+    doc.add_paragraph("OVERVIEW", style="Heading 1")
+    doc.add_paragraph(
+        "Seasoned software engineer with fifteen years of backend experience "
+        "across financial services and cloud infrastructure companies."
+    )
+    doc.add_paragraph("Experience", style="Heading 1")
+    doc.add_paragraph("Engineer | Corp")
+    doc.add_paragraph("Jan 2022 – Present")
+    doc.add_paragraph("- Built things.")
+    doc.add_paragraph("Technical Skills", style="Heading 1")
+    doc.add_paragraph("Java, Python")
+    path = tmp_path / "intro_prose.docx"
+    doc.save(str(path))
+    return path
+
+
+def _make_skills_like_template(tmp_path: Path) -> Path:
+    """DOCX template whose 'skills' section uses a noncanonical heading."""
+    doc = Document()
+    doc.add_paragraph("Experience", style="Heading 1")
+    doc.add_paragraph("Engineer | Corp")
+    doc.add_paragraph("Jan 2022 – Present")
+    doc.add_paragraph("- Built things.")
+    doc.add_paragraph("Core Technologies", style="Heading 1")
+    doc.add_paragraph("Java, SQL, AWS, Docker")
+    path = tmp_path / "skills_like.docx"
+    doc.save(str(path))
+    return path
+
+
+def _make_centered_contact_template(tmp_path: Path) -> Path:
+    """DOCX template where the first 'other' section has center-aligned body paras."""
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    doc = Document()
+    # 'other' section with center-aligned body (bad prototype candidate)
+    doc.add_paragraph("Contact Info", style="Heading 1")
+    contact_p = doc.add_paragraph("john@example.com | 555-1234")
+    contact_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    # Content sections (no summary)
+    doc.add_paragraph("Experience", style="Heading 1")
+    doc.add_paragraph("Engineer | Corp")
+    doc.add_paragraph("Jan 2022 – Present")
+    doc.add_paragraph("- Built things.")
+    doc.add_paragraph("Technical Skills", style="Heading 1")
+    doc.add_paragraph("Python, Go")
+    path = tmp_path / "centered_contact.docx"
+    doc.save(str(path))
+    return path
+
+
+_LLM_WITH_SUMMARY = """\
+Professional Summary
+Expert in distributed cloud systems with a focus on reliability.
+
+Experience
+Engineer | Acme Corp
+Jan 2022 – Present
+- Built distributed systems.
+
+Technical Skills
+Python, Go
+"""
+
+
+class TestPostProcessingImprovements:
+    """Tests for A (implicit summary anchoring), B (style-safe insertion),
+    C (Education freeze), and D (skills-like section detection)."""
+
+    # ── Test 1: A — Missing summary appears before Experience ────────────
+    def test_missing_summary_inserted_before_experience(self, tmp_path):
+        """Summary must appear before Experience when the template has no summary section."""
+        tpl = _make_no_summary_template(tmp_path)
+        text = _roundtrip(tpl, _LLM_WITH_SUMMARY, tmp_path)
+        paras = [p.strip() for p in text.split("\n") if p.strip()]
+        sum_idx = next(
+            (i for i, p in enumerate(paras) if "Expert in distributed" in p), None
+        )
+        exp_idx = next(
+            (i for i, p in enumerate(paras) if "Acme Corp" in p), None
+        )
+        assert sum_idx is not None, "Generated summary text not found in output"
+        assert exp_idx is not None, "Experience content not found in output"
+        assert sum_idx < exp_idx, (
+            "Summary must appear before Experience; "
+            f"summary at para {sum_idx}, experience at {exp_idx}"
+        )
+
+    # ── Test 2: A — Intro prose block replaced by LLM summary ───────────
+    def test_intro_prose_replaced_by_summary(self, tmp_path):
+        """LLM summary must replace the template's intro-prose block (not appear alongside it)."""
+        tpl = _make_intro_prose_template(tmp_path)
+        text = _roundtrip(tpl, _LLM_WITH_SUMMARY, tmp_path)
+        assert "Expert in distributed cloud systems" in text, (
+            "LLM summary content not found in output"
+        )
+        assert "Seasoned software engineer with fifteen years" not in text, (
+            "Original intro-prose still present — should have been replaced by LLM summary"
+        )
+
+    # ── Test 3: B — Inserted body paragraphs are left-aligned ───────────
+    def test_inserted_body_paragraphs_are_left_aligned(self, tmp_path):
+        """Inserted summary body paragraphs must not inherit center alignment."""
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        tpl = _make_centered_contact_template(tmp_path)
+        out = str(tmp_path / "out_aligned.docx")
+        save_doc_from_template(str(tpl), out, _LLM_WITH_SUMMARY)
+        out_doc = Document(out)
+        summary_paras = [
+            p for p in out_doc.paragraphs
+            if "Expert in distributed" in p.text or "cloud systems" in p.text
+        ]
+        assert summary_paras, "Summary paragraph not found in output DOCX"
+        for p in summary_paras:
+            assert p.alignment not in (
+                WD_ALIGN_PARAGRAPH.CENTER,
+                WD_ALIGN_PARAGRAPH.RIGHT,
+            ), (
+                f"Inserted body paragraph has non-left alignment ({p.alignment}): "
+                f"'{p.text[:60]}'"
+            )
+
+    # ── Test 4: C — Education freeze preserves source Education ─────────
+    def test_education_freeze_preserves_source_education(self, tmp_path):
+        """FREEZE_EDUCATION=True must preserve source Education; LLM-invented content ignored."""
+        from tailor.compiler.updater import FREEZE_EDUCATION
+        assert FREEZE_EDUCATION, "FREEZE_EDUCATION must be True for this test"
+
+        llm_with_fake_edu = (
+            "Professional Summary\nExperienced engineer.\n\n"
+            "Experience\n"
+            "Senior Engineer | Acme Corp\nJan 2022 – Present\n- Built systems.\n\n"
+            "Technical Skills\nPython, Kafka\n\n"
+            "Education\nFake University of Nowhere, 2099\n"
+        )
+        text = _roundtrip(RESUME_TEMPLATE, llm_with_fake_edu, tmp_path)
+        assert "Fake University of Nowhere" not in text, (
+            "LLM-invented Education content appeared — Education freeze did not work"
+        )
+        assert "2099" not in text, "LLM-invented graduation year appeared"
+        # Source Education content must still be present
+        assert "M.Sc" in text or "Technical State" in text, (
+            "Source Education content missing from output — freeze removed it instead of preserving"
+        )
+
+    # ── Test 5: D — Skills-like canonical heading detection ─────────────
+    def test_skills_like_heading_detected_by_classifier(self):
+        """_classify_section must return 'skills' for noncanonical skills-like headings."""
+        from tailor.compiler.docx_parser import _classify_section
+        assert _classify_section("Core Technologies") == "skills"
+        assert _classify_section("Key Proficiencies") == "skills"
+        assert _classify_section("Technical Competencies") == "skills"
+        assert _classify_section(
+            "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS"
+        ) == "skills"
+        # Locked headings must NOT classify as skills
+        assert _classify_section("References") == "other"
+        assert _classify_section("Certifications") == "certifications"
+        assert _classify_section("Languages") == "languages"
+
+    # ── Test 6: D — Skills content routed to skills-like section ────────
+    def test_skills_routed_to_skills_like_section(self, tmp_path):
+        """Generated Technical Skills must be written into a noncanonical 'Core Technologies'
+        section rather than left as an unmatched extra."""
+        tpl = _make_skills_like_template(tmp_path)
+        llm = (
+            "Experience\nEngineer | Corp\nJan 2022 – Present\n- Built things.\n\n"
+            "Technical Skills\nPython, Docker, AWS, Kubernetes\n"
+        )
+        text = _roundtrip(tpl, llm, tmp_path)
+        assert "Python" in text, "Generated skills not found in output"
+        assert "Docker" in text, "Generated skills not found in output"
+        # Old skills content should be replaced
+        assert "Java, SQL, AWS, Docker" not in text, (
+            "Old template skills content still present verbatim — skills section not updated"
+        )
+
+    # ── Test 7: Same-text roundtrip regression ───────────────────────────
+    def test_same_text_roundtrip_regression(self, tmp_path):
+        """All improvements must not disturb the same-text roundtrip on good templates."""
+        text = _roundtrip(RESUME_TEMPLATE, _RESUME_STANDARD_ORDER, tmp_path)
+        assert "Acme Corp" in text
+        assert "Python" in text
+        assert "Reduced latency by 30%" in text
+
+    # ── Test 8: Explicit-summary template not degraded ───────────────────
+    def test_explicit_summary_template_not_degraded(self, tmp_path):
+        """Templates with an explicit summary section must not be affected by A."""
+        orig = parse_docx(str(RESUME_TEMPLATE))
+        has_summary = any(s.semantic_type == "summary" for s in orig.sections)
+        if not has_summary:
+            pytest.skip("RESUME_TEMPLATE has no explicit summary section")
+        text = _roundtrip(RESUME_TEMPLATE, _RESUME_STANDARD_ORDER, tmp_path)
+        assert "Experienced engineer with 10 years" in text, (
+            "Summary content missing from output on explicit-summary template"
+        )
+        paras = [p.strip() for p in text.split("\n") if p.strip()]
+        sum_idx = next(
+            (i for i, p in enumerate(paras) if "Experienced engineer with 10 years" in p), None
+        )
+        exp_idx = next(
+            (i for i, p in enumerate(paras) if "Acme Corp" in p), None
+        )
+        if sum_idx is not None and exp_idx is not None:
+            assert sum_idx < exp_idx, "Summary must precede Experience on explicit-summary template"
+
+    # ── Test 9: Job-title sections consolidated and updated by LLM experience ─
+    def test_experience_other_sections_not_overwritten_by_summary(self, tmp_path):
+        """Three 'other' sections with job-title headings are consolidated into a
+        synthetic experience section and matched to the LLM's Experience output.
+        The LLM summary appears in the output and all three jobs are updated."""
+        doc = Document()
+        # Three experience entries with generic job-title headings
+        doc.add_paragraph("Software Engineer", style="Heading 1")
+        doc.add_paragraph("Embark")
+        doc.add_paragraph("January 2022 - current / New York, NY")
+        doc.add_paragraph("Architected backend services supporting logistics workflows.")
+        doc.add_paragraph("Software Engineer", style="Heading 1")
+        doc.add_paragraph("MarketSmart")
+        doc.add_paragraph("April 2019 - January 2022 / Washington, DC")
+        doc.add_paragraph("Developed lead-scoring features for a marketing platform.")
+        doc.add_paragraph("Software Engineer Intern", style="Heading 1")
+        doc.add_paragraph("Marketing Science Company")
+        doc.add_paragraph("April 2018 - March 2019 / Pittsburgh, PA")
+        doc.add_paragraph("Built internal dashboards to visualise campaign metrics.")
+        tpl = str(tmp_path / "three_other.docx")
+        doc.save(tpl)
+
+        # LLM provides a summary + 3 tailored roles matching the template structure
+        llm = """\
+Professional Summary
+Expert in distributed cloud systems with a focus on reliability.
+
+Experience
+Software Engineer | Embark
+January 2022 - current / New York, NY
+- Built cloud-native logistics systems at scale.
+Software Engineer | MarketSmart
+April 2019 - January 2022 / Washington, DC
+- Developed marketing analytics features.
+Software Engineer Intern | Marketing Science Company
+April 2018 - March 2019 / Pittsburgh, PA
+- Visualised campaign performance metrics.
+
+Technical Skills
+Python, Go
+"""
+        out = str(tmp_path / "out.docx")
+        compile_resume(tpl, llm, out)
+        out_doc = Document(out)
+        all_text = "\n".join(p.text for p in out_doc.paragraphs)
+
+        assert "Expert in distributed" in all_text, "LLM summary missing"
+        assert "Embark" in all_text, "First job (Embark) missing from output"
+        assert "MarketSmart" in all_text, "Second job (MarketSmart) missing from output"
+        assert "Marketing Science" in all_text, "Third job (Marketing Science) missing from output"
+        assert "cloud-native logistics" in all_text, "LLM tailored bullet not applied"
+
+    # ── Test 10: New summary placed before 'other'-type experience sections ─
+    def test_new_summary_before_other_type_experience(self, tmp_path):
+        """When the template has only 'other'-type sections (no recognised headings),
+        a newly generated Professional Summary must appear before the experience entries."""
+        doc = Document()
+        doc.add_paragraph("Software Engineer", style="Heading 1")
+        doc.add_paragraph("Embark")
+        doc.add_paragraph("January 2022 - current / New York, NY")
+        doc.add_paragraph("Built logistics systems.")
+        tpl = str(tmp_path / "one_other.docx")
+        doc.save(tpl)
+
+        llm = _LLM_WITH_SUMMARY
+        out = str(tmp_path / "out.docx")
+        compile_resume(tpl, llm, out)
+        out_doc = Document(out)
+        paras = [p.text.strip() for p in out_doc.paragraphs if p.text.strip()]
+        sum_idx = next(
+            (i for i, p in enumerate(paras) if "Expert in distributed" in p), None
+        )
+        exp_idx = next(
+            (i for i, p in enumerate(paras) if "Embark" in p), None
+        )
+        assert sum_idx is not None, "Summary text not found in output"
+        assert exp_idx is not None, "Experience (Embark) not found in output"
+        assert sum_idx < exp_idx, (
+            "Summary must precede experience entry; "
+            f"summary at {sum_idx}, Embark at {exp_idx}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Tests for spec §1–§9 edit-scope and locking requirements
+# ---------------------------------------------------------------------------
+
+
+def _make_locked_template(tmp_path: Path) -> Path:
+    """Template with Experience, Skills, Education, Certifications, Languages."""
+    doc = Document()
+    doc.add_paragraph("Experience", style="Heading 1")
+    doc.add_paragraph("Engineer | Acme Corp")
+    doc.add_paragraph("Jan 2022 – Present")
+    doc.add_paragraph("- Original bullet one.")
+    doc.add_paragraph("Technical Skills", style="Heading 1")
+    doc.add_paragraph("Java, SQL")
+    doc.add_paragraph("Education", style="Heading 1")
+    doc.add_paragraph("B.Sc Computer Science, State University, 2015")
+    doc.add_paragraph("Certifications", style="Heading 1")
+    doc.add_paragraph("AWS Certified Solutions Architect")
+    doc.add_paragraph("Languages", style="Heading 1")
+    doc.add_paragraph("English (native), French (B2)")
+    path = tmp_path / "locked_tpl.docx"
+    doc.save(str(path))
+    return path
+
+
+class TestEditScopeAndLocking:
+    """Spec §1–§3, §5–§6, §9: only summary/experience/skills editable; rest locked."""
+
+    # ── §2 — Section classification ──────────────────────────────────────
+    def test_certifications_classified_correctly(self):
+        from tailor.compiler.docx_parser import _classify_section
+        for name in ["certifications", "Certifications", "Certification", "Training",
+                     "Certifications and Training", "Licenses"]:
+            assert _classify_section(name) == "certifications", (
+                f"_classify_section({name!r}) should return 'certifications'"
+            )
+
+    def test_languages_classified_correctly(self):
+        from tailor.compiler.docx_parser import _classify_section
+        for name in ["languages", "Languages", "Language Skills"]:
+            assert _classify_section(name) == "languages", (
+                f"_classify_section({name!r}) should return 'languages'"
+            )
+
+    def test_websites_classified_correctly(self):
+        from tailor.compiler.docx_parser import _classify_section
+        for name in ["websites", "Websites", "Profiles", "Portfolio", "Links"]:
+            assert _classify_section(name) == "websites", (
+                f"_classify_section({name!r}) should return 'websites'"
+            )
+
+    def test_editable_types_not_locked(self):
+        from tailor.compiler.docx_parser import _classify_section
+        assert _classify_section("Professional Summary") == "summary"
+        assert _classify_section("Experience") == "experience"
+        assert _classify_section("Technical Skills") == "skills"
+
+    # ── §3 — Certifications locked ────────────────────────────────────────
+    def test_certifications_section_preserved(self, tmp_path):
+        """LLM-provided certifications content must be ignored; template preserved."""
+        tpl = _make_locked_template(tmp_path)
+        llm = (
+            "Experience\nEngineer | Acme Corp\nJan 2022 – Present\n- New bullet.\n\n"
+            "Technical Skills\nPython, Rust\n\n"
+            "Education\nFake School, 2099\n\n"
+            "Certifications\nFake Cert That Should Not Appear\n\n"
+            "Languages\nKlingon (native)\n"
+        )
+        text = _roundtrip(tpl, llm, tmp_path)
+        assert "AWS Certified Solutions Architect" in text, (
+            "Original certifications content must be preserved"
+        )
+        assert "Fake Cert That Should Not Appear" not in text, (
+            "LLM certifications content must not appear"
+        )
+
+    # ── §3 — Languages locked ─────────────────────────────────────────────
+    def test_languages_section_preserved(self, tmp_path):
+        """LLM-provided languages content must be ignored; template preserved."""
+        tpl = _make_locked_template(tmp_path)
+        llm = (
+            "Experience\nEngineer | Acme Corp\nJan 2022 – Present\n- New bullet.\n\n"
+            "Technical Skills\nPython, Rust\n\n"
+            "Education\nFake School, 2099\n\n"
+            "Certifications\nFake Cert\n\n"
+            "Languages\nKlingon (native)\n"
+        )
+        text = _roundtrip(tpl, llm, tmp_path)
+        assert "English (native)" in text, "Original languages content must be preserved"
+        assert "Klingon" not in text, "LLM languages content must not appear"
+
+    # ── §1 — Experience bullets editable, header/meta preserved ──────────
+    def test_experience_bullets_replaced_header_preserved(self, tmp_path):
+        """Bullet points must be updated; company name and dates must be preserved."""
+        tpl = _make_locked_template(tmp_path)
+        llm = (
+            "Experience\nEngineer | Acme Corp\nJan 2022 – Present\n"
+            "- New tailored bullet.\n\n"
+            "Technical Skills\nPython, Rust\n\n"
+            "Education\nFake School, 2099\n\n"
+            "Certifications\nFake Cert\n\n"
+            "Languages\nKlingon\n"
+        )
+        text = _roundtrip(tpl, llm, tmp_path)
+        assert "Acme Corp" in text, "Company name must be preserved"
+        assert "New tailored bullet" in text, "LLM bullets must appear"
+        assert "Original bullet one" not in text, "Old bullets must be replaced"
+
+    # ── §5 — No new experience sections ──────────────────────────────────
+    def test_extra_experience_section_discarded(self, tmp_path):
+        """Duplicate LLM experience sections ('Work History') must be discarded.
+
+        The LLM outputs TWO experience-type sections but the template only has one.
+        The second must be silently discarded rather than appended to the output.
+        """
+        tpl = _make_locked_template(tmp_path)
+        # "Work History" is a known experience-type heading (in _EXPERIENCE_NAMES),
+        # so it parses as a second experience section rather than being absorbed
+        # into the first as a role.
+        llm = (
+            "Experience\nEngineer | Acme Corp\nJan 2022 - Present\n- Tailored bullet.\n\n"
+            "Work History\nContractor | SomeCo\n2019 - 2022\n"
+            "- This should be discarded.\n\n"
+            "Technical Skills\nPython, Rust\n\n"
+            "Education\nB.Sc Computer Science, State University, 2015\n\n"
+            "Certifications\nAWS Certified Solutions Architect\n\n"
+            "Languages\nEnglish (native), French (B2)\n"
+        )
+        text = _roundtrip(tpl, llm, tmp_path)
+        assert "This should be discarded" not in text, (
+            "Extra experience section must not be inserted (spec §5)"
+        )
+        assert "SomeCo" not in text, "Extra experience company must not appear"
+
+    # ── §6 — Skills sanitization ──────────────────────────────────────────
+    def test_skills_current_date_removed(self, tmp_path):
+        """CURRENT_DATE in skills must be filtered out before rendering."""
+        from tailor.compiler.layout import _sanitize_skills_body
+        lines = [
+            "Python, Java",
+            "CURRENT_DATE",
+            "Go, Rust",
+        ]
+        clean = _sanitize_skills_body(lines)
+        assert "CURRENT_DATE" not in "\n".join(clean)
+        assert "Python, Java" in "\n".join(clean)
+        assert "Go, Rust" in "\n".join(clean)
+
+    def test_skills_generated_on_removed(self, tmp_path):
+        """'Generated on' line in skills must be filtered out."""
+        from tailor.compiler.layout import _sanitize_skills_body
+        lines = ["Python, Java", "Generated on: 2025-01-01", "Docker"]
+        clean = _sanitize_skills_body(lines)
+        texts = "\n".join(clean)
+        assert "Generated on" not in texts
+        assert "Python, Java" in texts
+
+    def test_skills_additional_line_removed(self, tmp_path):
+        """Lines starting with 'Additional' must be filtered from skills."""
+        from tailor.compiler.layout import _sanitize_skills_body
+        lines = ["Python, Java", "Additional: Communication, Leadership", "Docker"]
+        clean = _sanitize_skills_body(lines)
+        texts = "\n".join(clean)
+        assert "Additional" not in texts
+        assert "Python, Java" in texts
+
+    def test_skills_full_sentence_removed(self, tmp_path):
+        """Full sentences (8+ words ending in '.') must be removed from skills."""
+        from tailor.compiler.layout import _sanitize_skills_body
+        lines = [
+            "Python, Java, Scala",
+            "I have extensive experience with distributed systems and cloud platforms.",
+            "Docker, Kubernetes",
+        ]
+        clean = _sanitize_skills_body(lines)
+        texts = "\n".join(clean)
+        assert "I have extensive experience" not in texts
+        assert "Python, Java, Scala" in texts
+        assert "Docker, Kubernetes" in texts
+
+    def test_skills_concise_lines_kept(self, tmp_path):
+        """Concise skill tokens must not be filtered."""
+        from tailor.compiler.layout import _sanitize_skills_body
+        lines = [
+            "Python, Java, Go, Rust, TypeScript",
+            "AWS (EC2, S3, Lambda), Docker, Kubernetes",
+            "PostgreSQL, Redis, Kafka",
+        ]
+        clean = _sanitize_skills_body(lines)
+        assert clean == lines  # nothing filtered
+
+    # ── §9 — Soft failure mode ────────────────────────────────────────────
+    def test_ambiguous_mapping_returns_template_verbatim(self):
+        """When section mapping is ambiguous, apply_tailored must return original."""
+        from tailor.compiler.updater import apply_tailored
+        from tailor.compiler.text_parser import LlmSection
+
+        # Build a minimal original document
+        doc = Document()
+        doc.add_paragraph("Experience", style="Heading 1")
+        doc.add_paragraph("Engineer | Corp")
+        doc.add_paragraph("Jan 2022 – Present")
+        doc.add_paragraph("- Bullet.")
+        buf = io.BytesIO()
+        doc.save(buf)
+        original = parse_docx(buf)
+
+        # LLM simultaneously drops Experience (real section) and invents "Invented Section"
+        llm_sections = [
+            LlmSection(heading="Invented Section", semantic_type="other", body_lines=["line"]),
+        ]
+        result = apply_tailored(original, llm_sections)
+        # Must return original verbatim — original Experience section preserved
+        orig_headings = [s.title for s in original.sections]
+        result_headings = [s.title for s in result.sections]
+        assert result_headings == orig_headings, (
+            f"Soft failure must return template verbatim; "
+            f"original={orig_headings}, result={result_headings}"
         )

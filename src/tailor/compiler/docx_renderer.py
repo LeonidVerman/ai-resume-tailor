@@ -35,6 +35,21 @@ def _strip_section_break(p_elem) -> None:
             pPr.remove(sectPr)
 
 
+def _strip_column_break(p_elem) -> None:
+    """Remove w:br type='column' runs from a paragraph.
+
+    Column breaks in the template force content to start at the top of the
+    next column.  After tailoring, column placement is determined by content
+    volume flowing naturally through the w:cols grid — explicit column breaks
+    are not needed and produce spurious layout jumps when section headings
+    are cloned from a paragraph that happened to carry one.
+    """
+    for r_elem in list(p_elem.findall(f"{{{_W}}}r")):
+        for br in list(r_elem.findall(f"{{{_W}}}br")):
+            if br.get(f"{{{_W}}}type") == "column":
+                r_elem.remove(br)
+
+
 def _strip_last_rendered_page_breaks(p_elem) -> None:
     """Remove w:lastRenderedPageBreak elements from a cloned paragraph.
 
@@ -195,11 +210,20 @@ def _set_para_text(p_elem, text: str) -> None:
 # Item renderers
 # ---------------------------------------------------------------------------
 
-def _render_para(pm: ParaModel, body, sectPr) -> None:
-    """Render a single ParaModel and insert it before sectPr (or append)."""
+def _render_para(pm: ParaModel, body, sectPr, preserve_section_break: bool = False) -> None:
+    """Render a single ParaModel and insert it before sectPr (or append).
+
+    When *preserve_section_break* is True, embedded ``w:sectPr`` elements in
+    the paragraph's ``w:pPr`` are kept intact rather than stripped.  Pass
+    True for header-section paragraphs in multi-column templates so the
+    section boundary (e.g. single-column header → two-column body) is
+    preserved in the output.
+    """
     if pm.style.xml_proto is not None:
         clone = deepcopy(pm.style.xml_proto)
         _strip_last_rendered_page_breaks(clone)
+        if not preserve_section_break:
+            _strip_section_break(clone)
         _set_para_text(clone, pm.text)
     elif pm.paragraph_profile is not None:
         from tailor.compiler.para_builder import build_para_element
@@ -499,6 +523,179 @@ def _patch_bullet_numbering(d) -> None:
 
 
 # ---------------------------------------------------------------------------
+# DOCX native two-column rendering
+# ---------------------------------------------------------------------------
+
+_WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+
+
+def _fix_anchor_layout_in_cell(cell_elem) -> None:
+    """Set layoutInCell='0' on every floating anchor inside *cell_elem*.
+
+    Floating anchors with layoutInCell='1' interpret their position offsets
+    relative to the containing table cell instead of the page.  For background
+    decoration shapes that use absolute page-relative coordinates (e.g. the
+    full-page grey header/sidebar drawing group in the veeva_03 template), this
+    causes the drawing to shift down when the paragraph that owns it is placed
+    inside a table cell.  Setting layoutInCell='0' restores page-relative
+    positioning so the drawing always appears at its intended page coordinates.
+    """
+    for anchor in cell_elem.findall(f".//{{{_WP}}}anchor"):
+        anchor.set("layoutInCell", "0")
+
+
+def _render_docx_native_two_col(
+    doc: "ResumeDocument",
+    body,
+    sectPr,
+    left_w: int,
+    right_w: int,
+    col_space: int,
+    header_para_ids: frozenset,
+) -> None:
+    """Render a DOCX template whose body uses native w:cols two-column layout.
+
+    Word's sequential column flow (col1→col2→page2-col1→page2-col2) causes
+    sidebar content to spill across columns and main content to jump to the
+    wrong column after a page overflow.  Converting to a table gives each
+    column an independent text stream that stays in its column across pages.
+
+    Layout:
+    - Full-width header section (paragraphs up to and including the embedded
+      sectPr boundary) is rendered normally before the table.
+    - A single-row borderless table holds the two-column body:
+        Left cell  (left_w twips)  : left-column body (contact, edu, skills)
+        Right cell (right_w twips) : section content (summary, experience …)
+
+    col_space is preserved as right padding on the left cell so the visual
+    gap between columns matches the original template.
+    """
+    from lxml import etree
+
+    # Find the embedded-sectPr boundary in header_paras.
+    # Paragraphs before (and including) it are full-width; those after are
+    # the left-column body content.
+    has_sectPr_boundary = False
+    split_after = len(doc.header_paras)  # fallback: all header_paras are left-col
+    for i, pm in enumerate(doc.header_paras):
+        if pm.style.xml_proto is not None:
+            pPr = pm.style.xml_proto.find(f"{{{_W}}}pPr")
+            if pPr is not None and pPr.find(f"{{{_W}}}sectPr") is not None:
+                split_after = i + 1
+                has_sectPr_boundary = True
+                break
+
+    full_width_paras = doc.header_paras[:split_after]
+    left_col_paras = doc.header_paras[split_after:]
+    right_col_paras = doc.all_paras[len(doc.header_paras):]
+
+    # Render full-width header paras WITHOUT preserving the embedded sectPr.
+    # In the original template the sectPr boundary separated the full-width
+    # header section from the two-column body section.  Now that the body is
+    # rendered as a table (single-column), the section break is unnecessary
+    # and causes LibreOffice to insert a blank page before the table.
+    # Stripping it collapses the entire document into one section; the body
+    # sectPr (already stripped of w:cols) governs page geometry uniformly.
+    for pm in full_width_paras:
+        _render_para(pm, body, sectPr, preserve_section_break=False)
+
+    # The sectPr boundary paragraph is a zero-height section marker in native
+    # Word flow.  In our table layout it becomes a regular paragraph above the
+    # table and contributes ~12pt of line height, shifting all left-column
+    # content downward by ~13–14pt.  This misaligns text with the fixed-position
+    # icon/heading shapes anchored to the page.
+    # Fix: patch the boundary paragraph's spacing to use exact line-height of
+    # 20 twips (1pt) so it contributes negligible vertical space before the table.
+    # The paragraph must remain present (removing it entirely causes LibreOffice to
+    # push the table to the next page due to page-anchor interaction with the
+    # background drawing in the first left-cell paragraph).
+    if has_sectPr_boundary and sectPr is not None:
+        boundary_p = sectPr.getprevious()
+        if boundary_p is not None and boundary_p.tag == f"{{{_W}}}p":
+            _pPr = boundary_p.find(f"{{{_W}}}pPr")
+            if _pPr is None:
+                _pPr = etree.SubElement(boundary_p, f"{{{_W}}}pPr")
+                boundary_p.insert(0, _pPr)
+            _sp = _pPr.find(f"{{{_W}}}spacing")
+            if _sp is None:
+                _sp = etree.SubElement(_pPr, f"{{{_W}}}spacing")
+            _sp.set(f"{{{_W}}}line", "20")
+            _sp.set(f"{{{_W}}}lineRule", "exact")
+            _sp.set(f"{{{_W}}}before", "0")
+            _sp.set(f"{{{_W}}}after", "0")
+
+    # Build the two-column table.
+    tbl = etree.Element(f"{{{_W}}}tbl")
+
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    # In native w:cols layout the inter-column space (col_space) is EXTERNAL to
+    # both columns — it sits in the gap between them and is NOT part of either
+    # column's text area.  Do NOT add col_space as a cell right margin: that
+    # would reduce the left cell content area from left_w to (left_w - col_space),
+    # causing paragraphs with ind-right values (icon gaps) and ind-left values
+    # (location indent) to wrap, shifting the sidebar sections out of alignment
+    # with their floating section-heading shapes.
+    # Keeping the cell width = left_w and adding NO cell right margin preserves
+    # the original paragraph text area exactly.  The visual inter-column gap is
+    # implicit in the right-side slack between the table and the page margin.
+    tblW.set(f"{{{_W}}}w", str(left_w + right_w))
+    tblW.set(f"{{{_W}}}type", "dxa")
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+        brd.set(f"{{{_W}}}val", "none")
+    # Zero all cell margins so no extra insets are added inside any cell.
+    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        m = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+        m.set(f"{{{_W}}}w", "0")
+        m.set(f"{{{_W}}}type", "dxa")
+
+    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+    # Left cell (narrow sidebar).  Width = left_w, no cell margins: the usable
+    # text area equals left_w, matching the original native column width exactly.
+    left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
+    left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
+    left_tcW.set(f"{{{_W}}}w", str(left_w))
+    left_tcW.set(f"{{{_W}}}type", "dxa")
+    left_vAlign = etree.SubElement(left_tcPr, f"{{{_W}}}vAlign")
+    left_vAlign.set(f"{{{_W}}}val", "top")
+
+    for pm in left_col_paras:
+        _render_para(pm, left_tc, None)
+    if not left_col_paras:
+        etree.SubElement(left_tc, f"{{{_W}}}p")
+    # Floating anchors positioned relative to the page must not be re-anchored
+    # to the cell origin — force page-relative layout for all anchors in the cell.
+    _fix_anchor_layout_in_cell(left_tc)
+
+    # Right cell (main content)
+    right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
+    right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
+    right_tcW.set(f"{{{_W}}}w", str(right_w))
+    right_tcW.set(f"{{{_W}}}type", "dxa")
+    right_vAlign = etree.SubElement(right_tcPr, f"{{{_W}}}vAlign")
+    right_vAlign.set(f"{{{_W}}}val", "top")
+
+    for pm in right_col_paras:
+        _render_para(pm, right_tc, None)
+    if not right_col_paras:
+        etree.SubElement(right_tc, f"{{{_W}}}p")
+    _fix_anchor_layout_in_cell(right_tc)
+
+    if sectPr is not None:
+        sectPr.addprevious(tbl)
+    else:
+        body.append(tbl)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -561,10 +758,60 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     )
     render_items = doc.body_items if has_table_blocks else doc.all_paras
 
+    # For flat (non-table) DOCX documents, preserve embedded w:sectPr elements
+    # in header paragraphs.  In templates that use Word's native multi-column
+    # section formatting, the header-section boundary is encoded as a w:sectPr
+    # inside a paragraph's w:pPr.  Stripping it (the normal behaviour) would
+    # collapse the full-width merged header into the same column grid as the
+    # body, misplacing the name/title block into the narrow left column.
+    # Using object identity (id()) is safe: apply_tailored always forwards the
+    # original header_paras objects unchanged.
+    header_para_ids: frozenset[int] = (
+        frozenset(id(pm) for pm in doc.header_paras)
+        if not has_table_blocks and doc.header_paras
+        else frozenset()
+    )
+
+    # DOCX templates with a native two-column body (w:cols num=2): convert the
+    # column layout to a borderless table so that the left (sidebar) and right
+    # (main) columns each form independent text streams that stay in their
+    # column across page breaks.  Word's sequential w:cols flow causes sidebar
+    # content to spill into the right column and main content to jump to the
+    # wrong column after a page overflow — both are fixed by the table approach.
+    if doc.source_kind == "docx" and not has_table_blocks and doc.header_paras:
+        cols_elem = sectPr.find(f"{{{_W}}}cols") if sectPr is not None else None
+        col_elems = cols_elem.findall(f"{{{_W}}}col") if cols_elem is not None else []
+        _left_w_raw = int(col_elems[0].get(f"{{{_W}}}w", "0")) if len(col_elems) == 2 else 0
+        _right_w_raw = int(col_elems[1].get(f"{{{_W}}}w", "0")) if len(col_elems) == 2 else 0
+        # Only treat as a sidebar layout (and convert to table) when the left
+        # column is substantially narrower than the right — ratio < 0.6 covers
+        # typical sidebar templates (veeva_03: 2848/7362 ≈ 0.39) while leaving
+        # balanced two-column layouts (ratios 0.7–1.3) in normal w:cols flow.
+        _is_unequal_two_col = (
+            cols_elem is not None
+            and cols_elem.get(f"{{{_W}}}num") == "2"
+            and len(col_elems) == 2
+            and _left_w_raw > 0
+            and _right_w_raw > 0
+            and _left_w_raw < _right_w_raw * 0.6
+        )
+        if _is_unequal_two_col:
+            left_w = _left_w_raw
+            right_w = _right_w_raw
+            col_space = int(col_elems[0].get(f"{{{_W}}}space", "0"))
+            # Switch body section to single-column flow; the table provides
+            # the two-column layout instead.
+            sectPr.remove(cols_elem)
+            _render_docx_native_two_col(
+                doc, body, sectPr, left_w, right_w, col_space, header_para_ids
+            )
+            d.save(output_path)
+            return
+
     for item in render_items:
         if isinstance(item, TableBlock):
             _render_table_block(item, doc, body, sectPr)
         else:
-            _render_para(item, body, sectPr)
+            _render_para(item, body, sectPr, preserve_section_break=id(item) in header_para_ids)
 
     d.save(output_path)

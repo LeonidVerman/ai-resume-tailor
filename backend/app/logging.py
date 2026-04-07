@@ -47,7 +47,11 @@ def configure_logging(level: str = "INFO", log_dir: str = "") -> None:
         root.addHandler(file_handler)
 
     # Quieten noisy third-party loggers.
-    for _noisy in ("uvicorn.access", "httpcore", "httpx", "hpack", "python_multipart"):
+    for _noisy in (
+        "uvicorn.access", "httpcore", "httpx", "hpack", "python_multipart",
+        "botocore", "boto3", "s3transfer", "urllib3",
+        "openai._base_client",
+    ):
         logging.getLogger(_noisy).setLevel(logging.WARNING)
 
 

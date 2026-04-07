@@ -108,6 +108,7 @@ class TestGenerationServiceGenerate:
             patch("backend.app.services.generation_service.GenerationService._run_pipeline",
                   return_value=(tailor_result, 100, 200, 0.005, {})),
             patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini"),
+            patch("backend.app.services.generation_service.UsagePolicyService"),
         ):
             resp = svc.generate(user_id, request)
 
@@ -196,6 +197,7 @@ class TestGenerationServiceGenerate:
                 return_value=(tailor_result, 10, 20, None, {}),
             ) as mock_pipeline,
             patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini"),
+            patch("backend.app.services.generation_service.UsagePolicyService"),
         ):
             svc.generate(user_id, request)
 
@@ -223,6 +225,7 @@ class TestGenerationServiceGenerate:
                 return_value=(tailor_result, 10, 20, None, {}),
             ) as mock_pipeline,
             patch("tailor.config.SIMPLE_MODEL", "gpt-4o-mini"),
+            patch("backend.app.services.generation_service.UsagePolicyService"),
         ):
             svc.generate(user_id, request)
 

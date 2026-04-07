@@ -43,33 +43,33 @@ def _make_service(
     return UsagePolicyService(billing_repo=billing_repo, monthly_usage_repo=monthly_repo)
 
 
-# ── check_and_consume ──────────────────────────────────────────────────────
+# ── consume ────────────────────────────────────────────────────────────────
 
 class TestCheckAndConsume:
     def test_monthly_quota_available_passes(self):
         """Monthly quota still available → increment succeeds, no exception."""
         svc = _make_service(increment_result=True)
-        svc.check_and_consume("user-1", None)  # should not raise
+        svc.consume("user-1", None)  # should not raise
 
     def test_monthly_quota_exhausted_credits_consumed(self):
         """Monthly quota full but credits available → decrement credits, no exception."""
         svc = _make_service(increment_result=False, decrement_result=True)
         billing = _make_billing(extra_credits=3)
-        svc.check_and_consume("user-1", billing)  # should not raise
+        svc.consume("user-1", billing)  # should not raise
 
     def test_all_exhausted_raises_429(self):
         """Both quota and credits exhausted → HTTP 429."""
         svc = _make_service(increment_result=False, decrement_result=False, current_count=3)
         billing = _make_billing(extra_credits=0)
         with pytest.raises(HTTPException) as exc_info:
-            svc.check_and_consume("user-1", billing)
+            svc.consume("user-1", billing)
         assert exc_info.value.status_code == 429
 
     def test_429_has_error_code(self):
         svc = _make_service(increment_result=False, decrement_result=False, current_count=3)
         billing = _make_billing()
         with pytest.raises(HTTPException) as exc_info:
-            svc.check_and_consume("user-1", billing)
+            svc.consume("user-1", billing)
         detail = exc_info.value.detail
         assert detail["error_code"] == "QUOTA_EXCEEDED"
 
@@ -77,7 +77,7 @@ class TestCheckAndConsume:
         svc = _make_service(increment_result=False, decrement_result=False, current_count=3)
         billing = _make_billing(plan=PLAN_FREE, extra_credits=0)
         with pytest.raises(HTTPException) as exc_info:
-            svc.check_and_consume("user-1", billing)
+            svc.consume("user-1", billing)
         detail = exc_info.value.detail
         assert "monthly_used" in detail
         assert "monthly_limit" in detail
@@ -89,7 +89,7 @@ class TestCheckAndConsume:
         # At limit with no credits: should 429
         svc = _make_service(increment_result=False, decrement_result=False, current_count=3)
         with pytest.raises(HTTPException) as exc_info:
-            svc.check_and_consume("user-1", None)
+            svc.consume("user-1", None)
         assert exc_info.value.status_code == 429
 
     def test_monthly_limit_override_used(self):
@@ -100,7 +100,7 @@ class TestCheckAndConsume:
 
         svc = UsagePolicyService(billing_repo=billing_repo, monthly_usage_repo=monthly_repo)
         billing = _make_billing(plan=PLAN_FREE, monthly_limit_override=10)
-        svc.check_and_consume("user-1", billing)
+        svc.consume("user-1", billing)
 
         # Verify the limit passed to increment_atomic was 10 (override), not 3 (free default)
         call_kwargs = monthly_repo.increment_atomic.call_args
@@ -113,7 +113,7 @@ class TestCheckAndConsume:
 
         svc = UsagePolicyService(billing_repo=billing_repo, monthly_usage_repo=monthly_repo)
         billing = _make_billing(plan=PLAN_STARTER)
-        svc.check_and_consume("user-1", billing)
+        svc.consume("user-1", billing)
 
         call_kwargs = monthly_repo.increment_atomic.call_args
         limit_arg = call_kwargs[0][3] if len(call_kwargs[0]) > 3 else call_kwargs[1].get("limit")
@@ -126,7 +126,7 @@ class TestCheckAndConsume:
 
         svc = UsagePolicyService(billing_repo=billing_repo, monthly_usage_repo=monthly_repo)
         billing = _make_billing(plan=PLAN_PRO)
-        svc.check_and_consume("user-1", billing)
+        svc.consume("user-1", billing)
 
         call_kwargs = monthly_repo.increment_atomic.call_args
         limit_arg = call_kwargs[0][3] if len(call_kwargs[0]) > 3 else call_kwargs[1].get("limit")
@@ -141,7 +141,7 @@ class TestCheckAndConsume:
 
         svc = UsagePolicyService(billing_repo=billing_repo, monthly_usage_repo=monthly_repo)
         with pytest.raises(HTTPException):
-            svc.check_and_consume("user-1", None)
+            svc.consume("user-1", None)
         billing_repo.decrement_credits_atomic.assert_not_called()
 
 

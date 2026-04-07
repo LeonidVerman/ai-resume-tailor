@@ -78,7 +78,8 @@ class Settings(BaseSettings):
     stripe_price_id_pro: str = ""
     stripe_price_id_credit_pack: str = ""
 
-    # ── App base URL (used for Stripe success/cancel URL fallback) ─────────
+    # ── App base URL (used for password-reset redirect and Stripe return URLs) ─
+    # Set APP_BASE_URL in production to the public frontend domain.
     app_base_url: str = "http://localhost:3000"
 
     @property

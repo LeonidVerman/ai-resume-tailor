@@ -139,15 +139,15 @@ def generate(request: GenerationRequest, user: CurrentUserDep, db: DbDep):
     if resume is None or resume.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Structured resume not found")
 
-    # ── Quota gate ─────────────────────────────────────────────────────────
+    # ── Quota gate (check only — consume happens on success inside generate()) ─
     billing = BillingRepository(db).get_by_user_id(user.id)
     UsagePolicyService(
         billing_repo=BillingRepository(db),
         monthly_usage_repo=MonthlyUsageRepository(db),
-    ).check_and_consume(user.id, billing)
+    ).check_quota(user.id, billing)
 
     try:
-        return _service(db).generate(user.id, request)
+        return _service(db).generate(user.id, request, billing)
     except HTTPException:
         raise
     except Exception as exc:

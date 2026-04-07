@@ -19,7 +19,10 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError(null);
     try {
-      await auth.forgotPassword({ email: email.trim() });
+      await auth.forgotPassword({
+        email: email.trim(),
+        redirect_to: `${window.location.origin}/reset-password`,
+      });
       setSubmitted(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");

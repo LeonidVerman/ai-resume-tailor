@@ -23,6 +23,7 @@ from backend.app.schemas.auth import (
     AuthUserResponse,
     ForgotPasswordRequest,
     LoginRequest,
+    RefreshRequest,
     RegisterRequest,
     ResetPasswordRequest,
 )
@@ -177,12 +178,17 @@ def auth_me(user: CurrentUserDep, db: DbDep):
     except Exception:
         legal_accepted = False
 
+    from backend.app.db.repositories.billing_repository import BillingRepository
+    from backend.app.constants import PLAN_FREE
+    billing = BillingRepository(db).get_by_user_id(user.id)
+    plan_type = billing.plan_type if billing is not None else PLAN_FREE
+
     return AuthMeResponse(
         user_id=user.id,
         email=user.email,
         role=user.role,
         is_admin=(user.role == ROLE_ADMIN),
-        plan_type=user.plan_type,
+        plan_type=plan_type,
         onboarding_completed=onboarding_completed,
         legal_accepted=legal_accepted,
     )
@@ -203,7 +209,10 @@ def forgot_password(request: ForgotPasswordRequest, settings: SettingsDep):
             detail="Password reset is only available when AUTH_MODE=supabase",
         )
     from backend.app.clients.supabase_client import make_supabase_client_from_settings
-    redirect_url = f"{settings.app_base_url}/reset-password"
+    # Use the redirect URL supplied by the frontend (window.location.origin +
+    # '/reset-password') so the link works on any environment without hardcoding
+    # the domain.  Supabase validates redirect_to against its allowed-URL list.
+    redirect_url = request.redirect_to or f"{settings.app_base_url}/reset-password"
     try:
         make_supabase_client_from_settings().reset_password_request(
             request.email, redirect_url
@@ -238,6 +247,49 @@ def reset_password(request: ResetPasswordRequest, settings: SettingsDep):
             detail=str(exc) or "Invalid or expired recovery token",
         )
     logger.info("Password reset completed (token accepted)")
+
+
+# ── Refresh ───────────────────────────────────────────────────────────────
+
+@router.post("/refresh", response_model=AuthLoginResponse)
+def refresh(request: RefreshRequest, db: DbDep, settings: SettingsDep):
+    """Exchange a refresh token for a new session."""
+    if settings.auth_mode != "supabase":
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Token refresh is only available when AUTH_MODE=supabase",
+        )
+
+    from backend.app.clients.supabase_client import make_supabase_client_from_settings
+    from backend.app.db.repositories.user_repository import UserRepository
+    from backend.app.services.auth_service import AuthService
+
+    supabase = make_supabase_client_from_settings()
+    try:
+        response = supabase.refresh_session(request.refresh_token)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
+
+    if response.user is None or response.session is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
+
+    auth_service = AuthService(UserRepository(db))
+    user = auth_service.get_or_create_user(
+        email=response.user.email,
+        supabase_user_id=response.user.id,
+    )
+    db.commit()
+
+    return AuthLoginResponse(
+        user=_user_response(user),
+        session=_session_response(response.session),
+    )
 
 
 # ── Status ────────────────────────────────────────────────────────────────

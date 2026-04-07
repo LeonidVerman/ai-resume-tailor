@@ -7,6 +7,7 @@ import {
   clearStoredToken,
   getStoredToken,
   getStoredUserId,
+  setStoredRefreshToken,
   setStoredToken,
   setStoredUserId,
 } from "@/lib/auth";
@@ -58,6 +59,7 @@ export function useAuth() {
       try {
         const result = await auth.login({ email, password });
         setStoredToken(result.session.access_token);
+        setStoredRefreshToken(result.session.refresh_token);
         const me = await auth.me();
         setState({ user: me, loading: false, error: null });
         router.push("/dashboard");
@@ -98,6 +100,7 @@ export function useAuth() {
       try {
         const result = await auth.register({ email, password });
         setStoredToken(result.session.access_token);
+        setStoredRefreshToken(result.session.refresh_token);
         const me = await auth.me();
         setState({ user: me, loading: false, error: null });
         // New users always need to accept legal docs before using the app.

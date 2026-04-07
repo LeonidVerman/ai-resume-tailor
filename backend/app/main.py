@@ -21,7 +21,7 @@ from backend.app.logging import configure_logging, get_logger
 
 settings = get_settings()
 configure_logging(
-    level="DEBUG" if settings.is_development else "INFO",
+    level="INFO",
     log_dir=settings.log_dir,
 )
 logger = get_logger(__name__)

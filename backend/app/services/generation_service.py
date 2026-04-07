@@ -24,13 +24,16 @@ from datetime import datetime, timezone
 
 from backend.app.db.models.generation_run import GenerationRun
 from backend.app.db.repositories.admin_config_repository import AdminConfigRepository
+from backend.app.db.repositories.billing_repository import BillingRepository
 from backend.app.db.repositories.candidate_profile_repository import CandidateProfileRepository
 from backend.app.db.repositories.generation_run_repository import GenerationRunRepository
 from backend.app.db.repositories.job_description_repository import JobDescriptionRepository
+from backend.app.db.repositories.monthly_usage_repository import MonthlyUsageRepository
 from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
 from backend.app.db.repositories.tailored_document_repository import TailoredDocumentRepository
 from backend.app.schemas.generation import GenerationRequest, GenerationResponse
 from backend.app.services.storage_service import StorageService
+from backend.app.services.usage_policy_service import UsagePolicyService
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +71,7 @@ class GenerationService:
         self._storage_service = storage_service
 
     def generate(
-        self, user_id: str, request: GenerationRequest
+        self, user_id: str, request: GenerationRequest, billing=None
     ) -> GenerationResponse:
         """
         Run the tailoring pipeline and persist the results.
@@ -152,46 +155,77 @@ class GenerationService:
             storage_service=self._storage_service,
         )
 
-        # ── Persist tailored document ──────────────────────────────────────
-        template_original_filename = (resume.resume_jsonb or {}).get("original_filename", "")
-        tailored_doc = self._doc_repo.create(
-            user_id=user_id,
-            generation_run_id=run.id,
-            company_name=meta.get("company", ""),
-            role_title=meta.get("job_title", ""),
-            resume_jsonb={
-                "text": result.resume,
-                "template_original_filename": template_original_filename,
-                "diff": (debug_meta.get("diff") or {}).get("resume") or [],
-            } if result.resume else None,
-            cover_letter_jsonb={"text": result.cover_letter} if result.cover_letter else None,
-        )
+        try:
+            # ── Persist tailored document ──────────────────────────────────
+            # Strip null bytes (\u0000) which PostgreSQL rejects in text/JSONB fields.
+            resume_text = result.resume.replace("\x00", "") if result.resume else None
+            cover_letter_text = result.cover_letter.replace("\x00", "") if result.cover_letter else None
 
-        # ── Render and upload artifacts ────────────────────────────────────
-        self._render_and_upload(
-            user_id=user_id,
-            run_id=str(run.id),
-            tailored_doc=tailored_doc,
-            resume=resume,
-            result=result,
-        )
+            template_original_filename = (resume.resume_jsonb or {}).get("original_filename", "")
+            tailored_doc = self._doc_repo.create(
+                user_id=user_id,
+                generation_run_id=run.id,
+                company_name=meta.get("company", ""),
+                role_title=meta.get("job_title", ""),
+                resume_jsonb={
+                    "text": resume_text,
+                    "template_original_filename": template_original_filename,
+                    "diff": (debug_meta.get("diff") or {}).get("resume") or [],
+                } if resume_text else None,
+                cover_letter_jsonb={"text": cover_letter_text} if cover_letter_text else None,
+            )
 
-        # ── Finalize run record ────────────────────────────────────────────
-        self._run_repo.update(
-            run,
-            status="succeeded",
-            token_input=token_input,
-            token_output=token_output,
-            cost_estimate=cost,
-            completed_at=datetime.now(tz=timezone.utc),
-        )
-        logger.info(
-            "Generation run finished run_id=%s status=succeeded user_id=%s jd_id=%s "
-            "resume_id=%s company=%s title=%s tokens_in=%s tokens_out=%s",
-            run.id, user_id, jd.id, resume.id,
-            meta.get("company", ""), meta.get("job_title", ""),
-            token_input, token_output,
-        )
+            # ── Render and upload artifacts ────────────────────────────────
+            self._render_and_upload(
+                user_id=user_id,
+                run_id=str(run.id),
+                tailored_doc=tailored_doc,
+                resume=resume,
+                result=result,
+            )
+
+            # ── Consume quota slot (only on full success) ──────────────────
+            # check_quota() was called earlier at the API layer for a fast
+            # pre-flight rejection; the actual counter increment happens here
+            # so that pipeline failures (post-processing, DB errors, etc.)
+            # do not consume a generation slot.
+            UsagePolicyService(
+                billing_repo=BillingRepository(self._run_repo._db),
+                monthly_usage_repo=MonthlyUsageRepository(self._run_repo._db),
+            ).consume(user_id, billing)
+
+            # ── Finalize run record ────────────────────────────────────────
+            self._run_repo.update(
+                run,
+                status="succeeded",
+                token_input=token_input,
+                token_output=token_output,
+                cost_estimate=cost,
+                completed_at=datetime.now(tz=timezone.utc),
+            )
+            logger.info(
+                "Generation run finished run_id=%s status=succeeded user_id=%s jd_id=%s "
+                "resume_id=%s company=%s title=%s tokens_in=%s tokens_out=%s",
+                run.id, user_id, jd.id, resume.id,
+                meta.get("company", ""), meta.get("job_title", ""),
+                token_input, token_output,
+            )
+        except Exception as exc:
+            logger.error(
+                "Generation run finished run_id=%s status=failed (post-pipeline) user_id=%s "
+                "jd_id=%s resume_id=%s company=%s title=%s error=%s",
+                run.id, user_id, jd.id, resume.id,
+                meta.get("company", ""), meta.get("job_title", ""), exc,
+                exc_info=True,
+            )
+            with contextlib.suppress(Exception):
+                self._run_repo.update(
+                    run,
+                    status="failed",
+                    error_message=str(exc)[:2000],
+                    completed_at=datetime.now(tz=timezone.utc),
+                )
+            raise
 
         return GenerationResponse(
             run_id=run.id,

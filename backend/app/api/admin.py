@@ -78,6 +78,45 @@ def _eval_service(db) -> EvaluationService:
     )
 
 
+def _slugify(text: str) -> str:
+    """Replace whitespace with underscores and strip non-alphanumeric/non-underscore chars."""
+    text = re.sub(r"\s+", "_", text.strip())
+    return re.sub(r"[^\w]", "", text) or "Unknown"
+
+
+def _build_run_filename(run, db) -> str:
+    """
+    Build a rich download filename for a generation-run debug JSON.
+
+    Format: FirstName_LastName-Company-Position-RunID-yyyyMMdd-HHmmss.json
+    Example: Leonid_Verman-Boam_AI-Technical_Product_Lead-68-20260318-065752.json
+    """
+    # Candidate name from profile JSONB
+    name = "Unknown"
+    profile = CandidateProfileRepository(db).get_by_user_id(run.user_id)
+    if profile:
+        candidate = (profile.profile_jsonb or {}).get("candidate") or {}
+        raw_name = (candidate.get("name") or "").strip()
+        if raw_name:
+            parts = raw_name.split()
+            first = _slugify(parts[0])
+            last = _slugify(parts[-1]) if len(parts) >= 2 else first
+            name = f"{first}_{last}"
+
+    # Company and role from first tailored document
+    company = "Unknown"
+    position = "Unknown"
+    if run.tailored_documents:
+        doc = run.tailored_documents[0]
+        if doc.company_name:
+            company = _slugify(doc.company_name)
+        if doc.role_title:
+            position = _slugify(doc.role_title)
+
+    timestamp = run.started_at.strftime("%Y%m%d-%H%M%S")
+    return f"{name}-{company}-{position}-{run.id}-{timestamp}.json"
+
+
 @router.post("/evaluate-run", response_model=EvaluationResponse, status_code=201)
 def evaluate_run(request: EvaluationRequest, _admin: AdminDep, db: DbDep):
     """
@@ -485,7 +524,7 @@ def download_run_data(
     for run in runs:
         try:
             data = storage.get_debug_json_bytes(run.user_id, str(run.id))
-            files.append((f"run-{run.id}.json", data))
+            files.append((_build_run_filename(run, db), data))
         except Exception:
             # Skip runs that have no debug file (pre-feature or failed upload)
             continue
@@ -530,10 +569,11 @@ def download_run_data_by_id(run_id: str, _admin: AdminDep, db: DbDep):
             detail=f"No debug file found for run {run_id}.",
         )
 
+    filename = _build_run_filename(run, db)
     return Response(
         content=data,
         media_type="application/json",
-        headers={"Content-Disposition": f'attachment; filename="run-{run_id}.json"'},
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 

@@ -42,7 +42,7 @@ def _normalize_letter_spaced(s: str) -> str:
 
 
 _EXPERIENCE_NAMES: frozenset[str] = frozenset({
-    "experience", "work experience", "professional experience",
+    "experience", "experiences", "work experience", "professional experience",
     "employment history", "employment", "career history",
     "work history", "professional background",
 })
@@ -60,17 +60,35 @@ _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
     "educational background", "degrees",
 })
+_CERTIFICATIONS_NAMES: frozenset[str] = frozenset({
+    "certifications", "certification", "licenses", "license",
+    "certifications and training", "training and certifications",
+    "training", "courses", "professional development",
+})
+_LANGUAGES_NAMES: frozenset[str] = frozenset({
+    "languages", "language skills",
+})
+_WEBSITES_NAMES: frozenset[str] = frozenset({
+    "websites", "profiles", "social profiles", "links",
+    "portfolio", "web profiles", "online profiles",
+})
 _ALL_KNOWN: frozenset[str] = (
-    _EXPERIENCE_NAMES | _SUMMARY_NAMES | _SKILLS_NAMES | _EDUCATION_NAMES | frozenset({
-        "certifications", "certification", "licenses", "publications",
-        "projects", "volunteer", "volunteering", "awards", "honors",
-        "references", "languages", "interests", "activities",
+    _EXPERIENCE_NAMES | _SUMMARY_NAMES | _SKILLS_NAMES | _EDUCATION_NAMES
+    | _CERTIFICATIONS_NAMES | _LANGUAGES_NAMES | _WEBSITES_NAMES
+    | frozenset({
+        "publications", "projects", "volunteer", "volunteering",
+        "awards", "honors", "references", "interests", "activities",
         "leadership", "leadership experience", "additional information",
     })
 )
 
 
 def _classify(heading: str) -> str:
+    """Classify an LLM section heading to a semantic type.
+
+    Returns one of: experience | summary | skills | education |
+    certifications | languages | websites | other.
+    """
     t = heading.strip().lower()
     if t in _EXPERIENCE_NAMES:
         return "experience"
@@ -80,6 +98,12 @@ def _classify(heading: str) -> str:
         return "skills"
     if t in _EDUCATION_NAMES:
         return "education"
+    if t in _CERTIFICATIONS_NAMES:
+        return "certifications"
+    if t in _LANGUAGES_NAMES:
+        return "languages"
+    if t in _WEBSITES_NAMES:
+        return "websites"
     # Try letter-spaced form: "S U M M A R Y" → "summary"
     tn = _normalize_letter_spaced(heading)
     if tn != t:
@@ -91,6 +115,12 @@ def _classify(heading: str) -> str:
             return "skills"
         if tn in _EDUCATION_NAMES:
             return "education"
+        if tn in _CERTIFICATIONS_NAMES:
+            return "certifications"
+        if tn in _LANGUAGES_NAMES:
+            return "languages"
+        if tn in _WEBSITES_NAMES:
+            return "websites"
     return "other"
 
 

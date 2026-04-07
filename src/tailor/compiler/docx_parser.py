@@ -29,7 +29,7 @@ _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 # ---------------------------------------------------------------------------
 
 _EXPERIENCE_NAMES: frozenset[str] = frozenset({
-    "experience", "work experience", "professional experience",
+    "experience", "experiences", "work experience", "professional experience",
     "employment history", "employment", "career history",
     "work history", "professional background",
 })
@@ -47,22 +47,62 @@ _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
     "educational background", "degrees",
 })
+_CERTIFICATIONS_NAMES: frozenset[str] = frozenset({
+    "certifications", "certification", "licenses", "license",
+    "certifications and training", "training and certifications",
+    "training", "courses", "professional development",
+})
+_LANGUAGES_NAMES: frozenset[str] = frozenset({
+    "languages", "language skills",
+})
+_WEBSITES_NAMES: frozenset[str] = frozenset({
+    "websites", "profiles", "social profiles", "links",
+    "portfolio", "web profiles", "online profiles",
+})
 
 _ALL_HEADING_NAMES: frozenset[str] = (
     _EXPERIENCE_NAMES | _SUMMARY_NAMES | _SKILLS_NAMES | _EDUCATION_NAMES
+    | _CERTIFICATIONS_NAMES | _LANGUAGES_NAMES | _WEBSITES_NAMES
     | frozenset({
-        "projects", "certifications", "certification", "publications",
-        "awards", "honors", "languages", "references", "activities",
+        "projects", "publications",
+        "awards", "honors", "references", "activities",
         "volunteer", "volunteering", "leadership", "interests",
         "additional information",
     })
 )
+
+# D: keyword set for noncanonical skills-like section headings.
+# Applied as a word-level fallback after all exact-set checks fail.
+# Covers headings like "Core Technologies", "Key Proficiencies",
+# "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS", etc.
+_SKILLS_LIKE_WORDS: frozenset[str] = frozenset({
+    "skill", "technical", "technologies", "technology",
+    "keywords", "competencies", "competency",
+    "expertise", "proficiencies", "proficiency",
+})
+
+# E: keyword set for noncanonical websites/portfolio headings.
+# Applied as a word-level fallback so compound headings like
+# "Websites, Portfolios, Profiles" are classified as "websites".
+_WEBSITES_LIKE_WORDS: frozenset[str] = frozenset({
+    "website", "websites", "portfolio", "portfolios",
+    "profile", "profiles", "social", "links", "online",
+})
 
 _HEADING_STYLE_RE = re.compile(r"^heading\s*\d", re.IGNORECASE)
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
 
 def _classify_section(heading_text: str) -> str:
+    """Classify a section heading into a semantic type.
+
+    Returns one of: experience | summary | skills | education |
+    certifications | languages | websites | other.
+
+    Locked types (certifications, languages, websites) map to those specific
+    return values so apply_tailored can enforce write-protection without
+    requiring caller-side heading-name checks.
+    """
     t = heading_text.strip().lower()
     if t in _EXPERIENCE_NAMES:
         return "experience"
@@ -72,6 +112,21 @@ def _classify_section(heading_text: str) -> str:
         return "skills"
     if t in _EDUCATION_NAMES:
         return "education"
+    if t in _CERTIFICATIONS_NAMES:
+        return "certifications"
+    if t in _LANGUAGES_NAMES:
+        return "languages"
+    if t in _WEBSITES_NAMES:
+        return "websites"
+    # D/E: word-level fallback for noncanonical compound headings.
+    # Split on whitespace and common delimiters so headings like
+    # "Websites, Portfolios, Profiles" or "Core Technologies" match.
+    words = re.split(r"[\s/&,]+", t)
+    # E: websites check before skills — "profiles" must not fall through to "skills".
+    if any(w in _WEBSITES_LIKE_WORDS for w in words if w):
+        return "websites"
+    if any(w in _SKILLS_LIKE_WORDS for w in words if w):
+        return "skills"
     return "other"
 
 
@@ -475,12 +530,135 @@ def parse_docx(path: str) -> ResumeDocument:
         _finalise(current)
         sections.append(current)
 
+    # Approach B: consolidate consecutive 'other' sections that look like standalone
+    # job entries into a single synthetic 'experience' section.  Handles templates
+    # that title each job role as a section heading ("Software Engineer", "Software
+    # Engineer Intern") without a containing "Work Experience" / "Experience" header.
+    sections = _consolidate_job_entry_sections(sections)
+
     return ResumeDocument(
         header_paras=header_paras,
         sections=sections,
         layout=layout,
         all_paras=all_paras,
         body_items=body_items,
+    )
+
+
+# G: words that commonly appear in job/role titles.  Used by
+# _is_job_entry_section to distinguish role-titled sections (e.g.
+# "Software Engineer", "Senior Developer Intern") from company-named,
+# school-named, or personal-name sections (e.g. "Liceria & Co.",
+# "Harvard University", "John Smith").
+_JOB_TITLE_WORDS: frozenset[str] = frozenset({
+    "engineer", "developer", "programmer", "designer", "analyst",
+    "architect", "manager", "director", "lead", "senior", "junior",
+    "intern", "associate", "specialist", "consultant", "coordinator",
+    "administrator", "technician", "scientist", "researcher",
+    "officer", "executive", "head", "principal", "staff",
+})
+
+
+def _is_job_entry_section(sec: ResumeSection) -> bool:
+    """Return True when an 'other'-typed section looks like a standalone job entry.
+
+    Two conditions must hold:
+    1. The section heading contains at least one word from _JOB_TITLE_WORDS
+       (guards against merging company-name, school-name, or personal-name
+       sections that happen to contain a date and body text).
+    2. The body contains at least one role_meta paragraph (date/location line)
+       AND at least one content paragraph (bullet or paragraph).
+    """
+    heading_words = set(re.split(r'\W+', sec.title.lower()))
+    if not (heading_words & _JOB_TITLE_WORDS):
+        return False
+    has_meta = any(p.semantic == "role_meta" for p in sec.body_paras)
+    has_content = any(
+        p.semantic in ("bullet", "paragraph") and p.text.strip()
+        for p in sec.body_paras
+    )
+    return has_meta and has_content
+
+
+def _consolidate_job_entry_sections(sections: list[ResumeSection]) -> list[ResumeSection]:
+    """Merge consecutive 'other' sections that look like job entries into one experience section.
+
+    When a template omits an explicit "Experience" heading and instead headings
+    each role individually (e.g. "Software Engineer", "Software Engineer Intern"),
+    the parser produces multiple 'other' sections.  Two or more consecutive such
+    sections are consolidated into a single synthetic 'experience' section so the
+    LLM's Experience output can be matched to them via semantic-type in pass 2 of
+    _match_sections.
+    """
+    result: list[ResumeSection] = []
+    i = 0
+    while i < len(sections):
+        sec = sections[i]
+        if sec.semantic_type == "other" and _is_job_entry_section(sec):
+            j = i + 1
+            while (
+                j < len(sections)
+                and sections[j].semantic_type == "other"
+                and _is_job_entry_section(sections[j])
+            ):
+                j += 1
+            job_secs = sections[i:j]
+            if len(job_secs) >= 2:
+                result.append(_make_experience_from_job_sections(job_secs))
+                i = j
+                continue
+        result.append(sec)
+        i += 1
+    return result
+
+
+def _make_experience_from_job_sections(job_secs: list[ResumeSection]) -> ResumeSection:
+    """Build a synthetic 'experience' ResumeSection from a run of job-entry sections.
+
+    The first section's heading provides the style prototype for a synthetic
+    "Experience" heading.  Each section's heading becomes a RoleEntry.header and
+    its body paragraphs are split into meta_lines (role_meta) and bullets.
+    """
+    synthetic_heading = job_secs[0].heading.with_text("Experience")
+
+    roles: list[RoleEntry] = []
+    all_body_paras: list[ParaModel] = []
+    for sec in job_secs:
+        # Identify the company-name paragraph: the first non-empty 'paragraph'
+        # semantic para that appears before any role_meta para.  In templates
+        # where each job is a plain heading + "Company Name" + "Date" + bullets,
+        # the company name is structurally part of the meta (it identifies the
+        # employer) and should be placed before the date in meta_lines so the
+        # rendered order matches the original template (title → company → date).
+        company_para: ParaModel | None = None
+        for p in sec.body_paras:
+            if p.semantic == "role_meta":
+                break
+            if p.semantic == "paragraph" and p.text.strip():
+                company_para = p
+                break
+
+        date_meta = [p for p in sec.body_paras if p.semantic == "role_meta"]
+        meta_lines = ([company_para] if company_para else []) + date_meta
+        bullets = [
+            p for p in sec.body_paras
+            if p.semantic in ("bullet", "paragraph") and p.text.strip()
+            and p is not company_para
+        ]
+        roles.append(RoleEntry(
+            header=sec.heading,
+            meta_lines=meta_lines,
+            bullets=bullets,
+            role_id=sec.heading.text.strip(),
+        ))
+        all_body_paras.extend(sec.body_paras)
+
+    return ResumeSection(
+        title="Experience",
+        heading=synthetic_heading,
+        semantic_type="experience",
+        body_paras=all_body_paras,
+        roles=roles,
     )
 
 
