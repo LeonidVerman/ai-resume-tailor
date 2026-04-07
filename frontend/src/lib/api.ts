@@ -45,6 +45,8 @@ import type {
   StructuredResumeSummary,
   SystemStats,
   TailoredDocumentDetail,
+  UpgradePlanRequest,
+  UpgradePlanResponse,
 } from "@/types/api";
 
 const BASE_URL =
@@ -300,6 +302,11 @@ export const billing = {
   status: () => request<BillingStatus>("/billing/status"),
   createCheckout: (body: CheckoutSessionRequest) =>
     request<CheckoutSessionResponse>("/billing/create-checkout-session", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  upgradePlan: (body: UpgradePlanRequest) =>
+    request<UpgradePlanResponse>("/billing/upgrade-plan", {
       method: "POST",
       body: JSON.stringify(body),
     }),

@@ -29,6 +29,15 @@ export default function BillingPage() {
     setUpgrading(true);
     setActionError(null);
     try {
+      // Paid plan upgrading to a higher tier — modify subscription directly (with proration).
+      if (status?.plan_type === "starter" && plan === "pro") {
+        await billing.upgradePlan({ plan_type: "pro" });
+        // Reload billing status to reflect the new plan immediately.
+        const updated = await billing.status();
+        setStatus(updated);
+        return;
+      }
+      // Free plan → new subscription via Checkout redirect.
       const origin = window.location.origin;
       const result = await billing.createCheckout({
         plan_type: plan,
@@ -40,8 +49,9 @@ export default function BillingPage() {
       setActionError(
         e instanceof ApiError
           ? e.detail
-          : "Failed to create checkout session. Stripe may not be configured."
+          : "Failed to upgrade plan. Stripe may not be configured."
       );
+    } finally {
       setUpgrading(false);
     }
   }

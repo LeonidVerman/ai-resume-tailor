@@ -45,6 +45,18 @@ class CustomerPortalResponse(APIModel):
     portal_url: str
 
 
+class UpgradePlanRequest(APIModel):
+    """Request body for POST /billing/upgrade-plan."""
+    plan_type: Literal["pro"]  # Only upward upgrade supported (starter → pro)
+
+
+class UpgradePlanResponse(APIModel):
+    """Response from POST /billing/upgrade-plan."""
+    ok: bool
+    plan_type: str
+    message: str
+
+
 class GrantCreditsRequest(APIModel):
     """Request body for POST /admin/billing/grant-credits."""
     user_id: str

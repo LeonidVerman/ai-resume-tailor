@@ -167,49 +167,67 @@ export function BillingStatusCard({
         </CardBody>
       </Card>
 
-      {/* Upgrade options — only shown on free plan */}
-      {status.plan_type === "free" && (
-        <div className="grid grid-cols-2 gap-3">
-          {(["starter", "pro"] as const).map((plan) => (
-            <Card key={plan} className="relative">
-              {plan === "starter" && (
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                  <Badge variant="info">Most popular</Badge>
-                </div>
-              )}
-              <CardBody className="space-y-3 py-5">
-                <div>
-                  <p className="font-semibold text-gray-900 capitalize">{plan}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-0.5">
-                    {PLAN_PRICES[plan]}
-                  </p>
-                </div>
-                <ul className="space-y-1.5 text-sm text-gray-600">
-                  {plan === "starter" ? (
-                    <>
-                      <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-500" />40 generations/mo</li>
-                      <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-500" />DOCX exports</li>
-                      <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-500" />Email support</li>
-                    </>
-                  ) : (
-                    <>
-                      <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-500" />200 generations/mo</li>
-                      <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-500" />PDF + DOCX exports</li>
-                      <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-500" />Priority support</li>
-                    </>
+      {/* Upgrade options */}
+      {status.plan_type !== "pro" && (
+        <div className={status.plan_type === "free" ? "grid grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
+          {(["starter", "pro"] as const)
+            .filter((plan) => {
+              if (status.plan_type === "free") return true;       // free → show both
+              if (status.plan_type === "starter") return plan === "pro"; // starter → show only pro
+              return false;
+            })
+            .map((plan) => (
+              <Card key={plan} className="relative">
+                {plan === "starter" && status.plan_type === "free" && (
+                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
+                    <Badge variant="info">Most popular</Badge>
+                  </div>
+                )}
+                {plan === "pro" && status.plan_type === "starter" && (
+                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
+                    <Badge variant="purple">Upgrade available</Badge>
+                  </div>
+                )}
+                <CardBody className="space-y-3 py-5">
+                  <div>
+                    <p className="font-semibold text-gray-900 capitalize">{plan}</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-0.5">
+                      {PLAN_PRICES[plan]}
+                    </p>
+                  </div>
+                  <ul className="space-y-1.5 text-sm text-gray-600">
+                    {plan === "starter" ? (
+                      <>
+                        <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-500" />40 generations/mo</li>
+                        <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-500" />DOCX exports</li>
+                        <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-500" />Email support</li>
+                      </>
+                    ) : (
+                      <>
+                        <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-500" />200 generations/mo</li>
+                        <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-500" />PDF + DOCX exports</li>
+                        <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-500" />Priority support</li>
+                      </>
+                    )}
+                  </ul>
+                  <Button
+                    variant="primary"
+                    className="w-full"
+                    loading={upgrading}
+                    onClick={() => onUpgrade?.(plan)}
+                  >
+                    {status.plan_type === "starter" && plan === "pro"
+                      ? "Upgrade to Pro"
+                      : `Upgrade to ${plan}`}
+                  </Button>
+                  {status.plan_type === "starter" && plan === "pro" && (
+                    <p className="text-xs text-gray-500 text-center">
+                      Prorated charge for the remainder of your billing cycle.
+                    </p>
                   )}
-                </ul>
-                <Button
-                  variant="primary"
-                  className="w-full"
-                  loading={upgrading}
-                  onClick={() => onUpgrade?.(plan)}
-                >
-                  Upgrade to {plan}
-                </Button>
-              </CardBody>
-            </Card>
-          ))}
+                </CardBody>
+              </Card>
+            ))}
         </div>
       )}
     </div>

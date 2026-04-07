@@ -30,6 +30,8 @@ from backend.app.schemas.billing import (
     CheckoutSessionRequest,
     CheckoutSessionResponse,
     CustomerPortalResponse,
+    UpgradePlanRequest,
+    UpgradePlanResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -157,6 +159,78 @@ class BillingService:
         return CheckoutSessionResponse(
             checkout_url=session.checkout_url,
             session_id=session.session_id,
+        )
+
+    def upgrade_plan(
+        self, user_id: str, request: UpgradePlanRequest
+    ) -> UpgradePlanResponse:
+        """Upgrade an active paid subscription to a higher plan (e.g. starter → pro).
+
+        Calls Stripe Subscription.modify() with proration_behavior='always_invoice'
+        so the prorated net difference is charged immediately.
+        Also syncs the billing record locally so the UI reflects the change
+        without waiting for the webhook.
+
+        Raises 400 if user is not on a paid plan or already on the target plan.
+        Raises 404 if no billing record / subscription exists.
+        Raises 503 if Stripe is not configured.
+        """
+        self._require_stripe()
+
+        billing = self._repo.get_by_user_id(user_id)
+        if billing is None or not billing.stripe_customer_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No billing record found. Subscribe to a plan first.",
+            )
+
+        if billing.plan_type == request.plan_type:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Already on the {request.plan_type} plan.",
+            )
+
+        if billing.plan_type == PLAN_FREE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot upgrade directly from Free. Subscribe to a plan first.",
+            )
+
+        if not billing.stripe_subscription_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No active subscription found to upgrade.",
+            )
+
+        if billing.subscription_status not in ("active", "trialing"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Subscription is not active (status={billing.subscription_status}). "
+                       "Manage billing to resolve.",
+            )
+
+        new_price_id = self._price_id_for_plan(request.plan_type)
+
+        try:
+            updated_sub = self._stripe.upgrade_subscription(
+                subscription_id=billing.stripe_subscription_id,
+                new_price_id=new_price_id,
+            )
+        except Exception as exc:
+            logger.error("Stripe upgrade failed user=%s: %s", user_id, exc)
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Stripe upgrade failed: {exc}",
+            )
+
+        # Sync billing record immediately (webhook will also fire as safety net)
+        self._sync_subscription_to_billing(billing.stripe_customer_id, updated_sub)
+
+        logger.info("Plan upgraded user=%s -> %s", user_id, request.plan_type)
+        return UpgradePlanResponse(
+            ok=True,
+            plan_type=request.plan_type,
+            message=f"Successfully upgraded to {request.plan_type}.",
         )
 
     def create_customer_portal_session(

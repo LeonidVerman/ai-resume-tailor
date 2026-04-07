@@ -396,6 +396,16 @@ export interface CustomerPortalResponse {
   portal_url: string;
 }
 
+export interface UpgradePlanRequest {
+  plan_type: "pro";
+}
+
+export interface UpgradePlanResponse {
+  ok: boolean;
+  plan_type: string;
+  message: string;
+}
+
 // ── Evaluation ────────────────────────────────────────────────────────────
 
 export interface EvaluationScores {
