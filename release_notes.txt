@@ -1,4 +1,8 @@
-version 0.5.4.BETA - 2025-04-06
+version 0.5.5.BETA - 2026-04-07
+- Introduced Conservative, Normal and Aggressive generation modes
+- Bugfixes
+
+version 0.5.4.BETA - 2026-04-06
 - Improved layout postprocessing
 - Bugfixes
 
