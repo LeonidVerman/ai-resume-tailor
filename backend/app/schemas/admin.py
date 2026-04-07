@@ -52,6 +52,7 @@ class BenchmarkStartRequest(APIModel):
     """POST /admin/benchmark-runs request body."""
     client_id: str
     assess_model: str = "gpt-5.2"
+    generation_mode: str = "conservative"
 
 
 class BenchmarkRunSummary(APIModel):
@@ -62,6 +63,7 @@ class BenchmarkRunSummary(APIModel):
     positions_count: int | None
     completed_positions: int
     integrated_score: float | None
+    generation_mode: str | None = None
     created_at: datetime
     started_at: datetime | None
     completed_at: datetime | None
@@ -100,3 +102,4 @@ class BenchmarkRunDetail(BenchmarkRunSummary):
     report_dir: str | None
     weights_json: dict | None
     positions: list[BenchmarkPositionSummary]
+    # generation_mode inherited from BenchmarkRunSummary

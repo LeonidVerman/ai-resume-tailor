@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type {
   SystemStats,
   EvaluationResponse,
+  GenerationMode,
   BenchmarkRunSummary,
   BenchmarkRunDetail,
 } from "@/types/api";
@@ -64,6 +65,7 @@ export default function AdminPage() {
   // Benchmark state
   const [benchClientId, setBenchClientId] = useState("");
   const [benchAssessModel, setBenchAssessModel] = useState("gpt-5.2");
+  const [benchGenerationMode, setBenchGenerationMode] = useState<GenerationMode>("conservative");
   const [startingBenchmark, setStartingBenchmark] = useState(false);
   const [benchmarkError, setBenchmarkError] = useState<string | null>(null);
   const [benchmarkRuns, setBenchmarkRuns] = useState<BenchmarkRunSummary[]>([]);
@@ -212,7 +214,7 @@ export default function AdminPage() {
     setStartingBenchmark(true);
     setBenchmarkError(null);
     try {
-      await admin.startBenchmark(benchClientId.trim(), benchAssessModel);
+      await admin.startBenchmark(benchClientId.trim(), benchAssessModel, benchGenerationMode);
       setBenchClientId("");
       loadBenchmarkRuns();
     } catch (e) {
@@ -435,6 +437,19 @@ export default function AdminPage() {
                 ))}
               </select>
             </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-xs text-gray-500 whitespace-nowrap">Mode:</span>
+              <select
+                value={benchGenerationMode}
+                onChange={(e) => setBenchGenerationMode(e.target.value as GenerationMode)}
+                disabled={hasActiveBenchmark}
+                className="text-xs border border-gray-300 rounded-md px-2 py-1 bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+              >
+                <option value="conservative">Conservative</option>
+                <option value="normal">Normal</option>
+                <option value="aggressive">Aggressive</option>
+              </select>
+            </div>
           </div>
         </CardHeader>
         <CardBody>
@@ -506,6 +521,7 @@ export default function AdminPage() {
                     <th className="text-left px-4 py-2 font-medium text-gray-600">Run ID</th>
                     <th className="text-left px-4 py-2 font-medium text-gray-600">Client</th>
                     <th className="text-left px-4 py-2 font-medium text-gray-600">Status</th>
+                    <th className="text-left px-4 py-2 font-medium text-gray-600">Mode</th>
                     <th className="text-left px-4 py-2 font-medium text-gray-600">Started</th>
                     <th className="text-left px-4 py-2 font-medium text-gray-600">Completed</th>
                     <th className="text-left px-4 py-2 font-medium text-gray-600">Positions</th>
@@ -520,6 +536,9 @@ export default function AdminPage() {
                       <td className="px-4 py-2 font-mono text-xs text-gray-600 max-w-[120px] truncate">{r.client_id}</td>
                       <td className="px-4 py-2">
                         <BenchmarkStatusBadge status={r.status} />
+                      </td>
+                      <td className="px-4 py-2">
+                        <BenchmarkModeBadge mode={r.generation_mode} />
                       </td>
                       <td className="px-4 py-2 text-xs text-gray-600">
                         {r.started_at ? formatDateTime(r.started_at) : "—"}
@@ -666,6 +685,12 @@ export default function AdminPage() {
 }
 
 // ── Benchmark helper components ───────────────────────────────────────────
+
+function BenchmarkModeBadge({ mode }: { mode: GenerationMode | null }) {
+  if (!mode || mode === "conservative") return <span className="text-xs text-gray-400">Conservative</span>;
+  if (mode === "normal") return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Normal</span>;
+  return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">Aggressive</span>;
+}
 
 function BenchmarkStatusBadge({ status }: { status: string }) {
   const variants: Record<string, string> = {

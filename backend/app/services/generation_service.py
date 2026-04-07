@@ -105,6 +105,8 @@ class GenerationService:
         meta = jd.metadata_jsonb or {}
 
         # ── Create run record ──────────────────────────────────────────────
+        generation_mode = (request.generation_mode or "conservative") if hasattr(request, "generation_mode") else "conservative"
+
         run = self._run_repo.create(
             user_id=user_id,
             job_description_id=jd.id,
@@ -112,6 +114,7 @@ class GenerationService:
             status="running",
             model_name=simple_model,
             prompt_version=_PROMPT_VERSION,
+            generation_mode=generation_mode,
             started_at=datetime.now(tz=timezone.utc),
         )
         logger.info(
@@ -128,6 +131,7 @@ class GenerationService:
                 candidate_profile_text=candidate_profile_text,
                 candidate_layer=candidate_layer,
                 simple_model=simple_model,
+                generation_mode=generation_mode,
             )
         except Exception as exc:
             logger.error(
@@ -336,6 +340,7 @@ class GenerationService:
         candidate_profile_text: str | None = None,
         candidate_layer: str | None = None,
         simple_model: str | None = None,
+        generation_mode: str | None = None,
     ):
         """Call single-pass tailor_documents().
 
@@ -361,6 +366,7 @@ class GenerationService:
                 job, resume_template, cover_template,
                 candidate_profile=candidate_profile_text,
                 candidate_layer=candidate_layer,
+                generation_mode=generation_mode,
             )
 
         sections = diff_resume(resume_template, result.resume) if result.resume else {}

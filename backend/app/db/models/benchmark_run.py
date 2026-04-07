@@ -54,6 +54,7 @@ class BenchmarkRun(Base, TimestampMixin):
     # Generation config captured at run time
     simple_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
     assess_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    generation_mode: Mapped[str | None] = mapped_column(String(32), nullable=True)  # conservative | normal | aggressive
 
     # Error tracking
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)

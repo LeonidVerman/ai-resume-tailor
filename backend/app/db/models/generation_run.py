@@ -36,6 +36,7 @@ class GenerationRun(Base):
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")  # pending | running | succeeded | failed
     model_name: Mapped[str] = mapped_column(String(128), nullable=False, default="")
     prompt_version: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    generation_mode: Mapped[str | None] = mapped_column(String(32), nullable=True)  # conservative | normal | aggressive
 
     # Snapshot / payload
     input_snapshot_jsonb: Mapped[dict | None] = mapped_column(JSONB, nullable=True)

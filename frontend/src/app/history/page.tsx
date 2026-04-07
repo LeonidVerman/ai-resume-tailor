@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { ResumeDiffModal } from "@/components/generation/ResumeDiffModal";
 import { generations, documents } from "@/lib/api";
-import type { GenerationRunSummary, TailoredDocumentDetail } from "@/types/api";
+import type { GenerationRunSummary, GenerationMode, TailoredDocumentDetail } from "@/types/api";
 import { formatDateTime } from "@/lib/utils";
 
 const STATUS_ICON = {
@@ -58,6 +58,16 @@ function RunIdBadge({ id }: { id: number }) {
       {copied ? "✓ copied" : `#${id}`}
     </button>
   );
+}
+
+function ModeBadge({ mode }: { mode: GenerationMode }) {
+  if (mode === "normal") {
+    return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Normal</span>;
+  }
+  if (mode === "aggressive") {
+    return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">Aggressive</span>;
+  }
+  return null; // conservative is the default — no badge
 }
 
 // Cache of fetched TailoredDocumentDetail keyed by document id.
@@ -211,6 +221,7 @@ export default function HistoryPage() {
                         <Badge variant={STATUS_VARIANT[run.status] ?? "default"}>
                           {run.status}
                         </Badge>
+                        <ModeBadge mode={run.generation_mode} />
                       </div>
                       <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
