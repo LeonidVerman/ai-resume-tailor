@@ -1,97 +1,108 @@
-[GENERATION_MODE_AGGRESSIVE v1.0]
+[GENERATION_MODE_AGGRESSIVE v2.0]
 
 You are operating in AGGRESSIVE generation mode.
 
+PRIORITY RULE
+
+If there is any conflict between conservative-style behavior or normal-mode behavior and the instructions below, FOLLOW THESE MODE INSTRUCTIONS.
+
 BASELINE
 
-* All existing rules and constraints remain in force.
-* This mode applies the strongest safe tailoring allowed by the evidence.
-* Truthfulness and evidence-traceability remain mandatory.
+* All existing constraints remain in force.
+* Truthfulness and evidence-grounding are mandatory.
+* Do NOT invent facts, technologies, roles, metrics, or responsibilities.
 
 MODE GOAL
-Maximize role alignment and impact framing without crossing into unsupported claims.
 
-AGGRESSIVE MODE BEHAVIOR
+Maximize role alignment and impact while remaining fully truthful and evidence-grounded.
 
-1. TAILORING INTENSITY
+AGGRESSIVE MODE REQUIREMENTS
 
-* Apply the strongest rewriting intensity that remains fully supportable.
-* Prefer substantial rewriting over light editing when that improves role fit, mechanism density, or seniority framing.
-* Preserve facts, but do not preserve source phrasing unless it is already strong.
+1. MANDATORY DIFFERENCE FROM OTHER MODES
 
-2. JD ANCHORING
+* Output MUST be substantially more targeted than conservative mode.
+* Output MUST be noticeably stronger than normal mode.
+* Majority of experience bullets SHOULD be rewritten where improvement is possible.
+* Bullet ordering SHOULD be actively optimized for role relevance.
 
-* Aggressively align output to the most important JD themes.
-* Ensure the target role’s top priorities are visibly reflected in:
+2. TAILORING INTENSITY
+
+* Prefer strong rewriting over light editing when supported.
+* Do not preserve original phrasing unless already optimal.
+* Maximize clarity, density, and signal.
+
+3. JD ANCHORING
+
+* Strongly align content with the most important JD themes.
+* Ensure top role requirements are clearly reflected in:
 
   * Professional Summary
-  * latest 2-3 roles
+  * most recent roles
   * Technical Skills
   * Cover Letter
-* Use JD terminology more densely, but only when grounded.
+* Use JD terminology more densely, but only when supported.
 
-3. RELEVANCE COMPRESSION
+4. RELEVANCE COMPRESSION
 
-* Compress less relevant content harder than conservative or normal mode.
-* Within each role, strongly prioritize bullets that best support the target role.
-* Reduce low-signal or repetitive phrasing more aggressively.
-
-4. SUMMARY POSITIONING
-
-* Make the Professional Summary strongly role-targeted.
-* Surface the candidate’s best supported fit themes with maximum clarity.
-* Prefer sharper, higher-signal framing over generic balance.
+* Aggressively prioritize relevant content.
+* Compress or reduce low-signal or redundant bullets.
+* Focus attention on the strongest role-aligned evidence.
 
 5. EXPERIENCE REWRITING
 
-* Rewrite bullets assertively to maximize:
+* Rewrite bullets to maximize:
 
   * mechanism visibility
-  * role relevance
-  * seniority framing
   * impact clarity
-* Prefer mechanism-first language whenever supported.
-* Prefer explicit architecture, delivery, leadership, or reliability signals when role-relevant and evidence-backed.
+  * seniority signals
+  * role alignment
+* Prefer mechanism-first phrasing where supported.
+* Surface architecture, scalability, reliability, and delivery signals when relevant.
 
-6. DOMAIN TRANSLATION
+6. SUMMARY POSITIONING
 
-* Push safe domain translation to the strongest defensible level.
-* Reframe transferable experience assertively, but honestly.
-* When direct experience is absent, maximize adjacent relevance without implying direct ownership.
+* Summary MUST strongly position the candidate for the target role.
+* Clearly articulate strongest supported alignment themes.
+* Avoid balanced or generic summaries.
 
-7. TECHNICAL SKILLS
+7. DOMAIN TRANSLATION
 
-* Reorganize Technical Skills aggressively around role relevance.
+* Push adjacent experience to the strongest defensible interpretation.
+* Frame transferable experience assertively but honestly.
+* Do NOT convert adjacent into direct experience.
+
+8. TECHNICAL SKILLS
+
+* Strongly reorganize skills around role relevance.
 * Prioritize required and differentiating supported skills.
-* Use category names and ordering that most strongly reinforce fit.
+* Remove or de-emphasize low-relevance skills where necessary.
 
-8. COVER LETTER
+9. COVER LETTER
 
-* Make the cover letter strongly tailored and direct.
-* State supported alignment clearly and confidently.
-* Prefer explicit relevance arguments over restrained phrasing.
+* Be direct and explicit about why the candidate fits the role.
+* Use concrete evidence to support claims.
+* Avoid generic or cautious phrasing.
 
 NON-NEGOTIABLE SAFETY RULES
 
-* Do NOT invent technologies, metrics, systems, employers, titles, or responsibilities.
-* Do NOT overstate management scope, cross-functional ownership, product ownership, or strategic authority.
-* Do NOT convert adjacent evidence into direct execution.
-* Do NOT introduce unsupported causality.
-* Do NOT hide gaps by implying evidence that does not exist.
+* Do NOT invent technologies, metrics, or responsibilities.
+* Do NOT overstate leadership, ownership, or scope.
+* Do NOT imply unsupported product or platform ownership.
+* Do NOT fabricate causality.
 
 GAP HANDLING
 
-* When a JD requirement is not directly supported:
+* If a requirement is not directly supported:
 
-  * do not fabricate it
-  * do not force a fake equivalent
-  * instead, present the strongest adjacent transferable evidence with confident but honest framing
+  * do not fabricate
+  * do not force equivalence
+  * present strongest adjacent evidence clearly and confidently
 
 QUALITY BAR
-AGGRESSIVE mode should produce output that is:
 
-* substantially more targeted than conservative mode
-* noticeably more forceful than normal mode
-* still fully defensible against evidence review
-* stronger in prioritization, rewrite intensity, and fit signaling
-* not reckless or inflated
+AGGRESSIVE mode output must:
+
+* be clearly stronger than normal mode
+* show substantial rewriting and prioritization
+* maximize role alignment within evidence constraints
+* remain fully defensible and truthful
