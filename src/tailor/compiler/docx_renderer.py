@@ -575,12 +575,14 @@ def _render_docx_native_two_col(
     # Find the embedded-sectPr boundary in header_paras.
     # Paragraphs before (and including) it are full-width; those after are
     # the left-column body content.
+    has_sectPr_boundary = False
     split_after = len(doc.header_paras)  # fallback: all header_paras are left-col
     for i, pm in enumerate(doc.header_paras):
         if pm.style.xml_proto is not None:
             pPr = pm.style.xml_proto.find(f"{{{_W}}}pPr")
             if pPr is not None and pPr.find(f"{{{_W}}}sectPr") is not None:
                 split_after = i + 1
+                has_sectPr_boundary = True
                 break
 
     full_width_paras = doc.header_paras[:split_after]
@@ -596,6 +598,31 @@ def _render_docx_native_two_col(
     # sectPr (already stripped of w:cols) governs page geometry uniformly.
     for pm in full_width_paras:
         _render_para(pm, body, sectPr, preserve_section_break=False)
+
+    # The sectPr boundary paragraph is a zero-height section marker in native
+    # Word flow.  In our table layout it becomes a regular paragraph above the
+    # table and contributes ~12pt of line height, shifting all left-column
+    # content downward by ~13–14pt.  This misaligns text with the fixed-position
+    # icon/heading shapes anchored to the page.
+    # Fix: patch the boundary paragraph's spacing to use exact line-height of
+    # 20 twips (1pt) so it contributes negligible vertical space before the table.
+    # The paragraph must remain present (removing it entirely causes LibreOffice to
+    # push the table to the next page due to page-anchor interaction with the
+    # background drawing in the first left-cell paragraph).
+    if has_sectPr_boundary and sectPr is not None:
+        boundary_p = sectPr.getprevious()
+        if boundary_p is not None and boundary_p.tag == f"{{{_W}}}p":
+            _pPr = boundary_p.find(f"{{{_W}}}pPr")
+            if _pPr is None:
+                _pPr = etree.SubElement(boundary_p, f"{{{_W}}}pPr")
+                boundary_p.insert(0, _pPr)
+            _sp = _pPr.find(f"{{{_W}}}spacing")
+            if _sp is None:
+                _sp = etree.SubElement(_pPr, f"{{{_W}}}spacing")
+            _sp.set(f"{{{_W}}}line", "20")
+            _sp.set(f"{{{_W}}}lineRule", "exact")
+            _sp.set(f"{{{_W}}}before", "0")
+            _sp.set(f"{{{_W}}}after", "0")
 
     # Build the two-column table.
     tbl = etree.Element(f"{{{_W}}}tbl")
