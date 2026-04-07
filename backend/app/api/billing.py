@@ -20,6 +20,8 @@ from backend.app.schemas.billing import (
     CheckoutSessionRequest,
     CheckoutSessionResponse,
     CustomerPortalResponse,
+    UpgradePlanRequest,
+    UpgradePlanResponse,
 )
 from backend.app.services.billing_service import BillingService
 from backend.app.services.usage_policy_service import UsagePolicyService
@@ -73,6 +75,29 @@ def create_checkout_session(
         user_email=user.email,
         request=request,
     )
+
+
+@router.post(
+    "/upgrade-plan",
+    response_model=UpgradePlanResponse,
+    status_code=status.HTTP_200_OK,
+)
+def upgrade_plan(
+    request: UpgradePlanRequest,
+    user: CurrentUserDep,
+    db: DbDep,
+    settings: SettingsDep,
+):
+    """
+    Upgrade an active subscription to a higher plan (e.g. starter → pro).
+
+    Immediately modifies the Stripe subscription with proration so the user
+    is charged only the prorated difference for the remainder of the billing cycle.
+    Returns 400 if already on the target plan or on the free plan.
+    Returns 404 if no active subscription exists.
+    Returns 503 if Stripe is not configured.
+    """
+    return _billing_service(db, settings).upgrade_plan(user_id=user.id, request=request)
 
 
 @router.post(

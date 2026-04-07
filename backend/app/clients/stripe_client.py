@@ -193,6 +193,36 @@ class StripeClient:
             checkout_url=session.url,
         )
 
+    def upgrade_subscription(
+        self,
+        subscription_id: str,
+        new_price_id: str,
+    ) -> dict:
+        """Upgrade an existing subscription to a new price (e.g. Starter → Pro).
+
+        Uses proration_behavior='always_invoice' so Stripe immediately
+        calculates and charges the prorated net difference (credit for unused
+        time on the old plan, charge for remaining time on the new plan).
+
+        Returns the updated Stripe Subscription object as a dict.
+        """
+        stripe = self._stripe()
+        sub = stripe.Subscription.retrieve(subscription_id)
+        if not sub.items.data:
+            raise RuntimeError(f"Subscription {subscription_id} has no items")
+        item_id = sub.items.data[0].id
+
+        updated = stripe.Subscription.modify(
+            subscription_id,
+            items=[{"id": item_id, "price": new_price_id}],
+            proration_behavior="always_invoice",
+        )
+        logger.info(
+            "Upgraded subscription %s to price %s (proration=always_invoice)",
+            subscription_id, new_price_id,
+        )
+        return updated
+
     def create_customer_portal_session(
         self, customer_id: str, return_url: str
     ) -> str:

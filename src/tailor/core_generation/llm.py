@@ -39,12 +39,20 @@ class TailorResult:
 # Single-pass generation
 # ---------------------------------------------------------------------------
 
+def _load_generation_mode_overlay(mode: str | None) -> str:
+    """Return the mode overlay prompt text for non-conservative modes, or ''."""
+    if not mode or mode == "conservative":
+        return ""
+    return _load_prompt_optional(f"modes/mode_{mode}").strip()
+
+
 def tailor_documents(
     job: JobData,
     resume_template: str,
     cover_template: str,
     candidate_profile: str | None = None,
     candidate_layer: str | None = None,
+    generation_mode: str | None = None,
 ) -> tuple[TailorResult, list]:
     """Generate a tailored resume and cover letter in a single LLM call.
 
@@ -61,11 +69,13 @@ def tailor_documents(
         candidate_layer.strip() if candidate_layer
         else _load_prompt_optional("candidate").strip()
     )
+    mode_overlay = _load_generation_mode_overlay(generation_mode)
     developer_instructions = "\n\n".join(
         part for part in (
             _load_prompt("tailor").strip(),
             resolved_candidate,
             _load_prompt_optional("role").strip(),
+            mode_overlay,
         )
         if part
     )

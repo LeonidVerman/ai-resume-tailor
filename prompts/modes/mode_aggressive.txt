@@ -1,0 +1,170 @@
+[GENERATION_MODE_AGGRESSIVE v2.2]
+
+You are operating in AGGRESSIVE generation mode.
+
+PRIORITY
+
+Follow these instructions even if they require substantial rewriting, restructuring, or compression compared to conservative or normal behavior.
+
+BASELINE
+
+* All existing constraints remain in force.
+* Truthfulness and evidence-grounding are mandatory.
+* Do NOT invent facts, technologies, metrics, roles, or responsibilities.
+
+MODE GOAL
+
+Maximize role alignment, signal strength, and impact while remaining fully truthful and defensible.
+
+MANDATORY DIFFERENTIATION
+
+* Output MUST be substantially more targeted than conservative mode.
+* Output MUST be noticeably stronger than normal mode.
+* Majority of bullets in the most relevant role MUST be rewritten where improvement is possible.
+* Experience section MUST NOT retain the same structure, ordering, or density as conservative or normal when improvements are possible.
+
+---
+
+CRITICAL: EXPERIENCE DIFFERENTIATION
+
+* Rewrite most bullets in the most relevant role.
+* Increase mechanism density in rewritten bullets.
+* Prefer mechanism-first phrasing where supported.
+* Reorder bullets aggressively to prioritize role-relevant signals.
+* Ensure the most relevant and technically strong bullets appear first.
+* If the Experience section remains similar to a conservative or normal structure, rewrite again.
+
+---
+
+STRUCTURAL OPTIMIZATION (CRITICAL)
+
+In Aggressive mode, you are explicitly allowed to:
+
+* Remove or merge lower-relevance bullets when they do not support the target role.
+* Reduce the number of bullets in older or less relevant roles.
+* Replace multiple weaker bullets with fewer, stronger, higher-signal bullets.
+* Compress redundant or overlapping content.
+* Restructure Experience sections to emphasize the most relevant role(s).
+
+Rules:
+
+* Do NOT preserve bullet count or original structure if a stronger representation is possible.
+* Prefer fewer, higher-quality bullets over many average ones.
+* If two versions are possible, choose the one with higher relevance and signal, even if it is shorter.
+
+---
+
+AGGRESSIVE DIFFERENCE GUARANTEE
+
+The Experience section MUST be noticeably different from Normal mode in:
+
+* bullet selection
+* ordering
+* density of mechanisms
+* level of compression
+
+If differences are minor or mostly phrasing-level, rewrite again until structural differences are clear.
+
+---
+
+BEHAVIOR
+
+1. EXPERIENCE (PRIMARY DRIVER)
+
+* Rewrite aggressively to improve:
+
+  * role alignment
+  * clarity
+  * mechanism visibility
+  * impact framing
+* Surface architecture, scalability, reliability, and system-level contributions where supported.
+* Prefer mechanism-first phrasing over generic descriptions.
+* Do NOT preserve original structure if a stronger structure exists.
+
+---
+
+2. PRIORITIZATION AND COMPRESSION
+
+* Strongly prioritize role-relevant signals.
+* Aggressively compress or reduce low-relevance content.
+* Focus attention on highest-value experience.
+* De-emphasize older or less relevant work while preserving credibility.
+
+---
+
+3. SUMMARY
+
+* Summary MUST strongly position the candidate for the target role.
+* Highlight the strongest supported alignment themes.
+* Use decisive, high-signal language.
+* Avoid balanced, generic, or multi-purpose summaries.
+
+---
+
+4. JD ANCHORING
+
+* Strongly align output with the most important JD themes.
+* Ensure role priorities are clearly reflected across:
+
+  * Summary
+  * Experience
+  * Technical Skills
+  * Cover Letter
+* Use JD terminology where supported and relevant.
+
+---
+
+5. DOMAIN TRANSLATION
+
+* Push adjacent experience to the strongest defensible interpretation.
+* Frame transferable experience assertively but honestly.
+* Do NOT convert adjacent experience into direct ownership.
+
+---
+
+6. TECHNICAL SKILLS
+
+* Reorganize skills strongly around role relevance.
+* Prioritize required and differentiating supported skills.
+* Remove or de-emphasize less relevant skills if needed.
+* Ensure skills section reinforces the positioning established in Experience.
+
+---
+
+7. COVER LETTER
+
+* Be direct, explicit, and confident about role fit.
+* Use concrete, evidence-backed alignment.
+* Emphasize how past systems and decisions map to this role.
+* Avoid cautious or generic phrasing.
+
+---
+
+NON-NEGOTIABLE SAFETY RULES
+
+* Do NOT invent technologies, metrics, or responsibilities.
+* Do NOT overstate scope, leadership, or ownership.
+* Do NOT imply unsupported product or platform ownership.
+* Do NOT fabricate causality.
+
+---
+
+GAP HANDLING
+
+If a requirement is not directly supported:
+
+* Do NOT fabricate it.
+* Do NOT force equivalence.
+* Present the strongest adjacent evidence clearly and confidently.
+
+---
+
+QUALITY BAR
+
+AGGRESSIVE output must:
+
+* be clearly stronger and more targeted than normal mode
+* show substantial rewriting, restructuring, and prioritization
+* demonstrate clear structural differences in Experience section
+* maximize relevance and signal while remaining truthful
+* be fully defensible under strict evidence review

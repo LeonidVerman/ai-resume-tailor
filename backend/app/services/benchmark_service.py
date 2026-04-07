@@ -65,6 +65,7 @@ def _web_tailor_position(
     cover_template: str,
     candidate_profile_text: str | None,
     candidate_layer: str | None,
+    generation_mode: str | None = None,
 ) -> Any:
     """Run single-pass tailoring for one position using the Web generation stack.
 
@@ -75,6 +76,7 @@ def _web_tailor_position(
         job, resume_template, cover_template,
         candidate_profile=candidate_profile_text,
         candidate_layer=candidate_layer,
+        generation_mode=generation_mode,
     )
     return result
 
@@ -93,6 +95,7 @@ def _web_process_one_position(
     weights: dict[str, float],
     print_lock: threading.Lock,
     progress_callback,
+    generation_mode: str | None = None,
 ) -> dict | None:
     """Scrape → tailor (Web profile) → assess one position URL.
 
@@ -129,6 +132,7 @@ def _web_process_one_position(
             job, resume_template, cover_template,
             candidate_profile_text=profile_str,
             candidate_layer=candidate_layer,
+            generation_mode=generation_mode,
         )
     except Exception as exc:
         _print("[%d] Skipping — tailoring failed: %s", idx, exc)
@@ -190,6 +194,7 @@ def _run_benchmark_background(
     report_base_dir: str,
     positions_file: str,
     assess_model: str | None = None,
+    generation_mode: str | None = None,
 ) -> None:
     """Entry point for the FastAPI background task.
 
@@ -199,7 +204,7 @@ def _run_benchmark_background(
     factory = get_session_factory(database_url)
     db = factory()
     try:
-        _execute_benchmark(benchmark_run_id, db, report_base_dir, positions_file, assess_model=assess_model)
+        _execute_benchmark(benchmark_run_id, db, report_base_dir, positions_file, assess_model=assess_model, generation_mode=generation_mode)
         db.commit()
     except Exception:
         try:
@@ -217,6 +222,7 @@ def _execute_benchmark(
     report_base_dir: str,
     positions_file: str,
     assess_model: str | None = None,
+    generation_mode: str | None = None,
 ) -> None:
     """Main benchmark execution logic — runs in the background task."""
     from backend.app.db.repositories.benchmark_run_repository import BenchmarkRunRepository
@@ -309,6 +315,9 @@ def _execute_benchmark(
             # Each commit in background is its own transaction
             _update_progress(repo, db, run, count)
 
+        # Resolve generation_mode from parameter (passed at enqueue time) or run record
+        effective_generation_mode = generation_mode or run.generation_mode or "conservative"
+
         # Run benchmark with model override
         with _override_simple_model(simple_model):
             with ThreadPoolExecutor(max_workers=effective_workers) as executor:
@@ -321,6 +330,7 @@ def _execute_benchmark(
                         effective_assess_model, ASSESS_TEMPERATURE,
                         raw_dir, weights, print_lock,
                         _progress_callback,
+                        effective_generation_mode,
                     )
                     for i, url in enumerate(urls, 1)
                 ]
@@ -443,6 +453,7 @@ class BenchmarkService:
         report_base_dir: str,
         positions_file: str,
         assess_model: str | None = None,
+        generation_mode: str | None = None,
     ) -> Any:
         """Validate inputs, create a benchmark_run record, and enqueue the job.
 
@@ -501,6 +512,7 @@ class BenchmarkService:
             completed_positions=0,
             simple_model=cfg.simple_model,
             assess_model=assess_model,
+            generation_mode=generation_mode or "conservative",
         )
         db.commit()
 
@@ -512,6 +524,7 @@ class BenchmarkService:
             report_base_dir,
             positions_file,
             assess_model,
+            generation_mode or "conservative",
         )
 
         logger.info(

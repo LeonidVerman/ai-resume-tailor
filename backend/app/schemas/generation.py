@@ -21,6 +21,7 @@ class GenerationRequest(APIModel):
     """
     job_description_id: int
     structured_resume_id: int
+    generation_mode: Literal["conservative", "normal", "aggressive"] = "conservative"
 
 
 # ── Status / result ────────────────────────────────────────────────────────
@@ -34,6 +35,7 @@ class GenerationRunSummary(APIModel):
     status: GenerationStatus
     run_type: str
     model_name: str
+    generation_mode: str = "conservative"
     started_at: datetime
     completed_at: datetime | None = None
     cost_estimate: float | None = None
@@ -52,6 +54,7 @@ class GenerationRunDetail(APIModel):
     run_type: str
     model_name: str
     prompt_version: str
+    generation_mode: str = "conservative"
     token_input: int | None = None
     token_output: int | None = None
     cost_estimate: float | None = None

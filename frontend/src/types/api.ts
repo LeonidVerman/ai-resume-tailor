@@ -276,9 +276,12 @@ export interface JobDescriptionSummary {
 
 export type GenerationStatus = "pending" | "running" | "succeeded" | "failed";
 
+export type GenerationMode = "conservative" | "normal" | "aggressive";
+
 export interface GenerationRequest {
   job_description_id: number;
   structured_resume_id: number;
+  generation_mode?: GenerationMode;
 }
 
 export interface GenerationResponse {
@@ -293,6 +296,7 @@ export interface GenerationRunSummary {
   status: GenerationStatus;
   run_type: string;
   model_name: string;
+  generation_mode: GenerationMode;
   started_at: string;
   completed_at?: string;
   cost_estimate?: number;
@@ -392,6 +396,16 @@ export interface CustomerPortalResponse {
   portal_url: string;
 }
 
+export interface UpgradePlanRequest {
+  plan_type: "pro";
+}
+
+export interface UpgradePlanResponse {
+  ok: boolean;
+  plan_type: string;
+  message: string;
+}
+
 // ── Evaluation ────────────────────────────────────────────────────────────
 
 export interface EvaluationScores {
@@ -440,6 +454,8 @@ export type BenchmarkStatus = "queued" | "running" | "completed" | "failed";
 
 export interface BenchmarkStartRequest {
   client_id: string;
+  assess_model?: string;
+  generation_mode?: GenerationMode;
 }
 
 export interface BenchmarkRunSummary {
@@ -449,6 +465,7 @@ export interface BenchmarkRunSummary {
   positions_count: number | null;
   completed_positions: number;
   integrated_score: number | null;
+  generation_mode: GenerationMode | null;
   created_at: string;
   started_at: string | null;
   completed_at: string | null;
