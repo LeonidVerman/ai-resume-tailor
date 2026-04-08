@@ -154,7 +154,7 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
 
       {/* Resume selection */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
           <FileText className="h-4 w-4" /> Select resume
         </h3>
         {resumeList.length === 0 ? (
@@ -177,7 +177,7 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
 
       {/* JD selection */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
           <Briefcase className="h-4 w-4" /> Select job description
         </h3>
         {jdList.length === 0 ? (
@@ -232,7 +232,7 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
 
       {/* Generation mode selector */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">Generation mode</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-2">Generation mode</h3>
         <div className="grid grid-cols-3 gap-2">
           {MODE_OPTIONS.map((opt) => (
             <button
@@ -243,11 +243,11 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
                 "rounded-lg border px-3 py-2.5 text-left transition-all",
                 generationMode === opt.value
                   ? opt.value === "conservative"
-                    ? "border-gray-400 bg-gray-50 ring-2 ring-gray-200"
+                    ? "border-gray-300 bg-gray-50 ring-2 ring-gray-300/50"
                     : opt.value === "normal"
-                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
-                    : "border-orange-500 bg-orange-50 ring-2 ring-orange-200"
-                  : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                    ? "border-blue-300 bg-blue-50 ring-2 ring-blue-300/50"
+                    : "border-orange-300 bg-orange-50 ring-2 ring-orange-300/50"
+                  : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"
               )}
             >
               <span className={cn(

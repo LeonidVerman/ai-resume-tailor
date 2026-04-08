@@ -23,7 +23,7 @@ export default function GeneratePage() {
     <AppShell>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900 flex items-center gap-2">
           <Zap className="h-6 w-6 text-indigo-600" />
           Generate tailored documents
         </h1>

@@ -46,7 +46,7 @@ export default function ResumesPage() {
   return (
     <AppShell>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Resumes</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Resumes</h1>
         <p className="text-gray-500 mt-1">Upload and manage your master resumes.</p>
       </div>
 

@@ -54,7 +54,7 @@ export default function DashboardPage() {
     <AppShell>
       {/* Page header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
           Welcome back{user?.email ? `, ${user.email.split("@")[0]}` : ""}
         </h1>
         <p className="text-gray-500 mt-1">
@@ -205,7 +205,7 @@ function StatCard({
         <div className={`inline-flex h-9 w-9 rounded-lg ${bg} items-center justify-center mb-3`}>
           {icon}
         </div>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <p className="text-2xl font-bold text-gray-900 tabular-nums">{value}</p>
         <p className="text-xs text-gray-500 mt-0.5">{label}</p>
       </CardBody>
     </Card>

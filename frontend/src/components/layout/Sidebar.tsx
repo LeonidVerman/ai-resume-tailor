@@ -57,8 +57,8 @@ export function Sidebar() {
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
               isActive(href)
-                ? "bg-indigo-600 text-white"
-                : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                ? "bg-indigo-500/20 text-indigo-300"
+                : "text-gray-400 hover:bg-white/[0.07] hover:text-gray-200"
             )}
           >
             <Icon className="h-4 w-4 shrink-0" />
@@ -77,8 +77,8 @@ export function Sidebar() {
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
               isActive(href)
-                ? "bg-indigo-600 text-white"
-                : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                ? "bg-indigo-500/20 text-indigo-300"
+                : "text-gray-400 hover:bg-white/[0.07] hover:text-gray-200"
             )}
           >
             <Icon className="h-4 w-4 shrink-0" />
@@ -115,7 +115,7 @@ export function Sidebar() {
         </div>
         <button
           onClick={logout}
-          className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+          className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm text-gray-400 hover:bg-white/[0.07] hover:text-gray-200 transition-colors"
         >
           <LogOut className="h-4 w-4" />
           Sign out
