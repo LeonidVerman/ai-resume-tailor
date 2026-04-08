@@ -47,7 +47,7 @@ export function Sidebar() {
             <Wand2 className="h-5 w-5 text-indigo-400 group-hover:text-indigo-300 transition-colors shrink-0" />
             <span className="font-semibold text-white text-sm tracking-tight">CVRocket</span>
           </div>
-          <p className="text-xs text-gray-500 mt-0.5 pl-7 leading-tight">AI resume tailoring for engineers</p>
+          <p className="text-xs text-gray-500 mt-0.5 pl-7 leading-tight">AI resume tailoring for software engineers</p>
         </Link>
       </div>
 
