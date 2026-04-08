@@ -155,13 +155,13 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
       {/* Step 1: Resume selection */}
       <div>
         <div className="flex items-center gap-3 mb-3">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shrink-0">1</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white shrink-0">1</span>
           <h3 className="text-sm font-semibold text-gray-900">Select resume</h3>
         </div>
         {resumeList.length === 0 ? (
-          <p className="text-sm text-gray-400 pl-9">No resumes uploaded yet.</p>
+          <p className="text-sm text-gray-400 pl-10">No resumes uploaded yet.</p>
         ) : (
-          <div className="space-y-2 pl-9">
+          <div className="space-y-2 pl-10">
             {resumeList.map((r) => (
               <ResumeCard
                 key={r.id}
@@ -179,13 +179,13 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
       {/* Step 2: JD selection */}
       <div>
         <div className="flex items-center gap-3 mb-3">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shrink-0">2</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white shrink-0">2</span>
           <h3 className="text-sm font-semibold text-gray-900">Select job description</h3>
         </div>
         {jdList.length === 0 ? (
-          <p className="text-sm text-gray-400 pl-9">No job descriptions saved yet.</p>
+          <p className="text-sm text-gray-400 pl-10">No job descriptions saved yet.</p>
         ) : (
-          <div className="space-y-2 pl-9">
+          <div className="space-y-2 pl-10">
             {jdList.map((jd) => (
               <Card
                 key={jd.id}
@@ -193,7 +193,7 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
                 className={cn(
                   "cursor-pointer transition-all",
                   selectedJd === jd.id
-                    ? "border-indigo-200 bg-indigo-50 shadow-sm"
+                    ? "border-indigo-300 bg-indigo-50 shadow-sm"
                     : "border-gray-100 hover:border-gray-200 hover:bg-gray-50 hover:shadow-sm"
                 )}
               >
@@ -238,10 +238,10 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
       {/* Step 3: Generation mode selector */}
       <div>
         <div className="flex items-center gap-3 mb-3">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shrink-0">3</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white shrink-0">3</span>
           <h3 className="text-sm font-semibold text-gray-900">Generation mode</h3>
         </div>
-        <div className="grid grid-cols-3 gap-2 pl-9">
+        <div className="grid grid-cols-3 gap-2 pl-10">
           {MODE_OPTIONS.map((opt) => (
             <button
               key={opt.value}

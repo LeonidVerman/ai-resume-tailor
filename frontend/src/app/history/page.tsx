@@ -224,9 +224,9 @@ export default function HistoryPage() {
                         </Badge>
                         <ModeBadge mode={run.generation_mode} />
                       </div>
-                      <div className="flex items-center gap-3 mt-1 text-xs">
-                        <span className="flex items-center gap-1 text-gray-500">
-                          <Clock className="h-3 w-3" />
+                      <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
                           {formatDateTime(run.started_at)}
                         </span>
                         <RunIdBadge id={run.id} />

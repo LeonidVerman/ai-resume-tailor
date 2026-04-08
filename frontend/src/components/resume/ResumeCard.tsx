@@ -21,7 +21,7 @@ export function ResumeCard({ resume, selected, onSelect, onDelete, deleting }: R
         "transition-all",
         onSelect ? "cursor-pointer" : "",
         selected
-          ? "border-indigo-200 bg-indigo-50 shadow-sm"
+          ? "border-indigo-300 bg-indigo-50 shadow-sm"
           : onSelect ? "border-gray-100 hover:border-gray-200 hover:bg-gray-50 hover:shadow-sm" : ""
       )}
     >
