@@ -21,17 +21,17 @@ export function ResumeCard({ resume, selected, onSelect, onDelete, deleting }: R
         "transition-all",
         onSelect ? "cursor-pointer" : "",
         selected
-          ? "border-indigo-500 ring-2 ring-indigo-200"
-          : onSelect ? "hover:border-gray-300 hover:shadow" : ""
+          ? "border-indigo-400 bg-indigo-50/70 ring-2 ring-indigo-200/60 shadow-sm"
+          : onSelect ? "hover:border-gray-200 hover:bg-gray-50/60 hover:shadow-sm" : ""
       )}
     >
-      <CardBody className="flex items-center gap-3 py-3">
-        <div className="shrink-0 h-9 w-9 rounded-lg bg-indigo-50 flex items-center justify-center">
+      <CardBody className="flex items-center gap-3 py-3.5">
+        <div className={`shrink-0 h-9 w-9 rounded-lg flex items-center justify-center transition-colors ${selected ? "bg-indigo-100" : "bg-indigo-50"}`}>
           <FileText className="h-5 w-5 text-indigo-600" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-900 truncate">{resume.name}</p>
-          <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+          <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
             <Clock className="h-3 w-3" />
             {formatDate(resume.created_at)}
           </p>

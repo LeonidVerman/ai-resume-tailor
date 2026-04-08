@@ -144,11 +144,11 @@ export default function DashboardPage() {
           <CardHeader>
             <h2 className="font-semibold text-gray-900">Quick actions</h2>
           </CardHeader>
-          <CardBody className="space-y-2 py-3">
-            <ActionRow href="/generate" icon={<Zap className="h-4 w-4 text-indigo-600" />} label="Generate tailored documents" />
-            <ActionRow href="/resumes" icon={<FileText className="h-4 w-4 text-indigo-600" />} label="Upload a resume" />
-            <ActionRow href="/jobs" icon={<Briefcase className="h-4 w-4 text-indigo-600" />} label="Add a job description" />
-            <ActionRow href="/onboarding" icon={<User className="h-4 w-4 text-indigo-600" />} label="Update candidate profile" />
+          <CardBody className="space-y-1 py-3">
+            <ActionRow href="/generate" icon={<Zap className="h-4 w-4 text-indigo-600" />} label="Generate tailored documents" highlight />
+            <ActionRow href="/resumes" icon={<FileText className="h-4 w-4 text-gray-500" />} label="Upload a resume" />
+            <ActionRow href="/jobs" icon={<Briefcase className="h-4 w-4 text-gray-500" />} label="Add a job description" />
+            <ActionRow href="/onboarding" icon={<User className="h-4 w-4 text-gray-500" />} label="Update candidate profile" />
           </CardBody>
         </Card>
 
@@ -216,21 +216,31 @@ function ActionRow({
   href,
   icon,
   label,
+  highlight,
 }: {
   href: string;
   icon: React.ReactNode;
   label: string;
+  highlight?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors group"
+      className={`flex items-center gap-3 px-2 py-2 rounded-lg transition-colors group ${
+        highlight ? "bg-indigo-50 hover:bg-indigo-100" : "hover:bg-gray-50"
+      }`}
     >
-      <div className="h-7 w-7 rounded-md bg-indigo-50 flex items-center justify-center shrink-0">
+      <div className={`h-7 w-7 rounded-md flex items-center justify-center shrink-0 ${
+        highlight ? "bg-indigo-100" : "bg-gray-100"
+      }`}>
         {icon}
       </div>
-      <span className="text-sm text-gray-700 group-hover:text-gray-900">{label}</span>
-      <ArrowRight className="h-3.5 w-3.5 text-gray-400 ml-auto group-hover:text-indigo-600 transition-colors" />
+      <span className={`text-sm font-medium ${
+        highlight ? "text-indigo-700 group-hover:text-indigo-800" : "text-gray-600 group-hover:text-gray-900"
+      }`}>{label}</span>
+      <ArrowRight className={`h-3.5 w-3.5 ml-auto transition-colors ${
+        highlight ? "text-indigo-400 group-hover:text-indigo-600" : "text-gray-300 group-hover:text-gray-500"
+      }`} />
     </Link>
   );
 }
