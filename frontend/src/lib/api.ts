@@ -1,6 +1,6 @@
 // frontend/src/lib/api.ts
 //
-// Centralized API client for the AI Resume Tailor backend.
+// Centralized API client for the CVRocket backend.
 //
 // Auth: sends Authorization: Bearer <token> when a token is stored.
 //       Falls back to X-User-Id header when only a dev-bypass UUID is stored.

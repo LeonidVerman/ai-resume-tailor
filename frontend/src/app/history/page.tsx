@@ -166,7 +166,7 @@ export default function HistoryPage() {
     <AppShell>
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Generation history</h1>
-        <p className="text-gray-500 mt-1">All your previous generation runs.</p>
+        <p className="text-gray-500 mt-1">All your tailored resumes and cover letters for software engineering roles.</p>
       </div>
 
       {loading ? (

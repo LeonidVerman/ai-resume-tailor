@@ -42,9 +42,12 @@ export function Sidebar() {
     <aside className="w-56 shrink-0 flex flex-col bg-gray-950 text-gray-300 min-h-screen">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-gray-800">
-        <Link href="/dashboard" className="flex items-center gap-2 group">
-          <Wand2 className="h-5 w-5 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
-          <span className="font-semibold text-white text-sm">Resume Tailor</span>
+        <Link href="/dashboard" className="flex flex-col group">
+          <div className="flex items-center gap-2">
+            <Wand2 className="h-5 w-5 text-indigo-400 group-hover:text-indigo-300 transition-colors shrink-0" />
+            <span className="font-semibold text-white text-sm tracking-tight">CVRocket</span>
+          </div>
+          <p className="text-xs text-gray-500 mt-0.5 pl-7 leading-tight">AI resume tailoring for engineers</p>
         </Link>
       </div>
 

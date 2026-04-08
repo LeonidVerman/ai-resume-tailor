@@ -289,7 +289,7 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
           className="w-full px-5 py-3 text-base font-semibold shadow-md disabled:shadow-none"
         >
           <Zap className="h-5 w-5" />
-          {loading ? "Generating… (this takes 15–30 seconds)" : "Generate tailored documents"}
+          {loading ? "Generating… (this takes 15–30 seconds)" : "Generate tailored application materials"}
         </Button>
       </div>
     </div>

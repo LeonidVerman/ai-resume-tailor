@@ -78,14 +78,14 @@ export default function LegalAcceptPage() {
           <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-600 mb-4">
             <Wand2 className="h-6 w-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">AI Resume Tailor</h1>
+          <h1 className="text-2xl font-bold text-gray-900">CVRocket</h1>
           <p className="text-sm text-gray-500 mt-1">Please review and accept before continuing</p>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-1">Terms & Privacy</h2>
           <p className="text-sm text-gray-500 mb-6">
-            To use AI Resume Tailor, you must accept our legal documents. Please read each one
+            To use CVRocket, you must accept our legal documents. Please read each one
             before checking the boxes below.
           </p>
 

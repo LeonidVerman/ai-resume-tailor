@@ -58,7 +58,7 @@ export default function DashboardPage() {
           Welcome back{user?.email ? `, ${user.email.split("@")[0]}` : ""}
         </h1>
         <p className="text-gray-500 mt-1">
-          Generate perfectly tailored resumes and cover letters.
+          Tailor your resume and cover letter for each software engineering role.
         </p>
       </div>
 
@@ -145,7 +145,7 @@ export default function DashboardPage() {
             <h2 className="font-semibold text-gray-900">Quick actions</h2>
           </CardHeader>
           <CardBody className="space-y-1 py-3">
-            <ActionRow href="/generate" icon={<Zap className="h-4 w-4 text-indigo-600" />} label="Generate tailored documents" highlight />
+            <ActionRow href="/generate" icon={<Zap className="h-4 w-4 text-indigo-600" />} label="Generate tailored application materials" highlight />
             <ActionRow href="/resumes" icon={<FileText className="h-4 w-4 text-gray-500" />} label="Upload a resume" />
             <ActionRow href="/jobs" icon={<Briefcase className="h-4 w-4 text-gray-500" />} label="Add a job description" />
             <ActionRow href="/onboarding" icon={<User className="h-4 w-4 text-gray-500" />} label="Update candidate profile" />

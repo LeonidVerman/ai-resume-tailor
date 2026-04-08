@@ -25,10 +25,10 @@ export default function GeneratePage() {
       <div className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-gray-900 flex items-center gap-2">
           <Zap className="h-6 w-6 text-indigo-600" />
-          Generate tailored documents
+          Generate tailored application materials
         </h1>
         <p className="text-gray-500 mt-1">
-          Select your resume and a job description, then generate a tailored resume and cover letter.
+          Select your resume and a job description to generate a targeted software engineering resume and cover letter.
         </p>
       </div>
 
@@ -44,7 +44,7 @@ export default function GeneratePage() {
         <div className="col-span-2">
           <Card className="shadow-md border-gray-200">
             <CardHeader>
-              <h2 className="font-semibold text-gray-900">Generate tailored documents</h2>
+              <h2 className="font-semibold text-gray-900">Build your application package</h2>
               <p className="text-sm text-gray-500 mt-0.5">
                 Select your resume and job, choose a mode, then generate.
               </p>
