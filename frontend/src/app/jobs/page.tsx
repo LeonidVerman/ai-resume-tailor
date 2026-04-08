@@ -54,7 +54,7 @@ export default function JobsPage() {
   return (
     <AppShell>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Job Descriptions</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Job Descriptions</h1>
         <p className="text-gray-500 mt-1">Save and manage job postings for generation.</p>
       </div>
 

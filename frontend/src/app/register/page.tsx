@@ -38,7 +38,7 @@ export default function RegisterPage() {
           <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-600 mb-4">
             <Wand2 className="h-6 w-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">AI Resume Tailor</h1>
+          <h1 className="text-2xl font-bold text-gray-900">CVRocket</h1>
           <p className="text-sm text-gray-500 mt-1">Create your account</p>
         </div>
 

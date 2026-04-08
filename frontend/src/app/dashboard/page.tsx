@@ -42,7 +42,7 @@ export default function DashboardPage() {
   useEffect(() => {
     resumes.list().then(setResumeList).catch(() => []);
     jobDescriptions.list().then(setJdList).catch(() => []);
-    generations.list(5).then(setRunList).catch(() => []);
+    generations.list(500).then(setRunList).catch(() => []);
     billing.status().then(setBillingStatus).catch(() => null);
     candidateProfile.get().then(() => setHasProfile(true)).catch(() => setHasProfile(false));
   }, []);
@@ -54,11 +54,11 @@ export default function DashboardPage() {
     <AppShell>
       {/* Page header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
           Welcome back{user?.email ? `, ${user.email.split("@")[0]}` : ""}
         </h1>
         <p className="text-gray-500 mt-1">
-          Generate perfectly tailored resumes and cover letters.
+          Tailor your resume and cover letter for each software engineering role.
         </p>
       </div>
 
@@ -98,7 +98,7 @@ export default function DashboardPage() {
         <StatCard
           icon={<Zap className="h-5 w-5 text-green-600" />}
           label="Generations"
-          value={runList.length > 0 ? runList.length : 0}
+          value={runList.length}
           bg="bg-green-50"
         />
         <StatCard
@@ -139,20 +139,20 @@ export default function DashboardPage() {
       )}
 
       <div className="grid grid-cols-2 gap-6">
-        {/* Quick actions */}
-        <Card>
+        {/* Quick actions — primary card, stronger emphasis */}
+        <Card className="shadow-md border-gray-200">
           <CardHeader>
             <h2 className="font-semibold text-gray-900">Quick actions</h2>
           </CardHeader>
-          <CardBody className="space-y-2 py-3">
-            <ActionRow href="/generate" icon={<Zap className="h-4 w-4 text-indigo-600" />} label="Generate tailored documents" />
-            <ActionRow href="/resumes" icon={<FileText className="h-4 w-4 text-indigo-600" />} label="Upload a resume" />
-            <ActionRow href="/jobs" icon={<Briefcase className="h-4 w-4 text-indigo-600" />} label="Add a job description" />
-            <ActionRow href="/onboarding" icon={<User className="h-4 w-4 text-indigo-600" />} label="Update candidate profile" />
+          <CardBody className="space-y-1 py-3">
+            <ActionRow href="/generate" icon={<Zap className="h-4 w-4 text-indigo-600" />} label="Generate tailored application materials" highlight />
+            <ActionRow href="/resumes" icon={<FileText className="h-4 w-4 text-gray-500" />} label="Upload a resume" />
+            <ActionRow href="/jobs" icon={<Briefcase className="h-4 w-4 text-gray-500" />} label="Add a job description" />
+            <ActionRow href="/onboarding" icon={<User className="h-4 w-4 text-gray-500" />} label="Update candidate profile" />
           </CardBody>
         </Card>
 
-        {/* Recent runs */}
+        {/* Recent runs — secondary card */}
         <Card>
           <CardHeader className="flex items-center justify-between">
             <h2 className="font-semibold text-gray-900">Recent generations</h2>
@@ -164,12 +164,16 @@ export default function DashboardPage() {
             {runList.length === 0 ? (
               <p className="text-sm text-gray-500 py-2">No generations yet.</p>
             ) : (
-              <ul className="space-y-2">
-                {runList.slice(0, 5).map((run) => (
-                  <li key={run.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+              <ul className="divide-y divide-gray-50">
+                {runList.slice(0, 5).map((run) => (  // display only 5 most recent
+                  <li key={run.id} className="flex items-center justify-between py-2.5">
                     <div>
-                      <p className="text-sm text-gray-700 font-medium">{run.model_name}</p>
-                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <p className="text-sm text-gray-800 font-medium">
+                        {run.company_name && run.role_title
+                          ? `${run.company_name} — ${run.role_title}`
+                          : run.company_name ?? run.role_title ?? run.model_name}
+                      </p>
+                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                         <Clock className="h-3 w-3" />
                         {formatDate(run.started_at)}
                       </p>
@@ -205,7 +209,7 @@ function StatCard({
         <div className={`inline-flex h-9 w-9 rounded-lg ${bg} items-center justify-center mb-3`}>
           {icon}
         </div>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <p className="text-2xl font-bold text-gray-900 tabular-nums">{value}</p>
         <p className="text-xs text-gray-500 mt-0.5">{label}</p>
       </CardBody>
     </Card>
@@ -216,21 +220,31 @@ function ActionRow({
   href,
   icon,
   label,
+  highlight,
 }: {
   href: string;
   icon: React.ReactNode;
   label: string;
+  highlight?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors group"
+      className={`flex items-center gap-3 px-2 py-2 rounded-lg transition-colors group ${
+        highlight ? "bg-indigo-50 hover:bg-indigo-100" : "hover:bg-gray-50"
+      }`}
     >
-      <div className="h-7 w-7 rounded-md bg-indigo-50 flex items-center justify-center shrink-0">
+      <div className={`h-7 w-7 rounded-md flex items-center justify-center shrink-0 ${
+        highlight ? "bg-indigo-100" : "bg-gray-100"
+      }`}>
         {icon}
       </div>
-      <span className="text-sm text-gray-700 group-hover:text-gray-900">{label}</span>
-      <ArrowRight className="h-3.5 w-3.5 text-gray-400 ml-auto group-hover:text-indigo-600 transition-colors" />
+      <span className={`text-sm font-medium ${
+        highlight ? "text-indigo-700 group-hover:text-indigo-800" : "text-gray-600 group-hover:text-gray-900"
+      }`}>{label}</span>
+      <ArrowRight className={`h-3.5 w-3.5 ml-auto transition-colors ${
+        highlight ? "text-indigo-400 group-hover:text-indigo-600" : "text-gray-300 group-hover:text-gray-500"
+      }`} />
     </Link>
   );
 }

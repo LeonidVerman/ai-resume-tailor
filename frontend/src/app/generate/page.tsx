@@ -23,12 +23,12 @@ export default function GeneratePage() {
     <AppShell>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900 flex items-center gap-2">
           <Zap className="h-6 w-6 text-indigo-600" />
-          Generate tailored documents
+          Generate tailored application materials
         </h1>
         <p className="text-gray-500 mt-1">
-          Select your resume and a job description, then generate a tailored resume and cover letter.
+          Select your resume and a job description to generate a targeted software engineering resume and cover letter.
         </p>
       </div>
 
@@ -40,16 +40,16 @@ export default function GeneratePage() {
       )}
 
       <div className="grid grid-cols-3 gap-6">
-        {/* Main: selection + trigger */}
-        <div className="col-span-2 space-y-6">
-          <Card>
+        {/* Main workflow — primary surface, dominant weight */}
+        <div className="col-span-2">
+          <Card className="shadow-md border-gray-200">
             <CardHeader>
-              <h2 className="font-semibold text-gray-900">Select inputs</h2>
+              <h2 className="font-semibold text-gray-900">Build your application package</h2>
               <p className="text-sm text-gray-500 mt-0.5">
-                Choose which resume and job description to use.
+                Select your resume and job, choose a mode, then generate.
               </p>
             </CardHeader>
-            <CardBody>
+            <CardBody className="py-6">
               <GenerationForm
                 onGenerated={handleGenerated}
                 key={newJd?.id ?? "default"}
@@ -58,13 +58,13 @@ export default function GeneratePage() {
           </Card>
         </div>
 
-        {/* Sidebar: add JD */}
+        {/* Sidebar — secondary surface, supporting role */}
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <h2 className="font-semibold text-gray-900 text-sm">Add a job description</h2>
+          <Card className="bg-gray-50/80 border-gray-100 shadow-none">
+            <CardHeader className="border-gray-100">
+              <h2 className="text-sm font-semibold text-gray-700">Add a job description</h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Paste or scrape a new job posting to use in generation.
+                Paste or scrape a new job posting.
               </p>
             </CardHeader>
             <CardBody>
@@ -76,9 +76,9 @@ export default function GeneratePage() {
             </CardBody>
           </Card>
 
-          <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
-            <p className="font-medium mb-1">Generation time</p>
-            <p>Generation typically takes 15–30 seconds. Please keep this tab open.</p>
+          <div className="rounded-lg bg-amber-50/60 border border-amber-100 p-4 text-sm text-amber-700">
+            <p className="font-medium mb-1 text-amber-800">Generation time</p>
+            <p className="text-xs leading-relaxed">Typically 15–30 seconds. Keep this tab open.</p>
           </div>
         </div>
       </div>

@@ -291,7 +291,7 @@ export default function AdminPage() {
   return (
     <AppShell>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900 flex items-center gap-2">
           <ShieldCheck className="h-6 w-6 text-indigo-600" />
           Admin dashboard
         </h1>
@@ -688,8 +688,8 @@ export default function AdminPage() {
 
 function BenchmarkModeBadge({ mode }: { mode: GenerationMode | null }) {
   if (!mode || mode === "conservative") return <span className="text-xs text-gray-400">Conservative</span>;
-  if (mode === "normal") return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Normal</span>;
-  return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">Aggressive</span>;
+  if (mode === "normal") return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Normal</span>;
+  return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">Aggressive</span>;
 }
 
 function BenchmarkStatusBadge({ status }: { status: string }) {
@@ -912,7 +912,7 @@ function StatCard({
         <div className={`inline-flex h-9 w-9 rounded-lg ${bg} items-center justify-center mb-3`}>
           {icon}
         </div>
-        <p className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</p>
+        <p className="text-2xl font-bold text-gray-900 tabular-nums">{value.toLocaleString()}</p>
         <p className="text-xs text-gray-500 mt-0.5">{label}</p>
       </CardBody>
     </Card>

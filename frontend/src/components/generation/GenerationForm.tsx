@@ -132,7 +132,7 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Quota warning */}
       {billingStatus && (
         <div className={cn(
@@ -152,15 +152,16 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
         </div>
       )}
 
-      {/* Resume selection */}
+      {/* Step 1: Resume selection */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-          <FileText className="h-4 w-4" /> Select resume
-        </h3>
+        <div className="flex items-center gap-3 mb-3">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white shrink-0">1</span>
+          <h3 className="text-sm font-semibold text-gray-900">Select resume</h3>
+        </div>
         {resumeList.length === 0 ? (
-          <p className="text-sm text-gray-500">No resumes uploaded yet.</p>
+          <p className="text-sm text-gray-400 pl-10">No resumes uploaded yet.</p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 pl-10">
             {resumeList.map((r) => (
               <ResumeCard
                 key={r.id}
@@ -175,15 +176,16 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
         )}
       </div>
 
-      {/* JD selection */}
+      {/* Step 2: JD selection */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-          <Briefcase className="h-4 w-4" /> Select job description
-        </h3>
+        <div className="flex items-center gap-3 mb-3">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white shrink-0">2</span>
+          <h3 className="text-sm font-semibold text-gray-900">Select job description</h3>
+        </div>
         {jdList.length === 0 ? (
-          <p className="text-sm text-gray-500">No job descriptions saved yet.</p>
+          <p className="text-sm text-gray-400 pl-10">No job descriptions saved yet.</p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 pl-10">
             {jdList.map((jd) => (
               <Card
                 key={jd.id}
@@ -191,20 +193,23 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
                 className={cn(
                   "cursor-pointer transition-all",
                   selectedJd === jd.id
-                    ? "border-indigo-500 ring-2 ring-indigo-200"
-                    : "hover:border-gray-300 hover:shadow"
+                    ? "border-indigo-300 bg-indigo-50 shadow-sm"
+                    : "border-gray-100 hover:border-gray-200 hover:bg-gray-50 hover:shadow-sm"
                 )}
               >
-                <CardBody className="flex items-center gap-3 py-3">
-                  <div className="shrink-0 h-9 w-9 rounded-lg bg-amber-50 flex items-center justify-center">
-                    <Briefcase className="h-5 w-5 text-amber-600" />
+                <CardBody className="flex items-center gap-3 py-3.5">
+                  <div className={cn(
+                    "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center transition-colors",
+                    selectedJd === jd.id ? "bg-indigo-100" : "bg-amber-50"
+                  )}>
+                    <Briefcase className={cn("h-5 w-5", selectedJd === jd.id ? "text-indigo-600" : "text-amber-600")} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900">
                       {jd.job_title ?? "Untitled role"}{" "}
                       {jd.company && <span className="text-gray-500">@ {jd.company}</span>}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">{formatDate(jd.created_at)}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{formatDate(jd.created_at)}</p>
                   </div>
                   <Badge variant="default">
                     {jd.source_url ? "scraped" : "manual"}
@@ -219,7 +224,7 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDeleteJd(jd.id); }}
                     disabled={deletingJdId === jd.id}
-                    className="shrink-0 p-1 text-gray-400 hover:text-red-600 disabled:opacity-40 transition-colors"
+                    className="shrink-0 p-1 text-gray-300 hover:text-red-600 disabled:opacity-40 transition-colors"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -230,10 +235,13 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
         )}
       </div>
 
-      {/* Generation mode selector */}
+      {/* Step 3: Generation mode selector */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">Generation mode</h3>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white shrink-0">3</span>
+          <h3 className="text-sm font-semibold text-gray-900">Generation mode</h3>
+        </div>
+        <div className="grid grid-cols-3 gap-2 pl-10">
           {MODE_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -243,11 +251,11 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
                 "rounded-lg border px-3 py-2.5 text-left transition-all",
                 generationMode === opt.value
                   ? opt.value === "conservative"
-                    ? "border-gray-400 bg-gray-50 ring-2 ring-gray-200"
+                    ? "border-gray-300 bg-gray-50 ring-2 ring-gray-300/50"
                     : opt.value === "normal"
-                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
-                    : "border-orange-500 bg-orange-50 ring-2 ring-orange-200"
-                  : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                    ? "border-blue-300 bg-blue-50 ring-2 ring-blue-300/50"
+                    : "border-orange-300 bg-orange-50 ring-2 ring-orange-300/50"
+                  : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"
               )}
             >
               <span className={cn(
@@ -270,18 +278,20 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-600">✗ {error}</p>}
-
-      <Button
-        onClick={handleGenerate}
-        loading={loading}
-        disabled={!selectedResume || !selectedJd || quotaExhausted}
-        size="lg"
-        className="w-full"
-      >
-        <Zap className="h-4 w-4" />
-        {loading ? "Generating… (this takes 15–30 seconds)" : "Generate tailored documents"}
-      </Button>
+      {/* Generate action — primary CTA, visually dominant */}
+      <div className="pt-6 border-t border-gray-100">
+        {error && <p className="text-sm text-red-600 mb-4">✗ {error}</p>}
+        <Button
+          onClick={handleGenerate}
+          loading={loading}
+          disabled={!selectedResume || !selectedJd || quotaExhausted}
+          size="lg"
+          className="w-full px-5 py-3 text-base font-semibold shadow-md disabled:shadow-none"
+        >
+          <Zap className="h-5 w-5" />
+          {loading ? "Generating… (this takes 15–30 seconds)" : "Generate tailored application materials"}
+        </Button>
+      </div>
     </div>
   );
 }
