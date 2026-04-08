@@ -1,5 +1,16 @@
 # Release Notes
 
+## 0.6.0.BETA — 2026-04-08
+- Modernized UI
+
+## 0.5.5.BETA — 2026-04-07
+- Introduced Conservative, Normal and Aggressive generation modes
+- Bugfixes
+
+## 0.5.4.BETA — 2026-04-06
+- Improved layout postprocessing
+- Bugfixes
+
 ## 0.5.3.BETA — 2026-03-30
 
 ### New features
