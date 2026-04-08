@@ -28,7 +28,7 @@ export default function ProfilePage() {
       <div className="max-w-3xl mx-auto space-y-10">
         <div>
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Candidate profile</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Candidate profile</h1>
             <p className="text-gray-500 mt-1">
               Your profile is injected into every generation. Keep it accurate and complete.
             </p>

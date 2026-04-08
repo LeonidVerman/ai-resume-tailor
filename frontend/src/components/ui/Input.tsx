@@ -23,11 +23,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           className={cn(
             "w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors",
-            "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent",
+            "focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500",
             "disabled:bg-gray-50 disabled:text-gray-400",
             error
               ? "border-red-300 bg-red-50"
-              : "border-gray-300 bg-white hover:border-gray-400",
+              : "border-gray-200 bg-white hover:border-gray-300",
             className
           )}
           {...props}
@@ -61,11 +61,11 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={inputId}
           className={cn(
             "w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors resize-y min-h-[100px]",
-            "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent",
+            "focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500",
             "disabled:bg-gray-50 disabled:text-gray-400",
             error
               ? "border-red-300 bg-red-50"
-              : "border-gray-300 bg-white hover:border-gray-400",
+              : "border-gray-200 bg-white hover:border-gray-300",
             className
           )}
           {...props}

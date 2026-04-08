@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Resume Tailor",
-  description: "Generate tailored resumes and cover letters for any job",
+  title: "CVRocket — AI Resume Tailoring for Software Engineers",
+  description: "AI resume tailoring for software engineers. Generate targeted resumes and cover letters for each role.",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className="h-full antialiased bg-gray-50 text-gray-900">{children}</body>
+      <body className="h-full antialiased bg-slate-50 text-gray-900">{children}</body>
     </html>
   );
 }

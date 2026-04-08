@@ -62,10 +62,10 @@ function RunIdBadge({ id }: { id: number }) {
 
 function ModeBadge({ mode }: { mode: GenerationMode }) {
   if (mode === "normal") {
-    return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Normal</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Normal</span>;
   }
   if (mode === "aggressive") {
-    return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">Aggressive</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">Aggressive</span>;
   }
   return null; // conservative is the default — no badge
 }
@@ -165,8 +165,8 @@ export default function HistoryPage() {
   return (
     <AppShell>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Generation history</h1>
-        <p className="text-gray-500 mt-1">All your previous generation runs.</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Generation history</h1>
+        <p className="text-gray-500 mt-1">All your tailored resumes and cover letters for software engineering roles.</p>
       </div>
 
       {loading ? (
@@ -184,7 +184,8 @@ export default function HistoryPage() {
           </CardBody>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           {runs.map((run) => {
             const docId = run.tailored_document_id;
             const isExpanded = expanded === run.id;
@@ -199,8 +200,8 @@ export default function HistoryPage() {
               part === "resume" ? hasResume : hasCoverLetter;
 
             return (
-              <Card key={run.id}>
-                <CardBody className="py-4 space-y-3">
+              <div key={run.id} className="border-t border-gray-100 first:border-t-0 hover:bg-gray-50/50 transition-colors">
+                <div className="px-5 py-5 space-y-3">
                   {/* Row summary */}
                   <div className="flex items-center gap-4">
                     {/* Status icon */}
@@ -208,14 +209,14 @@ export default function HistoryPage() {
                       {STATUS_ICON[run.status] ?? STATUS_ICON.pending}
                     </div>
 
-                    {/* Info */}
+                    {/* Info — title is primary, metadata is secondary */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900 truncate">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-gray-900 truncate">
                           {run.company_name && run.role_title
-                            ? `${run.company_name} / ${run.role_title}`
+                            ? `${run.company_name} — ${run.role_title}`
                             : run.company_name ?? run.role_title ?? (
-                                <span className="font-mono">#{run.id}</span>
+                                <span className="font-mono text-gray-500">#{run.id}</span>
                               )}
                         </span>
                         <Badge variant={STATUS_VARIANT[run.status] ?? "default"}>
@@ -223,38 +224,32 @@ export default function HistoryPage() {
                         </Badge>
                         <ModeBadge mode={run.generation_mode} />
                       </div>
-                      <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
+                      <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                         <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                          <Clock className="h-3.5 w-3.5" />
                           {formatDateTime(run.started_at)}
                         </span>
                         <RunIdBadge id={run.id} />
-                        <span>{run.model_name}</span>
+                        <span className="text-gray-400">{run.model_name}</span>
                         {run.cost_estimate != null && (
-                          <span>${run.cost_estimate.toFixed(4)}</span>
+                          <span className="text-gray-400">${run.cost_estimate.toFixed(4)}</span>
                         )}
                       </div>
                     </div>
 
-                    {/* View changes */}
+                    {/* Actions — grouped on the right */}
                     {run.status === "succeeded" && docId && (
-                      <div className="shrink-0">
+                      <div className="shrink-0 flex items-center gap-1.5">
                         <button
                           onClick={() => handleViewDiff(run)}
                           disabled={diffFetchingId === docId}
-                          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors"
+                          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 transition-colors"
                         >
                           {diffFetchingId === docId
                             ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             : <GitCompare className="h-3.5 w-3.5" />}
                           View changes
                         </button>
-                      </div>
-                    )}
-
-                    {/* Expand/collapse downloads */}
-                    {run.status === "succeeded" && docId && (
-                      <div className="shrink-0">
                         <button
                           onClick={() => handleExpand(run)}
                           className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
@@ -270,7 +265,7 @@ export default function HistoryPage() {
                       <button
                         onClick={() => handleDelete(run.id)}
                         disabled={deletingId === run.id}
-                        className="p-1.5 text-gray-400 hover:text-red-600 disabled:opacity-40 transition-colors"
+                        className="p-1.5 text-gray-300 hover:text-red-500 disabled:opacity-40 transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -307,31 +302,32 @@ export default function HistoryPage() {
                       )}
                     </div>
                   )}
-                </CardBody>
-              </Card>
+                </div>
+              </div>
             );
           })}
 
-          {/* Pagination */}
-          <div className="flex justify-between items-center pt-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-            >
-              ← Previous
-            </Button>
-            <span className="text-sm text-gray-500">Page {page + 1}</span>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={runs.length < PAGE_SIZE}
-            >
-              Next →
-            </Button>
-          </div>
+        </div>
+        {/* Pagination */}
+        <div className="flex justify-between items-center pt-4">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+          >
+            ← Previous
+          </Button>
+          <span className="text-sm text-gray-500">Page {page + 1}</span>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={runs.length < PAGE_SIZE}
+          >
+            Next →
+          </Button>
+        </div>
         </div>
       )}
       {/* Diff modal */}
