@@ -21,8 +21,8 @@ export function ResumeCard({ resume, selected, onSelect, onDelete, deleting }: R
         "transition-all",
         onSelect ? "cursor-pointer" : "",
         selected
-          ? "border-indigo-400 bg-indigo-50/70 ring-2 ring-indigo-200/60 shadow-sm"
-          : onSelect ? "hover:border-gray-200 hover:bg-gray-50/60 hover:shadow-sm" : ""
+          ? "border-indigo-200 bg-indigo-50 shadow-sm"
+          : onSelect ? "border-gray-100 hover:border-gray-200 hover:bg-gray-50 hover:shadow-sm" : ""
       )}
     >
       <CardBody className="flex items-center gap-3 py-3.5">

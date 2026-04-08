@@ -139,8 +139,8 @@ export default function DashboardPage() {
       )}
 
       <div className="grid grid-cols-2 gap-6">
-        {/* Quick actions */}
-        <Card>
+        {/* Quick actions — primary card, stronger emphasis */}
+        <Card className="shadow-md border-gray-200">
           <CardHeader>
             <h2 className="font-semibold text-gray-900">Quick actions</h2>
           </CardHeader>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
           </CardBody>
         </Card>
 
-        {/* Recent runs */}
+        {/* Recent runs — secondary card */}
         <Card>
           <CardHeader className="flex items-center justify-between">
             <h2 className="font-semibold text-gray-900">Recent generations</h2>
@@ -164,12 +164,16 @@ export default function DashboardPage() {
             {runList.length === 0 ? (
               <p className="text-sm text-gray-500 py-2">No generations yet.</p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="divide-y divide-gray-50">
                 {runList.slice(0, 5).map((run) => (
-                  <li key={run.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                  <li key={run.id} className="flex items-center justify-between py-2.5">
                     <div>
-                      <p className="text-sm text-gray-700 font-medium">{run.model_name}</p>
-                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <p className="text-sm text-gray-800 font-medium">
+                        {run.company_name && run.role_title
+                          ? `${run.company_name} — ${run.role_title}`
+                          : run.company_name ?? run.role_title ?? run.model_name}
+                      </p>
+                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                         <Clock className="h-3 w-3" />
                         {formatDate(run.started_at)}
                       </p>

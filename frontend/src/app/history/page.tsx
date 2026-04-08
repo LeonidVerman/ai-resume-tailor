@@ -224,15 +224,15 @@ export default function HistoryPage() {
                         </Badge>
                         <ModeBadge mode={run.generation_mode} />
                       </div>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
-                        <span className="flex items-center gap-1">
+                      <div className="flex items-center gap-3 mt-1 text-xs">
+                        <span className="flex items-center gap-1 text-gray-500">
                           <Clock className="h-3 w-3" />
                           {formatDateTime(run.started_at)}
                         </span>
                         <RunIdBadge id={run.id} />
-                        <span className="text-gray-300">{run.model_name}</span>
+                        <span className="text-gray-400">{run.model_name}</span>
                         {run.cost_estimate != null && (
-                          <span className="text-gray-300">${run.cost_estimate.toFixed(4)}</span>
+                          <span className="text-gray-400">${run.cost_estimate.toFixed(4)}</span>
                         )}
                       </div>
                     </div>
