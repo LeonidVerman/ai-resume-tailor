@@ -42,7 +42,7 @@ export default function DashboardPage() {
   useEffect(() => {
     resumes.list().then(setResumeList).catch(() => []);
     jobDescriptions.list().then(setJdList).catch(() => []);
-    generations.list(5).then(setRunList).catch(() => []);
+    generations.list(500).then(setRunList).catch(() => []);
     billing.status().then(setBillingStatus).catch(() => null);
     candidateProfile.get().then(() => setHasProfile(true)).catch(() => setHasProfile(false));
   }, []);
@@ -98,7 +98,7 @@ export default function DashboardPage() {
         <StatCard
           icon={<Zap className="h-5 w-5 text-green-600" />}
           label="Generations"
-          value={runList.length > 0 ? runList.length : 0}
+          value={runList.length}
           bg="bg-green-50"
         />
         <StatCard
@@ -165,7 +165,7 @@ export default function DashboardPage() {
               <p className="text-sm text-gray-500 py-2">No generations yet.</p>
             ) : (
               <ul className="divide-y divide-gray-50">
-                {runList.slice(0, 5).map((run) => (
+                {runList.slice(0, 5).map((run) => (  // display only 5 most recent
                   <li key={run.id} className="flex items-center justify-between py-2.5">
                     <div>
                       <p className="text-sm text-gray-800 font-medium">
