@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/hooks/useAuth";
 import { auth } from "@/lib/api";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 
 function SessionExpiredBanner() {
   const searchParams = useSearchParams();
@@ -46,7 +47,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex flex-col bg-gray-50 px-4">
+      <div className="flex-1 flex items-center justify-center">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -126,6 +128,8 @@ export default function LoginPage() {
           </p>
         )}
       </div>
+      </div>
+      <PublicFooter />
     </div>
   );
 }

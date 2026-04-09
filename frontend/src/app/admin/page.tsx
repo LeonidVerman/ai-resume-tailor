@@ -21,6 +21,7 @@ import type {
   GenerationMode,
   BenchmarkRunSummary,
   BenchmarkRunDetail,
+  SignupCreditPolicyResponse,
 } from "@/types/api";
 import { formatDateTime } from "@/lib/utils";
 
@@ -30,6 +31,14 @@ export default function AdminPage() {
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
+
+  // Signup credit policy state
+  const [signupPolicy, setSignupPolicy] = useState<SignupCreditPolicyResponse | null>(null);
+  const [signupCreditMode, setSignupCreditMode] = useState("normal");
+  const [loadingSignupPolicy, setLoadingSignupPolicy] = useState(true);
+  const [savingSignupPolicy, setSavingSignupPolicy] = useState(false);
+  const [signupPolicySaved, setSignupPolicySaved] = useState(false);
+  const [signupPolicyError, setSignupPolicyError] = useState<string | null>(null);
 
   // Generation config state
   const [simpleModel, setSimpleModel] = useState("gpt-5.2");
@@ -115,6 +124,15 @@ export default function AdminPage() {
       })
       .finally(() => setLoadingConfig(false));
 
+    admin
+      .getSignupCreditPolicy()
+      .then((p) => {
+        setSignupPolicy(p);
+        setSignupCreditMode(p.signup_credit_mode);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingSignupPolicy(false));
+
     loadBenchmarkRuns();
   }, [user]);
 
@@ -151,6 +169,24 @@ export default function AdminPage() {
       setConfigError(e instanceof ApiError ? e.detail : "Failed to save configuration.");
     } finally {
       setSavingConfig(false);
+    }
+  }
+
+  async function handleSaveSignupPolicy(mode: string) {
+    setSavingSignupPolicy(true);
+    setSignupPolicyError(null);
+    setSignupPolicySaved(false);
+    try {
+      await admin.saveSignupCreditPolicy({ signup_credit_mode: mode });
+      const updated = await admin.getSignupCreditPolicy();
+      setSignupPolicy(updated);
+      setSignupCreditMode(updated.signup_credit_mode);
+      setSignupPolicySaved(true);
+      setTimeout(() => setSignupPolicySaved(false), 3000);
+    } catch (e) {
+      setSignupPolicyError(e instanceof ApiError ? e.detail : "Failed to save policy.");
+    } finally {
+      setSavingSignupPolicy(false);
     }
   }
 
@@ -352,6 +388,78 @@ export default function AdminPage() {
                 )}
               </div>
             </form>
+          )}
+        </CardBody>
+      </Card>
+
+      {/* Signup credit policy */}
+      <Card className="max-w-lg mb-8">
+        <CardHeader>
+          <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+            <Settings2 className="h-4 w-4 text-indigo-600" />
+            Initial signup credits
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Controls how many free generation credits newly registered users receive.
+            Changes apply only to future signups.
+          </p>
+        </CardHeader>
+        <CardBody>
+          {loadingSignupPolicy ? (
+            <Spinner label="Loading policy..." />
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                {[
+                  { value: "normal", label: "Normal", description: "3 free credits" },
+                  { value: "beta",   label: "Beta",   description: "10 free credits" },
+                ].map(({ value, label, description }) => (
+                  <label
+                    key={value}
+                    className={[
+                      "flex items-center justify-between gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-colors",
+                      signupCreditMode === value
+                        ? "border-indigo-300 bg-indigo-50"
+                        : "border-gray-100 hover:border-gray-200 hover:bg-gray-50",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="signup_credit_mode"
+                        value={value}
+                        checked={signupCreditMode === value}
+                        onChange={() => setSignupCreditMode(value)}
+                        className="accent-indigo-600"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{label}</p>
+                        <p className="text-xs text-gray-500">{description}</p>
+                      </div>
+                    </div>
+                    {signupPolicy?.signup_credit_mode === value && (
+                      <span className="text-xs text-indigo-600 font-medium">Active</span>
+                    )}
+                  </label>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => handleSaveSignupPolicy(signupCreditMode)}
+                  loading={savingSignupPolicy}
+                  disabled={signupCreditMode === signupPolicy?.signup_credit_mode}
+                >
+                  Save policy
+                </Button>
+                {signupPolicySaved && (
+                  <span className="text-sm text-green-600">✓ Saved</span>
+                )}
+                {signupPolicyError && (
+                  <span className="text-sm text-red-600">✗ {signupPolicyError}</span>
+                )}
+              </div>
+            </div>
           )}
         </CardBody>
       </Card>

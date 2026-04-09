@@ -116,6 +116,15 @@ export function Sidebar() {
           <p className="text-xs text-gray-500 truncate">{user?.email ?? "—"}</p>
           <p className="text-xs font-medium text-gray-400 capitalize">{user?.plan_type ?? "free"} plan</p>
         </div>
+        <div className="px-3 pb-1">
+          <p className="text-xs text-gray-600">Support</p>
+          <a
+            href="mailto:support@cvrocket.io"
+            className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+          >
+            support@cvrocket.io
+          </a>
+        </div>
         <button
           onClick={logout}
           className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm text-gray-500 hover:bg-white/[0.07] hover:text-gray-200 transition-colors"

@@ -6,6 +6,7 @@ import { Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { auth } from "@/lib/api";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 
 export default function ResetPasswordPage() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -62,7 +63,8 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex flex-col bg-gray-50 px-4">
+      <div className="flex-1 flex items-center justify-center">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -136,6 +138,8 @@ export default function ResetPasswordPage() {
           </p>
         )}
       </div>
+      </div>
+      <PublicFooter />
     </div>
   );
 }

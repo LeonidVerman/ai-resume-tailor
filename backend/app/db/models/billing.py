@@ -42,6 +42,16 @@ class Billing(Base, TimestampMixin):
     # One-time credit pack balance — persists across plan changes, does not expire
     extra_credits: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
+    # Signup credit grant tracking — idempotency guard + audit trail.
+    # initial_credits_granted is set True after the one-time signup grant fires.
+    # initial_credits_amount and initial_credits_mode record what was granted and
+    # under which policy mode, for auditability.
+    initial_credits_granted: Mapped[bool] = mapped_column(
+        nullable=False, default=False, server_default="false"
+    )
+    initial_credits_amount: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    initial_credits_mode: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
     # Optional per-user monthly limit override for grandfathering.
     # NULL means: use PLAN_MONTHLY_LIMITS[plan_type] from constants.
     monthly_limit_override: Mapped[int | None] = mapped_column(Integer, nullable=True)

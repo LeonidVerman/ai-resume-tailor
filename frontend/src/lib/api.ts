@@ -33,6 +33,8 @@ import type {
   EvaluationResponse,
   GenerationConfigRequest,
   GenerationConfigResponse,
+  SignupCreditPolicyRequest,
+  SignupCreditPolicyResponse,
   GenerationRequest,
   GenerationResponse,
   GenerationRunDetail,
@@ -355,6 +357,13 @@ export const admin = {
     request<GenerationConfigResponse>("/admin/generation-config"),
   saveGenerationConfig: (body: GenerationConfigRequest) =>
     request<AdminActionResponse>("/admin/generation-config", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  getSignupCreditPolicy: () =>
+    request<SignupCreditPolicyResponse>("/admin/signup-credit-policy"),
+  saveSignupCreditPolicy: (body: SignupCreditPolicyRequest) =>
+    request<AdminActionResponse>("/admin/signup-credit-policy", {
       method: "PUT",
       body: JSON.stringify(body),
     }),
