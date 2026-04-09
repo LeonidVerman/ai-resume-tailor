@@ -4,10 +4,13 @@ backend/app/db/repositories/billing_repository.py
 CRUD operations for Billing, including atomic credit operations.
 """
 
+from datetime import datetime, timezone
+
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend.app.db.models.billing import Billing
+from backend.app.db.models.stripe_checkout_purchase import StripeCheckoutPurchase
 
 
 class BillingRepository:
@@ -76,6 +79,47 @@ class BillingRepository:
         else:
             billing.extra_credits += amount
             self._db.flush()
+
+    def record_checkout_credit_grant(
+        self,
+        checkout_session_id: str,
+        user_id: str,
+        granted_credits: int,
+        event_id: str | None = None,
+        payment_intent_id: str | None = None,
+    ) -> bool:
+        """
+        Record that a credit grant was made for a Stripe checkout session.
+
+        Returns True if this is the first time this checkout session is processed
+        (credits should be granted).
+        Returns False if the checkout session was already recorded (duplicate
+        delivery — credits must NOT be granted again).
+
+        The INSERT and the subsequent add_credits() call share the same DB
+        session, so they participate in the same transaction.
+        """
+        existing = (
+            self._db.query(StripeCheckoutPurchase)
+            .filter(
+                StripeCheckoutPurchase.stripe_checkout_session_id == checkout_session_id
+            )
+            .first()
+        )
+        if existing is not None:
+            return False
+
+        purchase = StripeCheckoutPurchase(
+            stripe_checkout_session_id=checkout_session_id,
+            user_id=user_id,
+            stripe_event_id=event_id,
+            stripe_payment_intent_id=payment_intent_id,
+            granted_credits=granted_credits,
+            processed_at=datetime.now(timezone.utc),
+        )
+        self._db.add(purchase)
+        self._db.flush()
+        return True
 
     def grant_initial_signup_credits(
         self, user_id: str, amount: int, mode: str

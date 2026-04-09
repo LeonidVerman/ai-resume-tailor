@@ -118,7 +118,16 @@ async def stripe_webhook(
             )
 
     event_type = event_dict.get("type", "")
-    logger.info("Stripe webhook received: type=%s", event_type)
+    event_id = event_dict.get("id", "")
+    session_obj = event_dict.get("data", {}).get("object", {})
+    checkout_session_id = session_obj.get("id", "") if event_type == "checkout.session.completed" else ""
+    if checkout_session_id:
+        logger.info(
+            "Stripe webhook received: event_id=%s type=%s checkout_session_id=%s",
+            event_id, event_type, checkout_session_id,
+        )
+    else:
+        logger.info("Stripe webhook received: event_id=%s type=%s", event_id, event_type)
 
     if event_type not in _HANDLED_EVENTS:
         logger.debug("Unhandled Stripe event type: %s — acknowledged", event_type)

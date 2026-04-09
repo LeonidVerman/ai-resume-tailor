@@ -201,23 +201,65 @@ class TestCheckoutSessionCompleted:
         db.refresh(billing)
         assert billing.plan_type == PLAN_FREE
 
-    def test_idempotent_credit_grant(self, client, db, user):
-        """Replaying checkout.session.completed grants credits again (Stripe deduplicates)."""
+    def test_duplicate_checkout_session_does_not_grant_twice(self, client, db, user):
+        """Replaying the same checkout.session.completed must not grant credits twice."""
         billing = make_billing(db, user, plan_type=PLAN_FREE, extra_credits=0)
         db.flush()
 
-        event_payload = {
+        session_obj = {
             "id": "cs_789",
             "mode": "payment",
             "customer": "cus_x",
             "metadata": {"user_id": user.id, "pack_type": "credit_pack"},
         }
-        _post_event(client, "checkout.session.completed", event_payload)
-        _post_event(client, "checkout.session.completed", event_payload)
+        # First delivery — grants credits
+        r1 = _post_event(client, "checkout.session.completed", session_obj)
+        assert r1.status_code == 200
+
+        # Replay of the same event (same checkout session id) — must be ignored
+        r2 = _post_event(client, "checkout.session.completed", session_obj)
+        assert r2.status_code == 200
 
         db.refresh(billing)
-        # Both replays granted credits (Stripe itself prevents duplicate deliveries in prod)
+        assert billing.extra_credits == CREDIT_PACK_SIZE, (
+            "Credits must only be granted once per checkout session"
+        )
+
+    def test_different_checkout_sessions_each_grant_credits(self, client, db, user):
+        """Two distinct checkout sessions must each grant credits independently."""
+        billing = make_billing(db, user, plan_type=PLAN_FREE, extra_credits=0)
+        db.flush()
+
+        for session_id in ("cs_aaa", "cs_bbb"):
+            _post_event(
+                client,
+                "checkout.session.completed",
+                {
+                    "id": session_id,
+                    "mode": "payment",
+                    "customer": "cus_x",
+                    "metadata": {"user_id": user.id, "pack_type": "credit_pack"},
+                },
+            )
+
+        db.refresh(billing)
         assert billing.extra_credits == CREDIT_PACK_SIZE * 2
+
+    def test_duplicate_returns_200(self, client, db, user):
+        """Duplicate webhook delivery must still return 200 (Stripe expects acknowledgment)."""
+        make_billing(db, user, plan_type=PLAN_FREE, extra_credits=0)
+        db.flush()
+
+        session_obj = {
+            "id": "cs_dup_200",
+            "mode": "payment",
+            "customer": "cus_y",
+            "metadata": {"user_id": user.id, "pack_type": "credit_pack"},
+        }
+        _post_event(client, "checkout.session.completed", session_obj)
+        r2 = _post_event(client, "checkout.session.completed", session_obj)
+        assert r2.status_code == 200
+        assert r2.json() == {"received": True}
 
 
 # ── invoice.paid ───────────────────────────────────────────────────────────
