@@ -275,10 +275,30 @@ class BillingService:
             if not user_id:
                 logger.warning("checkout.session.completed payment missing user_id in metadata")
                 return
+
+            checkout_session_id = session.get("id", "")
+            event_id = stripe_event.get("id")
+            payment_intent_id = session.get("payment_intent")
+
+            is_new = self._repo.record_checkout_credit_grant(
+                checkout_session_id=checkout_session_id,
+                user_id=user_id,
+                granted_credits=CREDIT_PACK_SIZE,
+                event_id=event_id,
+                payment_intent_id=payment_intent_id,
+            )
+            if not is_new:
+                logger.info(
+                    "Stripe checkout already processed, skipping duplicate: "
+                    "event_id=%s checkout_session_id=%s user_id=%s",
+                    event_id, checkout_session_id, user_id,
+                )
+                return
+
             self._repo.add_credits(user_id, CREDIT_PACK_SIZE)
             logger.info(
-                "Granted %d credits to user=%s (checkout.session.completed)",
-                CREDIT_PACK_SIZE, user_id,
+                "Granted %d credits to user=%s for checkout_session_id=%s (event_id=%s)",
+                CREDIT_PACK_SIZE, user_id, checkout_session_id, event_id,
             )
 
         elif mode == "subscription":

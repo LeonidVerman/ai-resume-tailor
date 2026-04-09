@@ -37,6 +37,7 @@ from backend.app.constants import PLAN_FREE, PLAN_STARTER, ROLE_ADMIN, ROLE_USER
 from backend.app.db.base import Base
 import backend.app.db.models.billing  # noqa: F401
 import backend.app.db.models.monthly_usage  # noqa: F401
+import backend.app.db.models.stripe_checkout_purchase  # noqa: F401
 import backend.app.db.models.candidate_profile  # noqa: F401
 import backend.app.db.models.evaluation_run  # noqa: F401
 import backend.app.db.models.generation_run  # noqa: F401
