@@ -430,6 +430,16 @@ export interface GenerationConfigResponse {
   available_models: string[];
 }
 
+export interface SignupCreditPolicyResponse {
+  signup_credit_mode: string;
+  signup_credit_amount: number;
+  available_modes: string[];
+}
+
+export interface SignupCreditPolicyRequest {
+  signup_credit_mode: string;
+}
+
 export interface GenerationConfigRequest {
   simple_model: string;
 }

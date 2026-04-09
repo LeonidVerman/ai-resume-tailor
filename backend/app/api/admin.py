@@ -48,6 +48,8 @@ from backend.app.schemas.admin import (
     BenchmarkStartRequest,
     GenerationConfigRequest,
     GenerationConfigResponse,
+    SignupCreditPolicyRequest,
+    SignupCreditPolicyResponse,
     SystemStats,
 )
 from backend.app.schemas.evaluation import EvaluationRequest, EvaluationResponse
@@ -153,6 +155,44 @@ def save_generation_config(
     """Persist admin generation configuration."""
     AdminConfigRepository(db).upsert(simple_model=request.simple_model)
     return AdminActionResponse(ok=True, message="Generation configuration saved.")
+
+
+# ── Signup credit policy ───────────────────────────────────────────────────
+
+@router.get("/signup-credit-policy", response_model=SignupCreditPolicyResponse)
+def get_signup_credit_policy(_admin: AdminDep, db: DbDep):
+    """Return the current signup credit policy."""
+    from backend.app.constants import SIGNUP_CREDIT_MODES
+    from backend.app.services.signup_credit_service import SignupCreditService
+
+    svc = SignupCreditService(db)
+    mode, amount = svc.get_current_policy()
+    return SignupCreditPolicyResponse(
+        signup_credit_mode=mode,
+        signup_credit_amount=amount,
+        available_modes=list(SIGNUP_CREDIT_MODES),
+    )
+
+
+@router.put("/signup-credit-policy", response_model=AdminActionResponse)
+def save_signup_credit_policy(
+    request: SignupCreditPolicyRequest, _admin: AdminDep, db: DbDep
+):
+    """Update the signup credit policy mode."""
+    from backend.app.constants import SIGNUP_CREDIT_MODES
+
+    if request.signup_credit_mode not in SIGNUP_CREDIT_MODES:
+        from fastapi import HTTPException, status
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid mode '{request.signup_credit_mode}'. "
+                   f"Must be one of: {', '.join(SIGNUP_CREDIT_MODES)}",
+        )
+    AdminConfigRepository(db).upsert(signup_credit_mode=request.signup_credit_mode)
+    return AdminActionResponse(
+        ok=True,
+        message=f"Signup credit policy set to '{request.signup_credit_mode}'.",
+    )
 
 
 @router.post("/candidate-profiles/backfill", response_model=AdminActionResponse)

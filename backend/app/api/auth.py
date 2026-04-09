@@ -87,15 +87,21 @@ def register(request: RegisterRequest, db: DbDep, settings: SettingsDep):
             ),
         )
 
+    from backend.app.services.signup_credit_service import SignupCreditService
+
     auth_service = AuthService(UserRepository(db))
-    user = auth_service.get_or_create_user(
+    user, is_new = auth_service.get_or_create_user(
         email=response.user.email,
         supabase_user_id=response.user.id,
     )
     auth_service.record_login(user)
+
+    if is_new:
+        SignupCreditService(db).grant_initial_credits(user.id)
+
     db.commit()
 
-    logger.info("User registered user_id=%s email=%s", user.id, user.email)
+    logger.info("User registered user_id=%s email=%s is_new=%s", user.id, user.email, is_new)
 
     return AuthLoginResponse(
         user=_user_response(user),
@@ -134,7 +140,7 @@ def login(request: LoginRequest, db: DbDep, settings: SettingsDep):
         )
 
     auth_service = AuthService(UserRepository(db))
-    user = auth_service.get_or_create_user(
+    user, _ = auth_service.get_or_create_user(
         email=response.user.email,
         supabase_user_id=response.user.id,
     )
@@ -280,7 +286,7 @@ def refresh(request: RefreshRequest, db: DbDep, settings: SettingsDep):
         )
 
     auth_service = AuthService(UserRepository(db))
-    user = auth_service.get_or_create_user(
+    user, _ = auth_service.get_or_create_user(
         email=response.user.email,
         supabase_user_id=response.user.id,
     )

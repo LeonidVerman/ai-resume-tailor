@@ -76,3 +76,38 @@ class BillingRepository:
         else:
             billing.extra_credits += amount
             self._db.flush()
+
+    def grant_initial_signup_credits(
+        self, user_id: str, amount: int, mode: str
+    ) -> bool:
+        """
+        Grant initial signup credits exactly once per user.
+
+        Creates the billing row if absent, then atomically sets
+        initial_credits_granted=True and credits extra_credits.
+
+        Returns True if credits were granted, False if already granted (idempotent).
+        """
+        from backend.app.constants import PLAN_FREE
+
+        billing = self.get_by_user_id(user_id)
+        if billing is None:
+            self.create(
+                user_id=user_id,
+                plan_type=PLAN_FREE,
+                extra_credits=amount,
+                initial_credits_granted=True,
+                initial_credits_amount=amount,
+                initial_credits_mode=mode,
+            )
+            return True
+
+        if billing.initial_credits_granted:
+            return False
+
+        billing.extra_credits += amount
+        billing.initial_credits_granted = True
+        billing.initial_credits_amount = amount
+        billing.initial_credits_mode = mode
+        self._db.flush()
+        return True
