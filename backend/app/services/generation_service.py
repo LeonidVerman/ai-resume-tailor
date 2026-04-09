@@ -259,20 +259,13 @@ class GenerationService:
                 resume.id,
             )
         elif resume.source_file_url:
-            try:
-                template_bytes = self._storage_service.get_bytes(resume.source_file_url)
-                logger.info("Loaded resume template from storage key=%s (%d bytes)",
-                            resume.source_file_url, len(template_bytes))
-            except Exception as exc:
-                logger.error(
-                    "TEMPLATE FETCH FAILED — falling back to CLI default. "
-                    "key=%s error=%s", resume.source_file_url, exc, exc_info=True,
-                )
+            template_bytes = self._storage_service.get_bytes(resume.source_file_url)
+            logger.info("Loaded resume template from storage key=%s (%d bytes)",
+                        resume.source_file_url, len(template_bytes))
         else:
-            logger.warning(
-                "Resume id=%s has no source_file_url — template was uploaded before "
-                "storage was enabled. Re-upload the resume to use the correct template.",
-                resume.id,
+            raise RuntimeError(
+                f"Resume id={resume.id} has no stored template (source_file_url is not set). "
+                "Re-upload the resume to restore the template file."
             )
 
         url_updates: dict = {}
