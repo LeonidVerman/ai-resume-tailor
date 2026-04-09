@@ -166,7 +166,7 @@ class TestGrantCredits:
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data["credits_granted"] == 10
+        assert data["credits_adjusted"] == 10
         assert data["user_id"] == user.id
 
     def test_credits_reflected_in_billing_status(self, admin_client, client, db, user):
@@ -176,6 +176,32 @@ class TestGrantCredits:
         )
         resp = client.get(f"{API}/status")
         assert resp.json()["extra_credits"] == 7
+
+    def test_admin_can_deduct_credits(self, admin_client, client, db, user):
+        """Negative amount deducts credits; balance floors at 0."""
+        admin_client.post(
+            "/api/v1/admin/billing/grant-credits",
+            json={"user_id": user.id, "amount": 10},
+        )
+        admin_client.post(
+            "/api/v1/admin/billing/grant-credits",
+            json={"user_id": user.id, "amount": -4},
+        )
+        resp = client.get(f"{API}/status")
+        assert resp.json()["extra_credits"] == 6
+
+    def test_deduct_floors_at_zero(self, admin_client, client, db, user):
+        """Deducting more than the balance floors at 0, not negative."""
+        admin_client.post(
+            "/api/v1/admin/billing/grant-credits",
+            json={"user_id": user.id, "amount": 5},
+        )
+        admin_client.post(
+            "/api/v1/admin/billing/grant-credits",
+            json={"user_id": user.id, "amount": -100},
+        )
+        resp = client.get(f"{API}/status")
+        assert resp.json()["extra_credits"] == 0
 
     def test_non_admin_returns_403(self, client, user):
         resp = client.post(
@@ -191,9 +217,59 @@ class TestGrantCredits:
         )
         assert resp.status_code == 400
 
-    def test_negative_amount_rejected(self, admin_client, user):
+
+# ── POST /admin/billing/register-checkout-session ─────────────────────────
+
+class TestRegisterCheckoutSession:
+    def test_registers_new_session(self, admin_client, db, user):
+        """First registration returns registered=True."""
         resp = admin_client.post(
-            "/api/v1/admin/billing/grant-credits",
-            json={"user_id": user.id, "amount": -1},
+            "/api/v1/admin/billing/register-checkout-session",
+            json={
+                "checkout_session_id": "cs_test_abc123",
+                "user_id": user.id,
+                "granted_credits": 10,
+                "stripe_event_id": "evt_test_xyz",
+            },
         )
-        assert resp.status_code == 400
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["registered"] is True
+        assert data["checkout_session_id"] == "cs_test_abc123"
+
+    def test_duplicate_registration_is_no_op(self, admin_client, db, user):
+        """Second registration of same session returns registered=False without error."""
+        payload = {
+            "checkout_session_id": "cs_test_dup999",
+            "user_id": user.id,
+            "granted_credits": 10,
+        }
+        admin_client.post("/api/v1/admin/billing/register-checkout-session", json=payload)
+        resp = admin_client.post(
+            "/api/v1/admin/billing/register-checkout-session", json=payload
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["registered"] is False
+
+    def test_non_admin_returns_403(self, client, user):
+        resp = client.post(
+            "/api/v1/admin/billing/register-checkout-session",
+            json={
+                "checkout_session_id": "cs_test_unauth",
+                "user_id": user.id,
+                "granted_credits": 10,
+            },
+        )
+        assert resp.status_code == 403
+
+    def test_non_admin_returns_403(self, client, user):
+        resp = client.post(
+            "/api/v1/admin/billing/register-checkout-session",
+            json={
+                "checkout_session_id": "cs_test_unauth",
+                "user_id": user.id,
+                "granted_credits": 10,
+            },
+        )
+        assert resp.status_code == 403
