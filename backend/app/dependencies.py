@@ -95,10 +95,11 @@ def _get_user_from_bearer(
         )
 
     auth_service = AuthService(UserRepository(db))
-    return auth_service.get_or_create_user(
+    user, _ = auth_service.get_or_create_user(
         email=payload["email"],
         supabase_user_id=payload["id"],
     )
+    return user
 
 
 def _get_user_from_header(x_user_id: str | None, db: Session):
