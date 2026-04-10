@@ -16,6 +16,12 @@ from dataclasses import dataclass, field
 
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
+# Bullet prefixes the LLM may emit: hyphen-minus ("- "), Unicode bullet ("• "),
+# black-circle ("● "), or en-dash ("– ").  All are 2 characters; stripped[2:]
+# removes the prefix cleanly.  The LLM sometimes mirrors the template's own
+# bullet character instead of the canonical "- " form.
+_BULLET_PREFIXES: tuple[str, ...] = ("- ", "\u2022 ", "\u25cf ", "\u2013 ")
+
 
 def _normalize_letter_spaced(s: str) -> str:
     """Collapse letter-spaced headings to plain lowercase words.
@@ -303,7 +309,7 @@ def parse_llm_output(text: str) -> list[LlmSection]:
             text_val = stripped[2:] if stripped.startswith("- ") else stripped
             current.body_lines.append(text_val)
         elif state == "role":
-            if stripped.startswith("- "):
+            if any(stripped.startswith(p) for p in _BULLET_PREFIXES):
                 cur_role.bullets.append(stripped[2:])
                 state = "bullets"
             elif _is_meta_line(line):
@@ -313,18 +319,17 @@ def parse_llm_output(text: str) -> list[LlmSection]:
                 cur_role.meta_lines.append(stripped)
                 state = "meta"
         elif state == "meta":
-            if stripped.startswith("- "):
+            if any(stripped.startswith(p) for p in _BULLET_PREFIXES):
                 cur_role.bullets.append(stripped[2:])
                 state = "bullets"
             else:
                 # Keep as meta whether or not it looks like a date.
-                # Non-"- " content in meta state stays as meta so that
+                # Non-bullet content in meta state stays as meta so that
                 # plain-text paragraphs (e.g. PDF-sourced achievement lines
-                # serialised without "- " prefix) round-trip correctly.
-                # Bullets must use explicit "- " prefix to be recognised.
+                # serialised without a bullet prefix) round-trip correctly.
                 cur_role.meta_lines.append(stripped)
         elif state == "bullets":
-            if stripped.startswith("- "):
+            if any(stripped.startswith(p) for p in _BULLET_PREFIXES):
                 cur_role.bullets.append(stripped[2:])
             else:
                 cur_role.bullets.append(stripped)

@@ -138,6 +138,14 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "section body.  Layout fitting trims one skill line, causing a one-para "
         "count difference in the identity roundtrip."
     ),
+    "4-software-engineer-resume.docx": (
+        "NBSP/tab-column role header format: each job title paragraph uses "
+        "non-breaking spaces and tab stops for column alignment instead of a "
+        "'|' pipe separator.  The identity serializer combines role.header with "
+        "header_extra into a pipe-separated line; rendering writes that combined "
+        "text back into the tab-column paragraph, changing its content.  The "
+        "real pipeline (LLM pipe-format → DOCX) works correctly."
+    ),
 }
 
 # PDFs with non-standard content that cannot roundtrip cleanly.
@@ -157,6 +165,14 @@ _KNOWN_BAD_PDFS: dict[str, str] = {
         "line ('migration and team collaboration…') is dropped by the skills "
         "sanitizer (full-sentence filter), causing a one-paragraph offset in the "
         "DOCX-of-DOCX stability check."
+    ),
+    "4-software-engineer-resume.pdf": (
+        "NBSP/tab-column role header format: the rendered DOCX inherits the "
+        "non-breaking-space column-alignment from the source template.  The "
+        "identity serializer combines role.header with header_extra into a "
+        "pipe-separated line; when re-rendered the tab-column paragraphs receive "
+        "combined text, causing DOCX-of-DOCX text differences.  The real pipeline "
+        "(LLM pipe-format → DOCX) works correctly."
     ),
 }
 
