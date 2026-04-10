@@ -14,6 +14,7 @@ import {
   LogOut,
   Wand2,
   User,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,6 +30,7 @@ const resourceItems = [
   { href: "/resumes", label: "Resumes", icon: FileText },
   { href: "/jobs", label: "Job Descriptions", icon: Briefcase },
   { href: "/profile", label: "Profile", icon: User },
+  { href: "/help", label: "Help", icon: HelpCircle },
 ];
 
 export function Sidebar() {
