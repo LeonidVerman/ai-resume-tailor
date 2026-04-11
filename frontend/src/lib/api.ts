@@ -138,6 +138,13 @@ async function request<T>(
     const newToken = await _tryRefreshToken();
     if (newToken) {
       res = await _rawFetch(path, init, newToken, null);
+    } else {
+      // Refresh failed — session is unrecoverable. Redirect to login so the
+      // user can re-authenticate rather than seeing a raw "Invalid or expired
+      // token" error and having to reload manually.
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login?reason=session_expired";
+      }
     }
   }
 

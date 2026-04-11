@@ -205,6 +205,16 @@ def _set_para_text(p_elem, text: str) -> None:
             assigned = end
         _set_run_text(r, portion)
 
+    # Strip any <w:tab/> elements left over in runs after text distribution.
+    # Tab-column role headers and bullet paragraphs (e.g. \u25cf + <w:tab/> +
+    # text) use tab stops for original alignment.  After setting new LLM text
+    # the alignment comes from the text itself (pipe separators or paragraph
+    # indent), so residual <w:tab/> elements only produce mid-word tab
+    # characters when the paragraph is read back.
+    for r in all_runs:
+        for tab in list(r.findall(f"{{{_W}}}tab")):
+            r.remove(tab)
+
 
 # ---------------------------------------------------------------------------
 # Item renderers

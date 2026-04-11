@@ -1,0 +1,604 @@
+2026-04-02T20:19:15 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:15 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:15 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:15 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:16 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:16 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:22 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:22 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:28 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:28 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:35 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:35 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=bef90903-3737-4404-94a7-688277f4a449 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=05b0fe5a-bbee-4e09-b173-3f82bf97b854 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=da22b0e5-452c-405e-81ed-047a7a32b067 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice Smith", "headline": "Senior Engineer", "summary": "Experienced distributed systems engineer."}, "domains": {"primary": ["fintech"], "secondary": ["healthtech"]}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": ["distributed systems", "leadership"], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=f77c4607-30fe-4609-aa39-4f66ef75487d profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice Smith", "headline": "Senior Engineer", "summary": "Experienced distributed systems engineer."}, "domains": {"primary": ["fintech"], "secondary": ["healthtech"]}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": ["distributed systems", "leadership"], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=d8cfe1e8-1a13-4a0d-addd-a55a9e2df0aa profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:45 [INFO] backend.app.services.candidate_profile_service: Candidate profile updated profile_id=1 user_id=d8cfe1e8-1a13-4a0d-addd-a55a9e2df0aa profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice Updated", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=92c69397-e6cf-4ce3-8cf5-7575c592ff50 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=b5b21f20-3f45-4b74-bab1-bda424d65bd9 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=43193c47-9b54-4106-a16b-f6af94cc7db6 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:45 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=43193c47-9b54-4106-a16b-f6af94cc7db6
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:45 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=03a777ec-d634-4311-ae2f-494063fb7a88 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:45 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=03a777ec-d634-4311-ae2f-494063fb7a88
+2026-04-02T20:19:45 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:45 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:46 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=4a653fbc-bca3-4e05-8aa0-0a13e5f30d72 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": ["React", "Next.js"], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:46 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=d9aced65-aa6c-4fa6-8533-30bbabe7b8dd profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:46 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=ad198fd3-e8de-4e67-843a-65e72cae98ab profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:46 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=ad198fd3-e8de-4e67-843a-65e72cae98ab
+2026-04-02T20:19:46 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/ad198fd3-e8de-4e67-843a-65e72cae98ab/templates/1.docx
+2026-04-02T20:19:46 [INFO] backend.app.api.resume: Resume uploaded user_id=ad198fd3-e8de-4e67-843a-65e72cae98ab resume_id=1 filename=documents/ad198fd3-e8de-4e67-843a-65e72cae98ab/templates/1.docx
+2026-04-02T20:19:46 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=ad198fd3-e8de-4e67-843a-65e72cae98ab type=manual company=None title=None
+2026-04-02T20:19:46 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=ad198fd3-e8de-4e67-843a-65e72cae98ab jd_id=1 resume_id=1 company= title=
+2026-04-02T20:19:46 [INFO] backend.app.services.storage_service: Uploaded debug.json key=documents/ad198fd3-e8de-4e67-843a-65e72cae98ab/generated/1/debug.json
+2026-04-02T20:19:46 [INFO] backend.app.services.generation_service: Loaded resume template from storage key=documents/ad198fd3-e8de-4e67-843a-65e72cae98ab/templates/1.docx (49 bytes)
+2026-04-02T20:19:46 [WARNING] backend.app.services.generation_service: Failed to render/upload resume.docx run=1: Package not found at 'C:\Users\leoni\AppData\Local\Temp\tmp17k2a1pq.docx'
+2026-04-02T20:19:46 [INFO] backend.app.services.storage_service: Uploaded cover_letter.docx key=documents/ad198fd3-e8de-4e67-843a-65e72cae98ab/generated/1/cover_letter.docx
+2026-04-02T20:19:47 [INFO] backend.app.services.storage_service: Uploaded cover_letter.pdf key=documents/ad198fd3-e8de-4e67-843a-65e72cae98ab/generated/1/cover_letter.pdf
+2026-04-02T20:19:47 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:19:47 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=ad198fd3-e8de-4e67-843a-65e72cae98ab jd_id=1 resume_id=1 company= title= tokens_in=100 tokens_out=200
+2026-04-02T20:19:47 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:47 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:47 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=a9e0b0d4-7117-4021-93b7-bee72f41c661 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:47 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=a9e0b0d4-7117-4021-93b7-bee72f41c661
+2026-04-02T20:19:47 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/a9e0b0d4-7117-4021-93b7-bee72f41c661/templates/1.docx
+2026-04-02T20:19:47 [INFO] backend.app.api.resume: Resume uploaded user_id=a9e0b0d4-7117-4021-93b7-bee72f41c661 resume_id=1 filename=documents/a9e0b0d4-7117-4021-93b7-bee72f41c661/templates/1.docx
+2026-04-02T20:19:47 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=a9e0b0d4-7117-4021-93b7-bee72f41c661 type=manual company=None title=None
+2026-04-02T20:19:47 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=a9e0b0d4-7117-4021-93b7-bee72f41c661 jd_id=1 resume_id=1 company= title=
+2026-04-02T20:19:47 [INFO] backend.app.services.storage_service: Uploaded debug.json key=documents/a9e0b0d4-7117-4021-93b7-bee72f41c661/generated/1/debug.json
+2026-04-02T20:19:47 [INFO] backend.app.services.generation_service: Loaded resume template from storage key=documents/a9e0b0d4-7117-4021-93b7-bee72f41c661/templates/1.docx (49 bytes)
+2026-04-02T20:19:47 [WARNING] backend.app.services.generation_service: Failed to render/upload resume.docx run=1: Package not found at 'C:\Users\leoni\AppData\Local\Temp\tmp2c5h6h7k.docx'
+2026-04-02T20:19:47 [INFO] backend.app.services.storage_service: Uploaded cover_letter.docx key=documents/a9e0b0d4-7117-4021-93b7-bee72f41c661/generated/1/cover_letter.docx
+2026-04-02T20:19:47 [INFO] backend.app.services.storage_service: Uploaded cover_letter.pdf key=documents/a9e0b0d4-7117-4021-93b7-bee72f41c661/generated/1/cover_letter.pdf
+2026-04-02T20:19:47 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:19:47 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=a9e0b0d4-7117-4021-93b7-bee72f41c661 jd_id=1 resume_id=1 company= title= tokens_in=100 tokens_out=200
+2026-04-02T20:19:47 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:47 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:47 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=dc292e44-881f-47d4-bbf4-6246d595abbe profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:47 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=dc292e44-881f-47d4-bbf4-6246d595abbe
+2026-04-02T20:19:47 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/dc292e44-881f-47d4-bbf4-6246d595abbe/templates/1.docx
+2026-04-02T20:19:47 [INFO] backend.app.api.resume: Resume uploaded user_id=dc292e44-881f-47d4-bbf4-6246d595abbe resume_id=1 filename=documents/dc292e44-881f-47d4-bbf4-6246d595abbe/templates/1.docx
+2026-04-02T20:19:47 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:47 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:47 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=6cce9ba4-3f0f-432c-b5f9-7dd363141519 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:47 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=6cce9ba4-3f0f-432c-b5f9-7dd363141519
+2026-04-02T20:19:47 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=6cce9ba4-3f0f-432c-b5f9-7dd363141519 type=manual company=None title=None
+2026-04-02T20:19:47 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:47 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:47 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/171fc566-42a3-4af1-843d-a68f7dd360fc/templates/1.docx
+2026-04-02T20:19:47 [INFO] backend.app.api.resume: Resume uploaded user_id=171fc566-42a3-4af1-843d-a68f7dd360fc resume_id=1 filename=documents/171fc566-42a3-4af1-843d-a68f7dd360fc/templates/1.docx
+2026-04-02T20:19:48 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:19:48 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:19:48 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=a4b4a242-4255-4933-9e47-33e7368b83fe profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:19:48 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=a4b4a242-4255-4933-9e47-33e7368b83fe
+2026-04-02T20:19:48 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/a4b4a242-4255-4933-9e47-33e7368b83fe/templates/1.docx
+2026-04-02T20:19:48 [INFO] backend.app.api.resume: Resume uploaded user_id=a4b4a242-4255-4933-9e47-33e7368b83fe resume_id=1 filename=documents/a4b4a242-4255-4933-9e47-33e7368b83fe/templates/1.docx
+2026-04-02T20:19:48 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=a4b4a242-4255-4933-9e47-33e7368b83fe type=manual company=None title=None
+2026-04-02T20:19:48 [INFO] backend.app.services.candidate_meta_service: Generating candidate prompt (profile=1 model=gpt-5.2)
+2026-04-02T20:20:09 [INFO] backend.app.services.candidate_meta_service: Candidate prompt stored (profile=1)
+2026-04-02T20:20:09 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=a4b4a242-4255-4933-9e47-33e7368b83fe jd_id=1 resume_id=1 company= title=
+2026-04-02T20:20:09 [ERROR] backend.app.services.generation_service: Generation run finished run_id=1 status=failed user_id=a4b4a242-4255-4933-9e47-33e7368b83fe jd_id=1 resume_id=1 company= title= error=LLM timeout
+2026-04-02T20:20:09 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:09 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:09 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:09 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:09 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=74fa06c2-46d9-418e-a318-f82a3bd53a4f profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:20:09 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=74fa06c2-46d9-418e-a318-f82a3bd53a4f
+2026-04-02T20:20:09 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/74fa06c2-46d9-418e-a318-f82a3bd53a4f/templates/1.docx
+2026-04-02T20:20:09 [INFO] backend.app.api.resume: Resume uploaded user_id=74fa06c2-46d9-418e-a318-f82a3bd53a4f resume_id=1 filename=documents/74fa06c2-46d9-418e-a318-f82a3bd53a4f/templates/1.docx
+2026-04-02T20:20:09 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=74fa06c2-46d9-418e-a318-f82a3bd53a4f type=manual company=None title=None
+2026-04-02T20:20:09 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=74fa06c2-46d9-418e-a318-f82a3bd53a4f jd_id=1 resume_id=1 company= title=
+2026-04-02T20:20:09 [INFO] backend.app.services.storage_service: Uploaded debug.json key=documents/74fa06c2-46d9-418e-a318-f82a3bd53a4f/generated/1/debug.json
+2026-04-02T20:20:09 [INFO] backend.app.services.generation_service: Loaded resume template from storage key=documents/74fa06c2-46d9-418e-a318-f82a3bd53a4f/templates/1.docx (49 bytes)
+2026-04-02T20:20:09 [WARNING] backend.app.services.generation_service: Failed to render/upload resume.docx run=1: Package not found at 'C:\Users\leoni\AppData\Local\Temp\tmp2ce5flt4.docx'
+2026-04-02T20:20:09 [INFO] backend.app.services.storage_service: Uploaded cover_letter.docx key=documents/74fa06c2-46d9-418e-a318-f82a3bd53a4f/generated/1/cover_letter.docx
+2026-04-02T20:20:10 [INFO] backend.app.services.storage_service: Uploaded cover_letter.pdf key=documents/74fa06c2-46d9-418e-a318-f82a3bd53a4f/generated/1/cover_letter.pdf
+2026-04-02T20:20:10 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:20:10 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=74fa06c2-46d9-418e-a318-f82a3bd53a4f jd_id=1 resume_id=1 company= title= tokens_in=100 tokens_out=200
+2026-04-02T20:20:10 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:10 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:10 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=aa689584-20c3-4fd4-a985-d1c670b5ec70 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:20:10 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=aa689584-20c3-4fd4-a985-d1c670b5ec70
+2026-04-02T20:20:10 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/aa689584-20c3-4fd4-a985-d1c670b5ec70/templates/1.docx
+2026-04-02T20:20:10 [INFO] backend.app.api.resume: Resume uploaded user_id=aa689584-20c3-4fd4-a985-d1c670b5ec70 resume_id=1 filename=documents/aa689584-20c3-4fd4-a985-d1c670b5ec70/templates/1.docx
+2026-04-02T20:20:10 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=aa689584-20c3-4fd4-a985-d1c670b5ec70 type=manual company=None title=None
+2026-04-02T20:20:10 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=aa689584-20c3-4fd4-a985-d1c670b5ec70 jd_id=1 resume_id=1 company= title=
+2026-04-02T20:20:10 [INFO] backend.app.services.storage_service: Uploaded debug.json key=documents/aa689584-20c3-4fd4-a985-d1c670b5ec70/generated/1/debug.json
+2026-04-02T20:20:10 [INFO] backend.app.services.generation_service: Loaded resume template from storage key=documents/aa689584-20c3-4fd4-a985-d1c670b5ec70/templates/1.docx (49 bytes)
+2026-04-02T20:20:10 [WARNING] backend.app.services.generation_service: Failed to render/upload resume.docx run=1: Package not found at 'C:\Users\leoni\AppData\Local\Temp\tmp3ugkbmy9.docx'
+2026-04-02T20:20:10 [INFO] backend.app.services.storage_service: Uploaded cover_letter.docx key=documents/aa689584-20c3-4fd4-a985-d1c670b5ec70/generated/1/cover_letter.docx
+2026-04-02T20:20:10 [INFO] backend.app.services.storage_service: Uploaded cover_letter.pdf key=documents/aa689584-20c3-4fd4-a985-d1c670b5ec70/generated/1/cover_letter.pdf
+2026-04-02T20:20:10 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:20:10 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=aa689584-20c3-4fd4-a985-d1c670b5ec70 jd_id=1 resume_id=1 company= title= tokens_in=100 tokens_out=200
+2026-04-02T20:20:10 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:10 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:10 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=889f6c39-fd49-4aa9-bdb1-58581b82a751 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:20:10 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=889f6c39-fd49-4aa9-bdb1-58581b82a751
+2026-04-02T20:20:10 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/889f6c39-fd49-4aa9-bdb1-58581b82a751/templates/1.docx
+2026-04-02T20:20:10 [INFO] backend.app.api.resume: Resume uploaded user_id=889f6c39-fd49-4aa9-bdb1-58581b82a751 resume_id=1 filename=documents/889f6c39-fd49-4aa9-bdb1-58581b82a751/templates/1.docx
+2026-04-02T20:20:10 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=889f6c39-fd49-4aa9-bdb1-58581b82a751 type=manual company=None title=None
+2026-04-02T20:20:10 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=889f6c39-fd49-4aa9-bdb1-58581b82a751 jd_id=1 resume_id=1 company= title=
+2026-04-02T20:20:10 [INFO] backend.app.services.storage_service: Uploaded debug.json key=documents/889f6c39-fd49-4aa9-bdb1-58581b82a751/generated/1/debug.json
+2026-04-02T20:20:10 [INFO] backend.app.services.generation_service: Loaded resume template from storage key=documents/889f6c39-fd49-4aa9-bdb1-58581b82a751/templates/1.docx (49 bytes)
+2026-04-02T20:20:10 [WARNING] backend.app.services.generation_service: Failed to render/upload resume.docx run=1: Package not found at 'C:\Users\leoni\AppData\Local\Temp\tmpvehifrpg.docx'
+2026-04-02T20:20:10 [INFO] backend.app.services.storage_service: Uploaded cover_letter.docx key=documents/889f6c39-fd49-4aa9-bdb1-58581b82a751/generated/1/cover_letter.docx
+2026-04-02T20:20:10 [INFO] backend.app.services.storage_service: Uploaded cover_letter.pdf key=documents/889f6c39-fd49-4aa9-bdb1-58581b82a751/generated/1/cover_letter.pdf
+2026-04-02T20:20:10 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:20:10 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=889f6c39-fd49-4aa9-bdb1-58581b82a751 jd_id=1 resume_id=1 company= title= tokens_in=100 tokens_out=200
+2026-04-02T20:20:10 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:10 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:10 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=962faaa4-f9d9-4d84-bef9-d539dc810a1f profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:20:10 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=962faaa4-f9d9-4d84-bef9-d539dc810a1f
+2026-04-02T20:20:10 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/962faaa4-f9d9-4d84-bef9-d539dc810a1f/templates/1.docx
+2026-04-02T20:20:10 [INFO] backend.app.api.resume: Resume uploaded user_id=962faaa4-f9d9-4d84-bef9-d539dc810a1f resume_id=1 filename=documents/962faaa4-f9d9-4d84-bef9-d539dc810a1f/templates/1.docx
+2026-04-02T20:20:10 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=962faaa4-f9d9-4d84-bef9-d539dc810a1f type=manual company=None title=None
+2026-04-02T20:20:10 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=962faaa4-f9d9-4d84-bef9-d539dc810a1f jd_id=1 resume_id=1 company= title=
+2026-04-02T20:20:10 [INFO] backend.app.services.storage_service: Uploaded debug.json key=documents/962faaa4-f9d9-4d84-bef9-d539dc810a1f/generated/1/debug.json
+2026-04-02T20:20:10 [INFO] backend.app.services.generation_service: Loaded resume template from storage key=documents/962faaa4-f9d9-4d84-bef9-d539dc810a1f/templates/1.docx (49 bytes)
+2026-04-02T20:20:10 [WARNING] backend.app.services.generation_service: Failed to render/upload resume.docx run=1: Package not found at 'C:\Users\leoni\AppData\Local\Temp\tmpir0tyra2.docx'
+2026-04-02T20:20:10 [INFO] backend.app.services.storage_service: Uploaded cover_letter.docx key=documents/962faaa4-f9d9-4d84-bef9-d539dc810a1f/generated/1/cover_letter.docx
+2026-04-02T20:20:11 [INFO] backend.app.services.storage_service: Uploaded cover_letter.pdf key=documents/962faaa4-f9d9-4d84-bef9-d539dc810a1f/generated/1/cover_letter.pdf
+2026-04-02T20:20:11 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:20:11 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=962faaa4-f9d9-4d84-bef9-d539dc810a1f jd_id=1 resume_id=1 company= title= tokens_in=100 tokens_out=200
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=84892a76-fd15-49f3-ab21-ec1a3107a1f5 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:20:11 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=84892a76-fd15-49f3-ab21-ec1a3107a1f5
+2026-04-02T20:20:11 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/84892a76-fd15-49f3-ab21-ec1a3107a1f5/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.api.resume: Resume uploaded user_id=84892a76-fd15-49f3-ab21-ec1a3107a1f5 resume_id=1 filename=documents/84892a76-fd15-49f3-ab21-ec1a3107a1f5/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=84892a76-fd15-49f3-ab21-ec1a3107a1f5 type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=aedab9ab-233c-425c-9bf8-710de80183a7 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:20:11 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=aedab9ab-233c-425c-9bf8-710de80183a7
+2026-04-02T20:20:11 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/aedab9ab-233c-425c-9bf8-710de80183a7/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.api.resume: Resume uploaded user_id=aedab9ab-233c-425c-9bf8-710de80183a7 resume_id=1 filename=documents/aedab9ab-233c-425c-9bf8-710de80183a7/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=aedab9ab-233c-425c-9bf8-710de80183a7 type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=aedab9ab-233c-425c-9bf8-710de80183a7 jd_id=1 resume_id=1 company= title=
+2026-04-02T20:20:11 [INFO] backend.app.services.storage_service: Uploaded debug.json key=documents/aedab9ab-233c-425c-9bf8-710de80183a7/generated/1/debug.json
+2026-04-02T20:20:11 [INFO] backend.app.services.generation_service: Loaded resume template from storage key=documents/aedab9ab-233c-425c-9bf8-710de80183a7/templates/1.docx (49 bytes)
+2026-04-02T20:20:11 [WARNING] backend.app.services.generation_service: Failed to render/upload resume.docx run=1: Package not found at 'C:\Users\leoni\AppData\Local\Temp\tmpgeae0jgm.docx'
+2026-04-02T20:20:11 [INFO] backend.app.services.storage_service: Uploaded cover_letter.docx key=documents/aedab9ab-233c-425c-9bf8-710de80183a7/generated/1/cover_letter.docx
+2026-04-02T20:20:11 [INFO] backend.app.services.storage_service: Uploaded cover_letter.pdf key=documents/aedab9ab-233c-425c-9bf8-710de80183a7/generated/1/cover_letter.pdf
+2026-04-02T20:20:11 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:20:11 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=aedab9ab-233c-425c-9bf8-710de80183a7 jd_id=1 resume_id=1 company= title= tokens_in=100 tokens_out=200
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/85c0c7d3-8384-46ff-8057-f52e85b5bf29/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.api.resume: Resume uploaded user_id=85c0c7d3-8384-46ff-8057-f52e85b5bf29 resume_id=1 filename=documents/85c0c7d3-8384-46ff-8057-f52e85b5bf29/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=85c0c7d3-8384-46ff-8057-f52e85b5bf29 type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=9c074545-6daf-40d9-95f0-27e92aab7332 type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=d648f463-86a3-448a-82c3-6a819104795e type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=934bf38c-ab84-432d-af26-f048f9bd8e69 type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=f2a6710d-01d0-4560-ab63-ea06a215a87e type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=0b27e598-3d00-4453-a259-6bd09a5ebefa type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=9608b221-1ad3-4bfe-abba-40731a51743a type=manual company=Acme Corp title=Senior Engineer
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=d68fdf6e-662e-4da0-8b3e-a05194d54cb6 type=manual company=Beta Inc title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=816d9455-d69d-48bc-ad28-dc8babdaf318 type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=4ed18f00-173e-4118-ba44-d8a3f17bf0e8 type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=47b06421-5c9d-4123-b1a1-03e7fa62bcd5 type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=cd9db6bf-b5c0-4513-9ac2-03ae8593bff2 type=manual company=TestCo title=Staff Engineer
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=3274ee06-0e64-42ff-9216-5d041f7959c0 type=scraped company=Acme Corp title=Senior Engineer url=https://example.com/jobs/123
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=405c1580-98e1-44cf-83d8-4da86abacc78 type=scraped company=Acme Corp title=Senior Engineer url=https://example.com/jobs/123
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [WARNING] backend.app.api.job_description: Scrape failed for https://example.com/jobs/123 — returning: Scraping the job description from the URL failed. Please copy and paste the job description manually.
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=4610c8f9-4de2-49b8-af07-7c0f8b14ca04 type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=ba581da8-4cb4-4c54-bbed-f951bd47449a type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=accd16aa-768c-4940-953c-c7cd41f0132b type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=81c15fe5-f8d1-434d-8a83-876675c76173 type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description deleted jd_id=1 user_id=81c15fe5-f8d1-434d-8a83-876675c76173
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=d4fdc439-f48c-4998-b4c6-11e258004480 type=manual company=None title=None
+2026-04-02T20:20:11 [INFO] backend.app.services.job_normalizer_service: Job description deleted jd_id=1 user_id=d4fdc439-f48c-4998-b4c6-11e258004480
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/5c66e905-6ebd-46ce-98d1-8958fcddf130/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.api.resume: Resume uploaded user_id=5c66e905-6ebd-46ce-98d1-8958fcddf130 resume_id=1 filename=documents/5c66e905-6ebd-46ce-98d1-8958fcddf130/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/9121d09b-c810-4cdf-9461-ec27f7c357cf/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.api.resume: Resume uploaded user_id=9121d09b-c810-4cdf-9461-ec27f7c357cf resume_id=1 filename=documents/9121d09b-c810-4cdf-9461-ec27f7c357cf/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/03e4d248-c7ae-4d9e-9159-a3a3d34d909c/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.api.resume: Resume uploaded user_id=03e4d248-c7ae-4d9e-9159-a3a3d34d909c resume_id=1 filename=documents/03e4d248-c7ae-4d9e-9159-a3a3d34d909c/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/972f3378-3641-4bb4-af2a-4119dd45f3d1/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.api.resume: Resume uploaded user_id=972f3378-3641-4bb4-af2a-4119dd45f3d1 resume_id=1 filename=documents/972f3378-3641-4bb4-af2a-4119dd45f3d1/templates/1.docx
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:11 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:11 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/566ed9a8-3cbe-4d75-8a50-fac4f5fc5408/templates/1.docx
+2026-04-02T20:20:12 [INFO] backend.app.api.resume: Resume uploaded user_id=566ed9a8-3cbe-4d75-8a50-fac4f5fc5408 resume_id=1 filename=documents/566ed9a8-3cbe-4d75-8a50-fac4f5fc5408/templates/1.docx
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/f536557b-e1ff-4fd1-89d4-d792f8e6c121/templates/1.docx
+2026-04-02T20:20:12 [INFO] backend.app.api.resume: Resume uploaded user_id=f536557b-e1ff-4fd1-89d4-d792f8e6c121 resume_id=1 filename=documents/f536557b-e1ff-4fd1-89d4-d792f8e6c121/templates/1.docx
+2026-04-02T20:20:12 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/f536557b-e1ff-4fd1-89d4-d792f8e6c121/templates/2.docx
+2026-04-02T20:20:12 [INFO] backend.app.api.resume: Resume uploaded user_id=f536557b-e1ff-4fd1-89d4-d792f8e6c121 resume_id=2 filename=documents/f536557b-e1ff-4fd1-89d4-d792f8e6c121/templates/2.docx
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/42d4617c-222a-48c0-9a20-5c5454ffcd37/templates/1.docx
+2026-04-02T20:20:12 [INFO] backend.app.api.resume: Resume uploaded user_id=42d4617c-222a-48c0-9a20-5c5454ffcd37 resume_id=1 filename=documents/42d4617c-222a-48c0-9a20-5c5454ffcd37/templates/1.docx
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/e5aa1854-277e-4726-96d5-ad854d5f08eb/templates/1.docx
+2026-04-02T20:20:12 [INFO] backend.app.api.resume: Resume uploaded user_id=e5aa1854-277e-4726-96d5-ad854d5f08eb resume_id=1 filename=documents/e5aa1854-277e-4726-96d5-ad854d5f08eb/templates/1.docx
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/5a1dc9bc-d28b-499f-b0e9-6aa36a20886b/templates/1.docx
+2026-04-02T20:20:12 [INFO] backend.app.api.resume: Resume uploaded user_id=5a1dc9bc-d28b-499f-b0e9-6aa36a20886b resume_id=1 filename=documents/5a1dc9bc-d28b-499f-b0e9-6aa36a20886b/templates/1.docx
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=payment_intent.created
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=customer.subscription.updated
+2026-04-02T20:20:12 [INFO] backend.app.services.billing_service: Synced subscription customer=cus_ea5dbca4a60e4c status=active plan=free
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=customer.subscription.updated
+2026-04-02T20:20:12 [WARNING] backend.app.services.billing_service: No billing record for Stripe customer cus_unknown
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=customer.subscription.deleted
+2026-04-02T20:20:12 [INFO] backend.app.services.billing_service: Synced subscription customer=cus_4f23e294882d4c status=canceled plan=free
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=checkout.session.completed
+2026-04-02T20:20:12 [INFO] backend.app.services.billing_service: Granted 10 credits to user=416c48a4-6114-42ab-a903-3e0326312e5c (checkout.session.completed)
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=checkout.session.completed
+2026-04-02T20:20:12 [WARNING] backend.app.services.billing_service: checkout.session.completed payment missing user_id in metadata
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=checkout.session.completed
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=checkout.session.completed
+2026-04-02T20:20:12 [INFO] backend.app.services.billing_service: Granted 10 credits to user=0baa4193-c426-4b6c-ad1d-db46f06dc9df (checkout.session.completed)
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=checkout.session.completed
+2026-04-02T20:20:12 [INFO] backend.app.services.billing_service: Granted 10 credits to user=0baa4193-c426-4b6c-ad1d-db46f06dc9df (checkout.session.completed)
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=invoice.paid
+2026-04-02T20:20:12 [INFO] backend.app.services.billing_service: invoice.paid: customer=cus_46a011dad3ca4e plan=free subscription=sub_abc
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=invoice.paid
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=invoice.paid
+2026-04-02T20:20:12 [INFO] backend.app.services.billing_service: invoice.paid: customer=cus_562970c4d5e64d plan=free subscription=sub_abc
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=invoice.paid
+2026-04-02T20:20:12 [INFO] backend.app.services.billing_service: invoice.paid: customer=cus_562970c4d5e64d plan=free subscription=sub_abc
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=invoice.payment_failed
+2026-04-02T20:20:12 [INFO] backend.app.services.billing_service: invoice.payment_failed: customer=cus_66e54cef279f43 marked past_due
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.api.webhooks: Stripe webhook received: type=invoice.payment_failed
+2026-04-02T20:20:12 [WARNING] backend.app.services.billing_service: invoice.payment_failed: no billing record for customer cus_nobody
+2026-04-02T20:20:12 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:12 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:12 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=bd7c1c62-0658-4e4b-b006-9d264b6d72e0 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:20:12 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=bd7c1c62-0658-4e4b-b006-9d264b6d72e0
+2026-04-02T20:20:12 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/bd7c1c62-0658-4e4b-b006-9d264b6d72e0/templates/1.docx
+2026-04-02T20:20:12 [INFO] backend.app.api.resume: Resume uploaded user_id=bd7c1c62-0658-4e4b-b006-9d264b6d72e0 resume_id=1 filename=documents/bd7c1c62-0658-4e4b-b006-9d264b6d72e0/templates/1.docx
+2026-04-02T20:20:12 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=bd7c1c62-0658-4e4b-b006-9d264b6d72e0 type=manual company=None title=None
+2026-04-02T20:20:12 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=bd7c1c62-0658-4e4b-b006-9d264b6d72e0 jd_id=1 resume_id=1 company= title=
+2026-04-02T20:20:12 [INFO] backend.app.services.storage_service: Uploaded debug.json key=documents/bd7c1c62-0658-4e4b-b006-9d264b6d72e0/generated/1/debug.json
+2026-04-02T20:20:12 [INFO] backend.app.services.generation_service: Loaded resume template from storage key=documents/bd7c1c62-0658-4e4b-b006-9d264b6d72e0/templates/1.docx (229 bytes)
+2026-04-02T20:20:12 [WARNING] backend.app.services.generation_service: Failed to render/upload resume.docx run=1: Package not found at 'C:\Users\leoni\AppData\Local\Temp\tmp7ij_39tg.docx'
+2026-04-02T20:20:12 [INFO] backend.app.services.storage_service: Uploaded cover_letter.docx key=documents/bd7c1c62-0658-4e4b-b006-9d264b6d72e0/generated/1/cover_letter.docx
+2026-04-02T20:20:13 [INFO] backend.app.services.storage_service: Uploaded cover_letter.pdf key=documents/bd7c1c62-0658-4e4b-b006-9d264b6d72e0/generated/1/cover_letter.pdf
+2026-04-02T20:20:13 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:20:13 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=bd7c1c62-0658-4e4b-b006-9d264b6d72e0 jd_id=1 resume_id=1 company= title= tokens_in=500 tokens_out=1000
+2026-04-02T20:20:13 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:13 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:13 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=f5c373cb-7ce1-435f-9a06-d460d4de8624 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Test User", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:20:13 [INFO] backend.app.services.candidate_profile_service: Onboarding completed for profile id=1 user=f5c373cb-7ce1-435f-9a06-d460d4de8624
+2026-04-02T20:20:13 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/f5c373cb-7ce1-435f-9a06-d460d4de8624/templates/1.docx
+2026-04-02T20:20:13 [INFO] backend.app.api.resume: Resume uploaded user_id=f5c373cb-7ce1-435f-9a06-d460d4de8624 resume_id=1 filename=documents/f5c373cb-7ce1-435f-9a06-d460d4de8624/templates/1.docx
+2026-04-02T20:20:13 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=f5c373cb-7ce1-435f-9a06-d460d4de8624 type=manual company=None title=None
+2026-04-02T20:20:13 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=f5c373cb-7ce1-435f-9a06-d460d4de8624 jd_id=1 resume_id=1 company= title=
+2026-04-02T20:20:13 [INFO] backend.app.services.storage_service: Uploaded debug.json key=documents/f5c373cb-7ce1-435f-9a06-d460d4de8624/generated/1/debug.json
+2026-04-02T20:20:13 [INFO] backend.app.services.generation_service: Loaded resume template from storage key=documents/f5c373cb-7ce1-435f-9a06-d460d4de8624/templates/1.docx (229 bytes)
+2026-04-02T20:20:13 [WARNING] backend.app.services.generation_service: Failed to render/upload resume.docx run=1: Package not found at 'C:\Users\leoni\AppData\Local\Temp\tmpvb_d0pr1.docx'
+2026-04-02T20:20:13 [INFO] backend.app.services.storage_service: Uploaded cover_letter.docx key=documents/f5c373cb-7ce1-435f-9a06-d460d4de8624/generated/1/cover_letter.docx
+2026-04-02T20:20:13 [INFO] backend.app.services.storage_service: Uploaded cover_letter.pdf key=documents/f5c373cb-7ce1-435f-9a06-d460d4de8624/generated/1/cover_letter.pdf
+2026-04-02T20:20:13 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:20:13 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=f5c373cb-7ce1-435f-9a06-d460d4de8624 jd_id=1 resume_id=1 company= title= tokens_in=500 tokens_out=1000
+2026-04-02T20:20:13 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:13 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:14 [INFO] backend.app.services.storage_service: Uploaded resume template key=documents/9805f5c2-a75d-4cd4-9108-9a4a95b24442/templates/1.docx
+2026-04-02T20:20:14 [INFO] backend.app.api.resume: Resume uploaded user_id=9805f5c2-a75d-4cd4-9108-9a4a95b24442 resume_id=1 filename=documents/9805f5c2-a75d-4cd4-9108-9a4a95b24442/templates/1.docx
+2026-04-02T20:20:14 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:20:14 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:20:14 [INFO] backend.app.services.job_normalizer_service: Job description added jd_id=1 user_id=bd061364-a929-45bb-a7df-27608b349c45 type=manual company=None title=None
+2026-04-02T20:20:14 [INFO] backend.app.services.candidate_meta_service: Generating candidate prompt (profile=bc425aa9-c29d-4f61-9b36-07bdb21d40b3 model=gpt-4o)
+2026-04-02T20:20:14 [INFO] backend.app.services.candidate_meta_service: Candidate prompt stored (profile=bc425aa9-c29d-4f61-9b36-07bdb21d40b3)
+2026-04-02T20:20:14 [INFO] backend.app.services.candidate_meta_service: Generating candidate prompt (profile=13db9924-e208-4758-ac58-02bc9904da46 model=gpt-4o)
+2026-04-02T20:20:14 [INFO] backend.app.services.candidate_meta_service: Candidate prompt stored (profile=13db9924-e208-4758-ac58-02bc9904da46)
+2026-04-02T20:20:14 [INFO] backend.app.services.candidate_meta_service: Generating candidate prompt (profile=93aa61f5-df3e-4b67-a2dc-2f77684b88cd model=gpt-4o)
+2026-04-02T20:20:14 [INFO] backend.app.services.candidate_meta_service: Candidate prompt stored (profile=93aa61f5-df3e-4b67-a2dc-2f77684b88cd)
+2026-04-02T20:20:14 [INFO] backend.app.services.candidate_meta_service: Generating candidate prompt (profile=83379d65-0e55-4564-ba03-3e427311ed18 model=gpt-4.1)
+2026-04-02T20:20:14 [INFO] backend.app.services.candidate_meta_service: Candidate prompt stored (profile=83379d65-0e55-4564-ba03-3e427311ed18)
+2026-04-02T20:20:14 [INFO] backend.app.services.candidate_meta_service: Generating candidate prompt (profile=e83e13f9-d66d-41b7-8d46-e79d24bef3c3 model=gpt-4o)
+2026-04-02T20:20:14 [INFO] backend.app.services.candidate_meta_service: Generating candidate prompt (profile=73b375d8-7ff6-4dca-be06-bb684362feb0 model=gpt-4o)
+2026-04-02T20:20:14 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=92b88870-2f1e-4d2f-9c7c-1f20233c75b6 jd_id=1 resume_id=1 company=Acme title=SWE
+2026-04-02T20:20:14 [INFO] backend.app.services.generation_service: Resume id=1: using stored PDF IR for rendering.
+2026-04-02T20:20:25 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['resume_docx_url', 'resume_pdf_url', 'cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:20:25 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=92b88870-2f1e-4d2f-9c7c-1f20233c75b6 jd_id=1 resume_id=1 company=Acme title=SWE tokens_in=10 tokens_out=20
+2026-04-02T20:20:25 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=u1 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:20:25 [INFO] backend.app.services.candidate_profile_service: Candidate profile updated profile_id=1 user_id=u1 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice Updated", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:20:25 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=u1 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:20:25 [INFO] backend.app.services.candidate_profile_service: Candidate profile updated profile_id=1 user_id=u1 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Alice", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-02T20:20:25 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=18fe2624-2a39-4dab-8ec3-2049e4134fa1 jd_id=1 resume_id=1 company=Acme title=Engineer
+2026-04-02T20:20:25 [INFO] backend.app.services.generation_service: Resume id=1: using stored PDF IR for rendering.
+2026-04-02T20:20:36 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['resume_docx_url', 'resume_pdf_url', 'cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:20:36 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=18fe2624-2a39-4dab-8ec3-2049e4134fa1 jd_id=1 resume_id=1 company=Acme title=Engineer tokens_in=100 tokens_out=200
+2026-04-02T20:20:36 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=4d0f778d-c673-481f-b941-46d49475e538 jd_id=1 resume_id=1 company=Acme title=Engineer
+2026-04-02T20:20:36 [ERROR] backend.app.services.generation_service: Generation run finished run_id=1 status=failed user_id=4d0f778d-c673-481f-b941-46d49475e538 jd_id=1 resume_id=1 company=Acme title=Engineer error=LLM error
+2026-04-02T20:20:36 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=4d0a5468-b519-43a6-8f29-2cd2a95f2359 jd_id=1 resume_id=1 company=WidgetCo title=Principal Engineer
+2026-04-02T20:20:36 [INFO] backend.app.services.generation_service: Resume id=1: using stored PDF IR for rendering.
+2026-04-02T20:20:47 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['resume_docx_url', 'resume_pdf_url', 'cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:20:47 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=4d0a5468-b519-43a6-8f29-2cd2a95f2359 jd_id=1 resume_id=1 company=WidgetCo title=Principal Engineer tokens_in=10 tokens_out=20
+2026-04-02T20:20:47 [INFO] backend.app.services.generation_service: Generation run started run_id=1 user_id=ff106220-5911-406e-b197-17402b81eb80 jd_id=1 resume_id=1 company= title=
+2026-04-02T20:20:47 [INFO] backend.app.services.generation_service: Resume id=1: using stored PDF IR for rendering.
+2026-04-02T20:20:57 [INFO] backend.app.services.generation_service: Artifact URLs updated for doc=1: ['resume_docx_url', 'resume_pdf_url', 'cover_letter_docx_url', 'cover_letter_pdf_url']
+2026-04-02T20:20:57 [INFO] backend.app.services.generation_service: Generation run finished run_id=1 status=succeeded user_id=ff106220-5911-406e-b197-17402b81eb80 jd_id=1 resume_id=1 company= title= tokens_in=10 tokens_out=20
+2026-04-02T20:20:57 [INFO] backend.app.services.job_scraper_service: Scraping job URL: https://hiring.cafe/viewjob/83jfi7dadcki07vc
+2026-04-02T20:20:57 [INFO] backend.app.services.job_scraper_service: Scraping job URL: https://hiring.cafe/viewjob/83jfi7dadcki07vc
+2026-04-02T20:20:57 [WARNING] backend.app.services.job_scraper_service: Generator scraper failed for https://hiring.cafe/viewjob/83jfi7dadcki07vc: Playwright not available
+Traceback (most recent call last):
+  File "C:\Development\ai-resume-tailor\backend\app\services\job_scraper_service.py", line 78, in scrape
+    job_data = scrape_job_url(url)
+  File "C:\Python314\Lib\unittest\mock.py", line 1175, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1179, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1234, in _execute_mock_call
+    raise effect
+Exception: Playwright not available
+2026-04-02T20:20:57 [INFO] backend.app.services.job_scraper_service: HTTP fallback succeeded for https://hiring.cafe/viewjob/83jfi7dadcki07vc: company='HiringCafe Inc' title='Principal Engineer' text_len=38
+2026-04-02T20:20:57 [INFO] backend.app.services.job_scraper_service: Scraping job URL: https://hiring.cafe/viewjob/83jfi7dadcki07vc
+2026-04-02T20:20:57 [WARNING] backend.app.services.job_scraper_service: Generator scraper failed for https://hiring.cafe/viewjob/83jfi7dadcki07vc: Playwright not available
+Traceback (most recent call last):
+  File "C:\Development\ai-resume-tailor\backend\app\services\job_scraper_service.py", line 78, in scrape
+    job_data = scrape_job_url(url)
+  File "C:\Python314\Lib\unittest\mock.py", line 1175, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1179, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1234, in _execute_mock_call
+    raise effect
+Exception: Playwright not available
+2026-04-02T20:20:57 [WARNING] backend.app.services.job_scraper_service: HTTP fallback failed for https://hiring.cafe/viewjob/83jfi7dadcki07vc: Connection refused
+Traceback (most recent call last):
+  File "C:\Development\ai-resume-tailor\backend\app\services\job_scraper_service.py", line 95, in scrape
+    result = _http_scrape(url)
+  File "C:\Development\ai-resume-tailor\backend\app\services\job_scraper_service.py", line 140, in _http_scrape
+    response = httpx.get(url, headers=_HTTP_HEADERS, follow_redirects=True, timeout=30)
+  File "C:\Python314\Lib\unittest\mock.py", line 1175, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1179, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1234, in _execute_mock_call
+    raise effect
+Exception: Connection refused
+2026-04-02T20:20:57 [INFO] backend.app.services.job_scraper_service: Scraping job URL: https://hiring.cafe/viewjob/83jfi7dadcki07vc
+2026-04-02T20:20:57 [INFO] backend.app.services.job_scraper_service: Scraping job URL: https://hiring.cafe/viewjob/83jfi7dadcki07vc
+2026-04-02T20:20:57 [WARNING] backend.app.services.job_scraper_service: Generator scraper failed for https://hiring.cafe/viewjob/83jfi7dadcki07vc: Playwright not available
+Traceback (most recent call last):
+  File "C:\Development\ai-resume-tailor\backend\app\services\job_scraper_service.py", line 78, in scrape
+    job_data = scrape_job_url(url)
+  File "C:\Python314\Lib\unittest\mock.py", line 1175, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1179, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1234, in _execute_mock_call
+    raise effect
+Exception: Playwright not available
+2026-04-02T20:20:57 [WARNING] backend.app.services.job_scraper_service: HTTP fallback failed for https://hiring.cafe/viewjob/83jfi7dadcki07vc: Connection refused
+Traceback (most recent call last):
+  File "C:\Development\ai-resume-tailor\backend\app\services\job_scraper_service.py", line 95, in scrape
+    result = _http_scrape(url)
+  File "C:\Development\ai-resume-tailor\backend\app\services\job_scraper_service.py", line 140, in _http_scrape
+    response = httpx.get(url, headers=_HTTP_HEADERS, follow_redirects=True, timeout=30)
+  File "C:\Python314\Lib\unittest\mock.py", line 1175, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1179, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1234, in _execute_mock_call
+    raise effect
+Exception: Connection refused
+2026-04-02T20:20:57 [WARNING] backend.app.services.resume_parser_service: Resume file resume.txt yielded empty text
+2026-04-02T20:20:58 [INFO] backend.app.services.usage_policy_service: Extra credit consumed user=user-1 (monthly quota exhausted)
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.services.billing_service: Created checkout session user=e60a4005-6b0b-4f7c-b16f-61ae2d95d031 plan=starter
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:05 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:05 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:06 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:06 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:06 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:06 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:06 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:06 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:06 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:06 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:06 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:06 [INFO] backend.app.main: Storage: local path=storage
+2026-04-02T20:21:06 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-02T20:21:06 [INFO] backend.app.main: Storage: local path=storage

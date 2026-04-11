@@ -58,6 +58,22 @@ class UpgradePlanResponse(APIModel):
 
 
 class GrantCreditsRequest(APIModel):
-    """Request body for POST /admin/billing/grant-credits."""
+    """Request body for POST /admin/billing/grant-credits.
+    Use a negative amount to deduct credits (floored at 0)."""
     user_id: str
-    amount: int
+    amount: int  # positive to add, negative to deduct
+
+
+class RegisterCheckoutSessionRequest(APIModel):
+    """Request body for POST /admin/billing/register-checkout-session.
+
+    Manually records a Stripe checkout session as already processed in
+    stripe_checkout_purchases. Use this to seed the dedup table for any
+    checkout sessions that were processed before the idempotency migration
+    was deployed (cold-start gap), preventing future replays from granting
+    credits again.
+    """
+    checkout_session_id: str
+    user_id: str
+    granted_credits: int
+    stripe_event_id: str | None = None

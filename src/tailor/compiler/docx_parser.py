@@ -313,9 +313,25 @@ def _infer_semantic(pm: ParaModel) -> str:
     if (
         pm.style.numbering
         or "list" in style_name.lower()
-        or text.startswith(("- ", "• ", "· ", "– ", "* "))
+        or text.startswith(("- ", "• ", "· ", "– ", "* ", "\u25cf", "\u25e6"))
     ):
         return "bullet"
+
+    # NBSP/space-column role header: job title and date/company are placed on
+    # the same paragraph and aligned using non-breaking spaces (\\xa0) or tab
+    # stops instead of a "|" separator.  Detect by splitting on 3+ consecutive
+    # nbsp/space characters (or a tab): if the first segment looks like a job
+    # title (short, no year) and the full text contains a year, it is a role
+    # header rather than a date-only meta line or a body paragraph.
+    if _YEAR_RE.search(text):
+        first_seg = re.split(r"[\xa0 ]{3,}|\t+", text.strip())[0].strip()
+        if (
+            first_seg
+            and len(first_seg) <= 60
+            and first_seg[-1] not in ".!?,;:"
+            and not _YEAR_RE.search(first_seg)
+        ):
+            return "role_header"
 
     if _YEAR_RE.search(text) and len(text) <= 80 and "|" not in text:
         return "role_meta"

@@ -31,7 +31,7 @@ from fastapi.responses import Response
 from backend.app.config import get_settings
 from backend.app.dependencies import AdminDep, DbDep
 from backend.app.db.repositories.billing_repository import BillingRepository
-from backend.app.schemas.billing import GrantCreditsRequest
+from backend.app.schemas.billing import GrantCreditsRequest, RegisterCheckoutSessionRequest
 from backend.app.db.repositories.admin_config_repository import AdminConfigRepository
 from backend.app.db.repositories.benchmark_run_repository import BenchmarkRunRepository
 from backend.app.db.repositories.benchmark_run_position_repository import BenchmarkRunPositionRepository
@@ -626,12 +626,51 @@ def download_run_data_by_id(run_id: str, _admin: AdminDep, db: DbDep):
 @router.post("/billing/grant-credits", status_code=200)
 def grant_credits(request: GrantCreditsRequest, _admin: AdminDep, db: DbDep):
     """
-    Grant one-time generation credits to a user.
+    Grant or deduct generation credits for a user.
 
-    Admin-only. Use to award beta credits or compensate users manually.
+    Admin-only. Pass a positive amount to add credits, negative to deduct
+    (balance is floored at 0 — cannot go below zero).
     Creates a billing row for the user if none exists.
     """
-    if request.amount <= 0:
-        raise HTTPException(status_code=400, detail="amount must be > 0")
+    if request.amount == 0:
+        raise HTTPException(status_code=400, detail="amount must be non-zero")
     BillingRepository(db).add_credits(request.user_id, request.amount)
-    return {"user_id": request.user_id, "credits_granted": request.amount}
+    return {"user_id": request.user_id, "credits_adjusted": request.amount}
+
+
+@router.post("/billing/register-checkout-session", status_code=200)
+def register_checkout_session(
+    request: RegisterCheckoutSessionRequest, _admin: AdminDep, db: DbDep
+):
+    """
+    Manually record a Stripe checkout session as already processed.
+
+    Admin-only. Use this to seed the stripe_checkout_purchases dedup table
+    for checkout sessions that were processed before the idempotency migration
+    was deployed (the "cold-start gap"). After seeding, replays of the given
+    session will be silently ignored rather than granting credits again.
+
+    Safe to call multiple times — duplicate session IDs are ignored.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    repo = BillingRepository(db)
+    inserted = repo.record_checkout_credit_grant(
+        checkout_session_id=request.checkout_session_id,
+        user_id=request.user_id,
+        granted_credits=request.granted_credits,
+        event_id=request.stripe_event_id,
+    )
+    if inserted:
+        logger.info(
+            "Admin seeded checkout session: checkout_session_id=%s user_id=%s credits=%d",
+            request.checkout_session_id, request.user_id, request.granted_credits,
+        )
+        return {"registered": True, "checkout_session_id": request.checkout_session_id}
+    else:
+        logger.info(
+            "Admin seed no-op (already exists): checkout_session_id=%s",
+            request.checkout_session_id,
+        )
+        return {"registered": False, "checkout_session_id": request.checkout_session_id,
+                "note": "session already recorded — no change made"}

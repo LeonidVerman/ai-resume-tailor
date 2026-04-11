@@ -2,7 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { Zap } from "lucide-react";
+import Link from "next/link";
+import { Zap, HelpCircle } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { JobDescriptionForm } from "@/components/job-description/JobDescriptionForm";
@@ -28,7 +29,11 @@ export default function GeneratePage() {
           Generate tailored application materials
         </h1>
         <p className="text-gray-500 mt-1">
-          Select your resume and a job description to generate a targeted software engineering resume and cover letter.
+          Select your resume and a job description to generate a targeted software engineering resume and cover letter.{" "}
+          <Link href="/help" className="inline-flex items-center gap-1 text-indigo-500 hover:text-indigo-600 text-sm font-medium">
+            <HelpCircle className="h-3.5 w-3.5" />
+            Quick guide
+          </Link>
         </p>
       </div>
 

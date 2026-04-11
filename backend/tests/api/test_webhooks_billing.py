@@ -360,3 +360,44 @@ class TestInvoicePaymentFailed:
             {"id": "in_x", "customer": "cus_nobody"},
         )
         assert resp.status_code == 200
+
+
+# ── Admin seed + replay integration ────────────────────────────────────────
+
+class TestSeedAndReplay:
+    def test_seeded_session_blocks_webhook_replay(self, admin_client, client, db, user):
+        """After admin-seeding a session, replaying that webhook does not grant credits."""
+        billing = make_billing(db, user, plan_type=PLAN_FREE, extra_credits=0)
+        db.flush()
+
+        session_id = "cs_test_seed_then_replay_x"
+
+        # Admin seeds the session as already processed (cold-start gap remediation)
+        seed_resp = admin_client.post(
+            "/api/v1/admin/billing/register-checkout-session",
+            json={
+                "checkout_session_id": session_id,
+                "user_id": user.id,
+                "granted_credits": CREDIT_PACK_SIZE,
+            },
+        )
+        assert seed_resp.status_code == 200
+        assert seed_resp.json()["registered"] is True
+
+        # Replay the webhook for that session
+        replay_resp = _post_event(
+            client,
+            "checkout.session.completed",
+            {
+                "id": session_id,
+                "mode": "payment",
+                "customer": "cus_test",
+                "metadata": {"user_id": user.id, "pack_type": "credit_pack"},
+            },
+        )
+        assert replay_resp.status_code == 200
+
+        db.refresh(billing)
+        assert billing.extra_credits == 0, (
+            "Credits must not be granted when session was already seeded"
+        )

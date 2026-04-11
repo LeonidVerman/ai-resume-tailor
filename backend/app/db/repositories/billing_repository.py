@@ -66,18 +66,20 @@ class BillingRepository:
 
     def add_credits(self, user_id: str, amount: int) -> None:
         """
-        Add credits to a user's balance.  Creates a billing row if none exists.
-        Used by the admin grant-credits endpoint and the credit-pack webhook handler.
+        Add (or deduct, if negative) credits to a user's balance.
+        Creates a billing row if none exists.
+        Balance is floored at 0 — cannot go negative.
 
+        Used by the admin grant/adjust-credits endpoint and the credit-pack webhook handler.
         Admin-only path: not performance-critical, ORM is fine.
         """
         from backend.app.constants import PLAN_FREE
 
         billing = self.get_by_user_id(user_id)
         if billing is None:
-            self.create(user_id=user_id, plan_type=PLAN_FREE, extra_credits=amount)
+            self.create(user_id=user_id, plan_type=PLAN_FREE, extra_credits=max(0, amount))
         else:
-            billing.extra_credits += amount
+            billing.extra_credits = max(0, billing.extra_credits + amount)
             self._db.flush()
 
     def record_checkout_credit_grant(

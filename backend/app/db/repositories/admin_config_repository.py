@@ -21,7 +21,7 @@ class AdminConfigRepository:
 
     def get(self) -> AdminConfig:
         """Return the single config row, creating it with defaults if absent."""
-        row = self._db.query(AdminConfig).first()
+        row = self._db.query(AdminConfig).order_by(AdminConfig.id).first()
         if row is None:
             row = AdminConfig(**_DEFAULTS)
             self._db.add(row)
