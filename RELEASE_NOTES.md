@@ -1,5 +1,30 @@
 # Release Notes
 
+## 0.7.0.BETA — 2026-04-11
+
+### New features
+- **Help & Quick Start page** (`/help`): sidebar link and dedicated page with onboarding
+  guidance and quick-start instructions for new users.
+
+### Bug fixes
+- **Stale token overlap in two-column templates** (`docx_renderer.py`): residual `<w:tab/>`
+  elements were left in role-header paragraphs after text distribution, causing stale tokens
+  to appear alongside the updated content in sidebar/two-column resume templates.
+- **Experience section not rewritten for NBSP/tab-column templates** (`docx_parser.py`,
+  `text_parser.py`, `docx_renderer.py`): role headers that use non-breaking spaces and tab
+  stops for column alignment (instead of a `|` pipe separator) were not recognised as role
+  headers, leaving the experience section unchanged from the template. Detection now handles
+  the NBSP/tab-column format; `•` and `◉` bullet variants are also supported.
+- **Signup credit mode not applied to new users** (`admin_config_repository.py`, migration
+  `k4l5m6n7o8p9`): `AdminConfigRepository.get()` used `.first()` without `ORDER BY`, making
+  row selection non-deterministic when duplicate rows existed. A TOCTOU race on an empty table
+  could produce two rows; the admin's "beta" update would land on one row while new-user
+  signups read the other (still "normal"), granting 3 credits instead of 10. Fixed by adding
+  `order_by(AdminConfig.id)` and a migration that deduplicates extra rows and adds a
+  `CHECK (id = 1)` constraint to prevent recurrence.
+
+---
+
 ## 0.6.0.BETA — 2026-04-08
 - Modernized UI
 
