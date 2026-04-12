@@ -139,12 +139,16 @@ def login(request: LoginRequest, db: DbDep, settings: SettingsDep):
             detail="Invalid email or password",
         )
 
+    from backend.app.services.signup_credit_service import SignupCreditService
+
     auth_service = AuthService(UserRepository(db))
-    user, _ = auth_service.get_or_create_user(
+    user, is_new = auth_service.get_or_create_user(
         email=response.user.email,
         supabase_user_id=response.user.id,
     )
     auth_service.record_login(user)
+    if is_new:
+        SignupCreditService(db).grant_initial_credits(user.id)
     db.commit()
 
     return AuthLoginResponse(
@@ -285,11 +289,15 @@ def refresh(request: RefreshRequest, db: DbDep, settings: SettingsDep):
             detail="Invalid or expired refresh token",
         )
 
+    from backend.app.services.signup_credit_service import SignupCreditService
+
     auth_service = AuthService(UserRepository(db))
-    user, _ = auth_service.get_or_create_user(
+    user, is_new = auth_service.get_or_create_user(
         email=response.user.email,
         supabase_user_id=response.user.id,
     )
+    if is_new:
+        SignupCreditService(db).grant_initial_credits(user.id)
     db.commit()
 
     return AuthLoginResponse(
