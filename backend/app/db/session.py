@@ -7,6 +7,7 @@ The engine is created lazily so that the backend imports cleanly
 even when DATABASE_URL is not yet configured.
 """
 
+import functools
 from collections.abc import Generator
 from typing import Any
 
@@ -47,8 +48,16 @@ def get_engine(database_url: str = ""):
     return _make_engine(database_url)
 
 
+@functools.lru_cache(maxsize=4)
 def get_session_factory(database_url: str) -> sessionmaker:
-    """Return a session factory bound to the given database URL."""
+    """Return a cached session factory bound to the given database URL.
+
+    The engine (and its connection pool) is created once per unique URL and
+    reused across all requests.  Previously a new engine was instantiated on
+    every call, creating and discarding a connection pool on every HTTP
+    request — a significant performance problem under Supabase's
+    Transaction-mode PgBouncer.
+    """
     return _make_session_factory(database_url)
 
 

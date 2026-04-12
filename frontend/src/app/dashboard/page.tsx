@@ -118,7 +118,12 @@ export default function DashboardPage() {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-700">Free plan quota</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {billingStatus.monthly_used} / {billingStatus.monthly_limit} generations used
+                    {billingStatus.monthly_used} / {billingStatus.monthly_limit} monthly generations used
+                    {billingStatus.extra_credits > 0 && (
+                      <span className="ml-2 text-emerald-600 font-medium">
+                        · {billingStatus.extra_credits} bonus credit{billingStatus.extra_credits !== 1 ? "s" : ""} available
+                      </span>
+                    )}
                   </p>
                 </div>
                 <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
