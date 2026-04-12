@@ -11,7 +11,7 @@ from backend.app.db.models.admin_config import AdminConfig
 
 _DEFAULTS = {
     "simple_model": "gpt-5.2",
-    "signup_credit_mode": "normal",
+    "initial_credits": 3,
 }
 
 

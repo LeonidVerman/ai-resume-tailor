@@ -124,7 +124,7 @@ class BillingRepository:
         return True
 
     def grant_initial_signup_credits(
-        self, user_id: str, amount: int, mode: str, monthly_limit_override: int | None = None
+        self, user_id: str, amount: int, mode: str | None, monthly_limit_override: int | None = None
     ) -> bool:
         """
         Grant initial signup credits exactly once per user.

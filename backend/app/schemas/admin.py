@@ -21,14 +21,12 @@ AVAILABLE_MODELS: list[str] = [
 
 class SignupCreditPolicyResponse(APIModel):
     """GET /admin/signup-credit-policy response."""
-    signup_credit_mode: str
-    signup_credit_amount: int
-    available_modes: list[str]
+    initial_credits: int
 
 
 class SignupCreditPolicyRequest(APIModel):
     """PUT /admin/signup-credit-policy request body."""
-    signup_credit_mode: str
+    initial_credits: int
 
 
 class GenerationConfigRequest(APIModel):
