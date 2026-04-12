@@ -15,7 +15,11 @@ import logging
 
 from sqlalchemy.orm import Session
 
-from backend.app.constants import SIGNUP_CREDIT_AMOUNTS, SIGNUP_CREDIT_MODE_NORMAL
+from backend.app.constants import (
+    SIGNUP_CREDIT_AMOUNTS,
+    SIGNUP_CREDIT_MODE_NORMAL,
+    SIGNUP_CREDIT_MODES_OVERRIDE_MONTHLY,
+)
 from backend.app.db.repositories.admin_config_repository import AdminConfigRepository
 from backend.app.db.repositories.billing_repository import BillingRepository
 
@@ -51,10 +55,15 @@ class SignupCreditService:
         registration attempt.
         """
         mode, amount = self.get_current_policy()
+        # Beta (and any future override-monthly mode) suppresses the regular
+        # monthly plan quota so the user's total is exactly `amount` credits,
+        # not amount + plan_monthly_limit.
+        monthly_override = 0 if mode in SIGNUP_CREDIT_MODES_OVERRIDE_MONTHLY else None
         granted = BillingRepository(self._db).grant_initial_signup_credits(
             user_id=user_id,
             amount=amount,
             mode=mode,
+            monthly_limit_override=monthly_override,
         )
         if granted:
             logger.info(

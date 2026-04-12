@@ -148,6 +148,8 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
             ? `Quota exhausted (${billingStatus.monthly_used}/${billingStatus.monthly_limit} used, ${billingStatus.extra_credits} credits). Go to Billing to upgrade.`
             : billingStatus.monthly_used >= billingStatus.monthly_limit
             ? `Monthly quota reached — using extra credits (${billingStatus.extra_credits} remaining).`
+            : billingStatus.extra_credits > 0
+            ? `${billingStatus.monthly_used}/${billingStatus.monthly_limit} generations used this month · ${billingStatus.extra_credits} bonus credit${billingStatus.extra_credits !== 1 ? "s" : ""} available.`
             : `${billingStatus.monthly_used}/${billingStatus.monthly_limit} generations used this month.`}
         </div>
       )}

@@ -35,6 +35,8 @@ SIGNUP_CREDIT_AMOUNTS: dict[str, int] = {
     SIGNUP_CREDIT_MODE_NORMAL: 3,
     SIGNUP_CREDIT_MODE_BETA: 10,
 }
+# Modes that suppress the regular monthly plan quota (user lives entirely on extra_credits)
+SIGNUP_CREDIT_MODES_OVERRIDE_MONTHLY: frozenset[str] = frozenset({SIGNUP_CREDIT_MODE_BETA})
 
 # Generation modes
 GENERATION_MODE_CONSERVATIVE = "conservative"

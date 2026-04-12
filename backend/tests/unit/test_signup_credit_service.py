@@ -122,6 +122,7 @@ class TestGrantInitialCredits:
             user_id="user-123",
             amount=3,
             mode=SIGNUP_CREDIT_MODE_NORMAL,
+            monthly_limit_override=None,  # normal mode does not override monthly quota
         )
 
     def test_grants_credits_in_beta_mode(self):
@@ -141,6 +142,7 @@ class TestGrantInitialCredits:
             user_id="user-456",
             amount=10,
             mode=SIGNUP_CREDIT_MODE_BETA,
+            monthly_limit_override=0,  # beta mode suppresses the 3/month free quota
         )
 
     def test_no_double_grant_when_already_granted(self):
@@ -242,3 +244,34 @@ class TestBillingRepositoryGrantInitialCredits:
         assert created["initial_credits_granted"] is True
         assert created["initial_credits_amount"] == 3
         assert created["initial_credits_mode"] == "normal"
+
+    def test_monthly_limit_override_stored_for_beta(self):
+        """Beta grant passes monthly_limit_override=0 to suppress the free monthly quota."""
+        from backend.app.db.repositories.billing_repository import BillingRepository
+
+        db = MagicMock()
+        repo = BillingRepository(db)
+        repo.get_by_user_id = MagicMock(return_value=None)
+
+        created = {}
+        repo.create = MagicMock(side_effect=lambda **kw: created.update(kw) or MagicMock())
+
+        repo.grant_initial_signup_credits("new-beta-user", amount=10, mode="beta", monthly_limit_override=0)
+
+        assert created["monthly_limit_override"] == 0
+        assert created["extra_credits"] == 10
+
+    def test_monthly_limit_override_applied_to_existing_billing_row(self):
+        """Override is applied even when billing row already exists."""
+        from backend.app.db.repositories.billing_repository import BillingRepository
+
+        db = MagicMock()
+        repo = BillingRepository(db)
+        billing = self._make_billing(granted=False, credits=0)
+        billing.monthly_limit_override = None
+        repo.get_by_user_id = MagicMock(return_value=billing)
+        repo._db = MagicMock()
+
+        repo.grant_initial_signup_credits("u2", amount=10, mode="beta", monthly_limit_override=0)
+
+        assert billing.monthly_limit_override == 0
