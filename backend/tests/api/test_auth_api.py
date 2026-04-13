@@ -13,15 +13,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from backend.app.config import get_settings
+from backend.app.dependencies import get_db_session
+from backend.app.main import app
+
 
 API = "/api/v1/auth"
 
 # Patch targets. Lazy imports in the endpoint functions must be patched
 # at the module where they are *defined*.
-_SUPA   = "backend.app.clients.supabase_client.make_supabase_client_from_settings"
-_SVC    = "backend.app.services.signup_credit_service.SignupCreditService"
-_SETTINGS = "backend.app.config.get_settings"
-_AUTH_SVC = "backend.app.services.auth_service.AuthService"
+_SUPA = "backend.app.clients.supabase_client.make_supabase_client_from_settings"
+_SVC  = "backend.app.services.signup_credit_service.SignupCreditService"
 
 
 def _settings_stub() -> MagicMock:
@@ -56,51 +58,57 @@ def _mock_user(email: str) -> MagicMock:
 def _patch_login(supa_resp, is_new: bool, grant_mock):
     """Patch the full dependency chain for the /login endpoint."""
     local_user = _mock_user(supa_resp.user.email)
+    mock_db = MagicMock()
 
-    with patch(_SETTINGS, return_value=_settings_stub()), \
-         patch(_SUPA) as mock_factory, \
-         patch("backend.app.services.auth_service.AuthService.get_or_create_user",
-               return_value=(local_user, is_new)), \
-         patch("backend.app.services.auth_service.AuthService.record_login"), \
-         patch(_SVC) as MockSvc, \
-         patch("backend.app.db.session.get_session_factory") as mock_sf:
+    # Use dependency_overrides so FastAPI's Depends(get_settings) is intercepted.
+    app.dependency_overrides[get_settings] = _settings_stub
+    app.dependency_overrides[get_db_session] = lambda: (yield mock_db)
 
-        # Give the DB dependency a valid mock session
-        mock_session = MagicMock()
-        mock_sf.return_value.return_value = mock_session
+    try:
+        with patch(_SUPA) as mock_factory, \
+             patch("backend.app.services.auth_service.AuthService.get_or_create_user",
+                   return_value=(local_user, is_new)), \
+             patch("backend.app.services.auth_service.AuthService.record_login"), \
+             patch(_SVC) as MockSvc:
 
-        mock_supabase = MagicMock()
-        mock_supabase.sign_in.return_value = supa_resp
-        mock_factory.return_value = mock_supabase
+            mock_supabase = MagicMock()
+            mock_supabase.sign_in.return_value = supa_resp
+            mock_factory.return_value = mock_supabase
 
-        MockSvc.return_value.grant_initial_credits = grant_mock
-        yield
+            MockSvc.return_value.grant_initial_credits = grant_mock
+            yield
+    finally:
+        app.dependency_overrides.pop(get_settings, None)
+        app.dependency_overrides.pop(get_db_session, None)
 
 
 @contextmanager
 def _patch_refresh(supa_resp, is_new: bool, grant_mock):
     """Patch the full dependency chain for the /refresh endpoint."""
     local_user = _mock_user(supa_resp.user.email)
+    mock_db = MagicMock()
 
-    with patch(_SETTINGS, return_value=_settings_stub()), \
-         patch(_SUPA) as mock_factory, \
-         patch("backend.app.services.auth_service.AuthService.get_or_create_user",
-               return_value=(local_user, is_new)), \
-         patch(_SVC) as MockSvc, \
-         patch("backend.app.db.session.get_session_factory") as mock_sf:
+    app.dependency_overrides[get_settings] = _settings_stub
+    app.dependency_overrides[get_db_session] = lambda: (yield mock_db)
 
-        mock_session = MagicMock()
-        mock_sf.return_value.return_value = mock_session
+    try:
+        with patch(_SUPA) as mock_factory, \
+             patch("backend.app.services.auth_service.AuthService.get_or_create_user",
+                   return_value=(local_user, is_new)), \
+             patch(_SVC) as MockSvc:
 
-        mock_supabase = MagicMock()
-        mock_supabase.refresh_session.return_value = supa_resp
-        mock_factory.return_value = mock_supabase
+            mock_supabase = MagicMock()
+            mock_supabase.refresh_session.return_value = supa_resp
+            mock_factory.return_value = mock_supabase
 
-        MockSvc.return_value.grant_initial_credits = grant_mock
-        yield
+            MockSvc.return_value.grant_initial_credits = grant_mock
+            yield
+    finally:
+        app.dependency_overrides.pop(get_settings, None)
+        app.dependency_overrides.pop(get_db_session, None)
 
 
-# ── Login ───────────────────────────────────────────────────────────���──────
+# ── Login ──────────────────────────────────────────────────────────────────
 
 class TestLoginGrantsCreditsOnFirstLogin:
     """
