@@ -445,7 +445,13 @@ export default function ProfileOnboardingPage() {
         );
 
       // ── Step 6: AI tools ──────────────────────────────────────────────────
-      case 6:
+      case 6: {
+        const AI_PLACEHOLDERS: Record<keyof AIToolingPractice, string> = {
+          hands_on_tools: "ChatGPT\nGitHub Copilot\nAI-assisted IDE tools",
+          usage_patterns: "Debugging issues\nLearning new frameworks and APIs\nImproving development workflows",
+          principles: "Engineer remains accountable for code quality\nAvoid sharing sensitive data with AI tools",
+          concepts_familiarity: "Large language models\nRAG systems\nAI-assisted development",
+        };
         return (
           <div className="grid grid-cols-2 gap-4">
             {(
@@ -460,6 +466,7 @@ export default function ProfileOnboardingPage() {
                 <ArrayListEditor
                   value={ai[field]}
                   onChange={v => setAI(field, v)}
+                  placeholder={AI_PLACEHOLDERS[field]}
                   rows={3}
                   resetKey={exampleLoadKey}
                 />
@@ -467,6 +474,7 @@ export default function ProfileOnboardingPage() {
             ))}
           </div>
         );
+      }
 
       // ── Step 7: Role fit themes ───────────────────────────────────────────
       case 7:

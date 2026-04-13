@@ -518,16 +518,17 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
         <div className="grid grid-cols-2 gap-4">
           {(
             [
-              ["hands_on_tools", "Hands-on tools"],
-              ["usage_patterns", "Usage patterns"],
-              ["principles", "Principles"],
-              ["concepts_familiarity", "Concepts familiarity"],
-            ] as [keyof AIToolingPractice, string][]
-          ).map(([field, label]) => (
+              ["hands_on_tools", "Hands-on tools", "ChatGPT\nGitHub Copilot\nAI-assisted IDE tools"],
+              ["usage_patterns", "Usage patterns", "Debugging issues\nLearning new frameworks and APIs\nImproving development workflows"],
+              ["principles", "Principles", "Engineer remains accountable for code quality\nAvoid sharing sensitive data with AI tools"],
+              ["concepts_familiarity", "Concepts familiarity", "Large language models\nRAG systems\nAI-assisted development"],
+            ] as [keyof AIToolingPractice, string, string][]
+          ).map(([field, label, placeholder]) => (
             <Field key={field} label={label} configKey={`ai_tooling_practice.${field}`}>
               <ArrayListEditor
                 value={ai[field]}
                 onChange={v => setAI(field, v)}
+                placeholder={placeholder}
                 rows={3}
                 resetKey={rk("ai")}
               />
