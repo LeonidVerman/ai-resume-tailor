@@ -1,5 +1,18 @@
 # Release Notes
 
+## 0.7.1.BETA — 2026-04-12
+
+### Bug fixes
+- **Initial free generation count admin setting** (`signup_credit_service.py`, `admin_config.py`,
+  migration `l5m6n7o8p9q0`): replaced the `signup_credit_mode` string enum (`normal`/`beta`) with
+  a plain configurable integer `initial_credits` (default 3) editable directly from the Admin
+  panel. Users granted credits have `monthly_limit_override=0` so their total allowance is exactly
+  the configured amount rather than credits plus the free monthly quota on top. Generate page now
+  shows "0/N credits used" for credit-only users instead of the misleading "Monthly quota reached"
+  message.
+
+---
+
 ## 0.7.0.BETA — 2026-04-11
 
 ### New features
