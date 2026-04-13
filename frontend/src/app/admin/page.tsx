@@ -34,7 +34,7 @@ export default function AdminPage() {
 
   // Signup credit policy state
   const [signupPolicy, setSignupPolicy] = useState<SignupCreditPolicyResponse | null>(null);
-  const [signupCreditMode, setSignupCreditMode] = useState("normal");
+  const [initialCredits, setInitialCredits] = useState(3);
   const [loadingSignupPolicy, setLoadingSignupPolicy] = useState(true);
   const [savingSignupPolicy, setSavingSignupPolicy] = useState(false);
   const [signupPolicySaved, setSignupPolicySaved] = useState(false);
@@ -128,7 +128,7 @@ export default function AdminPage() {
       .getSignupCreditPolicy()
       .then((p) => {
         setSignupPolicy(p);
-        setSignupCreditMode(p.signup_credit_mode);
+        setInitialCredits(p.initial_credits);
       })
       .catch(() => {})
       .finally(() => setLoadingSignupPolicy(false));
@@ -172,15 +172,15 @@ export default function AdminPage() {
     }
   }
 
-  async function handleSaveSignupPolicy(mode: string) {
+  async function handleSaveSignupPolicy() {
     setSavingSignupPolicy(true);
     setSignupPolicyError(null);
     setSignupPolicySaved(false);
     try {
-      await admin.saveSignupCreditPolicy({ signup_credit_mode: mode });
+      await admin.saveSignupCreditPolicy({ initial_credits: initialCredits });
       const updated = await admin.getSignupCreditPolicy();
       setSignupPolicy(updated);
-      setSignupCreditMode(updated.signup_credit_mode);
+      setInitialCredits(updated.initial_credits);
       setSignupPolicySaved(true);
       setTimeout(() => setSignupPolicySaved(false), 3000);
     } catch (e) {
@@ -409,48 +409,30 @@ export default function AdminPage() {
             <Spinner label="Loading policy..." />
           ) : (
             <div className="space-y-4">
-              <div className="space-y-2">
-                {[
-                  { value: "normal", label: "Normal", description: "3 free credits" },
-                  { value: "beta",   label: "Beta",   description: "10 free credits" },
-                ].map(({ value, label, description }) => (
-                  <label
-                    key={value}
-                    className={[
-                      "flex items-center justify-between gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-colors",
-                      signupCreditMode === value
-                        ? "border-indigo-300 bg-indigo-50"
-                        : "border-gray-100 hover:border-gray-200 hover:bg-gray-50",
-                    ].join(" ")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="signup_credit_mode"
-                        value={value}
-                        checked={signupCreditMode === value}
-                        onChange={() => setSignupCreditMode(value)}
-                        className="accent-indigo-600"
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{label}</p>
-                        <p className="text-xs text-gray-500">{description}</p>
-                      </div>
-                    </div>
-                    {signupPolicy?.signup_credit_mode === value && (
-                      <span className="text-xs text-indigo-600 font-medium">Active</span>
-                    )}
-                  </label>
-                ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Credits per new user
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={1000}
+                  value={initialCredits}
+                  onChange={(e) => setInitialCredits(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="w-28 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Currently active: <span className="font-medium">{signupPolicy?.initial_credits ?? "—"}</span>
+                </p>
               </div>
 
               <div className="flex items-center gap-3">
                 <Button
-                  onClick={() => handleSaveSignupPolicy(signupCreditMode)}
+                  onClick={handleSaveSignupPolicy}
                   loading={savingSignupPolicy}
-                  disabled={signupCreditMode === signupPolicy?.signup_credit_mode}
+                  disabled={initialCredits === signupPolicy?.initial_credits}
                 >
-                  Save policy
+                  Save
                 </Button>
                 {signupPolicySaved && (
                   <span className="text-sm text-green-600">✓ Saved</span>

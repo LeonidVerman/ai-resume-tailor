@@ -5,11 +5,10 @@ Admin configuration — single-row settings table for admin-controlled
 generation behaviour (model selection) and signup credit policy.
 """
 
-from sqlalchemy import BigInteger, String
+from sqlalchemy import BigInteger, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.app.db.base import Base, TimestampMixin
-from backend.app.constants import SIGNUP_CREDIT_MODE_NORMAL
 
 
 class AdminConfig(Base, TimestampMixin):
@@ -21,14 +20,14 @@ class AdminConfig(Base, TimestampMixin):
         String(128), nullable=False, default="gpt-5.2"
     )
 
-    # Signup credit policy — controls how many initial credits new users receive.
-    # Resolved amounts: normal=3, beta=10 (see constants.SIGNUP_CREDIT_AMOUNTS).
-    signup_credit_mode: Mapped[str] = mapped_column(
-        String(32), nullable=False, default=SIGNUP_CREDIT_MODE_NORMAL
+    # Number of free generation credits granted to newly registered users.
+    # Configurable via the Admin panel — no code change needed to adjust.
+    initial_credits: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=3
     )
 
     def __repr__(self) -> str:
         return (
             f"<AdminConfig simple={self.simple_model!r} "
-            f"signup_credit_mode={self.signup_credit_mode!r}>"
+            f"initial_credits={self.initial_credits!r}>"
         )

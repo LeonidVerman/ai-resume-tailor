@@ -431,13 +431,11 @@ export interface GenerationConfigResponse {
 }
 
 export interface SignupCreditPolicyResponse {
-  signup_credit_mode: string;
-  signup_credit_amount: number;
-  available_modes: string[];
+  initial_credits: number;
 }
 
 export interface SignupCreditPolicyRequest {
-  signup_credit_mode: string;
+  initial_credits: number;
 }
 
 export interface GenerationConfigRequest {

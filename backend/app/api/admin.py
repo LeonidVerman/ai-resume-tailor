@@ -161,16 +161,11 @@ def save_generation_config(
 
 @router.get("/signup-credit-policy", response_model=SignupCreditPolicyResponse)
 def get_signup_credit_policy(_admin: AdminDep, db: DbDep):
-    """Return the current signup credit policy."""
-    from backend.app.constants import SIGNUP_CREDIT_MODES
+    """Return the current initial credits amount for new signups."""
     from backend.app.services.signup_credit_service import SignupCreditService
 
-    svc = SignupCreditService(db)
-    mode, amount = svc.get_current_policy()
     return SignupCreditPolicyResponse(
-        signup_credit_mode=mode,
-        signup_credit_amount=amount,
-        available_modes=list(SIGNUP_CREDIT_MODES),
+        initial_credits=SignupCreditService(db).get_initial_credits(),
     )
 
 
@@ -178,20 +173,18 @@ def get_signup_credit_policy(_admin: AdminDep, db: DbDep):
 def save_signup_credit_policy(
     request: SignupCreditPolicyRequest, _admin: AdminDep, db: DbDep
 ):
-    """Update the signup credit policy mode."""
-    from backend.app.constants import SIGNUP_CREDIT_MODES
+    """Update the initial credits granted to new users at signup."""
+    from fastapi import HTTPException, status
 
-    if request.signup_credit_mode not in SIGNUP_CREDIT_MODES:
-        from fastapi import HTTPException, status
+    if request.initial_credits < 0:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Invalid mode '{request.signup_credit_mode}'. "
-                   f"Must be one of: {', '.join(SIGNUP_CREDIT_MODES)}",
+            detail="initial_credits must be 0 or greater.",
         )
-    AdminConfigRepository(db).upsert(signup_credit_mode=request.signup_credit_mode)
+    AdminConfigRepository(db).upsert(initial_credits=request.initial_credits)
     return AdminActionResponse(
         ok=True,
-        message=f"Signup credit policy set to '{request.signup_credit_mode}'.",
+        message=f"Signup initial credits set to {request.initial_credits}.",
     )
 
 

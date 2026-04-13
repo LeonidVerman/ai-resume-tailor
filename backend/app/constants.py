@@ -27,14 +27,8 @@ CREDIT_PACK_PRICE_DISPLAY = "$4.99"
 ROLE_USER = "user"
 ROLE_ADMIN = "admin"
 
-# Signup credit policy
-SIGNUP_CREDIT_MODE_NORMAL = "normal"
-SIGNUP_CREDIT_MODE_BETA = "beta"
-SIGNUP_CREDIT_MODES = (SIGNUP_CREDIT_MODE_NORMAL, SIGNUP_CREDIT_MODE_BETA)
-SIGNUP_CREDIT_AMOUNTS: dict[str, int] = {
-    SIGNUP_CREDIT_MODE_NORMAL: 3,
-    SIGNUP_CREDIT_MODE_BETA: 10,
-}
+# Default initial credits granted to new users (overridden by admin_config.initial_credits)
+SIGNUP_CREDITS_DEFAULT = 3
 
 # Generation modes
 GENERATION_MODE_CONSERVATIVE = "conservative"

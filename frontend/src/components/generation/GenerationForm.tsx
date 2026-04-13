@@ -67,6 +67,8 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
     }).finally(() => setLoadingData(false));
   }, []);
 
+  // monthly_limit=0 means the user runs purely on extra_credits (e.g. beta signup)
+  const creditsOnly = billingStatus !== null && billingStatus.monthly_limit === 0;
   const quotaExhausted =
     billingStatus !== null &&
     billingStatus.monthly_used >= billingStatus.monthly_limit &&
@@ -137,17 +139,23 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
       {billingStatus && (
         <div className={cn(
           "flex items-center gap-2 px-4 py-3 rounded-lg text-sm",
-          quotaExhausted
+          (quotaExhausted || (creditsOnly && billingStatus.extra_credits === 0))
             ? "bg-red-50 text-red-700 border border-red-200"
-            : billingStatus.monthly_used >= billingStatus.monthly_limit
+            : !creditsOnly && billingStatus.monthly_used >= billingStatus.monthly_limit
             ? "bg-amber-50 text-amber-700 border border-amber-200"
             : "bg-blue-50 text-blue-700 border border-blue-200"
         )}>
           <AlertCircle className="h-4 w-4 shrink-0" />
-          {quotaExhausted
-            ? `Quota exhausted (${billingStatus.monthly_used}/${billingStatus.monthly_limit} used, ${billingStatus.extra_credits} credits). Go to Billing to upgrade.`
+          {creditsOnly
+            ? billingStatus.extra_credits === 0
+              ? "All credits used. Go to Billing to upgrade."
+              : `${billingStatus.monthly_used}/${billingStatus.extra_credits + billingStatus.monthly_used} credits used.`
+            : quotaExhausted
+            ? `Quota exhausted (${billingStatus.monthly_used}/${billingStatus.monthly_limit} used, 0 credits). Go to Billing to upgrade.`
             : billingStatus.monthly_used >= billingStatus.monthly_limit
             ? `Monthly quota reached — using extra credits (${billingStatus.extra_credits} remaining).`
+            : billingStatus.extra_credits > 0
+            ? `${billingStatus.monthly_used}/${billingStatus.monthly_limit} generations used this month · ${billingStatus.extra_credits} bonus credit${billingStatus.extra_credits !== 1 ? "s" : ""} available.`
             : `${billingStatus.monthly_used}/${billingStatus.monthly_limit} generations used this month.`}
         </div>
       )}

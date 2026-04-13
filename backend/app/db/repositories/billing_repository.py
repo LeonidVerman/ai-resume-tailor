@@ -124,13 +124,15 @@ class BillingRepository:
         return True
 
     def grant_initial_signup_credits(
-        self, user_id: str, amount: int, mode: str
+        self, user_id: str, amount: int, mode: str | None, monthly_limit_override: int | None = None
     ) -> bool:
         """
         Grant initial signup credits exactly once per user.
 
-        Creates the billing row if absent, then atomically sets
-        initial_credits_granted=True and credits extra_credits.
+        Creates the billing row if absent, then sets initial_credits_granted=True
+        and credits extra_credits.  When monthly_limit_override is provided it
+        is stored on the billing row so the user's monthly quota is overridden
+        (e.g. 0 for beta mode so they consume only their extra_credits).
 
         Returns True if credits were granted, False if already granted (idempotent).
         """
@@ -145,6 +147,7 @@ class BillingRepository:
                 initial_credits_granted=True,
                 initial_credits_amount=amount,
                 initial_credits_mode=mode,
+                monthly_limit_override=monthly_limit_override,
             )
             return True
 
@@ -155,5 +158,7 @@ class BillingRepository:
         billing.initial_credits_granted = True
         billing.initial_credits_amount = amount
         billing.initial_credits_mode = mode
+        if monthly_limit_override is not None:
+            billing.monthly_limit_override = monthly_limit_override
         self._db.flush()
         return True
