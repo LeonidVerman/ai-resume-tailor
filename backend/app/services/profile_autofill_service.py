@@ -1,0 +1,282 @@
+"""
+backend/app/services/profile_autofill_service.py
+
+Candidate profile autofill service.
+
+Given a resume already stored in structured_resumes, calls the LLM once to
+produce a full CandidateProfileDocument draft.  The draft is cached in
+candidate_profile_resume_drafts (one row per user+resume pair) so repeat
+requests reuse the stored result.  A SHA-256 hash of resume_jsonb detects
+when the resume has changed since the draft was generated (is_stale flag).
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import logging
+from datetime import datetime, timezone
+
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+
+from backend.app.clients.openai_client import make_openai_client_from_settings
+from backend.app.db.repositories.candidate_profile_resume_draft_repository import (
+    CandidateProfileResumeDraftRepository,
+)
+from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
+from backend.app.schemas.autofill import AutofillDraftResponse
+from backend.app.schemas.candidate_profile import CandidateProfileDocument
+
+logger = logging.getLogger(__name__)
+
+
+# ── JSON schema passed to OpenAI structured-output mode ───────────────────────
+# Mirrors CandidateProfileDocument structure; all leaf fields are optional
+# so partial resumes still produce valid output.
+
+_PROFILE_SCHEMA: dict = {
+    "name": "candidate_profile",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["candidate"],
+        "properties": {
+            "candidate_profile_version": {"type": "string"},
+            "candidate": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["name"],
+                "properties": {
+                    "name": {"type": "string"},
+                    "headline": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "summary": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                },
+            },
+            "domains": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["primary", "secondary"],
+                "properties": {
+                    "primary": {"type": "array", "items": {"type": "string"}},
+                    "secondary": {"type": "array", "items": {"type": "string"}},
+                },
+            },
+            "experience_highlights": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["area", "impact"],
+                    "properties": {
+                        "area": {"type": "string"},
+                        "market": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                        "employer_relationship": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                        "impact": {"type": "array", "items": {"type": "string"}},
+                        "team_context": {"type": "array", "items": {"type": "string"}},
+                        "architecture_patterns": {"type": "array", "items": {"type": "string"}},
+                        "constraints_and_tradeoffs": {"type": "array", "items": {"type": "string"}},
+                        "skills_applied": {"type": "array", "items": {"type": "string"}},
+                        "security_auth_patterns": {"type": "array", "items": {"type": "string"}},
+                    },
+                },
+            },
+            "technical_skills": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": [
+                    "languages", "backend_systems", "datastores", "infra_devops",
+                    "frontend", "api_patterns", "async_messaging", "observability",
+                    "security_auth_patterns", "scalability_reliability_patterns",
+                ],
+                "properties": {
+                    "languages": {"type": "array", "items": {"type": "string"}},
+                    "backend_systems": {"type": "array", "items": {"type": "string"}},
+                    "datastores": {"type": "array", "items": {"type": "string"}},
+                    "infra_devops": {"type": "array", "items": {"type": "string"}},
+                    "frontend": {"type": "array", "items": {"type": "string"}},
+                    "api_patterns": {"type": "array", "items": {"type": "string"}},
+                    "async_messaging": {"type": "array", "items": {"type": "string"}},
+                    "observability": {"type": "array", "items": {"type": "string"}},
+                    "security_auth_patterns": {"type": "array", "items": {"type": "string"}},
+                    "scalability_reliability_patterns": {"type": "array", "items": {"type": "string"}},
+                },
+            },
+            "leadership": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["scope", "practices", "risk_management"],
+                "properties": {
+                    "scope": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["team_size_max", "style_keywords"],
+                        "properties": {
+                            "team_size_max": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+                            "style_keywords": {"type": "array", "items": {"type": "string"}},
+                        },
+                    },
+                    "practices": {"type": "array", "items": {"type": "string"}},
+                    "risk_management": {"type": "array", "items": {"type": "string"}},
+                },
+            },
+            "ai_tooling_practice": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["hands_on_tools", "usage_patterns", "principles", "concepts_familiarity"],
+                "properties": {
+                    "hands_on_tools": {"type": "array", "items": {"type": "string"}},
+                    "usage_patterns": {"type": "array", "items": {"type": "string"}},
+                    "principles": {"type": "array", "items": {"type": "string"}},
+                    "concepts_familiarity": {"type": "array", "items": {"type": "string"}},
+                },
+            },
+            "role_fit_themes": {"type": "array", "items": {"type": "string"}},
+            "constraints_and_preferences": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["work_context", "communication", "resume_constraint"],
+                "properties": {
+                    "work_context": {"type": "array", "items": {"type": "string"}},
+                    "communication": {"type": "array", "items": {"type": "string"}},
+                    "resume_constraint": {"type": "array", "items": {"type": "string"}},
+                },
+            },
+            "claim_boundaries": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["security_auth", "domain_limits", "employment_constraints"],
+                "properties": {
+                    "security_auth": {"type": "array", "items": {"type": "string"}},
+                    "domain_limits": {"type": "array", "items": {"type": "string"}},
+                    "employment_constraints": {"type": "array", "items": {"type": "string"}},
+                },
+            },
+        },
+    },
+}
+
+
+def _build_autofill_prompt(raw_text: str) -> str:
+    return (
+        "You are a career profile assistant. Read the resume below and extract structured "
+        "information to populate a candidate profile JSON.\n\n"
+        "Rules:\n"
+        "- Be factual: only include information explicitly present in the resume.\n"
+        "- Do not invent, embellish, or generalize beyond what is stated.\n"
+        "- candidate.name: the person's full name from the resume header.\n"
+        "- candidate.headline: a short 1-line professional summary (infer from title/summary).\n"
+        "- candidate.summary: a 2-3 sentence factual summary of their background.\n"
+        "- experience_highlights: one entry per job. area = role/company area. "
+        "impact = bullet point achievements from that job.\n"
+        "- technical_skills: populate from the skills section and experience bullets.\n"
+        "- For sections with no evidence in the resume, return empty arrays or null.\n"
+        "- Return valid JSON matching the schema exactly.\n\n"
+        f"RESUME:\n{raw_text}"
+    )
+
+
+# ── Service ────────────────────────────────────────────────────────────────────
+
+class ProfileAutofillService:
+    def __init__(self, db: Session) -> None:
+        self._db = db
+
+    @staticmethod
+    def _resume_hash(resume_jsonb: dict) -> str:
+        """SHA-256 hex digest of the resume JSONB for staleness detection."""
+        return hashlib.sha256(
+            json.dumps(resume_jsonb, sort_keys=True).encode()
+        ).hexdigest()
+
+    def get_draft(self, user_id: str, resume_id: int) -> AutofillDraftResponse | None:
+        """
+        Return the cached draft for this resume, with an is_stale flag.
+        Returns None if no draft has been generated yet.
+        Raises 404 if the resume does not exist or belongs to another user.
+        """
+        resume = StructuredResumeRepository(self._db).get_by_id(resume_id)
+        if resume is None or resume.user_id != user_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
+
+        row = CandidateProfileResumeDraftRepository(self._db).get_by_user_and_resume(
+            user_id, resume_id
+        )
+        if row is None:
+            return None
+
+        current_hash = self._resume_hash(resume.resume_jsonb)
+        return AutofillDraftResponse(
+            resume_id=resume_id,
+            draft=CandidateProfileDocument.model_validate(row.draft_jsonb),
+            status=row.status,
+            resume_hash=row.resume_hash,
+            is_stale=(row.resume_hash != current_hash),
+            model=row.model,
+            generated_at=row.generated_at,
+        )
+
+    def generate(self, user_id: str, resume_id: int) -> AutofillDraftResponse:
+        """
+        Generate (or regenerate) a profile draft from a resume using the LLM.
+        Persists the result in candidate_profile_resume_drafts and returns it.
+        Raises 404 if the resume is not found, 422 if it has no text.
+        """
+        resume = StructuredResumeRepository(self._db).get_by_id(resume_id)
+        if resume is None or resume.user_id != user_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
+
+        raw_text = resume.resume_jsonb.get("raw_text", "")
+        if not raw_text.strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Resume has no extractable text. Re-upload the resume and try again.",
+            )
+
+        client = make_openai_client_from_settings()
+        prompt = _build_autofill_prompt(raw_text)
+
+        logger.info(
+            "ProfileAutofillService.generate user_id=%s resume_id=%s text_len=%d",
+            user_id, resume_id, len(raw_text),
+        )
+
+        result = client.complete_json(
+            [{"role": "user", "content": prompt}],
+            json_schema=_PROFILE_SCHEMA,
+            model="gpt-4o",
+            temperature=0.2,
+            max_tokens=4096,
+        )
+
+        draft_dict = json.loads(result.content)
+        current_hash = self._resume_hash(resume.resume_jsonb)
+        now = datetime.now(tz=timezone.utc)
+
+        repo = CandidateProfileResumeDraftRepository(self._db)
+        row = repo.upsert(
+            user_id=user_id,
+            resume_id=resume_id,
+            draft_jsonb=draft_dict,
+            resume_hash=current_hash,
+            status="ready",
+            model=result.model,
+            generated_at=now,
+        )
+        self._db.commit()
+
+        logger.info(
+            "ProfileAutofillService.generate done draft_id=%s model=%s",
+            row.id, result.model,
+        )
+
+        return AutofillDraftResponse(
+            resume_id=resume_id,
+            draft=CandidateProfileDocument.model_validate(draft_dict),
+            status="ready",
+            resume_hash=current_hash,
+            is_stale=False,
+            model=result.model,
+            generated_at=row.generated_at,
+        )

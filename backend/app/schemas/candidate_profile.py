@@ -124,5 +124,6 @@ class CandidateProfileResponse(APIModel):
     profile_version: str
     profile: CandidateProfileDocument
     onboarding_completed: bool
+    source_resume_id: int | None = None
     created_at: datetime
     updated_at: datetime
