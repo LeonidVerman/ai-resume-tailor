@@ -15,12 +15,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ArrayListEditor } from "@/components/candidate-profile/ArrayListEditor";
 import { ExperienceHighlightCard } from "@/components/candidate-profile/ExperienceHighlightCard";
+import { SelectResumeModal } from "@/components/candidate-profile/SelectResumeModal";
 import { candidateProfile, ApiError } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -149,6 +150,7 @@ export default function ProfileOnboardingPage() {
   // Incrementing this forces ArrayListEditors on the current step to re-sync
   // their local text state after example data is loaded.
   const [exampleLoadKey, setExampleLoadKey] = useState(0);
+  const [fillModalOpen, setFillModalOpen] = useState(false);
 
   // ── Save current state to backend ────────────────────────────────────────
 
@@ -275,6 +277,37 @@ export default function ProfileOnboardingPage() {
       case 7: setDoc(d => ({ ...d, role_fit_themes: EXAMPLE_ROLE_THEMES })); break;
       case 8: setDoc(d => ({ ...d, claim_boundaries: EXAMPLE_CLAIM_BOUNDARIES })); break;
     }
+    setExampleLoadKey(k => k + 1);
+  }
+
+  function fillFromDraft(draft: CandidateProfileDocument) {
+    const hasContent = !!(
+      doc.candidate.name || highlights.length > 0 ||
+      doc.domains.primary.length ||
+      Object.values(doc.technical_skills).some(a => a.length > 0)
+    );
+    if (hasContent && !window.confirm(
+      "This will replace all profile fields with data from the resume draft.\nContinue?"
+    )) {
+      return;
+    }
+    setDoc({
+      candidate_profile_version: "2.0",
+      candidate: draft.candidate ?? EMPTY_DOC.candidate,
+      domains: draft.domains ?? EMPTY_DOC.domains,
+      experience_highlights: draft.experience_highlights ?? [],
+      technical_skills: { ...EMPTY_DOC.technical_skills, ...draft.technical_skills },
+      leadership: {
+        scope: { ...EMPTY_DOC.leadership.scope, ...(draft.leadership?.scope ?? {}) },
+        practices: draft.leadership?.practices ?? [],
+        risk_management: draft.leadership?.risk_management ?? [],
+      },
+      ai_tooling_practice: { ...EMPTY_DOC.ai_tooling_practice, ...draft.ai_tooling_practice },
+      role_fit_themes: draft.role_fit_themes ?? [],
+      constraints_and_preferences: { ...EMPTY_DOC.constraints_and_preferences, ...draft.constraints_and_preferences },
+      claim_boundaries: { ...EMPTY_DOC.claim_boundaries, ...draft.claim_boundaries },
+    });
+    setHighlights((draft.experience_highlights ?? []).map(keyed));
     setExampleLoadKey(k => k + 1);
   }
 
@@ -532,6 +565,12 @@ export default function ProfileOnboardingPage() {
   // ── Layout ────────────────────────────────────────────────────────────────
 
   return (
+    <>
+    <SelectResumeModal
+      open={fillModalOpen}
+      onClose={() => setFillModalOpen(false)}
+      onApply={(draft) => fillFromDraft(draft)}
+    />
     <div className="min-h-screen bg-gray-50 flex items-start justify-center py-12 px-4">
       <div className="w-full max-w-3xl">
         <div className="mb-8 text-center">
@@ -546,7 +585,15 @@ export default function ProfileOnboardingPage() {
             <StepHeader step={step} title={STEPS[step - 1]} />
           </CardHeader>
           <CardBody className="space-y-6">
-            <div className="flex justify-end -mt-2">
+            <div className="flex items-center justify-between -mt-2">
+              <button
+                type="button"
+                onClick={() => setFillModalOpen(true)}
+                className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 hover:underline underline-offset-2 transition-colors"
+              >
+                <Wand2 className="h-3.5 w-3.5" />
+                Fill from resume
+              </button>
               <button
                 type="button"
                 onClick={handleLoadExample}
@@ -584,5 +631,6 @@ export default function ProfileOnboardingPage() {
         </Card>
       </div>
     </div>
+    </>
   );
 }
