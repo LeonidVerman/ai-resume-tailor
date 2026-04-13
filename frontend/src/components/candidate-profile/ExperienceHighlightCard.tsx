@@ -12,6 +12,7 @@ interface Props {
   index: number;
   onChange: (h: ExperienceHighlight) => void;
   onRemove: () => void;
+  resetKey?: string | number;
 }
 
 const OPTIONAL_LIST_FIELDS: Array<[keyof ExperienceHighlight, string]> = [
@@ -22,7 +23,7 @@ const OPTIONAL_LIST_FIELDS: Array<[keyof ExperienceHighlight, string]> = [
   ["security_auth_patterns", "Security / auth patterns"],
 ];
 
-export function ExperienceHighlightCard({ value, index, onChange, onRemove }: Props) {
+export function ExperienceHighlightCard({ value, index, onChange, onRemove, resetKey }: Props) {
   const [showDetails, setShowDetails] = useState(false);
 
   function set<K extends keyof ExperienceHighlight>(field: K, val: ExperienceHighlight[K]) {
@@ -53,7 +54,7 @@ export function ExperienceHighlightCard({ value, index, onChange, onRemove }: Pr
         <Input
           value={value.area}
           onChange={e => set("area", e.target.value)}
-          placeholder="crypto_exchange_platform"
+          placeholder="Backend platform development"
           className="mt-1"
         />
       </div>
@@ -67,9 +68,10 @@ export function ExperienceHighlightCard({ value, index, onChange, onRemove }: Pr
         <ArrayListEditor
           value={value.impact}
           onChange={v => set("impact", v)}
-          placeholder={"Built and launched a cryptocurrency exchange\nScaled to 1M+ users"}
+          placeholder={"Improved application performance and reliability\nResolved production issues and improved system stability"}
           rows={4}
           className="mt-1"
+          resetKey={resetKey}
         />
       </div>
 
@@ -105,7 +107,7 @@ export function ExperienceHighlightCard({ value, index, onChange, onRemove }: Pr
               <Input
                 value={value.employer_relationship ?? ""}
                 onChange={e => set("employer_relationship", e.target.value || undefined)}
-                placeholder="independent_contractor_via_platform"
+                placeholder="Independent contractor"
                 className="mt-1"
               />
             </div>
@@ -121,6 +123,7 @@ export function ExperienceHighlightCard({ value, index, onChange, onRemove }: Pr
                 onChange={v => set(field, v)}
                 rows={3}
                 className="mt-1"
+                resetKey={resetKey}
               />
             </div>
           ))}
