@@ -248,6 +248,19 @@ class ProfileAutofillService:
             json.dumps(resume_jsonb, sort_keys=True).encode()
         ).hexdigest()
 
+    @staticmethod
+    def _coerce_draft(raw: dict) -> CandidateProfileDocument:
+        """
+        Validate LLM output into CandidateProfileDocument.
+
+        The JSON schema allows null for optional top-level fields so that the
+        model can omit sections it has no data for. CandidateProfileDocument
+        uses default_factory for those fields, so passing null raises a
+        ValidationError. Stripping null values lets the defaults kick in.
+        """
+        cleaned = {k: v for k, v in raw.items() if v is not None}
+        return CandidateProfileDocument.model_validate(cleaned)
+
     def get_draft(self, user_id: str, resume_id: int) -> AutofillDraftResponse | None:
         """
         Return the cached draft for this resume, with an is_stale flag.
@@ -267,7 +280,7 @@ class ProfileAutofillService:
         current_hash = self._resume_hash(resume.resume_jsonb)
         return AutofillDraftResponse(
             resume_id=resume_id,
-            draft=CandidateProfileDocument.model_validate(row.draft_jsonb),
+            draft=self._coerce_draft(row.draft_jsonb),
             status=row.status,
             resume_hash=row.resume_hash,
             is_stale=(row.resume_hash != current_hash),
@@ -331,7 +344,7 @@ class ProfileAutofillService:
 
         return AutofillDraftResponse(
             resume_id=resume_id,
-            draft=CandidateProfileDocument.model_validate(draft_dict),
+            draft=self._coerce_draft(draft_dict),
             status="ready",
             resume_hash=current_hash,
             is_stale=False,
