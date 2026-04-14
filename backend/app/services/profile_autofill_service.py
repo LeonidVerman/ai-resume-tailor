@@ -27,8 +27,11 @@ from backend.app.db.repositories.candidate_profile_resume_draft_repository impor
 from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
 from backend.app.schemas.autofill import AutofillDraftResponse
 from backend.app.schemas.candidate_profile import CandidateProfileDocument
+from tailor.prompts import _load_prompt
 
 logger = logging.getLogger(__name__)
+
+_AUTOFILL_PROMPT_NAME = "autofill/autofill_from_resume"
 
 
 # ── JSON schema passed to OpenAI structured-output mode ───────────────────────
@@ -216,23 +219,9 @@ _PROFILE_SCHEMA: dict = {
 }
 
 
-def _build_autofill_prompt(raw_text: str) -> str:
-    return (
-        "You are a career profile assistant. Read the resume below and extract structured "
-        "information to populate a candidate profile JSON.\n\n"
-        "Rules:\n"
-        "- Be factual: only include information explicitly present in the resume.\n"
-        "- Do not invent, embellish, or generalize beyond what is stated.\n"
-        "- candidate.name: the person's full name from the resume header.\n"
-        "- candidate.headline: a short 1-line professional summary (infer from title/summary).\n"
-        "- candidate.summary: a 2-3 sentence factual summary of their background.\n"
-        "- experience_highlights: one entry per job. area = role/company area. "
-        "impact = bullet point achievements from that job.\n"
-        "- technical_skills: populate from the skills section and experience bullets.\n"
-        "- For sections with no evidence in the resume, return empty arrays or null.\n"
-        "- Return valid JSON matching the schema exactly.\n\n"
-        f"RESUME:\n{raw_text}"
-    )
+def _load_autofill_prompt(raw_text: str) -> str:
+    """Load prompts/autofill/autofill_from_resume.txt and inject the resume text."""
+    return _load_prompt(_AUTOFILL_PROMPT_NAME, resume_text=raw_text)
 
 
 # ── Service ────────────────────────────────────────────────────────────────────
@@ -306,11 +295,11 @@ class ProfileAutofillService:
             )
 
         client = make_openai_client_from_settings()
-        prompt = _build_autofill_prompt(raw_text)
+        prompt = _load_autofill_prompt(raw_text)
 
         logger.info(
-            "ProfileAutofillService.generate user_id=%s resume_id=%s text_len=%d",
-            user_id, resume_id, len(raw_text),
+            "ProfileAutofillService.generate user_id=%s resume_id=%s text_len=%d prompt=%s",
+            user_id, resume_id, len(raw_text), _AUTOFILL_PROMPT_NAME,
         )
 
         result = client.complete_json(
