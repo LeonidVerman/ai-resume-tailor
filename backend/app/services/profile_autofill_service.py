@@ -41,13 +41,26 @@ _PROFILE_SCHEMA: dict = {
     "schema": {
         "type": "object",
         "additionalProperties": False,
-        "required": ["candidate"],
+        # OpenAI strict mode: every key in properties must appear in required.
+        # Optional fields use anyOf [type, null] to allow the model to omit them.
+        "required": [
+            "candidate_profile_version",
+            "candidate",
+            "domains",
+            "experience_highlights",
+            "technical_skills",
+            "leadership",
+            "ai_tooling_practice",
+            "role_fit_themes",
+            "constraints_and_preferences",
+            "claim_boundaries",
+        ],
         "properties": {
-            "candidate_profile_version": {"type": "string"},
+            "candidate_profile_version": {"anyOf": [{"type": "string"}, {"type": "null"}]},
             "candidate": {
                 "type": "object",
                 "additionalProperties": False,
-                "required": ["name"],
+                "required": ["name", "headline", "summary"],
                 "properties": {
                     "name": {"type": "string"},
                     "headline": {"anyOf": [{"type": "string"}, {"type": "null"}]},
@@ -55,103 +68,148 @@ _PROFILE_SCHEMA: dict = {
                 },
             },
             "domains": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["primary", "secondary"],
-                "properties": {
-                    "primary": {"type": "array", "items": {"type": "string"}},
-                    "secondary": {"type": "array", "items": {"type": "string"}},
-                },
-            },
-            "experience_highlights": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": ["area", "impact"],
-                    "properties": {
-                        "area": {"type": "string"},
-                        "market": {"anyOf": [{"type": "string"}, {"type": "null"}]},
-                        "employer_relationship": {"anyOf": [{"type": "string"}, {"type": "null"}]},
-                        "impact": {"type": "array", "items": {"type": "string"}},
-                        "team_context": {"type": "array", "items": {"type": "string"}},
-                        "architecture_patterns": {"type": "array", "items": {"type": "string"}},
-                        "constraints_and_tradeoffs": {"type": "array", "items": {"type": "string"}},
-                        "skills_applied": {"type": "array", "items": {"type": "string"}},
-                        "security_auth_patterns": {"type": "array", "items": {"type": "string"}},
-                    },
-                },
-            },
-            "technical_skills": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": [
-                    "languages", "backend_systems", "datastores", "infra_devops",
-                    "frontend", "api_patterns", "async_messaging", "observability",
-                    "security_auth_patterns", "scalability_reliability_patterns",
-                ],
-                "properties": {
-                    "languages": {"type": "array", "items": {"type": "string"}},
-                    "backend_systems": {"type": "array", "items": {"type": "string"}},
-                    "datastores": {"type": "array", "items": {"type": "string"}},
-                    "infra_devops": {"type": "array", "items": {"type": "string"}},
-                    "frontend": {"type": "array", "items": {"type": "string"}},
-                    "api_patterns": {"type": "array", "items": {"type": "string"}},
-                    "async_messaging": {"type": "array", "items": {"type": "string"}},
-                    "observability": {"type": "array", "items": {"type": "string"}},
-                    "security_auth_patterns": {"type": "array", "items": {"type": "string"}},
-                    "scalability_reliability_patterns": {"type": "array", "items": {"type": "string"}},
-                },
-            },
-            "leadership": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["scope", "practices", "risk_management"],
-                "properties": {
-                    "scope": {
+                "anyOf": [
+                    {
                         "type": "object",
                         "additionalProperties": False,
-                        "required": ["team_size_max", "style_keywords"],
+                        "required": ["primary", "secondary"],
                         "properties": {
-                            "team_size_max": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
-                            "style_keywords": {"type": "array", "items": {"type": "string"}},
+                            "primary": {"type": "array", "items": {"type": "string"}},
+                            "secondary": {"type": "array", "items": {"type": "string"}},
                         },
                     },
-                    "practices": {"type": "array", "items": {"type": "string"}},
-                    "risk_management": {"type": "array", "items": {"type": "string"}},
-                },
+                    {"type": "null"},
+                ],
+            },
+            "experience_highlights": {
+                "anyOf": [
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": [
+                                "area", "market", "employer_relationship", "impact",
+                                "team_context", "architecture_patterns",
+                                "constraints_and_tradeoffs", "skills_applied",
+                                "security_auth_patterns",
+                            ],
+                            "properties": {
+                                "area": {"type": "string"},
+                                "market": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                                "employer_relationship": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                                "impact": {"type": "array", "items": {"type": "string"}},
+                                "team_context": {"type": "array", "items": {"type": "string"}},
+                                "architecture_patterns": {"type": "array", "items": {"type": "string"}},
+                                "constraints_and_tradeoffs": {"type": "array", "items": {"type": "string"}},
+                                "skills_applied": {"type": "array", "items": {"type": "string"}},
+                                "security_auth_patterns": {"type": "array", "items": {"type": "string"}},
+                            },
+                        },
+                    },
+                    {"type": "null"},
+                ],
+            },
+            "technical_skills": {
+                "anyOf": [
+                    {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": [
+                            "languages", "backend_systems", "datastores", "infra_devops",
+                            "frontend", "api_patterns", "async_messaging", "observability",
+                            "security_auth_patterns", "scalability_reliability_patterns",
+                        ],
+                        "properties": {
+                            "languages": {"type": "array", "items": {"type": "string"}},
+                            "backend_systems": {"type": "array", "items": {"type": "string"}},
+                            "datastores": {"type": "array", "items": {"type": "string"}},
+                            "infra_devops": {"type": "array", "items": {"type": "string"}},
+                            "frontend": {"type": "array", "items": {"type": "string"}},
+                            "api_patterns": {"type": "array", "items": {"type": "string"}},
+                            "async_messaging": {"type": "array", "items": {"type": "string"}},
+                            "observability": {"type": "array", "items": {"type": "string"}},
+                            "security_auth_patterns": {"type": "array", "items": {"type": "string"}},
+                            "scalability_reliability_patterns": {"type": "array", "items": {"type": "string"}},
+                        },
+                    },
+                    {"type": "null"},
+                ],
+            },
+            "leadership": {
+                "anyOf": [
+                    {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["scope", "practices", "risk_management"],
+                        "properties": {
+                            "scope": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "required": ["team_size_max", "style_keywords"],
+                                "properties": {
+                                    "team_size_max": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+                                    "style_keywords": {"type": "array", "items": {"type": "string"}},
+                                },
+                            },
+                            "practices": {"type": "array", "items": {"type": "string"}},
+                            "risk_management": {"type": "array", "items": {"type": "string"}},
+                        },
+                    },
+                    {"type": "null"},
+                ],
             },
             "ai_tooling_practice": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["hands_on_tools", "usage_patterns", "principles", "concepts_familiarity"],
-                "properties": {
-                    "hands_on_tools": {"type": "array", "items": {"type": "string"}},
-                    "usage_patterns": {"type": "array", "items": {"type": "string"}},
-                    "principles": {"type": "array", "items": {"type": "string"}},
-                    "concepts_familiarity": {"type": "array", "items": {"type": "string"}},
-                },
+                "anyOf": [
+                    {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["hands_on_tools", "usage_patterns", "principles", "concepts_familiarity"],
+                        "properties": {
+                            "hands_on_tools": {"type": "array", "items": {"type": "string"}},
+                            "usage_patterns": {"type": "array", "items": {"type": "string"}},
+                            "principles": {"type": "array", "items": {"type": "string"}},
+                            "concepts_familiarity": {"type": "array", "items": {"type": "string"}},
+                        },
+                    },
+                    {"type": "null"},
+                ],
             },
-            "role_fit_themes": {"type": "array", "items": {"type": "string"}},
+            "role_fit_themes": {
+                "anyOf": [
+                    {"type": "array", "items": {"type": "string"}},
+                    {"type": "null"},
+                ],
+            },
             "constraints_and_preferences": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["work_context", "communication", "resume_constraint"],
-                "properties": {
-                    "work_context": {"type": "array", "items": {"type": "string"}},
-                    "communication": {"type": "array", "items": {"type": "string"}},
-                    "resume_constraint": {"type": "array", "items": {"type": "string"}},
-                },
+                "anyOf": [
+                    {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["work_context", "communication", "resume_constraint"],
+                        "properties": {
+                            "work_context": {"type": "array", "items": {"type": "string"}},
+                            "communication": {"type": "array", "items": {"type": "string"}},
+                            "resume_constraint": {"type": "array", "items": {"type": "string"}},
+                        },
+                    },
+                    {"type": "null"},
+                ],
             },
             "claim_boundaries": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["security_auth", "domain_limits", "employment_constraints"],
-                "properties": {
-                    "security_auth": {"type": "array", "items": {"type": "string"}},
-                    "domain_limits": {"type": "array", "items": {"type": "string"}},
-                    "employment_constraints": {"type": "array", "items": {"type": "string"}},
-                },
+                "anyOf": [
+                    {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["security_auth", "domain_limits", "employment_constraints"],
+                        "properties": {
+                            "security_auth": {"type": "array", "items": {"type": "string"}},
+                            "domain_limits": {"type": "array", "items": {"type": "string"}},
+                            "employment_constraints": {"type": "array", "items": {"type": "string"}},
+                        },
+                    },
+                    {"type": "null"},
+                ],
             },
         },
     },
