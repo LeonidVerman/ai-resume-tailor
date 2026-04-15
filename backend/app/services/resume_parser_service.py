@@ -178,6 +178,11 @@ def _extract_name(lines: list[str]) -> str:
             continue
         if len(stripped) < 2:
             continue
+        # Names have at least one word starting with an uppercase letter.
+        # Garbled lines like "a ifropc" typically lack any capitalization.
+        words = stripped.split()
+        if not any(w and w[0].isupper() for w in words):
+            continue
         return stripped
     return "Unknown"
 
