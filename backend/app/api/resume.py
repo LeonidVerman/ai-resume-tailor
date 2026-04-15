@@ -105,9 +105,11 @@ async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep):
         template_ir_jsonb=norm.template_ir,
     )
 
-    # Upload the original file bytes to storage and record the key.
+    # Upload the original file bytes to storage using the correct extension so
+    # the stored key's extension matches the actual content type.
     storage_svc = StorageService(make_storage_client_from_settings())
-    key = storage_svc.upload_resume_template(user.id, str(resume.id), norm.normalized_data)
+    ext = norm.source_type if norm.source_type in ("docx", "pdf") else "docx"
+    key = storage_svc.upload_resume_template(user.id, str(resume.id), norm.normalized_data, extension=ext)
     _repo(db).update(resume, source_file_url=key)
 
     logger.info(

@@ -44,9 +44,13 @@ class StorageService:
 
     # ── Upload ─────────────────────────────────────────────────────────────
 
-    def upload_resume_template(self, user_id: str, resume_id: str, data: bytes) -> str:
-        """Upload a resume template DOCX; returns the storage object key."""
-        key = f"{_DOCUMENT_PREFIX}/{user_id}/templates/{resume_id}.docx"
+    def upload_resume_template(self, user_id: str, resume_id: str, data: bytes, extension: str = "docx") -> str:
+        """Upload a resume template file; returns the storage object key.
+
+        The extension should match the actual content type (docx or pdf) so
+        that downstream code can use the key extension for format detection.
+        """
+        key = f"{_DOCUMENT_PREFIX}/{user_id}/templates/{resume_id}.{extension}"
         self._storage.upload_bytes(data, key)
         logger.info("Uploaded resume template key=%s", key)
         return key
