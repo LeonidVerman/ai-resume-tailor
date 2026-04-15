@@ -46,7 +46,7 @@ export function BillingStatusCard({
       : 0
   );
   const quotaFull = status.monthly_used >= status.monthly_limit && status.extra_credits === 0;
-  const nearQuota = !quotaFull && status.monthly_used >= status.monthly_limit;
+  const nearQuota = !quotaFull && status.monthly_limit > 0 && status.monthly_used >= status.monthly_limit;
 
   return (
     <div className="space-y-4">
