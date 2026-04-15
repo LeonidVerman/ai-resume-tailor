@@ -53,6 +53,10 @@ class JobDescriptionResponse(APIModel):
     source_type: Literal["scraped", "manual"] | None = None
     raw_text: str
     metadata: JobMetadata | None = None
+    # "ok"      = both company and job_title successfully extracted
+    # "partial" = scraped but one or both fields could not be extracted
+    # "manual"  = user-entered; no extraction attempted
+    parse_status: Literal["ok", "partial", "manual"] = "ok"
     created_at: datetime
 
 
@@ -62,4 +66,5 @@ class JobDescriptionSummary(APIModel):
     company: str | None = None
     job_title: str | None = None
     source_url: str | None = None
+    parse_status: Literal["ok", "partial", "manual"] = "ok"
     created_at: datetime

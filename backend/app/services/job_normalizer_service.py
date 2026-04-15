@@ -114,15 +114,36 @@ class JobNormalizerService:
     # ── Internal ───────────────────────────────────────────────────────────
 
     @staticmethod
+    def _clean(value: str | None) -> str | None:
+        """Strip legacy placeholder values so they are never shown as real data."""
+        if value is None:
+            return None
+        stripped = value.strip()
+        if not stripped or stripped.lower() == "unknown":
+            return None
+        return stripped
+
+    @staticmethod
+    def _parse_status(source_type: str | None, company: str | None, job_title: str | None) -> str:
+        if source_type == "manual":
+            return "manual"
+        # scraped — ok only when both fields were successfully extracted
+        if company and job_title:
+            return "ok"
+        return "partial"
+
+    @staticmethod
     def _to_response(jd: JobDescription) -> JobDescriptionResponse:
         meta_raw = jd.metadata_jsonb or {}
+        company = JobNormalizerService._clean(meta_raw.get("company"))
+        job_title = JobNormalizerService._clean(meta_raw.get("job_title"))
         metadata = JobMetadata(
-            company=meta_raw.get("company"),
-            job_title=meta_raw.get("job_title"),
-            location=meta_raw.get("location"),
-            employment_type=meta_raw.get("employment_type"),
-            seniority_level=meta_raw.get("seniority_level"),
-            remote_policy=meta_raw.get("remote_policy"),
+            company=company,
+            job_title=job_title,
+            location=JobNormalizerService._clean(meta_raw.get("location")),
+            employment_type=JobNormalizerService._clean(meta_raw.get("employment_type")),
+            seniority_level=JobNormalizerService._clean(meta_raw.get("seniority_level")),
+            remote_policy=JobNormalizerService._clean(meta_raw.get("remote_policy")),
         ) if meta_raw else None
         return JobDescriptionResponse(
             id=jd.id,
@@ -131,16 +152,20 @@ class JobNormalizerService:
             source_type=jd.source_type,
             raw_text=jd.raw_text,
             metadata=metadata,
+            parse_status=JobNormalizerService._parse_status(jd.source_type, company, job_title),
             created_at=jd.created_at,
         )
 
     @staticmethod
     def _to_summary(jd: JobDescription) -> JobDescriptionSummary:
         meta_raw = jd.metadata_jsonb or {}
+        company = JobNormalizerService._clean(meta_raw.get("company"))
+        job_title = JobNormalizerService._clean(meta_raw.get("job_title"))
         return JobDescriptionSummary(
             id=jd.id,
-            company=meta_raw.get("company"),
-            job_title=meta_raw.get("job_title"),
+            company=company,
+            job_title=job_title,
             source_url=jd.source_url,
+            parse_status=JobNormalizerService._parse_status(jd.source_type, company, job_title),
             created_at=jd.created_at,
         )

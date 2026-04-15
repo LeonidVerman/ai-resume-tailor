@@ -2,13 +2,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Briefcase, Trash2 } from "lucide-react";
+import { Briefcase, Trash2, Eye, AlertTriangle } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { JobDescriptionForm } from "@/components/job-description/JobDescriptionForm";
+import { JobDescriptionPreviewModal } from "@/components/job-description/JobDescriptionPreviewModal";
 import { jobDescriptions } from "@/lib/api";
 import type { JobDescriptionSummary, JobDescriptionResponse } from "@/types/api";
 import { formatDate } from "@/lib/utils";
@@ -17,6 +18,7 @@ export default function JobsPage() {
   const [list, setList] = useState<JobDescriptionSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [previewJdId, setPreviewJdId] = useState<number | null>(null);
 
   useEffect(() => {
     jobDescriptions
@@ -33,6 +35,7 @@ export default function JobsPage() {
         company: jd.metadata?.company,
         job_title: jd.metadata?.job_title,
         source_url: jd.source_url,
+        parse_status: jd.parse_status,
         created_at: jd.created_at,
       },
       ...prev,
@@ -52,6 +55,8 @@ export default function JobsPage() {
   }
 
   return (
+    <>
+    <JobDescriptionPreviewModal jdId={previewJdId} onClose={() => setPreviewJdId(null)} />
     <AppShell>
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Job Descriptions</h1>
@@ -84,11 +89,27 @@ export default function JobsPage() {
                         {jd.job_title ?? "Untitled role"}{" "}
                         {jd.company && <span className="text-gray-500">@ {jd.company}</span>}
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5">{formatDate(jd.created_at)}</p>
+                      {jd.parse_status === "partial" ? (
+                        <p className="text-xs text-amber-600 mt-0.5 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Could not extract job details — view to inspect content
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-500 mt-0.5">{formatDate(jd.created_at)}</p>
+                      )}
                     </div>
                     <Badge variant="default">
                       {jd.source_url ? "scraped" : "manual"}
                     </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setPreviewJdId(jd.id)}
+                      className="text-gray-400 hover:text-gray-700"
+                      title="View job description"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -118,5 +139,6 @@ export default function JobsPage() {
         </div>
       </div>
     </AppShell>
+    </>
   );
 }

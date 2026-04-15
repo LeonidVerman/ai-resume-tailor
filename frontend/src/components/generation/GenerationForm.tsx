@@ -2,11 +2,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, Briefcase, Zap, AlertCircle, Trash2 } from "lucide-react";
+import { FileText, Briefcase, Zap, AlertCircle, Trash2, Eye, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ResumeCard } from "@/components/resume/ResumeCard";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { JobDescriptionPreviewModal } from "@/components/job-description/JobDescriptionPreviewModal";
 import { resumes, jobDescriptions, generations, billing, ApiError } from "@/lib/api";
 import type {
   StructuredResumeSummary,
@@ -52,6 +53,7 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [deletingResumeId, setDeletingResumeId] = useState<number | null>(null);
   const [deletingJdId, setDeletingJdId] = useState<number | null>(null);
+  const [previewJdId, setPreviewJdId] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -134,6 +136,8 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
   }
 
   return (
+    <>
+    <JobDescriptionPreviewModal jdId={previewJdId} onClose={() => setPreviewJdId(null)} />
     <div className="space-y-8">
       {/* Quota warning */}
       {billingStatus && (
@@ -217,7 +221,14 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
                       {jd.job_title ?? "Untitled role"}{" "}
                       {jd.company && <span className="text-gray-500">@ {jd.company}</span>}
                     </p>
-                    <p className="text-xs text-gray-400 mt-0.5">{formatDate(jd.created_at)}</p>
+                    {jd.parse_status === "partial" ? (
+                      <p className="text-xs text-amber-600 mt-0.5 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Could not extract job details
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400 mt-0.5">{formatDate(jd.created_at)}</p>
+                    )}
                   </div>
                   <Badge variant="default">
                     {jd.source_url ? "scraped" : "manual"}
@@ -229,6 +240,13 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
                       </svg>
                     </div>
                   )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setPreviewJdId(jd.id); }}
+                    className="shrink-0 p-1 text-gray-300 hover:text-gray-600 transition-colors"
+                    title="View job description"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDeleteJd(jd.id); }}
                     disabled={deletingJdId === jd.id}
@@ -301,5 +319,6 @@ export function GenerationForm({ onGenerated }: GenerationFormProps) {
         </Button>
       </div>
     </div>
+    </>
   );
 }

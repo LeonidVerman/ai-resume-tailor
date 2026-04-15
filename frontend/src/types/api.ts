@@ -271,6 +271,8 @@ export interface JobDescriptionManualRequest {
   source_url?: string;
 }
 
+export type JobDescriptionParseStatus = "ok" | "partial" | "manual";
+
 export interface JobDescriptionResponse {
   id: number;
   user_id: string;
@@ -278,6 +280,7 @@ export interface JobDescriptionResponse {
   source_type?: "scraped" | "manual";
   raw_text: string;
   metadata?: JobMetadata;
+  parse_status: JobDescriptionParseStatus;
   created_at: string;
 }
 
@@ -286,6 +289,7 @@ export interface JobDescriptionSummary {
   company?: string;
   job_title?: string;
   source_url?: string;
+  parse_status: JobDescriptionParseStatus;
   created_at: string;
 }
 
