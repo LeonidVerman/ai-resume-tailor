@@ -95,34 +95,36 @@ export function BillingStatusCard({
             </div>
           )}
 
-          {/* Monthly usage bar */}
-          <div className="pt-2">
-            <div className="flex justify-between text-sm mb-1.5">
-              <span className="text-gray-600">Monthly generations</span>
-              <span className={quotaFull ? "text-red-600 font-medium" : "text-gray-900"}>
-                {status.monthly_used} / {status.monthly_limit}
-              </span>
+          {/* Monthly usage bar — only shown when a monthly quota is configured */}
+          {status.monthly_limit > 0 && (
+            <div className="pt-2">
+              <div className="flex justify-between text-sm mb-1.5">
+                <span className="text-gray-600">Monthly generations</span>
+                <span className={quotaFull ? "text-red-600 font-medium" : "text-gray-900"}>
+                  {status.monthly_used} / {status.monthly_limit}
+                </span>
+              </div>
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    quotaFull ? "bg-red-500" : usagePercent >= 80 ? "bg-amber-500" : "bg-indigo-500"
+                  }`}
+                  style={{ width: `${usagePercent}%` }}
+                />
+              </div>
+              {quotaFull && (
+                <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Monthly quota reached. Use extra credits or upgrade.
+                </p>
+              )}
+              {nearQuota && status.extra_credits > 0 && (
+                <p className="text-xs text-amber-600 mt-1.5">
+                  Monthly quota reached — using extra credits ({status.extra_credits} remaining).
+                </p>
+              )}
             </div>
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all ${
-                  quotaFull ? "bg-red-500" : usagePercent >= 80 ? "bg-amber-500" : "bg-indigo-500"
-                }`}
-                style={{ width: `${usagePercent}%` }}
-              />
-            </div>
-            {quotaFull && (
-              <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                Monthly quota reached. Use extra credits or upgrade.
-              </p>
-            )}
-            {nearQuota && status.extra_credits > 0 && (
-              <p className="text-xs text-amber-600 mt-1.5">
-                Monthly quota reached — using extra credits ({status.extra_credits} remaining).
-              </p>
-            )}
-          </div>
+          )}
 
           {/* Extra credits */}
           {status.extra_credits > 0 && (

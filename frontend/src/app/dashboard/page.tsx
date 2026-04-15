@@ -116,24 +116,39 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-700">Free plan quota</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {billingStatus.monthly_used} / {billingStatus.monthly_limit} monthly generations used
-                    {billingStatus.extra_credits > 0 && (
-                      <span className="ml-2 text-emerald-600 font-medium">
-                        · {billingStatus.extra_credits} bonus credit{billingStatus.extra_credits !== 1 ? "s" : ""} available
-                      </span>
-                    )}
-                  </p>
+                  {billingStatus.monthly_limit > 0 ? (
+                    <>
+                      <p className="text-sm font-medium text-gray-700">Free plan quota</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {billingStatus.monthly_used} / {billingStatus.monthly_limit} monthly generations used
+                        {billingStatus.extra_credits > 0 && (
+                          <span className="ml-2 text-emerald-600 font-medium">
+                            · {billingStatus.extra_credits} bonus credit{billingStatus.extra_credits !== 1 ? "s" : ""} available
+                          </span>
+                        )}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-gray-700">Generation credits</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {billingStatus.extra_credits > 0
+                          ? <span className="text-emerald-600 font-medium">{billingStatus.extra_credits} credit{billingStatus.extra_credits !== 1 ? "s" : ""} remaining</span>
+                          : "No credits remaining — purchase a pack to continue"}
+                      </p>
+                    </>
+                  )}
                 </div>
-                <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-indigo-500 rounded-full"
-                    style={{
-                      width: `${Math.min(100, billingStatus.monthly_limit > 0 ? (billingStatus.monthly_used / billingStatus.monthly_limit) * 100 : 0)}%`,
-                    }}
-                  />
-                </div>
+                {billingStatus.monthly_limit > 0 && (
+                  <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-indigo-500 rounded-full"
+                      style={{
+                        width: `${Math.min(100, (billingStatus.monthly_used / billingStatus.monthly_limit) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                )}
               </div>
               <Link href="/billing">
                 <Button variant="ghost" size="sm">Upgrade</Button>

@@ -37,7 +37,14 @@ class MonthlyUsageRepository:
 
         Implementation: single INSERT … ON CONFLICT DO UPDATE WHERE count < limit.
         If the WHERE clause fails, zero rows are affected, which we detect via rowcount.
+
+        Short-circuit for limit <= 0: the WHERE clause on the UPDATE correctly
+        rejects increments once a row exists, but the initial INSERT always
+        succeeds regardless of limit — writing count=1 even when limit=0.
+        Guard here so users with monthly_limit_override=0 go straight to credits.
         """
+        if limit <= 0:
+            return False
         result = self._db.execute(
             text(
                 """
