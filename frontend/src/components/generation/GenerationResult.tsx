@@ -24,13 +24,15 @@ type Phase = "pending" | "polling" | "done" | "failed";
 
 const ARTIFACTS: Array<{
   part: "resume" | "cover_letter";
-  format: "docx" | "pdf";
+  format: "docx" | "pdf" | "txt";
   label: string;
 }> = [
   { part: "resume",       format: "docx", label: "Resume DOCX" },
   { part: "resume",       format: "pdf",  label: "Resume PDF"  },
+  { part: "resume",       format: "txt",  label: "Resume TXT"  },
   { part: "cover_letter", format: "docx", label: "Cover Letter DOCX" },
   { part: "cover_letter", format: "pdf",  label: "Cover Letter PDF"  },
+  { part: "cover_letter", format: "txt",  label: "Cover Letter TXT"  },
 ];
 
 export function GenerationResult({ result }: GenerationResultProps) {
@@ -92,7 +94,7 @@ export function GenerationResult({ result }: GenerationResultProps) {
 
   const handleDownload = async (
     part: "resume" | "cover_letter",
-    format: "docx" | "pdf",
+    format: "docx" | "pdf" | "txt",
     label: string,
   ) => {
     if (!result.tailored_document_id) return;

@@ -28,16 +28,18 @@ const STATUS_VARIANT: Record<string, "success" | "danger" | "info" | "default"> 
   pending: "default",
 };
 
-// Artifact descriptors for the 4-link download panel.
+// Artifact descriptors for the download panel.
 const ARTIFACTS: Array<{
   part: "resume" | "cover_letter";
-  format: "docx" | "pdf";
+  format: "docx" | "pdf" | "txt";
   label: string;
 }> = [
   { part: "resume",       format: "docx", label: "Resume DOCX" },
   { part: "resume",       format: "pdf",  label: "Resume PDF"  },
+  { part: "resume",       format: "txt",  label: "Resume TXT"  },
   { part: "cover_letter", format: "docx", label: "Cover Letter DOCX" },
   { part: "cover_letter", format: "pdf",  label: "Cover Letter PDF"  },
+  { part: "cover_letter", format: "txt",  label: "Cover Letter TXT"  },
 ];
 
 /** Displays the run ID; click copies it. */
@@ -90,7 +92,7 @@ export default function HistoryPage() {
   const handleDownload = async (
     docId: number,
     part: "resume" | "cover_letter",
-    format: "docx" | "pdf",
+    format: "docx" | "pdf" | "txt",
   ) => {
     try {
       const { blob, filename } = await documents.downloadFormatted(docId, part, format);

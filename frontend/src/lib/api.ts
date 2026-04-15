@@ -301,11 +301,11 @@ export const documents = {
     }
     return res.blob();
   },
-  // Download a rendered DOCX or PDF artifact.
+  // Download a rendered DOCX, PDF, or plain-text artifact.
   downloadFormatted: async (
     id: number,
     part: "resume" | "cover_letter",
-    format: "docx" | "pdf",
+    format: "docx" | "pdf" | "txt",
   ): Promise<{ blob: Blob; filename: string }> => {
     const token = getStoredToken();
     const userId = getStoredUserId();
