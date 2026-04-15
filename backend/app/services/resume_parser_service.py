@@ -153,37 +153,45 @@ def _extract_contacts(text: str) -> ContactInfo:
 
 
 def _extract_name(lines: list[str]) -> str:
-    """Best-effort: return the first line that looks like a person's name.
+    """Best-effort: return the candidate name from the first promising line.
 
-    A name line must:
-    - Not match an email, phone number, or social URL pattern
-    - Have at least 50 % alphabetic characters (rules out phone-number-only
-      lines, address lines, and encoding-garbled lines like "Ħ +1 236 863 3698")
-    - Be at least 2 characters long
+    Strategy: strip known non-name tokens (email, phone, social URLs) from
+    each line, then collect the leading run of title-cased word tokens.
+    Require at least two such tokens (first + last name) to avoid returning
+    section headers like "Experience".
+
+    Example: "Gleb Zernov ć gzernov@proton.me"
+        → strip email → "Gleb Zernov ć"
+        → leading title-cased tokens → ["Gleb", "Zernov"]
+        → return "Gleb Zernov"
     """
     for line in lines[:8]:
         stripped = line.strip()
         if not stripped:
             continue
-        if _EMAIL_RE.search(stripped):
+        # Remove non-name tokens so the name isn't discarded just because it
+        # shares a line with a phone number, email, or social URL.
+        candidate = _EMAIL_RE.sub("", stripped)
+        candidate = _PHONE_RE.sub("", candidate)
+        candidate = _LINKEDIN_RE.sub("", candidate)
+        candidate = _GITHUB_RE.sub("", candidate)
+        candidate = candidate.strip()
+        if not candidate:
             continue
-        if _PHONE_RE.search(stripped):
-            continue
-        if _LINKEDIN_RE.search(stripped):
-            continue
-        if _GITHUB_RE.search(stripped):
-            continue
-        alpha_ratio = sum(1 for c in stripped if c.isalpha()) / len(stripped)
-        if alpha_ratio < 0.5:
-            continue
-        if len(stripped) < 2:
-            continue
-        # Names have at least one word starting with an uppercase letter.
-        # Garbled lines like "a ifropc" typically lack any capitalization.
-        words = stripped.split()
-        if not any(w and w[0].isupper() for w in words):
-            continue
-        return stripped
+        # Collect the leading run of title-cased tokens (≥ 2 letters, starts
+        # with an uppercase letter).  Stop at the first token that breaks the
+        # pattern so garbled suffixes like "ć" don't end up in the name.
+        name_tokens: list[str] = []
+        for word in candidate.split():
+            alpha_only = "".join(c for c in word if c.isalpha())
+            if len(alpha_only) >= 2 and alpha_only[0].isupper():
+                name_tokens.append(alpha_only)
+            elif not name_tokens:
+                continue  # skip leading non-name junk before the name starts
+            else:
+                break  # first non-name token after name started → stop
+        if len(name_tokens) >= 2:
+            return " ".join(name_tokens[:4])
     return "Unknown"
 
 
