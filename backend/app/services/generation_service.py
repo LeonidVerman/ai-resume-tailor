@@ -258,16 +258,28 @@ class GenerationService:
             # PDF-sourced resume: use the stored ResumeDocument IR directly.
             template_ir_dict = resume.template_ir_jsonb
             logger.info("Resume id=%s: using stored PDF IR for rendering.", resume.id)
-        elif resume.input_conversion_warning:
-            # Legacy: was converted via LibreOffice; no IR available.
-            logger.warning(
-                "Resume id=%s was uploaded as PDF without IR — using CLI default template.",
-                resume.id,
-            )
         elif resume.source_file_url:
-            template_bytes = self._storage_service.get_bytes(resume.source_file_url)
-            logger.info("Loaded resume template from storage key=%s (%d bytes)",
-                        resume.source_file_url, len(template_bytes))
+            raw_bytes = self._storage_service.get_bytes(resume.source_file_url)
+            if raw_bytes[:4] == b'%PDF':
+                # PDF in storage but no stored IR (legacy upload without IR column).
+                # Re-parse the PDF on the fly so we never fall back to the CLI template.
+                logger.info(
+                    "Resume id=%s: no stored IR — re-parsing PDF from storage key=%s.",
+                    resume.id, resume.source_file_url,
+                )
+                try:
+                    from tailor.compiler.pdf_parser import parse_pdf
+                    template_ir_dict = parse_pdf(raw_bytes).to_dict()
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"Resume id={resume.id} is a PDF that could not be parsed "
+                        f"for rendering ({exc}). Please re-upload the resume."
+                    ) from exc
+            else:
+                # DOCX — use bytes directly as the template.
+                template_bytes = raw_bytes
+                logger.info("Loaded resume DOCX template from storage key=%s (%d bytes)",
+                            resume.source_file_url, len(template_bytes))
         else:
             raise RuntimeError(
                 f"Resume id={resume.id} has no stored template (source_file_url is not set). "
