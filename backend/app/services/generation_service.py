@@ -166,6 +166,11 @@ class GenerationService:
             cover_letter_text = result.cover_letter.replace("\x00", "") if result.cover_letter else None
 
             template_original_filename = (resume.resume_jsonb or {}).get("original_filename", "")
+            candidate_name = ""
+            if profile and profile.profile_jsonb:
+                candidate_name = (profile.profile_jsonb.get("candidate") or {}).get("name", "")
+            if not candidate_name:
+                candidate_name = (resume.resume_jsonb or {}).get("name", "")
             tailored_doc = self._doc_repo.create(
                 user_id=user_id,
                 generation_run_id=run.id,
@@ -174,9 +179,10 @@ class GenerationService:
                 resume_jsonb={
                     "text": resume_text,
                     "template_original_filename": template_original_filename,
+                    "candidate_name": candidate_name,
                     "diff": (debug_meta.get("diff") or {}).get("resume") or [],
                 } if resume_text else None,
-                cover_letter_jsonb={"text": cover_letter_text} if cover_letter_text else None,
+                cover_letter_jsonb={"text": cover_letter_text, "candidate_name": candidate_name} if cover_letter_text else None,
             )
 
             # ── Render and upload artifacts ────────────────────────────────

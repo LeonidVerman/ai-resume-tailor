@@ -43,17 +43,16 @@ _PDF_MIME = "application/pdf"
 def _artifact_filename(doc, part: str, fmt: str) -> str:
     """Build a download filename for the artifact.
 
-    For resume: uses template_original_filename from resume_jsonb when available,
-    deriving the stem from the original upload filename.  Falls back to the CLI
-    template basename pattern when not available.
+    Uses candidate_name stored in the document jsonb (set at generation time from
+    the candidate profile or resume name).  Falls back gracefully for legacy records
+    that pre-date this field.
 
     Examples:
-        original_filename="My_Resume.docx", company="Xero", part="resume", fmt="docx"
-            → My_Resume_Xero.docx
-        fallback: Leonid_Verman_Resume_Xero.docx
+        candidate_name="Jane Smith", company="Acme", part="resume"   → Jane_Smith_Resume_Acme.docx
+        candidate_name="Jane Smith", company="Acme", part="cover_letter" → Jane_Smith_Cover_Letter_Acme.docx
+        legacy fallback (no candidate_name) → Resume_Acme.docx / Cover_Letter_Acme.docx
     """
-    import os
-    from tailor.config import RESUME_TEMPLATE, COVER_TEMPLATE
+    import re
 
     company_name = doc.company_name or "Unknown"
     safe_company = "".join(
@@ -61,22 +60,20 @@ def _artifact_filename(doc, part: str, fmt: str) -> str:
         for c in company_name
     )
 
-    if part == "resume":
-        original_filename = (doc.resume_jsonb or {}).get("template_original_filename", "")
-        if original_filename:
-            base_stem = os.path.splitext(os.path.basename(original_filename))[0]
-            # Strip trailing _Template (case-insensitive) before appending company.
-            # e.g. "Leonid_Verman_Resume_Template" → "Leonid_Verman_Resume"
-            import re
-            base_stem = re.sub(r"_?template$", "", base_stem, flags=re.IGNORECASE)
-            return f"{base_stem}_{safe_company}.{fmt}"
-        template = RESUME_TEMPLATE
+    jsonb = doc.resume_jsonb if part == "resume" else doc.cover_letter_jsonb
+    candidate_name = (jsonb or {}).get("candidate_name", "")
+    if candidate_name:
+        safe_name = re.sub(r"[^A-Za-z0-9_-]", "_", candidate_name).strip("_")
+        safe_name = re.sub(r"_+", "_", safe_name)
     else:
-        template = COVER_TEMPLATE
+        safe_name = ""
 
-    stem = os.path.splitext(os.path.basename(str(template)))[0]
-    name = stem.replace("Template", safe_company)
-    return f"{name}.{fmt}"
+    if part == "resume":
+        prefix = f"{safe_name}_Resume" if safe_name else "Resume"
+    else:
+        prefix = f"{safe_name}_Cover_Letter" if safe_name else "Cover_Letter"
+
+    return f"{prefix}_{safe_company}.{fmt}"
 
 
 def _repo(db) -> TailoredDocumentRepository:
