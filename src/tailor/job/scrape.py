@@ -231,6 +231,83 @@ def scrape_hiring_cafe(url: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Workable scraper (apply.workable.com job pages)
+# ---------------------------------------------------------------------------
+
+def scrape_workable(url: str) -> dict:
+    """Scrape a Workable job via the public v2 JSON API.
+
+    Workable's apply pages are SPAs; the job data lives in an undocumented
+    but stable v2 endpoint: ``/api/v2/accounts/{slug}/jobs/{shortcode}``.
+    Extracts title, company (from the account slug), and assembles a plain-text
+    description from the three HTML sections: description, requirements, benefits.
+    """
+    import httpx
+
+    m = re.search(r'apply\.workable\.com/([^/]+)/j/([A-Za-z0-9]+)', url, re.IGNORECASE)
+    if not m:
+        raise ValueError(f"Cannot parse Workable job URL: {url}")
+    account_slug, shortcode = m.group(1), m.group(2)
+
+    api_url = f"https://apply.workable.com/api/v2/accounts/{account_slug}/jobs/{shortcode}"
+    resp = httpx.get(
+        api_url,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            ),
+            "Accept": "application/json",
+        },
+        timeout=20,
+        follow_redirects=True,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    job_title = data.get("title") or None
+    # Derive company from the account slug (e.g. "my-company" → "My Company")
+    company = account_slug.replace("-", " ").title() if account_slug else None
+
+    # Assemble full description from the three HTML sections
+    sections = []
+    description_html = data.get("description") or ""
+    requirements_html = data.get("requirements") or ""
+    benefits_html = data.get("benefits") or ""
+
+    if description_html:
+        sections.append(_workable_html_to_text(description_html))
+    if requirements_html:
+        text = _workable_html_to_text(requirements_html)
+        if text:
+            sections.append("REQUIREMENTS\n" + text)
+    if benefits_html:
+        text = _workable_html_to_text(benefits_html)
+        if text:
+            sections.append("WHY JOIN\n" + text)
+
+    description = "\n\n".join(s for s in sections if s)
+    return {"company": company, "job_title": job_title, "description": description}
+
+
+def _workable_html_to_text(html: str) -> str:
+    """Convert Workable HTML job content to plain text with bullet points."""
+    # Convert list items to bullets before stripping tags
+    html = re.sub(r'<li[^>]*>', '• ', html, flags=re.IGNORECASE)
+    html = re.sub(r'</li>', '\n', html, flags=re.IGNORECASE)
+    html = re.sub(r'<br\s*/?>', '\n', html, flags=re.IGNORECASE)
+    html = re.sub(r'</p>', '\n', html, flags=re.IGNORECASE)
+    html = re.sub(r'<[^>]+>', '', html)
+    # Decode common HTML entities
+    html = html.replace('&nbsp;', ' ').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
+    html = html.replace('&#39;', "'").replace('&quot;', '"')
+    # Collapse runs of spaces; normalise blank lines
+    html = re.sub(r'[ \t]+', ' ', html)
+    html = re.sub(r'\n{3,}', '\n\n', html)
+    return html.strip()
+
+
+# ---------------------------------------------------------------------------
 # Notion scraper (public notion.site / notion.so pages)
 # ---------------------------------------------------------------------------
 
@@ -382,6 +459,7 @@ _SITE_SCRAPERS = {
     "notion": scrape_notion,
     "smartrecruiters": scrape_smartrecruiters,
     "wellfound": scrape_wellfound,
+    "workable": scrape_workable,
 }
 
 
@@ -413,6 +491,8 @@ def _detect_site(url):
         return "jobbank"
     if "notion.site" in host or "notion.so" in host:
         return "notion"
+    if "apply.workable.com" in host:
+        return "workable"
     # Extend here as new sites are added to _SITE_SCRAPERS
     return "generic"
 
