@@ -153,11 +153,32 @@ def _extract_contacts(text: str) -> ContactInfo:
 
 
 def _extract_name(lines: list[str]) -> str:
-    """Best-effort: assume the first non-empty line is the name."""
-    for line in lines[:5]:
+    """Best-effort: return the first line that looks like a person's name.
+
+    A name line must:
+    - Not match an email, phone number, or social URL pattern
+    - Have at least 50 % alphabetic characters (rules out phone-number-only
+      lines, address lines, and encoding-garbled lines like "Ħ +1 236 863 3698")
+    - Be at least 2 characters long
+    """
+    for line in lines[:8]:
         stripped = line.strip()
-        if stripped and not _EMAIL_RE.search(stripped):
-            return stripped
+        if not stripped:
+            continue
+        if _EMAIL_RE.search(stripped):
+            continue
+        if _PHONE_RE.search(stripped):
+            continue
+        if _LINKEDIN_RE.search(stripped):
+            continue
+        if _GITHUB_RE.search(stripped):
+            continue
+        alpha_ratio = sum(1 for c in stripped if c.isalpha()) / len(stripped)
+        if alpha_ratio < 0.5:
+            continue
+        if len(stripped) < 2:
+            continue
+        return stripped
     return "Unknown"
 
 
