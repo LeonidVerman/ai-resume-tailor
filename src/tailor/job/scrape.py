@@ -231,6 +231,140 @@ def scrape_hiring_cafe(url: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Notion scraper (public notion.site / notion.so pages)
+# ---------------------------------------------------------------------------
+
+def scrape_notion(url: str) -> dict:
+    """Scrape a public Notion page using the unofficial Notion block API.
+
+    Works for any publicly shared page hosted on notion.site or notion.so.
+    Extracts job title from the page title and company from the workspace
+    subdomain (e.g. ``uptop.notion.site`` → "Uptop").  Content is assembled
+    from the ordered block tree without requiring a browser or Playwright.
+    """
+    import httpx
+
+    path = urlparse(url).path
+    m = re.search(r'([0-9a-f]{32})(?:[/?#]|$)', path, re.IGNORECASE)
+    if not m:
+        raise ValueError(f"Cannot find Notion page ID in URL: {url}")
+    raw_id = m.group(1).lower()
+    page_id = f"{raw_id[:8]}-{raw_id[8:12]}-{raw_id[12:16]}-{raw_id[16:20]}-{raw_id[20:]}"
+
+    resp = httpx.post(
+        "https://www.notion.so/api/v3/loadPageChunk",
+        json={
+            "pageId": page_id,
+            "limit": 100,
+            "cursor": {"stack": []},
+            "chunkNumber": 0,
+            "verticalColumns": False,
+        },
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            ),
+            "notion-client-version": "23.13.0",
+        },
+        timeout=20,
+        follow_redirects=True,
+    )
+    resp.raise_for_status()
+
+    block_map = resp.json().get("recordMap", {}).get("block", {})
+    if not block_map:
+        raise ValueError("Notion API returned no block data")
+
+    root_v = (block_map.get(page_id, {}).get("value") or {}).get("value") or {}
+
+    # Page title → job title
+    title_rt = (root_v.get("properties") or {}).get("title", [])
+    job_title = _notion_rich_text(title_rt).strip() or None
+
+    # Workspace subdomain → company (e.g. "uptop.notion.site" → "Uptop")
+    host = urlparse(url).netloc.lower()
+    company: str | None = None
+    if host.endswith(".notion.site"):
+        sub = host[: -len(".notion.site")]
+        if sub and sub != "www":
+            company = sub.replace("-", " ").title()
+
+    # Walk blocks in content order
+    content_ids = root_v.get("content") or []
+    lines = _notion_walk_blocks(content_ids, block_map, depth=0)
+    description = "\n".join(lines).strip()
+
+    return {"company": company, "job_title": job_title, "description": description}
+
+
+def _notion_rich_text(segments: list) -> str:
+    """Convert a Notion rich-text array to plain text (strips inline styles)."""
+    parts = []
+    for seg in segments or []:
+        if isinstance(seg, list) and seg:
+            parts.append(str(seg[0]))
+    return "".join(parts)
+
+
+def _notion_walk_blocks(ids: list, block_map: dict, depth: int) -> list[str]:
+    """Recursively convert an ordered list of Notion block IDs to text lines."""
+    HEADING_TYPES = {"header", "sub_header", "sub_sub_header"}
+    LIST_TYPES = {"bulleted_list", "numbered_list"}
+    PASSTHROUGH_TYPES = {"column_list", "column", "toggle"}
+    SKIP_TYPES = {
+        "page", "divider", "image", "video", "embed", "file",
+        "bookmark", "collection_view", "table_of_contents",
+    }
+
+    lines: list[str] = []
+    for bid in ids:
+        v = (block_map.get(bid, {}).get("value") or {}).get("value") or {}
+        btype = v.get("type", "")
+        props = v.get("properties") or {}
+        text = _notion_rich_text(props.get("title", [])).strip()
+        children = v.get("content") or []
+
+        if btype in SKIP_TYPES:
+            pass
+        elif btype in PASSTHROUGH_TYPES:
+            if children:
+                lines.extend(_notion_walk_blocks(children, block_map, depth))
+            continue
+        elif btype in HEADING_TYPES:
+            if text:
+                lines.append("")
+                lines.append(text.upper())
+        elif btype == "bulleted_list":
+            indent = "  " * depth
+            if text:
+                lines.append(f"{indent}• {text}")
+        elif btype == "numbered_list":
+            indent = "  " * depth
+            if text:
+                lines.append(f"{indent}{text}")
+        elif btype in {"to_do"}:
+            if text:
+                checked = (props.get("checked") or [[""]])[0][0]
+                box = "☑" if checked == "Yes" else "☐"
+                lines.append(f"  {box} {text}")
+        elif btype == "quote":
+            if text:
+                lines.append(f"> {text}")
+        elif btype in {"callout", "text", "paragraph"}:
+            if text:
+                lines.append(text)
+        elif text:
+            lines.append(text)
+
+        if children and btype not in SKIP_TYPES:
+            lines.extend(_notion_walk_blocks(children, block_map, depth + 1))
+
+    return lines
+
+
+# ---------------------------------------------------------------------------
 # Site registry + dispatcher
 # ---------------------------------------------------------------------------
 
@@ -245,6 +379,7 @@ _SITE_SCRAPERS = {
     "jobbank": scrape_jobbank,
     "lever": scrape_lever,
     "linkedin": scrape_linkedin,
+    "notion": scrape_notion,
     "smartrecruiters": scrape_smartrecruiters,
     "wellfound": scrape_wellfound,
 }
@@ -276,6 +411,8 @@ def _detect_site(url):
         return "smartrecruiters"
     if "jobbank.gc.ca" in host:
         return "jobbank"
+    if "notion.site" in host or "notion.so" in host:
+        return "notion"
     # Extend here as new sites are added to _SITE_SCRAPERS
     return "generic"
 
