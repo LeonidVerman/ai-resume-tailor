@@ -1,5 +1,38 @@
 # Release Notes
 
+## 0.8.1.BETA — 2026-04-15
+
+### New features
+- **Fill candidate profile from example profile**: users can now one-click populate all
+  candidate profile sections from a built-in example profile to quickly explore the system.
+- **Fill candidate profile from resume**: users can select an uploaded resume and generate
+  a complete candidate profile draft via a single LLM call. The draft is cached per resume
+  with SHA-256 staleness detection, accessible from both the profile editor and the onboarding
+  wizard. First-time users with no resumes can upload directly from the picker modal.
+
+### Bug fixes
+- **#30 TXT generation**: plain-text download format is now available for all generated documents.
+- **#28 Cover letter wrong name**: Leonid's personal header was leaking into generated cover letters
+  for web users. The cover letter template is now stripped of the author's contact block and
+  replaced with the candidate's name before being passed to the LLM.
+- **#27 Job description viewer**: inline job description preview available from the generate page.
+- **#31 Scraping failure**: fixed edge cases causing job description URL scraping to fail.
+- **#34 Wrong person and contacts on resume / wrong resume template**: fixed a three-part bug
+  chain — cover letter template contamination, an IR zero-section crash in `updater.py`, and the
+  download fallback silently using the wrong resume template. Fallback renders now look up the
+  user's original resume via `structured_resume_id` stored in the generation record.
+- **#35 Wrong free credits counter**: the initial free credits counter was decrementing the total
+  instead of incrementing used. For users with `monthly_limit_override=0` (credit-pack-only),
+  `increment_atomic` now short-circuits so generations always consume from `extra_credits`. The
+  generate form shows "N credits remaining" rather than a misleading used/total ratio.
+- **#33 Wrong title of parsed resume**: resume title showed a phone number or section header
+  instead of the candidate's name. Parser now strips email/phone/URL tokens from each line before
+  extracting the leading run of title-cased name tokens.
+- **#29 Error parsing resume**: fixed a crash when parsing PDFs whose IR contains zero detected
+  sections (`updater.py` guard added).
+
+---
+
 ## 0.8.0.BETA — 2026-04-14
 
 ### New features
