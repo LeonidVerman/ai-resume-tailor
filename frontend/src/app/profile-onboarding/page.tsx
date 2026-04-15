@@ -15,14 +15,25 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ArrayListEditor } from "@/components/candidate-profile/ArrayListEditor";
 import { ExperienceHighlightCard } from "@/components/candidate-profile/ExperienceHighlightCard";
+import { SelectResumeModal } from "@/components/candidate-profile/SelectResumeModal";
 import { candidateProfile, ApiError } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  EXAMPLE_CANDIDATE,
+  EXAMPLE_DOMAINS,
+  EXAMPLE_HIGHLIGHTS,
+  EXAMPLE_TECHNICAL_SKILLS,
+  EXAMPLE_LEADERSHIP,
+  EXAMPLE_AI_TOOLING,
+  EXAMPLE_ROLE_THEMES,
+  EXAMPLE_CLAIM_BOUNDARIES,
+} from "@/config/exampleProfileData";
 import type {
   CandidateProfileDocument,
   ExperienceHighlight,
@@ -136,6 +147,10 @@ export default function ProfileOnboardingPage() {
   const [highlights, setHighlights] = useState<KeyedHighlight[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Incrementing this forces ArrayListEditors on the current step to re-sync
+  // their local text state after example data is loaded.
+  const [exampleLoadKey, setExampleLoadKey] = useState(0);
+  const [fillModalOpen, setFillModalOpen] = useState(false);
 
   // ── Save current state to backend ────────────────────────────────────────
 
@@ -220,6 +235,82 @@ export default function ProfileOnboardingPage() {
     setDoc(d => ({ ...d, claim_boundaries: { ...d.claim_boundaries, [field]: val } }));
   }
 
+  // ── Example loading ───────────────────────────────────────────────────────
+
+  function stepHasContent(): boolean {
+    switch (step) {
+      case 1: return !!(doc.candidate.name || doc.candidate.headline || doc.candidate.summary);
+      case 2: return doc.domains.primary.length > 0 || doc.domains.secondary.length > 0;
+      case 3: return highlights.length > 0;
+      case 4: return Object.values(doc.technical_skills).some(arr => arr.length > 0);
+      case 5: return !!(
+        doc.leadership.scope.team_size_max ||
+        doc.leadership.scope.style_keywords.length ||
+        doc.leadership.practices.length ||
+        doc.leadership.risk_management.length
+      );
+      case 6: return Object.values(doc.ai_tooling_practice).some(arr => arr.length > 0);
+      case 7: return doc.role_fit_themes.length > 0;
+      case 8: return !!(
+        doc.claim_boundaries.security_auth.length ||
+        doc.claim_boundaries.domain_limits.length ||
+        doc.claim_boundaries.employment_constraints.length
+      );
+      default: return false;
+    }
+  }
+
+  function handleLoadExample() {
+    if (stepHasContent()) {
+      const ok = window.confirm(
+        "Replace this page with example content?\nThis will update only the fields on the current page."
+      );
+      if (!ok) return;
+    }
+    switch (step) {
+      case 1: setDoc(d => ({ ...d, candidate: EXAMPLE_CANDIDATE })); break;
+      case 2: setDoc(d => ({ ...d, domains: EXAMPLE_DOMAINS })); break;
+      case 3: setHighlights(EXAMPLE_HIGHLIGHTS.map(keyed)); break;
+      case 4: setDoc(d => ({ ...d, technical_skills: EXAMPLE_TECHNICAL_SKILLS })); break;
+      case 5: setDoc(d => ({ ...d, leadership: EXAMPLE_LEADERSHIP })); break;
+      case 6: setDoc(d => ({ ...d, ai_tooling_practice: EXAMPLE_AI_TOOLING })); break;
+      case 7: setDoc(d => ({ ...d, role_fit_themes: EXAMPLE_ROLE_THEMES })); break;
+      case 8: setDoc(d => ({ ...d, claim_boundaries: EXAMPLE_CLAIM_BOUNDARIES })); break;
+    }
+    setExampleLoadKey(k => k + 1);
+  }
+
+  function fillFromDraft(draft: CandidateProfileDocument) {
+    const hasContent = !!(
+      doc.candidate.name || highlights.length > 0 ||
+      doc.domains.primary.length ||
+      Object.values(doc.technical_skills).some(a => a.length > 0)
+    );
+    if (hasContent && !window.confirm(
+      "This will replace all profile fields with data from the resume draft.\nContinue?"
+    )) {
+      return;
+    }
+    setDoc({
+      candidate_profile_version: "2.0",
+      candidate: draft.candidate ?? EMPTY_DOC.candidate,
+      domains: draft.domains ?? EMPTY_DOC.domains,
+      experience_highlights: draft.experience_highlights ?? [],
+      technical_skills: { ...EMPTY_DOC.technical_skills, ...draft.technical_skills },
+      leadership: {
+        scope: { ...EMPTY_DOC.leadership.scope, ...(draft.leadership?.scope ?? {}) },
+        practices: draft.leadership?.practices ?? [],
+        risk_management: draft.leadership?.risk_management ?? [],
+      },
+      ai_tooling_practice: { ...EMPTY_DOC.ai_tooling_practice, ...draft.ai_tooling_practice },
+      role_fit_themes: draft.role_fit_themes ?? [],
+      constraints_and_preferences: { ...EMPTY_DOC.constraints_and_preferences, ...draft.constraints_and_preferences },
+      claim_boundaries: { ...EMPTY_DOC.claim_boundaries, ...draft.claim_boundaries },
+    });
+    setHighlights((draft.experience_highlights ?? []).map(keyed));
+    setExampleLoadKey(k => k + 1);
+  }
+
   const { candidate, domains, technical_skills: ts, leadership, ai_tooling_practice: ai, claim_boundaries: cb } = doc;
 
   // Show nothing while checking auth (prevents a flash of the form).
@@ -244,14 +335,14 @@ export default function ProfileOnboardingPage() {
               <Input
                 value={candidate.headline ?? ""}
                 onChange={e => setDoc(d => ({ ...d, candidate: { ...d.candidate, headline: e.target.value } }))}
-                placeholder="Senior backend engineer & engineering leader"
+                placeholder="Software engineer, backend systems and cloud applications"
               />
             </FieldRow>
             <FieldRow label="Summary" required>
               <Textarea
                 value={candidate.summary ?? ""}
                 onChange={e => setDoc(d => ({ ...d, candidate: { ...d.candidate, summary: e.target.value } }))}
-                placeholder="Brief factual summary of your background and key strengths..."
+                placeholder="Software engineer with experience building and maintaining backend and full-stack systems. Focused on scalability, reliability, and delivering production-quality features."
                 className="min-h-[120px]"
               />
             </FieldRow>
@@ -266,16 +357,18 @@ export default function ProfileOnboardingPage() {
               <ArrayListEditor
                 value={domains.primary}
                 onChange={v => setDoc(d => ({ ...d, domains: { ...d.domains, primary: v } }))}
-                placeholder={"fintech\ncrypto_exchange\nblockchain"}
+                placeholder={"Web applications\nBackend systems\nCloud infrastructure"}
                 rows={4}
+                resetKey={exampleLoadKey}
               />
             </FieldRow>
             <FieldRow label="Secondary domains">
               <ArrayListEditor
                 value={domains.secondary}
                 onChange={v => setDoc(d => ({ ...d, domains: { ...d.domains, secondary: v } }))}
-                placeholder={"payments\nrisk_controls"}
+                placeholder={"Enterprise SaaS\nFinancial technology"}
                 rows={3}
+                resetKey={exampleLoadKey}
               />
             </FieldRow>
           </div>
@@ -327,7 +420,12 @@ export default function ProfileOnboardingPage() {
             ).map(([field, label]) => (
               <div key={field}>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-                <ArrayListEditor value={ts[field]} onChange={v => setTech(field, v)} rows={3} />
+                <ArrayListEditor
+                  value={ts[field]}
+                  onChange={v => setTech(field, v)}
+                  rows={3}
+                  resetKey={exampleLoadKey}
+                />
               </div>
             ))}
           </div>
@@ -347,15 +445,16 @@ export default function ProfileOnboardingPage() {
                     const n = e.target.value === "" ? null : parseInt(e.target.value, 10);
                     setLeadership(l => ({ ...l, scope: { ...l.scope, team_size_max: isNaN(n as number) ? null : n } }));
                   }}
-                  placeholder="20"
+                  placeholder="8"
                 />
               </FieldRow>
               <FieldRow label="Leadership style keywords">
                 <ArrayListEditor
                   value={leadership.scope.style_keywords}
                   onChange={v => setLeadership(l => ({ ...l, scope: { ...l.scope, style_keywords: v } }))}
-                  placeholder={"results\nclarity"}
+                  placeholder={"Ownership\nCollaboration\nExecution"}
                   rows={3}
+                  resetKey={exampleLoadKey}
                 />
               </FieldRow>
             </div>
@@ -364,6 +463,7 @@ export default function ProfileOnboardingPage() {
                 value={leadership.practices}
                 onChange={v => setLeadership(l => ({ ...l, practices: v }))}
                 rows={4}
+                resetKey={exampleLoadKey}
               />
             </FieldRow>
             <FieldRow label="Risk management">
@@ -371,13 +471,20 @@ export default function ProfileOnboardingPage() {
                 value={leadership.risk_management}
                 onChange={v => setLeadership(l => ({ ...l, risk_management: v }))}
                 rows={3}
+                resetKey={exampleLoadKey}
               />
             </FieldRow>
           </div>
         );
 
       // ── Step 6: AI tools ──────────────────────────────────────────────────
-      case 6:
+      case 6: {
+        const AI_PLACEHOLDERS: Record<keyof AIToolingPractice, string> = {
+          hands_on_tools: "ChatGPT\nGitHub Copilot\nAI-assisted IDE tools",
+          usage_patterns: "Debugging issues\nLearning new frameworks and APIs\nImproving development workflows",
+          principles: "Engineer remains accountable for code quality\nAvoid sharing sensitive data with AI tools",
+          concepts_familiarity: "Large language models\nRAG systems\nAI-assisted development",
+        };
         return (
           <div className="grid grid-cols-2 gap-4">
             {(
@@ -389,11 +496,18 @@ export default function ProfileOnboardingPage() {
               ] as [keyof AIToolingPractice, string][]
             ).map(([field, label]) => (
               <FieldRow key={field} label={label}>
-                <ArrayListEditor value={ai[field]} onChange={v => setAI(field, v)} rows={3} />
+                <ArrayListEditor
+                  value={ai[field]}
+                  onChange={v => setAI(field, v)}
+                  placeholder={AI_PLACEHOLDERS[field]}
+                  rows={3}
+                  resetKey={exampleLoadKey}
+                />
               </FieldRow>
             ))}
           </div>
         );
+      }
 
       // ── Step 7: Role fit themes ───────────────────────────────────────────
       case 7:
@@ -402,8 +516,9 @@ export default function ProfileOnboardingPage() {
             <ArrayListEditor
               value={doc.role_fit_themes}
               onChange={v => setDoc(d => ({ ...d, role_fit_themes: v }))}
-              placeholder={"fintech_backend\nhigh_throughput_systems\ncrypto_infrastructure"}
+              placeholder={"Backend development\nScalable system design\nAPI development"}
               rows={6}
+              resetKey={exampleLoadKey}
             />
           </FieldRow>
         );
@@ -416,24 +531,27 @@ export default function ProfileOnboardingPage() {
               <ArrayListEditor
                 value={cb.security_auth}
                 onChange={v => setClaimBoundaries("security_auth", v)}
-                placeholder={"Not a direct OAuth2/OIDC/SAML implementation"}
+                placeholder={"Do not claim ownership of large-scale security architecture unless supported"}
                 rows={4}
+                resetKey={exampleLoadKey}
               />
             </FieldRow>
             <FieldRow label="Domain limits">
               <ArrayListEditor
                 value={cb.domain_limits}
                 onChange={v => setClaimBoundaries("domain_limits", v)}
-                placeholder={"Do not imply ownership of unrelated SaaS domains"}
+                placeholder={"Avoid overstating leadership scope\nKeep domain claims aligned with actual experience"}
                 rows={4}
+                resetKey={exampleLoadKey}
               />
             </FieldRow>
             <FieldRow label="Employment constraints">
               <ArrayListEditor
                 value={cb.employment_constraints}
                 onChange={v => setClaimBoundaries("employment_constraints", v)}
-                placeholder={"Current work is independent contractor — label clearly"}
+                placeholder={"Maintain accuracy of roles and dates"}
                 rows={3}
+                resetKey={exampleLoadKey}
               />
             </FieldRow>
           </div>
@@ -447,6 +565,12 @@ export default function ProfileOnboardingPage() {
   // ── Layout ────────────────────────────────────────────────────────────────
 
   return (
+    <>
+    <SelectResumeModal
+      open={fillModalOpen}
+      onClose={() => setFillModalOpen(false)}
+      onApply={(draft) => fillFromDraft(draft)}
+    />
     <div className="min-h-screen bg-gray-50 flex items-start justify-center py-12 px-4">
       <div className="w-full max-w-3xl">
         <div className="mb-8 text-center">
@@ -461,6 +585,24 @@ export default function ProfileOnboardingPage() {
             <StepHeader step={step} title={STEPS[step - 1]} />
           </CardHeader>
           <CardBody className="space-y-6">
+            <div className="flex items-center justify-between -mt-2">
+              <button
+                type="button"
+                onClick={() => setFillModalOpen(true)}
+                className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 hover:underline underline-offset-2 transition-colors"
+              >
+                <Wand2 className="h-3.5 w-3.5" />
+                Fill from resume
+              </button>
+              <button
+                type="button"
+                onClick={handleLoadExample}
+                className="text-xs text-indigo-500 hover:text-indigo-700 hover:underline underline-offset-2 transition-colors"
+              >
+                Load from example profile
+              </button>
+            </div>
+
             {renderStep()}
 
             {error && <p className="text-sm text-red-600">✗ {error}</p>}
@@ -489,5 +631,6 @@ export default function ProfileOnboardingPage() {
         </Card>
       </div>
     </div>
+    </>
   );
 }

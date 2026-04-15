@@ -2,14 +2,26 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ArrayListEditor } from "./ArrayListEditor";
 import { FieldHelp } from "./FieldHelp";
 import { ExperienceHighlightCard } from "./ExperienceHighlightCard";
+import { SelectResumeModal } from "./SelectResumeModal";
 import { candidateProfile, ApiError } from "@/lib/api";
+import {
+  EXAMPLE_CANDIDATE,
+  EXAMPLE_DOMAINS,
+  EXAMPLE_HIGHLIGHTS,
+  EXAMPLE_TECHNICAL_SKILLS,
+  EXAMPLE_LEADERSHIP,
+  EXAMPLE_AI_TOOLING,
+  EXAMPLE_ROLE_THEMES,
+  EXAMPLE_CONSTRAINTS,
+  EXAMPLE_CLAIM_BOUNDARIES,
+} from "@/config/exampleProfileData";
 import type {
   CandidateProfileDocument,
   CandidateProfileResponse,
@@ -94,11 +106,30 @@ const EMPTY_HIGHLIGHT: ExperienceHighlight = {
 
 // ── Section helpers ─────────────────────────────────────────────────────────
 
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+function LoadExampleButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-xs text-indigo-500 hover:text-indigo-700 hover:underline underline-offset-2 transition-colors"
+    >
+      Load from example
+    </button>
+  );
+}
+
+function SectionCard({
+  title, children, actions,
+}: {
+  title: string; children: React.ReactNode; actions?: React.ReactNode;
+}) {
   return (
     <Card>
       <CardHeader>
-        <h3 className="font-semibold text-gray-900">{title}</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-gray-900">{title}</h3>
+          {actions}
+        </div>
       </CardHeader>
       <CardBody className="space-y-4">{children}</CardBody>
     </Card>
@@ -138,6 +169,14 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [fillModalOpen, setFillModalOpen] = useState(false);
+
+  // Per-section reset keys: incrementing forces ArrayListEditors in that section
+  // to re-sync their local textarea state from the updated value prop.
+  const [resetKeys, setResetKeys] = useState<Record<string, number>>({});
+  const bumpKey = (section: string) =>
+    setResetKeys(k => ({ ...k, [section]: (k[section] ?? 0) + 1 }));
+  const rk = (section: string) => resetKeys[section] ?? 0;
 
   // ── Field setters ────────────────────────────────────────────────────────
 
@@ -167,6 +206,110 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
       ...d,
       claim_boundaries: { ...d.claim_boundaries, [field]: val },
     }));
+  }
+
+  // ── Example loading ──────────────────────────────────────────────────────
+
+  function confirmLoad(hasContent: boolean): boolean {
+    if (!hasContent) return true;
+    return window.confirm(
+      "Replace this section with example content?\nThis will update only the fields on the current section."
+    );
+  }
+
+  function loadCandidateExample() {
+    const has = !!(doc.candidate.name || doc.candidate.headline || doc.candidate.summary);
+    if (!confirmLoad(has)) return;
+    setDoc(d => ({ ...d, candidate: EXAMPLE_CANDIDATE }));
+    // candidate fields are controlled inputs — no resetKey needed
+  }
+
+  function loadDomainsExample() {
+    const has = doc.domains.primary.length > 0 || doc.domains.secondary.length > 0;
+    if (!confirmLoad(has)) return;
+    setDoc(d => ({ ...d, domains: EXAMPLE_DOMAINS }));
+    bumpKey("domains");
+  }
+
+  function loadHighlightsExample() {
+    if (!confirmLoad(highlights.length > 0)) return;
+    setHighlights(EXAMPLE_HIGHLIGHTS.map(toKeyed));
+    // ExperienceHighlightCard remounts on key change — no extra resetKey needed
+  }
+
+  function loadTechExample() {
+    const has = Object.values(doc.technical_skills).some(arr => arr.length > 0);
+    if (!confirmLoad(has)) return;
+    setDoc(d => ({ ...d, technical_skills: EXAMPLE_TECHNICAL_SKILLS }));
+    bumpKey("tech");
+  }
+
+  function loadLeadershipExample() {
+    const has = !!(
+      doc.leadership.scope.team_size_max ||
+      doc.leadership.scope.style_keywords.length ||
+      doc.leadership.practices.length ||
+      doc.leadership.risk_management.length
+    );
+    if (!confirmLoad(has)) return;
+    setDoc(d => ({ ...d, leadership: EXAMPLE_LEADERSHIP }));
+    bumpKey("leadership");
+  }
+
+  function loadAIExample() {
+    const has = Object.values(doc.ai_tooling_practice).some(arr => arr.length > 0);
+    if (!confirmLoad(has)) return;
+    setDoc(d => ({ ...d, ai_tooling_practice: EXAMPLE_AI_TOOLING }));
+    bumpKey("ai");
+  }
+
+  function loadThemesExample() {
+    if (!confirmLoad(doc.role_fit_themes.length > 0)) return;
+    setDoc(d => ({ ...d, role_fit_themes: EXAMPLE_ROLE_THEMES }));
+    bumpKey("themes");
+  }
+
+  function loadConstraintsExample() {
+    const cx = doc.constraints_and_preferences;
+    const has = cx.work_context.length > 0 || cx.communication.length > 0 || cx.resume_constraint.length > 0;
+    if (!confirmLoad(has)) return;
+    setDoc(d => ({ ...d, constraints_and_preferences: EXAMPLE_CONSTRAINTS }));
+    bumpKey("constraints");
+  }
+
+  function loadClaimsExample() {
+    const has = !!(
+      doc.claim_boundaries.security_auth.length ||
+      doc.claim_boundaries.domain_limits.length ||
+      doc.claim_boundaries.employment_constraints.length
+    );
+    if (!confirmLoad(has)) return;
+    setDoc(d => ({ ...d, claim_boundaries: EXAMPLE_CLAIM_BOUNDARIES }));
+    bumpKey("claims");
+  }
+
+  // ── Fill from resume draft ───────────────────────────────────────────────
+
+  function fillFromDraft(draft: CandidateProfileDocument) {
+    const hasContent = !!(
+      doc.candidate.name || highlights.length > 0 ||
+      doc.domains.primary.length || Object.values(doc.technical_skills).some(a => a.length > 0)
+    );
+    if (hasContent && !window.confirm(
+      "This will replace all profile fields with data from the resume draft.\nContinue?"
+    )) {
+      return;
+    }
+    const hydrated = hydrateProfile(draft);
+    setDoc(hydrated);
+    setHighlights(hydrated.experience_highlights.map(toKeyed));
+    // Bump all section reset keys so ArrayListEditors re-sync
+    const sections = ["domains", "tech", "leadership", "ai", "themes", "constraints", "claims"];
+    setResetKeys(k => {
+      const next = { ...k };
+      sections.forEach(s => { next[s] = (next[s] ?? 0) + 1; });
+      return next;
+    });
   }
 
   // ── Validation ───────────────────────────────────────────────────────────
@@ -220,10 +363,31 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
+    <>
+    <SelectResumeModal
+      open={fillModalOpen}
+      onClose={() => setFillModalOpen(false)}
+      onApply={(draft) => fillFromDraft(draft)}
+    />
     <form onSubmit={handleSubmit} className="space-y-6">
 
+      {/* Fill from resume toolbar */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setFillModalOpen(true)}
+          className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 transition-colors"
+        >
+          <Wand2 className="h-4 w-4" />
+          Fill from resume
+        </button>
+      </div>
+
       {/* 1 — Candidate basics */}
-      <SectionCard title="Candidate basics">
+      <SectionCard
+        title="Candidate basics"
+        actions={<LoadExampleButton onClick={loadCandidateExample} />}
+      >
         <Field label="Name" configKey="candidate.name" required>
           <Input
             value={candidate.name}
@@ -235,41 +399,49 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
           <Input
             value={candidate.headline ?? ""}
             onChange={e => setCandidate("headline", e.target.value)}
-            placeholder="Senior backend engineer & engineering leader"
+            placeholder="Software engineer, backend systems and cloud applications"
           />
         </Field>
         <Field label="Summary" configKey="candidate.summary" required>
           <Textarea
             value={candidate.summary ?? ""}
             onChange={e => setCandidate("summary", e.target.value)}
-            placeholder="Brief factual summary of your background and key strengths..."
+            placeholder="Software engineer with experience building and maintaining backend and full-stack systems. Focused on scalability, reliability, and delivering production-quality features."
             className="min-h-[100px]"
           />
         </Field>
       </SectionCard>
 
       {/* 2 — Domain expertise */}
-      <SectionCard title="Domain expertise">
+      <SectionCard
+        title="Domain expertise"
+        actions={<LoadExampleButton onClick={loadDomainsExample} />}
+      >
         <Field label="Primary domains" configKey="domains.primary" required>
           <ArrayListEditor
             value={domains.primary}
             onChange={v => setDomains("primary", v)}
-            placeholder={"fintech\ncrypto_exchange\nblockchain"}
+            placeholder={"Web applications\nBackend systems\nCloud infrastructure"}
             rows={4}
+            resetKey={rk("domains")}
           />
         </Field>
         <Field label="Secondary domains" configKey="domains.secondary">
           <ArrayListEditor
             value={domains.secondary}
             onChange={v => setDomains("secondary", v)}
-            placeholder={"payments\nrisk_controls\nregulated_systems"}
+            placeholder={"Enterprise SaaS\nFinancial technology"}
             rows={3}
+            resetKey={rk("domains")}
           />
         </Field>
       </SectionCard>
 
       {/* 3 — Experience highlights */}
-      <SectionCard title="Key experience highlights">
+      <SectionCard
+        title="Key experience highlights"
+        actions={<LoadExampleButton onClick={loadHighlightsExample} />}
+      >
         <div className="space-y-4">
           {highlights.map((h, i) => (
             <ExperienceHighlightCard
@@ -296,7 +468,10 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
       </SectionCard>
 
       {/* 4 — Technical skills */}
-      <SectionCard title="Technical skills">
+      <SectionCard
+        title="Technical skills"
+        actions={<LoadExampleButton onClick={loadTechExample} />}
+      >
         <div className="grid grid-cols-2 gap-4">
           {(
             [
@@ -320,6 +495,7 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
                 onChange={v => setTech(field, v)}
                 rows={3}
                 className="mt-1"
+                resetKey={rk("tech")}
               />
             </div>
           ))}
@@ -327,7 +503,10 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
       </SectionCard>
 
       {/* 5 — Leadership */}
-      <SectionCard title="Leadership style and scope">
+      <SectionCard
+        title="Leadership style and scope"
+        actions={<LoadExampleButton onClick={loadLeadershipExample} />}
+      >
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-0.5">Largest team led</label>
@@ -343,7 +522,7 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
                   scope: { ...l.scope, team_size_max: isNaN(n as number) ? null : n },
                 }));
               }}
-              placeholder="20"
+              placeholder="8"
               className="mt-1"
             />
           </div>
@@ -351,8 +530,9 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
             <ArrayListEditor
               value={leadership.scope.style_keywords}
               onChange={v => setLeadership(l => ({ ...l, scope: { ...l.scope, style_keywords: v } }))}
-              placeholder={"results\nclarity\naccountability"}
+              placeholder={"Ownership\nCollaboration\nExecution"}
               rows={3}
+              resetKey={rk("leadership")}
             />
           </Field>
         </div>
@@ -361,6 +541,7 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
             value={leadership.practices}
             onChange={v => setLeadership(l => ({ ...l, practices: v }))}
             rows={4}
+            resetKey={rk("leadership")}
           />
         </Field>
         <Field label="Risk management" configKey="leadership.risk_management">
@@ -368,26 +549,32 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
             value={leadership.risk_management}
             onChange={v => setLeadership(l => ({ ...l, risk_management: v }))}
             rows={3}
+            resetKey={rk("leadership")}
           />
         </Field>
       </SectionCard>
 
       {/* 6 — AI tooling */}
-      <SectionCard title="AI tools and practices">
+      <SectionCard
+        title="AI tools and practices"
+        actions={<LoadExampleButton onClick={loadAIExample} />}
+      >
         <div className="grid grid-cols-2 gap-4">
           {(
             [
-              ["hands_on_tools", "Hands-on tools"],
-              ["usage_patterns", "Usage patterns"],
-              ["principles", "Principles"],
-              ["concepts_familiarity", "Concepts familiarity"],
-            ] as [keyof AIToolingPractice, string][]
-          ).map(([field, label]) => (
+              ["hands_on_tools", "Hands-on tools", "ChatGPT\nGitHub Copilot\nAI-assisted IDE tools"],
+              ["usage_patterns", "Usage patterns", "Debugging issues\nLearning new frameworks and APIs\nImproving development workflows"],
+              ["principles", "Principles", "Engineer remains accountable for code quality\nAvoid sharing sensitive data with AI tools"],
+              ["concepts_familiarity", "Concepts familiarity", "Large language models\nRAG systems\nAI-assisted development"],
+            ] as [keyof AIToolingPractice, string, string][]
+          ).map(([field, label, placeholder]) => (
             <Field key={field} label={label} configKey={`ai_tooling_practice.${field}`}>
               <ArrayListEditor
                 value={ai[field]}
                 onChange={v => setAI(field, v)}
+                placeholder={placeholder}
                 rows={3}
+                resetKey={rk("ai")}
               />
             </Field>
           ))}
@@ -395,25 +582,33 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
       </SectionCard>
 
       {/* 7 — Role fit themes */}
-      <SectionCard title="Strong-fit role themes">
+      <SectionCard
+        title="Strong-fit role themes"
+        actions={<LoadExampleButton onClick={loadThemesExample} />}
+      >
         <Field label="Role fit themes" configKey="role_fit_themes">
           <ArrayListEditor
             value={role_fit_themes}
             onChange={v => setDoc(d => ({ ...d, role_fit_themes: v }))}
-            placeholder={"fintech_backend\ncrypto_and_blockchain_infrastructure\nhigh_throughput_low_latency_systems"}
+            placeholder={"Backend development\nScalable system design\nAPI development"}
             rows={5}
+            resetKey={rk("themes")}
           />
         </Field>
       </SectionCard>
 
       {/* 8 — Resume constraints */}
-      <SectionCard title="Resume constraints and preferences">
+      <SectionCard
+        title="Resume constraints and preferences"
+        actions={<LoadExampleButton onClick={loadConstraintsExample} />}
+      >
         <div className="grid grid-cols-2 gap-4">
           <Field label="Work context" configKey="constraints_and_preferences.work_context">
             <ArrayListEditor
               value={cx.work_context}
               onChange={v => setConstraints("work_context", v)}
               rows={3}
+              resetKey={rk("constraints")}
             />
           </Field>
           <Field label="Communication" configKey="constraints_and_preferences.communication">
@@ -421,6 +616,7 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
               value={cx.communication}
               onChange={v => setConstraints("communication", v)}
               rows={3}
+              resetKey={rk("constraints")}
             />
           </Field>
         </div>
@@ -428,36 +624,43 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
           <ArrayListEditor
             value={cx.resume_constraint}
             onChange={v => setConstraints("resume_constraint", v)}
-            placeholder={"when describing current contracting work, clearly mark as independent contractor\navoid implying employee status where relevant"}
+            placeholder={"Maintain accuracy of roles and dates\nKeep claims aligned with actual experience"}
             rows={3}
+            resetKey={rk("constraints")}
           />
         </Field>
       </SectionCard>
 
       {/* 9 — Claim boundaries */}
-      <SectionCard title="Claim boundaries">
+      <SectionCard
+        title="Claim boundaries"
+        actions={<LoadExampleButton onClick={loadClaimsExample} />}
+      >
         <Field label="Security / auth boundaries" configKey="claim_boundaries.security_auth">
           <ArrayListEditor
             value={cb.security_auth}
             onChange={v => setClaimBoundaries("security_auth", v)}
-            placeholder={"Not a direct OAuth2/OIDC/SAML implementation\nArchitecture aligns with JWT-style principles"}
+            placeholder={"Do not claim ownership of large-scale security architecture unless supported"}
             rows={4}
+            resetKey={rk("claims")}
           />
         </Field>
         <Field label="Domain limits" configKey="claim_boundaries.domain_limits">
           <ArrayListEditor
             value={cb.domain_limits}
             onChange={v => setClaimBoundaries("domain_limits", v)}
-            placeholder={"Do not imply direct ownership of unrelated SaaS business domains unless explicitly supported\nDo not claim unsupported protocol or compliance framework implementation"}
+            placeholder={"Avoid overstating leadership scope\nKeep domain claims aligned with actual experience"}
             rows={4}
+            resetKey={rk("claims")}
           />
         </Field>
         <Field label="Employment constraints" configKey="claim_boundaries.employment_constraints">
           <ArrayListEditor
             value={cb.employment_constraints}
             onChange={v => setClaimBoundaries("employment_constraints", v)}
-            placeholder={"Current AI-lab work must be clearly labeled as independent contractor work\nAvoid implying employee status where not applicable"}
+            placeholder={"Maintain accuracy of roles and dates\nAvoid implying a different employment status than what applies"}
             rows={3}
+            resetKey={rk("claims")}
           />
         </Field>
       </SectionCard>
@@ -470,5 +673,6 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
         Save profile
       </Button>
     </form>
+    </>
   );
 }

@@ -33,6 +33,14 @@ class CandidateProfile(Base, TimestampMixin):
         DateTime(timezone=True), nullable=True, default=None
     )
 
+    # FK to the resume last used to autofill this profile (nullable)
+    source_resume_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("structured_resumes.id", ondelete="SET NULL"),
+        nullable=True,
+        default=None,
+    )
+
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="candidate_profiles")  # noqa: F821
 

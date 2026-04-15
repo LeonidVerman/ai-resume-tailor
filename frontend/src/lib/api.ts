@@ -22,6 +22,8 @@ import type {
   LegalAcceptRequest,
   LegalCurrentResponse,
   LegalStatusResponse,
+  AutofillDraftResponse,
+  AutofillGenerateRequest,
   BenchmarkRunDetail,
   BenchmarkRunSummary,
   BillingStatus,
@@ -209,6 +211,27 @@ export const candidateProfile = {
     request<CandidateProfileResponse>("/candidate-profile/complete-onboarding", {
       method: "POST",
     }),
+  autofill: {
+    listResumes: () =>
+      request<StructuredResumeSummary[]>("/candidate-profile/autofill/resumes"),
+    getDraft: (resumeId: number) =>
+      request<AutofillDraftResponse>(
+        `/candidate-profile/autofill/draft?resume_id=${resumeId}`
+      ),
+    generate: (body: AutofillGenerateRequest) =>
+      request<AutofillDraftResponse>("/candidate-profile/autofill/generate", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    selectSource: (resumeId: number) =>
+      request<{ source_resume_id: number | null }>(
+        "/candidate-profile/autofill/select-source",
+        {
+          method: "POST",
+          body: JSON.stringify({ resume_id: resumeId }),
+        }
+      ),
+  },
 };
 
 // ── Resumes ───────────────────────────────────────────────────────────────

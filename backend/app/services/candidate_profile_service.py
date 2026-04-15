@@ -124,6 +124,7 @@ class CandidateProfileService:
             profile_version=profile.profile_version,
             profile=doc,
             onboarding_completed=profile.onboarding_completed,
+            source_resume_id=profile.source_resume_id,
             created_at=profile.created_at,
             updated_at=profile.updated_at,
         )

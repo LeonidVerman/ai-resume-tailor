@@ -1,154 +1,158 @@
 {
   "candidate.name": {
     "description": "Candidate full name",
-    "examples": ["Leonid Verman"]
+    "examples": ["Jane Smith"]
   },
   "candidate.headline": {
     "description": "Short professional headline used to summarize profile",
-    "examples": ["Senior backend engineer & engineering leader", "Engineering manager, SaaS platforms"]
+    "examples": ["Software engineer, backend systems and cloud applications", "Engineering manager, SaaS platforms"]
   },
   "candidate.summary": {
     "description": "Short factual profile summary. Use real experience only.",
-    "examples": ["Senior backend engineer and engineering leader with 10-15+ years focused on high-performance, fault-tolerant distributed systems in fintech and crypto. Scaled production systems to 1M+ users under regulatory constraints."]
+    "examples": ["Software engineer with experience building and maintaining backend and full-stack systems. Focused on scalability, reliability, and delivering production-quality features."]
   },
   "domains.primary": {
-    "description": "Main industries or problem areas. One per line.",
-    "examples": ["fintech", "crypto_exchange", "blockchain"]
+    "description": "Main industries or problem areas. One per row or separated by commas.",
+    "examples": ["Web applications", "Backend systems", "Cloud infrastructure"]
   },
   "domains.secondary": {
-    "description": "Related industries or adjacent areas. One per line.",
-    "examples": ["payments", "risk_controls", "regulated_systems"]
+    "description": "Related industries or adjacent areas. One per row or separated by commas.",
+    "examples": ["Enterprise SaaS", "Financial technology", "AI-enabled applications"]
   },
   "experience_highlights.area": {
     "description": "Main area or initiative this highlight represents",
-    "examples": ["crypto_exchange_platform", "ai_model_training_evaluation"]
+    "examples": ["Backend platform development", "Cloud application modernization"]
   },
   "experience_highlights.impact": {
-    "description": "Key achievements or responsibilities. One per line.",
-    "examples": ["Built and launched a cryptocurrency exchange for the Japanese market", "Scaled from early stage to 1M+ users"]
+    "description": "Key achievements or responsibilities. One per row or separated by commas.",
+    "examples": ["Improved application performance and reliability", "Reduced response times through backend and database optimization"]
   },
   "experience_highlights.market": {
     "description": "Target geography, customer segment, or market context",
-    "examples": ["Japan"]
+    "examples": ["North America", "Enterprise customers"]
   },
   "experience_highlights.team_context": {
-    "description": "Team size, role in team, leadership scope. One per line.",
-    "examples": ["Initial team size: 4 engineers", "Later led teams up to 15-20 engineers"]
+    "description": "Team size, role in team, leadership scope. One per row or separated by commas.",
+    "examples": ["Worked in a cross-functional engineering team", "Collaborated with product and QA stakeholders"]
   },
   "experience_highlights.architecture_patterns": {
-    "description": "Technical mechanisms actually used in this work. One per line.",
-    "examples": ["Horizontal scaling of trading servers", "Database read replicas for read-heavy GET endpoints", "Multiple caching layers to reduce DB load"]
+    "description": "Technical mechanisms actually used in this work. One per row or separated by commas.",
+    "examples": ["Service-oriented design", "API-based architecture", "Layered application structure"]
   },
   "experience_highlights.constraints_and_tradeoffs": {
-    "description": "Important constraints, deadlines, or tradeoffs. One per line.",
-    "examples": ["Fast go-live timeline due to regulatory approval timeline", "Regulatory constraints made some database partitioning/sharding approaches harder"]
+    "description": "Important constraints, deadlines, or tradeoffs. One per row or separated by commas.",
+    "examples": ["Worked within an existing architecture", "Balanced feature delivery with system stability"]
   },
   "experience_highlights.employer_relationship": {
     "description": "Employment type or relationship if relevant",
-    "examples": ["independent_contractor_via_platform"]
+    "examples": ["Independent contractor", "Full-time employee"]
   },
   "experience_highlights.skills_applied": {
-    "description": "Specific skills used in this highlight. One per line.",
-    "examples": ["senior-level software engineering problem solving", "ambiguity handling", "evaluation of solution robustness and reasoning quality"]
+    "description": "Specific skills used in this highlight. One per row or separated by commas.",
+    "examples": ["Backend development", "API design", "Database optimization", "Debugging and troubleshooting"]
   },
   "experience_highlights.security_auth_patterns": {
-    "description": "Security or auth patterns specific to this highlight. One per line.",
-    "examples": ["Encrypted signed session tokens", "Centralized revocation via Redis"]
+    "description": "Security or auth patterns specific to this highlight. One per row or separated by commas.",
+    "examples": ["Token-based authentication", "Role-based access control"]
   },
   "technical_skills.languages": {
-    "description": "Programming languages. One per line.",
-    "examples": ["Java", "C#", "Python", "TypeScript"]
+    "description": "Programming languages. One per row or separated by commas.",
+    "examples": ["Java", "Python", "JavaScript", "TypeScript"]
   },
   "technical_skills.backend_systems": {
-    "description": "Backend engineering expertise. One per line.",
-    "examples": ["high-throughput APIs", "distributed systems", "fault tolerance", "low-latency design", "event-driven architecture"]
+    "description": "Backend engineering expertise. One per row or separated by commas.",
+    "examples": ["REST API development", "Backend services", "Integrations and business logic"]
   },
   "technical_skills.datastores": {
-    "description": "Databases and storage systems. One per line.",
-    "examples": ["MySQL", "PostgreSQL", "Redis", "Oracle"]
+    "description": "Databases and storage systems. One per row or separated by commas.",
+    "examples": ["PostgreSQL", "MySQL", "NoSQL", "Query optimization"]
   },
   "technical_skills.infra_devops": {
-    "description": "Infrastructure and DevOps tools. One per line.",
-    "examples": ["AWS", "Docker", "Kubernetes", "CI/CD"]
+    "description": "Infrastructure and DevOps tools. One per row or separated by commas.",
+    "examples": ["AWS", "Docker", "CI/CD pipelines", "Monitoring and logging"]
+  },
+  "technical_skills.frontend": {
+    "description": "Frontend technologies and frameworks. One per row or separated by commas.",
+    "examples": ["React", "HTML", "CSS", "Frontend integration"]
   },
   "technical_skills.api_patterns": {
-    "description": "API design patterns. One per line.",
-    "examples": ["REST", "WebSockets"]
+    "description": "API design patterns. One per row or separated by commas.",
+    "examples": ["REST", "GraphQL", "Webhooks"]
   },
   "technical_skills.async_messaging": {
-    "description": "Async and messaging experience. One per line.",
-    "examples": ["message_queues", "idempotent_processing", "Kafka", "RabbitMQ"]
+    "description": "Async and messaging experience. One per row or separated by commas.",
+    "examples": ["Message queues", "Kafka", "Asynchronous processing"]
   },
   "technical_skills.observability": {
-    "description": "Observability and monitoring approach. One per line.",
-    "examples": ["Metrics logs tracing mindset"]
+    "description": "Observability and monitoring approach. One per row or separated by commas.",
+    "examples": ["Metrics and logging", "Distributed tracing", "Error monitoring"]
   },
   "technical_skills.security_auth_patterns": {
-    "description": "Security and authentication patterns implemented. One per line.",
-    "examples": ["Encrypted signed session tokens", "API level access control RBAC style", "Distributed session validation via Redis"]
+    "description": "Security and authentication patterns implemented. One per row or separated by commas.",
+    "examples": ["Token-based authentication", "Role-based access control", "Secure API design"]
   },
   "technical_skills.scalability_reliability_patterns": {
-    "description": "Scalability and reliability patterns applied. One per line.",
-    "examples": ["Horizontal scaling", "Read replica traffic isolation", "Multi layer caching", "Async decoupling via queues"]
+    "description": "Scalability and reliability patterns applied. One per row or separated by commas.",
+    "examples": ["Caching", "Horizontal scaling", "Asynchronous processing", "Performance tuning"]
   },
   "leadership.scope.team_size_max": {
     "description": "Largest team you have directly led",
-    "examples": ["20"]
+    "examples": ["8"]
   },
   "leadership.scope.style_keywords": {
-    "description": "Keywords describing your leadership style. One per line.",
-    "examples": ["results", "clarity", "accountability", "continuous_improvement", "ownership"]
+    "description": "Keywords describing your leadership style. One per row or separated by commas.",
+    "examples": ["Ownership", "Collaboration", "Execution", "Continuous improvement"]
   },
   "leadership.practices": {
-    "description": "Specific leadership practices you apply. One per line.",
-    "examples": ["clear_task_definition_and_expectations", "transparent_decision_making", "code_review_as_collaborative_quality_process", "mentorship_and_standards"]
+    "description": "Specific leadership practices you apply. One per row or separated by commas.",
+    "examples": ["Participates in code reviews and knowledge sharing", "Collaborates with cross-functional teams", "Breaks down complex tasks into manageable deliverables"]
   },
   "leadership.risk_management": {
-    "description": "Risk management approach. One per line.",
-    "examples": ["pushes_back_on_risky_changes_that_threaten_production_stability", "prefers_guardrails_for_innovation_in_regulated_systems"]
+    "description": "Risk management approach. One per row or separated by commas.",
+    "examples": ["Prioritizes reliability and stability", "Validates changes through testing and incremental rollout"]
   },
   "ai_tooling_practice.hands_on_tools": {
-    "description": "AI tools you actively use. One per line.",
-    "examples": ["Cursor", "ChatGPT", "Claude Code", "OpenAI API"]
+    "description": "AI tools you actively use. One per row or separated by commas.",
+    "examples": ["ChatGPT", "GitHub Copilot", "AI-assisted IDE tools"]
   },
   "ai_tooling_practice.usage_patterns": {
-    "description": "How you use AI tools. One per line.",
-    "examples": ["prototyping_new_modules", "investigating_problems_and_root_causes", "rapid_learning_of_new_tools_and_tech", "model_evaluation"]
+    "description": "How you use AI tools. One per row or separated by commas.",
+    "examples": ["Debugging issues", "Learning new frameworks and APIs", "Improving development workflows"]
   },
   "ai_tooling_practice.principles": {
-    "description": "Principles guiding your AI usage. One per line.",
-    "examples": ["engineer_remains_accountable", "avoid_pasting_sensitive_data", "security_and_safety_first_in_regulated_contexts"]
+    "description": "Principles guiding your AI usage. One per row or separated by commas.",
+    "examples": ["Engineer remains accountable for code quality", "Avoid sharing sensitive data with AI tools"]
   },
   "ai_tooling_practice.concepts_familiarity": {
-    "description": "AI concepts you are familiar with. One per line.",
-    "examples": ["RAG", "vector_databases", "LLM_capabilities_and_limits"]
+    "description": "AI concepts you are familiar with. One per row or separated by commas.",
+    "examples": ["Large language models", "RAG systems", "AI-assisted development"]
   },
   "role_fit_themes": {
-    "description": "Areas where you are especially strong or should be positioned. One per line.",
-    "examples": ["fintech_backend", "crypto_and_blockchain_infrastructure", "high_throughput_low_latency_systems", "distributed_backend_architecture", "ai_platform_or_llm_integration"]
+    "description": "Areas where you are especially strong or should be positioned. One per row or separated by commas.",
+    "examples": ["Backend development", "Scalable system design", "API development", "Production reliability"]
   },
   "constraints_and_preferences.work_context": {
-    "description": "Work environment preferences. One per line.",
-    "examples": ["mission_critical", "highly_regulated_environments"]
+    "description": "Work environment preferences. One per row or separated by commas.",
+    "examples": ["Agile engineering teams", "Product-focused development", "Collaborative software environments"]
   },
   "constraints_and_preferences.communication": {
-    "description": "Communication strengths. One per line.",
-    "examples": ["strong_written_and_verbal", "cross_functional_collaboration"]
+    "description": "Communication strengths. One per row or separated by commas.",
+    "examples": ["Clear technical communication", "Cross-functional collaboration", "Documentation and knowledge sharing"]
   },
   "constraints_and_preferences.resume_constraint": {
-    "description": "Specific resume presentation constraints. One per line.",
-    "examples": ["when describing current contracting work, clearly mark as independent contractor", "avoid implying employee status where relevant"]
+    "description": "Specific resume presentation constraints. One per row or separated by commas.",
+    "examples": ["Maintain accuracy of roles and dates", "Keep claims aligned with actual experience"]
   },
   "claim_boundaries.security_auth": {
-    "description": "What you can and cannot claim about security/auth experience. One per line.",
-    "examples": ["Not a direct OAuth2/OIDC/SAML implementation", "Architecture aligns with JWT-style principles: cryptographic integrity, expiry enforcement, stateless identity propagation"]
+    "description": "What you can and cannot claim about security or auth experience. One per row or separated by commas.",
+    "examples": ["Do not claim ownership of large-scale security architecture unless supported", "Keep security claims aligned with actual implementation experience"]
   },
   "claim_boundaries.domain_limits": {
-    "description": "Domain areas where claims should be limited or qualified. One per line.",
-    "examples": ["Do not imply direct ownership of unrelated SaaS business domains unless explicitly supported", "Do not claim unsupported protocol or compliance framework implementation"]
+    "description": "Domain areas where claims should be limited or qualified. One per row or separated by commas.",
+    "examples": ["Avoid overstating leadership scope", "Keep domain claims aligned with actual experience"]
   },
   "claim_boundaries.employment_constraints": {
-    "description": "Employment or engagement status constraints to respect in generated content. One per line.",
-    "examples": ["Current AI-lab work must be clearly labeled as independent contractor work", "Avoid implying employee status where not applicable"]
+    "description": "Employment or engagement status constraints to respect in generated content. One per row or separated by commas.",
+    "examples": ["Maintain accuracy of roles and dates", "Avoid implying a different employment status than what applies"]
   }
 }

@@ -164,8 +164,25 @@ export interface CandidateProfileResponse {
   profile_version: string;
   profile: CandidateProfileDocument;
   onboarding_completed: boolean;
+  source_resume_id?: number;
   created_at: string;
   updated_at: string;
+}
+
+// ── Autofill ──────────────────────────────────────────────────────────────────
+
+export interface AutofillDraftResponse {
+  resume_id: number;
+  draft: CandidateProfileDocument;
+  status: "ready" | "failed";
+  resume_hash: string;
+  is_stale: boolean;
+  model: string | null;
+  generated_at: string;
+}
+
+export interface AutofillGenerateRequest {
+  resume_id: number;
 }
 
 export interface CandidateProfileUpsertRequest {

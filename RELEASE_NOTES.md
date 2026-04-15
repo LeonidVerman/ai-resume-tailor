@@ -1,5 +1,17 @@
 # Release Notes
 
+## 0.8.0.BETA — 2026-04-14
+
+### New features
+- **Fill candidate profile from example profile**: users can now one-click populate all
+  candidate profile sections from a built-in example profile to quickly explore the system.
+- **Fill candidate profile from resume**: users can select an uploaded resume and generate
+  a complete candidate profile draft via a single LLM call. The draft is cached per resume
+  with SHA-256 staleness detection, accessible from both the profile editor and the onboarding
+  wizard. First-time users with no resumes can upload directly from the picker modal.
+
+---
+
 ## 0.7.1.BETA — 2026-04-12
 
 ### Bug fixes
