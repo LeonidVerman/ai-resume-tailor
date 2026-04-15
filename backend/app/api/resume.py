@@ -12,7 +12,7 @@ GET  /resumes/{id}       — return a specific resume record
 
 import logging
 
-from fastapi import APIRouter, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from backend.app.dependencies import CurrentUserDep, DbDep
@@ -58,8 +58,27 @@ def _to_summary(resume) -> StructuredResumeSummary:
     )
 
 
+def _run_classification_background(resume_id: int, norm_data: bytes, template_ir: dict | None) -> None:
+    """Background task: classify the uploaded resume template via LLM.
+
+    Opens its own DB session so the upload session can be closed first.
+    Failures are caught and logged inside ResumeClassificationService.
+    """
+    from backend.app.config import get_settings
+    from backend.app.db.session import get_session_factory
+    from backend.app.services.resume_classification_service import ResumeClassificationService
+
+    settings = get_settings()
+    factory = get_session_factory(settings.database_url)
+    db = factory()
+    try:
+        ResumeClassificationService(db).classify_and_store(resume_id, norm_data, template_ir)
+    finally:
+        db.close()
+
+
 @router.post("/upload", response_model=StructuredResumeResponse, status_code=201)
-async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep):
+async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep, background_tasks: BackgroundTasks):
     """
     Upload a DOCX or PDF resume.
 
@@ -116,6 +135,17 @@ async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep):
         "Resume uploaded user_id=%s resume_id=%s filename=%s",
         user.id, resume.id, key,
     )
+
+    # Kick off LLM classification in the background.  The upload response is
+    # returned immediately; classification persists to classification_jsonb once
+    # the LLM call completes.  Failures are caught inside the background task.
+    background_tasks.add_task(
+        _run_classification_background,
+        resume.id,
+        norm.normalized_data,
+        norm.template_ir,
+    )
+
     return _to_response(resume)
 
 

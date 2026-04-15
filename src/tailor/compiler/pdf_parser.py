@@ -1741,10 +1741,13 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
         else:
             all_paras.extend(section.body_paras)
 
-    return ResumeDocument(
+    doc = ResumeDocument(
         header_paras=header_paras,
         sections=sections,
         layout=layout,
         all_paras=all_paras,
         source_kind="pdf",
     )
+    from tailor.compiler.models import assign_stable_ids
+    assign_stable_ids(doc)
+    return doc

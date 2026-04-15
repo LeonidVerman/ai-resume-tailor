@@ -122,6 +122,8 @@ class ParaModel:
     semantic: str
     # Set for PDF-sourced paragraphs; None for DOCX-sourced paragraphs.
     paragraph_profile: ParagraphProfile | None = None
+    # Stable synthetic ID assigned by assign_stable_ids(); "" until assigned.
+    para_id: str = ""
 
     def with_text(self, new_text: str) -> "ParaModel":
         """Return a copy sharing this paragraph's style but with different text."""
@@ -173,6 +175,7 @@ class ParaModel:
             "text": self.text,
             "semantic": self.semantic,
             "paragraph_profile": self.paragraph_profile.to_dict() if self.paragraph_profile else None,
+            "para_id": self.para_id,
         }
 
     @classmethod
@@ -184,6 +187,7 @@ class ParaModel:
             style=ParaStyle(),
             semantic=d["semantic"],
             paragraph_profile=pp,
+            para_id=d.get("para_id", ""),
         )
 
 
@@ -202,7 +206,8 @@ class RoleEntry:
     header_extra: list[ParaModel] = field(default_factory=list)
     meta_lines: list[ParaModel] = field(default_factory=list)
     bullets: list[ParaModel] = field(default_factory=list)
-    role_id: str = ""   # normalised header text; used as stable anchor for matching
+    role_id: str = ""         # normalised header text; used as anchor for updater matching
+    role_id_stable: str = ""  # synthetic positional ID assigned by assign_stable_ids()
 
     def to_dict(self) -> dict:
         return {
@@ -211,6 +216,7 @@ class RoleEntry:
             "meta_lines": [p.to_dict() for p in self.meta_lines],
             "bullets": [p.to_dict() for p in self.bullets],
             "role_id": self.role_id,
+            "role_id_stable": self.role_id_stable,
         }
 
     @classmethod
@@ -221,6 +227,7 @@ class RoleEntry:
             meta_lines=[ParaModel.from_dict(p) for p in d.get("meta_lines", [])],
             bullets=[ParaModel.from_dict(p) for p in d.get("bullets", [])],
             role_id=d.get("role_id", ""),
+            role_id_stable=d.get("role_id_stable", ""),
         )
 
 
@@ -233,6 +240,8 @@ class ResumeSection:
     semantic_type: str  # experience | summary | skills | education | other
     body_paras: list[ParaModel] = field(default_factory=list)   # non-experience sections
     roles: list[RoleEntry] = field(default_factory=list)        # experience sections only
+    # Stable synthetic ID assigned by assign_stable_ids(); "" until assigned.
+    section_id: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -241,6 +250,7 @@ class ResumeSection:
             "heading": self.heading.to_dict(),
             "body_paras": [p.to_dict() for p in self.body_paras],
             "roles": [r.to_dict() for r in self.roles],
+            "section_id": self.section_id,
         }
 
     @classmethod
@@ -251,6 +261,7 @@ class ResumeSection:
             semantic_type=d["semantic_type"],
             body_paras=[ParaModel.from_dict(p) for p in d.get("body_paras", [])],
             roles=[RoleEntry.from_dict(r) for r in d.get("roles", [])],
+            section_id=d.get("section_id", ""),
         )
 
 
@@ -388,3 +399,49 @@ class ResumeDocument:
             all_paras=all_paras,
             source_kind=d.get("source_kind", "pdf"),
         )
+
+
+# ── Stable ID assignment ───────────────────────────────────────────────────
+
+def assign_stable_ids(doc: "ResumeDocument") -> None:
+    """Assign synthetic sequential IDs to every section, role, and paragraph.
+
+    IDs are positional (assigned in document order) and stable for the same
+    parsed document.  They are stored on the IR objects and round-trip through
+    to_dict() / from_dict() so classification input built from a deserialized
+    IR carries the same IDs as the original parse.
+
+    Calling this function a second time on the same document re-assigns IDs
+    from scratch (idempotent but not additive).
+
+    ID formats:
+        sections  → "sec_1", "sec_2", …
+        roles     → "role_1", "role_2", … (globally sequential)
+        paras     → "para_1", "para_2", … (globally sequential across doc)
+    """
+    para_counter = 0
+    role_counter = 0
+
+    def _assign_para(pm: "ParaModel") -> None:
+        nonlocal para_counter
+        para_counter += 1
+        pm.para_id = f"para_{para_counter}"
+
+    for pm in doc.header_paras:
+        _assign_para(pm)
+
+    for sec_idx, section in enumerate(doc.sections, start=1):
+        section.section_id = f"sec_{sec_idx}"
+        _assign_para(section.heading)
+        for role in section.roles:
+            role_counter += 1
+            role.role_id_stable = f"role_{role_counter}"
+            _assign_para(role.header)
+            for pm in role.header_extra:
+                _assign_para(pm)
+            for pm in role.meta_lines:
+                _assign_para(pm)
+            for pm in role.bullets:
+                _assign_para(pm)
+        for pm in section.body_paras:
+            _assign_para(pm)

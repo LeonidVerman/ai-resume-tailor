@@ -552,13 +552,16 @@ def parse_docx(path: str) -> ResumeDocument:
     # Engineer Intern") without a containing "Work Experience" / "Experience" header.
     sections = _consolidate_job_entry_sections(sections)
 
-    return ResumeDocument(
+    doc = ResumeDocument(
         header_paras=header_paras,
         sections=sections,
         layout=layout,
         all_paras=all_paras,
         body_items=body_items,
     )
+    from tailor.compiler.models import assign_stable_ids
+    assign_stable_ids(doc)
+    return doc
 
 
 # G: words that commonly appear in job/role titles.  Used by

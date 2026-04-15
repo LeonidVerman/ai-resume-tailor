@@ -1,0 +1,108 @@
+2026-04-13T21:21:35 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=user-aaa resume_id=42 text_len=50
+2026-04-13T21:21:35 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-13T21:21:35 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=user-aaa resume_id=42 text_len=50
+2026-04-13T21:21:35 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-13T21:21:35 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:21:35 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:21:35 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:21:35 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:21:35 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:21:35 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:21:35 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:21:35 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:21:35 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:21:35 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:21:35 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=73e9a41a-b7d9-4f75-ae68-f35cf0e1da2b resume_id=1 text_len=50
+2026-04-13T21:21:35 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-13T21:21:35 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:21:35 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:21:35 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:21:35 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:21:35 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=d129e2a4-7473-4afb-af38-babb47410973 resume_id=1 text_len=50
+2026-04-13T21:21:35 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-13T21:21:35 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=d129e2a4-7473-4afb-af38-babb47410973 resume_id=1 text_len=50
+2026-04-13T21:21:35 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-13T21:21:35 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:21:35 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:21:35 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=bbe44883-4e4e-4a7f-af30-1515d849e524 resume_id=1 text_len=50
+2026-04-13T21:21:35 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-13T21:21:35 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:21:35 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:21:35 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=0cd01a9f-c681-4ad6-a8f5-271cbb4da2ad profile={"candidate_profile_version": "2.0", "candidate": {"name": "Jane Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-13T21:21:35 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:21:35 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:21:35 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=0b74ea16-35de-4b99-b4c7-98605fa1070c profile={"candidate_profile_version": "2.0", "candidate": {"name": "Jane Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-13T21:21:35 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:21:35 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:29:13 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=user-aaa resume_id=42 text_len=50
+2026-04-13T21:29:13 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-13T21:29:13 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=user-aaa resume_id=42 text_len=50
+2026-04-13T21:29:13 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-13T21:29:13 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:29:13 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:29:13 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:29:13 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:29:13 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:29:13 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:29:13 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:29:13 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:29:13 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:29:13 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:29:13 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=74ea4e25-408e-455b-b09e-f0f90a932a83 resume_id=1 text_len=50
+2026-04-13T21:29:13 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-13T21:29:13 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:29:13 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:29:13 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:29:13 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:29:13 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=74d99672-1133-4549-802b-f8803e66b938 resume_id=1 text_len=50
+2026-04-13T21:29:13 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-13T21:29:13 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=74d99672-1133-4549-802b-f8803e66b938 resume_id=1 text_len=50
+2026-04-13T21:29:13 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-13T21:29:13 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:29:13 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:29:13 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=9475070e-006c-4884-bd17-cdb7a925ed5e resume_id=1 text_len=50
+2026-04-13T21:29:13 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-13T21:29:13 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:29:13 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:29:13 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=9fad930f-d3ec-4f36-9c28-e3d1a9ee110c profile={"candidate_profile_version": "2.0", "candidate": {"name": "Jane Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-13T21:29:14 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:29:14 [INFO] backend.app.main: Storage: local path=storage
+2026-04-13T21:29:14 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=faf8e498-f756-4867-9bc1-691387eca51c profile={"candidate_profile_version": "2.0", "candidate": {"name": "Jane Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-13T21:29:14 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-13T21:29:14 [INFO] backend.app.main: Storage: local path=storage
+2026-04-14T13:30:45 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=user-aaa resume_id=42 text_len=50 prompt=autofill/autofill_from_resume
+2026-04-14T13:30:45 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-14T13:30:45 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=user-aaa resume_id=42 text_len=50 prompt=autofill/autofill_from_resume
+2026-04-14T13:30:45 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-14T13:30:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-14T13:30:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-14T13:30:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-14T13:30:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-14T13:30:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-14T13:30:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-14T13:30:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-14T13:30:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-14T13:30:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-14T13:30:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-14T13:30:46 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=a5f30721-cd57-4fb2-8d7b-bed29db8be4e resume_id=1 text_len=50 prompt=autofill/autofill_from_resume
+2026-04-14T13:30:46 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-14T13:30:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-14T13:30:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-14T13:30:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-14T13:30:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-14T13:30:46 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=b5366068-78ba-4b4d-a4bd-1a8acff18f3a resume_id=1 text_len=50 prompt=autofill/autofill_from_resume
+2026-04-14T13:30:46 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-14T13:30:46 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=b5366068-78ba-4b4d-a4bd-1a8acff18f3a resume_id=1 text_len=50 prompt=autofill/autofill_from_resume
+2026-04-14T13:30:46 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-14T13:30:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-14T13:30:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-14T13:30:46 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate user_id=595724f2-e5ae-4bf1-aed1-8820eacf4e77 resume_id=1 text_len=50 prompt=autofill/autofill_from_resume
+2026-04-14T13:30:46 [INFO] backend.app.services.profile_autofill_service: ProfileAutofillService.generate done draft_id=1 model=gpt-4o-2026-01-01
+2026-04-14T13:30:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-14T13:30:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-14T13:30:46 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=a5c59232-1bca-4d75-b9c2-1c089a45aa23 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Jane Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-14T13:30:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-14T13:30:46 [INFO] backend.app.main: Storage: local path=storage
+2026-04-14T13:30:46 [INFO] backend.app.services.candidate_profile_service: Candidate profile created profile_id=1 user_id=83b90a28-b1ee-4cb0-892e-ec8e197d6540 profile={"candidate_profile_version": "2.0", "candidate": {"name": "Jane Smith", "headline": null, "summary": null}, "domains": {"primary": [], "secondary": []}, "experience_highlights": [], "technical_skills": {"languages": [], "backend_systems": [], "datastores": [], "infra_devops": [], "frontend": [], "api_patterns": [], "async_messaging": [], "observability": [], "security_auth_patterns": [], "scalability_reliability_patterns": []}, "leadership": {"scope": {"team_size_max": null, "style_keywords": []}, "practices": [], "risk_management": []}, "ai_tooling_practice": {"hands_on_tools": [], "usage_patterns": [], "principles": [], "concepts_familiarity": []}, "role_fit_themes": [], "constraints_and_preferences": {"work_context": [], "communication": [], "resume_constraint": []}, "claim_boundaries": {"security_auth": [], "domain_limits": [], "employment_constraints": []}}
+2026-04-14T13:30:46 [INFO] backend.app.main: Starting resume-tailor-backend env=development version=dev
+2026-04-14T13:30:46 [INFO] backend.app.main: Storage: local path=storage
