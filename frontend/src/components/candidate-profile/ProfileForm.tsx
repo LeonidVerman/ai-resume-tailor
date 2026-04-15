@@ -2,13 +2,14 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ArrayListEditor } from "./ArrayListEditor";
 import { FieldHelp } from "./FieldHelp";
 import { ExperienceHighlightCard } from "./ExperienceHighlightCard";
+import { SelectResumeModal } from "./SelectResumeModal";
 import { candidateProfile, ApiError } from "@/lib/api";
 import {
   EXAMPLE_CANDIDATE,
@@ -168,6 +169,7 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [fillModalOpen, setFillModalOpen] = useState(false);
 
   // Per-section reset keys: incrementing forces ArrayListEditors in that section
   // to re-sync their local textarea state from the updated value prop.
@@ -286,6 +288,30 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
     bumpKey("claims");
   }
 
+  // ── Fill from resume draft ───────────────────────────────────────────────
+
+  function fillFromDraft(draft: CandidateProfileDocument) {
+    const hasContent = !!(
+      doc.candidate.name || highlights.length > 0 ||
+      doc.domains.primary.length || Object.values(doc.technical_skills).some(a => a.length > 0)
+    );
+    if (hasContent && !window.confirm(
+      "This will replace all profile fields with data from the resume draft.\nContinue?"
+    )) {
+      return;
+    }
+    const hydrated = hydrateProfile(draft);
+    setDoc(hydrated);
+    setHighlights(hydrated.experience_highlights.map(toKeyed));
+    // Bump all section reset keys so ArrayListEditors re-sync
+    const sections = ["domains", "tech", "leadership", "ai", "themes", "constraints", "claims"];
+    setResetKeys(k => {
+      const next = { ...k };
+      sections.forEach(s => { next[s] = (next[s] ?? 0) + 1; });
+      return next;
+    });
+  }
+
   // ── Validation ───────────────────────────────────────────────────────────
 
   function validate(): string | null {
@@ -337,7 +363,25 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
+    <>
+    <SelectResumeModal
+      open={fillModalOpen}
+      onClose={() => setFillModalOpen(false)}
+      onApply={(draft) => fillFromDraft(draft)}
+    />
     <form onSubmit={handleSubmit} className="space-y-6">
+
+      {/* Fill from resume toolbar */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setFillModalOpen(true)}
+          className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 transition-colors"
+        >
+          <Wand2 className="h-4 w-4" />
+          Fill from resume
+        </button>
+      </div>
 
       {/* 1 — Candidate basics */}
       <SectionCard
@@ -629,5 +673,6 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
         Save profile
       </Button>
     </form>
+    </>
   );
 }
