@@ -364,7 +364,7 @@ class GenerationService:
         from tailor.diff import diff_resume
 
         resume_template = resume_raw_text
-        cover_template = read_docx(str(COVER_TEMPLATE))
+        cover_template = _build_cover_template(read_docx(str(COVER_TEMPLATE)), candidate_profile_text)
 
         job = JobData(
             company=jd_company,
@@ -388,6 +388,35 @@ class GenerationService:
 
         token_input, token_output, cost = _extract_usage_from_messages([llm_req])
         return result, token_input, token_output, cost, debug_meta
+
+
+def _build_cover_template(raw_template: str, candidate_profile_text: str | None) -> str:
+    """Replace the personal header in the cover letter template with the candidate's name.
+
+    Leonid's cover letter template starts with his name and contact block.  For
+    web users this causes the LLM to adopt Leonid's identity when the MASTER_RESUME
+    name is garbled (e.g. PDF encoding artefacts).  We strip everything before
+    "Dear " and prepend only the candidate's name so the LLM has the correct
+    structural template without any alien contact info.
+    """
+    # Extract candidate name from profile JSON if available.
+    candidate_name = ""
+    if candidate_profile_text:
+        import json as _json
+        try:
+            profile_data = _json.loads(candidate_profile_text)
+            candidate_name = (profile_data.get("candidate") or {}).get("name", "")
+        except Exception:
+            pass
+
+    # Find the start of "Dear " to isolate the body (strips personal header).
+    dear_idx = raw_template.find("\nDear ")
+    if dear_idx == -1:
+        dear_idx = raw_template.find("Dear ")
+    body = raw_template[dear_idx:].lstrip("\n") if dear_idx >= 0 else raw_template
+
+    header = f"{candidate_name}\n" if candidate_name else ""
+    return header + body
 
 
 @contextlib.contextmanager
