@@ -52,7 +52,21 @@ def extract_text_from_docx(data: bytes) -> str:
     from docx import Document
     from docx.oxml.ns import qn
 
-    doc = Document(io.BytesIO(data))
+    try:
+        doc = Document(io.BytesIO(data))
+    except Exception as exc:
+        from zipfile import BadZipFile
+        from fastapi import HTTPException, status
+        if isinstance(exc, BadZipFile) or "not a zip file" in str(exc).lower():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "The file could not be read as a DOCX document. "
+                    "It may be in the older .doc format or be corrupted. "
+                    "Please save it as .docx or convert it to PDF and try again."
+                ),
+            ) from exc
+        raise
 
     W  = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
     MC = "http://schemas.openxmlformats.org/markup-compatibility/2006"
