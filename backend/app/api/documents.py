@@ -27,6 +27,7 @@ from fastapi import APIRouter, HTTPException, Response, status
 
 from backend.app.clients.storage_client import make_storage_client_from_settings
 from backend.app.dependencies import CurrentUserDep, DbDep
+from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
 from backend.app.db.repositories.tailored_document_repository import TailoredDocumentRepository
 from backend.app.schemas.tailored_document import ArtifactURLs, TailoredDocumentDetail
 from backend.app.services.rendering_service import RenderingService
@@ -204,19 +205,8 @@ def download_document(
                     "Storage fetch failed for doc=%s part=%s key=%s: %s; falling back to render",
                     doc_id, part, storage_key, exc,
                 )
-        # Fallback: on-demand render.
-        svc = RenderingService()
-        try:
-            if part == "resume":
-                docx_bytes = svc.render_resume_docx(text)
-            else:
-                docx_bytes = svc.render_cover_letter_docx(text)
-        except Exception as exc:
-            logger.error("DOCX rendering failed for doc=%s part=%s: %s", doc_id, part, exc)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"DOCX rendering failed: {exc}",
-            )
+        # Fallback: on-demand render using the original resume template.
+        docx_bytes = _render_docx_fallback(doc, part, text, db)
         return Response(
             content=docx_bytes,
             media_type=_DOCX_MIME,
@@ -239,19 +229,9 @@ def download_document(
                 "Storage fetch failed for doc=%s part=%s key=%s: %s; falling back to render",
                 doc_id, part, storage_key, exc,
             )
-    # Fallback: on-demand render.
+    # Fallback: on-demand render using the original resume template.
+    docx_bytes = _render_docx_fallback(doc, part, text, db)
     svc = RenderingService()
-    try:
-        if part == "resume":
-            docx_bytes = svc.render_resume_docx(text)
-        else:
-            docx_bytes = svc.render_cover_letter_docx(text)
-    except Exception as exc:
-        logger.error("DOCX rendering failed for doc=%s part=%s: %s", doc_id, part, exc)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"DOCX rendering failed: {exc}",
-        )
     try:
         if part == "resume":
             pdf_bytes = svc.render_resume_pdf(docx_bytes, method="local")
@@ -268,3 +248,56 @@ def download_document(
         media_type=_PDF_MIME,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+def _render_docx_fallback(doc, part: str, text: str, db) -> bytes:
+    """Render a DOCX on-demand using the original resume template (never Leonid's default).
+
+    For resumes, looks up the structured resume via structured_resume_id stored
+    in resume_jsonb so the correct user template (IR or DOCX bytes) is used.
+    For cover letters, the cover letter template is used as usual.
+
+    Raises HTTPException(500) if rendering fails.
+    """
+    svc = RenderingService()
+    if part == "cover_letter":
+        try:
+            return svc.render_cover_letter_docx(text)
+        except Exception as exc:
+            logger.error("Cover letter DOCX render failed for doc=%s: %s", doc.id, exc)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"DOCX rendering failed: {exc}",
+            )
+
+    # Resume: look up the original structured resume to get its template.
+    # structured_resume_id is stored in resume_jsonb since the generation fix.
+    template_bytes: bytes | None = None
+    template_ir_dict: dict | None = None
+    resume_id = (doc.resume_jsonb or {}).get("structured_resume_id")
+    if resume_id:
+        try:
+            resume = StructuredResumeRepository(db).get_by_id(resume_id)
+            if resume:
+                if resume.template_ir_jsonb:
+                    template_ir_dict = resume.template_ir_jsonb
+                elif resume.source_file_url:
+                    raw = _storage_svc().get_bytes(resume.source_file_url)
+                    if raw[:4] == b'%PDF':
+                        from tailor.compiler.pdf_parser import parse_pdf
+                        template_ir_dict = parse_pdf(raw).to_dict()
+                    else:
+                        template_bytes = raw
+        except Exception as exc:
+            logger.warning("Could not load resume template for fallback render (doc=%s): %s", doc.id, exc)
+    else:
+        logger.warning("doc=%s resume_jsonb has no structured_resume_id; fallback will use default template", doc.id)
+
+    try:
+        return svc.render_resume_docx(text, template_bytes=template_bytes, template_ir_dict=template_ir_dict)
+    except Exception as exc:
+        logger.error("Resume DOCX render failed for doc=%s: %s", doc.id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"DOCX rendering failed: {exc}",
+        )

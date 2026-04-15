@@ -180,6 +180,7 @@ class GenerationService:
                     "text": resume_text,
                     "template_original_filename": template_original_filename,
                     "candidate_name": candidate_name,
+                    "structured_resume_id": resume.id,
                     "diff": (debug_meta.get("diff") or {}).get("resume") or [],
                 } if resume_text else None,
                 cover_letter_jsonb={"text": cover_letter_text, "candidate_name": candidate_name} if cover_letter_text else None,
@@ -299,7 +300,7 @@ class GenerationService:
                     user_id, run_id, resume_docx_bytes
                 )
             except Exception as exc:
-                logger.warning("Failed to render/upload resume.docx run=%s: %s", run_id, exc)
+                logger.warning("Failed to render/upload resume.docx run=%s: %s", run_id, exc, exc_info=True)
                 resume_docx_bytes = None
         else:
             resume_docx_bytes = None

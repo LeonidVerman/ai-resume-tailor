@@ -841,6 +841,16 @@ def apply_tailored(
         # name/contact header block) may still have llm_section=None and are
         # kept verbatim, prepended before the LLM-ordered sections.
 
+        # Guard: if match.pairs is empty (IR has 0 sections — e.g. PDF parsing
+        # detected no section headings), we have no archetype to clone styles
+        # from.  Return the original document verbatim rather than crashing.
+        if not match.pairs:
+            _log.warning(
+                "apply_tailored: IR has 0 sections — cannot apply LLM output; "
+                "returning original document verbatim."
+            )
+            return original
+
         # B: Style archetypes for extra sections.
         # heading_arch: first section heading (unchanged — heading style is fine).
         # body_arch: best left-aligned, non-bold, non-'other' body paragraph.
