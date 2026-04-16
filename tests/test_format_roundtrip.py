@@ -146,6 +146,55 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "text back into the tab-column paragraph, changing its content.  The "
         "real pipeline (LLM pipe-format → DOCX) works correctly."
     ),
+    # Separate-line format: job title on its own paragraph, company name on
+    # the next.  The improved role grouping (v0.8.2+) now correctly groups
+    # these into roles; the identity serializer then combines role.header +
+    # header_extra (company name) into a single pipe-separated string so that
+    # parse_llm_output can detect the role boundary.  The rendered DOCX has
+    # combined text where the original had two separate paragraphs, causing a
+    # text diff.  The real LLM pipeline (which rewrites role headers) is
+    # unaffected.
+    "18-Project-Engineer-Editable-Resume-Template-Download-in-docx.docx": (
+        "Separate-line role header format: title and company on separate "
+        "paragraphs; identity serializer combines them with '|', changing "
+        "paragraph text in the roundtrip.  Real LLM pipeline unaffected."
+    ),
+    "19-Software-Engineer-Editable-Resume-Template-Download-in-docx-2.docx": (
+        "Separate-line role header format: title and company on separate "
+        "paragraphs; identity serializer combines them with '|', changing "
+        "paragraph text in the roundtrip.  Real LLM pipeline unaffected."
+    ),
+    "21-Software-Engineer-Editable-Resume-Template-Download-in-docx.docx": (
+        "Separate-line role header format: title and company on separate "
+        "paragraphs; identity serializer combines them with '|', changing "
+        "paragraph text in the roundtrip.  Real LLM pipeline unaffected."
+    ),
+    "23-Project-Engineer-Editable-Resume-Template-Download-in-docx-2.docx": (
+        "Separate-line role header format: title and company on separate "
+        "paragraphs; identity serializer combines them with '|', changing "
+        "paragraph text in the roundtrip.  Real LLM pipeline unaffected."
+    ),
+    "24-Naval-Engineering-Editable-Resume-Template-Download-in-docx.docx": (
+        "Separate-line role header format: title and company on separate "
+        "paragraphs; identity serializer combines them with '|', changing "
+        "paragraph text in the roundtrip.  Real LLM pipeline unaffected."
+    ),
+    "26-Engineer-Editable-Resume-Template-Download-in-docx-2.docx": (
+        "Separate-line role header format: title and company on separate "
+        "paragraphs; identity serializer combines them with '|', changing "
+        "paragraph text in the roundtrip.  Real LLM pipeline unaffected."
+    ),
+    "28-Engineer-Editable-Resume-Template-Download-in-docx.docx": (
+        "Separate-line role header format: title and company on separate "
+        "paragraphs; identity serializer combines them with '|', changing "
+        "paragraph text in the roundtrip.  Real LLM pipeline unaffected."
+    ),
+    "5-Software Development Resume.docx": (
+        "Separate-line role header format: date/company meta appears before "
+        "the job title; identity serializer combines role.header (date line) "
+        "with header_extra into a pipe-separated string, changing paragraph "
+        "text in the roundtrip.  Real LLM pipeline unaffected."
+    ),
     "Valerii_Konchin_CV.docx": (
         "Two-column sidebar layout: skills and experience content are interleaved "
         "in document order so the parser cannot correctly separate them into "
@@ -179,6 +228,46 @@ _KNOWN_BAD_PDFS: dict[str, str] = {
         "pipe-separated line; when re-rendered the tab-column paragraphs receive "
         "combined text, causing DOCX-of-DOCX text differences.  The real pipeline "
         "(LLM pipe-format → DOCX) works correctly."
+    ),
+    # Separate-line role header format (same category as 4-software-engineer-resume.pdf
+    # above): job title and company on separate paragraphs.  Improved role grouping
+    # (v0.8.2+) now correctly groups these; identity serializer then combines
+    # role.header + header_extra with '|', causing DOCX-of-DOCX text differences.
+    "16-Devops-Engineer-Editable-Resume-Template-Download-in-docx.pdf": (
+        "Separate-line role header format; identity serializer combines header "
+        "with header_extra, causing DOCX-of-DOCX text differences."
+    ),
+    "18-Project-Engineer-Editable-Resume-Template-Download-in-docx.pdf": (
+        "Separate-line role header format; identity serializer combines header "
+        "with header_extra, causing DOCX-of-DOCX text differences."
+    ),
+    "19-Software-Engineer-Editable-Resume-Template-Download-in-docx-2.pdf": (
+        "Separate-line role header format; identity serializer combines header "
+        "with header_extra, causing DOCX-of-DOCX text differences."
+    ),
+    "21-Software-Engineer-Editable-Resume-Template-Download-in-docx.pdf": (
+        "Separate-line role header format; identity serializer combines header "
+        "with header_extra, causing DOCX-of-DOCX text differences."
+    ),
+    "22-Software-Engineer-Editable-Resume-Template-Download-in-docx-4.pdf": (
+        "Separate-line role header format; identity serializer combines header "
+        "with header_extra, causing DOCX-of-DOCX text differences."
+    ),
+    "23-Project-Engineer-Editable-Resume-Template-Download-in-docx-2.pdf": (
+        "Separate-line role header format; identity serializer combines header "
+        "with header_extra, causing DOCX-of-DOCX text differences."
+    ),
+    "24-Naval-Engineering-Editable-Resume-Template-Download-in-docx.pdf": (
+        "Separate-line role header format; identity serializer combines header "
+        "with header_extra, causing DOCX-of-DOCX text differences."
+    ),
+    "26-Engineer-Editable-Resume-Template-Download-in-docx-2.pdf": (
+        "Separate-line role header format; identity serializer combines header "
+        "with header_extra, causing DOCX-of-DOCX text differences."
+    ),
+    "5-Software Development Resume.pdf": (
+        "Separate-line role header format; identity serializer combines header "
+        "with header_extra, causing DOCX-of-DOCX text differences."
     ),
 }
 

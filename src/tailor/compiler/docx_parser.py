@@ -32,6 +32,8 @@ _EXPERIENCE_NAMES: frozenset[str] = frozenset({
     "experience", "experiences", "work experience", "professional experience",
     "employment history", "employment", "career history",
     "work history", "professional background",
+    # Non-canonical but common variants found in real templates:
+    "employment summary", "work summary", "experience summary",
 })
 _SUMMARY_NAMES: frozenset[str] = frozenset({
     "professional summary", "summary", "objective", "career objective",
@@ -352,6 +354,69 @@ def _infer_semantic(pm: ParaModel) -> str:
 # Group experience body paragraphs into RoleEntry list
 # ---------------------------------------------------------------------------
 
+def _relabel_implicit_role_headers(body_paras: list[ParaModel]) -> None:
+    """Relabel 'paragraph' semantics to 'role_header' for standalone job-title
+    lines that lack the usual |/NBSP/tab marker but precede a date/meta line.
+
+    Many resume templates place the job title on its own paragraph and the
+    company + date either immediately below or one paragraph below (company
+    name sandwiched between title and date).  This pass detects that pattern
+    before _group_roles() runs so the grouping state-machine finds the correct
+    role boundaries.
+
+    A paragraph is relabeled when ALL of the following hold:
+      1. Current semantic is 'paragraph' (not already detected as something else)
+      2. Text is short (≤ 60 chars), contains no year, and does not start with
+         a bullet character
+      3. The text contains at least one word from _JOB_TITLE_WORDS (job title
+         signal; guards against relabeling company-name or content lines)
+      4. The FIRST non-empty paragraph that follows is NOT already a role_header
+         (avoids double-marking when the company|date line already has a pipe)
+      5. Within the next two non-empty paragraphs there is either a role_meta
+         paragraph OR a paragraph whose text contains a four-digit year
+
+    Mutations are applied in place; no new ParaModel objects are created.
+    """
+    n = len(body_paras)
+    for i, pm in enumerate(body_paras):
+        if pm.semantic != "paragraph":
+            continue
+        text = pm.text.strip()
+        if not text or len(text) > 60 or _YEAR_RE.search(text):
+            continue
+        if text[0] in "-\u2022\u00b7\u2013*":
+            continue
+        words = set(re.split(r"\W+", text.lower()))
+        if not (words & _JOB_TITLE_WORDS):
+            continue
+
+        # Collect the next two non-empty paragraphs.
+        ahead: list[ParaModel] = []
+        for j in range(i + 1, min(i + 8, n)):
+            nxt = body_paras[j]
+            if nxt.text.strip():
+                ahead.append(nxt)
+                if len(ahead) >= 2:
+                    break
+
+        if not ahead:
+            continue
+        # Guard: if immediately followed by an existing role_header, the
+        # company|date line is already correctly labeled — skip to avoid
+        # creating a duplicate boundary.
+        if ahead[0].semantic == "role_header":
+            continue
+        # Relabel if any of the next two substantive paragraphs is role_meta
+        # or contains a year (potential meta line that is too long for the
+        # role_meta heuristic, e.g. "Acme Corp; Jan 2020 – Dec 2022; Remote").
+        for a in ahead:
+            if a.semantic == "role_meta" or (
+                a.semantic == "paragraph" and _YEAR_RE.search(a.text)
+            ):
+                pm.semantic = "role_header"
+                break
+
+
 def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     roles: list[RoleEntry] = []
     header: ParaModel | None = None
@@ -384,7 +449,14 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             header = pm
             state = "header"
         elif state == "init":
-            pass  # pre-role content; skip
+            if s == "role_meta":
+                # Pattern B: date/meta line precedes any role_header (e.g.
+                # "2014-2016\nCompany Name\nJob Title\n…").  Use the meta line
+                # as a synthetic role boundary so subsequent content is captured.
+                _flush()
+                header = pm
+                state = "header"
+            # all other pre-role content is silently skipped
         elif state == "header":
             if s == "role_meta":
                 meta.append(pm)
@@ -550,7 +622,17 @@ def parse_docx(path: str) -> ResumeDocument:
                     )
                 )
             ):
-                pm.semantic = "paragraph"
+                # Preserve role_header for pipe-separated lines (e.g. "Title | Company")
+                # that were styled as Heading N and therefore initially classified as
+                # section_heading but are semantically role headers inside experience.
+                if (
+                    current.semantic_type == "experience"
+                    and "|" in pm.text
+                    and not pm.text.lstrip().startswith(("-", "\u2022", "\u00b7", "\u2013"))
+                ):
+                    pm.semantic = "role_header"
+                else:
+                    pm.semantic = "paragraph"
                 current.body_paras.append(pm)
                 continue
             if current is not None:
@@ -707,4 +789,5 @@ def _make_experience_from_job_sections(job_secs: list[ResumeSection]) -> ResumeS
 
 def _finalise(section: ResumeSection) -> None:
     if section.semantic_type == "experience":
+        _relabel_implicit_role_headers(section.body_paras)
         section.roles = _group_roles(section.body_paras)
