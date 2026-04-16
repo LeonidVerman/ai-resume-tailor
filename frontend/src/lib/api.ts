@@ -423,7 +423,12 @@ export const admin = {
   downloadBenchmarkZip: (id: number) =>
     downloadBlob(`/admin/benchmark-runs/${id}/download`, `benchmark-${id}.zip`),
 
-  classifyFile: async (file: File): Promise<{ blob: Blob; filename: string }> => {
+  classifyFile: async (
+    file: File
+  ): Promise<{
+    classificationBlob: Blob; classificationFilename: string;
+    inputBlob: Blob; inputFilename: string;
+  }> => {
     const token = getStoredToken();
     const userId = getStoredUserId();
     const headers: Record<string, string> = {};
@@ -446,8 +451,12 @@ export const admin = {
     }
     const json = await res.json();
     const basename = file.name.replace(/\.[^.]+$/, "");
-    const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
-    return { blob, filename: `${basename}.json` };
+    return {
+      classificationBlob: new Blob([JSON.stringify(json.classification, null, 2)], { type: "application/json" }),
+      classificationFilename: `${basename}.json`,
+      inputBlob: new Blob([JSON.stringify(json.llm_input, null, 2)], { type: "application/json" }),
+      inputFilename: `${basename}_input.json`,
+    };
   },
 };
 

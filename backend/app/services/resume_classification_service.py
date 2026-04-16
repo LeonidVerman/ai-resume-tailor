@@ -106,7 +106,7 @@ class ResumeClassificationService:
             return None
 
         try:
-            result = self._classify(resume_id, norm_data, template_ir_dict)
+            _llm_input, result = self._classify(resume_id, norm_data, template_ir_dict)
         except Exception as exc:
             logger.error(
                 "Classification failed for resume=%s: %s",
@@ -135,9 +135,16 @@ class ResumeClassificationService:
         return resume.classification_jsonb
 
     def classify_bytes(self, norm_data: bytes, template_ir_dict: dict | None) -> dict:
-        """Classify bytes directly without storing. Returns classification dict.
+        """Classify bytes directly without storing. Returns classification dict only."""
+        _llm_input, classification = self._classify(0, norm_data, template_ir_dict)
+        return classification
 
-        Raises on any LLM or parsing error (caller handles).
+    def classify_bytes_with_input(
+        self, norm_data: bytes, template_ir_dict: dict | None
+    ) -> tuple[dict, dict]:
+        """Classify bytes and return (llm_input_dict, classification_dict).
+
+        Use this when the caller needs the LLM input for debugging/download.
         """
         return self._classify(0, norm_data, template_ir_dict)
 
@@ -148,17 +155,18 @@ class ResumeClassificationService:
         resume_id: int,
         norm_data: bytes,
         template_ir_dict: dict | None,
-    ) -> dict:
-        """Build input, call LLM, return raw classification dict."""
+    ) -> tuple[dict, dict]:
+        """Build input, call LLM, return (llm_input_dict, classification_dict)."""
         from tailor.compiler.classification_models import build_classification_input
         from tailor.prompts import _load_prompt
 
         doc = _build_ir(norm_data, template_ir_dict)
         document_id = str(resume_id)
         cls_input = build_classification_input(doc, document_id)
+        llm_input_dict = cls_input.to_dict()
 
         prompt_template = _load_prompt(_PROMPT_NAME)
-        input_json = json.dumps(cls_input.to_dict(), ensure_ascii=False)
+        input_json = json.dumps(llm_input_dict, ensure_ascii=False)
         full_prompt = f"{prompt_template}\n\nINPUT:\n{input_json}"
 
         schema = _load_schema()
@@ -166,7 +174,7 @@ class ResumeClassificationService:
         result = client.complete_json(
             messages=[{"role": "user", "content": full_prompt}],
             json_schema=schema,
-            model="gpt-4.1",
+            model="gpt-4o-mini",
             temperature=0.1,
             max_tokens=8192,
         )
@@ -178,4 +186,4 @@ class ResumeClassificationService:
             len(classification_dict.get("sections", [])),
             result.usage.total_tokens,
         )
-        return classification_dict
+        return llm_input_dict, classification_dict

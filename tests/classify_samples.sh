@@ -9,8 +9,10 @@
 #   API_URL    — defaults to http://localhost:8000
 #
 # Output:
-#   tmp/artefacts/classification/docx/<basename>.json  (from tests/samples/resume/docx/*.docx)
-#   tmp/artefacts/classification/pdf/<basename>.json   (from tests/samples/resume/pfd/*.pdf)
+#   tmp/artefacts/classification/docx/<basename>.json              classification
+#   tmp/artefacts/classification/pdf/<basename>.json               classification
+#   tmp/artefacts/classification/llm-input/docx/<basename>_input.json  LLM input
+#   tmp/artefacts/classification/llm-input/pdf/<basename>_input.json   LLM input
 
 set -euo pipefail
 
@@ -24,15 +26,21 @@ DOCX_INPUT="$SCRIPT_DIR/samples/resume/docx"
 PDF_INPUT="$SCRIPT_DIR/samples/resume/pfd"
 DOCX_OUTPUT="$REPO_ROOT/tmp/artefacts/classification/docx"
 PDF_OUTPUT="$REPO_ROOT/tmp/artefacts/classification/pdf"
+DOCX_INPUT_OUTPUT="$REPO_ROOT/tmp/artefacts/classification/llm-input/docx"
+PDF_INPUT_OUTPUT="$REPO_ROOT/tmp/artefacts/classification/llm-input/pdf"
 
-mkdir -p "$DOCX_OUTPUT" "$PDF_OUTPUT"
+mkdir -p "$DOCX_OUTPUT" "$PDF_OUTPUT" "$DOCX_INPUT_OUTPUT" "$PDF_INPUT_OUTPUT"
 
 classify_file() {
   local input_file="$1"
-  local output_dir="$2"
+  local out_dir="$2"
+  local input_dir="$3"
   local basename
   basename="$(basename "${input_file%.*}")"
-  local out_file="$output_dir/$basename.json"
+  local out_file="$out_dir/$basename.json"
+  local input_file_out="$input_dir/${basename}_input.json"
+  local tmp_file
+  tmp_file="$(mktemp)"
 
   printf "  %-60s → " "$(basename "$input_file")"
 
@@ -41,19 +49,20 @@ classify_file() {
     extra_headers=(-H "X-Cli-Secret: $CLI_SECRET")
   fi
 
-  http_code=$(curl -s -o "$out_file" -w "%{http_code}" \
+  http_code=$(curl -s -o "$tmp_file" -w "%{http_code}" \
     -X POST \
     "${extra_headers[@]}" \
     -F "file=@$input_file" \
     "$API_URL/api/v1/admin/classification/classify-file")
 
   if [ "$http_code" = "200" ]; then
-    echo "OK  $out_file"
+    python3 "$SCRIPT_DIR/classify_helper.py" "$tmp_file" "$out_file" "$input_file_out"
+    echo "OK"
   else
-    body=$(cat "$out_file" 2>/dev/null || echo "(no body)")
+    body=$(cat "$tmp_file" 2>/dev/null || echo "(no body)")
     echo "FAIL (HTTP $http_code) $body"
-    rm -f "$out_file"
   fi
+  rm -f "$tmp_file"
 }
 
 echo "=== Classifying DOCX samples ==="
@@ -63,7 +72,7 @@ if [ ${#docx_files[@]} -eq 0 ]; then
   echo "  No .docx files found in $DOCX_INPUT"
 else
   for f in "${docx_files[@]}"; do
-    classify_file "$f" "$DOCX_OUTPUT"
+    classify_file "$f" "$DOCX_OUTPUT" "$DOCX_INPUT_OUTPUT"
   done
 fi
 
@@ -74,9 +83,11 @@ if [ ${#pdf_files[@]} -eq 0 ]; then
   echo "  No .pdf files found in $PDF_INPUT"
 else
   for f in "${pdf_files[@]}"; do
-    classify_file "$f" "$PDF_OUTPUT"
+    classify_file "$f" "$PDF_OUTPUT" "$PDF_INPUT_OUTPUT"
   done
 fi
 
 echo ""
-echo "Done. Results saved to $REPO_ROOT/tmp/artefacts/classification/"
+echo "Done."
+echo "  Classification: $REPO_ROOT/tmp/artefacts/classification/{docx,pdf}/"
+echo "  LLM input:      $REPO_ROOT/tmp/artefacts/classification/llm-input/{docx,pdf}/"

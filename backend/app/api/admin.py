@@ -692,12 +692,14 @@ async def classify_resume_file(file: UploadFile, _access: ClassifyFileDep, db: D
         raise HTTPException(status_code=422, detail=str(exc))
 
     try:
-        result = ResumeClassificationService(db).classify_bytes(norm.normalized_data, norm.template_ir)
+        llm_input, classification = ResumeClassificationService(db).classify_bytes_with_input(
+            norm.normalized_data, norm.template_ir
+        )
     except Exception as exc:
         logger.error("Ad-hoc classification failed for %s: %s", filename, exc, exc_info=True)
         raise HTTPException(status_code=500, detail=f"Classification failed: {exc}") from exc
 
-    return result
+    return {"classification": classification, "llm_input": llm_input}
 
 
 # ── Classification debug ───────────────────────────────────────────────────

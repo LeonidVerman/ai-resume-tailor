@@ -256,8 +256,10 @@ export default function AdminPage() {
     setClassifying(true);
     setClassifyError(null);
     try {
-      const { blob, filename } = await admin.classifyFile(classifySelectedFile);
-      triggerDownload(blob, filename);
+      const { classificationBlob, classificationFilename, inputBlob, inputFilename } =
+        await admin.classifyFile(classifySelectedFile);
+      triggerDownload(classificationBlob, classificationFilename);
+      triggerDownload(inputBlob, inputFilename);
     } catch (e) {
       setClassifyError(e instanceof ApiError ? e.detail : "Classification failed.");
     } finally {
@@ -800,8 +802,8 @@ export default function AdminPage() {
         </CardHeader>
         <CardBody>
           <p className="text-sm text-gray-500 mb-4">
-            Upload a DOCX or PDF resume to run LLM classification and download the result as JSON.
-            The file is not stored.
+            Upload a DOCX or PDF resume to run LLM classification. Downloads two files:
+            the classification output and the LLM input (for debugging). Nothing is stored.
           </p>
           <form onSubmit={handleClassifyFile} className="space-y-4">
             <div>
@@ -819,7 +821,7 @@ export default function AdminPage() {
             </div>
             <Button type="submit" loading={classifying} disabled={!classifySelectedFile}>
               <Download className="h-4 w-4" />
-              Classify &amp; download JSON
+              Classify &amp; download output + input JSON
             </Button>
           </form>
           {classifyError && (
