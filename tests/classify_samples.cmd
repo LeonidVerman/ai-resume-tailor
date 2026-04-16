@@ -23,13 +23,13 @@ if "%TOKEN%"=="" (
 
 if "%API_URL%"=="" set API_URL=http://localhost:8000
 
-set SCRIPT_DIR=%~dp0
-set REPO_ROOT=%SCRIPT_DIR%..
+set TESTS_DIR=%~dp0
+for %%i in ("%TESTS_DIR%..") do set REPO_ROOT=%%~fi
 
-set DOCX_INPUT=%REPO_ROOT%tests\samples\resume\docx
-set PDF_INPUT=%REPO_ROOT%tests\samples\resume\pfd
-set DOCX_OUTPUT=%REPO_ROOT%artefacts\classification\docx
-set PDF_OUTPUT=%REPO_ROOT%artefacts\classification\pdf
+set DOCX_INPUT=%TESTS_DIR%samples\resume\docx
+set PDF_INPUT=%TESTS_DIR%samples\resume\pfd
+set DOCX_OUTPUT=%REPO_ROOT%\artefacts\classification\docx
+set PDF_OUTPUT=%REPO_ROOT%\artefacts\classification\pdf
 
 if not exist "%DOCX_OUTPUT%" mkdir "%DOCX_OUTPUT%"
 if not exist "%PDF_OUTPUT%" mkdir "%PDF_OUTPUT%"
@@ -67,4 +67,4 @@ for %%f in ("%PDF_INPUT%\*.pdf") do (
 if "%FOUND_PDF%"=="0" echo   No .pdf files found in %PDF_INPUT%
 
 echo.
-echo Done. Results saved to artefacts\classification\
+echo Done. Results saved to %REPO_ROOT%\artefacts\classification\
