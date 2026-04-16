@@ -183,6 +183,31 @@ def _block_text(blk: dict) -> str:
     return " ".join(parts).strip()
 
 
+def _deduplicate_page_indices(doc) -> set[int]:
+    """Return the set of page indices to skip because they are exact duplicates.
+
+    When a PDF is a template gallery (the same page repeated N times), every
+    copy after the first produces spurious duplicate sections in the parser
+    output.  This function fingerprints each page by its normalised text
+    content and marks all but the *first* occurrence of any duplicate for
+    skipping.
+
+    Only exact duplicates are skipped (normalised whitespace).  Near-similar
+    but distinct pages are preserved.
+    """
+    seen: dict[str, int] = {}  # fingerprint → first page index
+    skip: set[int] = set()
+    for page in doc:
+        text = " ".join(page.get_text().split())
+        if not text:
+            continue
+        if text in seen:
+            skip.add(page.number)
+        else:
+            seen[text] = page.number
+    return skip
+
+
 def _detect_header_footer_texts(doc) -> set[str]:
     """Return text strings that appear as page headers/footers.
 
@@ -797,7 +822,8 @@ def _detect_column_split(
 
 
 def _extract_paragraphs(
-    doc, hf_texts: set[str], margin_left: float, layout: "LayoutProfile"
+    doc, hf_texts: set[str], margin_left: float, layout: "LayoutProfile",
+    skip_pages: set[int] | None = None,
 ) -> list[ParaModel]:
     """Extract all content paragraphs from the document, skipping H/F text.
 
@@ -813,8 +839,11 @@ def _extract_paragraphs(
     # layout.column_split_x is the visual sidebar boundary (drawing right-edge);
     # used as the authoritative right-column indent origin.
     layout_split_x = layout.column_split_x  # may be None
+    _skip = skip_pages or set()
 
     for page in doc:
+        if page.number in _skip:
+            continue
         page_margin_left = margin_left
         blocks = page.get_text("dict")["blocks"]
 
@@ -1702,8 +1731,9 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
         )
 
     layout = _extract_layout(doc)
+    skip_pages = _deduplicate_page_indices(doc)
     hf_texts = _detect_header_footer_texts(doc)
-    raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt, layout)
+    raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt, layout, skip_pages)
     header_paras, sections = _group_sections(raw_paras)
 
     # Rebuild all_paras from the structured IR so it reflects any post-processing
