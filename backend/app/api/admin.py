@@ -31,7 +31,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
 from backend.app.config import get_settings
-from backend.app.dependencies import AdminDep, DbDep
+from backend.app.dependencies import AdminDep, ClassifyFileDep, DbDep
 from backend.app.db.repositories.billing_repository import BillingRepository
 from backend.app.schemas.billing import GrantCreditsRequest, RegisterCheckoutSessionRequest
 from backend.app.db.repositories.admin_config_repository import AdminConfigRepository
@@ -675,7 +675,7 @@ def register_checkout_session(
 # ── Classification ────────────────────────────────────────────────────────
 
 @router.post("/classification/classify-file")
-async def classify_resume_file(file: UploadFile, _admin: AdminDep, db: DbDep):
+async def classify_resume_file(file: UploadFile, _access: ClassifyFileDep, db: DbDep):
     """
     Upload a DOCX or PDF resume, run LLM classification, and return the
     classification JSON directly.  Nothing is stored in the database.

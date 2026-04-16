@@ -134,3 +134,33 @@ def require_admin(user=Depends(get_current_user)):
 
 
 AdminDep = Annotated[object, Depends(require_admin)]
+
+
+# ── Classify-file guard ────────────────────────────────────────────────────
+
+def require_classify_file_access(
+    x_cli_secret: Annotated[str | None, Header(alias="X-Cli-Secret")] = None,
+    settings: Settings = Depends(get_settings),
+):
+    """Allow access when:
+    - X-Cli-Secret header matches settings.classification_cli_secret (if set), OR
+    - classification_cli_secret is empty AND app_env is 'development' (no-auth dev mode).
+
+    Raises 401 in all other cases.
+    """
+    secret = settings.classification_cli_secret
+    if secret:
+        if x_cli_secret != secret:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="X-Cli-Secret header missing or incorrect",
+            )
+    elif settings.app_env != "development":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="classification_cli_secret must be configured in non-development environments",
+        )
+    # development + no secret configured → allow
+
+
+ClassifyFileDep = Annotated[None, Depends(require_classify_file_access)]
