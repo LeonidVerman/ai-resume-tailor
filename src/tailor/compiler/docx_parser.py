@@ -526,14 +526,29 @@ def parse_docx(path: str) -> ResumeDocument:
     for pm in all_paras:
         if pm.semantic == "section_heading":
             found_heading = True
-            # Approach A: absorb non-standard heading paragraphs that appear inside an
-            # experience section and are not recognised section names.  Handles templates
-            # where role titles ("Senior Software Developer" without a pipe separator)
-            # are formatted as bold headings but should remain body content.
+            # Approach A: absorb sub-entry heading paragraphs that appear inside an
+            # entry-type section and are not recognised top-level section names.
+            #
+            # For "experience": absorb any non-known heading — handles role titles
+            # like "Senior Software Developer" formatted as bold headings without a
+            # pipe separator.
+            #
+            # For "education" / "certifications": absorb ONLY when the paragraph does
+            # not classify as a distinct semantic section (i.e. _classify_section
+            # returns "other").  This keeps institution names / degree lines / cert
+            # entries inside their parent section while still promoting a subsequent
+            # "SKILLS & ABILITIES" (semantic_type="skills") to a peer section.
+            t_lower = pm.text.strip().lower()
             if (
                 current is not None
-                and current.semantic_type == "experience"
-                and pm.text.strip().lower() not in _ALL_HEADING_NAMES
+                and t_lower not in _ALL_HEADING_NAMES
+                and (
+                    current.semantic_type == "experience"
+                    or (
+                        current.semantic_type in {"education", "certifications"}
+                        and _classify_section(pm.text.strip()) == "other"
+                    )
+                )
             ):
                 pm.semantic = "paragraph"
                 current.body_paras.append(pm)

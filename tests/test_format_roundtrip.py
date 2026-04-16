@@ -146,6 +146,12 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "text back into the tab-column paragraph, changing its content.  The "
         "real pipeline (LLM pipe-format → DOCX) works correctly."
     ),
+    "Valerii_Konchin_CV.docx": (
+        "Two-column sidebar layout: skills and experience content are interleaved "
+        "in document order so the parser cannot correctly separate them into "
+        "distinct section bodies.  Section structure (PROFILE, EDUCATION, etc.) "
+        "is parsed correctly; only the body-para ordering cannot round-trip."
+    ),
 }
 
 # PDFs with non-standard content that cannot roundtrip cleanly.
