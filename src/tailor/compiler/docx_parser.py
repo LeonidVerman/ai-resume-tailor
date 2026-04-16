@@ -279,6 +279,15 @@ def _infer_semantic(pm: ParaModel) -> str:
     if style_name.lower() in {"title", "subtitle"}:
         return "section_heading"
 
+    # Style "Heading" (bare, without a level digit) paired with a known section
+    # name.  Some templates use a custom "Heading" paragraph style for section
+    # titles that does not inherit a numbered Word heading style (e.g. "Heading 1"),
+    # so the regex above does not match.  Guarded by the known-name set to avoid
+    # false positives on non-heading paragraphs that share the same style (e.g.
+    # the candidate's own name in the document header area).
+    if style_name.lower() == "heading" and text.lower() in _ALL_HEADING_NAMES:
+        return "section_heading"
+
     # Known section names: bold paragraph whose text exactly matches a recognized
     # section name is a section heading regardless of font size or spacing.
     # This handles templates that use small bold text (e.g. 10.5pt) for headings.
