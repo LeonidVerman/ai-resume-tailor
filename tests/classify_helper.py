@@ -19,7 +19,7 @@ from pathlib import Path
 
 def main():
     if len(sys.argv) != 4:
-        print(f"Usage: {sys.argv[0]} <response_json> <output_json> <input_json}", file=sys.stderr)
+        print(f"Usage: {sys.argv[0]} <response_json> <output_json> <input_json>", file=sys.stderr)
         sys.exit(1)
 
     response_path, output_path, input_path = sys.argv[1], sys.argv[2], sys.argv[3]
