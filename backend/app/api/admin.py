@@ -25,7 +25,9 @@ import zipfile
 from datetime import date, timedelta
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+import logging
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
 from backend.app.config import get_settings
@@ -70,6 +72,7 @@ def _storage_service() -> StorageService:
 _POSITIONS_FILE = str(Path(__file__).parents[3] / "benchmark" / "positions.txt")
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _eval_service(db) -> EvaluationService:
@@ -667,6 +670,34 @@ def register_checkout_session(
         )
         return {"registered": False, "checkout_session_id": request.checkout_session_id,
                 "note": "session already recorded — no change made"}
+
+
+# ── Classification ────────────────────────────────────────────────────────
+
+@router.post("/classification/classify-file")
+async def classify_resume_file(file: UploadFile, _admin: AdminDep, db: DbDep):
+    """
+    Upload a DOCX or PDF resume, run LLM classification, and return the
+    classification JSON directly.  Nothing is stored in the database.
+    """
+    from backend.app.services.document_normalization_service import normalize_input_document
+    from backend.app.services.resume_classification_service import ResumeClassificationService
+
+    data = await file.read()
+    filename = file.filename or "resume.docx"
+
+    try:
+        norm = normalize_input_document(data, filename)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    try:
+        result = ResumeClassificationService(db).classify_bytes(norm.normalized_data, norm.template_ir)
+    except Exception as exc:
+        logger.error("Ad-hoc classification failed for %s: %s", filename, exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Classification failed: {exc}") from exc
+
+    return result
 
 
 # ── Classification debug ───────────────────────────────────────────────────

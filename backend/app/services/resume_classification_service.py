@@ -134,6 +134,13 @@ class ResumeClassificationService:
             return None
         return resume.classification_jsonb
 
+    def classify_bytes(self, norm_data: bytes, template_ir_dict: dict | None) -> dict:
+        """Classify bytes directly without storing. Returns classification dict.
+
+        Raises on any LLM or parsing error (caller handles).
+        """
+        return self._classify(0, norm_data, template_ir_dict)
+
     # ── Internal ──────────────────────────────────────────────────────────
 
     def _classify(
@@ -159,7 +166,7 @@ class ResumeClassificationService:
         result = client.complete_json(
             messages=[{"role": "user", "content": full_prompt}],
             json_schema=schema,
-            model="gpt-4o",
+            model="gpt-4.1",
             temperature=0.1,
             max_tokens=8192,
         )

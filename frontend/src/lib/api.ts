@@ -422,6 +422,33 @@ export const admin = {
     request<BenchmarkRunDetail>(`/admin/benchmark-runs/${id}`),
   downloadBenchmarkZip: (id: number) =>
     downloadBlob(`/admin/benchmark-runs/${id}/download`, `benchmark-${id}.zip`),
+
+  classifyFile: async (file: File): Promise<{ blob: Blob; filename: string }> => {
+    const token = getStoredToken();
+    const userId = getStoredUserId();
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    else if (userId) headers["X-User-Id"] = userId;
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${BASE_URL}/admin/classification/classify-file`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const body = await res.json();
+        detail = body.detail ?? detail;
+      } catch { /* ignore */ }
+      throw new ApiError(res.status, detail);
+    }
+    const json = await res.json();
+    const basename = file.name.replace(/\.[^.]+$/, "");
+    const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
+    return { blob, filename: `${basename}.json` };
+  },
 };
 
 // ── Legal ──────────────────────────────────────────────────────────────────
