@@ -10,7 +10,7 @@ rem   classify_samples.cmd samples\resume\pfd\some.pdf             -- single fil
 rem
 rem Optional env vars:
 rem   CLI_SECRET -- X-Cli-Secret value (only needed when CLASSIFICATION_CLI_SECRET
-rem                 is configured on the server; not required in local development)
+rem                is configured on the server; not required in local development)
 rem   API_URL    -- defaults to http://localhost:8000
 rem
 rem Output:
@@ -40,35 +40,6 @@ if not exist "%PDF_INPUT_OUTPUT%" mkdir "%PDF_INPUT_OUTPUT%"
 
 set CLI_SECRET_HEADER=
 if not "%CLI_SECRET%"=="" set CLI_SECRET_HEADER=-H "X-Cli-Secret: %CLI_SECRET%"
-
-rem Helper: classify one file and save output.
-rem   %1 = full path to input file
-rem   %2 = output json path
-rem   %3 = llm-input json path
-:classify_one
-  set _INPUT=%~1
-  set _OUT=%~2
-  set _IN=%~3
-  set _BASENAME=%~n1
-  set _TMP=%TEMP%\classify_tmp_!_BASENAME!.json
-  set _HTTP_TMP=%TEMP%\classify_http_!_BASENAME!.txt
-
-  curl -s -o "!_TMP!" -w "%%{http_code}" ^
-    -X POST ^
-    %CLI_SECRET_HEADER% ^
-    -F "file=@!_INPUT!" ^
-    "%API_URL%/api/v1/admin/classification/classify-file" > "!_HTTP_TMP!" 2>nul
-  set /p _HTTP_CODE=<"!_HTTP_TMP!"
-  del "!_HTTP_TMP!" 2>nul
-
-  if "!_HTTP_CODE!"=="200" (
-    python "%TESTS_DIR%classify_helper.py" "!_TMP!" "!_OUT!" "!_IN!"
-    echo OK
-  ) else (
-    echo FAIL (HTTP !_HTTP_CODE!)
-  )
-  del "!_TMP!" 2>nul
-goto :eof
 
 rem -----------------------------------------------------------------------
 rem If a single file argument was provided, classify only that file
@@ -100,7 +71,6 @@ echo === Classifying DOCX samples ===
 set FOUND_DOCX=0
 for %%f in ("%DOCX_INPUT%\*.docx") do (
   set FOUND_DOCX=1
-  set _BNAME=%%~nf
   <nul set /p "=  %%~nxf -> "
   call :classify_one "%%f" "%DOCX_OUTPUT%\%%~nf.json" "%DOCX_INPUT_OUTPUT%\%%~nf_input.json"
 )
@@ -120,3 +90,35 @@ echo.
 echo Done.
 echo   Classification: %REPO_ROOT%\tmp\artefacts\classification\{docx,pdf}\
 echo   LLM input:      %REPO_ROOT%\tmp\artefacts\classification\llm-input\{docx,pdf}\
+goto :eof
+
+rem -----------------------------------------------------------------------
+rem Subroutine: classify_one  (must be after all main logic)
+rem   %1 = full path to input file
+rem   %2 = output json path
+rem   %3 = llm-input json path
+rem -----------------------------------------------------------------------
+:classify_one
+  set _INPUT=%~1
+  set _OUT=%~2
+  set _IN=%~3
+  set _BASENAME=%~n1
+  set _TMP=%TEMP%\classify_tmp_!_BASENAME!.json
+  set _HTTP_TMP=%TEMP%\classify_http_!_BASENAME!.txt
+
+  curl -s -o "!_TMP!" -w "%%{http_code}" ^
+    -X POST ^
+    %CLI_SECRET_HEADER% ^
+    -F "file=@!_INPUT!" ^
+    "%API_URL%/api/v1/admin/classification/classify-file" > "!_HTTP_TMP!" 2>nul
+  set /p _HTTP_CODE=<"!_HTTP_TMP!"
+  del "!_HTTP_TMP!" 2>nul
+
+  if "!_HTTP_CODE!"=="200" (
+    python "%TESTS_DIR%classify_helper.py" "!_TMP!" "!_OUT!" "!_IN!"
+    echo OK
+  ) else (
+    echo FAIL (HTTP !_HTTP_CODE!)
+  )
+  del "!_TMP!" 2>nul
+goto :eof
