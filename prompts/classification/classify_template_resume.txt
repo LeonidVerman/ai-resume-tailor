@@ -1,42 +1,41 @@
-You are classifying a resume template into a structured semantic representation used for deterministic resume tailoring and rendering.
+You are a strict JSON classifier.
 
-Your task is NOT to rewrite the resume.
-Your task is NOT to improve content.
-Your task is ONLY to classify the existing template structure.
+Your task:
+Classify a parsed resume template into a structured JSON format.
 
-You will receive a parsed resume template with stable IDs assigned by the parser.
+You MUST follow all rules below exactly.
+If you cannot satisfy the rules, choose a safe fallback instead of producing invalid structure.
 
-The parser has already identified:
-- sections
-- paragraphs
-- roles (for experience-like sections, when detectable)
-- raw heading text
-- paragraph text
+Return JSON only.
+No explanations.
+No comments.
 
-You must return JSON only.
+==================================================
+CORE RULES
+==================================================
 
-GOAL
+1. NEVER modify:
+   - document_id
+   - section_id
+   - role_id
+   - para_id
 
-Produce a structured classification that maps the parsed template into canonical semantic section/block types and rewrite policies.
+2. NEVER rewrite text.
 
-This classification will later be used to:
-- preserve non-editable parts of the template
-- rewrite only allowed parts
-- map tailored LLM output back to the correct template sections/paragraphs deterministically
+3. NEVER invent sections.
 
-CORE PRINCIPLES
+4. If uncertain:
+   - semantic_type = "other"
+   - rewrite_policy = "preserve"
 
-1. Preserve parser-assigned IDs exactly.
-2. Do NOT invent or modify IDs.
-3. Do NOT rewrite resume text.
-4. Do NOT add validation commentary, explanations, or prose.
-5. Output JSON only.
-6. Prefer conservative classification when uncertain.
-7. Do NOT mark sections as editable unless they are clearly intended for tailoring.
+5. STRUCTURE MUST BE VALID.
+Invalid structure is worse than conservative classification.
 
-SECTION-LEVEL SEMANTIC TYPES
+==================================================
+ALLOWED VALUES
+==================================================
 
-Allowed values for section.semantic_type:
+section.semantic_type:
 - summary
 - skills
 - experience
@@ -45,24 +44,12 @@ Allowed values for section.semantic_type:
 - additional
 - other
 
-SECTION-LEVEL REWRITE POLICIES
-
-Allowed values for section.rewrite_policy:
+section.rewrite_policy:
 - rewrite_body
 - rewrite_bullets_only
 - preserve
 
-Interpretation:
-- rewrite_body:
-  body text may be replaced or rewritten later
-- rewrite_bullets_only:
-  only bullet/body content within roles may be rewritten later; headings/meta stay preserved
-- preserve:
-  preserve section as-is
-
-BLOCK-LEVEL SEMANTIC TYPES
-
-Allowed values for block.semantic_type:
+block.semantic_type:
 - summary_paragraph
 - skills_paragraph
 - role_header
@@ -73,211 +60,230 @@ Allowed values for block.semantic_type:
 - additional_item
 - other_paragraph
 
-BLOCK-LEVEL REWRITE POLICIES
-
-Allowed values for block.rewrite_policy:
+block.rewrite_policy:
 - rewrite_text
 - preserve
 
-CLASSIFICATION GUIDELINES
-
-1. Summary-like sections
-Examples:
-- PROFILE
-- SUMMARY
-- PROFESSIONAL SUMMARY
-- ABOUT
-These usually become:
-- section.semantic_type = summary
-- section.rewrite_policy = rewrite_body
-
-2. Skills-like sections
-Examples:
-- CORE COMPETENCIES
-- TECHNICAL SKILLS
-- SKILLS
-These usually become:
-- section.semantic_type = skills
-- section.rewrite_policy = rewrite_body
-
-3. Experience-like sections
-Examples:
-- EXPERIENCE
-- PROFESSIONAL EXPERIENCE
-- EMPLOYMENT
-These usually become:
-- section.semantic_type = experience
-- section.rewrite_policy = rewrite_bullets_only
-- preserve_heading = true
-- preserve_body_structure = true
-
-Within experience:
-- role headers => preserve
-- role meta/date/location => preserve
-- bullets/body lines => rewrite_text
-
-4. Education
-Usually:
-- section.semantic_type = education
-- section.rewrite_policy = preserve
-
-5. Projects
-Usually:
-- section.semantic_type = projects
-- preserve unless there is a future business decision to rewrite them
-
-6. Additional / miscellaneous
-Examples:
-- ADDITIONAL INFORMATION
-- LANGUAGES
-- WORK AUTHORIZATION
-- CERTIFICATIONS
-Usually:
-- section.semantic_type = additional
-- section.rewrite_policy = preserve
-
-7. Unknown or non-standard sections
-If unclear, classify as:
-- section.semantic_type = other
-- section.rewrite_policy = preserve
-
-IMPORTANT PRESERVATION RULES
-
-Default preserve behavior for:
-- contact information
-- education
-- certifications
-- languages
-- work authorization
-- miscellaneous non-standard sections unless clearly summary/skills
-
-Default rewrite behavior for:
-- summary section body
-- skills section body
-- experience bullets/body content only
-
+==================================================
 DISPLAY TITLE
+==================================================
 
-For each section, provide:
-- raw_title = original heading text from template if present
-- display_title = canonical human-readable title
+Each section MUST include:
+- raw_title (from input)
+- display_title (normalized human-readable)
 
 Examples:
-- raw_title: "PROFILE" -> display_title: "Professional Summary"
-- raw_title: "CORE COMPETENCIES" -> display_title: "Technical Skills"
-- raw_title: "PROFESSIONAL EXPERIENCE" -> display_title: "Experience"
+PROFILE → Professional Summary
+CORE COMPETENCIES → Technical Skills
+PROFESSIONAL EXPERIENCE → Experience
 
-If the raw title is already appropriate, display_title may match it semantically in normalized form.
+==================================================
+STRICT SECTION CONTRACTS
+==================================================
 
-INPUT SHAPE
+------------------------------------------
+SUMMARY SECTION (HARD RULE)
+------------------------------------------
 
-You will receive JSON with parser-produced template structure similar to this shape:
+If semantic_type = "summary":
 
-{
-  "document_id": "...",
-  "source_kind": "...",
-  "sections": [
-    {
-      "section_id": "...",
-      "raw_title": "...",
-      "paragraphs": [
-        {
-          "para_id": "...",
-          "text": "...",
-          "parser_semantic": "section_heading|paragraph|bullet|role_header|role_meta|empty"
-        }
-      ],
-      "roles": [
-        {
-          "role_id": "...",
-          "header_para_ids": ["..."],
-          "meta_para_ids": ["..."],
-          "bullet_para_ids": ["..."]
-        }
-      ]
-    }
-  ]
-}
+- rewrite_policy MUST be "rewrite_body"
+- roles[] MUST be empty or absent
+- blocks[] MUST exist
+- EVERY block MUST:
+  - semantic_type = "summary_paragraph"
+  - rewrite_policy = "rewrite_text"
+  - new = false
 
-OUTPUT REQUIREMENTS
+- preserve_heading MUST be false
+- preserve_body_structure MUST be false
 
-Return JSON only with this shape:
+IF YOU CANNOT SATISFY THIS:
+→ classify entire section as:
+  semantic_type = "other"
+  rewrite_policy = "preserve"
+
+------------------------------------------
+SKILLS SECTION (HARD RULE)
+------------------------------------------
+
+If semantic_type = "skills":
+
+- rewrite_policy MUST be "rewrite_body"
+- roles[] MUST be empty or absent
+- blocks[] MUST exist
+- EVERY block MUST:
+  - semantic_type = "skills_paragraph"
+  - rewrite_policy = "rewrite_text"
+  - new = false
+
+- preserve_heading MUST be false
+- preserve_body_structure MUST be false
+
+IF YOU CANNOT SATISFY THIS:
+→ fallback to:
+  semantic_type = "other"
+  rewrite_policy = "preserve"
+
+------------------------------------------
+EXPERIENCE SECTION (HARD RULE)
+------------------------------------------
+
+If semantic_type = "experience":
+
+- rewrite_policy MUST be "rewrite_bullets_only"
+- blocks[] MUST be empty or absent
+- roles[] MUST be populated (if roles are visible)
+
+- preserve_heading MUST be true
+- preserve_body_structure MUST be true
+
+Each role MUST follow:
+
+header_blocks:
+  - semantic_type = "role_header"
+  - rewrite_policy = "preserve"
+
+meta_blocks:
+  - semantic_type = "role_meta"
+  - rewrite_policy = "preserve"
+
+body_blocks:
+  - semantic_type = "bullet"
+  - rewrite_policy = "rewrite_text"
+
+IF roles cannot be safely determined:
+→ DO NOT output broken experience
+→ fallback to:
+  semantic_type = "other"
+  rewrite_policy = "preserve"
+
+------------------------------------------
+EDUCATION SECTION (HARD RULE)
+------------------------------------------
+
+If semantic_type = "education":
+
+- rewrite_policy MUST be "preserve"
+- roles[] MUST be empty or absent
+- blocks[] MUST exist
+- EVERY block MUST:
+  - semantic_type = "education_entry" OR "other_paragraph"
+  - rewrite_policy = "preserve"
+
+- preserve_heading MUST be true
+- preserve_body_structure MUST be true
+
+DO NOT USE:
+- role_header
+- role_meta
+- bullet
+
+------------------------------------------
+PROJECTS SECTION
+------------------------------------------
+
+If semantic_type = "projects":
+
+- rewrite_policy MUST be "preserve"
+- roles[] MUST be empty
+- blocks[] MUST exist
+- blocks MUST be:
+  - project_entry OR other_paragraph
+  - rewrite_policy = "preserve"
+
+------------------------------------------
+ADDITIONAL SECTION
+------------------------------------------
+
+If semantic_type = "additional":
+
+- rewrite_policy MUST be "preserve"
+- roles[] MUST be empty
+- blocks[] MUST exist
+- blocks MUST be:
+  - additional_item OR other_paragraph
+  - rewrite_policy = "preserve"
+
+DO NOT USE:
+- role_header
+- role_meta
+- bullet
+
+------------------------------------------
+OTHER SECTION
+------------------------------------------
+
+If semantic_type = "other":
+
+- rewrite_policy MUST be "preserve"
+- roles[] MUST be empty
+- blocks[] MUST exist
+- EVERY block MUST:
+  - semantic_type = "other_paragraph"
+  - rewrite_policy = "preserve"
+
+==================================================
+STRUCTURE RULES
+==================================================
+
+1. EXPERIENCE:
+   - MUST use roles[]
+   - MUST NOT use blocks[]
+
+2. NON-EXPERIENCE:
+   - MUST use blocks[]
+   - MUST NOT use roles[]
+
+3. NEVER mix:
+   - roles[] and blocks[] for same section (except roles-only sections)
+
+4. NO MIXED POLICIES inside a section.
+
+==================================================
+BLOCK IDS
+==================================================
+
+If block_id is missing:
+- generate: blk_001, blk_002, ...
+
+DO NOT change:
+- section_id
+- role_id
+- para_id
+
+==================================================
+INPUT FORMAT
+==================================================
+
+You receive JSON with:
+- sections
+- paragraphs
+- optional roles
+
+==================================================
+OUTPUT FORMAT
+==================================================
+
+Return JSON:
 
 {
   "document_id": "...",
   "classification_version": "1.0",
   "source_kind": "...",
-  "sections": [
-    {
-      "section_id": "...",
-      "raw_title": "...",
-      "display_title": "...",
-      "semantic_type": "...",
-      "rewrite_policy": "...",
-      "preserve_heading": true,
-      "preserve_body_structure": true,
-      "blocks": [
-        {
-          "block_id": "...",
-          "para_id": "...",
-          "semantic_type": "...",
-          "rewrite_policy": "...",
-          "new": false
-        }
-      ],
-      "roles": [
-        {
-          "role_id": "...",
-          "header_blocks": [
-            {
-              "block_id": "...",
-              "para_id": "...",
-              "semantic_type": "role_header",
-              "rewrite_policy": "preserve",
-              "new": false
-            }
-          ],
-          "meta_blocks": [
-            {
-              "block_id": "...",
-              "para_id": "...",
-              "semantic_type": "role_meta",
-              "rewrite_policy": "preserve",
-              "new": false
-            }
-          ],
-          "body_blocks": [
-            {
-              "block_id": "...",
-              "para_id": "...",
-              "semantic_type": "bullet",
-              "rewrite_policy": "rewrite_text",
-              "new": false
-            }
-          ]
-        }
-      ]
-    }
-  ]
+  "sections": [...]
 }
 
-BLOCK IDS
+==================================================
+FINAL RULE
+==================================================
 
-If block_id is not supplied in input, generate stable local block IDs within the output such as:
-- blk_001
-- blk_002
-- ...
+If any rule cannot be satisfied:
 
-But NEVER modify:
-- section_id
-- role_id
-- para_id
-- document_id
+→ fallback to safe classification:
+   semantic_type = "other"
+   rewrite_policy = "preserve"
 
-CONSERVATIVE CLASSIFICATION RULE
-
-If you are unsure:
-- classify section as other
-- set rewrite_policy to preserve
+STRICTLY FOLLOW ALL RULES.
 
 Return JSON only.
