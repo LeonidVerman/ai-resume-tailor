@@ -8,15 +8,26 @@ Responsibilities
 - Accept a parsed ResumeDocument (or build one from raw bytes when needed)
 - Build a compact ClassificationInput from the IR
 - Call the LLM with the classification prompt and JSON schema
-- Parse the response into a ClassificationOutput
-- Persist the result in structured_resumes.classification_jsonb
+- Validate the LLM output and downgrade invalid sections (Phase 2a)
+- Persist the result envelope in structured_resumes.classification_jsonb
 - Expose a retrieval helper for the admin debug endpoint
 
-This service is additive (Phase 1): it does NOT affect tailoring or rendering.
-All errors are caught and logged so a classification failure never blocks upload.
+Phase 1: LLM classification.
+Phase 2a: Deterministic validation + safe section downgrade (no LLM retry).
 
 Prompt:   prompts/classification/classify_template_resume.txt
 Schema:   prompts/classification/classification_schema.json
+
+Stored envelope (classification_jsonb):
+{
+  "raw_classification": {...},   # verbatim LLM output
+  "validation":         {...},   # validate_classification() result
+  "classification":     {...},   # final contract-safe classification
+  "status":             "valid" | "downgraded",
+  "validation_error_count": int,
+  "invalid_section_ids": [...],
+  "recovery_applied":   bool,
+}
 """
 
 from __future__ import annotations
@@ -156,8 +167,18 @@ class ResumeClassificationService:
         norm_data: bytes,
         template_ir_dict: dict | None,
     ) -> tuple[dict, dict]:
-        """Build input, call LLM, return (llm_input_dict, classification_dict)."""
+        """Build input, call LLM, validate, downgrade.
+
+        Returns
+        -------
+        (llm_input_dict, envelope_dict)
+
+        envelope_dict contains:
+          raw_classification, validation, classification (final), status,
+          validation_error_count, invalid_section_ids, recovery_applied.
+        """
         from tailor.compiler.classification_models import build_classification_input
+        from tailor.compiler.classification_validator import apply_validation_and_downgrade
         from tailor.prompts import _load_prompt
 
         doc = _build_ir(norm_data, template_ir_dict)
@@ -179,11 +200,34 @@ class ResumeClassificationService:
             max_tokens=8192,
         )
 
-        classification_dict = json.loads(result.content)
+        raw_classification = json.loads(result.content)
         logger.debug(
             "Classification complete resume=%s sections=%d tokens=%d",
             resume_id,
-            len(classification_dict.get("sections", [])),
+            len(raw_classification.get("sections", [])),
             result.usage.total_tokens,
         )
-        return llm_input_dict, classification_dict
+
+        validation, final, status_meta = apply_validation_and_downgrade(raw_classification)
+
+        if status_meta["recovery_applied"]:
+            logger.warning(
+                "Classification validation: %d invalid section(s) downgraded "
+                "for resume=%s — ids=%s error_count=%d",
+                len(status_meta["invalid_section_ids"]),
+                resume_id,
+                status_meta["invalid_section_ids"],
+                status_meta["validation_error_count"],
+            )
+        else:
+            logger.debug(
+                "Classification validation passed for resume=%s", resume_id,
+            )
+
+        envelope = {
+            "raw_classification": raw_classification,
+            "validation": validation,
+            "classification": final,
+            **status_meta,
+        }
+        return llm_input_dict, envelope
