@@ -41,6 +41,35 @@ if not exist "%PDF_INPUT_OUTPUT%" mkdir "%PDF_INPUT_OUTPUT%"
 set CLI_SECRET_HEADER=
 if not "%CLI_SECRET%"=="" set CLI_SECRET_HEADER=-H "X-Cli-Secret: %CLI_SECRET%"
 
+rem Helper: classify one file and save output.
+rem   %1 = full path to input file
+rem   %2 = output json path
+rem   %3 = llm-input json path
+:classify_one
+  set _INPUT=%~1
+  set _OUT=%~2
+  set _IN=%~3
+  set _BASENAME=%~n1
+  set _TMP=%TEMP%\classify_tmp_!_BASENAME!.json
+  set _HTTP_TMP=%TEMP%\classify_http_!_BASENAME!.txt
+
+  curl -s -o "!_TMP!" -w "%%{http_code}" ^
+    -X POST ^
+    %CLI_SECRET_HEADER% ^
+    -F "file=@!_INPUT!" ^
+    "%API_URL%/api/v1/admin/classification/classify-file" > "!_HTTP_TMP!" 2>nul
+  set /p _HTTP_CODE=<"!_HTTP_TMP!"
+  del "!_HTTP_TMP!" 2>nul
+
+  if "!_HTTP_CODE!"=="200" (
+    python "%TESTS_DIR%classify_helper.py" "!_TMP!" "!_OUT!" "!_IN!"
+    echo OK
+  ) else (
+    echo FAIL (HTTP !_HTTP_CODE!)
+  )
+  del "!_TMP!" 2>nul
+goto :eof
+
 rem -----------------------------------------------------------------------
 rem If a single file argument was provided, classify only that file
 rem -----------------------------------------------------------------------
@@ -54,19 +83,13 @@ if not "%~1"=="" (
     set OUT_DIR=%PDF_OUTPUT%
     set IN_DIR=%PDF_INPUT_OUTPUT%
   )
-  set TMP_FILE=%TEMP%\classify_tmp_%~n1.json
-  echo Classifying: %~1
-  curl -s -o "!TMP_FILE!" -w "HTTP %%{http_code}" ^
-    -X POST ^
-    %CLI_SECRET_HEADER% ^
-    -F "file=@!SINGLE_FILE!" ^
-    "%API_URL%/api/v1/admin/classification/classify-file"
-  python "%TESTS_DIR%classify_helper.py" "!TMP_FILE!" "!OUT_DIR!\%~n1.json" "!IN_DIR!\%~n1_input.json"
-  del "!TMP_FILE!" 2>nul
+  set BASENAME=%~n1
+  echo Classifying: !SINGLE_FILE!
+  call :classify_one "!SINGLE_FILE!" "!OUT_DIR!\!BASENAME!.json" "!IN_DIR!\!BASENAME!_input.json"
   echo.
   echo Done.
-  echo   Classification: !OUT_DIR!\%~n1.json
-  echo   LLM input:      !IN_DIR!\%~n1_input.json
+  echo   Classification: !OUT_DIR!\!BASENAME!.json
+  echo   LLM input:      !IN_DIR!\!BASENAME!_input.json
   goto :eof
 )
 
@@ -77,16 +100,9 @@ echo === Classifying DOCX samples ===
 set FOUND_DOCX=0
 for %%f in ("%DOCX_INPUT%\*.docx") do (
   set FOUND_DOCX=1
-  set TMP_FILE=%TEMP%\classify_tmp_%%~nf.json
+  set _BNAME=%%~nf
   <nul set /p "=  %%~nxf -> "
-  curl -s -o "!TMP_FILE!" -w "HTTP %%{http_code}" ^
-    -X POST ^
-    %CLI_SECRET_HEADER% ^
-    -F "file=@%%f" ^
-    "%API_URL%/api/v1/admin/classification/classify-file"
-  python "%TESTS_DIR%classify_helper.py" "!TMP_FILE!" "%DOCX_OUTPUT%\%%~nf.json" "%DOCX_INPUT_OUTPUT%\%%~nf_input.json"
-  del "!TMP_FILE!" 2>nul
-  echo.
+  call :classify_one "%%f" "%DOCX_OUTPUT%\%%~nf.json" "%DOCX_INPUT_OUTPUT%\%%~nf_input.json"
 )
 if "%FOUND_DOCX%"=="0" echo   No .docx files found in %DOCX_INPUT%
 
@@ -95,16 +111,8 @@ echo === Classifying PDF samples ===
 set FOUND_PDF=0
 for %%f in ("%PDF_INPUT%\*.pdf") do (
   set FOUND_PDF=1
-  set TMP_FILE=%TEMP%\classify_tmp_%%~nf.json
   <nul set /p "=  %%~nxf -> "
-  curl -s -o "!TMP_FILE!" -w "HTTP %%{http_code}" ^
-    -X POST ^
-    %CLI_SECRET_HEADER% ^
-    -F "file=@%%f" ^
-    "%API_URL%/api/v1/admin/classification/classify-file"
-  python "%TESTS_DIR%classify_helper.py" "!TMP_FILE!" "%PDF_OUTPUT%\%%~nf.json" "%PDF_INPUT_OUTPUT%\%%~nf_input.json"
-  del "!TMP_FILE!" 2>nul
-  echo.
+  call :classify_one "%%f" "%PDF_OUTPUT%\%%~nf.json" "%PDF_INPUT_OUTPUT%\%%~nf_input.json"
 )
 if "%FOUND_PDF%"=="0" echo   No .pdf files found in %PDF_INPUT%
 
