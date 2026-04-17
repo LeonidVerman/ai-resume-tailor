@@ -43,11 +43,11 @@ _SUMMARY_NAMES: frozenset[str] = frozenset({
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "skill", "core competencies", "competencies",
     "technical expertise", "expertise", "key skills", "areas of expertise",
-    "technologies", "tech stack",
+    "technologies", "tech stack", "relevant skills",
 })
 _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
-    "educational background", "degrees",
+    "educational background", "degrees", "educational history",
 })
 _CERTIFICATIONS_NAMES: frozenset[str] = frozenset({
     "certifications", "certification", "licenses", "license",
@@ -70,6 +70,7 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         "awards", "honors", "references", "activities",
         "volunteer", "volunteering", "leadership", "interests",
         "additional information", "communication",
+        "affiliations", "affiliations and awards", "affiliations & awards",
     })
 )
 
@@ -298,10 +299,23 @@ def _infer_semantic(pm: ParaModel) -> str:
     if style_name.lower() == "heading" and text.lower() in _ALL_HEADING_NAMES:
         return "section_heading"
 
-    # Known section names: bold paragraph whose text exactly matches a recognized
-    # section name is a section heading regardless of font size or spacing.
-    # This handles templates that use small bold text (e.g. 10.5pt) for headings.
+    # Known section names (bold): bold paragraph exactly matching a recognized
+    # section name is a heading regardless of font size or spacing.
     if pm.style.bold and text.lower() in _ALL_HEADING_NAMES:
+        return "section_heading"
+
+    # Known section names (plain paragraph, no formatting at all): a paragraph
+    # with no named style, not bold, and no explicit spacing_before that exactly
+    # matches a known section name.  Targets templates like 20-Software-Engineer
+    # where section titles are plain 12pt text with no paragraph-level styling.
+    # Guarded by spacing_before=None so that PDF-generated DOCX headings (which
+    # carry spacing_before=20 from the style template) are not affected.
+    if (
+        not style_name
+        and not pm.style.bold
+        and pm.style.spacing_before is None
+        and text.lower() in _ALL_HEADING_NAMES
+    ):
         return "section_heading"
 
     # Heuristic: bold, short (≥2 words), title-case, no bullets, has spacing.
@@ -328,6 +342,14 @@ def _infer_semantic(pm: ParaModel) -> str:
 
     if "|" in text and not text.startswith(("-", "•")):
         return "role_header"
+    # " / " separator (space-slash-space): role_header only when neither the
+    # segment before nor after the slash looks like a date/year.
+    # "Lamna Health / General Practitioner" → role_header ✓
+    # "January 2022 - current / New York, NY" → date line, NOT role_header ✓
+    if " / " in text and not text.startswith(("-", "•")):
+        before_slash, after_slash = text.split(" / ", 1)
+        if not _YEAR_RE.search(before_slash) and not _YEAR_RE.search(after_slash.strip()):
+            return "role_header"
 
     if (
         pm.style.numbering
@@ -646,12 +668,18 @@ def parse_docx(path: str) -> ResumeDocument:
                     )
                 )
             ):
-                # Preserve role_header for pipe-separated lines (e.g. "Title | Company")
+                # Preserve role_header for pipe-separated or slash-separated lines
+                # (e.g. "Title | Company", "Lamna Health / General Practitioner")
                 # that were styled as Heading N and therefore initially classified as
                 # section_heading but are semantically role headers inside experience.
+                _is_slash_role = (
+                    " / " in pm.text
+                    and not _YEAR_RE.search(pm.text.split(" / ", 1)[0])
+                    and not _YEAR_RE.search(pm.text.split(" / ", 1)[1].strip())
+                )
                 if (
                     current.semantic_type == "experience"
-                    and "|" in pm.text
+                    and ("|" in pm.text or _is_slash_role)
                     and not pm.text.lstrip().startswith(("-", "\u2022", "\u00b7", "\u2013"))
                 ):
                     pm.semantic = "role_header"
