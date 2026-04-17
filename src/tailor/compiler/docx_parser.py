@@ -69,7 +69,7 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         "projects", "publications",
         "awards", "honors", "references", "activities",
         "volunteer", "volunteering", "leadership", "interests",
-        "additional information",
+        "additional information", "communication",
     })
 )
 
@@ -93,6 +93,14 @@ _WEBSITES_LIKE_WORDS: frozenset[str] = frozenset({
 
 _HEADING_STYLE_RE = re.compile(r"^heading\s*\d", re.IGNORECASE)
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
+_DATE_RANGE_RE = re.compile(r"[-\u2013\u2014]")  # dash/en-dash/em-dash in date ranges
+
+
+def _heading_level(pm: "ParaModel") -> int | None:
+    """Return the numeric level from a 'Heading N' style, or None."""
+    style_name = (pm.style.style_name or "").strip()
+    m = re.match(r"^heading\s*(\d+)", style_name, re.IGNORECASE)
+    return int(m.group(1)) if m else None
 
 
 def _classify_section(heading_text: str) -> str:
@@ -611,8 +619,24 @@ def parse_docx(path: str) -> ResumeDocument:
             # entries inside their parent section while still promoting a subsequent
             # "SKILLS & ABILITIES" (semantic_type="skills") to a peer section.
             t_lower = pm.text.strip().lower()
+            # Heading-level guard: never absorb a Heading-N paragraph into a
+            # section whose own heading uses Heading-M with M >= N.  In
+            # table-based templates the section labels ("Communication",
+            # "Leadership") use the same "Heading 1" style as top-level section
+            # headings ("Experience"), so absorbing them would incorrectly merge
+            # distinct sections.  Only fire this guard when both paragraphs have
+            # an explicit numbered heading style — avoids interfering with
+            # bold/heuristic headings.
+            new_level = _heading_level(pm)
+            cur_level = _heading_level(current.heading) if current is not None else None
+            _same_or_higher = (
+                new_level is not None
+                and cur_level is not None
+                and new_level <= cur_level
+            )
             if (
                 current is not None
+                and not _same_or_higher
                 and t_lower not in _ALL_HEADING_NAMES
                 and (
                     current.semantic_type == "experience"
@@ -631,6 +655,19 @@ def parse_docx(path: str) -> ResumeDocument:
                     and not pm.text.lstrip().startswith(("-", "\u2022", "\u00b7", "\u2013"))
                 ):
                     pm.semantic = "role_header"
+                elif (
+                    current.semantic_type == "experience"
+                    and new_level is not None
+                    and new_level <= 2  # Heading 2 absorbed into Heading 1 section
+                    and len(pm.text.strip()) <= 60
+                    and _DATE_RANGE_RE.search(pm.text)
+                ):
+                    # Absorbed Heading 2 that looks like a date range (e.g. "June
+                    # 20XX – Present").  Promote to role_meta so _group_roles can
+                    # detect role boundaries even when the year regex cannot match
+                    # placeholder text.  Heading 3+ is left as paragraph to avoid
+                    # misidentifying sub-heading dates in other templates.
+                    pm.semantic = "role_meta"
                 else:
                     pm.semantic = "paragraph"
                 current.body_paras.append(pm)

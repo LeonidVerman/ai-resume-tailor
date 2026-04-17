@@ -1,7 +1,12 @@
 @echo off
 rem classify_samples.cmd
 rem
-rem Run LLM classification against all resume samples and save JSON output.
+rem Run LLM classification against resume samples and save JSON output.
+rem
+rem Usage:
+rem   classify_samples.cmd                          -- classify all samples
+rem   classify_samples.cmd samples\resume\docx\10-Template5.docx  -- single file
+rem   classify_samples.cmd samples\resume\pfd\some.pdf             -- single file
 rem
 rem Optional env vars:
 rem   CLI_SECRET -- X-Cli-Secret value (only needed when CLASSIFICATION_CLI_SECRET
@@ -36,6 +41,38 @@ if not exist "%PDF_INPUT_OUTPUT%" mkdir "%PDF_INPUT_OUTPUT%"
 set CLI_SECRET_HEADER=
 if not "%CLI_SECRET%"=="" set CLI_SECRET_HEADER=-H "X-Cli-Secret: %CLI_SECRET%"
 
+rem -----------------------------------------------------------------------
+rem If a single file argument was provided, classify only that file
+rem -----------------------------------------------------------------------
+if not "%~1"=="" (
+  set SINGLE_FILE=%TESTS_DIR%%~1
+  set EXT=%~x1
+  if /i "!EXT!"==".docx" (
+    set OUT_DIR=%DOCX_OUTPUT%
+    set IN_DIR=%DOCX_INPUT_OUTPUT%
+  ) else (
+    set OUT_DIR=%PDF_OUTPUT%
+    set IN_DIR=%PDF_INPUT_OUTPUT%
+  )
+  set TMP_FILE=%TEMP%\classify_tmp_%~n1.json
+  echo Classifying: %~1
+  curl -s -o "!TMP_FILE!" -w "HTTP %%{http_code}" ^
+    -X POST ^
+    %CLI_SECRET_HEADER% ^
+    -F "file=@!SINGLE_FILE!" ^
+    "%API_URL%/api/v1/admin/classification/classify-file"
+  python "%TESTS_DIR%classify_helper.py" "!TMP_FILE!" "!OUT_DIR!\%~n1.json" "!IN_DIR!\%~n1_input.json"
+  del "!TMP_FILE!" 2>nul
+  echo.
+  echo Done.
+  echo   Classification: !OUT_DIR!\%~n1.json
+  echo   LLM input:      !IN_DIR!\%~n1_input.json
+  goto :eof
+)
+
+rem -----------------------------------------------------------------------
+rem No argument — classify all DOCX then all PDF samples
+rem -----------------------------------------------------------------------
 echo === Classifying DOCX samples ===
 set FOUND_DOCX=0
 for %%f in ("%DOCX_INPUT%\*.docx") do (

@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # classify_samples.sh
 #
-# Run LLM classification against all resume samples and save JSON output.
+# Run LLM classification against resume samples and save JSON output.
+#
+# Usage:
+#   ./classify_samples.sh                                  -- classify all samples
+#   ./classify_samples.sh samples/resume/docx/10-Template5.docx  -- single file
+#   ./classify_samples.sh samples/resume/pfd/some.pdf             -- single file
 #
 # Optional env vars:
 #   CLI_SECRET — X-Cli-Secret value (only needed when CLASSIFICATION_CLI_SECRET
@@ -65,6 +70,36 @@ classify_file() {
   rm -f "$tmp_file"
 }
 
+# -----------------------------------------------------------------------
+# If a single file argument was provided, classify only that file
+# -----------------------------------------------------------------------
+if [ $# -gt 0 ]; then
+  input_file="$1"
+  # Resolve relative to SCRIPT_DIR if not an absolute path
+  if [[ "$input_file" != /* ]]; then
+    input_file="$SCRIPT_DIR/$input_file"
+  fi
+  ext="${input_file##*.}"
+  if [[ "${ext,,}" == "docx" ]]; then
+    out_dir="$DOCX_OUTPUT"
+    in_dir="$DOCX_INPUT_OUTPUT"
+  else
+    out_dir="$PDF_OUTPUT"
+    in_dir="$PDF_INPUT_OUTPUT"
+  fi
+  echo "Classifying: $(basename "$input_file")"
+  classify_file "$input_file" "$out_dir" "$in_dir"
+  echo ""
+  echo "Done."
+  basename_no_ext="$(basename "${input_file%.*}")"
+  echo "  Classification: $out_dir/$basename_no_ext.json"
+  echo "  LLM input:      $in_dir/${basename_no_ext}_input.json"
+  exit 0
+fi
+
+# -----------------------------------------------------------------------
+# No argument — classify all DOCX then all PDF samples
+# -----------------------------------------------------------------------
 echo "=== Classifying DOCX samples ==="
 shopt -s nullglob
 docx_files=("$DOCX_INPUT"/*.docx)

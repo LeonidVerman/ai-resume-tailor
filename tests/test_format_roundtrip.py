@@ -195,6 +195,13 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "with header_extra into a pipe-separated string, changing paragraph "
         "text in the roundtrip.  Real LLM pipeline unaffected."
     ),
+    "10-Template5.docx": (
+        "Table-based side-by-side role layout: three roles are presented in "
+        "adjacent table cells; the parser detects them via the role_meta+relabel "
+        "heuristic but the identity serializer combines role.header with "
+        "header_extra (company name) into a pipe-separated string, changing "
+        "paragraph text.  Real LLM pipeline unaffected."
+    ),
     "Valerii_Konchin_CV.docx": (
         "Two-column sidebar layout: skills and experience content are interleaved "
         "in document order so the parser cannot correctly separate them into "
