@@ -27,7 +27,7 @@ def main() -> None:
         doc = parse_docx(str(input_path))
     elif ext == ".pdf":
         from tailor.compiler.pdf_parser import parse_pdf
-        doc = parse_pdf(str(input_path))
+        doc = parse_pdf(input_path.read_bytes())
     else:
         print(f"Unsupported file type: {ext}", file=sys.stderr)
         sys.exit(1)
