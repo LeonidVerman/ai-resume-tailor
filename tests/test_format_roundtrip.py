@@ -215,6 +215,20 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "distinct section bodies.  Section structure (PROFILE, EDUCATION, etc.) "
         "is parsed correctly; only the body-para ordering cannot round-trip."
     ),
+    "7-Template2.docx": (
+        "Placeholder-year role format ('January 20xx - Current'): date lines use "
+        "'20xx' instead of real years; the placeholder pre-pass promotes them to "
+        "role_meta, triggering Pattern B (date-as-header).  The identity serializer "
+        "then combines the date header with following content via '|', changing "
+        "paragraph text.  Role detection now works (3 roles vs 0); real LLM "
+        "pipeline unaffected."
+    ),
+    "6-Template1.docx": (
+        "Placeholder-year role format ('Jan 20XX - Current'): same structure as "
+        "7-Template2.docx — date lines use '20XX'; the placeholder pre-pass promotes "
+        "them to role_meta, triggering Pattern B (date-as-header).  Role detection "
+        "now works (3 roles vs 0); real LLM pipeline unaffected."
+    ),
 }
 
 # PDFs with non-standard content that cannot roundtrip cleanly.
@@ -282,6 +296,17 @@ _KNOWN_BAD_PDFS: dict[str, str] = {
     "5-Software Development Resume.pdf": (
         "Separate-line role header format; identity serializer combines header "
         "with header_extra, causing DOCX-of-DOCX text differences."
+    ),
+    "7-Template2.pdf": (
+        "Placeholder-year role format: the rendered DOCX uses Pattern B "
+        "(date-as-header); identity serializer combines the date header with "
+        "following content, causing DOCX-of-DOCX text differences."
+    ),
+    "10-Template5.pdf": (
+        "Table-based side-by-side layout: the rendered DOCX inherits a separate-line "
+        "role format; identity serializer combines role.header with header_extra "
+        "(company name) via '|', causing DOCX-of-DOCX text differences.  Underlying "
+        "issue is the same as 10-Template5.docx in _KNOWN_BAD_DOCX."
     ),
 }
 

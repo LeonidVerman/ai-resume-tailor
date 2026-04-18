@@ -49,6 +49,7 @@ from tailor.compiler.models import (
 # ---------------------------------------------------------------------------
 
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
+_DATE_PLACEHOLDER_RE = re.compile(r"\b20[Xx]{2}\b", re.IGNORECASE)
 _SCANNED_CHAR_THRESHOLD = 50  # fewer chars → likely scanned
 _CONT_RE = re.compile(r"\s*\(cont\.?\)\s*$", re.IGNORECASE)
 
@@ -1271,8 +1272,8 @@ def _infer_semantic(pm: ParaModel) -> str:
     if text.startswith(_BULLET_PREFIXES):
         return "bullet"
 
-    # Date/location meta line: contains a year, short, no pipe
-    if _YEAR_RE.search(text) and len(text) <= 80 and "|" not in text:
+    # Date/location meta line: contains a year (or placeholder like "20XX"), short, no pipe
+    if (_YEAR_RE.search(text) or _DATE_PLACEHOLDER_RE.search(text)) and len(text) <= 80 and "|" not in text:
         return "role_meta"
 
     return "paragraph"
@@ -1295,11 +1296,12 @@ _SUMMARY_NAMES: frozenset[str] = frozenset({
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "core competencies", "competencies",
     "technical expertise", "expertise", "key skills", "areas of expertise",
-    "technologies", "tech stack",
+    "technologies", "tech stack", "relevant skills", "skills & abilities",
+    "skill summary",
 })
 _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
-    "educational background", "degrees",
+    "educational background", "degrees", "educational history",
 })
 
 _ALL_KNOWN: frozenset[str] = (
@@ -1311,7 +1313,10 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         "projects", "certifications", "certification", "publications",
         "awards", "honors", "languages", "references", "activities",
         "volunteer", "volunteering", "leadership", "interests",
-        "additional information",
+        "additional information", "communication",
+        "affiliations", "affiliations and awards", "affiliations & awards",
+        "certifications and training", "training and certifications",
+        "professional certifications",
     })
 )
 

@@ -38,7 +38,7 @@ _EXPERIENCE_NAMES: frozenset[str] = frozenset({
 _SUMMARY_NAMES: frozenset[str] = frozenset({
     "professional summary", "summary", "objective", "career objective",
     "profile", "professional profile", "about me", "career summary",
-    "executive summary",
+    "executive summary", "overview",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "skill", "core competencies", "competencies",
@@ -94,6 +94,7 @@ _WEBSITES_LIKE_WORDS: frozenset[str] = frozenset({
 
 _HEADING_STYLE_RE = re.compile(r"^heading\s*\d", re.IGNORECASE)
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
+_DATE_PLACEHOLDER_RE = re.compile(r"\b20[Xx]{2}\b", re.IGNORECASE)
 _DATE_RANGE_RE = re.compile(r"[-\u2013\u2014]")  # dash/en-dash/em-dash in date ranges
 
 
@@ -437,11 +438,20 @@ def _relabel_implicit_role_headers(body_paras: list[ParaModel]) -> None:
         if ahead[0].semantic == "role_header":
             continue
         # Relabel if any of the next two substantive paragraphs is role_meta
-        # or contains a year (potential meta line that is too long for the
-        # role_meta heuristic, e.g. "Acme Corp; Jan 2020 – Dec 2022; Remote").
+        # or contains a year.  The placeholder check ("20xx") is restricted to
+        # the FIRST lookahead only — checking the second would falsely promote
+        # a job title whose first lookahead is content and whose second is the
+        # *next* role's date (e.g. 6-Template1 / "Jan 20XX - Current" pattern).
         for a in ahead:
             if a.semantic == "role_meta" or (
                 a.semantic == "paragraph" and _YEAR_RE.search(a.text)
+            ):
+                pm.semantic = "role_header"
+                break
+            if (
+                a is ahead[0]
+                and a.semantic == "paragraph"
+                and _DATE_PLACEHOLDER_RE.search(a.text)
             ):
                 pm.semantic = "role_header"
                 break
@@ -495,9 +505,20 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
             elif s == "paragraph":
-                # Multi-line role header: Word can wrap long headers across
-                # two paragraphs.  Collect as header_extra; do not render.
-                header_extra.append(pm)
+                _txt = pm.text.strip()
+                # Date-range line in header state (e.g. "January 20xx - Current"):
+                # route to meta so it doesn't appear in the rendered role header.
+                if (
+                    (_YEAR_RE.search(_txt) or _DATE_PLACEHOLDER_RE.search(_txt))
+                    and len(_txt) <= 80
+                ):
+                    pm.semantic = "role_meta"
+                    meta.append(pm)
+                    state = "meta"
+                else:
+                    # Multi-line role header: Word can wrap long headers across
+                    # two paragraphs.  Collect as header_extra; do not render.
+                    header_extra.append(pm)
             elif s == "empty":
                 pass
             else:
@@ -627,6 +648,17 @@ def parse_docx(path: str) -> ResumeDocument:
 
     for pm in all_paras:
         if pm.semantic == "section_heading":
+            # Pre-section guard: before the first known section, headings that are
+            # not recognised section names AND contain no job-title words go to
+            # header_paras.  This prevents candidate names ("Sheetal Parmar",
+            # "HARPER RUSSO") from becoming bogus sections while still allowing
+            # job-title headings ("Software Engineer", "Senior Developer") that
+            # will later be consolidated into a synthetic experience section.
+            if not found_heading and pm.text.strip().lower() not in _ALL_HEADING_NAMES:
+                _guard_words = set(re.split(r"\W+", pm.text.strip().lower())) - {""}
+                if not (_guard_words & _JOB_TITLE_WORDS):
+                    header_paras.append(pm)
+                    continue
             found_heading = True
             # Approach A: absorb sub-entry heading paragraphs that appear inside an
             # entry-type section and are not recognised top-level section names.
@@ -854,5 +886,22 @@ def _make_experience_from_job_sections(job_secs: list[ResumeSection]) -> ResumeS
 
 def _finalise(section: ResumeSection) -> None:
     if section.semantic_type == "experience":
+        # Pre-pass: promote plain-paragraph date lines with placeholder years
+        # (e.g. "January 20xx - Current") to role_meta so that
+        # _relabel_implicit_role_headers and _group_roles can detect role
+        # boundaries in templates that never use real 4-digit years.
+        # Guard: skip when the section already has pipe-format role_header
+        # paragraphs — those templates do not need this heuristic and the
+        # pre-pass would create spurious Pattern-B roles before each real header.
+        has_role_headers = any(p.semantic == "role_header" for p in section.body_paras)
+        if not has_role_headers:
+            for p in section.body_paras:
+                if (
+                    p.semantic == "paragraph"
+                    and _DATE_PLACEHOLDER_RE.search(p.text)
+                    and len(p.text.strip()) <= 80
+                    and "|" not in p.text
+                ):
+                    p.semantic = "role_meta"
         _relabel_implicit_role_headers(section.body_paras)
         section.roles = _group_roles(section.body_paras)
