@@ -112,7 +112,7 @@ def build_classification_input(doc: ResumeDocument, document_id: str) -> Classif
 
         roles: list[ClassificationRoleInput] = []
 
-        if section.semantic_type == "experience" and section.roles:
+        if section.roles:
             for role in section.roles:
                 rid = role.role_id_stable or role.role_id or f"role_in_{sec_id}_{len(roles)+1}"
 
@@ -145,6 +145,30 @@ def build_classification_input(doc: ResumeDocument, document_id: str) -> Classif
                     meta_para_ids=meta_ids,
                     bullet_para_ids=bullet_ids,
                 ))
+        elif (
+            section.semantic_type not in ("experience", "summary", "skills", "education")
+            and any(p.semantic == "role_meta" for p in section.body_paras)
+        ):
+            # Pattern C: job-title-as-section (PDF table/column layouts where
+            # each job title is parsed as a section heading followed by
+            # company + date + bullets in the body).  The section heading itself
+            # is the role header; use its existing para_id so the entry is
+            # consistent with what the section heading shows in paras[0].
+            meta_ids = []
+            bullet_ids = []
+            for pm in section.body_paras:
+                p = ClassificationParaInput(_pid(pm), pm.text, pm.semantic)
+                paras.append(p)
+                if pm.semantic == "role_meta":
+                    meta_ids.append(p.para_id)
+                elif pm.semantic == "bullet":
+                    bullet_ids.append(p.para_id)
+            roles.append(ClassificationRoleInput(
+                role_id=f"{sec_id}_role_1",
+                header_para_ids=[_pid(section.heading)],
+                meta_para_ids=meta_ids,
+                bullet_para_ids=bullet_ids,
+            ))
         else:
             for pm in section.body_paras:
                 paras.append(ClassificationParaInput(_pid(pm), pm.text, pm.semantic))
