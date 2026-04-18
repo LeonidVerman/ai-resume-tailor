@@ -1317,6 +1317,9 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         "affiliations", "affiliations and awards", "affiliations & awards",
         "certifications and training", "training and certifications",
         "professional certifications",
+        # Contact sections appear in sidebar/column layouts; must be recognised
+        # as headings so they don't bleed into adjacent experience sections.
+        "contact", "contact info", "contact information",
     })
 )
 
@@ -1672,6 +1675,22 @@ def _group_sections(
             # matched the same way as in _infer_semantic.
             if not found_section and _normalize_heading_text(pm.text) not in _ALL_HEADING_NAMES_NOSPACE:
                 header_paras.append(pm)
+                continue
+
+            # Two-column / table PDF layout: the experience section label
+            # ("WORK EXPERIENCE") appears alone as a heading with no body
+            # paragraphs; the actual job-title entries follow as bold-heading
+            # paragraphs in the adjacent column.  Absorb the first such
+            # non-known heading as a role_header so _group_roles can detect it.
+            _htext = _normalize_heading_text(pm.text)
+            if (
+                current is not None
+                and current.semantic_type == "experience"
+                and len(current.body_paras) == 0
+                and _htext not in _ALL_HEADING_NAMES_NOSPACE
+            ):
+                pm.semantic = "role_header"
+                current.body_paras.append(pm)
                 continue
 
             found_section = True

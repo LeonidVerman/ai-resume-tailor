@@ -186,7 +186,11 @@ def detect_merged_section(sections: list[dict], para_map: dict[str, str]) -> lis
             continue
         for p in sec.get("paragraphs", []):
             if p.get("parser_semantic") in ("section_heading", "paragraph", "role_header"):
-                text = p.get("text", "").strip().lower()
+                raw = p.get("text", "").strip()
+                # Sentence fragments (lowercase first char) are not headings.
+                if not raw or not raw[0].isupper():
+                    continue
+                text = raw.lower()
                 if text in _SECTION_HEADING_WORDS and text not in _EXPERIENCE_TITLES:
                     issues.append(Issue(
                         code="MERGED_SECTION_SUSPECTED",
@@ -206,6 +210,11 @@ def detect_heading_not_recognized(sections: list[dict]) -> list[Issue]:
                 continue
             text = p.get("text", "").strip()
             if not text or len(text) > 60:
+                continue
+            # Sentence fragments that end up as short paragraphs in PDFs
+            # (e.g. "projects" as the last word of a wrapped line) are
+            # not headings.  Genuine missed headings always start uppercase.
+            if not text[0].isupper():
                 continue
             words = set(re.split(r"[\s/&,]+", text.lower()))
             words.discard("")
