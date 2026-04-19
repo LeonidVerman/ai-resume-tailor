@@ -452,6 +452,19 @@ def downgrade_invalid_sections(classification: dict, invalid_section_ids: set[st
 # Public: combined entry point
 # ---------------------------------------------------------------------------
 
+def get_errors_by_section(validation: dict) -> dict[str, list[dict]]:
+    """Return a mapping of section_id → list of error dicts from a validation result.
+
+    Useful for building a repair payload that scopes errors to each invalid section.
+    """
+    by_section: dict[str, list[dict]] = {}
+    for err in validation.get("errors", []):
+        sid = err.get("section_id") or ""
+        if sid:
+            by_section.setdefault(sid, []).append(err)
+    return by_section
+
+
 def apply_validation_and_downgrade(
     raw_classification: dict,
 ) -> tuple[dict, dict, dict]:

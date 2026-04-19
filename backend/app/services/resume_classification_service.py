@@ -8,25 +8,37 @@ Responsibilities
 - Accept a parsed ResumeDocument (or build one from raw bytes when needed)
 - Build a compact ClassificationInput from the IR
 - Call the LLM with the classification prompt and JSON schema
-- Validate the LLM output and downgrade invalid sections (Phase 2a)
+- Validate the LLM output
+- If invalid sections exist: attempt section-level LLM repair (single pass)
+- Revalidate after repair; downgrade any remaining invalid sections
 - Persist the result envelope in structured_resumes.classification_jsonb
 - Expose a retrieval helper for the admin debug endpoint
 
-Phase 1: LLM classification.
+Phase 1:  LLM classification.
 Phase 2a: Deterministic validation + safe section downgrade (no LLM retry).
+Phase 2b: LLM repair of invalid sections before downgrade (single pass).
 
-Prompt:   prompts/classification/classify_template_resume.txt
-Schema:   prompts/classification/classification_schema.json
+Prompt (classify):  prompts/classification/classify_template_resume.txt
+Schema (classify):  prompts/classification/classification_schema.json
+Prompt (repair):    prompts/classification/repair_classification.txt
+Schema (repair):    prompts/classification/repair_classification_schema.json
 
 Stored envelope (classification_jsonb):
 {
-  "raw_classification": {...},   # verbatim LLM output
-  "validation":         {...},   # validate_classification() result
-  "classification":     {...},   # final contract-safe classification
-  "status":             "valid" | "downgraded",
-  "validation_error_count": int,
-  "invalid_section_ids": [...],
-  "recovery_applied":   bool,
+  "raw_classification":         {...},   # verbatim initial LLM output
+  "validation":                 {...},   # validate_classification() result (initial)
+  "repair_input":               {...|null},  # repair request payload (null if no repair needed)
+  "repair_response":            {...|null},  # verbatim repair LLM output (null if not attempted / failed)
+  "validation_after_repair":    {...|null},  # validate_classification() after repair merge (null if no repair)
+  "classification":             {...},   # final contract-safe classification
+  "status":                     "valid" | "repaired" | "repaired_and_downgraded" | "downgraded" | "failed",
+  "validation_error_count":     int,     # errors in initial validation
+  "invalid_section_count_before_repair": int,
+  "invalid_section_count_after_repair":  int,
+  "repaired_section_count":     int,
+  "downgraded_section_count":   int,
+  "invalid_section_ids":        [...],   # kept for backward compat (ids downgraded in final)
+  "recovery_applied":           bool,    # kept for backward compat
 }
 """
 
@@ -45,34 +57,32 @@ from backend.app.db.repositories.structured_resume_repository import StructuredR
 
 logger = logging.getLogger(__name__)
 
-# Prompt and schema paths relative to the tailor package config.
 _PROMPT_NAME = "classification/classify_template_resume"
+_REPAIR_PROMPT_NAME = "classification/repair_classification"
 
 
 def _load_schema() -> dict:
-    """Load the OpenAI response_format JSON schema from the prompts directory."""
     from tailor.config import PROMPTS_DIR
     schema_path = PROMPTS_DIR / "classification" / "classification_schema.json"
     with open(schema_path, encoding="utf-8") as f:
         return json.load(f)
 
 
-def _build_ir(norm_data: bytes, template_ir_dict: dict | None):
-    """Return a ResumeDocument for classification.
+def _load_repair_schema() -> dict:
+    from tailor.config import PROMPTS_DIR
+    schema_path = PROMPTS_DIR / "classification" / "repair_classification_schema.json"
+    with open(schema_path, encoding="utf-8") as f:
+        return json.load(f)
 
-    For PDF uploads template_ir_dict is already available (parsed during
-    normalization).  For DOCX uploads we write the bytes to a temp file and
-    parse with parse_docx (stable IDs are assigned inside the parser).
-    """
+
+def _build_ir(norm_data: bytes, template_ir_dict: dict | None):
     if template_ir_dict:
         from tailor.compiler.models import ResumeDocument, assign_stable_ids
         doc = ResumeDocument.from_dict(template_ir_dict)
-        # Re-assign IDs in case the serialized IR pre-dates the stable-ID feature.
         if not any(s.section_id for s in doc.sections):
             assign_stable_ids(doc)
         return doc
 
-    # DOCX path: write to temp file, parse, return.
     suffix = ".docx"
     tmp_path: str | None = None
     try:
@@ -106,11 +116,7 @@ class ResumeClassificationService:
         norm_data: bytes,
         template_ir_dict: dict | None,
     ) -> dict | None:
-        """Run classification and persist result in classification_jsonb.
-
-        Returns the raw classification dict on success, None on any failure.
-        Errors are logged; they do NOT propagate to the caller.
-        """
+        """Run classification and persist result in classification_jsonb."""
         resume = self._repo.get_by_id(resume_id)
         if resume is None:
             logger.warning("classify_and_store: resume %s not found", resume_id)
@@ -128,7 +134,7 @@ class ResumeClassificationService:
         try:
             self._repo.update(resume, classification_jsonb=result)
             self._db.commit()
-            logger.info("Classification stored for resume=%s", resume_id)
+            logger.info("Classification stored for resume=%s status=%s", resume_id, result.get("status"))
         except Exception as exc:
             logger.error(
                 "Failed to persist classification for resume=%s: %s",
@@ -139,27 +145,164 @@ class ResumeClassificationService:
         return result
 
     def get_classification(self, resume_id: int) -> dict | None:
-        """Return the stored classification dict, or None if not yet classified."""
         resume = self._repo.get_by_id(resume_id)
         if resume is None:
             return None
         return resume.classification_jsonb
 
     def classify_bytes(self, norm_data: bytes, template_ir_dict: dict | None) -> dict:
-        """Classify bytes directly without storing. Returns classification dict only."""
         _llm_input, classification = self._classify(0, norm_data, template_ir_dict)
         return classification
 
     def classify_bytes_with_input(
         self, norm_data: bytes, template_ir_dict: dict | None
     ) -> tuple[dict, dict]:
-        """Classify bytes and return (llm_input_dict, classification_dict).
-
-        Use this when the caller needs the LLM input for debugging/download.
-        """
         return self._classify(0, norm_data, template_ir_dict)
 
     # ── Internal ──────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _build_repair_payload(
+        llm_input_dict: dict,
+        raw_classification: dict,
+        validation: dict,
+    ) -> dict:
+        """Assemble the repair request payload for all invalid sections.
+
+        Each invalid section contributes one entry with:
+          - parser_section:   the parser-produced section from llm_input_dict
+          - classified_section: the current (invalid) classification output
+          - validation_errors: error dicts scoped to that section
+        """
+        from tailor.compiler.classification_validator import get_errors_by_section
+
+        errors_by_sid = get_errors_by_section(validation)
+
+        # Index parser sections by section_id for fast lookup
+        parser_secs: dict[str, dict] = {
+            s["section_id"]: s
+            for s in llm_input_dict.get("sections", [])
+            if isinstance(s, dict) and s.get("section_id")
+        }
+
+        # Index classified sections by section_id
+        classified_secs: dict[str, dict] = {
+            s.get("section_id", ""): s
+            for s in raw_classification.get("sections", [])
+            if isinstance(s, dict)
+        }
+
+        invalid_section_ids = {
+            sr["section_id"]
+            for sr in validation.get("section_results", [])
+            if not sr.get("is_valid", True) and sr.get("section_id")
+        }
+
+        invalid_sections = []
+        for sid in invalid_section_ids:
+            classified = classified_secs.get(sid)
+            if classified is None:
+                continue
+            invalid_sections.append({
+                "parser_section": parser_secs.get(sid, {}),
+                "classified_section": classified,
+                "validation_errors": errors_by_sid.get(sid, []),
+            })
+
+        return {
+            "document_id": raw_classification.get("document_id", ""),
+            "source_kind": raw_classification.get("source_kind", ""),
+            "invalid_sections": invalid_sections,
+        }
+
+    @staticmethod
+    def _merge_repaired_sections(
+        raw_classification: dict,
+        repaired_sections: list[dict],
+        invalid_ids: set[str],
+    ) -> dict:
+        """Return a new classification dict with repaired sections substituted.
+
+        Rules:
+        - Only sections whose section_id was invalid may be replaced.
+        - If repair omits an invalid section, the original stays (downgrade will handle it).
+        - If repair returns an unknown section_id, it is ignored.
+        - Already-valid sections are never touched.
+        """
+        repair_by_id: dict[str, dict] = {}
+        for sec in repaired_sections:
+            if not isinstance(sec, dict):
+                continue
+            sid = sec.get("section_id", "")
+            if sid in invalid_ids:
+                repair_by_id[sid] = sec
+            else:
+                if sid:
+                    logger.debug("Repair returned unknown/valid section_id=%s — ignored", sid)
+
+        result = dict(raw_classification)
+        result["sections"] = [
+            repair_by_id.get(sec.get("section_id", ""), sec)
+            if sec.get("section_id", "") in invalid_ids
+            else sec
+            for sec in raw_classification.get("sections", [])
+        ]
+        return result
+
+    def _call_repair(self, repair_payload: dict, resume_id: int) -> dict | None:
+        """Call the repair LLM with the repair payload.
+
+        Returns the parsed repair response dict, or None if the call fails or
+        the response is malformed.
+        """
+        from tailor.prompts import _load_prompt
+
+        try:
+            repair_prompt = _load_prompt(_REPAIR_PROMPT_NAME)
+        except FileNotFoundError:
+            logger.error("Repair prompt file not found: %s", _REPAIR_PROMPT_NAME)
+            return None
+
+        repair_schema = _load_repair_schema()
+        input_json = json.dumps(repair_payload, ensure_ascii=False)
+        full_prompt = f"{repair_prompt}\n\nINPUT:\n{input_json}"
+
+        client = make_openai_client_from_settings()
+        try:
+            result = client.complete_json(
+                messages=[{"role": "user", "content": full_prompt}],
+                json_schema=repair_schema,
+                model="gpt-4o-mini",
+                temperature=0.1,
+                max_tokens=8192,
+            )
+        except Exception as exc:
+            logger.error(
+                "Repair LLM call failed for resume=%s: %s", resume_id, exc, exc_info=True,
+            )
+            return None
+
+        try:
+            parsed = json.loads(result.content)
+        except Exception as exc:
+            logger.error(
+                "Repair response is not valid JSON for resume=%s: %s", resume_id, exc,
+            )
+            return None
+
+        if not isinstance(parsed.get("sections"), list):
+            logger.error(
+                "Repair response missing sections[] for resume=%s", resume_id,
+            )
+            return None
+
+        logger.debug(
+            "Repair LLM complete resume=%s repaired_sections=%d tokens=%d",
+            resume_id,
+            len(parsed.get("sections", [])),
+            result.usage.total_tokens,
+        )
+        return parsed
 
     def _classify(
         self,
@@ -167,18 +310,24 @@ class ResumeClassificationService:
         norm_data: bytes,
         template_ir_dict: dict | None,
     ) -> tuple[dict, dict]:
-        """Build input, call LLM, validate, downgrade.
+        """Build input, call LLM, validate, repair, revalidate, downgrade.
 
         Returns
         -------
         (llm_input_dict, envelope_dict)
 
         envelope_dict contains:
-          raw_classification, validation, classification (final), status,
-          validation_error_count, invalid_section_ids, recovery_applied.
+          raw_classification, validation, repair_input, repair_response,
+          validation_after_repair, classification (final), status,
+          validation_error_count, invalid_section_count_before_repair,
+          invalid_section_count_after_repair, repaired_section_count,
+          downgraded_section_count, invalid_section_ids, recovery_applied.
         """
         from tailor.compiler.classification_models import build_classification_input
-        from tailor.compiler.classification_validator import apply_validation_and_downgrade
+        from tailor.compiler.classification_validator import (
+            validate_classification,
+            downgrade_invalid_sections,
+        )
         from tailor.prompts import _load_prompt
 
         doc = _build_ir(norm_data, template_ir_dict)
@@ -208,26 +357,97 @@ class ResumeClassificationService:
             result.usage.total_tokens,
         )
 
-        validation, final, status_meta = apply_validation_and_downgrade(raw_classification)
+        # ── Step 2: initial validation ────────────────────────────────────
+        initial_validation = validate_classification(raw_classification)
+        invalid_ids_before = [
+            sr["section_id"]
+            for sr in initial_validation["section_results"]
+            if not sr["is_valid"]
+        ]
+        invalid_count_before = len(invalid_ids_before)
 
-        if status_meta["recovery_applied"]:
+        # ── Step 3: repair invalid sections if any ────────────────────────
+        repair_input: dict | None = None
+        repair_response: dict | None = None
+        validation_after_repair: dict | None = None
+        merged = raw_classification
+
+        if invalid_ids_before:
+            repair_input = self._build_repair_payload(
+                llm_input_dict, raw_classification, initial_validation
+            )
+            repair_response = self._call_repair(repair_input, resume_id)
+
+            if repair_response is not None:
+                repaired_sections = repair_response.get("sections", [])
+                merged = self._merge_repaired_sections(
+                    raw_classification, repaired_sections, set(invalid_ids_before)
+                )
+                # ── Step 4: revalidate merged result ──────────────────────
+                validation_after_repair = validate_classification(merged)
+                logger.info(
+                    "Classification repair resume=%s invalid_before=%d repair_sections=%d",
+                    resume_id, invalid_count_before, len(repaired_sections),
+                )
+            else:
+                logger.warning(
+                    "Repair call produced no usable result for resume=%s — falling back to downgrade",
+                    resume_id,
+                )
+
+        # ── Step 5: downgrade remaining invalid sections ──────────────────
+        check_validation = validation_after_repair or initial_validation
+        invalid_ids_after = [
+            sr["section_id"]
+            for sr in check_validation["section_results"]
+            if not sr["is_valid"]
+        ]
+        invalid_count_after = len(invalid_ids_after)
+        invalid_set_after = set(invalid_ids_after)
+
+        final = downgrade_invalid_sections(merged, invalid_set_after)
+
+        # ── Step 6: compute status and counts ────────────────────────────
+        repaired_count = invalid_count_before - invalid_count_after
+        downgraded_count = invalid_count_after
+
+        if invalid_count_before == 0:
+            status = "valid"
+        elif repair_response is not None and invalid_count_after == 0:
+            status = "repaired"
+        elif repair_response is not None and invalid_count_after > 0:
+            status = "repaired_and_downgraded"
+        elif repair_response is None and invalid_count_before > 0:
+            status = "downgraded"
+        else:
+            status = "valid"
+
+        if status != "valid":
             logger.warning(
-                "Classification validation: %d invalid section(s) downgraded "
-                "for resume=%s — ids=%s error_count=%d",
-                len(status_meta["invalid_section_ids"]),
-                resume_id,
-                status_meta["invalid_section_ids"],
-                status_meta["validation_error_count"],
+                "Classification result resume=%s status=%s before=%d after=%d "
+                "repaired=%d downgraded=%d",
+                resume_id, status,
+                invalid_count_before, invalid_count_after,
+                repaired_count, downgraded_count,
             )
         else:
-            logger.debug(
-                "Classification validation passed for resume=%s", resume_id,
-            )
+            logger.debug("Classification validation passed for resume=%s", resume_id)
 
-        envelope = {
+        envelope: dict = {
             "raw_classification": raw_classification,
-            "validation": validation,
+            "validation": initial_validation,
+            "repair_input": repair_input,
+            "repair_response": repair_response,
+            "validation_after_repair": validation_after_repair,
             "classification": final,
-            **status_meta,
+            "status": status,
+            "validation_error_count": len(initial_validation["errors"]),
+            "invalid_section_count_before_repair": invalid_count_before,
+            "invalid_section_count_after_repair": invalid_count_after,
+            "repaired_section_count": repaired_count,
+            "downgraded_section_count": downgraded_count,
+            # backward-compat keys
+            "invalid_section_ids": invalid_ids_after,
+            "recovery_applied": bool(invalid_set_after),
         }
         return llm_input_dict, envelope
