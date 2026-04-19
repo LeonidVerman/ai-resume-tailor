@@ -71,6 +71,7 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         "volunteer", "volunteering", "leadership", "interests",
         "additional information", "communication",
         "affiliations", "affiliations and awards", "affiliations & awards",
+        "contact",
     })
 )
 

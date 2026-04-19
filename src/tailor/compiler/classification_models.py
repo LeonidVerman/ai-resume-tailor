@@ -101,13 +101,17 @@ def _normalize_role_header_items(
         extra_meta.insert(0, items[0])
         items = items[1:]
 
-    # Norm C: items at index >= 1 that look like employer/location (short, no pipe, no date)
+    # Norm C: items at index >= 1 that look like employer/location or body text
+    # (no pipe, no date, and not a very long proper title).  The threshold is
+    # 120 chars to also catch medium-length sentence-like descriptions (e.g.
+    # "This is the place for a summary of your key responsibilities…", 89 chars)
+    # that templates insert as header_extra lines.
     if len(items) > 1:
         new_items: list[tuple[str, str, str]] = [items[0]]
         for item in items[1:]:
             pid, txt, sem = item
             t = txt.strip()
-            if len(t) <= 80 and ' | ' not in t and not _is_date_line(t):
+            if len(t) <= 120 and ' | ' not in t and not _is_date_line(t):
                 extra_meta.append(item)
             else:
                 new_items.append(item)

@@ -201,10 +201,20 @@ def detect_merged_section(sections: list[dict], para_map: dict[str, str]) -> lis
     return issues
 
 
+_SKILLS_SECTION_WORDS: frozenset[str] = frozenset({
+    "skill", "skills", "competenc", "expertise", "proficien", "key skills",
+    "technical skills", "core competencies",
+})
+
+
 def detect_heading_not_recognized(sections: list[dict]) -> list[Issue]:
     """Short paragraph that looks like a heading but is marked 'paragraph'."""
     issues: list[Issue] = []
     for sec in sections:
+        # Single-word soft-skill items (e.g. "Communication", "Leadership") that
+        # appear inside skills-type sections are not missed headings.
+        sec_title_lower = sec.get("raw_title", "").lower()
+        in_skills_sec = any(kw in sec_title_lower for kw in _SKILLS_SECTION_WORDS)
         for p in sec.get("paragraphs", []):
             if p.get("parser_semantic") != "paragraph":
                 continue
@@ -219,6 +229,9 @@ def detect_heading_not_recognized(sections: list[dict]) -> list[Issue]:
             words = set(re.split(r"[\s/&,]+", text.lower()))
             words.discard("")
             if words & _HEADING_TRIGGER_WORDS and text.lower() in _SECTION_HEADING_WORDS:
+                # Skip single-word soft-skill items inside skill sections.
+                if in_skills_sec and len(words) == 1:
+                    continue
                 issues.append(Issue(
                     code="HEADING_NOT_RECOGNIZED",
                     detail=f"'{text}' looks like a section heading but is marked 'paragraph'",
@@ -233,13 +246,17 @@ def detect_bullet_not_recognized(sections: list[dict]) -> list[Issue]:
     issues: list[Issue] = []
     for sec in sections:
         for p in sec.get("paragraphs", []):
-            if p.get("parser_semantic") == "bullet":
+            sem = p.get("parser_semantic")
+            # A paragraph already recognised as a section_heading or role_header
+            # is not a missed bullet even if its text starts with a list marker
+            # (e.g. numbered section headings like "1. Professional Summary").
+            if sem in ("bullet", "section_heading", "role_header"):
                 continue
             text = p.get("text", "")
             if _BULLET_PREFIX_RE.match(text):
                 issues.append(Issue(
                     code="BULLET_NOT_RECOGNIZED",
-                    detail=f"'{text.strip()[:60]}' looks like a bullet but is '{p.get('parser_semantic')}'",
+                    detail=f"'{text.strip()[:60]}' looks like a bullet but is '{sem}'",
                     section_id=sec["section_id"],
                     para_id=p["para_id"],
                 ))
