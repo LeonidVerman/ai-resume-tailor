@@ -359,6 +359,11 @@ def _infer_semantic(pm: ParaModel) -> str:
     ):
         return "bullet"
 
+    # Fused year-prefix: "2023CompanyName" — year glued to next word so the
+    # \b boundary in _YEAR_RE doesn't fire.  Treat as role_meta.
+    if re.match(r"^(19|20)\d{2}[A-Za-z]", text) and len(text) <= 80 and "|" not in text:
+        return "role_meta"
+
     # NBSP/space-column role header: job title and date/company are placed on
     # the same paragraph and aligned using non-breaking spaces (\\xa0) or tab
     # stops instead of a "|" separator.  Detect by splitting on 3+ consecutive

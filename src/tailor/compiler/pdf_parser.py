@@ -1655,6 +1655,26 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             pass
 
     _flush()
+
+    # Date-only body: the section body has only role_meta lines and no headers
+    # were ever detected (e.g. a "WORK HISTORY" section where dates are placed
+    # in the same column as the section label but the job titles were absorbed
+    # into a different text block).  Synthesise a minimal stub role per date
+    # line so the section is not reported as EXPERIENCE_NO_ROLES.
+    if not roles and pre_header_meta:
+        non_empty = [p for p in body_paras if p.semantic != "empty"]
+        if non_empty and all(p.semantic == "role_meta" for p in non_empty):
+            for pm in pre_header_meta:
+                roles.append(
+                    RoleEntry(
+                        header=pm,
+                        header_extra=[],
+                        meta_lines=[],
+                        bullets=[],
+                        role_id=pm.text.strip(),
+                    )
+                )
+
     return roles
 
 
@@ -1666,6 +1686,17 @@ def _group_sections(
     sections: list[ResumeSection] = []
     current: ResumeSection | None = None
     found_section = False
+    # Through-empty-section absorb: stash an empty experience section so that
+    # a non-known heading encountered one or more known sections later can
+    # still be absorbed into it as a role_header.  This handles two-column PDF
+    # layouts where the experience section label and the job-title headings
+    # land in different text-extraction bands, with other known section labels
+    # (Education, Contact Info) appearing in between.
+    _last_empty_exp: ResumeSection | None = None
+    _last_empty_exp_insert_idx: int | None = None
+    # True when `current` has already been inserted into `sections` (via
+    # through-empty absorb) and must not be appended again.
+    _current_in_sections = False
 
     for pm in paras:
         if pm.semantic == "section_heading":
@@ -1693,10 +1724,43 @@ def _group_sections(
                 current.body_paras.append(pm)
                 continue
 
+            # Through-empty absorb: a non-known heading appeared after one or
+            # more known sections that separated it from the stashed empty
+            # experience section.  Finalize the intervening "current" section,
+            # restore the stash as current, and absorb this heading into it.
+            if _last_empty_exp is not None and _htext not in _ALL_HEADING_NAMES_NOSPACE:
+                if current is not None:
+                    _finalise(current)
+                    if not _current_in_sections:
+                        sections.append(current)
+                pm.semantic = "role_header"
+                _last_empty_exp.body_paras.append(pm)
+                sections.insert(_last_empty_exp_insert_idx, _last_empty_exp)
+                current = _last_empty_exp
+                _current_in_sections = True
+                _last_empty_exp = None
+                _last_empty_exp_insert_idx = None
+                continue
+
             found_section = True
             if current is not None:
-                _finalise(current)
-                sections.append(current)
+                if (
+                    current.semantic_type == "experience"
+                    and len(current.body_paras) == 0
+                ):
+                    # Stash the empty experience section; do not finalize yet.
+                    # If a previous stash exists, finalize it now (it will not
+                    # get any role content).
+                    if _last_empty_exp is not None:
+                        _finalise(_last_empty_exp)
+                        sections.insert(_last_empty_exp_insert_idx, _last_empty_exp)
+                    _last_empty_exp = current
+                    _last_empty_exp_insert_idx = len(sections)
+                else:
+                    _finalise(current)
+                    if not _current_in_sections:
+                        sections.append(current)
+            _current_in_sections = False
             current = ResumeSection(
                 title=pm.text.strip(),
                 heading=pm,
@@ -1707,9 +1771,15 @@ def _group_sections(
         elif current is not None:
             current.body_paras.append(pm)
 
+    # Finalize any stash that was never absorbed.
+    if _last_empty_exp is not None:
+        _finalise(_last_empty_exp)
+        sections.insert(_last_empty_exp_insert_idx, _last_empty_exp)
+
     if current is not None:
         _finalise(current)
-        sections.append(current)
+        if not _current_in_sections:
+            sections.append(current)
 
     return header_paras, sections
 

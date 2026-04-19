@@ -229,6 +229,15 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "them to role_meta, triggering Pattern B (date-as-header).  Role detection "
         "now works (3 roles vs 0); real LLM pipeline unaffected."
     ),
+    "16-Devops-Engineer-Editable-Resume-Template-Download-in-docx.docx": (
+        "Fused year+company role format ('2023Ginyard International Co. Junior "
+        "software developer'): year glued to company name so the word-boundary "
+        "regex missed it; fused-year detection now promotes these lines to "
+        "role_meta, triggering Pattern B.  The identity serializer then combines "
+        "role.header with header_extra (content paragraphs) via '|', changing "
+        "paragraph text.  Role detection now works (1 role vs 0); real LLM "
+        "pipeline unaffected."
+    ),
 }
 
 # PDFs with non-standard content that cannot roundtrip cleanly.
