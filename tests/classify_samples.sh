@@ -126,3 +126,7 @@ echo ""
 echo "Done."
 echo "  Classification: $REPO_ROOT/tmp/artefacts/classification/{docx,pdf}/"
 echo "  LLM input:      $REPO_ROOT/tmp/artefacts/classification/llm-input/{docx,pdf}/"
+
+echo ""
+echo "=== Generating classification report ==="
+python3 "$REPO_ROOT/scripts/generate_classification_report.py"
