@@ -32,6 +32,20 @@ CORE RULES
 Invalid structure is worse than conservative classification.
 
 ==================================================
+PARSER-FIRST RULE
+==================================================
+
+If parser already provides:
+- roles[]
+- role_header-like lines
+- role_meta-like lines
+
+Use parser structure as the default truth.
+
+Do NOT reshuffle aggressively.
+Only normalize structure to satisfy the contract.
+
+==================================================
 ALLOWED VALUES
 ==================================================
 
@@ -99,7 +113,7 @@ If semantic_type = "summary":
 - preserve_body_structure MUST be false
 
 IF YOU CANNOT SATISFY THIS:
-→ classify entire section as:
+→ fallback to:
   semantic_type = "other"
   rewrite_policy = "preserve"
 
@@ -152,14 +166,94 @@ body_blocks:
   - semantic_type = "bullet"
   - rewrite_policy = "rewrite_text"
 
-IF roles cannot be safely determined:
-→ DO NOT output broken experience
+------------------------------------------
+EXPERIENCE NORMALIZATION PROCEDURE
+------------------------------------------
+
+When classifying experience sections, follow this procedure strictly:
+
+Start from parser-provided roles and preserve grouping.
+
+For each role:
+
+1. HEADER (role_header)
+   - ONLY role title / position name
+   Examples:
+     - Senior Software Engineer
+     - Backend Developer
+     - Project Coordinator
+
+2. META (role_meta)
+   - Employment metadata only:
+     - dates
+     - company
+     - location
+     - employment type
+   Examples:
+     - Jan 2020 – Present
+     - Acme Corp
+     - Vancouver, BC
+
+3. BODY (bullet)
+   - Sentence-like responsibilities / achievements
+   Examples:
+     - Led migration to microservices
+     - Improved latency by 35%
+
+------------------------------------------
+AMBIGUOUS-LINE RULES
+------------------------------------------
+
+- Date-only line → MUST go to meta
+- Company-only line → prefer meta
+- Location-only line → prefer meta
+- Sentence-like text → MUST go to body
+- If a line mixes title + date:
+    - title → header
+    - date → meta
+- If unsure between meta and body → choose BODY
+
+STRICT PROHIBITIONS:
+- NEVER place date-only text in header
+- NEVER place sentence-like text in meta
+- NEVER mix semantic types inside header/meta/body
+
+------------------------------------------
+EXAMPLES
+------------------------------------------
+
+Example 1:
+"Jan 2020 – Present | Senior Engineer"
+→ header: "Senior Engineer"
+→ meta: "Jan 2020 – Present"
+
+Example 2:
+"Acme Corp"
+→ meta
+
+Example 3:
+"Led migration of services"
+→ body
+
+Example 4:
+"Senior Engineer" + "Acme Corp" + "Jan 2020 – Present"
+→ header: "Senior Engineer"
+→ meta: "Acme Corp", "Jan 2020 – Present"
+
+------------------------------------------
+FALLBACK RULE (IMPORTANT)
+------------------------------------------
+
+Before falling back:
+- attempt normalization using rules above
+
+If still not possible:
 → fallback to:
   semantic_type = "other"
   rewrite_policy = "preserve"
 
 ------------------------------------------
-EDUCATION SECTION (HARD RULE)
+EDUCATION SECTION
 ------------------------------------------
 
 If semantic_type = "education":
@@ -170,14 +264,6 @@ If semantic_type = "education":
 - EVERY block MUST:
   - semantic_type = "education_entry" OR "other_paragraph"
   - rewrite_policy = "preserve"
-
-- preserve_heading MUST be true
-- preserve_body_structure MUST be true
-
-DO NOT USE:
-- role_header
-- role_meta
-- bullet
 
 ------------------------------------------
 PROJECTS SECTION
@@ -205,11 +291,6 @@ If semantic_type = "additional":
   - additional_item OR other_paragraph
   - rewrite_policy = "preserve"
 
-DO NOT USE:
-- role_header
-- role_meta
-- bullet
-
 ------------------------------------------
 OTHER SECTION
 ------------------------------------------
@@ -235,10 +316,9 @@ STRUCTURE RULES
    - MUST use blocks[]
    - MUST NOT use roles[]
 
-3. NEVER mix:
-   - roles[] and blocks[] for same section (except roles-only sections)
+3. NEVER mix roles[] and blocks[]
 
-4. NO MIXED POLICIES inside a section.
+4. NO mixed rewrite policies inside a section
 
 ==================================================
 BLOCK IDS
@@ -280,10 +360,10 @@ FINAL RULE
 
 If any rule cannot be satisfied:
 
-→ fallback to safe classification:
+→ fallback to:
    semantic_type = "other"
    rewrite_policy = "preserve"
 
-STRICTLY FOLLOW ALL RULES.
+STRUCTURE VALIDITY IS THE HIGHEST PRIORITY.
 
 Return JSON only.
