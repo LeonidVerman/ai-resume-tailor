@@ -470,9 +470,16 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     meta: list[ParaModel] = []
     bullets: list[ParaModel] = []
     state = "init"
+    # True when the current role was started by a role_meta line (Pattern B —
+    # no role_header precedes the first date/company line).  In Pattern B
+    # documents every role boundary IS a role_meta, so a new role_meta that
+    # appears after bullets have started must be treated as the next boundary,
+    # not absorbed as a continuation bullet.  Mirrored from pdf_parser.py
+    # used_pattern_b logic.
+    header_is_role_meta = False
 
     def _flush():
-        nonlocal header
+        nonlocal header, header_is_role_meta
         if header is None:
             return
         roles.append(RoleEntry(
@@ -483,6 +490,7 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             role_id=header.text.strip(),
         ))
         header = None
+        header_is_role_meta = False
         header_extra.clear()
         meta.clear()
         bullets.clear()
@@ -493,6 +501,7 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
         if s == "role_header":
             _flush()
             header = pm
+            header_is_role_meta = False
             state = "header"
         elif state == "init":
             if s == "role_meta":
@@ -501,6 +510,7 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 # as a synthetic role boundary so subsequent content is captured.
                 _flush()
                 header = pm
+                header_is_role_meta = True
                 state = "header"
             # all other pre-role content is silently skipped
         elif state == "header":
@@ -541,10 +551,20 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
         elif state == "bullets":
-            if s in ("bullet", "paragraph", "role_meta"):
+            if s == "role_meta" and header_is_role_meta:
+                # Pattern B continuation: current role was started by a role_meta
+                # boundary; a new role_meta after bullets signals the next job.
+                # Flush the current role and start the new one.
+                _flush()
+                header = pm
+                header_is_role_meta = True
+                state = "header"
+            elif s in ("bullet", "paragraph", "role_meta"):
                 # role_meta can appear mid-bullet-list when a bullet line contains a
                 # year (e.g. "Resolved 150 bugs since 2023 for apps post-launch to")
                 # but is semantically a continuation bullet, not a date/meta line.
+                # This branch is only reached when header_is_role_meta is False
+                # (role started via role_header), so role_meta here is a false positive.
                 bullets.append(pm)
             # role_header handled at top; ignore empty/other
         else:

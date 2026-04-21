@@ -56,6 +56,8 @@ _ISSUE_WEIGHTS: dict[str, int] = {
     "BULLET_NOT_RECOGNIZED": 1,
     "ROLE_HEADER_CONTAINS_DATE": 2,
     "ROLE_GROUPING_WEAK": 2,
+    "EXPERIENCE_ROLE_BOUNDARY_INSIDE_BULLETS": 5,
+    "EXPERIENCE_OVERMERGED_ROLE": 3,
 }
 
 # Section titles that indicate a paragraph has been wrongly absorbed into
@@ -337,6 +339,80 @@ def detect_role_grouping_weak(
     return issues
 
 
+def detect_experience_role_boundary_inside_bullets(sections: list[dict]) -> list[Issue]:
+    """Experience role bullet_para_ids contain paragraphs whose parser_semantic is not 'bullet'.
+
+    This catches the over-merge pattern where job-boundary lines (role_meta,
+    paragraph) were absorbed into a prior role's bullet list instead of
+    triggering a new role split.
+    """
+    issues: list[Issue] = []
+    for sec in sections:
+        if not _is_experience_section(sec.get("raw_title", "")):
+            continue
+        para_sem: dict[str, str] = {
+            p["para_id"]: p.get("parser_semantic", "")
+            for p in sec.get("paragraphs", [])
+        }
+        for role in sec.get("roles", []):
+            non_bullet = [
+                (pid, para_sem.get(pid, "?"))
+                for pid in role.get("bullet_para_ids", [])
+                if para_sem.get(pid, "bullet") != "bullet"
+            ]
+            if non_bullet:
+                sample = [(pid, sem) for pid, sem in non_bullet[:4]]
+                issues.append(Issue(
+                    code="EXPERIENCE_ROLE_BOUNDARY_INSIDE_BULLETS",
+                    detail=(
+                        f"Role bullet_para_ids contain {len(non_bullet)} non-bullet "
+                        f"paragraph(s): {sample}"
+                    ),
+                    section_id=sec["section_id"],
+                    role_id=role["role_id"],
+                ))
+    return issues
+
+
+# Minimum bullet_para_ids count to consider a role suspect for over-merging.
+_OVERMERGE_BULLET_THRESHOLD = 15
+
+
+def detect_experience_overmerged_role(sections: list[dict]) -> list[Issue]:
+    """Experience role has many bullet_para_ids and multiple role_meta entries inside them.
+
+    Heuristic: if a single role claims ≥15 bullet slots AND at least 2 of those
+    slots are role_meta paragraphs, multiple jobs were most likely merged.
+    """
+    issues: list[Issue] = []
+    for sec in sections:
+        if not _is_experience_section(sec.get("raw_title", "")):
+            continue
+        para_sem: dict[str, str] = {
+            p["para_id"]: p.get("parser_semantic", "")
+            for p in sec.get("paragraphs", [])
+        }
+        for role in sec.get("roles", []):
+            bullet_ids = role.get("bullet_para_ids", [])
+            if len(bullet_ids) < _OVERMERGE_BULLET_THRESHOLD:
+                continue
+            role_meta_pids = [
+                pid for pid in bullet_ids if para_sem.get(pid) == "role_meta"
+            ]
+            if len(role_meta_pids) >= 2:
+                issues.append(Issue(
+                    code="EXPERIENCE_OVERMERGED_ROLE",
+                    detail=(
+                        f"Role has {len(bullet_ids)} bullet_para_ids with "
+                        f"{len(role_meta_pids)} role_meta entries — likely over-merged "
+                        f"(first: {role_meta_pids[0]})"
+                    ),
+                    section_id=sec["section_id"],
+                    role_id=role["role_id"],
+                ))
+    return issues
+
+
 # ---------------------------------------------------------------------------
 # Per-file analysis
 # ---------------------------------------------------------------------------
@@ -360,6 +436,8 @@ def analyse_file(path: Path) -> FileReport:
     report.issues.extend(detect_bullet_not_recognized(sections))
     report.issues.extend(detect_role_header_contains_date(sections, para_map))
     report.issues.extend(detect_role_grouping_weak(sections, para_map))
+    report.issues.extend(detect_experience_role_boundary_inside_bullets(sections))
+    report.issues.extend(detect_experience_overmerged_role(sections))
 
     score = 0
     for issue in report.issues:
