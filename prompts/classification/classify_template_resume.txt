@@ -47,7 +47,7 @@ CORE RULES
      semantic_type = "other"
      rewrite_policy = "preserve"
 
-5. VALID STRUCTURE is more important than perfect classification.
+5. VALID STRUCTURE > perfect classification
 
 ==================================================
 PARSER-FIRST RULE (CRITICAL)
@@ -55,19 +55,17 @@ PARSER-FIRST RULE (CRITICAL)
 
 If parser provides:
 - roles[]
-- role_header-like lines
-- role_meta-like lines
+- role_header / role_meta / bullet signals
 
 Then:
-→ use parser structure as the source of truth
+→ use parser structure as source of truth
 
 DO NOT:
 - split roles
 - merge roles
-- reorder content
+- reorder
 
-ONLY:
-- normalize block types to satisfy schema
+ONLY normalize block types/policies.
 
 ==================================================
 ALLOWED VALUES
@@ -107,142 +105,156 @@ DISPLAY TITLE
 ==================================================
 
 Each section MUST include:
-- raw_title (from input)
-- display_title (normalized human-readable)
+- raw_title
+- display_title (normalized)
 
-Examples:
-PROFILE → Professional Summary
-CORE SKILLS → Technical Skills
-WORK EXPERIENCE → Experience
+==================================================
+GLOBAL NORMALIZATION (CRITICAL)
+==================================================
+
+After assigning section type:
+
+You MUST normalize ALL blocks to match the section contract.
+
+Never leave parser types/policies unchanged if they violate rules.
+
+==================================================
+REWRITE POLICY RULE (CRITICAL)
+==================================================
+
+In ANY rewrite section:
+- summary
+- skills
+- experience (body only)
+
+ALL blocks MUST have:
+→ rewrite_policy = "rewrite_text"
+
+NEVER output:
+→ preserve inside rewrite sections
+
+NO EXCEPTIONS
 
 ==================================================
 SECTION CONTRACTS
 ==================================================
 
 ------------------------------------------
-SUMMARY (REWRITE)
+SUMMARY
 ------------------------------------------
 
-- semantic_type = "summary"
-- rewrite_policy = "rewrite_body"
-- roles[] MUST be empty
-- blocks[] MUST exist
+semantic_type = "summary"
+rewrite_policy = "rewrite_body"
 
-All blocks:
-- summary_paragraph
-- rewrite_text
-
-preserve_heading = false
-preserve_body_structure = false
-
-------------------------------------------
-SKILLS (REWRITE)
-------------------------------------------
-
-- semantic_type = "skills"
-- rewrite_policy = "rewrite_body"
-- roles[] MUST be empty
-- blocks[] MUST exist
-
-All blocks:
-- skills_paragraph
-- rewrite_text
-
-preserve_heading = false
-preserve_body_structure = false
-
-------------------------------------------
-EXPERIENCE (REWRITE BULLETS ONLY)
-------------------------------------------
-
-- semantic_type = "experience"
-- rewrite_policy = "rewrite_bullets_only"
-- blocks[] MUST NOT exist
-- roles[] MUST exist
-
-preserve_heading = true
-preserve_body_structure = true
-
-------------------------------------------
-EXPERIENCE NORMALIZATION PROCEDURE
-------------------------------------------
-
-For each role:
-
-1. HEADER (role_header)
-→ ONLY role title
-
-Examples:
-- Software Engineer
-- Backend Developer
-
-2. META (role_meta)
-→ employment metadata:
-- dates
-- company
-- location
-
-3. BODY (bullet)
-→ sentence-like text
-
-Examples:
-- Led migration to microservices
-- Improved latency by 30%
-
-------------------------------------------
-AMBIGUOUS RULES (CRITICAL)
-------------------------------------------
-
-- date-only → meta
-- company-only → meta
-- location-only → meta
-- sentence-like → body
-
-IF UNSURE:
-→ ALWAYS choose BODY
-
-STRICT RULES:
-- NEVER put dates in header
-- NEVER put sentences in meta
-- NEVER mix types inside block groups
-
-------------------------------------------
-EDUCATION (PURE PRESERVE — CRITICAL)
-------------------------------------------
-
-Education is NOT rewritten.
-
-- semantic_type = "education"
-- rewrite_policy = "preserve"
-- roles[] MUST be empty
-- blocks[] MUST exist
+roles[] MUST be empty
 
 ALL blocks:
-- semantic_type = "education_entry"
-- rewrite_policy = "preserve"
+- semantic_type = summary_paragraph
+- rewrite_policy = rewrite_text
 
-NO interpretation required.
+preserve_heading = false
+preserve_body_structure = false
 
-DO NOT:
-- infer degree structure
-- split fields
-- reclassify content
+------------------------------------------
+SKILLS
+------------------------------------------
 
-Simply:
-→ map all paragraphs to education_entry
+semantic_type = "skills"
+rewrite_policy = "rewrite_body"
+
+roles[] MUST be empty
+
+ALL blocks:
+- semantic_type = skills_paragraph
+- rewrite_policy = rewrite_text
+
+preserve_heading = false
+preserve_body_structure = false
+
+If section contains:
+- technology names
+- programming languages
+- comma-separated skill lists
+
+→ semantic_type = "skills"
+
+------------------------------------------
+EXPERIENCE (CRITICAL)
+------------------------------------------
+
+semantic_type = "experience"
+rewrite_policy = "rewrite_bullets_only"
+
+blocks[] MUST NOT exist
+roles[] MUST exist
 
 preserve_heading = true
 preserve_body_structure = true
 
 ------------------------------------------
-PROJECTS (PRESERVE)
+EXPERIENCE NORMALIZATION
 ------------------------------------------
 
-- semantic_type = "projects"
-- rewrite_policy = "preserve"
-- roles[] MUST be empty
+For EACH role:
 
-blocks:
+HEADER:
+- ONLY role title
+- semantic_type = role_header
+- rewrite_policy = preserve
+
+META:
+- dates, company, location
+- semantic_type = role_meta
+- rewrite_policy = preserve
+
+BODY:
+- sentence-like content
+- semantic_type = bullet
+- rewrite_policy = rewrite_text
+
+------------------------------------------
+EXPERIENCE STRICT RULES
+------------------------------------------
+
+NEVER:
+- put role_meta in header
+- put role_header in body
+- put sentences in meta
+- mix block types in same group
+
+IF UNSURE:
+→ move to BODY
+
+If section contains:
+- role headers but no clear bullets
+
+→ still treat sentence-like lines as body_blocks
+------------------------------------------
+EDUCATION (PURE PRESERVE)
+------------------------------------------
+
+semantic_type = "education"
+rewrite_policy = "preserve"
+
+roles[] MUST be empty
+
+ALL blocks:
+- semantic_type = education_entry
+- rewrite_policy = preserve
+
+preserve_heading = true
+preserve_body_structure = true
+
+NO interpretation allowed.
+
+------------------------------------------
+PROJECTS
+------------------------------------------
+
+semantic_type = "projects"
+rewrite_policy = "preserve"
+
+ALL blocks:
 - project_entry OR other_paragraph
 - preserve
 
@@ -250,14 +262,13 @@ preserve_heading = true
 preserve_body_structure = true
 
 ------------------------------------------
-ADDITIONAL (PRESERVE)
+ADDITIONAL
 ------------------------------------------
 
-- semantic_type = "additional"
-- rewrite_policy = "preserve"
-- roles[] MUST be empty
+semantic_type = "additional"
+rewrite_policy = "preserve"
 
-blocks:
+ALL blocks:
 - additional_item OR other_paragraph
 - preserve
 
@@ -265,24 +276,24 @@ preserve_heading = true
 preserve_body_structure = true
 
 ------------------------------------------
-OTHER (SAFE FALLBACK)
+OTHER (STRICT FALLBACK)
 ------------------------------------------
 
-- semantic_type = "other"
-- rewrite_policy = "preserve"
-- roles[] MUST be empty
-- blocks[] MUST exist
+semantic_type = "other"
+rewrite_policy = "preserve"
 
 ALL blocks:
-- other_paragraph
-- preserve
+- semantic_type = other_paragraph
+- rewrite_policy = preserve
 
 preserve_heading = true
 preserve_body_structure = true
 
-IMPORTANT:
-If downgrading to "other":
+If section is "other":
 → convert ALL blocks to other_paragraph
+
+Do not classify as "other" if:
+- section matches known resume patterns
 
 ==================================================
 STRUCTURE RULES
@@ -301,16 +312,59 @@ STRUCTURE RULES
 4. NEVER mix rewrite policies
 
 ==================================================
-FAILSAFE RULE
+ANTI-MIXING RULE
 ==================================================
 
-Before fallback:
-→ attempt normalization
+Inside each group:
+- header_blocks
+- meta_blocks
+- body_blocks
+- section blocks
 
-If still invalid:
-→ fallback to:
-   semantic_type = "other"
-   rewrite_policy = "preserve"
+ALL blocks MUST have:
+- same semantic_type
+- same rewrite_policy
+
+==================================================
+FINAL VALIDATION (MANDATORY)
+==================================================
+
+Before output:
+
+Check:
+
+1. Experience has:
+   - no blocks[]
+   - correct roles structure
+
+2. Rewrite sections:
+   - ALL rewrite_text
+
+3. Preserve sections:
+   - ALL preserve
+
+4. No mixed types/policies
+
+If invalid:
+→ fix via normalization
+→ OR fallback to "other"
+
+DO NOT return invalid structure.
+
+==================================================
+REPAIR-AWARE MODE
+==================================================
+
+A repair step will run after you.
+
+Your goal:
+→ produce VALID structure
+→ not perfect semantics
+
+Prefer:
+- safe normalization
+over:
+- partial incorrect mapping
 
 ==================================================
 OUTPUT FORMAT
@@ -318,15 +372,9 @@ OUTPUT FORMAT
 
 {
   "document_id": "...",
-  "classification_version": "1.0",
+  "classification_version": "v4.1",
   "source_kind": "...",
   "sections": [...]
 }
-
-==================================================
-FINAL RULE
-==================================================
-
-VALID STRUCTURE > perfect classification.
 
 Return JSON only.
