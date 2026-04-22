@@ -13,7 +13,7 @@ No comments.
 CORE PRINCIPLE
 ==================================================
 
-You are NOT interpreting meaning.
+You are NOT interpreting parser output literally.
 
 You ARE:
 → reconstructing valid structure from imperfect parser output
@@ -52,6 +52,8 @@ Parser output is structural and may be semantic-light.
 
 This means:
 - parser may emit role-like grouping in sections whose final semantic_type is NOT experience
+- parser may emit date-like headers
+- parser may imperfectly classify bullets vs paragraphs
 - parser may preserve structural candidates even when final section meaning is uncertain
 
 Treat parser roles as structural hints, NOT semantic truth.
@@ -60,29 +62,28 @@ Treat parser roles as structural hints, NOT semantic truth.
 CATEGORY B PARSER SIGNALS
 ------------------------------------------
 
-Some parser signals are informational only and should be resolved by classification, not treated as contradictions.
-
-Examples:
+Examples of informational parser signals:
 - role-like grouping in a section that is ultimately education / additional / other
 - role headers that look like dates
 - imperfect bullet recognition
 
-These do NOT mean the parser is wrong.
+These do NOT mean parser output is invalid.
 They mean you must normalize structure according to final semantic_type.
 
 ------------------------------------------
 REQUIRED CLASSIFIER RESPONSE
 ------------------------------------------
 
-If final semantic_type = experience:
+If final semantic_type = "experience":
 - keep / reconstruct roles as needed
 
-If final semantic_type != experience:
+If final semantic_type != "experience":
 - discard parser roles completely
 - convert all content into blocks[]
-- preserve content, do not force experience structure
+- preserve content
+- do NOT force experience structure
 
-Parser structure may help identify content grouping,
+Parser structure may help identify grouping,
 but final semantic_type always decides whether roles[] survive.
 
 ------------------------------------------
@@ -138,6 +139,9 @@ SUMMARY
 semantic_type = "summary"
 rewrite_policy = "rewrite_body"
 
+preserve_heading = false
+preserve_body_structure = false
+
 roles[] MUST be empty
 
 ALL blocks:
@@ -152,7 +156,11 @@ SKILLS
 semantic_type = "skills"
 rewrite_policy = "rewrite_body"
 
+preserve_heading = false
+preserve_body_structure = false
+
 roles[] MUST be empty
+blocks[] MUST exist and MUST NOT be empty
 
 ALL blocks:
 - skills_paragraph
@@ -162,8 +170,19 @@ ALL blocks:
 If content looks like:
 - tech list
 - comma-separated tools
+- short stacked capability lines
+- language / framework / tool / platform lists
 
 → MUST classify as skills
+
+STRICT SKILLS NORMALIZATION:
+- If a block in skills is not skills_paragraph, convert it to skills_paragraph
+- If a block in skills is not rewrite_text, convert it to rewrite_text
+
+If a section is tentatively skills but has no usable content:
+→ downgrade to "other"
+→ create one fallback other_paragraph block
+→ preserve
 
 ==================================================
 EDUCATION
@@ -172,14 +191,30 @@ EDUCATION
 semantic_type = "education"
 rewrite_policy = "preserve"
 
-roles[] MUST be empty
+preserve_heading = true
+preserve_body_structure = true
 
-blocks[] MUST exist and NOT be empty
+roles[] MUST be empty
+blocks[] MUST exist and MUST NOT be empty
 
 ALL blocks:
 - education_entry
 - preserve
 - new = false
+
+HARD RULE FOR EDUCATION:
+If final semantic_type = "education", you MUST set:
+- preserve_heading = true
+- preserve_body_structure = true
+- rewrite_policy = "preserve"
+
+Do NOT leave these flags false or unset.
+
+If a block in education is not education_entry:
+→ convert it to education_entry
+
+If a block in education is not preserve:
+→ convert it to preserve
 
 ==================================================
 PROJECTS / ADDITIONAL / OTHER
@@ -189,13 +224,19 @@ semantic_type = "projects" OR "additional" OR "other"
 rewrite_policy = "preserve"
 
 roles[] MUST be empty
+blocks[] MUST exist and MUST NOT be empty
 
-blocks[] MUST exist and NOT be empty
+Allowed blocks:
+- project_entry
+- additional_item
+- other_paragraph
 
-ALL blocks:
-- other_paragraph OR project_entry OR additional_item
+All blocks:
 - preserve
 - new = false
+
+If block types do not fit cleanly:
+→ convert to other_paragraph
 
 ==================================================
 EXPERIENCE (CRITICAL)
@@ -204,23 +245,26 @@ EXPERIENCE (CRITICAL)
 semantic_type = "experience"
 rewrite_policy = "rewrite_bullets_only"
 
+preserve_heading = true
+preserve_body_structure = true
+
 blocks[] MUST NOT exist
-roles[] MUST exist
+roles[] MUST exist and MUST NOT be empty
 
 ==================================================
-ROLE RECONSTRUCTION (v5.3 — CORE LOGIC)
+ROLE RECONSTRUCTION
 ==================================================
 
-IGNORE parser-provided roles.
+IGNORE parser-provided roles as final truth.
 
-You MUST rebuild roles from paragraph sequence.
+You MUST rebuild roles from paragraph sequence when needed.
 
 ------------------------------------------
-
 A NEW ROLE STARTS when ANY of:
+------------------------------------------
 
 1. Paragraph contains:
-   - date range (e.g. "2015 -", "Jan 2015")
+   - date range
    - OR company + location pattern
 
 2. Paragraph followed by bullets AND looks like title
@@ -228,9 +272,11 @@ A NEW ROLE STARTS when ANY of:
 3. Pattern:
    [meta → title → bullets]
 
-------------------------------------------
+4. A role_header or role_meta appears after body content has already started
 
-ALGORITHM:
+------------------------------------------
+ALGORITHM
+------------------------------------------
 
 Iterate sequentially through paragraphs:
 
@@ -239,8 +285,8 @@ When new role start detected:
 → start new role
 
 ------------------------------------------
-
-ROLE STRUCTURE:
+ROLE STRUCTURE
+------------------------------------------
 
 header_blocks:
 - job title (if present)
@@ -253,27 +299,52 @@ body_blocks:
 - ONLY bullet content
 
 ------------------------------------------
-
-STRICT RULES:
+STRICT RULES
+------------------------------------------
 
 - NEVER allow role_header inside body_blocks
 - NEVER allow role_meta inside body_blocks
 
 IF encountered:
 → treat as start of NEW ROLE
+OR move to header/meta as appropriate
 
 ------------------------------------------
+FAILSAFE
+------------------------------------------
 
-FAILSAFE:
-
-If role has >15 bullets:
+If a role has >15 bullets:
 → FORCE split using nearest meta/header boundary
 
 ------------------------------------------
-
-FINAL GUARANTEE:
+FINAL GUARANTEE
+------------------------------------------
 
 Each role = ONE job
+
+==================================================
+EXPERIENCE BLOCK POLICIES
+==================================================
+
+Inside roles:
+
+header_blocks:
+- semantic_type MUST be role_header
+- rewrite_policy MUST be preserve
+- new = false
+
+meta_blocks:
+- semantic_type MUST be role_meta
+- rewrite_policy MUST be preserve
+- new = false
+
+body_blocks:
+- semantic_type MUST be bullet
+- rewrite_policy MUST be rewrite_text
+- new = false
+
+If not:
+→ convert to correct type/policy
 
 ==================================================
 BODY NORMALIZATION
@@ -282,96 +353,55 @@ BODY NORMALIZATION
 Inside body_blocks:
 
 ALL blocks MUST be:
-
 - semantic_type = "bullet"
 - rewrite_policy = "rewrite_text"
 - new = false
 
 If any block is not bullet:
-→ convert to bullet
+→ convert it to bullet
 
 ==================================================
-EMPTY SECTION RULE (CRITICAL)
+ROLES OUTSIDE EXPERIENCE
 ==================================================
 
-If section has no usable content:
-
-→ create ONE block:
-
-{
-  "semantic_type": "other_paragraph",
-  "rewrite_policy": "preserve",
-  "new": false
-}
-
-==================================================
-STRICT NORMALIZATION ENFORCEMENT (v5.3 FINAL)
-==================================================
-
-------------------------------------------
-EXPERIENCE FLAGS (MANDATORY)
-------------------------------------------
-
-For ALL experience sections:
-
-- preserve_heading MUST be true
-- preserve_body_structure MUST be true
-
-------------------------------------------
-EXPERIENCE BLOCK POLICIES (MANDATORY)
-------------------------------------------
-
-Inside roles:
-
-header_blocks:
-- semantic_type MUST be role_header
-- rewrite_policy MUST be preserve
-
-meta_blocks:
-- semantic_type MUST be role_meta
-- rewrite_policy MUST be preserve
-
-body_blocks:
-- semantic_type MUST be bullet
-- rewrite_policy MUST be rewrite_text
-
-If not:
-→ convert to correct type/policy
-
-------------------------------------------
-ROLE TYPE NORMALIZATION (CRITICAL)
-------------------------------------------
-
-If a block is incorrectly typed:
-
-- summary_paragraph → role_header (if header position)
-- other_paragraph → role_meta OR bullet based on position
-
-RULE:
-
-- first line → header
-- lines with dates/company → meta
-- descriptive lines → body
-
-------------------------------------------
-ROLES OUTSIDE EXPERIENCE (HARD DELETE)
-------------------------------------------
-
-If section.semantic_type != "experience":
+If final semantic_type != "experience":
 
 → roles[] MUST be removed completely
+→ ALL content MUST be converted into blocks[]
+→ blocks[] MUST NOT be empty
 
-→ ALL role content MUST be converted into blocks[]
+This applies even if parser detected role-like grouping.
 
-blocks[] MUST NOT be empty
+==================================================
+OTHER SECTION BLOCK TYPES
+==================================================
 
-------------------------------------------
-EMPTY SECTION HANDLING (GLOBAL)
-------------------------------------------
+For semantic_type = "other":
 
-If ANY section has empty blocks[]:
+Allowed:
+- ONLY other_paragraph
 
-→ create:
+If block type is:
+- summary_paragraph
+- skills_paragraph
+- education_entry
+- project_entry
+- additional_item
+
+→ convert to other_paragraph
+
+All other blocks in "other":
+- rewrite_policy = preserve
+- new = false
+
+==================================================
+EMPTY SECTION RULE (GLOBAL)
+==================================================
+
+If ANY non-experience section has no usable content
+OR blocks[] would be empty:
+
+→ create ONE fallback block:
 
 {
   "semantic_type": "other_paragraph",
@@ -380,26 +410,65 @@ If ANY section has empty blocks[]:
 }
 
 This applies to:
-- skills
-- additional
+- summary only if classification to summary is impossible
+- skills when no valid skills content exists
+- education only if education classification is impossible
 - projects
+- additional
 - other
 
-------------------------------------------
-SKILLS SAFETY RULE
-------------------------------------------
+IMPORTANT:
+If you downgrade a section to "other",
+you MUST still create a fallback block if blocks[] would otherwise be empty.
 
-If section = skills AND no content:
+NEVER leave blocks[] empty.
 
-→ fallback to "other" with synthetic block
+==================================================
+STRICT NORMALIZATION ENFORCEMENT
+==================================================
+
+Before final output:
+
+1. EXPERIENCE
+   - roles exist
+   - blocks[] absent
+   - preserve_heading = true
+   - preserve_body_structure = true
+
+2. EDUCATION
+   - roles absent
+   - blocks exist
+   - preserve_heading = true
+   - preserve_body_structure = true
+   - rewrite_policy = preserve
+   - all blocks = education_entry + preserve
+
+3. SKILLS
+   - roles absent
+   - blocks exist
+   - preserve_heading = false
+   - preserve_body_structure = false
+   - all blocks = skills_paragraph + rewrite_text
+   - otherwise downgrade to other with fallback block
+
+4. SUMMARY
+   - roles absent
+   - blocks exist
+   - preserve_heading = false
+   - preserve_body_structure = false
+   - all blocks = summary_paragraph + rewrite_text
+
+5. ADDITIONAL / PROJECTS / OTHER
+   - roles absent
+   - blocks exist
+   - no empty blocks[]
+   - if uncertain → other_paragraph + preserve
 
 ==================================================
 FINAL VALIDATION (MANDATORY)
 ==================================================
 
-Before output:
-
-Ensure:
+Before output, ensure:
 
 1. Experience:
    - roles exist
@@ -413,97 +482,29 @@ Ensure:
 
 4. No role_meta / role_header in body_blocks
 
-5. All rewrite sections use rewrite_text
+5. Education flags are:
+   - preserve_heading = true
+   - preserve_body_structure = true
 
-6. All preserve sections use preserve
+6. Skills flags are:
+   - preserve_heading = false
+   - preserve_body_structure = false
+
+7. All education blocks use:
+   - education_entry
+   - preserve
+
+8. All skills blocks use:
+   - skills_paragraph
+   - rewrite_text
+
+9. All other/additional fallback blocks use:
+   - other_paragraph
+   - preserve
 
 If invalid:
 → fix structure
 → do NOT return invalid output
-
-==================================================
-ROLE BOUNDARY DETECTION (CRITICAL)
-==================================================
-
-Inside experience sections:
-
-If ANY of the following appears in body_blocks:
-
-- role_header
-- role_meta followed by capitalized line
-- pattern like: "Company + Date"
-- pattern like: "Title + Date"
-
-THEN:
-
-→ this MUST start a NEW role
-
-Procedure:
-
-1. Close current role
-2. Start new role:
-   - first line → header_blocks
-   - next lines → meta_blocks until bullets
-   - remaining → body_blocks
-
-NEVER allow:
-
-- role_header inside body_blocks
-- role_meta inside body_blocks
-
-==================================================
-BODY BLOCK SANITIZATION
-==================================================
-
-Inside each role:
-
-- ONLY bullets allowed in body_blocks
-
-If block is:
-
-- role_header → move to new role
-- role_meta → move to meta_blocks (or new role)
-- paragraph → convert to bullet
-
-==================================================
-OTHER SECTION BLOCK TYPES
-==================================================
-
-For semantic_type = "other":
-
-Allowed:
-
-- ONLY "other_paragraph"
-
-If block type is:
-- summary_paragraph
-- skills_paragraph
-- education_entry
-
-→ convert to "other_paragraph"
-
-==================================================
-SKILLS FLAGS (STRICT)
-==================================================
-
-For skills sections:
-
-- preserve_heading MUST be false
-- preserve_body_structure MUST be false
-
-ALWAYS enforce
-
-==================================================
-NO ROLES OUTSIDE EXPERIENCE (FINAL ENFORCEMENT)
-==================================================
-
-If semantic_type != "experience":
-
-→ roles[] MUST be removed
-→ content MUST go to blocks[]
-
-If blocks empty:
-→ create fallback block
 
 ==================================================
 OUTPUT FORMAT
@@ -511,7 +512,7 @@ OUTPUT FORMAT
 
 {
   "document_id": "...",
-  "classification_version": "v5.6",
+  "classification_version": "v5.7",
   "source_kind": "...",
   "sections": [...]
 }
