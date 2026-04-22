@@ -1611,6 +1611,9 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                     # role_meta can appear mid-bullet-list when a line contains
                     # a year (e.g. "Resolved 150 bugs since June 2023 …") but is
                     # clearly a continuation bullet, not a date/meta line.
+                    # Reclassify so parser_semantic reflects the actual role in
+                    # the output (prevents EXPERIENCE_ROLE_BOUNDARY_INSIDE_BULLETS).
+                    pm.semantic = "bullet"
                     bullets.append(pm)
             elif s == "paragraph":
                 _txt = pm.text.strip()
