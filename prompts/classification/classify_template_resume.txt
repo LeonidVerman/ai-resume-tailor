@@ -538,7 +538,7 @@ OUTPUT FORMAT
 
 {
   "document_id": "...",
-  "classification_version": "v5.7",
+  "classification_version": "v5.8",
   "source_kind": "...",
   "sections": [...]
 }
