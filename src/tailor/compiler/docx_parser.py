@@ -463,6 +463,33 @@ def _relabel_implicit_role_headers(body_paras: list[ParaModel]) -> None:
                 break
 
 
+_EDUCATION_INSTITUTION_WORDS = frozenset(
+    ["university", "college", "school", "institute", "academy", "polytechnic"]
+)
+_EDUCATION_DEGREE_WORDS = frozenset(
+    ["bachelor", "master", "b.sc", "m.sc", "ph.d", "diploma", "associate", "undergraduate"]
+)
+
+
+def _is_education_intrusion_meta(pm: "ParaModel", recent_bullets: list["ParaModel"]) -> bool:
+    """Return True when a role_meta looks like an education institution line
+    (e.g. 'Your University May 2020') that has wandered into an experience role
+    body due to a two-column table layout.
+
+    Two signals must both fire:
+    1. The role_meta text contains an institution keyword.
+    2. At least one of the last 4 non-empty bullets contains a degree keyword.
+    """
+    txt_lower = pm.text.strip().lower()
+    if not any(w in txt_lower for w in _EDUCATION_INSTITUTION_WORDS):
+        return False
+    recent_non_empty = [b for b in recent_bullets if b.text.strip()][-4:]
+    return any(
+        any(w in b.text.strip().lower() for w in _EDUCATION_DEGREE_WORDS)
+        for b in recent_non_empty
+    )
+
+
 def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     roles: list[RoleEntry] = []
     header: ParaModel | None = None
@@ -564,8 +591,13 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 # year (e.g. "Resolved 150 bugs since 2023 for apps post-launch to")
                 # but is semantically a continuation bullet, not a date/meta line.
                 # This branch is only reached when header_is_role_meta is False
-                # (role started via role_header), so role_meta here is a false positive.
-                bullets.append(pm)
+                # (role started via role_header), so role_meta here is a false positive —
+                # UNLESS it looks like an education institution line that wandered in from
+                # a two-column table layout (e.g. "Your University May 2020").
+                if s == "role_meta" and _is_education_intrusion_meta(pm, bullets):
+                    pass  # drop — do not add to this role's bullets
+                else:
+                    bullets.append(pm)
             # role_header handled at top; ignore empty/other
         else:
             pass  # unreachable
