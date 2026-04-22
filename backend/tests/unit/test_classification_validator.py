@@ -386,11 +386,12 @@ def test_education_wrong_block_type():
     assert E_EDU_BLOCK_TYPE in _error_codes(r)
 
 
-def test_education_other_paragraph_allowed():
+def test_education_other_paragraph_not_allowed():
+    # other_paragraph is no longer valid inside education — must be education_entry
     sec = _education_section()
     sec["blocks"][0]["semantic_type"] = "other_paragraph"
     r = validate_classification(_doc([sec]))
-    assert r["is_valid"] is True
+    assert E_EDU_BLOCK_TYPE in _error_codes(r)
 
 
 # ---------------------------------------------------------------------------

@@ -216,6 +216,32 @@ If a block in education is not education_entry:
 If a block in education is not preserve:
 → convert it to preserve
 
+STRICT EDUCATION BLOCK PROHIBITION:
+The following block types are NEVER valid inside an education section:
+- role_header
+- role_meta
+- other_paragraph
+- summary_paragraph
+- skills_paragraph
+
+Even if the parser classified a line as role_header (e.g. because it contains
+a pipe separator like "POSTGRADUATE CERTIFICATE | JAN 2015 - DEC 2016"),
+inside an education section that line MUST be education_entry, not role_header.
+
+EDUCATION_ENTRY EXAMPLES — these ALL become education_entry:
+- "BACHELOR OF SCIENCE | SEPT 2009 - MAY 2014"   ← degree + date, pipe format
+- "POSTGRADUATE CERTIFICATE | JAN 2015 - DEC 2016" ← program + date, pipe format
+- "Massachusetts Institute of Technology"          ← institution name
+- "GPA: 3.95"                                      ← academic metric
+- "BS Mechanical Engineering"                      ← program title line
+- "Highest Performing Student, Engineering Dept"   ← academic distinction
+- "Certificate in Engineering Design"              ← credential line
+- "Relevant coursework: Thermodynamics, CAD"       ← academic description
+
+The parser_semantic of "role_header" is a layout signal only.
+Inside education, it does NOT override the section type.
+Always output education_entry for ALL blocks in an education section.
+
 ==================================================
 PROJECTS / ADDITIONAL / OTHER
 ==================================================

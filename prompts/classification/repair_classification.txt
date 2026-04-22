@@ -123,8 +123,13 @@ If semantic_type = "education":
 - rewrite_policy = "preserve"
 - roles[] must be empty
 - all blocks must be:
-  - education_entry OR other_paragraph
+  - education_entry (ONLY — never other_paragraph, never role_header, never role_meta)
   - preserve
+
+Any block in an education section that is role_header, role_meta, other_paragraph,
+summary_paragraph, or skills_paragraph MUST be converted to education_entry.
+This includes pipe-format degree/date lines (e.g. "BACHELOR OF SCIENCE | MAY 2014")
+which the parser may have labelled role_header — inside education they are education_entry.
 
 PROJECTS
 If semantic_type = "projects":

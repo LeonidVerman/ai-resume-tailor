@@ -161,6 +161,53 @@ class ResumeClassificationService:
 
     # ── Internal ──────────────────────────────────────────────────────────
 
+    _INVALID_EDUCATION_BLOCK_TYPES = frozenset({
+        "role_header", "role_meta", "other_paragraph",
+        "summary_paragraph", "skills_paragraph",
+        "project_entry", "additional_item",
+    })
+
+    @staticmethod
+    def _normalize_education_blocks(classification: dict) -> dict:
+        """Return classification with any invalid block types inside education
+        sections converted to education_entry + preserve.
+
+        This is a deterministic safety net applied after each LLM call so that
+        mis-classified parser-semantic lines (e.g. pipe-format degree lines
+        tagged role_header) never survive into the final output as wrong types.
+        """
+        invalid_types = ResumeClassificationService._INVALID_EDUCATION_BLOCK_TYPES
+        sections = classification.get("sections", [])
+        if not any(
+            s.get("semantic_type") == "education"
+            for s in sections
+            if isinstance(s, dict)
+        ):
+            return classification  # fast path: no education sections
+
+        result = dict(classification)
+        new_sections = []
+        for sec in sections:
+            if not isinstance(sec, dict) or sec.get("semantic_type") != "education":
+                new_sections.append(sec)
+                continue
+            blocks = sec.get("blocks", [])
+            if not any(b.get("semantic_type") in invalid_types for b in blocks if isinstance(b, dict)):
+                new_sections.append(sec)
+                continue
+            fixed_blocks = []
+            for b in blocks:
+                if isinstance(b, dict) and b.get("semantic_type") in invalid_types:
+                    b = dict(b)
+                    b["semantic_type"] = "education_entry"
+                    b["rewrite_policy"] = "preserve"
+                fixed_blocks.append(b)
+            sec = dict(sec)
+            sec["blocks"] = fixed_blocks
+            new_sections.append(sec)
+        result["sections"] = new_sections
+        return result
+
     @staticmethod
     def _build_repair_payload(
         llm_input_dict: dict,
@@ -350,6 +397,7 @@ class ResumeClassificationService:
         )
 
         raw_classification = json.loads(result.content)
+        raw_classification = self._normalize_education_blocks(raw_classification)
         logger.debug(
             "Classification complete resume=%s sections=%d tokens=%d",
             resume_id,
@@ -383,6 +431,7 @@ class ResumeClassificationService:
                 merged = self._merge_repaired_sections(
                     raw_classification, repaired_sections, set(invalid_ids_before)
                 )
+                merged = self._normalize_education_blocks(merged)
                 # ── Step 4: revalidate merged result ──────────────────────
                 validation_after_repair = validate_classification(merged)
                 logger.info(

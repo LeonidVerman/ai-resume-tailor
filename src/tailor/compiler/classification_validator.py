@@ -242,7 +242,7 @@ def _validate_education(s: dict, sid: str) -> list[dict]:
     e += _check_blocks_non_empty(s.get("blocks", []), sid, E_EDU_BLOCKS_EMPTY)
     e += _check_blocks_uniform(
         s.get("blocks", []), sid,
-        frozenset({"education_entry", "other_paragraph"}), "preserve",
+        frozenset({"education_entry"}), "preserve",
         E_EDU_BLOCK_TYPE, E_EDU_BLOCK_POLICY,
     )
     return e
