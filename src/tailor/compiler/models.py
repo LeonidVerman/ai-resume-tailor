@@ -360,15 +360,19 @@ class ResumeDocument:
     # 'docx' for DOCX-sourced (xml_proto available); 'pdf' for PDF-sourced (para_builder path).
     source_kind: str = "docx"
     body_items: list[Any] | None = None  # list[ParaModel | TableBlock]; None for PDF/deserialised
+    label_column_fixed: bool = False     # True when label-column layout reordering was applied
 
     def to_dict(self) -> dict:
         """Serialize to a JSON-compatible dict.  xml_proto is not included."""
-        return {
+        d: dict = {
             "source_kind": self.source_kind,
             "header_paras": [p.to_dict() for p in self.header_paras],
             "sections": [s.to_dict() for s in self.sections],
             "layout": self.layout.to_dict(),
         }
+        if self.label_column_fixed:
+            d["label_column_fixed"] = True
+        return d
 
     @classmethod
     def from_dict(cls, d: dict) -> "ResumeDocument":

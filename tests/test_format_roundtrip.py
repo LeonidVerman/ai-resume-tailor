@@ -238,6 +238,15 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "paragraph text.  Role detection now works (1 role vs 0); real LLM "
         "pipeline unaffected."
     ),
+    "20-Software-Engineer-Editable-Resume-Template-Download-in-docx-5.docx": (
+        "Label-column layout: the document uses a 2-column newspaper layout where "
+        "section labels (Summary, Work Experience, …) are in a narrow left column "
+        "and all content is in the wide right column.  The parser now correctly "
+        "detects 3 experience roles; the identity serializer combines role.header "
+        "(e.g. 'SOFTWARE ENGINEER') with header_extra (company name) into a "
+        "pipe-separated string, changing paragraph text.  Real LLM pipeline "
+        "unaffected."
+    ),
 }
 
 # PDFs with non-standard content that cannot roundtrip cleanly.

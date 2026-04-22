@@ -43,6 +43,9 @@ Category B (structural candidates / informational):
   ROLE_HEADER_CONTAINS_DATE                (w=2) Role header is predominantly a date line.
   ROLE_LIKE_GROUPING_NON_EXPERIENCE        (w=1) Non-experience section has role-like structure;
                                                   LLM decides final section semantics.
+  LABEL_COLUMN_DETECTED                    (w=1) Parser detected and fixed a label-column layout
+                                                  (narrow left column of section labels + wide right
+                                                  column of content); section structure was reordered.
 """
 
 from __future__ import annotations
@@ -75,6 +78,7 @@ _ISSUE_METADATA: dict[str, tuple[str, int, str]] = {
     "BULLET_NOT_RECOGNIZED":                   (_CAT_B, 1, "info"),
     "ROLE_GROUPING_WEAK":                      (_CAT_B, 2, "low"),
     "ROLE_LIKE_GROUPING_NON_EXPERIENCE":       (_CAT_B, 1, "info"),
+    "LABEL_COLUMN_DETECTED":                   (_CAT_B, 1, "info"),
 }
 
 
@@ -457,6 +461,19 @@ def detect_role_grouping_weak(
     return issues
 
 
+def detect_label_column(data: dict) -> list[Issue]:
+    """Emit one informational issue when the label-column layout fix was applied."""
+    if data.get("label_column_fixed"):
+        return [Issue(
+            code="LABEL_COLUMN_DETECTED",
+            detail=(
+                "Document uses a 2-column label-column layout; parser reordered "
+                "section headings to align with right-column content."
+            ),
+        )]
+    return []
+
+
 def detect_role_like_grouping_non_experience(sections: list[dict]) -> list[Issue]:
     """Non-experience section has role-like grouping.
 
@@ -508,6 +525,7 @@ def analyse_file(path: Path) -> FileReport:
     all_issues.extend(detect_bullet_not_recognized(sections))
     all_issues.extend(detect_role_grouping_weak(sections, para_map))
     all_issues.extend(detect_role_like_grouping_non_experience(sections))
+    all_issues.extend(detect_label_column(data))
 
     for issue in all_issues:
         if _category(issue.code) == _CAT_A:

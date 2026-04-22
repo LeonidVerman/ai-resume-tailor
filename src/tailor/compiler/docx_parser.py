@@ -666,6 +666,12 @@ def parse_docx(path: str) -> ResumeDocument:
             body_items.append(TableBlock(xml_proto=deepcopy(child), para_models=table_paras))
         # sectPr and other elements are ignored (preserved in the body XML)
 
+    # Fix label-column layout: when the document uses a narrow left column of section
+    # labels and a wide right column of content, the linear XML order puts all labels
+    # before all content.  This reorders all_paras so each heading is adjacent to its
+    # content before section grouping runs.  body_items is intentionally not modified.
+    all_paras, _label_col_fixed = _apply_label_column_fix(all_paras, body)
+
     # Group into sections
     header_paras: list[ParaModel] = []
     sections: list[ResumeSection] = []
@@ -787,6 +793,7 @@ def parse_docx(path: str) -> ResumeDocument:
         layout=layout,
         all_paras=all_paras,
         body_items=body_items,
+        label_column_fixed=_label_col_fixed,
     )
     from tailor.compiler.models import assign_stable_ids
     assign_stable_ids(doc)
@@ -908,6 +915,227 @@ def _make_experience_from_job_sections(job_secs: list[ResumeSection]) -> ResumeS
         body_paras=all_body_paras,
         roles=roles,
     )
+
+
+# ---------------------------------------------------------------------------
+# Label-column layout detection and fix
+# ---------------------------------------------------------------------------
+
+def _detect_label_column_layout(body) -> bool:
+    """Return True when the body sectPr defines exactly 2 columns with a narrow first column.
+
+    A narrow first column is one whose width is less than 35 % of the combined width of
+    both columns.  This pattern is used by templates that place section labels in a slim
+    left rail and all resume content in a wide right rail.
+    """
+    body_sectPr = body.find(f"{{{_W}}}sectPr")
+    if body_sectPr is None:
+        return False
+    cols_elem = body_sectPr.find(f"{{{_W}}}cols")
+    if cols_elem is None:
+        return False
+    col_elems = cols_elem.findall(f"{{{_W}}}col")
+    if len(col_elems) != 2:
+        return False
+    try:
+        w0 = int(col_elems[0].get(f"{{{_W}}}w") or 0)
+        w1 = int(col_elems[1].get(f"{{{_W}}}w") or 0)
+    except (ValueError, TypeError):
+        return False
+    total = w0 + w1
+    return total > 0 and (w0 / total) < 0.35
+
+
+def _find_label_column_split(paras: list[ParaModel]) -> int | None:
+    """Return the index of the first right-column (content) paragraph, or None.
+
+    In a label-column layout the left column contains only section headings and
+    empty spacing paragraphs.  The split point is the first non-empty paragraph
+    that appears after at least two recognised section headings with nothing but
+    empty paragraphs between them.
+
+    Only paragraphs whose text matches a known section name (_ALL_HEADING_NAMES)
+    are counted — this excludes candidate job-title headings in the header area
+    (e.g. "SOFTWARE ENGINEER" styled as Heading N) that are not section labels.
+    """
+    heading_count = 0
+    first_heading_seen = False
+    for i, pm in enumerate(paras):
+        is_known_section = (
+            pm.semantic == "section_heading"
+            and pm.text.strip().lower() in _ALL_HEADING_NAMES
+        )
+        if is_known_section:
+            heading_count += 1
+            first_heading_seen = True
+        elif first_heading_seen and pm.text.strip():
+            if heading_count >= 2:
+                return i
+            return None  # Content appeared before 2 headings accumulated → normal doc
+    return None
+
+
+_DEGREE_TITLE_WORDS_LBL: frozenset[str] = frozenset({
+    "bachelor", "master", "doctorate", "phd", "mba", "associate", "diploma",
+    "bs", "ms", "ba", "ma", "bsc", "msc",
+    "science", "arts", "engineering", "technology", "business",
+    "computing", "computer", "information",
+})
+
+
+def _looks_like_degree_title_lbl(text: str) -> bool:
+    words = frozenset(re.split(r"\W+", text.lower())) - {"", "of", "in", "the", "and", "a"}
+    return bool(words & _DEGREE_TITLE_WORDS_LBL)
+
+
+def _lbl_find_experience_start(right_paras: list[ParaModel], min_idx: int) -> int:
+    """First index >= min_idx where a job entry starts (first paragraph before a role_meta)."""
+    for i in range(min_idx, len(right_paras)):
+        if not right_paras[i].text.strip():
+            continue
+        ahead = [
+            right_paras[j]
+            for j in range(i + 1, min(i + 8, len(right_paras)))
+            if right_paras[j].text.strip()
+        ][:4]
+        if any(p.semantic == "role_meta" for p in ahead):
+            return i
+    return min_idx
+
+
+def _lbl_find_education_start(right_paras: list[ParaModel], min_idx: int) -> int:
+    """First index >= min_idx whose text looks like a degree or institution title."""
+    for i in range(min_idx, len(right_paras)):
+        pm = right_paras[i]
+        if pm.text.strip() and _looks_like_degree_title_lbl(pm.text):
+            return i
+    return min_idx
+
+
+def _lbl_find_skills_start(right_paras: list[ParaModel], min_idx: int) -> int:
+    """First index >= min_idx of a skills paragraph: non-role_meta, non-degree, no nearby dates."""
+    for i in range(min_idx, len(right_paras)):
+        pm = right_paras[i]
+        if not pm.text.strip():
+            continue
+        if pm.semantic == "role_meta":
+            continue
+        if _looks_like_degree_title_lbl(pm.text):
+            continue
+        has_nearby_date = any(
+            right_paras[j].semantic == "role_meta"
+            for j in range(i + 1, min(i + 6, len(right_paras)))
+        )
+        if not has_nearby_date:
+            return i
+    return min_idx
+
+
+def _lbl_find_other_start(right_paras: list[ParaModel], min_idx: int) -> int:
+    """First index >= min_idx of an 'other'-type section (affiliations, etc.).
+
+    Detects either a bold entry header, or a paragraph that precedes a role_meta
+    within the next four non-empty paragraphs.
+    """
+    for i in range(min_idx, len(right_paras)):
+        pm = right_paras[i]
+        if not pm.text.strip():
+            continue
+        if pm.semantic == "role_meta":
+            # Role-meta line — backtrack to the header that precedes it
+            for j in range(max(min_idx, i - 4), i):
+                if right_paras[j].text.strip() and right_paras[j].semantic != "role_meta":
+                    return j
+            return i
+        if pm.style.bold:
+            return i
+    return min_idx
+
+
+def _lbl_injection_index(
+    right_paras: list[ParaModel], heading: ParaModel, min_idx: int
+) -> int:
+    """Return the index in right_paras where heading should be injected (>= min_idx)."""
+    sem = _classify_section(heading.text)
+    if sem == "experience":
+        return _lbl_find_experience_start(right_paras, min_idx)
+    if sem == "education":
+        return _lbl_find_education_start(right_paras, min_idx)
+    if sem == "skills":
+        return _lbl_find_skills_start(right_paras, min_idx)
+    # "summary" is handled as index 0 by the caller; all other types use other-start
+    return _lbl_find_other_start(right_paras, min_idx)
+
+
+def _apply_label_column_fix(
+    all_paras: list[ParaModel], body
+) -> tuple[list[ParaModel], bool]:
+    """Detect and fix label-column layout; return (new_all_paras, was_fixed).
+
+    In a 2-column newspaper-layout DOCX where column 0 is a narrow label rail
+    containing only section headings, all headings appear before all content in the
+    linear XML order.  This causes the parser to build empty sections and then dump
+    every resume paragraph into the last section.
+
+    When detected, the function reorders all_paras so each heading is positioned
+    immediately before the right-column content block it belongs to.  The left-column
+    empty spacing paragraphs are dropped from all_paras (they are redundant once the
+    headings are relocated).
+
+    body_items is NOT modified — it is used by the DOCX renderer, not by section
+    grouping.
+    """
+    if not _detect_label_column_layout(body):
+        return all_paras, False
+
+    split_idx = _find_label_column_split(all_paras)
+    if split_idx is None:
+        return all_paras, False
+
+    # Section headings from the left column (in document order, empties stripped).
+    # Only include recognised section names to exclude candidate job-title headings
+    # in the header area (e.g. "SOFTWARE ENGINEER" styled as Heading N).
+    left_headings = [
+        pm for pm in all_paras[:split_idx]
+        if pm.semantic == "section_heading"
+        and pm.text.strip().lower() in _ALL_HEADING_NAMES
+    ]
+    if len(left_headings) < 2:
+        return all_paras, False
+
+    right_col = all_paras[split_idx:]
+
+    # Everything before the first recognised section heading (name, contact, etc.).
+    # Use the same filter as left_headings so that candidate job-title headings in
+    # the header area are preserved in pre_header rather than discarded.
+    first_heading_idx = next(
+        i for i, pm in enumerate(all_paras)
+        if pm.semantic == "section_heading" and pm.text.strip().lower() in _ALL_HEADING_NAMES
+    )
+    pre_header = all_paras[:first_heading_idx]
+
+    # Compute injection indices: where in right_col each heading should be placed
+    injection_indices: list[int] = []
+    min_idx = 0
+    for k, heading in enumerate(left_headings):
+        idx = 0 if k == 0 else _lbl_injection_index(right_col, heading, min_idx)
+        injection_indices.append(idx)
+        min_idx = idx
+
+    # Bail out if indices are not non-decreasing (semantic detection went wrong)
+    if any(b < a for a, b in zip(injection_indices, injection_indices[1:])):
+        return all_paras, False
+
+    # Build new all_paras: pre_header + interleaved headings + right-column content
+    new_paras: list[ParaModel] = list(pre_header)
+    prev_idx = 0
+    for heading, inject_at in zip(left_headings, injection_indices):
+        new_paras.extend(right_col[prev_idx:inject_at])
+        new_paras.append(heading)
+        prev_idx = inject_at
+    new_paras.extend(right_col[prev_idx:])
+
+    return new_paras, True
 
 
 def _finalise(section: ResumeSection) -> None:
