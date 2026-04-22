@@ -45,6 +45,63 @@ CORE RULES
      rewrite_policy = "preserve"
 
 ==================================================
+PARSER SIGNAL INTERPRETATION
+==================================================
+
+Parser output is structural and may be semantic-light.
+
+This means:
+- parser may emit role-like grouping in sections whose final semantic_type is NOT experience
+- parser may preserve structural candidates even when final section meaning is uncertain
+
+Treat parser roles as structural hints, NOT semantic truth.
+
+------------------------------------------
+CATEGORY B PARSER SIGNALS
+------------------------------------------
+
+Some parser signals are informational only and should be resolved by classification, not treated as contradictions.
+
+Examples:
+- role-like grouping in a section that is ultimately education / additional / other
+- role headers that look like dates
+- imperfect bullet recognition
+
+These do NOT mean the parser is wrong.
+They mean you must normalize structure according to final semantic_type.
+
+------------------------------------------
+REQUIRED CLASSIFIER RESPONSE
+------------------------------------------
+
+If final semantic_type = experience:
+- keep / reconstruct roles as needed
+
+If final semantic_type != experience:
+- discard parser roles completely
+- convert all content into blocks[]
+- preserve content, do not force experience structure
+
+Parser structure may help identify content grouping,
+but final semantic_type always decides whether roles[] survive.
+
+------------------------------------------
+SEMANTIC AUTHORITY
+------------------------------------------
+
+Final section meaning is decided here in classification,
+not by parser headings or parser role grouping alone.
+
+A section can contain role-like grouped content and still be:
+- education
+- additional
+- other
+
+In such cases:
+- roles[] must be removed
+- content becomes blocks[]
+
+==================================================
 SECTION TYPES
 ==================================================
 
@@ -454,7 +511,7 @@ OUTPUT FORMAT
 
 {
   "document_id": "...",
-  "classification_version": "v5.5",
+  "classification_version": "v5.6",
   "source_kind": "...",
   "sections": [...]
 }
