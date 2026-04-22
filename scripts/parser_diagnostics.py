@@ -32,7 +32,6 @@ Category A (true parser bugs):
   EXPERIENCE_NO_ROLES                      (w=3) Experience section has no roles[].
   MERGED_SECTION_SUSPECTED                 (w=4) Experience body absorbed a section heading.
   HEADING_NOT_RECOGNIZED                   (w=2) Paragraph looks like a heading but is 'paragraph'.
-  ROLE_HEADER_CONTAINS_DATE                (w=2) Role header is predominantly a date line.
   EXPERIENCE_ROLE_BOUNDARY_INSIDE_BULLETS  (w=5) Experience role bullet_para_ids contain role_meta
                                                   entries (true job-boundary markers absorbed as bullets).
   EXPERIENCE_OVERMERGED_ROLE               (w=3) Single experience role with many bullets and
@@ -41,6 +40,7 @@ Category A (true parser bugs):
 Category B (structural candidates / informational):
   BULLET_NOT_RECOGNIZED                    (w=1) Text looks like a bullet but semantic is not 'bullet'.
   ROLE_GROUPING_WEAK                       (w=2) Role has 2+ headers and 0 bullets.
+  ROLE_HEADER_CONTAINS_DATE                (w=2) Role header is predominantly a date line.
   ROLE_LIKE_GROUPING_NON_EXPERIENCE        (w=1) Non-experience section has role-like structure;
                                                   LLM decides final section semantics.
 """
@@ -68,7 +68,7 @@ _ISSUE_METADATA: dict[str, tuple[str, int, str]] = {
     "EXPERIENCE_NO_ROLES":                     (_CAT_A, 3, "high"),
     "MERGED_SECTION_SUSPECTED":                (_CAT_A, 4, "high"),
     "HEADING_NOT_RECOGNIZED":                  (_CAT_A, 2, "medium"),
-    "ROLE_HEADER_CONTAINS_DATE":               (_CAT_A, 2, "medium"),
+    "ROLE_HEADER_CONTAINS_DATE":               (_CAT_B, 2, "low"),
     "EXPERIENCE_ROLE_BOUNDARY_INSIDE_BULLETS": (_CAT_A, 5, "high"),
     "EXPERIENCE_OVERMERGED_ROLE":              (_CAT_A, 3, "high"),
     # Category B — structural signals / informational
@@ -531,10 +531,13 @@ def _build_json_payload(reports: list[FileReport]) -> dict:
     total_a_score = sum(r.parser_issue_score for r in reports)
     total_b_score = sum(r.info_score for r in reports)
 
+    ratio = parser_issue_count / total if total else 0.0
     if parser_issue_count == 0:
         health_status = "ok"
-    elif parser_issue_count <= max(1, total // 10):
+    elif ratio < 0.15:
         health_status = "warning"
+    elif ratio < 0.30:
+        health_status = "degraded"
     else:
         health_status = "critical"
 
