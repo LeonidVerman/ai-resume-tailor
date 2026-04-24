@@ -73,6 +73,8 @@ def _run_classification_background(resume_id: int, norm_data: bytes, template_ir
     db = factory()
     try:
         ResumeClassificationService(db).classify_and_store(resume_id, norm_data, template_ir)
+    except Exception as exc:
+        logger.error("Classification background task failed resume=%s: %s", resume_id, exc)
     finally:
         db.close()
 
