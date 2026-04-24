@@ -71,6 +71,12 @@ export default function AdminPage() {
   const [downloadingRdById, setDownloadingRdById] = useState(false);
   const [rdByIdError, setRdByIdError] = useState<string | null>(null);
 
+  // Classification tool state
+  const [classifySelectedFile, setClassifySelectedFile] = useState<File | null>(null);
+  const [classifying, setClassifying] = useState(false);
+  const [classifyError, setClassifyError] = useState<string | null>(null);
+  const classifyFileRef = useRef<HTMLInputElement>(null);
+
   // Benchmark state
   const [benchClientId, setBenchClientId] = useState("");
   const [benchAssessModel, setBenchAssessModel] = useState("gpt-5.2");
@@ -241,6 +247,23 @@ export default function AdminPage() {
       setRdByIdError(e instanceof ApiError ? e.detail : "Download failed.");
     } finally {
       setDownloadingRdById(false);
+    }
+  }
+
+  async function handleClassifyFile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!classifySelectedFile) return;
+    setClassifying(true);
+    setClassifyError(null);
+    try {
+      const { classificationBlob, classificationFilename, inputBlob, inputFilename } =
+        await admin.classifyFile(classifySelectedFile);
+      triggerDownload(classificationBlob, classificationFilename);
+      triggerDownload(inputBlob, inputFilename);
+    } catch (e) {
+      setClassifyError(e instanceof ApiError ? e.detail : "Classification failed.");
+    } finally {
+      setClassifying(false);
     }
   }
 
@@ -768,6 +791,42 @@ export default function AdminPage() {
               <p className="text-sm text-red-600 mt-3">✗ {rdByIdError}</p>
             )}
           </div>
+        </CardBody>
+      </Card>
+
+      {/* Resume Classification */}
+      <Card>
+        <CardHeader>
+          <FileText className="h-5 w-5 text-purple-600" />
+          <h2 className="text-base font-semibold text-gray-900">Resume Classification</h2>
+        </CardHeader>
+        <CardBody>
+          <p className="text-sm text-gray-500 mb-4">
+            Upload a DOCX or PDF resume to run LLM classification. Downloads two files:
+            the classification output and the LLM input (for debugging). Nothing is stored.
+          </p>
+          <form onSubmit={handleClassifyFile} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Resume file</label>
+              <input
+                ref={classifyFileRef}
+                type="file"
+                accept=".docx,.pdf"
+                className="block w-full text-sm text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border file:border-gray-300 file:bg-white file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-50"
+                onChange={(e) => {
+                  setClassifySelectedFile(e.target.files?.[0] ?? null);
+                  setClassifyError(null);
+                }}
+              />
+            </div>
+            <Button type="submit" loading={classifying} disabled={!classifySelectedFile}>
+              <Download className="h-4 w-4" />
+              Classify &amp; download output + input JSON
+            </Button>
+          </form>
+          {classifyError && (
+            <p className="text-sm text-red-600 mt-3">✗ {classifyError}</p>
+          )}
         </CardBody>
       </Card>
     </AppShell>

@@ -25,11 +25,13 @@ import zipfile
 from datetime import date, timedelta
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+import logging
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
 from backend.app.config import get_settings
-from backend.app.dependencies import AdminDep, DbDep
+from backend.app.dependencies import AdminDep, ClassifyFileDep, DbDep
 from backend.app.db.repositories.billing_repository import BillingRepository
 from backend.app.schemas.billing import GrantCreditsRequest, RegisterCheckoutSessionRequest
 from backend.app.db.repositories.admin_config_repository import AdminConfigRepository
@@ -70,6 +72,7 @@ def _storage_service() -> StorageService:
 _POSITIONS_FILE = str(Path(__file__).parents[3] / "benchmark" / "positions.txt")
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _eval_service(db) -> EvaluationService:
@@ -667,3 +670,95 @@ def register_checkout_session(
         )
         return {"registered": False, "checkout_session_id": request.checkout_session_id,
                 "note": "session already recorded — no change made"}
+
+
+# ── Classification ────────────────────────────────────────────────────────
+
+@router.post("/classification/classify-file")
+async def classify_resume_file(file: UploadFile, _access: ClassifyFileDep, db: DbDep):
+    """
+    Upload a DOCX or PDF resume, run LLM classification, and return the
+    classification JSON directly.  Nothing is stored in the database.
+    """
+    from backend.app.services.document_normalization_service import normalize_input_document
+    from backend.app.services.resume_classification_service import ResumeClassificationService
+
+    data = await file.read()
+    filename = file.filename or "resume.docx"
+
+    try:
+        norm = normalize_input_document(data, filename)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    try:
+        llm_input, classification = ResumeClassificationService(db).classify_bytes_with_input(
+            norm.normalized_data, norm.template_ir
+        )
+    except Exception as exc:
+        logger.error("Ad-hoc classification failed for %s: %s", filename, exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Classification failed: {exc}") from exc
+
+    return {"classification": classification, "llm_input": llm_input}
+
+
+# ── Classification debug ───────────────────────────────────────────────────
+
+@router.get("/resumes/{resume_id}/classification")
+def get_resume_classification(resume_id: int, _admin: AdminDep, db: DbDep):
+    """
+    Return the stored LLM classification for an uploaded resume.
+
+    Returns the raw classification JSON (as produced by Phase 1 classification).
+    404 if the resume does not exist or has not been classified yet.
+    """
+    from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
+    from backend.app.services.resume_classification_service import ResumeClassificationService
+
+    resume = StructuredResumeRepository(db).get_by_id(resume_id)
+    if resume is None:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    classification = ResumeClassificationService(db).get_classification(resume_id)
+    if classification is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Classification not yet available for this resume. "
+                   "It may still be processing or may have failed — check backend logs.",
+        )
+    return classification
+
+
+@router.post("/resumes/{resume_id}/classification/trigger")
+def trigger_resume_classification(resume_id: int, _admin: AdminDep, db: DbDep, background_tasks: BackgroundTasks):
+    """
+    Manually trigger LLM classification for a resume that was not classified
+    on upload (e.g. uploaded before this feature was deployed).
+
+    Classification runs in the background; this endpoint returns immediately.
+    """
+    from backend.app.clients.storage_client import make_storage_client_from_settings
+    from backend.app.db.repositories.structured_resume_repository import StructuredResumeRepository
+    from backend.app.services.storage_service import StorageService
+
+    resume = StructuredResumeRepository(db).get_by_id(resume_id)
+    if resume is None:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    # Download the stored file to get norm_data bytes.
+    if not resume.source_file_url:
+        raise HTTPException(status_code=422, detail="Resume has no stored source file — cannot classify.")
+
+    try:
+        norm_data = StorageService(make_storage_client_from_settings()).get_bytes(resume.source_file_url)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch resume file: {exc}") from exc
+
+    from backend.app.api.resume import _run_classification_background
+    background_tasks.add_task(
+        _run_classification_background,
+        resume_id,
+        norm_data,
+        resume.template_ir_jsonb,
+    )
+    return {"status": "triggered", "resume_id": resume_id}

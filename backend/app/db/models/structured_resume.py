@@ -30,6 +30,9 @@ class StructuredResume(Base, CreatedAtMixin):
     # Serialized ResumeDocument IR (see compiler/models.py ResumeDocument.to_dict()).
     # Populated for PDF uploads; None for DOCX uploads.
     template_ir_jsonb: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    # LLM classification result produced at upload time (Phase 1).
+    # Populated asynchronously after upload; None until classification completes.
+    classification_jsonb: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     # Soft-delete flag — set to True instead of hard-deleting the row.
     delete_flg: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
