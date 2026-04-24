@@ -49,6 +49,7 @@ from tailor.compiler.models import (
 # ---------------------------------------------------------------------------
 
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
+_DATE_PLACEHOLDER_RE = re.compile(r"\b20[Xx]{2}\b", re.IGNORECASE)
 _SCANNED_CHAR_THRESHOLD = 50  # fewer chars → likely scanned
 _CONT_RE = re.compile(r"\s*\(cont\.?\)\s*$", re.IGNORECASE)
 
@@ -181,6 +182,31 @@ def _block_text(blk: dict) -> str:
             if t:
                 parts.append(t)
     return " ".join(parts).strip()
+
+
+def _deduplicate_page_indices(doc) -> set[int]:
+    """Return the set of page indices to skip because they are exact duplicates.
+
+    When a PDF is a template gallery (the same page repeated N times), every
+    copy after the first produces spurious duplicate sections in the parser
+    output.  This function fingerprints each page by its normalised text
+    content and marks all but the *first* occurrence of any duplicate for
+    skipping.
+
+    Only exact duplicates are skipped (normalised whitespace).  Near-similar
+    but distinct pages are preserved.
+    """
+    seen: dict[str, int] = {}  # fingerprint → first page index
+    skip: set[int] = set()
+    for page in doc:
+        text = " ".join(page.get_text().split())
+        if not text:
+            continue
+        if text in seen:
+            skip.add(page.number)
+        else:
+            seen[text] = page.number
+    return skip
 
 
 def _detect_header_footer_texts(doc) -> set[str]:
@@ -797,7 +823,8 @@ def _detect_column_split(
 
 
 def _extract_paragraphs(
-    doc, hf_texts: set[str], margin_left: float, layout: "LayoutProfile"
+    doc, hf_texts: set[str], margin_left: float, layout: "LayoutProfile",
+    skip_pages: set[int] | None = None,
 ) -> list[ParaModel]:
     """Extract all content paragraphs from the document, skipping H/F text.
 
@@ -813,8 +840,11 @@ def _extract_paragraphs(
     # layout.column_split_x is the visual sidebar boundary (drawing right-edge);
     # used as the authoritative right-column indent origin.
     layout_split_x = layout.column_split_x  # may be None
+    _skip = skip_pages or set()
 
     for page in doc:
+        if page.number in _skip:
+            continue
         page_margin_left = margin_left
         blocks = page.get_text("dict")["blocks"]
 
@@ -1242,8 +1272,8 @@ def _infer_semantic(pm: ParaModel) -> str:
     if text.startswith(_BULLET_PREFIXES):
         return "bullet"
 
-    # Date/location meta line: contains a year, short, no pipe
-    if _YEAR_RE.search(text) and len(text) <= 80 and "|" not in text:
+    # Date/location meta line: contains a year (or placeholder like "20XX"), short, no pipe
+    if (_YEAR_RE.search(text) or _DATE_PLACEHOLDER_RE.search(text)) and len(text) <= 80 and "|" not in text:
         return "role_meta"
 
     return "paragraph"
@@ -1266,11 +1296,12 @@ _SUMMARY_NAMES: frozenset[str] = frozenset({
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "core competencies", "competencies",
     "technical expertise", "expertise", "key skills", "areas of expertise",
-    "technologies", "tech stack",
+    "technologies", "tech stack", "relevant skills", "skills & abilities",
+    "skill summary",
 })
 _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
-    "educational background", "degrees",
+    "educational background", "degrees", "educational history",
 })
 
 _ALL_KNOWN: frozenset[str] = (
@@ -1282,7 +1313,13 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         "projects", "certifications", "certification", "publications",
         "awards", "honors", "languages", "references", "activities",
         "volunteer", "volunteering", "leadership", "interests",
-        "additional information",
+        "additional information", "communication",
+        "affiliations", "affiliations and awards", "affiliations & awards",
+        "certifications and training", "training and certifications",
+        "professional certifications",
+        # Contact sections appear in sidebar/column layouts; must be recognised
+        # as headings so they don't bleed into adjacent experience sections.
+        "contact", "contact info", "contact information",
     })
 )
 
@@ -1345,6 +1382,14 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     # Paragraphs buffered for sibling-geometry check: indented but not yet
     # confirmed as bullets (require ≥2 siblings before promoting).
     pending: list[ParaModel] = []
+    # Date lines seen before the role title in Pattern B (date-before-title)
+    # format.  Cleared when adopted into meta for the new role.
+    pre_header_meta: list[ParaModel] = []
+    # True when the current role was established via Pattern B (a date/meta
+    # line preceded the title).  Used to detect the next role boundary: in
+    # Pattern B, a new role_meta in header/meta/bullets state is the date for
+    # the NEXT role, not additional meta for the current one.
+    used_pattern_b = False
     state = "init"
 
     # Only use indent-based bullet promotion when the section has at least one
@@ -1361,6 +1406,11 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     # standard path — otherwise a plain paragraph before the first role_header
     # would be incorrectly treated as a standalone role entry.
     has_pipe_role_headers = any(p.semantic == "role_header" for p in body_paras)
+
+    # When the section has date/meta lines, role detection works even without
+    # explicit bullet markers — the date lines are sufficient role-boundary
+    # signals (Pattern A: title→date, Pattern B: date→title).
+    has_role_meta = any(p.semantic == "role_meta" for p in body_paras)
 
     def _hdr_indent() -> float:
         """Return the indent of the current role header (0 if unknown)."""
@@ -1385,7 +1435,7 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
         pending.clear()
 
     def _flush() -> None:
-        nonlocal header
+        nonlocal header, used_pattern_b
         if header is None:
             return
         # Unfulfilled pending paragraphs had only one sibling → not bullets.
@@ -1414,26 +1464,70 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
         header_extra.clear()
         meta.clear()
         bullets.clear()
+        used_pattern_b = False
 
-    for pm in body_paras:
+    def _peek(start: int, max_dist: int = 2) -> str | None:
+        """Return the semantic of the next non-empty paragraph within max_dist steps."""
+        for i in range(start, min(start + max_dist, len(body_paras))):
+            if body_paras[i].semantic != "empty":
+                return body_paras[i].semantic
+        return None
+
+    def _start_pattern_b(date_pm: ParaModel) -> None:
+        """Flush the current role and buffer date_pm for the next Pattern B role."""
+        nonlocal state
+        _flush()
+        pre_header_meta.append(date_pm)
+        state = "init"
+
+    for idx, pm in enumerate(body_paras):
         s = pm.semantic
         if s == "role_header":
             _flush()
             header = pm
+            # Absorb any buffered Pattern B dates into this role's meta.
+            if pre_header_meta:
+                meta.extend(pre_header_meta)
+                pre_header_meta.clear()
             state = "header"
         elif state == "init":
-            if s == "paragraph" and not has_pipe_role_headers and has_explicit_bullets:
-                # Separate-line format with explicit bullet markers: treat the
-                # first plain paragraph as the role title (role header).  Require
-                # explicit bullets so that sections where bullet markers are
-                # rendered as empty paragraphs (e.g. \uf0b7 chars classified as
-                # "empty") are not accidentally split into spurious roles.
-                header = pm
-                state = "header"
+            if s == "paragraph" and not has_pipe_role_headers:
+                _txt_init = pm.text.strip()
+                _can_promote = (
+                    has_explicit_bullets
+                    # Pattern B: a date line was already buffered — this paragraph
+                    # is the role title that follows the date.
+                    or bool(pre_header_meta)
+                    # Pattern A: paragraph immediately followed by a date line AND
+                    # starts with a capital letter (job titles start with capitals;
+                    # preamble/description fragments start with lowercase).
+                    or (
+                        has_role_meta
+                        and _peek(idx + 1) == "role_meta"
+                        and bool(_txt_init) and _txt_init[0].isupper()
+                    )
+                )
+                if _can_promote:
+                    # Separate-line format: this paragraph is the role title.
+                    header = pm
+                    if pre_header_meta:
+                        # Pattern B: adopt buffered date(s) into this role's meta.
+                        meta.extend(pre_header_meta)
+                        pre_header_meta.clear()
+                        used_pattern_b = True
+                    state = "header"
+            elif s == "role_meta" and not has_pipe_role_headers:
+                # Pattern B: date appears before the title — buffer it.
+                pre_header_meta.append(pm)
         elif state == "header":
             if s == "role_meta":
-                meta.append(pm)
-                state = "meta"
+                if used_pattern_b:
+                    # Pattern B: current role already has its date (from
+                    # pre_header_meta); this date belongs to the NEXT role.
+                    _start_pattern_b(pm)
+                else:
+                    meta.append(pm)
+                    state = "meta"
             elif s == "bullet":
                 _promote_pending()
                 bullets.append(pm)
@@ -1465,7 +1559,11 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 state = "bullets"
         elif state == "meta":
             if s == "role_meta":
-                meta.append(pm)
+                if used_pattern_b:
+                    # Pattern B continuation: this date starts the next role.
+                    _start_pattern_b(pm)
+                else:
+                    meta.append(pm)
             elif s == "bullet":
                 # Explicit marker: confirm any buffered pending as bullets.
                 _promote_pending()
@@ -1478,6 +1576,19 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                         # Two or more siblings with list geometry → promote all.
                         _promote_pending()
                         state = "bullets"
+                elif (
+                    not has_pipe_role_headers
+                    and has_role_meta
+                    and not used_pattern_b
+                    and _peek(idx + 1) == "role_meta"
+                    and pm.text.strip()[:1].isupper()
+                ):
+                    # Pattern A new-role: this paragraph starts with a capital
+                    # and is immediately followed by a date line — treat it as
+                    # the next role's title rather than content for the current role.
+                    _flush()
+                    header = pm
+                    state = "header"
                 else:
                     # Non-indented paragraph → flush pending to meta, keep as meta.
                     meta.extend(pending)
@@ -1490,11 +1601,20 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
         elif state == "bullets":
-            if s in ("bullet", "role_meta"):
-                # role_meta can appear mid-bullet-list when a line contains a year
-                # (e.g. "Resolved 150 bugs since June 2023 for apps post-launch to")
-                # but is clearly a continuation bullet, not a date/meta line.
+            if s == "bullet":
                 bullets.append(pm)
+            elif s == "role_meta":
+                if used_pattern_b:
+                    # Pattern B continuation from bullets state.
+                    _start_pattern_b(pm)
+                else:
+                    # role_meta can appear mid-bullet-list when a line contains
+                    # a year (e.g. "Resolved 150 bugs since June 2023 …") but is
+                    # clearly a continuation bullet, not a date/meta line.
+                    # Reclassify so parser_semantic reflects the actual role in
+                    # the output (prevents EXPERIENCE_ROLE_BOUNDARY_INSIDE_BULLETS).
+                    pm.semantic = "bullet"
+                    bullets.append(pm)
             elif s == "paragraph":
                 _txt = pm.text.strip()
                 if _txt and _txt[0].islower():
@@ -1518,6 +1638,17 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                     _flush()
                     header = pm
                     state = "header"
+                elif (
+                    not has_pipe_role_headers
+                    and has_role_meta
+                    and not used_pattern_b
+                    and _peek(idx + 1) == "role_meta"
+                    and pm.text.strip()[:1].isupper()
+                ):
+                    # Pattern A new-role from bullets state (title→date format).
+                    _flush()
+                    header = pm
+                    state = "header"
                 elif len(bullets) >= 2:
                     # Established list (≥2 bullets): promote as continuation.
                     pm.semantic = "bullet"
@@ -1527,6 +1658,26 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             pass
 
     _flush()
+
+    # Date-only body: the section body has only role_meta lines and no headers
+    # were ever detected (e.g. a "WORK HISTORY" section where dates are placed
+    # in the same column as the section label but the job titles were absorbed
+    # into a different text block).  Synthesise a minimal stub role per date
+    # line so the section is not reported as EXPERIENCE_NO_ROLES.
+    if not roles and pre_header_meta:
+        non_empty = [p for p in body_paras if p.semantic != "empty"]
+        if non_empty and all(p.semantic == "role_meta" for p in non_empty):
+            for pm in pre_header_meta:
+                roles.append(
+                    RoleEntry(
+                        header=pm,
+                        header_extra=[],
+                        meta_lines=[],
+                        bullets=[],
+                        role_id=pm.text.strip(),
+                    )
+                )
+
     return roles
 
 
@@ -1538,6 +1689,17 @@ def _group_sections(
     sections: list[ResumeSection] = []
     current: ResumeSection | None = None
     found_section = False
+    # Through-empty-section absorb: stash an empty experience section so that
+    # a non-known heading encountered one or more known sections later can
+    # still be absorbed into it as a role_header.  This handles two-column PDF
+    # layouts where the experience section label and the job-title headings
+    # land in different text-extraction bands, with other known section labels
+    # (Education, Contact Info) appearing in between.
+    _last_empty_exp: ResumeSection | None = None
+    _last_empty_exp_insert_idx: int | None = None
+    # True when `current` has already been inserted into `sections` (via
+    # through-empty absorb) and must not be appended again.
+    _current_in_sections = False
 
     for pm in paras:
         if pm.semantic == "section_heading":
@@ -1549,10 +1711,59 @@ def _group_sections(
                 header_paras.append(pm)
                 continue
 
+            # Two-column / table PDF layout: the experience section label
+            # ("WORK EXPERIENCE") appears alone as a heading with no body
+            # paragraphs; the actual job-title entries follow as bold-heading
+            # paragraphs in the adjacent column.  Absorb the first such
+            # non-known heading as a role_header so _group_roles can detect it.
+            _htext = _normalize_heading_text(pm.text)
+            if (
+                current is not None
+                and current.semantic_type == "experience"
+                and len(current.body_paras) == 0
+                and _htext not in _ALL_HEADING_NAMES_NOSPACE
+            ):
+                pm.semantic = "role_header"
+                current.body_paras.append(pm)
+                continue
+
+            # Through-empty absorb: a non-known heading appeared after one or
+            # more known sections that separated it from the stashed empty
+            # experience section.  Finalize the intervening "current" section,
+            # restore the stash as current, and absorb this heading into it.
+            if _last_empty_exp is not None and _htext not in _ALL_HEADING_NAMES_NOSPACE:
+                if current is not None:
+                    _finalise(current)
+                    if not _current_in_sections:
+                        sections.append(current)
+                pm.semantic = "role_header"
+                _last_empty_exp.body_paras.append(pm)
+                sections.insert(_last_empty_exp_insert_idx, _last_empty_exp)
+                current = _last_empty_exp
+                _current_in_sections = True
+                _last_empty_exp = None
+                _last_empty_exp_insert_idx = None
+                continue
+
             found_section = True
             if current is not None:
-                _finalise(current)
-                sections.append(current)
+                if (
+                    current.semantic_type == "experience"
+                    and len(current.body_paras) == 0
+                ):
+                    # Stash the empty experience section; do not finalize yet.
+                    # If a previous stash exists, finalize it now (it will not
+                    # get any role content).
+                    if _last_empty_exp is not None:
+                        _finalise(_last_empty_exp)
+                        sections.insert(_last_empty_exp_insert_idx, _last_empty_exp)
+                    _last_empty_exp = current
+                    _last_empty_exp_insert_idx = len(sections)
+                else:
+                    _finalise(current)
+                    if not _current_in_sections:
+                        sections.append(current)
+            _current_in_sections = False
             current = ResumeSection(
                 title=pm.text.strip(),
                 heading=pm,
@@ -1563,9 +1774,15 @@ def _group_sections(
         elif current is not None:
             current.body_paras.append(pm)
 
+    # Finalize any stash that was never absorbed.
+    if _last_empty_exp is not None:
+        _finalise(_last_empty_exp)
+        sections.insert(_last_empty_exp_insert_idx, _last_empty_exp)
+
     if current is not None:
         _finalise(current)
-        sections.append(current)
+        if not _current_in_sections:
+            sections.append(current)
 
     return header_paras, sections
 
@@ -1702,8 +1919,9 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
         )
 
     layout = _extract_layout(doc)
+    skip_pages = _deduplicate_page_indices(doc)
     hf_texts = _detect_header_footer_texts(doc)
-    raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt, layout)
+    raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt, layout, skip_pages)
     header_paras, sections = _group_sections(raw_paras)
 
     # Rebuild all_paras from the structured IR so it reflects any post-processing
@@ -1741,10 +1959,13 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
         else:
             all_paras.extend(section.body_paras)
 
-    return ResumeDocument(
+    doc = ResumeDocument(
         header_paras=header_paras,
         sections=sections,
         layout=layout,
         all_paras=all_paras,
         source_kind="pdf",
     )
+    from tailor.compiler.models import assign_stable_ids
+    assign_stable_ids(doc)
+    return doc

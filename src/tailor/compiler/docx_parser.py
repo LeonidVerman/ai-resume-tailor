@@ -32,20 +32,22 @@ _EXPERIENCE_NAMES: frozenset[str] = frozenset({
     "experience", "experiences", "work experience", "professional experience",
     "employment history", "employment", "career history",
     "work history", "professional background",
+    # Non-canonical but common variants found in real templates:
+    "employment summary", "work summary", "experience summary",
 })
 _SUMMARY_NAMES: frozenset[str] = frozenset({
     "professional summary", "summary", "objective", "career objective",
     "profile", "professional profile", "about me", "career summary",
-    "executive summary",
+    "executive summary", "overview",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "skill", "core competencies", "competencies",
     "technical expertise", "expertise", "key skills", "areas of expertise",
-    "technologies", "tech stack",
+    "technologies", "tech stack", "relevant skills",
 })
 _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
-    "educational background", "degrees",
+    "educational background", "degrees", "educational history",
 })
 _CERTIFICATIONS_NAMES: frozenset[str] = frozenset({
     "certifications", "certification", "licenses", "license",
@@ -67,7 +69,9 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         "projects", "publications",
         "awards", "honors", "references", "activities",
         "volunteer", "volunteering", "leadership", "interests",
-        "additional information",
+        "additional information", "communication",
+        "affiliations", "affiliations and awards", "affiliations & awards",
+        "contact",
     })
 )
 
@@ -91,6 +95,15 @@ _WEBSITES_LIKE_WORDS: frozenset[str] = frozenset({
 
 _HEADING_STYLE_RE = re.compile(r"^heading\s*\d", re.IGNORECASE)
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
+_DATE_PLACEHOLDER_RE = re.compile(r"\b20[Xx]{2}\b", re.IGNORECASE)
+_DATE_RANGE_RE = re.compile(r"[-\u2013\u2014]")  # dash/en-dash/em-dash in date ranges
+
+
+def _heading_level(pm: "ParaModel") -> int | None:
+    """Return the numeric level from a 'Heading N' style, or None."""
+    style_name = (pm.style.style_name or "").strip()
+    m = re.match(r"^heading\s*(\d+)", style_name, re.IGNORECASE)
+    return int(m.group(1)) if m else None
 
 
 def _classify_section(heading_text: str) -> str:
@@ -279,10 +292,32 @@ def _infer_semantic(pm: ParaModel) -> str:
     if style_name.lower() in {"title", "subtitle"}:
         return "section_heading"
 
-    # Known section names: bold paragraph whose text exactly matches a recognized
-    # section name is a section heading regardless of font size or spacing.
-    # This handles templates that use small bold text (e.g. 10.5pt) for headings.
+    # Style "Heading" (bare, without a level digit) paired with a known section
+    # name.  Some templates use a custom "Heading" paragraph style for section
+    # titles that does not inherit a numbered Word heading style (e.g. "Heading 1"),
+    # so the regex above does not match.  Guarded by the known-name set to avoid
+    # false positives on non-heading paragraphs that share the same style (e.g.
+    # the candidate's own name in the document header area).
+    if style_name.lower() == "heading" and text.lower() in _ALL_HEADING_NAMES:
+        return "section_heading"
+
+    # Known section names (bold): bold paragraph exactly matching a recognized
+    # section name is a heading regardless of font size or spacing.
     if pm.style.bold and text.lower() in _ALL_HEADING_NAMES:
+        return "section_heading"
+
+    # Known section names (plain paragraph, no formatting at all): a paragraph
+    # with no named style, not bold, and no explicit spacing_before that exactly
+    # matches a known section name.  Targets templates like 20-Software-Engineer
+    # where section titles are plain 12pt text with no paragraph-level styling.
+    # Guarded by spacing_before=None so that PDF-generated DOCX headings (which
+    # carry spacing_before=20 from the style template) are not affected.
+    if (
+        not style_name
+        and not pm.style.bold
+        and pm.style.spacing_before is None
+        and text.lower() in _ALL_HEADING_NAMES
+    ):
         return "section_heading"
 
     # Heuristic: bold, short (≥2 words), title-case, no bullets, has spacing.
@@ -309,6 +344,14 @@ def _infer_semantic(pm: ParaModel) -> str:
 
     if "|" in text and not text.startswith(("-", "•")):
         return "role_header"
+    # " / " separator (space-slash-space): role_header only when neither the
+    # segment before nor after the slash looks like a date/year.
+    # "Lamna Health / General Practitioner" → role_header ✓
+    # "January 2022 - current / New York, NY" → date line, NOT role_header ✓
+    if " / " in text and not text.startswith(("-", "•")):
+        before_slash, after_slash = text.split(" / ", 1)
+        if not _YEAR_RE.search(before_slash) and not _YEAR_RE.search(after_slash.strip()):
+            return "role_header"
 
     if (
         pm.style.numbering
@@ -316,6 +359,11 @@ def _infer_semantic(pm: ParaModel) -> str:
         or text.startswith(("- ", "• ", "· ", "– ", "* ", "\u25cf", "\u25e6"))
     ):
         return "bullet"
+
+    # Fused year-prefix: "2023CompanyName" — year glued to next word so the
+    # \b boundary in _YEAR_RE doesn't fire.  Treat as role_meta.
+    if re.match(r"^(19|20)\d{2}[A-Za-z]", text) and len(text) <= 80 and "|" not in text:
+        return "role_meta"
 
     # NBSP/space-column role header: job title and date/company are placed on
     # the same paragraph and aligned using non-breaking spaces (\\xa0) or tab
@@ -343,6 +391,105 @@ def _infer_semantic(pm: ParaModel) -> str:
 # Group experience body paragraphs into RoleEntry list
 # ---------------------------------------------------------------------------
 
+def _relabel_implicit_role_headers(body_paras: list[ParaModel]) -> None:
+    """Relabel 'paragraph' semantics to 'role_header' for standalone job-title
+    lines that lack the usual |/NBSP/tab marker but precede a date/meta line.
+
+    Many resume templates place the job title on its own paragraph and the
+    company + date either immediately below or one paragraph below (company
+    name sandwiched between title and date).  This pass detects that pattern
+    before _group_roles() runs so the grouping state-machine finds the correct
+    role boundaries.
+
+    A paragraph is relabeled when ALL of the following hold:
+      1. Current semantic is 'paragraph' (not already detected as something else)
+      2. Text is short (≤ 60 chars), contains no year, and does not start with
+         a bullet character
+      3. The text contains at least one word from _JOB_TITLE_WORDS (job title
+         signal; guards against relabeling company-name or content lines)
+      4. The FIRST non-empty paragraph that follows is NOT already a role_header
+         (avoids double-marking when the company|date line already has a pipe)
+      5. Within the next two non-empty paragraphs there is either a role_meta
+         paragraph OR a paragraph whose text contains a four-digit year
+
+    Mutations are applied in place; no new ParaModel objects are created.
+    """
+    n = len(body_paras)
+    for i, pm in enumerate(body_paras):
+        if pm.semantic != "paragraph":
+            continue
+        text = pm.text.strip()
+        if not text or len(text) > 60 or _YEAR_RE.search(text):
+            continue
+        if text[0] in "-\u2022\u00b7\u2013*":
+            continue
+        words = set(re.split(r"\W+", text.lower()))
+        if not (words & _JOB_TITLE_WORDS):
+            continue
+
+        # Collect the next two non-empty paragraphs.
+        ahead: list[ParaModel] = []
+        for j in range(i + 1, min(i + 8, n)):
+            nxt = body_paras[j]
+            if nxt.text.strip():
+                ahead.append(nxt)
+                if len(ahead) >= 2:
+                    break
+
+        if not ahead:
+            continue
+        # Guard: if immediately followed by an existing role_header, the
+        # company|date line is already correctly labeled — skip to avoid
+        # creating a duplicate boundary.
+        if ahead[0].semantic == "role_header":
+            continue
+        # Relabel if any of the next two substantive paragraphs is role_meta
+        # or contains a year.  The placeholder check ("20xx") is restricted to
+        # the FIRST lookahead only — checking the second would falsely promote
+        # a job title whose first lookahead is content and whose second is the
+        # *next* role's date (e.g. 6-Template1 / "Jan 20XX - Current" pattern).
+        for a in ahead:
+            if a.semantic == "role_meta" or (
+                a.semantic == "paragraph" and _YEAR_RE.search(a.text)
+            ):
+                pm.semantic = "role_header"
+                break
+            if (
+                a is ahead[0]
+                and a.semantic == "paragraph"
+                and _DATE_PLACEHOLDER_RE.search(a.text)
+            ):
+                pm.semantic = "role_header"
+                break
+
+
+_EDUCATION_INSTITUTION_WORDS = frozenset(
+    ["university", "college", "school", "institute", "academy", "polytechnic"]
+)
+_EDUCATION_DEGREE_WORDS = frozenset(
+    ["bachelor", "master", "b.sc", "m.sc", "ph.d", "diploma", "associate", "undergraduate"]
+)
+
+
+def _is_education_intrusion_meta(pm: "ParaModel", recent_bullets: list["ParaModel"]) -> bool:
+    """Return True when a role_meta looks like an education institution line
+    (e.g. 'Your University May 2020') that has wandered into an experience role
+    body due to a two-column table layout.
+
+    Two signals must both fire:
+    1. The role_meta text contains an institution keyword.
+    2. At least one of the last 4 non-empty bullets contains a degree keyword.
+    """
+    txt_lower = pm.text.strip().lower()
+    if not any(w in txt_lower for w in _EDUCATION_INSTITUTION_WORDS):
+        return False
+    recent_non_empty = [b for b in recent_bullets if b.text.strip()][-4:]
+    return any(
+        any(w in b.text.strip().lower() for w in _EDUCATION_DEGREE_WORDS)
+        for b in recent_non_empty
+    )
+
+
 def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     roles: list[RoleEntry] = []
     header: ParaModel | None = None
@@ -350,9 +497,16 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     meta: list[ParaModel] = []
     bullets: list[ParaModel] = []
     state = "init"
+    # True when the current role was started by a role_meta line (Pattern B —
+    # no role_header precedes the first date/company line).  In Pattern B
+    # documents every role boundary IS a role_meta, so a new role_meta that
+    # appears after bullets have started must be treated as the next boundary,
+    # not absorbed as a continuation bullet.  Mirrored from pdf_parser.py
+    # used_pattern_b logic.
+    header_is_role_meta = False
 
     def _flush():
-        nonlocal header
+        nonlocal header, header_is_role_meta
         if header is None:
             return
         roles.append(RoleEntry(
@@ -363,6 +517,7 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             role_id=header.text.strip(),
         ))
         header = None
+        header_is_role_meta = False
         header_extra.clear()
         meta.clear()
         bullets.clear()
@@ -373,9 +528,18 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
         if s == "role_header":
             _flush()
             header = pm
+            header_is_role_meta = False
             state = "header"
         elif state == "init":
-            pass  # pre-role content; skip
+            if s == "role_meta":
+                # Pattern B: date/meta line precedes any role_header (e.g.
+                # "2014-2016\nCompany Name\nJob Title\n…").  Use the meta line
+                # as a synthetic role boundary so subsequent content is captured.
+                _flush()
+                header = pm
+                header_is_role_meta = True
+                state = "header"
+            # all other pre-role content is silently skipped
         elif state == "header":
             if s == "role_meta":
                 meta.append(pm)
@@ -384,9 +548,20 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
             elif s == "paragraph":
-                # Multi-line role header: Word can wrap long headers across
-                # two paragraphs.  Collect as header_extra; do not render.
-                header_extra.append(pm)
+                _txt = pm.text.strip()
+                # Date-range line in header state (e.g. "January 20xx - Current"):
+                # route to meta so it doesn't appear in the rendered role header.
+                if (
+                    (_YEAR_RE.search(_txt) or _DATE_PLACEHOLDER_RE.search(_txt))
+                    and len(_txt) <= 80
+                ):
+                    pm.semantic = "role_meta"
+                    meta.append(pm)
+                    state = "meta"
+                else:
+                    # Multi-line role header: Word can wrap long headers across
+                    # two paragraphs.  Collect as header_extra; do not render.
+                    header_extra.append(pm)
             elif s == "empty":
                 pass
             else:
@@ -403,11 +578,26 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
         elif state == "bullets":
-            if s in ("bullet", "paragraph", "role_meta"):
+            if s == "role_meta" and header_is_role_meta:
+                # Pattern B continuation: current role was started by a role_meta
+                # boundary; a new role_meta after bullets signals the next job.
+                # Flush the current role and start the new one.
+                _flush()
+                header = pm
+                header_is_role_meta = True
+                state = "header"
+            elif s in ("bullet", "paragraph", "role_meta"):
                 # role_meta can appear mid-bullet-list when a bullet line contains a
                 # year (e.g. "Resolved 150 bugs since 2023 for apps post-launch to")
                 # but is semantically a continuation bullet, not a date/meta line.
-                bullets.append(pm)
+                # This branch is only reached when header_is_role_meta is False
+                # (role started via role_header), so role_meta here is a false positive —
+                # UNLESS it looks like an education institution line that wandered in from
+                # a two-column table layout (e.g. "Your University May 2020").
+                if s == "role_meta" and _is_education_intrusion_meta(pm, bullets):
+                    pass  # drop — do not add to this role's bullets
+                else:
+                    bullets.append(pm)
             # role_header handled at top; ignore empty/other
         else:
             pass  # unreachable
@@ -508,6 +698,12 @@ def parse_docx(path: str) -> ResumeDocument:
             body_items.append(TableBlock(xml_proto=deepcopy(child), para_models=table_paras))
         # sectPr and other elements are ignored (preserved in the body XML)
 
+    # Fix label-column layout: when the document uses a narrow left column of section
+    # labels and a wide right column of content, the linear XML order puts all labels
+    # before all content.  This reorders all_paras so each heading is adjacent to its
+    # content before section grouping runs.  body_items is intentionally not modified.
+    all_paras, _label_col_fixed = _apply_label_column_fix(all_paras, body)
+
     # Group into sections
     header_paras: list[ParaModel] = []
     sections: list[ResumeSection] = []
@@ -516,17 +712,88 @@ def parse_docx(path: str) -> ResumeDocument:
 
     for pm in all_paras:
         if pm.semantic == "section_heading":
+            # Pre-section guard: before the first known section, headings that are
+            # not recognised section names AND contain no job-title words go to
+            # header_paras.  This prevents candidate names ("Sheetal Parmar",
+            # "HARPER RUSSO") from becoming bogus sections while still allowing
+            # job-title headings ("Software Engineer", "Senior Developer") that
+            # will later be consolidated into a synthetic experience section.
+            if not found_heading and pm.text.strip().lower() not in _ALL_HEADING_NAMES:
+                _guard_words = set(re.split(r"\W+", pm.text.strip().lower())) - {""}
+                if not (_guard_words & _JOB_TITLE_WORDS):
+                    header_paras.append(pm)
+                    continue
             found_heading = True
-            # Approach A: absorb non-standard heading paragraphs that appear inside an
-            # experience section and are not recognised section names.  Handles templates
-            # where role titles ("Senior Software Developer" without a pipe separator)
-            # are formatted as bold headings but should remain body content.
+            # Approach A: absorb sub-entry heading paragraphs that appear inside an
+            # entry-type section and are not recognised top-level section names.
+            #
+            # For "experience": absorb any non-known heading — handles role titles
+            # like "Senior Software Developer" formatted as bold headings without a
+            # pipe separator.
+            #
+            # For "education" / "certifications": absorb ONLY when the paragraph does
+            # not classify as a distinct semantic section (i.e. _classify_section
+            # returns "other").  This keeps institution names / degree lines / cert
+            # entries inside their parent section while still promoting a subsequent
+            # "SKILLS & ABILITIES" (semantic_type="skills") to a peer section.
+            t_lower = pm.text.strip().lower()
+            # Heading-level guard: never absorb a Heading-N paragraph into a
+            # section whose own heading uses Heading-M with M >= N.  In
+            # table-based templates the section labels ("Communication",
+            # "Leadership") use the same "Heading 1" style as top-level section
+            # headings ("Experience"), so absorbing them would incorrectly merge
+            # distinct sections.  Only fire this guard when both paragraphs have
+            # an explicit numbered heading style — avoids interfering with
+            # bold/heuristic headings.
+            new_level = _heading_level(pm)
+            cur_level = _heading_level(current.heading) if current is not None else None
+            _same_or_higher = (
+                new_level is not None
+                and cur_level is not None
+                and new_level <= cur_level
+            )
             if (
                 current is not None
-                and current.semantic_type == "experience"
-                and pm.text.strip().lower() not in _ALL_HEADING_NAMES
+                and not _same_or_higher
+                and t_lower not in _ALL_HEADING_NAMES
+                and (
+                    current.semantic_type == "experience"
+                    or (
+                        current.semantic_type in {"education", "certifications"}
+                        and _classify_section(pm.text.strip()) == "other"
+                    )
+                )
             ):
-                pm.semantic = "paragraph"
+                # Preserve role_header for pipe-separated or slash-separated lines
+                # (e.g. "Title | Company", "Lamna Health / General Practitioner")
+                # that were styled as Heading N and therefore initially classified as
+                # section_heading but are semantically role headers inside experience.
+                _is_slash_role = (
+                    " / " in pm.text
+                    and not _YEAR_RE.search(pm.text.split(" / ", 1)[0])
+                    and not _YEAR_RE.search(pm.text.split(" / ", 1)[1].strip())
+                )
+                if (
+                    current.semantic_type == "experience"
+                    and ("|" in pm.text or _is_slash_role)
+                    and not pm.text.lstrip().startswith(("-", "\u2022", "\u00b7", "\u2013"))
+                ):
+                    pm.semantic = "role_header"
+                elif (
+                    current.semantic_type == "experience"
+                    and new_level is not None
+                    and new_level <= 2  # Heading 2 absorbed into Heading 1 section
+                    and len(pm.text.strip()) <= 60
+                    and _DATE_RANGE_RE.search(pm.text)
+                ):
+                    # Absorbed Heading 2 that looks like a date range (e.g. "June
+                    # 20XX – Present").  Promote to role_meta so _group_roles can
+                    # detect role boundaries even when the year regex cannot match
+                    # placeholder text.  Heading 3+ is left as paragraph to avoid
+                    # misidentifying sub-heading dates in other templates.
+                    pm.semantic = "role_meta"
+                else:
+                    pm.semantic = "paragraph"
                 current.body_paras.append(pm)
                 continue
             if current is not None:
@@ -552,13 +819,17 @@ def parse_docx(path: str) -> ResumeDocument:
     # Engineer Intern") without a containing "Work Experience" / "Experience" header.
     sections = _consolidate_job_entry_sections(sections)
 
-    return ResumeDocument(
+    doc = ResumeDocument(
         header_paras=header_paras,
         sections=sections,
         layout=layout,
         all_paras=all_paras,
         body_items=body_items,
+        label_column_fixed=_label_col_fixed,
     )
+    from tailor.compiler.models import assign_stable_ids
+    assign_stable_ids(doc)
+    return doc
 
 
 # G: words that commonly appear in job/role titles.  Used by
@@ -678,6 +949,245 @@ def _make_experience_from_job_sections(job_secs: list[ResumeSection]) -> ResumeS
     )
 
 
+# ---------------------------------------------------------------------------
+# Label-column layout detection and fix
+# ---------------------------------------------------------------------------
+
+def _detect_label_column_layout(body) -> bool:
+    """Return True when the body sectPr defines exactly 2 columns with a narrow first column.
+
+    A narrow first column is one whose width is less than 35 % of the combined width of
+    both columns.  This pattern is used by templates that place section labels in a slim
+    left rail and all resume content in a wide right rail.
+    """
+    body_sectPr = body.find(f"{{{_W}}}sectPr")
+    if body_sectPr is None:
+        return False
+    cols_elem = body_sectPr.find(f"{{{_W}}}cols")
+    if cols_elem is None:
+        return False
+    col_elems = cols_elem.findall(f"{{{_W}}}col")
+    if len(col_elems) != 2:
+        return False
+    try:
+        w0 = int(col_elems[0].get(f"{{{_W}}}w") or 0)
+        w1 = int(col_elems[1].get(f"{{{_W}}}w") or 0)
+    except (ValueError, TypeError):
+        return False
+    total = w0 + w1
+    return total > 0 and (w0 / total) < 0.35
+
+
+def _find_label_column_split(paras: list[ParaModel]) -> int | None:
+    """Return the index of the first right-column (content) paragraph, or None.
+
+    In a label-column layout the left column contains only section headings and
+    empty spacing paragraphs.  The split point is the first non-empty paragraph
+    that appears after at least two recognised section headings with nothing but
+    empty paragraphs between them.
+
+    Only paragraphs whose text matches a known section name (_ALL_HEADING_NAMES)
+    are counted — this excludes candidate job-title headings in the header area
+    (e.g. "SOFTWARE ENGINEER" styled as Heading N) that are not section labels.
+    """
+    heading_count = 0
+    first_heading_seen = False
+    for i, pm in enumerate(paras):
+        is_known_section = (
+            pm.semantic == "section_heading"
+            and pm.text.strip().lower() in _ALL_HEADING_NAMES
+        )
+        if is_known_section:
+            heading_count += 1
+            first_heading_seen = True
+        elif first_heading_seen and pm.text.strip():
+            if heading_count >= 2:
+                return i
+            return None  # Content appeared before 2 headings accumulated → normal doc
+    return None
+
+
+_DEGREE_TITLE_WORDS_LBL: frozenset[str] = frozenset({
+    "bachelor", "master", "doctorate", "phd", "mba", "associate", "diploma",
+    "bs", "ms", "ba", "ma", "bsc", "msc",
+    "science", "arts", "engineering", "technology", "business",
+    "computing", "computer", "information",
+})
+
+
+def _looks_like_degree_title_lbl(text: str) -> bool:
+    words = frozenset(re.split(r"\W+", text.lower())) - {"", "of", "in", "the", "and", "a"}
+    return bool(words & _DEGREE_TITLE_WORDS_LBL)
+
+
+def _lbl_find_experience_start(right_paras: list[ParaModel], min_idx: int) -> int:
+    """First index >= min_idx where a job entry starts (first paragraph before a role_meta)."""
+    for i in range(min_idx, len(right_paras)):
+        if not right_paras[i].text.strip():
+            continue
+        ahead = [
+            right_paras[j]
+            for j in range(i + 1, min(i + 8, len(right_paras)))
+            if right_paras[j].text.strip()
+        ][:4]
+        if any(p.semantic == "role_meta" for p in ahead):
+            return i
+    return min_idx
+
+
+def _lbl_find_education_start(right_paras: list[ParaModel], min_idx: int) -> int:
+    """First index >= min_idx whose text looks like a degree or institution title."""
+    for i in range(min_idx, len(right_paras)):
+        pm = right_paras[i]
+        if pm.text.strip() and _looks_like_degree_title_lbl(pm.text):
+            return i
+    return min_idx
+
+
+def _lbl_find_skills_start(right_paras: list[ParaModel], min_idx: int) -> int:
+    """First index >= min_idx of a skills paragraph: non-role_meta, non-degree, no nearby dates."""
+    for i in range(min_idx, len(right_paras)):
+        pm = right_paras[i]
+        if not pm.text.strip():
+            continue
+        if pm.semantic == "role_meta":
+            continue
+        if _looks_like_degree_title_lbl(pm.text):
+            continue
+        has_nearby_date = any(
+            right_paras[j].semantic == "role_meta"
+            for j in range(i + 1, min(i + 6, len(right_paras)))
+        )
+        if not has_nearby_date:
+            return i
+    return min_idx
+
+
+def _lbl_find_other_start(right_paras: list[ParaModel], min_idx: int) -> int:
+    """First index >= min_idx of an 'other'-type section (affiliations, etc.).
+
+    Detects either a bold entry header, or a paragraph that precedes a role_meta
+    within the next four non-empty paragraphs.
+    """
+    for i in range(min_idx, len(right_paras)):
+        pm = right_paras[i]
+        if not pm.text.strip():
+            continue
+        if pm.semantic == "role_meta":
+            # Role-meta line — backtrack to the header that precedes it
+            for j in range(max(min_idx, i - 4), i):
+                if right_paras[j].text.strip() and right_paras[j].semantic != "role_meta":
+                    return j
+            return i
+        if pm.style.bold:
+            return i
+    return min_idx
+
+
+def _lbl_injection_index(
+    right_paras: list[ParaModel], heading: ParaModel, min_idx: int
+) -> int:
+    """Return the index in right_paras where heading should be injected (>= min_idx)."""
+    sem = _classify_section(heading.text)
+    if sem == "experience":
+        return _lbl_find_experience_start(right_paras, min_idx)
+    if sem == "education":
+        return _lbl_find_education_start(right_paras, min_idx)
+    if sem == "skills":
+        return _lbl_find_skills_start(right_paras, min_idx)
+    # "summary" is handled as index 0 by the caller; all other types use other-start
+    return _lbl_find_other_start(right_paras, min_idx)
+
+
+def _apply_label_column_fix(
+    all_paras: list[ParaModel], body
+) -> tuple[list[ParaModel], bool]:
+    """Detect and fix label-column layout; return (new_all_paras, was_fixed).
+
+    In a 2-column newspaper-layout DOCX where column 0 is a narrow label rail
+    containing only section headings, all headings appear before all content in the
+    linear XML order.  This causes the parser to build empty sections and then dump
+    every resume paragraph into the last section.
+
+    When detected, the function reorders all_paras so each heading is positioned
+    immediately before the right-column content block it belongs to.  The left-column
+    empty spacing paragraphs are dropped from all_paras (they are redundant once the
+    headings are relocated).
+
+    body_items is NOT modified — it is used by the DOCX renderer, not by section
+    grouping.
+    """
+    if not _detect_label_column_layout(body):
+        return all_paras, False
+
+    split_idx = _find_label_column_split(all_paras)
+    if split_idx is None:
+        return all_paras, False
+
+    # Section headings from the left column (in document order, empties stripped).
+    # Only include recognised section names to exclude candidate job-title headings
+    # in the header area (e.g. "SOFTWARE ENGINEER" styled as Heading N).
+    left_headings = [
+        pm for pm in all_paras[:split_idx]
+        if pm.semantic == "section_heading"
+        and pm.text.strip().lower() in _ALL_HEADING_NAMES
+    ]
+    if len(left_headings) < 2:
+        return all_paras, False
+
+    right_col = all_paras[split_idx:]
+
+    # Everything before the first recognised section heading (name, contact, etc.).
+    # Use the same filter as left_headings so that candidate job-title headings in
+    # the header area are preserved in pre_header rather than discarded.
+    first_heading_idx = next(
+        i for i, pm in enumerate(all_paras)
+        if pm.semantic == "section_heading" and pm.text.strip().lower() in _ALL_HEADING_NAMES
+    )
+    pre_header = all_paras[:first_heading_idx]
+
+    # Compute injection indices: where in right_col each heading should be placed
+    injection_indices: list[int] = []
+    min_idx = 0
+    for k, heading in enumerate(left_headings):
+        idx = 0 if k == 0 else _lbl_injection_index(right_col, heading, min_idx)
+        injection_indices.append(idx)
+        min_idx = idx
+
+    # Bail out if indices are not non-decreasing (semantic detection went wrong)
+    if any(b < a for a, b in zip(injection_indices, injection_indices[1:])):
+        return all_paras, False
+
+    # Build new all_paras: pre_header + interleaved headings + right-column content
+    new_paras: list[ParaModel] = list(pre_header)
+    prev_idx = 0
+    for heading, inject_at in zip(left_headings, injection_indices):
+        new_paras.extend(right_col[prev_idx:inject_at])
+        new_paras.append(heading)
+        prev_idx = inject_at
+    new_paras.extend(right_col[prev_idx:])
+
+    return new_paras, True
+
+
 def _finalise(section: ResumeSection) -> None:
     if section.semantic_type == "experience":
+        # Pre-pass: promote plain-paragraph date lines with placeholder years
+        # (e.g. "January 20xx - Current") to role_meta so that
+        # _relabel_implicit_role_headers and _group_roles can detect role
+        # boundaries in templates that never use real 4-digit years.
+        # Guard: skip when the section already has pipe-format role_header
+        # paragraphs — those templates do not need this heuristic and the
+        # pre-pass would create spurious Pattern-B roles before each real header.
+        has_role_headers = any(p.semantic == "role_header" for p in section.body_paras)
+        if not has_role_headers:
+            for p in section.body_paras:
+                if (
+                    p.semantic == "paragraph"
+                    and _DATE_PLACEHOLDER_RE.search(p.text)
+                    and len(p.text.strip()) <= 80
+                    and "|" not in p.text
+                ):
+                    p.semantic = "role_meta"
+        _relabel_implicit_role_headers(section.body_paras)
         section.roles = _group_roles(section.body_paras)

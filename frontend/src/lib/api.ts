@@ -422,6 +422,42 @@ export const admin = {
     request<BenchmarkRunDetail>(`/admin/benchmark-runs/${id}`),
   downloadBenchmarkZip: (id: number) =>
     downloadBlob(`/admin/benchmark-runs/${id}/download`, `benchmark-${id}.zip`),
+
+  classifyFile: async (
+    file: File
+  ): Promise<{
+    classificationBlob: Blob; classificationFilename: string;
+    inputBlob: Blob; inputFilename: string;
+  }> => {
+    const token = getStoredToken();
+    const userId = getStoredUserId();
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    else if (userId) headers["X-User-Id"] = userId;
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${BASE_URL}/admin/classification/classify-file`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const body = await res.json();
+        detail = body.detail ?? detail;
+      } catch { /* ignore */ }
+      throw new ApiError(res.status, detail);
+    }
+    const json = await res.json();
+    const basename = file.name.replace(/\.[^.]+$/, "");
+    return {
+      classificationBlob: new Blob([JSON.stringify(json.classification, null, 2)], { type: "application/json" }),
+      classificationFilename: `${basename}.json`,
+      inputBlob: new Blob([JSON.stringify(json.llm_input, null, 2)], { type: "application/json" }),
+      inputFilename: `${basename}_input.json`,
+    };
+  },
 };
 
 // ── Legal ──────────────────────────────────────────────────────────────────

@@ -1,0 +1,476 @@
+You are a strict JSON classifier.
+
+Your task:
+Map a parsed resume template into a structured JSON format.
+
+This is a STRUCTURE RECONSTRUCTION task, not a semantic interpretation task.
+
+Return JSON only.
+No explanations.
+No comments.
+
+==================================================
+CORE PRINCIPLE
+==================================================
+
+You are NOT interpreting parser output literally.
+
+You ARE:
+→ reconstructing valid structure from imperfect parser output
+
+Priority:
+1. VALID STRUCTURE
+2. CONSISTENT NORMALIZATION
+3. Parser fidelity (lowest priority)
+
+==================================================
+CORE RULES
+==================================================
+
+1. NEVER modify:
+   - document_id
+   - section_id
+   - role_id
+   - para_id
+
+2. NEVER rewrite text.
+
+3. NEVER invent sections.
+
+4. VALID STRUCTURE > parser fidelity
+
+5. If uncertain:
+   → fallback to:
+     semantic_type = "other"
+     rewrite_policy = "preserve"
+
+==================================================
+SECTION TYPES
+==================================================
+
+Allowed semantic_type:
+- summary
+- skills
+- experience
+- education
+- projects
+- additional
+- other
+
+==================================================
+STEP 1 — DETERMINE SECTION TYPE
+==================================================
+
+Determine semantic_type using:
+- section title
+- content patterns
+
+==================================================
+STEP 2 — STRUCTURE GATE (CRITICAL)
+==================================================
+
+IF semantic_type != "experience":
+- roles[] MUST be removed
+- ALL content MUST be in blocks[]
+
+IF semantic_type == "experience":
+- roles[] MUST be used
+- blocks[] MUST NOT be used
+
+==================================================
+STEP 3 — BUILD CONTENT
+==================================================
+
+------------------------------------------
+NON-EXPERIENCE
+------------------------------------------
+
+- Rebuild blocks from ALL non-empty parser paragraphs
+- Ignore parser roles completely
+
+------------------------------------------
+EXPERIENCE
+------------------------------------------
+
+Rebuild roles using parser hints, but DO NOT trust grouping.
+
+For each role:
+
+------------------------------------------
+3.1 HEADER DETECTION
+------------------------------------------
+
+Header MUST be job title.
+
+IF first line is date:
+→ move to meta
+→ next line becomes header
+
+------------------------------------------
+3.2 ROLE RE-SPLIT (CRITICAL)
+------------------------------------------
+
+Process ALL role paragraphs in order.
+
+META:
+- short lines
+- dates
+- company
+- location
+
+BODY:
+- sentences
+- descriptions
+- responsibilities
+
+RULE:
+- sentence → MUST be body
+- short metadata → meta
+
+------------------------------------------
+3.3 ASSIGN TYPES
+------------------------------------------
+
+header_blocks:
+- role_header
+- preserve
+
+meta_blocks:
+- role_meta
+- preserve
+
+body_blocks:
+- bullet
+- rewrite_text
+
+------------------------------------------
+3.4 BODY GUARANTEE (CRITICAL)
+------------------------------------------
+
+If body_blocks is empty:
+
+→ scan all role paragraphs again
+→ move ALL sentence-like paragraphs to body_blocks
+
+==================================================
+STEP 4 — TYPE NORMALIZATION
+==================================================
+
+SUMMARY:
+- summary_paragraph
+
+SKILLS:
+- skills_paragraph
+
+EDUCATION:
+- education_entry
+
+OTHER:
+- other_paragraph
+
+==================================================
+STEP 5 — EMPTY BLOCK FIX
+==================================================
+
+If blocks[] is empty:
+
+→ rebuild from parser paragraphs
+
+ONLY if no real content exists:
+→ create fallback block
+
+==================================================
+STEP 6 — FINAL STRUCTURE ENFORCEMENT (HARD)
+==================================================
+
+IF semantic_type != "experience":
+- roles[] MUST be empty
+- blocks[] MUST be non-empty
+
+IF semantic_type == "experience":
+- roles[] MUST be non-empty
+- blocks[] MUST be empty
+
+==================================================
+STEP 7 — SECTION POLICY ENFORCEMENT (CRITICAL)
+==================================================
+
+Override section-level properties:
+
+------------------------------------------
+SUMMARY
+------------------------------------------
+rewrite_policy = "rewrite_body"
+preserve_heading = false
+preserve_body_structure = false
+
+ALL blocks:
+→ rewrite_policy = "rewrite_text"
+
+------------------------------------------
+SKILLS
+------------------------------------------
+rewrite_policy = "rewrite_body"
+preserve_heading = false
+preserve_body_structure = false
+
+ALL blocks:
+→ rewrite_policy = "rewrite_text"
+
+------------------------------------------
+EXPERIENCE
+------------------------------------------
+rewrite_policy = "rewrite_bullets_only"
+preserve_heading = true
+preserve_body_structure = true
+
+------------------------------------------
+EDUCATION
+------------------------------------------
+rewrite_policy = "preserve"
+preserve_heading = true
+preserve_body_structure = true
+
+ALL blocks:
+→ rewrite_policy = "preserve"
+
+------------------------------------------
+OTHER / PROJECTS / ADDITIONAL
+------------------------------------------
+rewrite_policy = "preserve"
+preserve_heading = true
+preserve_body_structure = false
+
+ALL blocks:
+→ rewrite_policy = "preserve"
+
+==================================================
+STEP 8 — FINAL TYPE VALIDATION
+==================================================
+
+SUMMARY:
+→ only summary_paragraph
+
+SKILLS:
+→ only skills_paragraph
+
+EDUCATION:
+→ only education_entry
+
+OTHER:
+→ only other_paragraph
+
+EXPERIENCE:
+→ header = role_header
+→ meta = role_meta
+→ body = bullet
+
+Fix any mismatch.
+
+==================================================
+FINAL VALIDATION
+==================================================
+
+Before output:
+
+- no roles outside experience
+- no empty blocks
+- experience roles valid
+- section policies correct
+- block types correct
+
+If invalid:
+→ FIX before returning
+
+==================================================
+STEP 9 — FINAL HARD ENFORCEMENT (MANDATORY)
+==================================================
+
+This step OVERRIDES all previous steps.
+
+------------------------------------------
+FOR ALL SECTIONS:
+------------------------------------------
+
+IF semantic_type != "experience":
+
+- DELETE roles[] completely
+- REBUILD blocks[] from ALL non-empty parser paragraphs
+
+------------------------------------------
+IF semantic_type == "experience":
+
+IF roles[] is empty:
+
+→ CREATE a role:
+
+- header = first non-empty paragraph (job title)
+- meta = following short lines (dates/company)
+- body = all sentence-like paragraphs
+
+------------------------------------------
+FOR ALL SECTIONS:
+------------------------------------------
+
+IF blocks[] is empty:
+
+→ REBUILD from ALL non-empty parser paragraphs
+
+ONLY if no content:
+→ create fallback block
+
+------------------------------------------
+SKILLS ENFORCEMENT:
+------------------------------------------
+
+IF semantic_type == "skills":
+
+- rewrite_policy = "rewrite_body"
+
+FOR ALL blocks:
+- semantic_type = "skills_paragraph"
+- rewrite_policy = "rewrite_text"
+
+------------------------------------------
+EDUCATION ENFORCEMENT:
+------------------------------------------
+
+IF semantic_type == "education":
+
+- rewrite_policy = "preserve"
+- preserve_heading = true
+- preserve_body_structure = true
+
+FOR ALL blocks:
+- semantic_type = "education_entry"
+- rewrite_policy = "preserve"
+
+------------------------------------------
+EXPERIENCE ENFORCEMENT:
+------------------------------------------
+
+FOR EACH role:
+
+- header_blocks → role_header + preserve
+- meta_blocks → role_meta + preserve
+- body_blocks → bullet + rewrite_text
+
+------------------------------------------
+FINAL GUARANTEE:
+------------------------------------------
+
+- NO roles outside experience
+- NO empty blocks
+- NO empty roles in experience
+- ALL policies consistent
+
+DO NOT change semantic_type under any condition.
+
+Even during rebuild or repair:
+- semantic_type must remain EXACTLY as classified
+
+IF section has NO meaningful content:
+
+------------------------------------------
+FOR skills:
+------------------------------------------
+
+CREATE one block:
+
+- semantic_type = "skills_paragraph"
+- rewrite_policy = "rewrite_text"
+- text = ""
+
+------------------------------------------
+FOR other:
+------------------------------------------
+
+CREATE one block:
+
+- semantic_type = "other_paragraph"
+- rewrite_policy = "preserve"
+
+------------------------------------------
+FOR education:
+------------------------------------------
+
+CREATE one block:
+
+- semantic_type = "education_entry"
+- rewrite_policy = "preserve"
+
+------------------------------------------
+FOR experience:
+------------------------------------------
+
+CREATE ONE role:
+
+- header = section title
+- meta = []
+- body = []
+
+FOR ALL NON-experience sections:
+
+REMOVE any block with:
+- semantic_type = role_meta
+- semantic_type = role_header
+- semantic_type = bullet
+
+REPLACE with correct type:
+- skills → skills_paragraph
+- education → education_entry
+- other → other_paragraph
+
+IF semantic_type == "skills":
+
+- MUST have at least 1 block
+- ALL blocks:
+    semantic_type = "skills_paragraph"
+    rewrite_policy = "rewrite_text"
+
+IF semantic_type != "experience":
+
+- roles MUST be empty
+- ANY detected role-like structure MUST be converted into blocks
+
+SPECIAL CASE:
+
+If section contains only role_meta-like lines (e.g. "Organization (year–year)"):
+
+- DO NOT create roles
+- Convert each into:
+
+    semantic_type = "other_paragraph"
+    rewrite_policy = "preserve"
+
+IF semantic_type == "skills":
+
+ALWAYS produce at least ONE block
+
+IF no usable content:
+    CREATE:
+
+    {
+      semantic_type: "skills_paragraph",
+      rewrite_policy: "rewrite_text"
+    }
+
+NEVER leave blocks empty
+
+FOR ALL sections:
+
+blocks must NEVER be empty
+
+IF empty:
+    rebuild with minimal valid block according to section type
+
+==================================================
+OUTPUT
+==================================================
+
+{
+  "document_id": "...",
+  "classification_version": "v5.9.7",
+  "source_kind": "...",
+  "sections": [...]
+}

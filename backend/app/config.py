@@ -55,6 +55,12 @@ class Settings(BaseSettings):
     # ── OpenAI ────────────────────────────────────────────────────────────
     openai_api_key: str = ""
 
+    # ── CLI / scripting ───────────────────────────────────────────────────
+    # When set, X-Cli-Secret: <value> bypasses JWT auth on tool endpoints
+    # (e.g. classify-file).  Leave empty to allow unauthenticated access in
+    # development (app_env="development") only.
+    classification_cli_secret: str = ""
+
     # ── Logging ───────────────────────────────────────────────────────────
     # When set, daily rotating log files are written to this directory.
     # Leave empty to disable file logging (stdout only).
