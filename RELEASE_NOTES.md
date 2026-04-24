@@ -1,5 +1,14 @@
 # Release Notes
 
+## 0.8.2.BETA — 2026-04-24
+
+### New features
+- **AI resume template classification**: uploaded resumes are now classified by an LLM pipeline
+  (with deterministic validation, repair, and safe downgrade). Classification result is stored
+  per resume but not yet used in actual processing.
+
+---
+
 ## 0.8.1.BETA — 2026-04-15
 
 ### New features

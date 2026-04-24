@@ -90,6 +90,12 @@ export default function AdminPage() {
   const [downloadingBenchmarkZip, setDownloadingBenchmarkZip] = useState<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [grantUserId, setGrantUserId] = useState("");
+  const [grantAmount, setGrantAmount] = useState(10);
+  const [granting, setGranting] = useState(false);
+  const [grantResult, setGrantResult] = useState<string | null>(null);
+  const [grantError, setGrantError] = useState<string | null>(null);
+
   const hasActiveBenchmark = benchmarkRuns.some(
     (r) => r.status === "queued" || r.status === "running"
   );
@@ -193,6 +199,23 @@ export default function AdminPage() {
       setSignupPolicyError(e instanceof ApiError ? e.detail : "Failed to save policy.");
     } finally {
       setSavingSignupPolicy(false);
+    }
+  }
+
+  async function handleGrantCredits(e: React.FormEvent) {
+    e.preventDefault();
+    if (!grantUserId.trim()) return;
+    setGranting(true);
+    setGrantResult(null);
+    setGrantError(null);
+    try {
+      const res = await admin.grantCredits(grantUserId.trim(), grantAmount);
+      setGrantResult(`Done — adjusted ${res.credits_adjusted > 0 ? "+" : ""}${res.credits_adjusted} credits for ${res.user_id}`);
+      setGrantUserId("");
+    } catch (e) {
+      setGrantError(e instanceof ApiError ? e.detail : "Failed to grant credits.");
+    } finally {
+      setGranting(false);
     }
   }
 
@@ -466,6 +489,49 @@ export default function AdminPage() {
               </div>
             </div>
           )}
+        </CardBody>
+      </Card>
+
+      {/* Grant credits */}
+      <Card className="max-w-lg mb-8">
+        <CardHeader>
+          <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+            <Settings2 className="h-4 w-4 text-indigo-600" />
+            Grant credits
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Add or deduct generation credits for a specific user. Use a negative amount to deduct.
+          </p>
+        </CardHeader>
+        <CardBody>
+          <form onSubmit={handleGrantCredits} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+              <input
+                type="text"
+                value={grantUserId}
+                onChange={(e) => setGrantUserId(e.target.value)}
+                placeholder="UUID"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Credits</label>
+              <input
+                type="number"
+                value={grantAmount}
+                onChange={(e) => setGrantAmount(parseInt(e.target.value) || 0)}
+                className="w-28 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <Button type="submit" loading={granting} disabled={!grantUserId.trim()}>
+                Grant
+              </Button>
+              {grantResult && <span className="text-sm text-green-600">✓ {grantResult}</span>}
+              {grantError && <span className="text-sm text-red-600">✗ {grantError}</span>}
+            </div>
+          </form>
         </CardBody>
       </Card>
 
