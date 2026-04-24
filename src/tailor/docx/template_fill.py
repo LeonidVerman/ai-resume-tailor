@@ -285,9 +285,10 @@ def save_doc_from_template(template_path, output_path, new_text, classification=
 
     if has_experience:
         from tailor.compiler.pipeline import compile_resume
-        compile_resume(template_path, new_text, output_path, classification=classification)
+        return compile_resume(template_path, new_text, output_path, classification=classification)
     else:
         # Cover letter path: use blank-line group filling
         doc = Document(template_path)
         _apply_groups(doc.paragraphs, new_text, doc)
         doc.save(output_path)
+        return None

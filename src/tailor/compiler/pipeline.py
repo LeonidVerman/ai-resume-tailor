@@ -66,6 +66,7 @@ def compile_resume(
         len(updated.all_paras),
         output_path,
     )
+    return updated
 
 
 def compile_resume_from_ir(
@@ -112,4 +113,5 @@ def compile_resume_from_ir(
         len(updated.all_paras),
         output_path,
     )
+    return updated
 
