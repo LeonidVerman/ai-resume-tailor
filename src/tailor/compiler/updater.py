@@ -27,12 +27,24 @@ Locked sections
 Sections with semantic_type in _LOCKED_SEMANTIC_TYPES are never modified
 regardless of LLM output (spec §3).  Only summary, experience (bullets), and
 skills are editable (spec §1).
+
+Classification-constrained path
+--------------------------------
+When a ClassificationOutput is passed to apply_tailored(), the updater consults
+it for each section before applying changes:
+- preserve         → section kept verbatim (no text changes at all)
+- preserve_heading → heading ParaModel.text never changed
+- experience sections → header and meta lines NEVER changed; bullets only
+- preserve_body_structure → no add/remove of body paragraphs; text-only update
+
+When classification is None the function behaves identically to before.
 """
 from __future__ import annotations
 
 import logging
 import re
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from tailor.compiler.models import (
     ParaModel,
@@ -43,6 +55,9 @@ from tailor.compiler.models import (
     TableBlock,
 )
 from tailor.compiler.text_parser import LlmRole, LlmSection
+
+if TYPE_CHECKING:
+    from tailor.compiler.classification_models import ClassificationOutput, ClassificationSection, ClassificationRole
 
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 _log = logging.getLogger(__name__)
@@ -771,12 +786,167 @@ def _is_experience_like(llm_s: "LlmSection") -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Classification-constrained update helpers
+# ---------------------------------------------------------------------------
+
+def _update_experience_classified(
+    orig: ResumeSection,
+    llm: LlmSection,
+    cls_sec: "ClassificationSection",
+    role_cls: "dict[str, ClassificationRole]",
+) -> ResumeSection:
+    """Experience section update constrained by classification.
+
+    Rules (always applied regardless of rewrite_policy, except "preserve"
+    which is handled upstream):
+    - Role header and meta lines are NEVER modified.
+    - Only bullet text is updated.
+    - IR role count is authoritative: extra LLM roles are ignored; extra IR
+      roles beyond the LLM output are kept verbatim.
+    """
+    # Resolve LLM roles: try pipe format first, then dash format.
+    llm_roles = llm.roles
+    if not llm_roles and llm.body_lines and orig.roles:
+        reparsed = _reparse_body_lines_as_roles(llm.body_lines)
+        if reparsed:
+            llm_roles = reparsed
+
+    if len(llm_roles) > len(orig.roles):
+        _log.debug(
+            "classification: ignoring %d extra LLM roles for section %r (IR has %d)",
+            len(llm_roles) - len(orig.roles), orig.title, len(orig.roles),
+        )
+
+    updated_roles: list[RoleEntry] = []
+    for i, o_role in enumerate(orig.roles):
+        if i < len(llm_roles):
+            updated = _update_role_bullets_only(o_role, llm_roles[i].bullets)
+            _log.debug(
+                "classification: role %r → updated %d bullets",
+                o_role.role_id, len(llm_roles[i].bullets),
+            )
+        else:
+            # No LLM counterpart — keep IR role verbatim.
+            updated = o_role
+            _log.debug("classification: role %r → verbatim (no LLM counterpart)", o_role.role_id)
+        updated_roles.append(updated)
+
+    new_heading = (
+        orig.heading
+        if cls_sec.preserve_heading
+        else _strip_col_break_para(orig.heading.with_text(llm.heading))
+    )
+    _log.debug(
+        "classification: section %r preserve_heading=%s rewrite_policy=%s",
+        orig.title, cls_sec.preserve_heading, cls_sec.rewrite_policy,
+    )
+    return ResumeSection(
+        title=orig.title if cls_sec.preserve_heading else llm.heading,
+        heading=new_heading,
+        semantic_type=orig.semantic_type,
+        body_paras=orig.body_paras,
+        roles=updated_roles,
+    )
+
+
+def _update_body_classified(
+    orig: ResumeSection,
+    llm: LlmSection,
+    cls_sec: "ClassificationSection",
+) -> ResumeSection:
+    """Non-experience body section update constrained by classification.
+
+    When preserve_body_structure is True: only update text inside existing
+    content paragraphs — no adds, no removes.  Spacer and decorative paragraphs
+    are always preserved.
+
+    When preserve_body_structure is False: delegates to _update_body_section
+    (existing behaviour), then patches the heading back if preserve_heading.
+    """
+    new_heading = (
+        orig.heading
+        if cls_sec.preserve_heading
+        else orig.heading.with_text(llm.heading)
+    )
+    _log.debug(
+        "classification: body section %r preserve_heading=%s preserve_body_structure=%s",
+        orig.title, cls_sec.preserve_heading, cls_sec.preserve_body_structure,
+    )
+
+    if cls_sec.preserve_body_structure:
+        llm_lines = [l for l in llm.body_lines if l.strip()]
+        if orig.semantic_type == "skills":
+            llm_lines = _sanitize_skills_lines(llm_lines)
+
+        new_body: list[ParaModel] = []
+        llm_cursor = 0
+        for p in orig.body_paras:
+            if not p.text.strip() or _is_decorative_para(p):
+                new_body.append(p)
+            elif llm_cursor < len(llm_lines):
+                new_body.append(p.with_text(llm_lines[llm_cursor]))
+                _log.debug("classification: para %r → updated", p.para_id or p.text[:30])
+                llm_cursor += 1
+            else:
+                # No more LLM lines — keep original text.
+                new_body.append(p)
+                _log.debug("classification: para %r → verbatim (no LLM line)", p.para_id or p.text[:30])
+        if llm_cursor < len(llm_lines):
+            _log.debug(
+                "classification: %d extra LLM lines ignored (preserve_body_structure)",
+                len(llm_lines) - llm_cursor,
+            )
+        return ResumeSection(
+            title=orig.title if cls_sec.preserve_heading else llm.heading,
+            heading=new_heading,
+            semantic_type=orig.semantic_type,
+            body_paras=new_body,
+            roles=[],
+        )
+
+    # No structure constraint — use existing body update, then restore heading if needed.
+    if orig.semantic_type == "skills":
+        llm = LlmSection(
+            heading=llm.heading,
+            semantic_type=llm.semantic_type,
+            body_lines=_sanitize_skills_lines(llm.body_lines),
+            roles=llm.roles,
+        )
+    updated = _update_body_section(orig, llm)
+    if cls_sec.preserve_heading:
+        return ResumeSection(
+            title=orig.title,
+            heading=orig.heading,
+            semantic_type=updated.semantic_type,
+            body_paras=updated.body_paras,
+            roles=[],
+        )
+    return updated
+
+
+def _apply_section_classified(
+    orig: ResumeSection,
+    llm: LlmSection,
+    cls_sec: "ClassificationSection",
+    role_cls: "dict[str, ClassificationRole]",
+) -> ResumeSection:
+    """Dispatch classification-constrained section update."""
+    if cls_sec.rewrite_policy == "preserve":
+        _log.debug("classification: section %r (%s) → preserve", orig.title, orig.section_id)
+        return orig
+    if orig.semantic_type == "experience":
+        return _update_experience_classified(orig, llm, cls_sec, role_cls)
+    return _update_body_classified(orig, llm, cls_sec)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
 def apply_tailored(
     original: ResumeDocument,
     llm_sections: list[LlmSection],
+    classification: "ClassificationOutput | None" = None,
 ) -> ResumeDocument:
     """Apply LLM-tailored sections to the original document.
 
@@ -787,11 +957,39 @@ def apply_tailored(
     original sections are present), the extras are inserted at their LLM
     output position using cloned styles from the nearest existing sections.
 
+    Parameters
+    ----------
+    original:
+        Parsed template ResumeDocument.
+    llm_sections:
+        Parsed LLM output sections.
+    classification:
+        Optional upload-time ClassificationOutput.  When provided, the updater
+        consults it for each section to enforce rewrite_policy, preserve_heading,
+        and preserve_body_structure constraints.  Sections not found in the
+        classification index fall back to existing behavior.  When None the
+        function behaves identically to the pre-classification implementation.
+
     Raises
     ------
     ValueError
         If sections cannot be matched (see module docstring).
     """
+    # Build fast lookup indices from classification (empty dicts when absent).
+    _sec_cls: dict[str, ClassificationSection] = {}
+    _role_cls: dict[str, ClassificationRole] = {}
+    if classification is not None:
+        for _cs in classification.sections:
+            if _cs.section_id:
+                _sec_cls[_cs.section_id] = _cs
+            for _cr in _cs.roles:
+                if _cr.role_id:
+                    _role_cls[_cr.role_id] = _cr
+        _log.debug(
+            "apply_tailored: classification loaded — %d sections, %d roles indexed",
+            len(_sec_cls), len(_role_cls),
+        )
+
     try:
         match = _match_sections(original.sections, llm_sections)
     except ValueError as exc:
@@ -804,6 +1002,13 @@ def apply_tailored(
         if orig_section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             # Spec §3: locked section — preserve source verbatim.
             return orig_section
+
+        # Classification-constrained path: look up by stable section_id.
+        cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+        if cls_sec is not None:
+            return _apply_section_classified(orig_section, llm_section, cls_sec, _role_cls)
+
+        # No classification (or section_id not in index) → existing behaviour.
         if orig_section.semantic_type == "experience":
             if orig_section.roles or llm_section.roles:
                 return _update_experience_section(orig_section, llm_section)
@@ -1016,20 +1221,44 @@ def apply_tailored(
                 continue
             if orig_section.semantic_type in _LOCKED_SEMANTIC_TYPES:
                 continue  # Spec §3: locked sections are never updated in-place either.
-            orig_section.heading.text = llm_section.heading
+
+            cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+
+            # Classification: preserve → skip entirely.
+            if cls_sec is not None and cls_sec.rewrite_policy == "preserve":
+                _log.debug(
+                    "classification(table): skip section %r (preserve)", orig_section.title
+                )
+                continue
+
+            # Heading: respect preserve_heading.
+            if cls_sec is None or not cls_sec.preserve_heading:
+                orig_section.heading.text = llm_section.heading
 
             if orig_section.semantic_type == "experience":
-                for o_role, n_role in zip(orig_section.roles, llm_section.roles):
-                    o_role.header.text = n_role.header
-                    for o_m, n_m in zip(o_role.meta_lines, n_role.meta_lines):
-                        o_m.text = n_m
-                    for o_b, n_b in zip(o_role.bullets, n_role.bullets):
-                        o_b.text = n_b
+                llm_roles = llm_section.roles or []
+                if cls_sec is not None:
+                    # Classification present: update bullets only, never header/meta.
+                    for i, o_role in enumerate(orig_section.roles):
+                        if i < len(llm_roles):
+                            for o_b, n_b in zip(o_role.bullets, llm_roles[i].bullets):
+                                o_b.text = n_b
+                        # else: keep verbatim
+                else:
+                    # No classification: existing behaviour.
+                    for o_role, n_role in zip(orig_section.roles, llm_roles):
+                        o_role.header.text = n_role.header
+                        for o_m, n_m in zip(o_role.meta_lines, n_role.meta_lines):
+                            o_m.text = n_m
+                        for o_b, n_b in zip(o_role.bullets, n_role.bullets):
+                            o_b.text = n_b
             else:
                 non_empty_orig = [p for p in orig_section.body_paras if p.text.strip()]
                 llm_lines = [l for l in llm_section.body_lines if l.strip()]
                 if orig_section.semantic_type == "skills":
                     llm_lines = _sanitize_skills_lines(llm_lines)
+                # Both classified (preserve_body_structure) and unclassified paths
+                # update only as many paras as exist (zip stops at shorter list).
                 for o_p, new_text in zip(non_empty_orig, llm_lines):
                     o_p.text = new_text
 

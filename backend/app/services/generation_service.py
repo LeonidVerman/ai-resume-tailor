@@ -255,6 +255,18 @@ class GenerationService:
         template_bytes: bytes | None = None
         template_ir_dict: dict | None = None
 
+        # Load upload-time classification (the final, validated section).
+        # Falls back to None gracefully so rendering always proceeds.
+        classification_dict: dict | None = None
+        if resume.classification_jsonb:
+            classification_dict = resume.classification_jsonb.get("classification")
+            if classification_dict:
+                logger.info(
+                    "Resume id=%s: classification loaded for rendering (status=%s).",
+                    resume.id,
+                    resume.classification_jsonb.get("status", "unknown"),
+                )
+
         if resume.template_ir_jsonb:
             # PDF-sourced resume: use the stored ResumeDocument IR directly.
             template_ir_dict = resume.template_ir_jsonb
@@ -295,6 +307,7 @@ class GenerationService:
                     result.resume,
                     template_bytes=template_bytes,
                     template_ir_dict=template_ir_dict,
+                    classification_dict=classification_dict,
                 )
                 url_updates["resume_docx_url"] = self._storage_service.upload_resume_docx(
                     user_id, run_id, resume_docx_bytes
