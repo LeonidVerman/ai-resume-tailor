@@ -786,6 +786,296 @@ def _is_experience_like(llm_s: "LlmSection") -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Date-first experience layout detection and repair
+# ---------------------------------------------------------------------------
+#
+# Some templates place the date range BEFORE the company/title lines:
+#
+#   (2010-2013)
+#   Company Name
+#   JOB TITLE
+#   bullet ...
+#
+#   (2014-Now)
+#   ...
+#
+# The parser's _group_roles() state machine expects role_header → meta → bullets
+# and cannot handle this pattern. It misclassifies the first date as a
+# role_header, producing one collapsed malformed RoleEntry per section.
+#
+# The fix runs entirely inside apply_tailored before any content update:
+#   1. Detect the pattern from body_paras.
+#   2. Rebuild correct RoleEntry groups (for matching only).
+#   3. Match LLM roles to rebuilt IR roles by company name similarity.
+#   4. Update bullet paragraph texts in-place.
+#   5. Return section with roles=[] so the all_paras builder uses body_paras
+#      (preserving the original template paragraph order).
+
+_COMPANY_STOP_WORDS: frozenset[str] = frozenset({
+    "inc", "co", "llc", "ltd", "corp", "international", "group",
+    "the", "and", "of", "for", "a", "an",
+})
+
+
+def _extract_company_tokens(text: str) -> frozenset[str]:
+    """Return normalised significant tokens from a role header or company line.
+
+    Strips date ranges, splits on common role separators (pipe, dash) to keep
+    only the company half, removes stop-words and punctuation.
+    """
+    # Drop parenthesised date ranges like "(2014-Now)", "(2010–2013)"
+    text = re.sub(r"\([^)]*(?:19|20)\d{2}[^)]*\)", "", text)
+    # Split on role separators — keep only the first (company) segment
+    parts = re.split(r"\s[–—\-]\s|\|", text)
+    company_part = parts[0].strip().lower()
+    # Remove punctuation
+    company_part = re.sub(r"[^\w\s]", " ", company_part)
+    tokens = frozenset(
+        t for t in company_part.split()
+        if t and t not in _COMPANY_STOP_WORDS and len(t) > 1
+    )
+    return tokens
+
+
+def _has_date_first_layout(section: "ResumeSection") -> bool:
+    """Return True when the experience section uses a date-first role layout.
+
+    Conditions (all must hold):
+    - body_paras contains ≥ 2 non-empty role_meta (date) paragraphs
+    - roles is empty OR the first role's header carries a role_meta semantic
+      (i.e. the parser collapsed the section into one malformed role)
+    """
+    meta_count = sum(
+        1 for p in section.body_paras
+        if p.text.strip() and p.semantic == "role_meta"
+    )
+    if meta_count < 2:
+        return False
+    if not section.roles:
+        return True
+    return section.roles[0].header.semantic == "role_meta"
+
+
+def _rebuild_date_first_roles(section: "ResumeSection") -> "list[RoleEntry]":
+    """Rebuild RoleEntry list from body_paras for a date-first experience section.
+
+    Grouping algorithm:
+    - A new role starts when a non-empty role_meta paragraph is encountered.
+    - First non-empty non-date para after the date → header (company line).
+    - Second non-empty non-date para before any content → header_extra (title).
+    - Remaining non-empty paras until the next date → bullets.
+    - Empty paragraphs are skipped for grouping; they stay in body_paras for
+      rendering (body_paras is NOT modified).
+
+    Returned RoleEntry objects hold direct references to the ParaModel objects
+    inside body_paras (no copies are made).
+    """
+    roles: list[RoleEntry] = []
+
+    cur_meta: list[ParaModel] = []
+    cur_header: "ParaModel | None" = None
+    cur_header_extra: list[ParaModel] = []
+    cur_bullets: list[ParaModel] = []
+    in_role = False
+
+    def _flush() -> None:
+        nonlocal cur_meta, cur_header, cur_header_extra, cur_bullets, in_role
+        if not in_role or not cur_meta:
+            return
+        header = cur_header if cur_header is not None else cur_meta[0]
+        roles.append(RoleEntry(
+            header=header,
+            header_extra=cur_header_extra[:],
+            meta_lines=cur_meta[:],
+            bullets=cur_bullets[:],
+            role_id=header.text.strip(),
+            role_id_stable=header.para_id or header.text.strip(),
+        ))
+        cur_meta = []
+        cur_header = None
+        cur_header_extra = []
+        cur_bullets = []
+        in_role = False
+
+    for para in section.body_paras:
+        if not para.text.strip():
+            continue
+        if para.semantic == "role_meta":
+            _flush()
+            cur_meta = [para]
+            in_role = True
+        elif in_role:
+            if cur_header is None:
+                cur_header = para
+            elif not cur_bullets and not cur_header_extra:
+                cur_header_extra = [para]
+            else:
+                cur_bullets.append(para)
+
+    _flush()
+
+    _log.debug(
+        "date-first rebuild: section %r → %d roles (original malformed: %d)  "
+        "meta_para_ids=%s  header_para_ids=%s",
+        section.title,
+        len(roles),
+        len(section.roles),
+        [r.meta_lines[0].para_id for r in roles if r.meta_lines],
+        [r.header.para_id for r in roles],
+    )
+    return roles
+
+
+def _match_llm_to_ir_roles(
+    llm_roles: "list[LlmRole]",
+    ir_roles: "list[RoleEntry]",
+) -> "list[int | None]":
+    """Match each IR role to the best LLM role by company name similarity.
+
+    Returns a list of length len(ir_roles) where entry i is the index of the
+    matched LLM role, or None when no match exceeded the similarity threshold.
+    Unmatched LLM roles that remain after similarity matching are then assigned
+    by position (fallback).
+
+    Matching strategy (logged per role):
+    1. Jaccard similarity of normalised company tokens > 0.3 → company_similarity
+    2. First unmatched LLM role in LLM output order → position
+    """
+    ir_token_sets = []
+    for ir_role in ir_roles:
+        tokens: frozenset[str] = frozenset()
+        for src in [ir_role.header] + ir_role.header_extra:
+            tokens = tokens | _extract_company_tokens(src.text)
+        ir_token_sets.append(tokens)
+
+    used_llm: set[int] = set()
+    result: list[int | None] = [None] * len(ir_roles)
+
+    # Pass 1: company similarity
+    for ir_idx, ir_tokens in enumerate(ir_token_sets):
+        if not ir_tokens:
+            continue
+        best_score = 0.0
+        best_llm_idx: int | None = None
+        for llm_idx, llm_role in enumerate(llm_roles):
+            if llm_idx in used_llm:
+                continue
+            llm_tokens = _extract_company_tokens(llm_role.header)
+            if not llm_tokens:
+                continue
+            union = ir_tokens | llm_tokens
+            score = len(ir_tokens & llm_tokens) / len(union)
+            if score > best_score:
+                best_score = score
+                best_llm_idx = llm_idx
+        if best_llm_idx is not None and best_score > 0.3:
+            result[ir_idx] = best_llm_idx
+            used_llm.add(best_llm_idx)
+            _log.debug(
+                "date-first match: IR role %r → LLM[%d] %r "
+                "(score=%.2f, strategy=company_similarity)",
+                ir_roles[ir_idx].role_id, best_llm_idx,
+                llm_roles[best_llm_idx].header, best_score,
+            )
+
+    # Pass 2: positional fallback for unmatched IR roles
+    llm_cursor = 0
+    for ir_idx in range(len(ir_roles)):
+        if result[ir_idx] is not None:
+            continue
+        while llm_cursor in used_llm and llm_cursor < len(llm_roles):
+            llm_cursor += 1
+        if llm_cursor < len(llm_roles):
+            result[ir_idx] = llm_cursor
+            used_llm.add(llm_cursor)
+            _log.debug(
+                "date-first match: IR role %r → LLM[%d] %r (strategy=position)",
+                ir_roles[ir_idx].role_id, llm_cursor,
+                llm_roles[llm_cursor].header,
+            )
+            llm_cursor += 1
+        else:
+            _log.debug(
+                "date-first match: IR role %r → unmatched (no LLM role available)",
+                ir_roles[ir_idx].role_id,
+            )
+
+    return result
+
+
+def _update_experience_date_first(
+    orig: "ResumeSection",
+    llm: "LlmSection",
+    rebuilt_roles: "list[RoleEntry]",
+) -> "ResumeSection":
+    """Apply LLM bullet content to a date-first experience section.
+
+    - Resolves LLM roles from pipe or dash format.
+    - Matches them to rebuilt IR roles by company similarity (then position).
+    - Updates bullet paragraph texts in-place on body_paras ParaModel objects.
+    - Returns the section with roles=[] so the all_paras builder uses body_paras
+      in their original template order (date-first layout preserved).
+    - Extra LLM roles beyond IR role count are ignored.
+    - IR roles with no LLM counterpart keep their original bullet text.
+    """
+    # Resolve LLM role list (pipe or dash format)
+    llm_roles = llm.roles
+    if not llm_roles and llm.body_lines:
+        reparsed = _reparse_body_lines_as_roles(llm.body_lines)
+        if reparsed:
+            llm_roles = reparsed
+
+    if not llm_roles:
+        _log.debug("date-first: no LLM roles resolved; preserving section verbatim")
+        return ResumeSection(
+            title=orig.title,
+            heading=orig.heading,
+            semantic_type=orig.semantic_type,
+            body_paras=orig.body_paras,
+            roles=[],
+            section_id=orig.section_id,
+        )
+
+    match_map = _match_llm_to_ir_roles(llm_roles, rebuilt_roles)
+
+    if len(llm_roles) > len(rebuilt_roles):
+        _log.debug(
+            "date-first: %d extra LLM roles ignored (IR has %d roles)",
+            len(llm_roles) - len(rebuilt_roles), len(rebuilt_roles),
+        )
+
+    # Mutate bullet text in-place (the ParaModel objects are shared with body_paras)
+    for ir_idx, ir_role in enumerate(rebuilt_roles):
+        llm_idx = match_map[ir_idx]
+        if llm_idx is None:
+            _log.debug(
+                "date-first: IR role %r → no match, keeping original bullets",
+                ir_role.role_id,
+            )
+            continue
+        llm_bullets = llm_roles[llm_idx].bullets
+        for i, bullet_para in enumerate(ir_role.bullets):
+            if i < len(llm_bullets):
+                _log.debug(
+                    "date-first: para %r updated  %r → %r",
+                    bullet_para.para_id,
+                    bullet_para.text[:40],
+                    llm_bullets[i][:40],
+                )
+                bullet_para.text = llm_bullets[i]
+
+    # Return with roles=[] so all_paras builder uses body_paras order
+    return ResumeSection(
+        title=orig.title,
+        heading=orig.heading,
+        semantic_type=orig.semantic_type,
+        body_paras=orig.body_paras,
+        roles=[],
+        section_id=orig.section_id,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Classification-constrained update helpers
 # ---------------------------------------------------------------------------
 
@@ -1002,6 +1292,24 @@ def apply_tailored(
         if orig_section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             # Spec §3: locked section — preserve source verbatim.
             return orig_section
+
+        # Date-first experience layout: the parser produced malformed/collapsed
+        # roles because dates appear before company/title in the template.
+        # Detect and fix before any classification or normal dispatch.
+        if orig_section.semantic_type == "experience" and _has_date_first_layout(orig_section):
+            _log.debug(
+                "date-first layout detected: section %r  "
+                "original_role_count=%d  body_meta_count=%d",
+                orig_section.title,
+                len(orig_section.roles),
+                sum(1 for p in orig_section.body_paras
+                    if p.text.strip() and p.semantic == "role_meta"),
+            )
+            cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+            if cls_sec is not None and cls_sec.rewrite_policy == "preserve":
+                return orig_section
+            rebuilt = _rebuild_date_first_roles(orig_section)
+            return _update_experience_date_first(orig_section, llm_section, rebuilt)
 
         # Classification-constrained path: look up by stable section_id.
         cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
