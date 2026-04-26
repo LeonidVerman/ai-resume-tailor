@@ -6,8 +6,8 @@ Source: `src/tailor/compiler/docx_parser.py`
 
 `parse_docx(path)` converts a `.docx` file into a `ResumeDocument` IR.  It
 reads the raw XML, classifies every paragraph's semantic role, groups the
-experience section into `RoleEntry` objects, and applies a post-processing fix
-for the two-column label-rail layout that some templates use.
+experience section into `RoleEntry` objects, and applies post-processing fixes
+for multi-column layouts (newspaper-column and label-rail).
 
 ---
 
@@ -20,7 +20,10 @@ Document XML
     └─ tables (w:tbl)        → TableBlock (opaque XML + ParaModel list)
     │
     ▼
-_apply_label_column_fix()     ← reorders all_paras for 2-col label layouts
+_apply_multicolumn_newspaper_fix()  ← new: newspaper-col / table-col layouts
+    │
+    ▼
+_apply_label_column_fix()           ← existing: w:cols narrow label-rail
     │
     ▼
 Section grouping loop         ← builds ResumeSection list
@@ -226,6 +229,114 @@ bullets or meta lines.
 
 ---
 
+## Table-Based / Newspaper Multi-Column Resume Layouts
+
+Some resume templates create a two-column visual layout using Word's
+**newspaper-column feature** (`w:sectPr/w:cols`) rather than a table.  Content
+from the left and right visual columns is interleaved in the flat XML paragraph
+stream via `<w:br type="column">` breaks, and some paragraphs use a `<w:tab/>`
+character to place two section headings side-by-side on the same line.
+
+This is a different problem from the label-column fix: the label-column fix
+handles the case where a narrow left column contains ONLY section labels and the
+wide right column contains all resume content (labels before content in XML).
+The newspaper-column fix handles arbitrary two- or three-column layouts where
+left-column and right-column content is interleaved mid-document.
+
+### Why this is different from the label-rail fix
+
+The label-rail fix (`_apply_label_column_fix`) triggers when `w:cols[0].width
+< 35%` of total width and all headings precede all content.  The newspaper-column
+fix triggers on a different structural signature: mid-document `w:sectPr` breaks
+with 2+ columns AND `<w:br type="column">` paragraphs.
+
+### Detection criteria (`_detect_newspaper_multicolumn`)
+
+Triggers when ALL of the following hold:
+
+1. The document body contains at least one `<w:p>` with an embedded `<w:sectPr>`
+   defining 2+ columns (mid-document section break with multi-column layout).
+2. At least one paragraph in the body contains `<w:br type="column">`.
+3. **Conservative skills-column guard**: at least one paragraph uses a `<w:tab/>`
+   run character to separate two known section heading names, AND at least one
+   of those headings is a skills-type name (`skills`, `technical skills`,
+   `core competencies`, etc.).
+
+Criterion 3 prevents false positives on templates where `Experience | Education`
+is cleanly split into two correct sections without any cross-column contamination.
+
+### Dual-heading tab split (`_tab_split_texts`)
+
+When a paragraph contains a `<w:tab/>` element inside a `<w:r>` (run element)
+— distinct from `<w:tab>` stop-definitions inside `<w:tabs>` — and has explicit
+tab stops defined in `pPr`, and both sides of the tab are known section names,
+the paragraph is split into two virtual `ParaModel` instances:
+
+- Left text → col-0 stream with `semantic="section_heading"`
+- Right text → col-1 stream with `semantic="section_heading"`
+
+Example: `"EDUCATION[TAB]SKILLS"` → `ParaModel("EDUCATION")` + `ParaModel("SKILLS")`
+
+### Column assignment (`_assign_column_indices`)
+
+Each paragraph in a multi-column Word section is assigned a visual column index
+(0 = leftmost):
+
+- Default column is 0 at the start of each Word section.
+- When a paragraph starts with `<w:br type="column">` and has no text before the
+  break, the current column index increments before the text is placed.
+- Text content **after** the column break is extracted and placed as a new
+  `ParaModel` with the leading `\n` stripped.
+
+### Reordering
+
+For the body region (all Word sections after the initial header-area section),
+paragraphs are regrouped into column streams: `col_streams[0]`, `col_streams[1]`,
+`col_streams[2]`, …  Final `all_paras` is:
+
+```
+header_region_paras  (kept in place)
++ col_streams[0]     (all left-column paragraphs, in document order)
++ col_streams[1]     (all right-column paragraphs, in document order)
++ col_streams[2]     (third-column paragraphs, if any)
+```
+
+`body_items` (used by the DOCX renderer) is **not** modified.
+`ResumeDocument.table_column_layout_fixed` is set to `True` when applied.
+
+### Quality validation and fallback
+
+After building the candidate `all_paras`, the fix runs a lightweight comparison:
+
+- `cand_section_count >= orig_section_count` — candidate must not lose section headings
+- `cand_role_count >= orig_role_count` — candidate must not lose experience role headers
+
+If either check fails, the fix is aborted and the original order is returned.
+`metadata["aborted"] = True` with a reason string is set in that case.
+
+### Diagnostics
+
+Three diagnostic codes are emitted by `scripts/parser_diagnostics.py`:
+
+| Code | Category | Meaning |
+|------|----------|---------|
+| `TABLE_COLUMN_LAYOUT_DETECTED` | B / info | Fix applied; includes col count, headings per col, paras per col |
+| `TABLE_COLUMN_CONTAMINATION_SUSPECTED` | B / low | Skills-like text found inside a non-skills section; contamination may not have been fixed |
+| `TABLE_COLUMN_REORDER_ABORTED` | B / info | Fix detected but quality check failed; original order kept |
+
+### Known limitations
+
+- The fix only handles the specific newspaper-column pattern where dual-heading
+  paragraphs use `<w:tab/>` to align section names.  Templates that use other
+  mechanisms (e.g., absolute-positioned text boxes) are not handled.
+- Tab-split only applies when BOTH sides are known section heading names.
+  Non-heading content on the same tab-separated line is left intact.
+- The skills-column guard may miss templates where the skills column is named
+  "Expertise", "Core Technologies", etc. if those names are not in
+  `_SKILLS_COLUMN_NAMES`.
+
+---
+
 ## Data Model Quick Reference
 
 ```
@@ -244,5 +355,6 @@ ResumeDocument
 ├─ layout: LayoutProfile
 ├─ all_paras: list[ParaModel]         # flat ordered list (post-reorder)
 ├─ body_items: list[ParaModel|TableBlock]  # raw render order (never reordered)
-└─ label_column_fixed: bool
+├─ label_column_fixed: bool           # True when label-rail fix applied
+└─ table_column_layout_fixed: bool    # True when newspaper/multi-col fix applied
 ```

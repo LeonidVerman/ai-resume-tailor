@@ -361,6 +361,7 @@ class ResumeDocument:
     source_kind: str = "docx"
     body_items: list[Any] | None = None  # list[ParaModel | TableBlock]; None for PDF/deserialised
     label_column_fixed: bool = False     # True when label-column layout reordering was applied
+    table_column_layout_fixed: bool = False  # True when newspaper/table multi-column fix applied
 
     def to_dict(self) -> dict:
         """Serialize to a JSON-compatible dict.  xml_proto is not included."""
@@ -372,6 +373,8 @@ class ResumeDocument:
         }
         if self.label_column_fixed:
             d["label_column_fixed"] = True
+        if self.table_column_layout_fixed:
+            d["table_column_layout_fixed"] = True
         return d
 
     @classmethod

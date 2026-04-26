@@ -46,6 +46,13 @@ Category B (structural candidates / informational):
   LABEL_COLUMN_DETECTED                    (w=1) Parser detected and fixed a label-column layout
                                                   (narrow left column of section labels + wide right
                                                   column of content); section structure was reordered.
+  TABLE_COLUMN_LAYOUT_DETECTED             (w=1) Parser detected and fixed a newspaper/table
+                                                  multi-column layout (column-break contamination);
+                                                  paragraphs were reordered to column-first order.
+  TABLE_COLUMN_CONTAMINATION_SUSPECTED     (w=2) A non-skills section contains skills-like dense
+                                                  text; possible cross-column contamination not fixed.
+  TABLE_COLUMN_REORDER_ABORTED             (w=1) Multi-column reorder was detected but rolled back
+                                                  because the candidate reduced sections or roles.
 """
 
 from __future__ import annotations
@@ -79,6 +86,10 @@ _ISSUE_METADATA: dict[str, tuple[str, int, str]] = {
     "ROLE_GROUPING_WEAK":                      (_CAT_B, 2, "low"),
     "ROLE_LIKE_GROUPING_NON_EXPERIENCE":       (_CAT_B, 1, "info"),
     "LABEL_COLUMN_DETECTED":                   (_CAT_B, 1, "info"),
+    # Category B — multi-column / table-column layout signals
+    "TABLE_COLUMN_LAYOUT_DETECTED":            (_CAT_B, 1, "info"),
+    "TABLE_COLUMN_CONTAMINATION_SUSPECTED":    (_CAT_B, 2, "low"),
+    "TABLE_COLUMN_REORDER_ABORTED":            (_CAT_B, 1, "info"),
 }
 
 
@@ -461,6 +472,87 @@ def detect_role_grouping_weak(
     return issues
 
 
+def detect_table_column_layout(data: dict) -> list[Issue]:
+    """Emit informational issues for the multi-column layout fix.
+
+    TABLE_COLUMN_LAYOUT_DETECTED — fix was applied (contamination resolved).
+    TABLE_COLUMN_REORDER_ABORTED — fix detected but was rolled back by quality check.
+    TABLE_COLUMN_CONTAMINATION_SUSPECTED — fix not applied but contamination signals found.
+    """
+    issues: list[Issue] = []
+    meta = data.get("table_column_layout_meta", {})
+
+    if data.get("table_column_layout_fixed"):
+        col_count = meta.get("col_count", "?")
+        hpp = meta.get("headings_per_col", {})
+        ppc = meta.get("paras_per_col", {})
+        hpp_str = "; ".join(
+            f"col{k}={v}" for k, v in sorted(hpp.items())
+        ) if hpp else "n/a"
+        ppc_str = "; ".join(
+            f"col{k}={v}" for k, v in sorted(ppc.items())
+        ) if ppc else "n/a"
+        issues.append(Issue(
+            code="TABLE_COLUMN_LAYOUT_DETECTED",
+            detail=(
+                f"Multi-column newspaper layout detected and fixed "
+                f"(cols={col_count}, headings=[{hpp_str}], paras=[{ppc_str}])"
+            ),
+        ))
+        return issues
+
+    if meta.get("aborted"):
+        issues.append(Issue(
+            code="TABLE_COLUMN_REORDER_ABORTED",
+            detail=f"Multi-column reorder detected but aborted: {meta.get('reason', 'unknown')}",
+        ))
+
+    return issues
+
+
+_SKILLS_DENSITY_WORDS: frozenset[str] = frozenset({
+    "networking", "operating", "systems", "cross-platform", "encryption",
+    "testing", "integration", "critical", "management", "databases",
+    "proficiency", "proficiencies", "adobe", "photoshop", "illustrator",
+    "figma", "react", "angular", "javascript", "python", "java", "sql",
+    "linux", "windows", "macos", "agile", "scrum", "git", "docker",
+})
+
+
+def detect_table_column_contamination_suspected(sections: list[dict]) -> list[Issue]:
+    """Detect likely cross-column contamination: skills-like dense text inside
+    non-skills sections (certification, education, etc.)."""
+    issues: list[Issue] = []
+    for sec in sections:
+        sem = sec.get("semantic_type", "")
+        if sem in ("experience", "skills", "other"):
+            continue
+        title_lower = sec.get("raw_title", "").lower()
+        if "skill" in title_lower or "technical" in title_lower:
+            continue
+        # Check for skill-like dense text paragraphs
+        suspicious: list[str] = []
+        for p in sec.get("paragraphs", []):
+            text = p.get("text", "").strip()
+            if len(text) < 20:
+                continue
+            words = set(re.split(r"\W+", text.lower())) - {""}
+            skill_hits = len(words & _SKILLS_DENSITY_WORDS)
+            if skill_hits >= 2:
+                suspicious.append(text[:60])
+        if suspicious:
+            issues.append(Issue(
+                code="TABLE_COLUMN_CONTAMINATION_SUSPECTED",
+                detail=(
+                    f"Section '{sec.get('raw_title', '')}' contains "
+                    f"{len(suspicious)} skills-like paragraph(s); "
+                    f"possible cross-column contamination: {suspicious[0]!r}"
+                ),
+                section_id=sec.get("section_id", ""),
+            ))
+    return issues
+
+
 def detect_label_column(data: dict) -> list[Issue]:
     """Emit one informational issue when the label-column layout fix was applied."""
     if data.get("label_column_fixed"):
@@ -526,6 +618,8 @@ def analyse_file(path: Path) -> FileReport:
     all_issues.extend(detect_role_grouping_weak(sections, para_map))
     all_issues.extend(detect_role_like_grouping_non_experience(sections))
     all_issues.extend(detect_label_column(data))
+    all_issues.extend(detect_table_column_layout(data))
+    all_issues.extend(detect_table_column_contamination_suspected(sections))
 
     for issue in all_issues:
         if _category(issue.code) == _CAT_A:
