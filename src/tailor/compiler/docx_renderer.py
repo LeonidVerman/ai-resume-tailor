@@ -10,11 +10,20 @@ Strategy
    xml_proto (the deepcopy stored at parse time) and append it to the body.
 4. Set the paragraph text by clearing all run text and writing new_text on the
    first run (same pattern as Phase 14's _replace_text_preserving_format).
+
+Layout-blocks path (USE_LAYOUT_BLOCK_RENDERER or deserialized IR)
+------------------------------------------------------------------
+When layout_blocks are present and either the flag is on or no runtime xml_proto
+exists, render_docx calls _render_from_layout_blocks instead of the default
+section-based loop.  The blocks preserve physical document order so that
+newspaper-column and table layouts are not flattened into a single column.
 """
 from __future__ import annotations
 
+import logging
 import shutil
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 from docx import Document
 
@@ -26,7 +35,11 @@ from tailor.compiler.models import (
     TableBlock,
 )
 
+if TYPE_CHECKING:
+    pass
+
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+_log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -715,6 +728,47 @@ def _render_docx_native_two_col(
 # Layout-blocks rendering (Option B: XML prototype path)
 # ---------------------------------------------------------------------------
 
+def _build_para_lookup(doc: ResumeDocument) -> dict[str, ParaModel]:
+    """Build para_id → ParaModel from all semantic-model paragraphs.
+
+    Visits paragraphs in priority order — semantic sections first (they carry
+    the LLM-updated text), then ``all_paras`` as a gap-filler.  When duplicate
+    IDs are encountered (can happen when apply_tailored rebuilds all_paras),
+    the first-seen entry wins and the duplicate is logged.
+
+    Paragraphs with ``para_id=""`` are excluded from the map.
+    """
+    seen: dict[str, ParaModel] = {}
+
+    def _add(pm: ParaModel) -> None:
+        if not pm.para_id:
+            return
+        if pm.para_id in seen:
+            _log.debug("LAYOUT_BLOCK_DUPLICATE_PARA_ID: %r", pm.para_id)
+        else:
+            seen[pm.para_id] = pm
+
+    for pm in doc.header_paras:
+        _add(pm)
+    for sec in doc.sections:
+        _add(sec.heading)
+        for role in sec.roles:
+            _add(role.header)
+            for pm in role.header_extra:
+                _add(pm)
+            for pm in role.meta_lines:
+                _add(pm)
+            for pm in role.bullets:
+                _add(pm)
+        for pm in sec.body_paras:
+            _add(pm)
+    # Fallback: all_paras may contain paragraphs not yet in semantic sections
+    for pm in (doc.all_paras or []):
+        if pm.para_id and pm.para_id not in seen:
+            seen[pm.para_id] = pm
+    return seen
+
+
 def _render_from_layout_blocks(
     doc: ResumeDocument,
     body,
@@ -722,61 +776,113 @@ def _render_from_layout_blocks(
 ) -> None:
     """Render *doc* from its serialized layout_blocks (XML prototype strings).
 
-    This path is used when ``doc.layout_blocks`` is not None — i.e. after a
-    DB round-trip where ``body_items`` and ``xml_proto`` fields are absent but
-    the original XML strings survive in ``layout_blocks``.
+    This path reproduces the original physical document order instead of the
+    semantic section order, preserving newspaper-column layouts, table cell
+    widths, merged cells, and column-break structure.
 
-    For each block:
-    - ``LayoutParagraphBlock``: deserialize XML → ``w:p``, strip stale page
-      break markers, update text from ``para_lookup`` (by ``para_id``), insert.
-      If ``para_id`` is empty or not found in ``para_lookup``, the block is
-      inserted verbatim (preserves structural/orphan paragraphs such as
-      column-break transitions and tab-split section headings).
-    - ``LayoutTableBlock``: deserialize XML → ``w:tbl``, update each nested
-      ``w:p`` text from ``para_lookup``, insert.
+    Para-ID lookup
+    --------------
+    Every rendered paragraph is identified by its stable ``para_id``.  When a
+    ``para_id`` resolves to a ``ParaModel`` in the semantic model the paragraph
+    text is replaced with the updated value.  When not found, the original text
+    from the XML prototype is kept and ``LAYOUT_BLOCK_MISSING_PARA_ID`` is logged.
 
+    Column / section preservation
+    ------------------------------
     Column breaks (``w:br type="column"``) and embedded section properties
-    (``w:sectPr`` inside ``w:pPr``) are intentionally **not** stripped so that
-    newspaper-column layouts such as sample 31 preserve their two-column visual
-    structure.  Only ``w:lastRenderedPageBreak`` elements are removed because
-    they are always stale after content changes.
+    (``w:sectPr`` inside ``w:pPr``) are **not** stripped so that newspaper-
+    column layouts (e.g. sample 31) retain their two-column visual structure.
+    Only ``w:lastRenderedPageBreak`` elements are removed (always stale).
+
+    Unbound new content
+    -------------------
+    LLM-added paragraphs that exist in ``all_paras`` but have no entry in
+    ``layout_blocks`` (e.g. extra bullets with ``para_id=""``) are not placed.
+    Their count is logged as ``LAYOUT_UNBOUND_CONTENT_NOT_RENDERED``.
     """
     from lxml import etree
 
-    # Build para_id → ParaModel lookup from the full paragraph list.
-    # para_id="" entries are excluded (structural paragraphs without IDs).
-    para_lookup: dict[str, ParaModel] = {}
-    for pm in doc.all_paras:
-        if pm.para_id:
-            para_lookup[pm.para_id] = pm
+    _log.debug("LAYOUT_BLOCK_RENDERER_USED: rendering %d blocks", len(doc.layout_blocks))  # type: ignore[arg-type]
+
+    para_lookup = _build_para_lookup(doc)
+
+    # Collect para_ids referenced by layout_blocks to detect unbound content.
+    lb_para_ids: set[str] = set()
+    for block in doc.layout_blocks:  # type: ignore[union-attr]
+        if isinstance(block, LayoutTableBlock):
+            lb_para_ids.update(pid for pid in block.para_ids if pid)
+        elif isinstance(block, LayoutParagraphBlock) and block.para_id:
+            lb_para_ids.add(block.para_id)
+
+    # Detect unbound content: paragraphs in all_paras not captured by layout_blocks.
+    # Two cases:
+    #   (a) para_id set but not in lb_para_ids — updated para whose layout slot was lost
+    #   (b) para_id="" with non-empty text — new paragraph from clone_as (LLM extra bullet)
+    unbound_count = sum(
+        1 for pm in (doc.all_paras or [])
+        if (
+            (pm.para_id and pm.para_id not in lb_para_ids)
+            or (not pm.para_id and pm.text.strip())
+        )
+    )
+    if unbound_count:
+        _log.debug(
+            "LAYOUT_UNBOUND_CONTENT_NOT_RENDERED: %d paragraphs not in layout_blocks",
+            unbound_count,
+        )
 
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
             tbl_elem = etree.fromstring(block.xml_proto_xml)
             all_p = tbl_elem.findall(f".//{{{_W}}}p")
+            patched = 0
             for para_id, p_elem in zip(block.para_ids, all_p):
                 pm = para_lookup.get(para_id)
                 if pm is not None:
                     _set_para_text(p_elem, pm.text)
-                # else: keep original text (surplus template paragraphs)
+                    patched += 1
+                else:
+                    _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: table para_id=%r", para_id)
+                    # keep original text — surplus / unmatched template cells
+            _log.debug(
+                "TABLE_BLOCK_XML_PATCHED: table_id=%r  patched=%d/%d",
+                block.table_id, patched, len(block.para_ids),
+            )
             elem: Any = tbl_elem
+
         else:
             # LayoutParagraphBlock
             if not block.xml_proto_xml:
-                # No XML prototype — fall back to para_builder if profile exists
-                pm = para_lookup.get(block.para_id)
-                if pm is not None and pm.paragraph_profile is not None:
+                # No XML prototype: fall back to para_builder or runtime xml_proto
+                pm = para_lookup.get(block.para_id) if block.para_id else None
+                if pm is None:
+                    continue
+                if pm.style.xml_proto is not None:
+                    from copy import deepcopy
+                    elem = deepcopy(pm.style.xml_proto)
+                    _strip_last_rendered_page_breaks(elem)
+                    _set_para_text(elem, pm.text)
+                elif pm.paragraph_profile is not None:
                     from tailor.compiler.para_builder import build_para_element
                     elem = build_para_element(pm)
                 else:
+                    _log.debug(
+                        "LAYOUT_BLOCK_RENDERER_FALLBACK: para_id=%r has no xml_proto or profile",
+                        block.para_id,
+                    )
                     continue
             else:
                 elem = etree.fromstring(block.xml_proto_xml)
                 _strip_last_rendered_page_breaks(elem)
+                # Column breaks and embedded sectPr are intentionally preserved.
                 pm = para_lookup.get(block.para_id) if block.para_id else None
                 if pm is not None:
                     _set_para_text(elem, pm.text)
-                # else: structural paragraph — insert verbatim (no text change)
+                    _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
+                else:
+                    if block.para_id:
+                        _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)
+                    # Structural/orphan paragraph — insert verbatim (original text kept)
 
         if sectPr is not None:
             sectPr.addprevious(elem)
@@ -824,24 +930,28 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     if sectPr is not None:
         body.append(sectPr)
 
-    # Layout-blocks path: when the IR carries serialized XML prototypes and
-    # NO runtime xml_proto objects are present (i.e. we are working from a
-    # deserialized IR, not a freshly-parsed one), render from the stored XML
-    # strings.  This preserves full DOCX formatting (fonts, styles, tables,
-    # column structure) after a DB round-trip without falling back to para_builder.
+    # Layout-blocks path: activated when layout_blocks are present and either:
+    #   (a) USE_LAYOUT_BLOCK_RENDERER=true  — explicit flag, enforces physical
+    #       layout order even at runtime; LLM-added unbound content is not
+    #       placed (logged as LAYOUT_UNBOUND_CONTENT_NOT_RENDERED).
+    #   (b) No runtime xml_proto objects detected — deserialized from DB;
+    #       para_builder fallback would lose all DOCX formatting otherwise.
     #
-    # The runtime check uses a sample of the first 10 paragraphs: at parse time
-    # every w:p has an xml_proto; after deserialization all are None.  When any
-    # sample paragraph has xml_proto the existing rendering paths are used so
-    # that extra bullets / new sections produced by apply_tailored are visible.
-    if doc.layout_blocks is not None:
+    # PDF sources never use this path (layout_blocks is only built for DOCX).
+    if doc.layout_blocks is not None and doc.source_kind != "pdf":
+        from tailor.config import USE_LAYOUT_BLOCK_RENDERER
         _has_runtime_xml = any(
             pm.style.xml_proto is not None for pm in doc.all_paras[:10]
         )
-        if not _has_runtime_xml:
+        _use_lb = USE_LAYOUT_BLOCK_RENDERER or not _has_runtime_xml
+        if _use_lb:
             _render_from_layout_blocks(doc, body, sectPr)
             d.save(output_path)
             return
+        _log.debug(
+            "LAYOUT_BLOCK_RENDERER_FALLBACK: layout_blocks present but runtime xml_proto "
+            "detected and USE_LAYOUT_BLOCK_RENDERER=false — using default render path"
+        )
 
     # For PDF-sourced documents, override the template page geometry with the
     # source PDF's paper size and margins so the round-trip page count is stable.

@@ -433,25 +433,55 @@ When `USE_SERIALIZED_LAYOUT_TREE=true` (default), `parse_docx` serializes every 
 `w:p` and `w:tbl` as XML strings in `layout_blocks`.  After a DB round-trip:
 
 1. `from_dict()` restores `layout_blocks` with the XML strings.
-2. `apply_tailored` carries `layout_blocks` forward unchanged.
-3. `render_docx` detects: `layout_blocks` present **and** no `xml_proto` on any sample paragraph
-   (i.e. deserialized state) → calls `_render_from_layout_blocks`.
-4. The renderer deserializes each XML string, looks up the paragraph by `para_id` in
-   `doc.all_paras`, updates the text, and inserts into the output body — preserving the
-   original DOCX formatting (fonts, styles, column structure, table layout) without
-   needing `para_builder`.
+2. `apply_tailored` carries `layout_blocks` forward unchanged; `ParaModel.with_text()` preserves
+   `para_id` so updated paragraphs can still be located by ID.
+3. `render_docx` selects the layout_blocks path when **either**:
+   - `USE_LAYOUT_BLOCK_RENDERER=true` (explicit flag), **or**
+   - `layout_blocks` present AND no runtime `xml_proto` detected (deserialized IR).
+4. `_render_from_layout_blocks` builds a `para_id → ParaModel` lookup from the full semantic model
+   (header_paras, sections, roles, body_paras) with `all_paras` as a gap-filler.
+5. Each block is rendered in physical document order (not semantic-section order):
+   - `LayoutParagraphBlock`: deserialize XML, strip `lastRenderedPageBreak`, look up `para_id`,
+     set text, insert. Missing `para_id` → insert verbatim (original text kept, diagnostic logged).
+   - `LayoutTableBlock`: deserialize XML, iterate `w:p` in order, set text per `para_id`, insert.
+     Table structure (merged cells, borders, widths) is fully preserved.
 
 Column breaks (`w:br type="column"`) and embedded section properties (`w:sectPr` in `w:pPr`)
-are intentionally **not** stripped in this path, preserving newspaper-column layouts such
-as sample 31.
+are **not** stripped — this preserves newspaper-column layouts such as sample 31.
 
-Only `w:lastRenderedPageBreak` elements are removed (always stale after content changes).
+LLM-added paragraphs with `para_id=""` (e.g. extra bullets from `clone_as`) are not placed
+in layout_blocks mode; their count is logged as `LAYOUT_UNBOUND_CONTENT_NOT_RENDERED`.
 
-### Feature flag
+### Para-ID lookup priority
 
-`USE_SERIALIZED_LAYOUT_TREE` (env var, default `"true"`): controls whether `parse_docx`
-builds `layout_blocks`. Set to `"false"` to disable and keep the old `para_builder`
-fallback for all deserialized DOCX documents.
+The lookup is built in this order so that the LLM-updated text wins over raw `all_paras`:
+
+1. `header_paras`
+2. `sections[].heading`
+3. `sections[].roles[].{header, header_extra, meta_lines, bullets}`
+4. `sections[].body_paras`
+5. `all_paras` (gap-filler for anything missed above)
+
+Duplicate IDs are logged as `LAYOUT_BLOCK_DUPLICATE_PARA_ID`; the first-seen entry wins.
+
+### Render diagnostics
+
+| Code | Logged when |
+|---|---|
+| `LAYOUT_BLOCK_RENDERER_USED` | Layout_blocks path activated |
+| `LAYOUT_BLOCK_RENDERER_FALLBACK` | Flag off + runtime xml_proto detected → legacy path |
+| `LAYOUT_BLOCK_MISSING_PARA_ID` | Block's para_id not found in lookup |
+| `LAYOUT_BLOCK_DUPLICATE_PARA_ID` | Same para_id appears in multiple semantic locations |
+| `LAYOUT_UNBOUND_CONTENT_NOT_RENDERED` | New LLM paragraphs not captured in layout_blocks |
+| `TABLE_BLOCK_XML_PATCHED` | Table XML deserialized and cell texts updated |
+| `PARAGRAPH_BLOCK_XML_PATCHED` | Paragraph XML deserialized and text updated |
+
+### Feature flags
+
+| Flag | Default | Purpose |
+|---|---|---|
+| `USE_SERIALIZED_LAYOUT_TREE` | `true` | Build `layout_blocks` during `parse_docx` |
+| `USE_LAYOUT_BLOCK_RENDERER` | `false` | Force layout_blocks path even when runtime `xml_proto` present |
 
 ---
 
@@ -477,16 +507,17 @@ ResumeDocument (source_kind=docx)    ResumeDocument (source_kind=pdf)
                            │
                   ResumeDocument (updated)
                            │
-    ┌──────────────────────┼─────────────────────────┐
-    │ layout_blocks present │ xml_proto present        │
-    │ AND no xml_proto      │ (runtime DOCX)           │ PDF / no layout_blocks
-    │ (deserialized DOCX)   │                          │
-    ↓                       ↓                          ↓
-_render_from_layout_blocks  Clone xml_proto      build_para_element()
-  deserialize XML           _set_para_text()     from ParagraphProfile
-  patch text by para_id                          │
-    │                           │                │
-    └───────────────────────────┴────────────────┘
+    ┌──────────────────────────┬──────────────────────┬─────────────────┐
+    │ layout_blocks present    │ layout_blocks present│ PDF / no        │
+    │ AND (flag OR no          │ AND flag=false AND   │ layout_blocks   │
+    │ runtime xml_proto)       │ xml_proto present    │                 │
+    ↓                          ↓                      ↓                 │
+_render_from_layout_blocks  FALLBACK: legacy path   build_para_element()
+  physical block order      (xml_proto / table path) from ParagraphProfile
+  patch text by para_id     extra bullets visible    │
+  column breaks preserved                            │
+    │                           │                    │
+    └───────────────────────────┴────────────────────┘
                            ↓
                render_docx(updated, template, output_path)
                            ↓

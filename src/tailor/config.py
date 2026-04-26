@@ -37,3 +37,16 @@ ASSESS_TEMPERATURE: float = float(os.environ.get("ASSESS_TEMPERATURE", "0.2"))
 USE_SERIALIZED_LAYOUT_TREE: bool = (
     os.environ.get("USE_SERIALIZED_LAYOUT_TREE", "true").lower() == "true"
 )
+
+# When True, render_docx always uses the layout_blocks path for DOCX sources
+# that carry layout_blocks — even when runtime xml_proto objects exist.
+# This enforces physical layout order (layout_blocks order == original document
+# order) and preserves column/table structure after apply_tailored.
+#
+# When False (default), the layout_blocks path activates only when xml_proto
+# is absent (deserialized from DB) to avoid suppressing LLM-added content.
+# LLM-added paragraphs with empty para_id are not placed in layout_blocks
+# mode; they are only logged as LAYOUT_UNBOUND_CONTENT_NOT_RENDERED.
+USE_LAYOUT_BLOCK_RENDERER: bool = (
+    os.environ.get("USE_LAYOUT_BLOCK_RENDERER", "false").lower() == "true"
+)
