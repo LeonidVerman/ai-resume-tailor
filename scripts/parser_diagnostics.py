@@ -46,13 +46,12 @@ Category B (structural candidates / informational):
   LABEL_COLUMN_DETECTED                    (w=1) Parser detected and fixed a label-column layout
                                                   (narrow left column of section labels + wide right
                                                   column of content); section structure was reordered.
-  TABLE_COLUMN_LAYOUT_DETECTED             (w=1) Parser detected and fixed a newspaper/table
-                                                  multi-column layout (column-break contamination);
-                                                  paragraphs were reordered to column-first order.
-  TABLE_COLUMN_CONTAMINATION_SUSPECTED     (w=2) A non-skills section contains skills-like dense
-                                                  text; possible cross-column contamination not fixed.
-  TABLE_COLUMN_REORDER_ABORTED             (w=1) Multi-column reorder was detected but rolled back
-                                                  because the candidate reduced sections or roles.
+  TABLE_COLUMN_LAYOUT_DETECTED             (w=1) Band-aware fix applied; left/right streams separated.
+  TABLE_COLUMN_REORDER_ABORTED             (w=1) Fix detected but rolled back (quality check failed).
+  TABLE_COLUMN_CONTAMINATION_SUSPECTED     (w=2) Skills-list text inside a non-skills section.
+  TABLE_CONTACT_INSIDE_EXPERIENCE          (w=3) Phone/email/address inside an experience section.
+  TABLE_SKILLS_INSIDE_NON_SKILLS_SECTION   (w=2) Skills-list paragraph in a non-skills section.
+  TABLE_ORG_NAME_PROMOTED_TO_FAKE_SECTION  (w=1) Org name became a top-level section (not absorbed).
 """
 
 from __future__ import annotations
@@ -88,8 +87,11 @@ _ISSUE_METADATA: dict[str, tuple[str, int, str]] = {
     "LABEL_COLUMN_DETECTED":                   (_CAT_B, 1, "info"),
     # Category B — multi-column / table-column layout signals
     "TABLE_COLUMN_LAYOUT_DETECTED":            (_CAT_B, 1, "info"),
-    "TABLE_COLUMN_CONTAMINATION_SUSPECTED":    (_CAT_B, 2, "low"),
     "TABLE_COLUMN_REORDER_ABORTED":            (_CAT_B, 1, "info"),
+    "TABLE_COLUMN_CONTAMINATION_SUSPECTED":    (_CAT_B, 2, "low"),
+    "TABLE_CONTACT_INSIDE_EXPERIENCE":         (_CAT_B, 3, "medium"),
+    "TABLE_SKILLS_INSIDE_NON_SKILLS_SECTION":  (_CAT_B, 2, "low"),
+    "TABLE_ORG_NAME_PROMOTED_TO_FAKE_SECTION": (_CAT_B, 1, "info"),
 }
 
 
@@ -510,46 +512,175 @@ def detect_table_column_layout(data: dict) -> list[Issue]:
     return issues
 
 
-_SKILLS_DENSITY_WORDS: frozenset[str] = frozenset({
-    "networking", "operating", "systems", "cross-platform", "encryption",
-    "testing", "integration", "critical", "management", "databases",
-    "proficiency", "proficiencies", "adobe", "photoshop", "illustrator",
-    "figma", "react", "angular", "javascript", "python", "java", "sql",
-    "linux", "windows", "macos", "agile", "scrum", "git", "docker",
+_ACTION_VERBS: frozenset[str] = frozenset({
+    "developed", "built", "implemented", "led", "designed", "created",
+    "improved", "managed", "architected", "deployed", "delivered",
+    "collaborated", "optimized", "maintained", "integrated", "migrated",
+    "automated", "reduced", "increased", "launched", "established",
+    "coordinated", "analyzed", "resolved", "supported", "mentored",
+    "spearheaded", "streamlined", "facilitated", "engineered", "authored",
+})
+
+_CONTACT_PATTERNS: tuple[re.Pattern, ...] = (
+    re.compile(r"^\+?\d[\d\s\-().]{6,}$"),          # phone
+    re.compile(r"\b[\w.+-]+@[\w-]+\.\w{2,}\b"),       # email
+    re.compile(r"^(www\.|https?://)", re.IGNORECASE),  # URL
+    re.compile(r"\b\d{3,5}\b.{0,40}\b(st|ave|blvd|rd|ln|dr|way|city|street)\b", re.IGNORECASE),
+)
+
+_ORG_NAME_INDICATORS: frozenset[str] = frozenset({
+    "inc", "corp", "co", "ltd", "llc", "company", "tech", "technologies",
+    "university", "college", "school", "institute",
 })
 
 
+def _is_contact_para(text: str) -> bool:
+    """Return True when text looks like a phone/email/address line."""
+    t = text.strip()
+    return any(pat.search(t) for pat in _CONTACT_PATTERNS)
+
+
+def _is_skills_list_para(text: str) -> bool:
+    """Return True when text looks like a skills list, NOT a narrative bullet.
+
+    A paragraph is skills-like when:
+    - It is mostly comma/semicolon-separated tokens with few verbs.
+    - It does NOT start with an action verb.
+    - It does NOT contain ≥5 space-separated tokens that form a sentence with verbs.
+    - It does NOT end with sentence punctuation after many words (full sentence).
+    """
+    t = text.strip()
+    if not t or len(t) < 15:
+        return False
+
+    # Not skills-like if starts with a known action verb
+    first_word = re.split(r"\W+", t.lower())[0]
+    if first_word in _ACTION_VERBS:
+        return False
+
+    # Not skills-like if it is a full sentence (≥8 space-sep tokens ending with . ! ?)
+    tokens = t.split()
+    if len(tokens) >= 8 and t[-1] in ".!?":
+        return False
+
+    # Not skills-like if it contains typical sentence connectors
+    lower = t.lower()
+    for connector in (" to ", " for ", " with ", " using ", " by ", " in order to ", " through "):
+        if connector in lower:
+            return False
+
+    # Skills-like: high comma/semicolon density relative to length
+    separators = t.count(",") + t.count(";")
+    if separators >= 2 and len(tokens) >= 4:
+        return True
+
+    # Skills-like: short total length, low word count, no sentence punctuation
+    if len(tokens) <= 6 and t[-1] not in ".!?" and len(t) >= 15:
+        return True
+
+    return False
+
+
 def detect_table_column_contamination_suspected(sections: list[dict]) -> list[Issue]:
-    """Detect likely cross-column contamination: skills-like dense text inside
-    non-skills sections (certification, education, etc.)."""
+    """Emit TABLE_COLUMN_CONTAMINATION_SUSPECTED only when skills-list text appears
+    inside a section where it clearly does not belong (cert, education) and cannot
+    be explained as a narrative bullet."""
     issues: list[Issue] = []
+    _SKIP_SEMANTICS = {"experience", "skills", "other"}
     for sec in sections:
-        sem = sec.get("semantic_type", "")
-        if sem in ("experience", "skills", "other"):
+        if sec.get("semantic_type", "") in _SKIP_SEMANTICS:
             continue
         title_lower = sec.get("raw_title", "").lower()
-        if "skill" in title_lower or "technical" in title_lower:
+        if any(kw in title_lower for kw in ("skill", "technical", "expertise")):
             continue
-        # Check for skill-like dense text paragraphs
         suspicious: list[str] = []
         for p in sec.get("paragraphs", []):
             text = p.get("text", "").strip()
-            if len(text) < 20:
-                continue
-            words = set(re.split(r"\W+", text.lower())) - {""}
-            skill_hits = len(words & _SKILLS_DENSITY_WORDS)
-            if skill_hits >= 2:
+            if _is_skills_list_para(text):
                 suspicious.append(text[:60])
         if suspicious:
             issues.append(Issue(
                 code="TABLE_COLUMN_CONTAMINATION_SUSPECTED",
                 detail=(
-                    f"Section '{sec.get('raw_title', '')}' contains "
-                    f"{len(suspicious)} skills-like paragraph(s); "
-                    f"possible cross-column contamination: {suspicious[0]!r}"
+                    f"Section '{sec.get('raw_title', '')}' may contain skills-list text: "
+                    f"{suspicious[0]!r}"
                 ),
                 section_id=sec.get("section_id", ""),
             ))
+    return issues
+
+
+def detect_table_contact_inside_experience(sections: list[dict]) -> list[Issue]:
+    """Flag contact-like paragraphs (phone, email, address) inside experience sections."""
+    issues: list[Issue] = []
+    for sec in sections:
+        if not _is_experience_section(sec.get("raw_title", "")):
+            continue
+        for p in sec.get("paragraphs", []):
+            text = p.get("text", "").strip()
+            if _is_contact_para(text):
+                issues.append(Issue(
+                    code="TABLE_CONTACT_INSIDE_EXPERIENCE",
+                    detail=f"Contact-like text inside experience section: {text[:60]!r}",
+                    section_id=sec.get("section_id", ""),
+                    para_id=p.get("para_id", ""),
+                ))
+    return issues
+
+
+def detect_table_skills_inside_non_skills(sections: list[dict]) -> list[Issue]:
+    """Flag skills-list paragraphs inside non-skills sections."""
+    issues: list[Issue] = []
+    _SKIP = {"experience", "skills", "other"}
+    for sec in sections:
+        if sec.get("semantic_type", "") in _SKIP:
+            continue
+        title = sec.get("raw_title", "").lower()
+        if any(kw in title for kw in ("skill", "technical", "expertise")):
+            continue
+        for p in sec.get("paragraphs", []):
+            text = p.get("text", "").strip()
+            if _is_skills_list_para(text):
+                issues.append(Issue(
+                    code="TABLE_SKILLS_INSIDE_NON_SKILLS_SECTION",
+                    detail=(
+                        f"Skills-list text in '{sec.get('raw_title', '')}' section: "
+                        f"{text[:60]!r}"
+                    ),
+                    section_id=sec.get("section_id", ""),
+                    para_id=p.get("para_id", ""),
+                ))
+    return issues
+
+
+def detect_table_org_name_fake_sections(sections: list[dict]) -> list[Issue]:
+    """Flag sections that look like organization names promoted from sub-headings."""
+    issues: list[Issue] = []
+    for sec in sections:
+        if _is_experience_section(sec.get("raw_title", "")):
+            continue
+        if sec.get("roles"):
+            continue
+        title = sec.get("raw_title", "").strip()
+        if title.lower() in _SECTION_HEADING_WORDS:
+            continue
+        body_paras = sec.get("paragraphs", [])
+        non_empty = [p for p in body_paras if p.get("text", "").strip()]
+        if not non_empty:
+            continue
+        # Looks like org name if: 1–3 body paras, last para is a date
+        if len(non_empty) <= 3:
+            title_words = set(re.split(r"\W+", title.lower())) - {""}
+            last_text = non_empty[-1].get("text", "")
+            if _DATE_RE.search(last_text) and title_words & _ORG_NAME_INDICATORS:
+                issues.append(Issue(
+                    code="TABLE_ORG_NAME_PROMOTED_TO_FAKE_SECTION",
+                    detail=(
+                        f"Section '{title}' looks like an org-name sub-heading "
+                        f"(short body, date-like last line)"
+                    ),
+                    section_id=sec.get("section_id", ""),
+                ))
     return issues
 
 
@@ -620,6 +751,9 @@ def analyse_file(path: Path) -> FileReport:
     all_issues.extend(detect_label_column(data))
     all_issues.extend(detect_table_column_layout(data))
     all_issues.extend(detect_table_column_contamination_suspected(sections))
+    all_issues.extend(detect_table_contact_inside_experience(sections))
+    all_issues.extend(detect_table_skills_inside_non_skills(sections))
+    all_issues.extend(detect_table_org_name_fake_sections(sections))
 
     for issue in all_issues:
         if _category(issue.code) == _CAT_A:

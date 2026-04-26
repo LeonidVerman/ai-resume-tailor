@@ -768,7 +768,9 @@ def parse_docx(path: str) -> ResumeDocument:
                 and (
                     current.semantic_type == "experience"
                     or (
-                        current.semantic_type in {"education", "certifications"}
+                        current.semantic_type in {
+                            "education", "certifications", "other",
+                        }
                         and _classify_section(pm.text.strip()) == "other"
                     )
                 )
@@ -1181,37 +1183,22 @@ def _apply_label_column_fix(
 
 
 # ---------------------------------------------------------------------------
-# Newspaper-column / table multi-column layout fix
+# Newspaper-column / table multi-column layout fix (band-aware)
 # ---------------------------------------------------------------------------
 # Some DOCX templates use Word's newspaper-column feature (w:sectPr/w:cols) to
 # create a two- or three-column visual layout where left-column and right-column
-# content is interleaved in the flat paragraph stream.  Paragraphs that start
-# with <w:br type="column"> signal that their text content belongs to the NEXT
-# visual column; similarly, single-line heading paragraphs that use a <w:tab/>
-# to place two section names side-by-side in different visual columns appear as
-# a single merged paragraph in the XML.
+# content is interleaved in the flat paragraph stream.
 #
-# This fix:
-#   1. Detects whether the document has mid-document Word sections with 2+
-#      columns AND column-break paragraphs.
-#   2. Parses embedded sectPr elements to identify Word section boundaries and
-#      column counts.
-#   3. Assigns a visual column index (0 = leftmost) to each paragraph within
-#      each multi-column Word section.
-#   4. Splits "dual-heading" paragraphs (e.g. "EDUCATION[TAB]SKILLS") into
-#      two separate ParaModel items when both sides are known section names.
-#   5. Reorders all_paras for the body region (everything after the initial
-#      header section) so that col-0 paragraphs come first (in doc order),
-#      then col-1, then col-2 — preventing right-column content from polluting
-#      left-column sections during section grouping.
-#   6. Runs a lightweight quality validation; aborts and returns the original
-#      order if the candidate reordering would produce fewer valid sections or
-#      lose experience roles.
+# This fix applies a band-aware reordering that produces two streams:
+#   LEFT  stream: col-0 content + band-merged col-1 for 3-col wide-left sections
+#   RIGHT stream: col-1 (2-col), col-2 (3-col wide-left), tab-split right sides
+#
+# The document header section (initial Word section with name/contact) is kept
+# in its original document order to prevent contact info from polluting sections.
 #
 # body_items (used by the renderer) is NOT modified.
 
 _COL_BREAK_TAG = f"{{{_W}}}br"
-_TAB_TAG = f"{{{_W}}}tab"
 _KNOWN_SECTION_NAMES_LOWER: frozenset[str] = frozenset(
     t.lower() for t in _ALL_HEADING_NAMES
 )
@@ -1246,7 +1233,7 @@ def _text_after_column_break(p_elem) -> str:
             if elem.tag == f"{{{_W}}}t":
                 parts.append(elem.text or "")
             elif elem.tag == _COL_BREAK_TAG:
-                break  # second column break — stop
+                break
     return "".join(parts)
 
 
@@ -1268,28 +1255,21 @@ def _tab_split_texts(p_elem) -> tuple[str, str] | None:
     Only returns a split when:
     - The paragraph does NOT contain a column break.
     - pPr has explicit tab stops defined.
-    - A <w:tab/> run character (direct child of a <w:r> element, NOT a tab-stop
-      definition inside <w:tabs>) is present.
-    - Both sides of the tab have non-empty text.
-
-    Iterates only direct w:r children to avoid confusing tab-stop definitions
-    (inside w:pPr/w:tabs) with run-level tab characters.
+    - A <w:tab/> run character (direct child of a <w:r>, NOT inside <w:tabs>) exists.
+    - Both sides have non-empty text.
     """
     if _has_column_break(p_elem):
         return None
     pPr = p_elem.find(f"{{{_W}}}pPr")
     if pPr is None:
         return None
-    tabs = pPr.find(f"{{{_W}}}tabs")
-    if tabs is None:
+    if pPr.find(f"{{{_W}}}tabs") is None:
         return None
 
     left_parts: list[str] = []
     right_parts: list[str] = []
     in_right = False
 
-    # Iterate only direct children of p_elem that are <w:r> (run elements).
-    # This avoids hitting <w:tab> stop definitions inside <w:pPr><w:tabs>.
     for child in p_elem:
         local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
         if local != "r":
@@ -1313,12 +1293,7 @@ def _tab_split_texts(p_elem) -> tuple[str, str] | None:
 
 
 def _detect_newspaper_multicolumn(body) -> bool:
-    """Return True when the body has mid-document sectPr with 2+ columns AND
-    at least one column-break paragraph.
-
-    This distinguishes newspaper-column templates (sample 31) from single-column
-    or simple label-column templates already handled by _apply_label_column_fix.
-    """
+    """Return True when body has mid-document sectPr with 2+ columns AND column-break paras."""
     has_midoc_multicol = False
     for p_elem in body.findall(f".//{{{_W}}}p"):
         pPr = p_elem.find(f"{{{_W}}}pPr")
@@ -1330,31 +1305,18 @@ def _detect_newspaper_multicolumn(body) -> bool:
         cols_elem = sectPr.find(f"{{{_W}}}cols")
         if cols_elem is None:
             continue
-        col_elems = cols_elem.findall(f"{{{_W}}}col")
-        if len(col_elems) >= 2:
+        if len(cols_elem.findall(f"{{{_W}}}col")) >= 2:
             has_midoc_multicol = True
             break
 
     if not has_midoc_multicol:
         return False
 
-    for p_elem in body.findall(f".//{{{_W}}}p"):
-        if _has_column_break(p_elem):
-            return True
-
-    return False
+    return any(_has_column_break(p) for p in body.findall(f".//{{{_W}}}p"))
 
 
 def _parse_word_section_col_counts(body) -> list[tuple[int, int]]:
-    """Return list of (paragraph_index_end, col_count) for each Word section.
-
-    paragraph_index_end is the index (in list(body)) of the last paragraph in
-    that Word section.  col_count is the number of newspaper columns for that
-    section (0 or 1 = single column).
-
-    The LAST Word section is defined by the body-level sectPr (not embedded in
-    a paragraph), so it covers all remaining paragraphs.
-    """
+    """Return list of (end_body_child_idx, col_count) for each Word section."""
     body_children = list(body)
     result: list[tuple[int, int]] = []
     for i, child in enumerate(body_children):
@@ -1370,24 +1332,129 @@ def _parse_word_section_col_counts(body) -> list[tuple[int, int]]:
         cols_elem = sectPr.find(f"{{{_W}}}cols")
         col_elems = cols_elem.findall(f"{{{_W}}}col") if cols_elem is not None else []
         result.append((i, len(col_elems)))
-
-    # Body-level sectPr covers remaining paragraphs
     body_sectPr = body.find(f"{{{_W}}}sectPr")
     if body_sectPr is not None:
         cols_elem = body_sectPr.find(f"{{{_W}}}cols")
         col_elems = cols_elem.findall(f"{{{_W}}}col") if cols_elem is not None else []
         result.append((len(body_children) - 1, len(col_elems)))
+    return result
+
+
+def _parse_word_sections_full(body) -> list[dict]:
+    """Return section info including col_widths for each Word section."""
+    body_children = list(body)
+    result: list[dict] = []
+
+    def _widths_from_sectPr(sectPr) -> list[int]:
+        cols_elem = sectPr.find(f"{{{_W}}}cols")
+        col_elems = cols_elem.findall(f"{{{_W}}}col") if cols_elem is not None else []
+        widths = []
+        for c in col_elems:
+            try:
+                widths.append(int(c.get(f"{{{_W}}}w") or 0))
+            except (ValueError, TypeError):
+                widths.append(0)
+        return widths
+
+    for i, child in enumerate(body_children):
+        local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+        if local != "p":
+            continue
+        pPr = child.find(f"{{{_W}}}pPr")
+        if pPr is None:
+            continue
+        sectPr = pPr.find(f"{{{_W}}}sectPr")
+        if sectPr is None:
+            continue
+        widths = _widths_from_sectPr(sectPr)
+        result.append({"end_idx": i, "col_count": len(widths), "col_widths": widths})
+
+    body_sectPr = body.find(f"{{{_W}}}sectPr")
+    if body_sectPr is not None:
+        widths = _widths_from_sectPr(body_sectPr)
+        result.append({"end_idx": len(body_children) - 1, "col_count": len(widths), "col_widths": widths})
 
     return result
 
 
+def _is_wide_left_narrow_right_3col(col_widths: list[int]) -> bool:
+    """Return True when the first two columns are together >1.5× wider than the third."""
+    if len(col_widths) != 3:
+        return False
+    left = col_widths[0] + col_widths[1]
+    right = col_widths[2]
+    return right > 0 and left / right > 1.5
+
+
+def _split_col_at_empty_clusters(
+    paras: list[ParaModel],
+    threshold: int = 3,
+) -> list[list[ParaModel]]:
+    """Split paras into bands at runs of >= threshold consecutive empty paragraphs.
+
+    Empty paragraphs that form the cluster separator are discarded (they are
+    just whitespace separating layout bands and add no semantic content).
+    Trailing empties are also discarded.
+    """
+    bands: list[list[ParaModel]] = [[]]
+    pending_empties: list[ParaModel] = []
+
+    for pm in paras:
+        if not pm.text.strip():
+            pending_empties.append(pm)
+        else:
+            if len(pending_empties) >= threshold and bands[-1]:
+                bands.append([pm])
+            else:
+                bands[-1].extend(pending_empties)
+                bands[-1].append(pm)
+            pending_empties = []
+    # trailing empties discarded
+    return bands
+
+
+def _band_merge_cols(
+    col0: list[ParaModel],
+    col1: list[ParaModel],
+) -> list[ParaModel]:
+    """Interleave col0 and col1 using band detection.
+
+    col0 bands are defined by top-level section headings (Heading 1 or
+    heuristic-heading paragraphs).  col1 bands are defined by clusters of
+    3+ consecutive empty paragraphs, which visually separate layout rows.
+
+    Each col0 band i is paired with col1 band i; extra bands from either
+    side are appended at the end.
+    """
+    # Split col0 at top-level (Heading 1) section headings
+    col0_bands: list[list[ParaModel]] = [[]]
+    for pm in col0:
+        level = _heading_level(pm)
+        is_top = (
+            pm.semantic == "section_heading"
+            and (level is None or level <= 1)
+            and bool(col0_bands[-1])
+        )
+        if is_top:
+            col0_bands.append([pm])
+        else:
+            col0_bands[-1].append(pm)
+
+    col1_bands = _split_col_at_empty_clusters(col1, threshold=3)
+
+    result: list[ParaModel] = []
+    n = max(len(col0_bands), len(col1_bands))
+    for i in range(n):
+        result.extend(col0_bands[i] if i < len(col0_bands) else [])
+        result.extend(col1_bands[i] if i < len(col1_bands) else [])
+    return result
+
+
 def _simple_section_count(paras: list[ParaModel]) -> int:
-    """Count how many paragraphs in paras are recognised section headings."""
     return sum(1 for p in paras if p.semantic == "section_heading")
 
 
 def _count_experience_roles(paras: list[ParaModel]) -> int:
-    """Count how many role_header paragraphs are in paras (proxy for role count)."""
     return sum(1 for p in paras if p.semantic == "role_header")
 
 
@@ -1395,15 +1462,19 @@ def _apply_multicolumn_newspaper_fix(
     all_paras: list[ParaModel],
     body,
 ) -> tuple[list[ParaModel], bool, dict]:
-    """Detect and fix newspaper-column layout contamination.
+    """Band-aware newspaper-column layout fix.
 
-    For DOCX files that use Word's newspaper-column feature, content from
-    different visual columns is interleaved in the flat paragraph stream via
-    <w:br type="column"> breaks and tab-separated headings.
+    Separates the document into a LEFT stream (left visual column) and a RIGHT
+    stream (right visual column / skills sidebar) then combines them so section
+    grouping sees uncontaminated left-column content before right-column content.
 
-    When detected, reorders the body-region paragraphs to column-first order:
-    all column-0 paragraphs, then column-1, then column-2.  The header region
-    (initial single-column section) is kept in place.
+    For 3-column sections where col0+col1 >> col2 (wide-left narrow-right),
+    col0 and col1 are interleaved using band detection (col0 bands at section
+    headings, col1 bands at large empty clusters) so CERTIFICATION entries in
+    col1 appear inside the CERTIFICATION section rather than being orphaned.
+
+    The first Word section (name/contact header) is always kept in its original
+    document order so phone/email/address never contaminate experience roles.
 
     Returns (new_all_paras, was_fixed, metadata_dict).
     body_items is NOT modified.
@@ -1413,216 +1484,163 @@ def _apply_multicolumn_newspaper_fix(
 
     body_children = list(body)
 
-    # Conservative guard: only proceed when at least one tab-split heading paragraph
-    # produces a (left, right) pair where one side is a skills-type section name.
-    # This avoids false positives on templates where Experience|Education is cleanly
-    # split without cross-column contamination.
+    # Skills-column guard: only trigger when a tab-split heading has a skills-type
+    # section on one side — prevents false positives on Experience|Education splits.
     has_skills_col_split = False
     for child in body_children:
         local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
         if local != "p":
             continue
-        result = _tab_split_texts(child)
-        if result is None:
+        res = _tab_split_texts(child)
+        if res is None:
             continue
-        left_t, right_t = result
+        lt, rt = res
         if (
-            left_t.lower() in _KNOWN_SECTION_NAMES_LOWER
-            and right_t.lower() in _KNOWN_SECTION_NAMES_LOWER
-            and (
-                left_t.lower() in _SKILLS_COLUMN_NAMES
-                or right_t.lower() in _SKILLS_COLUMN_NAMES
-            )
+            lt.lower() in _KNOWN_SECTION_NAMES_LOWER
+            and rt.lower() in _KNOWN_SECTION_NAMES_LOWER
+            and (lt.lower() in _SKILLS_COLUMN_NAMES or rt.lower() in _SKILLS_COLUMN_NAMES)
         ):
             has_skills_col_split = True
             break
-
     if not has_skills_col_split:
         return all_paras, False, {}
-    n_body = len(body_children)
 
-    # Build a map from body-child index → paragraph index in all_paras.
-    # Only 'p' elements are in all_paras; 'tbl' elements are TableBlocks not included.
-    # We need to find which body child indices are 'p' elements.
-    p_child_indices: list[int] = []
-    for i, child in enumerate(body_children):
-        local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
-        if local == "p":
-            p_child_indices.append(i)
-
+    # Only handles documents with no tables (p_child_indices count must match all_paras)
+    p_child_indices: list[int] = [
+        i for i, c in enumerate(body_children)
+        if (c.tag.split("}")[-1] if "}" in c.tag else c.tag) == "p"
+    ]
     if len(p_child_indices) != len(all_paras):
-        # Mismatch — tables are present; this fix only handles newspaper-col (no tables)
         return all_paras, False, {}
 
-    # Parse Word section boundaries (paragraph-level sectPr breaks)
-    section_boundaries = _parse_word_section_col_counts(body)
-    # section_boundaries: list of (end_body_child_idx, col_count)
-
-    # Determine which Word section each body-child-index belongs to
-    def _word_section_for(body_idx: int) -> tuple[int, int]:
-        """Return (section_number, col_count) for body_idx."""
-        for sec_num, (end_idx, col_count) in enumerate(section_boundaries):
-            if body_idx <= end_idx:
-                return sec_num, col_count
-        return len(section_boundaries), 0
-
-    # Find the first multi-column section index to identify the "header" region
-    header_end_para_idx = 0  # all_paras index: everything up to here is in header region
-    first_multicol_sec = -1
-    for sec_num, (end_idx, col_count) in enumerate(section_boundaries):
-        if col_count >= 2:
-            first_multicol_sec = sec_num
-            break
-
-    if first_multicol_sec < 0:
+    section_infos = _parse_word_sections_full(body)
+    if not section_infos:
         return all_paras, False, {}
 
-    # The header region is everything in Word sections BEFORE the first multi-col section
-    # (which handles the name/title block in sample 31).
-    # We include the first multi-col section in the reorder-eligible zone because it
-    # contains the contact sidebar.
-    header_end_body_idx = -1
-    if first_multicol_sec > 0:
-        header_end_body_idx = section_boundaries[first_multicol_sec - 1][0]
-        header_end_para_idx = sum(
-            1 for ci in p_child_indices if ci <= header_end_body_idx
-        )
+    def _sec_for(bci: int) -> dict:
+        for si in section_infos:
+            if bci <= si["end_idx"]:
+                return si
+        return section_infos[-1]
 
-    # Assign column index to each paragraph in all_paras.
-    # col_assignments[para_idx] = visual column index (0, 1, 2, ...)
-    col_assignments: list[int] = [0] * len(all_paras)
-    current_col = 0
-    prev_sec_num = -1
+    # The first Word section (section_infos[0]) is the document header (name/contact).
+    # Keep all its paragraphs in their original document order.
+    first_sec_end = section_infos[0]["end_idx"]
+    header_end_para_idx = sum(1 for ci in p_child_indices if ci <= first_sec_end)
 
-    for para_idx, body_child_idx in enumerate(p_child_indices):
-        sec_num, col_count = _word_section_for(body_child_idx)
+    # Per-section, per-column paragraph lists
+    # key: (sec_idx, col_idx) → list[ParaModel]
+    per_sec_col: dict[tuple[int, int], list[ParaModel]] = {}
+    current_col_by_sec: dict[int, int] = {}
 
-        # Reset column counter at each Word section boundary
-        if sec_num != prev_sec_num:
-            current_col = 0
-            prev_sec_num = sec_num
+    for para_idx, bci in enumerate(p_child_indices):
+        if bci <= first_sec_end:
+            continue  # leave header section untouched
 
-        if col_count < 2:
-            # Single-column section: all paragraphs in col 0
-            col_assignments[para_idx] = 0
-            continue
+        si = _sec_for(bci)
+        sec_idx = section_infos.index(si)
+        col_count = si["col_count"]
 
-        # Check if this body paragraph starts with a column break
-        p_elem = body_children[body_child_idx]
-        if _has_column_break(p_elem):
-            before = _text_before_column_break(p_elem).strip()
-            if not before:
-                # Entire paragraph content is after the break → next column
-                current_col += 1
+        if sec_idx not in current_col_by_sec:
+            current_col_by_sec[sec_idx] = 0
 
-        col_assignments[para_idx] = current_col
-
-    # Handle tab-split heading paragraphs in single-column sections.
-    # When a paragraph uses <w:tab/> to place two known section headings side-by-side
-    # (e.g. "EDUCATION[TAB]SKILLS"), create two virtual ParaModel entries — one for
-    # each heading text — and assign them to col0 and col1 respectively.
-    split_map: dict[int, tuple[ParaModel, ParaModel]] = {}
-
-    for para_idx, body_child_idx in enumerate(p_child_indices):
-        sec_num, col_count = _word_section_for(body_child_idx)
-        p_elem = body_children[body_child_idx]
-        result = _tab_split_texts(p_elem)
-        if result is None:
-            continue
-        left_text, right_text = result
-        # Only split when BOTH sides are known section heading names
-        if (
-            left_text.lower() not in _KNOWN_SECTION_NAMES_LOWER
-            or right_text.lower() not in _KNOWN_SECTION_NAMES_LOWER
-        ):
-            continue
-        pm = all_paras[para_idx]
-        # Create two child ParaModel objects sharing the same style proto
-        left_pm = pm.with_text(left_text)
-        left_pm.semantic = "section_heading"
-        right_pm = pm.with_text(right_text)
-        right_pm.semantic = "section_heading"
-        split_map[para_idx] = (left_pm, right_pm)
-
-    # Classify each paragraph into col-0 or col-1+ stream.
-    # Paragraphs split by tab: left → col0, right → col1.
-    # Paragraphs with a col-break at start: adjust to next column.
-    col_streams: dict[int, list[ParaModel]] = {}  # col_idx → [ParaModel, ...]
-
-    for para_idx, body_child_idx in enumerate(p_child_indices):
-        col = col_assignments[para_idx]
+        p_elem = body_children[bci]
         pm = all_paras[para_idx]
 
-        if para_idx in split_map:
-            left_pm, right_pm = split_map[para_idx]
-            col_streams.setdefault(0, []).append(left_pm)
-            col_streams.setdefault(1, []).append(right_pm)
-            continue
-
-        # For column-break paragraphs: use text-after-break content in the new column;
-        # create a stripped version of the ParaModel so the leading \n is removed.
-        p_elem = body_children[body_child_idx]
-        if _has_column_break(p_elem):
-            after_text = _text_after_column_break(p_elem).strip()
-            if after_text and after_text != pm.text.strip():
-                stripped_pm = pm.with_text(after_text)
-                stripped_pm.semantic = _infer_semantic(stripped_pm)
-                col_streams.setdefault(col, []).append(stripped_pm)
+        # Tab-split: dual-heading paragraph → left side to col0, right to col1
+        split = _tab_split_texts(p_elem)
+        if split is not None:
+            lt, rt = split
+            if lt.lower() in _KNOWN_SECTION_NAMES_LOWER and rt.lower() in _KNOWN_SECTION_NAMES_LOWER:
+                lpm = pm.with_text(lt); lpm.semantic = "section_heading"
+                rpm = pm.with_text(rt); rpm.semantic = "section_heading"
+                per_sec_col.setdefault((sec_idx, 0), []).append(lpm)
+                per_sec_col.setdefault((sec_idx, 1), []).append(rpm)
                 continue
 
-        col_streams.setdefault(col, []).append(pm)
+        # Column break: advance column counter, strip leading \n from text
+        if col_count >= 2 and _has_column_break(p_elem):
+            before = _text_before_column_break(p_elem).strip()
+            if not before:
+                current_col_by_sec[sec_idx] += 1
 
-    if not col_streams:
+        col = current_col_by_sec[sec_idx] if col_count >= 2 else 0
+
+        if col_count >= 2 and _has_column_break(p_elem):
+            after = _text_after_column_break(p_elem).strip()
+            if after and after != pm.text.strip():
+                pm = pm.with_text(after)
+                pm.semantic = _infer_semantic(pm)
+
+        per_sec_col.setdefault((sec_idx, col), []).append(pm)
+
+    # Build left_stream and right_stream across all body Word sections
+    left_stream: list[ParaModel] = []
+    right_stream: list[ParaModel] = []
+
+    for sec_idx, si in enumerate(section_infos):
+        if si["end_idx"] <= first_sec_end:
+            continue  # header section, skip
+
+        col_count = si["col_count"]
+        widths = si["col_widths"]
+
+        def _col(c: int) -> list[ParaModel]:
+            return per_sec_col.get((sec_idx, c), [])
+
+        if col_count < 2:
+            # Single-column section: non-split goes left; tab-split right side goes right
+            left_stream.extend(_col(0))
+            right_stream.extend(_col(1))  # only populated by tab splits
+        elif col_count == 2:
+            left_stream.extend(_col(0))
+            right_stream.extend(_col(1))
+        elif col_count == 3 and _is_wide_left_narrow_right_3col(widths):
+            # col0+col1 form the left visual column (band-aware merge);
+            # col2 is the right visual column (skills sidebar).
+            merged = _band_merge_cols(_col(0), _col(1))
+            left_stream.extend(merged)
+            right_stream.extend(_col(2))
+        else:
+            # Standard multi-col: col0 left, rest right
+            left_stream.extend(_col(0))
+            for c in range(1, col_count):
+                right_stream.extend(_col(c))
+
+    # Build candidate: header (original order) + left + right
+    header_list = all_paras[:header_end_para_idx]
+    candidate = header_list + left_stream + right_stream
+
+    if not left_stream and not right_stream:
         return all_paras, False, {}
 
-    max_col = max(col_streams.keys())
-    if max_col == 0:
-        # All paragraphs in col 0 — no reordering needed
-        return all_paras, False, {}
+    # Quality validation: candidate must not lose section headings or experience roles
+    orig_sec = _simple_section_count(all_paras)
+    cand_sec = _simple_section_count(candidate)
+    orig_roles = _count_experience_roles(all_paras)
+    cand_roles = _count_experience_roles(candidate)
 
-    # Build candidate all_paras: header region (para indices < header_end_para_idx)
-    # + col0 + col1 + col2 + ...
-    header_paras_list = all_paras[:header_end_para_idx]
-    body_stream: list[ParaModel] = []
-    for col_idx in range(max_col + 1):
-        body_stream.extend(col_streams.get(col_idx, []))
-
-    candidate = header_paras_list + body_stream
-
-    # Quality validation: prefer candidate only if it improves section count
-    # or preserves experience structure.
-    orig_sec_count = _simple_section_count(all_paras)
-    cand_sec_count = _simple_section_count(candidate)
-    orig_role_count = _count_experience_roles(all_paras)
-    cand_role_count = _count_experience_roles(candidate)
-
-    # Abort if candidate loses section headings or experience roles
-    if cand_sec_count < orig_sec_count or cand_role_count < orig_role_count:
-        metadata = {
+    if cand_sec < orig_sec or cand_roles < orig_roles:
+        return all_paras, False, {
             "aborted": True,
             "reason": (
-                f"candidate lost sections ({orig_sec_count}->{cand_sec_count}) "
-                f"or roles ({orig_role_count}->{cand_role_count})"
+                f"candidate lost sections ({orig_sec}->{cand_sec}) "
+                f"or roles ({orig_roles}->{cand_roles})"
             ),
         }
-        return all_paras, False, metadata
 
-    # Build column/heading metadata for diagnostics
-    headings_per_col: dict[int, list[str]] = {}
-    paras_per_col: dict[int, int] = {}
-    for col_idx, stream in col_streams.items():
-        headings_per_col[col_idx] = [
-            p.text.strip() for p in stream if p.semantic == "section_heading"
-        ]
-        paras_per_col[col_idx] = len(stream)
+    headings_per_col: dict[int, list[str]] = {
+        0: [p.text.strip() for p in left_stream if p.semantic == "section_heading"],
+        1: [p.text.strip() for p in right_stream if p.semantic == "section_heading"],
+    }
+    paras_per_col = {0: len(left_stream), 1: len(right_stream)}
 
-    metadata = {
+    return candidate, True, {
         "aborted": False,
-        "col_count": max_col + 1,
+        "col_count": 2,
         "headings_per_col": headings_per_col,
         "paras_per_col": paras_per_col,
     }
-    return candidate, True, metadata
 
 
 def _finalise(section: ResumeSection) -> None:
