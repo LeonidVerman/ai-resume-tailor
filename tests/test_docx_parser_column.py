@@ -406,7 +406,13 @@ def test_contact_phone():
 
 def test_contact_email():
     from scripts.parser_diagnostics import _is_contact_para
-    assert _is_contact_para("hello@techguruplus.com 123 Anywhere St.")
+    assert _is_contact_para("hello@techguruplus.com")
+
+
+def test_contact_email_mixed_not_flagged():
+    """Email embedded in mixed address line is NOT standalone → should not flag."""
+    from scripts.parser_diagnostics import _is_contact_para
+    assert not _is_contact_para("hello@techguruplus.com 123 Anywhere St.")
 
 
 def test_contact_labelled():
@@ -555,3 +561,269 @@ def test_normal_tech_bullet_in_experience_not_flagged():
     # Experience is in the skip set, so never flagged
     issues = detect_table_skills_inside_non_skills(sections, has_multicolumn=True)
     assert issues == []
+
+
+# ---------------------------------------------------------------------------
+# TABLE_EDUCATION_INSIDE_EXPERIENCE — true positive (real education in XP)
+# ---------------------------------------------------------------------------
+
+def test_education_true_positive_degree_abbreviation():
+    from scripts.parser_diagnostics import detect_table_education_inside_experience
+    sections = [
+        {
+            "semantic_type": "experience",
+            "raw_title": "WORK EXPERIENCE",
+            "section_id": "sec_1",
+            "paragraphs": [
+                {"text": "Harvard University, Bachelor of Science, 2015",
+                 "parser_semantic": "paragraph", "para_id": "p1"},
+            ],
+            "roles": [],
+        }
+    ]
+    issues = detect_table_education_inside_experience(sections)
+    assert len(issues) == 1
+    assert issues[0].code == "TABLE_EDUCATION_INSIDE_EXPERIENCE"
+
+
+def test_education_true_positive_gpa():
+    from scripts.parser_diagnostics import detect_table_education_inside_experience
+    sections = [
+        {
+            "semantic_type": "experience",
+            "raw_title": "WORK EXPERIENCE",
+            "section_id": "sec_1",
+            "paragraphs": [
+                {"text": "B.S. in Computer Science, GPA 3.8",
+                 "parser_semantic": "paragraph", "para_id": "p1"},
+            ],
+            "roles": [],
+        }
+    ]
+    issues = detect_table_education_inside_experience(sections)
+    assert len(issues) == 1
+
+
+# ---------------------------------------------------------------------------
+# TABLE_EDUCATION_INSIDE_EXPERIENCE — false positives that MUST be silent
+# ---------------------------------------------------------------------------
+
+def _edu_sections_with(text: str, semantic: str = "paragraph") -> list[dict]:
+    return [
+        {
+            "semantic_type": "experience",
+            "raw_title": "WORK EXPERIENCE",
+            "section_id": "sec_1",
+            "paragraphs": [
+                {"text": text, "parser_semantic": semantic, "para_id": "p1"},
+            ],
+            "roles": [],
+        }
+    ]
+
+
+def test_education_fp_action_verb_bullet():
+    from scripts.parser_diagnostics import detect_table_education_inside_experience
+    assert detect_table_education_inside_experience(
+        _edu_sections_with("Built React/TypeScript interfaces for internal tooling")
+    ) == []
+
+
+def test_education_fp_supported_bullet():
+    from scripts.parser_diagnostics import detect_table_education_inside_experience
+    assert detect_table_education_inside_experience(
+        _edu_sections_with("Supported the launch of the mobile payments feature")
+    ) == []
+
+
+def test_education_fp_architected_bullet():
+    from scripts.parser_diagnostics import detect_table_education_inside_experience
+    assert detect_table_education_inside_experience(
+        _edu_sections_with("Architected backend services for the trading platform")
+    ) == []
+
+
+def test_education_fp_led_bullet():
+    from scripts.parser_diagnostics import detect_table_education_inside_experience
+    assert detect_table_education_inside_experience(
+        _edu_sections_with("Led a backend engineering team of 6 across two time zones")
+    ) == []
+
+
+def test_education_fp_role_meta_date():
+    """Role meta lines are excluded by parser_semantic filter."""
+    from scripts.parser_diagnostics import detect_table_education_inside_experience
+    assert detect_table_education_inside_experience(
+        _edu_sections_with("May 2023 - August 2023", semantic="role_meta")
+    ) == []
+
+
+def test_education_fp_role_header():
+    from scripts.parser_diagnostics import detect_table_education_inside_experience
+    assert detect_table_education_inside_experience(
+        _edu_sections_with("Senior Software Engineer", semantic="role_header")
+    ) == []
+
+
+def test_education_fp_role_header_pipe():
+    from scripts.parser_diagnostics import detect_table_education_inside_experience
+    assert detect_table_education_inside_experience(
+        _edu_sections_with("Acme Corp | Backend Developer", semantic="role_header")
+    ) == []
+
+
+def test_education_fp_company_address():
+    """Company+address line (role meta) excluded by semantic filter."""
+    from scripts.parser_diagnostics import detect_table_education_inside_experience
+    assert detect_table_education_inside_experience(
+        _edu_sections_with("TIMMERMAN INDUSTRIES - 123 Anywhere St.", semantic="role_meta")
+    ) == []
+
+
+def test_education_fp_company_pipe():
+    """Company | title line excluded by | guard."""
+    from scripts.parser_diagnostics import detect_table_education_inside_experience
+    # Even if semantic is wrongly paragraph, the | guard catches it
+    assert detect_table_education_inside_experience(
+        _edu_sections_with("Office manager | The Phone Company")
+    ) == []
+
+
+def test_education_fp_role_assigned_to_role():
+    """Paragraphs whose para_id appears in role lists are excluded."""
+    from scripts.parser_diagnostics import detect_table_education_inside_experience
+    sections = [
+        {
+            "semantic_type": "experience",
+            "raw_title": "WORK EXPERIENCE",
+            "section_id": "sec_1",
+            "paragraphs": [
+                # Would trigger _is_education_line, but it's role-assigned
+                {"text": "Bachelor of Science in Engineering, GPA 4.0",
+                 "parser_semantic": "paragraph", "para_id": "p1"},
+            ],
+            "roles": [
+                {"role_id": "r1", "bullet_para_ids": ["p1"],
+                 "header_para_ids": [], "meta_para_ids": []},
+            ],
+        }
+    ]
+    assert detect_table_education_inside_experience(sections) == []
+
+
+# ---------------------------------------------------------------------------
+# TABLE_CONTACT_INSIDE_EXPERIENCE — true positives
+# ---------------------------------------------------------------------------
+
+def _contact_xp_sections_with(text: str, semantic: str = "paragraph") -> list[dict]:
+    return [
+        {
+            "semantic_type": "experience",
+            "raw_title": "WORK EXPERIENCE",
+            "section_id": "sec_1",
+            "paragraphs": [
+                {"text": text, "parser_semantic": semantic, "para_id": "p1"},
+            ],
+            "roles": [],
+        }
+    ]
+
+
+def test_contact_xp_true_positive_standalone_email():
+    from scripts.parser_diagnostics import detect_table_contact_inside_experience
+    issues = detect_table_contact_inside_experience(
+        _contact_xp_sections_with("hello@example.com")
+    )
+    assert len(issues) == 1
+    assert issues[0].code == "TABLE_CONTACT_INSIDE_EXPERIENCE"
+
+
+def test_contact_xp_true_positive_labelled_phone():
+    from scripts.parser_diagnostics import detect_table_contact_inside_experience
+    issues = detect_table_contact_inside_experience(
+        _contact_xp_sections_with("Phone: +1 123-456-7890")
+    )
+    assert len(issues) == 1
+
+
+# ---------------------------------------------------------------------------
+# TABLE_CONTACT_INSIDE_EXPERIENCE — false positives that MUST be silent
+# ---------------------------------------------------------------------------
+
+def test_contact_xp_fp_role_meta_date():
+    from scripts.parser_diagnostics import detect_table_contact_inside_experience
+    assert detect_table_contact_inside_experience(
+        _contact_xp_sections_with("May 2023 - August 2023", semantic="role_meta")
+    ) == []
+
+
+def test_contact_xp_fp_company_address_role_meta():
+    from scripts.parser_diagnostics import detect_table_contact_inside_experience
+    assert detect_table_contact_inside_experience(
+        _contact_xp_sections_with("TIMMERMAN INDUSTRIES - 123 Anywhere St.", semantic="role_meta")
+    ) == []
+
+
+def test_contact_xp_fp_mixed_email_sentence():
+    """Email embedded inside a sentence is NOT a standalone contact line."""
+    from scripts.parser_diagnostics import detect_table_contact_inside_experience
+    assert detect_table_contact_inside_experience(
+        _contact_xp_sections_with("Worked on the project at hello@example.com repository")
+    ) == []
+
+
+def test_contact_xp_fp_role_header():
+    from scripts.parser_diagnostics import detect_table_contact_inside_experience
+    assert detect_table_contact_inside_experience(
+        _contact_xp_sections_with("Senior Software Engineer", semantic="role_header")
+    ) == []
+
+
+# ---------------------------------------------------------------------------
+# _is_education_line unit tests
+# ---------------------------------------------------------------------------
+
+def test_education_line_degree_abbreviation():
+    from scripts.parser_diagnostics import _is_education_line
+    assert _is_education_line("B.S. in Computer Science, GPA 3.8")
+
+
+def test_education_line_bachelor_phrase():
+    from scripts.parser_diagnostics import _is_education_line
+    assert _is_education_line("Harvard University, Bachelor of Science, 2015")
+
+
+def test_education_line_masters():
+    from scripts.parser_diagnostics import _is_education_line
+    assert _is_education_line("M.S. Information Systems")
+
+
+def test_education_line_phd():
+    from scripts.parser_diagnostics import _is_education_line
+    assert _is_education_line("Ph.D. in Computer Science, Stanford University")
+
+
+def test_education_line_fp_action_verb():
+    from scripts.parser_diagnostics import _is_education_line
+    assert not _is_education_line("Built React/TypeScript interfaces for clients")
+
+
+def test_education_line_fp_pipe_role_header():
+    from scripts.parser_diagnostics import _is_education_line
+    assert not _is_education_line("Senior Engineer | Acme Corp")
+
+
+def test_education_line_fp_date():
+    from scripts.parser_diagnostics import _is_education_line
+    assert not _is_education_line("January 2020 – Present")
+
+
+def test_education_line_fp_company_name_with_school():
+    """Company name containing 'school' alone should NOT trigger."""
+    from scripts.parser_diagnostics import _is_education_line
+    assert not _is_education_line("Old School Media Company")
+
+
+def test_education_line_fp_institute_in_company():
+    from scripts.parser_diagnostics import _is_education_line
+    assert not _is_education_line("Chartered Institute of Marketing")
