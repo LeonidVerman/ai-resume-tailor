@@ -178,9 +178,14 @@ def _match_sections(
 # Role updating
 # ---------------------------------------------------------------------------
 
-def _update_role(orig: RoleEntry, llm: LlmRole) -> RoleEntry:
-    """Produce an updated RoleEntry from original + LLM data."""
+def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> RoleEntry:
+    """Produce an updated RoleEntry from original + LLM data.
 
+    When *layout_bound* is True, no new unbound ParaModels are created:
+    - Extra LLM meta lines are dropped (logged as UPDATER_EXTRA_LLM_CONTENT_DROPPED).
+    - Extra LLM bullets beyond the original count are dropped.
+    - role_id_stable is preserved from the original entry.
+    """
     # Header: update text, keep style proto; strip any column break (the role
     # header may inherit a column break from the section heading para in
     # consolidated templates — the section heading handles column placement).
@@ -193,33 +198,42 @@ def _update_role(orig: RoleEntry, llm: LlmRole) -> RoleEntry:
     header_extra_texts = {pm.text.strip().lower() for pm in orig.header_extra}
     llm_meta = [m for m in llm.meta_lines if m.strip().lower() not in header_extra_texts]
 
-    # Meta lines: reuse original protos, clone extra if needed
+    # Meta lines: reuse original protos; in layout-bound mode drop extras.
     new_meta: list[ParaModel] = []
     for i, meta_text in enumerate(llm_meta):
         if i < len(orig.meta_lines):
             new_meta.append(orig.meta_lines[i].with_text(meta_text))
-        else:
+        elif not layout_bound:
             src = orig.meta_lines[-1] if orig.meta_lines else orig.header
             new_meta.append(src.clone_as(meta_text, "role_meta"))
+        else:
+            _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra meta line %r", meta_text[:60])
 
-    # Bullets: reuse original protos, clone archetype for extras
+    # Bullets: reuse original protos; in layout-bound mode drop extras.
     arch = orig.bullets[0] if orig.bullets else orig.header
     new_bullets: list[ParaModel] = []
     for i, bullet_text in enumerate(llm.bullets):
         if i < len(orig.bullets):
             new_bullets.append(orig.bullets[i].with_text(bullet_text))
-        else:
+        elif not layout_bound:
             new_bullets.append(arch.clone_as(bullet_text, "bullet"))
+        else:
+            _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra bullet %r", bullet_text[:60])
 
     return RoleEntry(
         header=new_header,
         meta_lines=new_meta,
         bullets=new_bullets,
         role_id=orig.role_id,
+        role_id_stable=orig.role_id_stable if layout_bound else "",
     )
 
 
-def _update_experience_section(orig: ResumeSection, llm: LlmSection) -> ResumeSection:
+def _update_experience_section(
+    orig: ResumeSection,
+    llm: LlmSection,
+    layout_bound: bool = False,
+) -> ResumeSection:
     # When the LLM wrote roles in dash format (no "|"), parse_llm_output returns
     # body_lines instead of roles.  Re-parse and update only the bullets, keeping
     # the template's role headers and meta verbatim (dates, company, title).
@@ -228,7 +242,9 @@ def _update_experience_section(orig: ResumeSection, llm: LlmSection) -> ResumeSe
         if reparsed:
             updated_roles: list[RoleEntry] = []
             for o_role, r_role in zip(orig.roles, reparsed):
-                updated_roles.append(_update_role_bullets_only(o_role, r_role.bullets))
+                updated_roles.append(
+                    _update_role_bullets_only(o_role, r_role.bullets, layout_bound=layout_bound)
+                )
             # Template roles with no LLM counterpart are kept verbatim
             for o_role in orig.roles[len(reparsed):]:
                 updated_roles.append(o_role)
@@ -238,16 +254,26 @@ def _update_experience_section(orig: ResumeSection, llm: LlmSection) -> ResumeSe
                 semantic_type=orig.semantic_type,
                 body_paras=orig.body_paras,
                 roles=updated_roles,
+                section_id=orig.section_id if layout_bound else "",
             )
 
     # Normal path: pipe-separated LLM roles matched by position.
-    # Surplus originals are dropped, extra LLM roles clone from last orig.
-    updated_roles = [_update_role(o, l) for o, l in zip(orig.roles, llm.roles)]
+    # In layout-bound mode, surplus LLM roles are dropped rather than cloned
+    # from the last original (which would create unbound role entries).
+    updated_roles = [
+        _update_role(o, l, layout_bound=layout_bound)
+        for o, l in zip(orig.roles, llm.roles)
+    ]
 
-    if len(llm.roles) > len(orig.roles) and orig.roles:
+    if len(llm.roles) > len(orig.roles) and orig.roles and not layout_bound:
         last_orig = orig.roles[-1]
         for extra_llm in llm.roles[len(orig.roles):]:
             updated_roles.append(_update_role(last_orig, extra_llm))
+    elif len(llm.roles) > len(orig.roles) and layout_bound:
+        _log.debug(
+            "UPDATER_EXTRA_LLM_CONTENT_DROPPED: %d extra LLM roles beyond template",
+            len(llm.roles) - len(orig.roles),
+        )
 
     return ResumeSection(
         title=llm.heading,
@@ -255,6 +281,7 @@ def _update_experience_section(orig: ResumeSection, llm: LlmSection) -> ResumeSe
         semantic_type=orig.semantic_type,
         body_paras=orig.body_paras,  # kept for flat-list rendering order
         roles=updated_roles,
+        section_id=orig.section_id if layout_bound else "",
     )
 
 
@@ -336,8 +363,20 @@ def _sanitize_skills_lines(lines: list[str]) -> list[str]:
     return clean
 
 
-def _update_body_section(orig: ResumeSection, llm: LlmSection) -> ResumeSection:
-    """Update a non-experience section with LLM body lines."""
+def _update_body_section(
+    orig: ResumeSection,
+    llm: LlmSection,
+    layout_bound: bool = False,
+) -> ResumeSection:
+    """Update a non-experience section with LLM body lines.
+
+    When *layout_bound* is True:
+    - Extra LLM lines beyond the original content-para count are packed into
+      the last available slot (joined by newline) rather than creating new
+      unbound paragraphs.  This keeps all content bound to existing para_ids.
+    - section_id is carried over from the original so layout_blocks references
+      remain resolvable.
+    """
     llm_lines = [l for l in llm.body_lines if l.strip()]
 
     # Separate body paragraphs into content targets and decorative preservations.
@@ -350,13 +389,33 @@ def _update_body_section(orig: ResumeSection, llm: LlmSection) -> ResumeSection:
     # Fall back to heading only when the section has no content paragraphs at all.
     arch = content_paras[0] if content_paras else orig.heading
 
+    # In layout-bound mode: pack surplus LLM lines into the last existing slot
+    # rather than creating unbound clones.
+    if layout_bound and content_paras and len(llm_lines) > len(content_paras):
+        n = len(content_paras)
+        packed_last = "\n".join(llm_lines[n - 1:])
+        packed_llm = list(llm_lines[: n - 1]) + [packed_last]
+        extra_count = len(llm_lines) - n
+        if extra_count > 0:
+            _log.debug(
+                "UPDATER_LAYOUT_BOUND_REPLACEMENT: section %r — "
+                "packed %d extra LLM lines into last slot",
+                orig.title, extra_count,
+            )
+    else:
+        packed_llm = llm_lines
+
     # Build updated versions of each content para (paired by position with LLM lines).
     updated: list[ParaModel] = []
-    for i, line in enumerate(llm_lines):
+    for i, line in enumerate(packed_llm):
         if i < len(content_paras):
             updated.append(content_paras[i].with_text(line))
-        else:
+            _log.debug("UPDATER_LAYOUT_BOUND_REPLACEMENT: para_id=%r → %r",
+                       content_paras[i].para_id, line[:60])
+        elif not layout_bound:
             updated.append(arch.clone_as(line, "paragraph"))
+        else:
+            _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: %r (no slot)", line[:60])
 
     # Rebuild body_paras:
     # - empty paras → preserved (spacing)
@@ -374,9 +433,10 @@ def _update_body_section(orig: ResumeSection, llm: LlmSection) -> ResumeSection:
             content_cursor += 1
         # else: LLM produced fewer lines — drop trailing content paras
 
-    # Append extra LLM lines beyond the original content para count.
-    for i in range(len(content_paras), len(llm_lines)):
-        new_body.append(updated[i])
+    # Append extra LLM lines beyond the original content para count (non-layout-bound only).
+    if not layout_bound:
+        for i in range(len(content_paras), len(packed_llm)):
+            new_body.append(updated[i])
 
     return ResumeSection(
         title=llm.heading,
@@ -384,6 +444,7 @@ def _update_body_section(orig: ResumeSection, llm: LlmSection) -> ResumeSection:
         semantic_type=orig.semantic_type,
         body_paras=new_body,
         roles=[],
+        section_id=orig.section_id if layout_bound else "",
     )
 
 
@@ -585,20 +646,29 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
     return roles
 
 
-def _update_role_bullets_only(orig: RoleEntry, llm_bullets: list[str]) -> RoleEntry:
+def _update_role_bullets_only(
+    orig: RoleEntry,
+    llm_bullets: list[str],
+    layout_bound: bool = False,
+) -> RoleEntry:
     """Return a copy of *orig* with bullets replaced by *llm_bullets*.
 
     The role header and meta_lines are preserved verbatim from the template.
     Used when the LLM wrote roles in dash format: the header text is unreliable
     (formatting differs from template) so only the bullet content is used.
+
+    When *layout_bound* is True, extra bullets beyond the original count are
+    dropped instead of being cloned into unbound paragraphs.
     """
     arch = orig.bullets[0] if orig.bullets else orig.header
     new_bullets: list[ParaModel] = []
     for i, text in enumerate(llm_bullets):
         if i < len(orig.bullets):
             new_bullets.append(orig.bullets[i].with_text(text))
-        else:
+        elif not layout_bound:
             new_bullets.append(arch.clone_as(text, "bullet"))
+        else:
+            _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra bullet %r", text[:60])
     return RoleEntry(
         # Strip any column break from the role header — the section heading
         # (or Summary heading) handles right-column placement; a second break
@@ -688,12 +758,14 @@ def _inject_skills_into_header(
     header_paras: list[ParaModel],
     skill_range: tuple[int, int],
     llm_skills: "LlmSection",
+    layout_bound: bool = False,
 ) -> list[ParaModel]:
     """Replace skill lines in *header_paras* with LLM skill content.
 
     *skill_range* is (start, end_exclusive) from _find_header_skills_block.
     Lines beyond the original skill-line count are appended as clones of
-    the first original skill paragraph.
+    the first original skill paragraph (or packed into the last slot when
+    *layout_bound* is True).
     Sanitization (marker / sentence filtering) is applied to the LLM lines.
 
     Left/hanging/firstLine indents are stripped from every resulting skill
@@ -709,13 +781,21 @@ def _inject_skills_into_header(
         [line for line in llm_skills.body_lines if line.strip()]
     )
 
+    # In layout-bound mode: pack surplus lines into last slot.
+    if layout_bound and len(llm_lines) > len(orig_skill_paras):
+        n = len(orig_skill_paras)
+        packed = "\n".join(llm_lines[n - 1:])
+        llm_lines = list(llm_lines[: n - 1]) + [packed]
+
     arch = _clear_left_indent(orig_skill_paras[0])
     new_skill_paras: list[ParaModel] = []
     for i, line in enumerate(llm_lines):
         if i < len(orig_skill_paras):
             new_skill_paras.append(_clear_left_indent(orig_skill_paras[i].with_text(line)))
-        else:
+        elif not layout_bound:
             new_skill_paras.append(arch.clone_as(line, "paragraph"))
+        else:
+            _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: header skill line %r", line[:60])
 
     return list(header_paras[:start]) + new_skill_paras + list(header_paras[end:])
 
@@ -1230,6 +1310,197 @@ def _apply_section_classified(
 
 
 # ---------------------------------------------------------------------------
+# LLM role-continuation repair
+# ---------------------------------------------------------------------------
+
+# Job-title words used to detect whether a section heading looks like a role
+# title rather than a structural section name.
+_JOB_TITLE_WORDS_FOR_REPAIR: frozenset[str] = frozenset({
+    "engineer", "developer", "programmer", "designer", "analyst",
+    "architect", "manager", "director", "lead", "senior", "junior",
+    "intern", "associate", "specialist", "consultant", "coordinator",
+    "administrator", "technician", "scientist", "researcher",
+    "officer", "executive", "head", "principal", "staff",
+    "web", "software", "frontend", "backend", "full", "ui", "ux",
+    "data", "machine", "learning", "devops", "qa", "security",
+})
+
+
+def _is_role_continuation_section(sec: "LlmSection") -> bool:
+    """Return True when *sec* looks like a role continuation rather than a real section.
+
+    A section is treated as a role continuation when:
+    - Its semantic_type is "other" (not a known structural section).
+    - Its heading contains at least one job-title word.
+    - Its heading is short (≤ 80 chars) and has no pipe / company markers.
+    - Its body starts with role-like content: a sub-role (has ``|`` in first
+      parsed role header) or a line containing a year.
+    """
+    if sec.semantic_type != "other":
+        return False
+    title = sec.heading.strip()
+    if not title or len(title) > 80:
+        return False
+    if "|" in title:
+        return False  # likely "Title | Company" — already a proper role header
+    title_words = {w.lower() for w in re.split(r"\W+", title) if w}
+    if not (title_words & _JOB_TITLE_WORDS_FOR_REPAIR):
+        return False
+    # Must have role-like body content.
+    if sec.roles:
+        return True  # text_parser found a sub-role → definitely a continuation
+    for line in (sec.body_lines or [])[:4]:
+        stripped = line.strip()
+        if "|" in stripped or _YEAR_RE.search(stripped):
+            return True
+    return False
+
+
+def _llm_section_to_role(sec: "LlmSection") -> "LlmRole":
+    """Convert a role-continuation LlmSection to an LlmRole.
+
+    The section heading becomes the role title.
+    If text_parser found a sub-role inside the section (company|date format),
+    that sub-role's header becomes a meta line and its bullets are used.
+    Otherwise body_lines are inspected directly.
+    """
+    from tailor.compiler.text_parser import LlmRole as _LlmRole
+    header = sec.heading.strip()
+    meta_lines: list[str] = []
+    bullets: list[str] = []
+
+    if sec.roles:
+        first = sec.roles[0]
+        # The first sub-role header is typically "Company | Date"
+        if first.header.strip():
+            meta_lines.append(first.header)
+        meta_lines.extend(first.meta_lines)
+        bullets.extend(first.bullets)
+        # Additional sub-roles in the section are rare but fold their bullets in.
+        for extra in sec.roles[1:]:
+            bullets.extend(extra.bullets)
+    else:
+        # Parse body_lines directly: lines with | or year → meta; bullet lines → bullets
+        for line in sec.body_lines:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.startswith(("- ", "• ", "* ", "– ")):
+                bullets.append(stripped.lstrip("-•*– ").strip())
+            elif "|" in stripped or _YEAR_RE.search(stripped):
+                meta_lines.append(stripped)
+            else:
+                bullets.append(stripped)
+
+    return _LlmRole(header=header, meta_lines=meta_lines, bullets=bullets)
+
+
+def _repair_role_continuation_sections(
+    llm_sections: list["LlmSection"],
+) -> list["LlmSection"]:
+    """Absorb role-title LLM sections following an Experience section as extra roles.
+
+    When text_parser sees a blank line between roles in the LLM output it may
+    emit each role title as a separate top-level LlmSection (semantic "other")
+    rather than as an LlmRole inside the Experience section.  This function
+    detects those continuation sections and merges them back so that:
+    - The Experience section gains the extra LlmRole entries.
+    - The standalone role-title sections are removed from the top-level list.
+
+    Only sections that immediately follow an Experience section AND satisfy
+    _is_role_continuation_section are absorbed.  Once a non-continuation section
+    is encountered the scan stops (we do not skip structural sections to find
+    more continuations).
+    """
+    result: list[LlmSection] = list(llm_sections)
+    i = 0
+    while i < len(result):
+        sec = result[i]
+        if sec.semantic_type != "experience":
+            i += 1
+            continue
+        # Greedily absorb following role-continuation sections
+        j = i + 1
+        while j < len(result) and _is_role_continuation_section(result[j]):
+            cand = result[j]
+            new_role = _llm_section_to_role(cand)
+            sec.roles.append(new_role)
+            _log.debug(
+                "UPDATER_ROLE_CONTINUATION_REPAIR: absorbed %r as role in Experience",
+                cand.heading,
+            )
+            result.pop(j)  # remove the absorbed section; j stays same
+        i += 1
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Layout binding validation
+# ---------------------------------------------------------------------------
+
+def validate_layout_binding(doc: "ResumeDocument") -> dict:
+    """Count layout-binding health metrics for an updated ResumeDocument.
+
+    Returns a dict with:
+    - ``unbound_semantic_paras``: paragraphs in the semantic model with empty para_id
+    - ``unbound_non_empty_paras``: subset of above that have non-empty text
+    - ``missing_section_ids``: sections with empty section_id
+    - ``missing_role_ids``: roles with empty role_id_stable
+    """
+    from tailor.compiler.models import LayoutParagraphBlock, LayoutTableBlock
+
+    unbound = 0
+    unbound_non_empty = 0
+    missing_sections = 0
+    missing_roles = 0
+
+    def _count_para(pm: "ParaModel") -> None:
+        nonlocal unbound, unbound_non_empty
+        if not pm.para_id:
+            unbound += 1
+            if pm.text.strip():
+                unbound_non_empty += 1
+
+    for pm in doc.header_paras:
+        _count_para(pm)
+    for sec in doc.sections:
+        if not sec.section_id:
+            missing_sections += 1
+        _count_para(sec.heading)
+        for role in sec.roles:
+            if not role.role_id_stable:
+                missing_roles += 1
+            _count_para(role.header)
+            for pm in role.meta_lines:
+                _count_para(pm)
+            for pm in role.bullets:
+                _count_para(pm)
+        for pm in sec.body_paras:
+            _count_para(pm)
+
+    # Para-ids referenced by layout_blocks but not in the semantic model
+    lb_ids: set[str] = set()
+    if doc.layout_blocks:
+        for block in doc.layout_blocks:
+            if isinstance(block, LayoutTableBlock):
+                lb_ids.update(pid for pid in block.para_ids if pid)
+            elif isinstance(block, LayoutParagraphBlock) and block.para_id:
+                lb_ids.add(block.para_id)
+    semantic_ids = {pm.para_id for pm in (doc.all_paras or []) if pm.para_id}
+    orphan_layout_ids = len(lb_ids - semantic_ids)
+
+    result = {
+        "unbound_semantic_paras": unbound,
+        "unbound_non_empty_paras": unbound_non_empty,
+        "missing_section_ids": missing_sections,
+        "missing_role_ids": missing_roles,
+        "orphan_layout_block_ids": orphan_layout_ids,
+    }
+    _log.debug("validate_layout_binding: %s", result)
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -1280,6 +1551,14 @@ def apply_tailored(
             len(_sec_cls), len(_role_cls),
         )
 
+    # Layout-bound mode: active when layout_blocks are present and the flag is on.
+    # Role-continuation repair runs whenever layout_blocks exist (flag-independent)
+    # to prevent "Web Designer" role titles from becoming fake top-level sections.
+    from tailor.config import USE_LAYOUT_BOUND_UPDATER
+    _layout_bound = original.layout_blocks is not None and USE_LAYOUT_BOUND_UPDATER
+    if original.layout_blocks is not None:
+        llm_sections = _repair_role_continuation_sections(list(llm_sections))
+
     try:
         match = _match_sections(original.sections, llm_sections)
     except ValueError as exc:
@@ -1319,9 +1598,11 @@ def apply_tailored(
         # No classification (or section_id not in index) → existing behaviour.
         if orig_section.semantic_type == "experience":
             if orig_section.roles or llm_section.roles:
-                return _update_experience_section(orig_section, llm_section)
+                return _update_experience_section(
+                    orig_section, llm_section, layout_bound=_layout_bound
+                )
             # No roles on either side — treat as body section to avoid content loss
-            return _update_body_section(orig_section, llm_section)
+            return _update_body_section(orig_section, llm_section, layout_bound=_layout_bound)
         if orig_section.semantic_type == "skills":
             # Spec §6: sanitize skills lines before inserting.
             sanitized = LlmSection(
@@ -1330,8 +1611,8 @@ def apply_tailored(
                 body_lines=_sanitize_skills_lines(llm_section.body_lines),
                 roles=llm_section.roles,
             )
-            return _update_body_section(orig_section, sanitized)
-        return _update_body_section(orig_section, llm_section)
+            return _update_body_section(orig_section, sanitized, layout_bound=_layout_bound)
+        return _update_body_section(orig_section, llm_section, layout_bound=_layout_bound)
 
     # injectable_skills_section is set in the extras path when skills live in
     # header_paras.  Initialised here so the all_paras build (after both paths)
@@ -1428,6 +1709,13 @@ def apply_tailored(
                     "apply_tailored: routing skills extra %r to header_paras injection",
                     llm_s.heading,
                 )
+            elif _layout_bound:
+                # In layout-bound mode, unmatched extras are skipped entirely
+                # rather than creating fully unbound sections.
+                _log.debug(
+                    "UPDATER_SECTION_ANCHOR_NOT_FOUND: %r dropped in layout-bound mode",
+                    llm_s.heading,
+                )
             else:
                 llm_order_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
 
@@ -1456,7 +1744,10 @@ def apply_tailored(
     # injectable_skills_section / header_skill_target are None in the fast path.
     if injectable_skills_section is not None and header_skill_target is not None:
         effective_header_paras: list[ParaModel] = _inject_skills_into_header(
-            original.header_paras, header_skill_target, injectable_skills_section
+            original.header_paras,
+            header_skill_target,
+            injectable_skills_section,
+            layout_bound=_layout_bound,
         )
     else:
         effective_header_paras = list(original.header_paras)
@@ -1514,10 +1805,15 @@ def apply_tailored(
     intro_para = _find_intro_prose_para(original) if injectable_extras else None
     # Extras are unhandled (preventing table path) when they are non-summary-type,
     # or when they are summary-type but no intro-prose target was found.
-    has_unhandled_extras = any(
-        e not in injectable_extras or intro_para is None
-        for e in match.extras
-    ) if match.extras else False
+    # In layout-bound mode, all extras were either injected via intro_para or
+    # dropped with a diagnostic — none are "unhandled" from the table path's view.
+    if _layout_bound:
+        has_unhandled_extras = False
+    else:
+        has_unhandled_extras = any(
+            e not in injectable_extras or intro_para is None
+            for e in match.extras
+        ) if match.extras else False
 
     if has_table_blocks and not has_unhandled_extras:
         # Table in-place update: mutate ParaModel.text on the original objects

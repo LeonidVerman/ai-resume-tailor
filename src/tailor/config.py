@@ -50,3 +50,18 @@ USE_SERIALIZED_LAYOUT_TREE: bool = (
 USE_LAYOUT_BLOCK_RENDERER: bool = (
     os.environ.get("USE_LAYOUT_BLOCK_RENDERER", "false").lower() == "true"
 )
+
+# When True, apply_tailored uses in-place para_id-preserving updates when the
+# IR carries layout_blocks.  Extra LLM content beyond original template slots
+# is packed into existing slots or dropped (with diagnostics) instead of being
+# written to new unbound ParaModels with empty para_id.  This ensures the
+# layout_blocks renderer can place all updated text.
+#
+# Also enables the LLM role-continuation repair pass: sections like "Web
+# Designer" that immediately follow an Experience section and carry role-like
+# content are absorbed as additional roles rather than promoted as top-level
+# sections.  The repair runs whenever layout_blocks are present regardless of
+# this flag.
+USE_LAYOUT_BOUND_UPDATER: bool = (
+    os.environ.get("USE_LAYOUT_BOUND_UPDATER", "false").lower() == "true"
+)
