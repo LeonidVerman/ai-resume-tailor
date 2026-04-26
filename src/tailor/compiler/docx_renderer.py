@@ -18,7 +18,13 @@ from copy import deepcopy
 
 from docx import Document
 
-from tailor.compiler.models import ParaModel, ResumeDocument, TableBlock
+from tailor.compiler.models import (
+    LayoutParagraphBlock,
+    LayoutTableBlock,
+    ParaModel,
+    ResumeDocument,
+    TableBlock,
+)
 
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
@@ -706,6 +712,79 @@ def _render_docx_native_two_col(
 
 
 # ---------------------------------------------------------------------------
+# Layout-blocks rendering (Option B: XML prototype path)
+# ---------------------------------------------------------------------------
+
+def _render_from_layout_blocks(
+    doc: ResumeDocument,
+    body,
+    sectPr,
+) -> None:
+    """Render *doc* from its serialized layout_blocks (XML prototype strings).
+
+    This path is used when ``doc.layout_blocks`` is not None — i.e. after a
+    DB round-trip where ``body_items`` and ``xml_proto`` fields are absent but
+    the original XML strings survive in ``layout_blocks``.
+
+    For each block:
+    - ``LayoutParagraphBlock``: deserialize XML → ``w:p``, strip stale page
+      break markers, update text from ``para_lookup`` (by ``para_id``), insert.
+      If ``para_id`` is empty or not found in ``para_lookup``, the block is
+      inserted verbatim (preserves structural/orphan paragraphs such as
+      column-break transitions and tab-split section headings).
+    - ``LayoutTableBlock``: deserialize XML → ``w:tbl``, update each nested
+      ``w:p`` text from ``para_lookup``, insert.
+
+    Column breaks (``w:br type="column"``) and embedded section properties
+    (``w:sectPr`` inside ``w:pPr``) are intentionally **not** stripped so that
+    newspaper-column layouts such as sample 31 preserve their two-column visual
+    structure.  Only ``w:lastRenderedPageBreak`` elements are removed because
+    they are always stale after content changes.
+    """
+    from lxml import etree
+
+    # Build para_id → ParaModel lookup from the full paragraph list.
+    # para_id="" entries are excluded (structural paragraphs without IDs).
+    para_lookup: dict[str, ParaModel] = {}
+    for pm in doc.all_paras:
+        if pm.para_id:
+            para_lookup[pm.para_id] = pm
+
+    for block in doc.layout_blocks:  # type: ignore[union-attr]
+        if isinstance(block, LayoutTableBlock):
+            tbl_elem = etree.fromstring(block.xml_proto_xml)
+            all_p = tbl_elem.findall(f".//{{{_W}}}p")
+            for para_id, p_elem in zip(block.para_ids, all_p):
+                pm = para_lookup.get(para_id)
+                if pm is not None:
+                    _set_para_text(p_elem, pm.text)
+                # else: keep original text (surplus template paragraphs)
+            elem: Any = tbl_elem
+        else:
+            # LayoutParagraphBlock
+            if not block.xml_proto_xml:
+                # No XML prototype — fall back to para_builder if profile exists
+                pm = para_lookup.get(block.para_id)
+                if pm is not None and pm.paragraph_profile is not None:
+                    from tailor.compiler.para_builder import build_para_element
+                    elem = build_para_element(pm)
+                else:
+                    continue
+            else:
+                elem = etree.fromstring(block.xml_proto_xml)
+                _strip_last_rendered_page_breaks(elem)
+                pm = para_lookup.get(block.para_id) if block.para_id else None
+                if pm is not None:
+                    _set_para_text(elem, pm.text)
+                # else: structural paragraph — insert verbatim (no text change)
+
+        if sectPr is not None:
+            sectPr.addprevious(elem)
+        else:
+            body.append(elem)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -744,6 +823,25 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         body.remove(child)
     if sectPr is not None:
         body.append(sectPr)
+
+    # Layout-blocks path: when the IR carries serialized XML prototypes and
+    # NO runtime xml_proto objects are present (i.e. we are working from a
+    # deserialized IR, not a freshly-parsed one), render from the stored XML
+    # strings.  This preserves full DOCX formatting (fonts, styles, tables,
+    # column structure) after a DB round-trip without falling back to para_builder.
+    #
+    # The runtime check uses a sample of the first 10 paragraphs: at parse time
+    # every w:p has an xml_proto; after deserialization all are None.  When any
+    # sample paragraph has xml_proto the existing rendering paths are used so
+    # that extra bullets / new sections produced by apply_tailored are visible.
+    if doc.layout_blocks is not None:
+        _has_runtime_xml = any(
+            pm.style.xml_proto is not None for pm in doc.all_paras[:10]
+        )
+        if not _has_runtime_xml:
+            _render_from_layout_blocks(doc, body, sectPr)
+            d.save(output_path)
+            return
 
     # For PDF-sourced documents, override the template page geometry with the
     # source PDF's paper size and margins so the round-trip page count is stable.

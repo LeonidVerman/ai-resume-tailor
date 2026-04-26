@@ -28,3 +28,12 @@ SIMPLE_TEMPERATURE: float = float(os.environ.get("SIMPLE_TEMPERATURE", "0.3"))
 # --- Assessment mode ---
 ASSESS_MODEL: str = os.environ.get("ASSESS_MODEL", "gpt-4o-mini")
 ASSESS_TEMPERATURE: float = float(os.environ.get("ASSESS_TEMPERATURE", "0.2"))
+
+# --- Layout tree serialization ---
+# When True, parse_docx captures every w:p / w:tbl as an XML string in
+# ResumeDocument.layout_blocks.  This allows the renderer to faithfully
+# reproduce DOCX layout (fonts, styles, tables, column structure) after a
+# DB round-trip without requiring the original template file at render time.
+USE_SERIALIZED_LAYOUT_TREE: bool = (
+    os.environ.get("USE_SERIALIZED_LAYOUT_TREE", "true").lower() == "true"
+)

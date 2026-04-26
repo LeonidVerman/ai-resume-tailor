@@ -162,6 +162,37 @@ from its `ParaModel.text`. `TableBlock` is never serialized.
 
 ---
 
+### `LayoutParagraphBlock`
+
+Serializable layout node for a single top-level body paragraph (Option B XML prototype).
+
+| Field | Type | Description |
+|---|---|---|
+| `para_id` | `str` | Stable ID matching the corresponding `ParaModel` in `all_paras`; `""` for structural/orphan paragraphs |
+| `xml_proto_xml` | `str \| None` | `etree.tostring(w:p)` — full paragraph XML as Unicode string |
+
+When `para_id` is `""` or not found in the updated `all_paras`, the renderer inserts the
+paragraph verbatim (original text unchanged). This preserves structural paragraphs such as
+column-break transitions and tab-split section headings that are not part of the semantic model.
+
+---
+
+### `LayoutTableBlock`
+
+Serializable layout node for a top-level table (Option B XML prototype).
+
+| Field | Type | Description |
+|---|---|---|
+| `table_id` | `str` | Sequential ID (`"tbl_1"`, `"tbl_2"`, …) |
+| `xml_proto_xml` | `str` | `etree.tostring(w:tbl)` — full table XML as Unicode string |
+| `para_ids` | `list[str]` | Stable IDs for every `w:p` inside the table, in document order |
+
+The renderer deserializes the XML, iterates `w:p` elements in order, looks each up in
+`para_lookup` by `para_id`, and updates the text. Paragraphs not found in `para_lookup`
+keep their original text (surplus template cells).
+
+---
+
 ### `ResumeDocument`
 
 Root of the IR tree.
@@ -175,10 +206,15 @@ Root of the IR tree.
 | `source_kind` | `str` | `"docx"` or `"pdf"` |
 | `body_items` | `list[ParaModel \| TableBlock] \| None` | Top-level render order; `None` for PDF / deserialized |
 | `label_column_fixed` | `bool` | `True` when label-column layout reordering was applied by the parser |
+| `table_column_layout_fixed` | `bool` | `True` when newspaper/multi-column fix was applied |
+| `layout_blocks` | `list[LayoutParagraphBlock \| LayoutTableBlock] \| None` | Serializable layout tree; `None` for PDF sources or when `USE_SERIALIZED_LAYOUT_TREE=false` |
 
-`to_dict()` serializes `source_kind`, `header_paras`, `sections`, `layout`, and optionally
-`label_column_fixed`. `all_paras` and `body_items` are **not** serialized — `all_paras` is
-rebuilt on deserialization; `body_items` is always `None` after deserialization.
+`to_dict()` serializes `source_kind`, `header_paras`, `sections`, `layout`, optional flag fields,
+and `layout_blocks` when present. `all_paras` and `body_items` are **not** serialized — `all_paras`
+is rebuilt on deserialization; `body_items` is always `None` after deserialization.
+
+`from_dict()` restores `layout_blocks` from the stored JSON so the renderer can use the
+XML-prototype path after a DB round-trip without requiring `xml_proto` or `body_items`.
 
 ---
 
@@ -382,17 +418,40 @@ The IR round-trips through JSON for storage in `structured_resumes.template_ir_j
 - All `ParagraphProfile` fields except `body_text_x0_pt`, `inline_image_bytes`, `inline_image_size_pt`, `text_runs`
 - All `ParaModel` fields except `ParaStyle.xml_proto`
 - `LayoutProfile`, `ResumeSection` (including `section_id`), `RoleEntry` (including `role_id_stable`)
-- `ResumeDocument.source_kind`, `label_column_fixed`
+- `ResumeDocument.source_kind`, `label_column_fixed`, `table_column_layout_fixed`
+- `ResumeDocument.layout_blocks` (when present): each block as `{kind, para_id, xml_proto_xml}` or `{kind, table_id, xml_proto_xml, para_ids}`
 
 **Not serialized:**
-- `ParaStyle.xml_proto` (lxml element)
+- `ParaStyle.xml_proto` (lxml element — carried in `layout_blocks.xml_proto_xml` instead)
 - `TableBlock` and `body_items`
 - Runtime fields on `ParagraphProfile` (see §2)
 - `all_paras` (rebuilt from sections on deserialization)
 
-After deserialization, `source_kind` is effectively treated as `"pdf"` regardless of original
-source — `xml_proto` is always `None`, so the renderer always uses `para_builder`. This is
-intentional: the template IR is stored once at upload time and reused for all generation runs.
+### Layout-blocks render path (Option B)
+
+When `USE_SERIALIZED_LAYOUT_TREE=true` (default), `parse_docx` serializes every top-level
+`w:p` and `w:tbl` as XML strings in `layout_blocks`.  After a DB round-trip:
+
+1. `from_dict()` restores `layout_blocks` with the XML strings.
+2. `apply_tailored` carries `layout_blocks` forward unchanged.
+3. `render_docx` detects: `layout_blocks` present **and** no `xml_proto` on any sample paragraph
+   (i.e. deserialized state) → calls `_render_from_layout_blocks`.
+4. The renderer deserializes each XML string, looks up the paragraph by `para_id` in
+   `doc.all_paras`, updates the text, and inserts into the output body — preserving the
+   original DOCX formatting (fonts, styles, column structure, table layout) without
+   needing `para_builder`.
+
+Column breaks (`w:br type="column"`) and embedded section properties (`w:sectPr` in `w:pPr`)
+are intentionally **not** stripped in this path, preserving newspaper-column layouts such
+as sample 31.
+
+Only `w:lastRenderedPageBreak` elements are removed (always stale after content changes).
+
+### Feature flag
+
+`USE_SERIALIZED_LAYOUT_TREE` (env var, default `"true"`): controls whether `parse_docx`
+builds `layout_blocks`. Set to `"false"` to disable and keep the old `para_builder`
+fallback for all deserialized DOCX documents.
 
 ---
 
@@ -403,28 +462,31 @@ DOCX template                        PDF document
 parse_docx()                         parse_pdf()
 ↓                                    ↓
 ParaStyle.xml_proto                  ParaModel.paragraph_profile
-(deepcopy of w:p)                    (font/size/spacing/color)
+layout_blocks (XML strings)          (no layout_blocks)
+(deepcopy of w:p / w:tbl)           (font/size/spacing/color)
 ResumeDocument (source_kind=docx)    ResumeDocument (source_kind=pdf)
          │                                    │
          └──────── assign_stable_ids() ───────┘
                            │
                   [optional: to_dict → DB → from_dict]
+                    xml_proto lost; layout_blocks restored
                            │
              apply_tailored(original, llm_sections)
-                           │
-                  Section matching + role updating
-                  (text replaced, style protos reused)
+               layout_blocks carried forward unchanged
+               with_text() preserves para_id for matching
                            │
                   ResumeDocument (updated)
                            │
-              ┌────────────┴────────────┐
-              │ xml_proto present?       │
-              │ (DOCX path)             │ (PDF / deserialized path)
-              ↓                          ↓
-      Clone xml_proto            build_para_element()
-      _set_para_text()           from ParagraphProfile
-              │                          │
-              └────────────┬────────────┘
+    ┌──────────────────────┼─────────────────────────┐
+    │ layout_blocks present │ xml_proto present        │
+    │ AND no xml_proto      │ (runtime DOCX)           │ PDF / no layout_blocks
+    │ (deserialized DOCX)   │                          │
+    ↓                       ↓                          ↓
+_render_from_layout_blocks  Clone xml_proto      build_para_element()
+  deserialize XML           _set_para_text()     from ParagraphProfile
+  patch text by para_id                          │
+    │                           │                │
+    └───────────────────────────┴────────────────┘
                            ↓
                render_docx(updated, template, output_path)
                            ↓
@@ -439,8 +501,9 @@ ResumeDocument (source_kind=docx)    ResumeDocument (source_kind=pdf)
 
 | Category | Details |
 |---|---|
-| DOCX paragraph formatting | Fonts, sizes, colors, spacing, numbering, styles, tabs, line breaks, hyperlinks, content controls — via `xml_proto` deepcopy |
-| DOCX table structure | Borders, cell widths, shading, merge spans — via `TableBlock.xml_proto` |
+| DOCX paragraph formatting | Fonts, sizes, colors, spacing, numbering, styles, tabs, line breaks, hyperlinks, content controls — via `xml_proto` deepcopy (runtime) or `layout_blocks.xml_proto_xml` (after DB round-trip) |
+| DOCX table structure | Borders, cell widths, shading, merge spans — via `TableBlock.xml_proto` (runtime) or `LayoutTableBlock.xml_proto_xml` (after DB round-trip) |
+| DOCX newspaper-column layout | Column grid (`w:cols`), column breaks (`w:br type="column"`) — preserved in `layout_blocks` XML strings and not stripped in `_render_from_layout_blocks` |
 | Page geometry | Dimensions, margins, column widths, default fonts |
 | Two-column visual layout | Column widths, background colors, header bands |
 | Bullet indentation | `indent_left` / `hanging`, numbering level |

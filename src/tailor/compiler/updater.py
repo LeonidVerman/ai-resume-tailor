@@ -1592,4 +1592,10 @@ def apply_tailored(
         # body_items with stale original text — pass None so the renderer falls
         # back to all_paras (correctly rebuilt by the extras path).
         body_items=original.body_items if (has_table_blocks and not has_unhandled_extras) else None,
+        # Carry layout_blocks forward unconditionally so the renderer can use
+        # serialized XML prototypes after a DB round-trip regardless of whether
+        # the document uses tables or flat paragraphs.  para_id values on
+        # with_text()-derived paragraphs (set in ParaModel.with_text) match the
+        # layout_blocks entries so the renderer can look them up by ID.
+        layout_blocks=original.layout_blocks,
     )
