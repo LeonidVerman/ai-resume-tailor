@@ -285,45 +285,273 @@ def test_skills_column_guard_triggers_with_skills():
 
 
 # ---------------------------------------------------------------------------
-# Diagnostics: _is_skills_list_para unit tests
+# Diagnostics: _is_skills_list_para — true positives
 # ---------------------------------------------------------------------------
 
-def test_skills_list_para_comma_separated():
+def test_skills_list_comma_separated():
     from scripts.parser_diagnostics import _is_skills_list_para
-    assert _is_skills_list_para("Python, JavaScript, SQL, Docker, Kubernetes")
+    assert _is_skills_list_para("Java, Python, AWS, Docker, PostgreSQL")
 
 
-def test_skills_list_para_not_action_verb_sentence():
+def test_skills_list_space_separated_long():
     from scripts.parser_diagnostics import _is_skills_list_para
-    assert not _is_skills_list_para("Developed a microservices architecture for high-traffic APIs")
-
-
-def test_skills_list_para_not_full_sentence():
-    from scripts.parser_diagnostics import _is_skills_list_para
-    assert not _is_skills_list_para(
-        "Led a team of 8 engineers to deliver a major product redesign ahead of schedule."
+    assert _is_skills_list_para(
+        "Networking basics Operating Systems Cross-platform software Encryption"
     )
 
 
-def test_skills_list_para_connector_words():
+def test_skills_list_testing_keywords():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert _is_skills_list_para(
+        "Unit testing Integration testing System testing Critical Thinking Time management"
+    )
+
+
+def test_skills_list_tech_comma():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert _is_skills_list_para("React, TypeScript, Node.js, PostgreSQL, Redis")
+
+
+# ---------------------------------------------------------------------------
+# Diagnostics: _is_skills_list_para — false positives that must return False
+# ---------------------------------------------------------------------------
+
+def test_skills_fp_section_heading_work_experience():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para("WORK EXPERIENCE")
+
+
+def test_skills_fp_section_heading_professional_experience():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para("Professional Experience")
+
+
+def test_skills_fp_section_heading_educational():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para("EDUCATIONAL HISTORY")
+
+
+def test_skills_fp_section_heading_software_engineer():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para("SOFTWARE ENGINEER")
+
+
+def test_skills_fp_contact_phone():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para("Landline: (123) 456 7890")
+
+
+def test_skills_fp_contact_email():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para("Email: hello@techguruplus.com")
+
+
+def test_skills_fp_contact_website():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para("Website: www.techguruplus.com")
+
+
+def test_skills_fp_institution_name():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para("University of Lovelstyne")
+
+
+def test_skills_fp_person_name():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para("Philippe Stolvan")
+
+
+def test_skills_fp_role_title_senior_engineer():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para("Senior Engineer")
+
+
+def test_skills_fp_role_title_project_coordinator():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para("Project Coordinator")
+
+
+def test_skills_fp_date_line():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para("Jan 2015 - present")
+
+
+def test_skills_fp_action_verb_sentence():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para(
+        "Developed trading systems for the Japanese financial market"
+    )
+
+
+def test_skills_fp_long_action_sentence():
+    from scripts.parser_diagnostics import _is_skills_list_para
+    assert not _is_skills_list_para(
+        "Implemented unit and integration testing practices to validate web application behavior"
+    )
+
+
+def test_skills_fp_connector_word_sentence():
     from scripts.parser_diagnostics import _is_skills_list_para
     assert not _is_skills_list_para("Implemented CI/CD pipelines using Jenkins and Docker")
 
 
 # ---------------------------------------------------------------------------
-# Diagnostics: contact-in-experience detection
+# Diagnostics: _is_contact_para
 # ---------------------------------------------------------------------------
 
-def test_contact_detection_phone():
+def test_contact_phone():
     from scripts.parser_diagnostics import _is_contact_para
     assert _is_contact_para("+123-456-7890")
 
 
-def test_contact_detection_email():
+def test_contact_email():
     from scripts.parser_diagnostics import _is_contact_para
     assert _is_contact_para("hello@techguruplus.com 123 Anywhere St.")
 
 
-def test_contact_detection_normal_bullet():
+def test_contact_labelled():
+    from scripts.parser_diagnostics import _is_contact_para
+    assert _is_contact_para("Landline: (123) 456 7890")
+
+
+def test_contact_false_positive_bullet():
     from scripts.parser_diagnostics import _is_contact_para
     assert not _is_contact_para("Improved system performance by 40% through query optimization")
+
+
+def test_contact_false_positive_experience():
+    from scripts.parser_diagnostics import _is_contact_para
+    assert not _is_contact_para("Led cross-functional teams of 5 engineers")
+
+
+# ---------------------------------------------------------------------------
+# Diagnostics: context-aware detector behaviour
+# ---------------------------------------------------------------------------
+
+def test_skills_detector_skips_without_multicolumn():
+    """Skills diagnostics must not fire for non-multicolumn files."""
+    from scripts.parser_diagnostics import detect_table_skills_inside_non_skills
+    sections = [
+        {
+            "semantic_type": "certifications",
+            "raw_title": "CERTIFICATION",
+            "section_id": "sec_1",
+            "paragraphs": [
+                {"text": "Java, Python, AWS, Docker, PostgreSQL", "parser_semantic": "paragraph",
+                 "para_id": "p1"},
+            ],
+            "roles": [],
+        }
+    ]
+    # Without multicolumn context → no issues
+    assert detect_table_skills_inside_non_skills(sections, has_multicolumn=False) == []
+    # With multicolumn context → should flag
+    issues = detect_table_skills_inside_non_skills(sections, has_multicolumn=True)
+    assert len(issues) == 1
+    assert issues[0].code == "TABLE_SKILLS_INSIDE_NON_SKILLS_SECTION"
+
+
+def test_skills_detector_skips_section_heading_para():
+    """section_heading paragraphs must never be flagged."""
+    from scripts.parser_diagnostics import detect_table_skills_inside_non_skills
+    sections = [
+        {
+            "semantic_type": "certifications",
+            "raw_title": "CERTIFICATION",
+            "section_id": "sec_1",
+            "paragraphs": [
+                # This would look skills-like without the semantic guard
+                {"text": "Java Python AWS Docker Kubernetes Terraform", "parser_semantic": "section_heading",
+                 "para_id": "p1"},
+            ],
+            "roles": [],
+        }
+    ]
+    issues = detect_table_skills_inside_non_skills(sections, has_multicolumn=True)
+    assert issues == [], "section_heading paragraphs must not be flagged"
+
+
+def test_contamination_no_duplicate_when_specific_fires():
+    """TABLE_COLUMN_CONTAMINATION_SUSPECTED must not fire for a section
+    already covered by TABLE_SKILLS_INSIDE_NON_SKILLS_SECTION."""
+    from scripts.parser_diagnostics import (
+        detect_table_skills_inside_non_skills,
+        detect_table_column_contamination_suspected,
+    )
+    sections = [
+        {
+            "semantic_type": "certifications",
+            "raw_title": "CERTIFICATION",
+            "section_id": "sec_1",
+            "paragraphs": [
+                {"text": "Java, Python, AWS, Docker, PostgreSQL", "parser_semantic": "paragraph",
+                 "para_id": "p1"},
+            ],
+            "roles": [],
+        }
+    ]
+    skills_issues = detect_table_skills_inside_non_skills(sections, has_multicolumn=True)
+    assert len(skills_issues) == 1
+
+    sections_covered = {i.section_id for i in skills_issues if i.section_id}
+    contamination = detect_table_column_contamination_suspected(sections, has_multicolumn=True)
+    # Simulate deduplication as done in analyse_file
+    deduped = [i for i in contamination if i.section_id not in sections_covered]
+    assert deduped == [], "Contamination should not fire when specific diagnostic already covers it"
+
+
+def test_contact_in_experience_section():
+    """Contact text inside experience must be flagged."""
+    from scripts.parser_diagnostics import detect_table_contact_inside_experience
+    sections = [
+        {
+            "semantic_type": "experience",
+            "raw_title": "WORK EXPERIENCE",
+            "section_id": "sec_1",
+            "paragraphs": [
+                {"text": "+123-456-7890", "parser_semantic": "paragraph", "para_id": "p1"},
+            ],
+            "roles": [],
+        }
+    ]
+    issues = detect_table_contact_inside_experience(sections)
+    assert len(issues) == 1
+    assert issues[0].code == "TABLE_CONTACT_INSIDE_EXPERIENCE"
+
+
+def test_contact_in_contact_section_not_flagged():
+    """Contact info inside a Contact section must NOT trigger experience diagnostic."""
+    from scripts.parser_diagnostics import detect_table_contact_inside_experience
+    sections = [
+        {
+            "semantic_type": "other",
+            "raw_title": "Contact",
+            "section_id": "sec_1",
+            "paragraphs": [
+                {"text": "+123-456-7890", "parser_semantic": "paragraph", "para_id": "p1"},
+            ],
+            "roles": [],
+        }
+    ]
+    issues = detect_table_contact_inside_experience(sections)
+    assert issues == [], "Contact info inside Contact section must not be flagged"
+
+
+def test_normal_tech_bullet_in_experience_not_flagged():
+    """Normal technical achievement bullets in experience must not be flagged."""
+    from scripts.parser_diagnostics import detect_table_skills_inside_non_skills
+    sections = [
+        {
+            "semantic_type": "experience",
+            "raw_title": "WORK EXPERIENCE",
+            "section_id": "sec_1",
+            "paragraphs": [
+                {"text": "Developed microservices using Python, Go and AWS Lambda",
+                 "parser_semantic": "paragraph", "para_id": "p1"},
+            ],
+            "roles": [],
+        }
+    ]
+    # Experience is in the skip set, so never flagged
+    issues = detect_table_skills_inside_non_skills(sections, has_multicolumn=True)
+    assert issues == []
