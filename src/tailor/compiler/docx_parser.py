@@ -873,6 +873,19 @@ def parse_docx(path: str) -> ResumeDocument:
                     para_id=_item.para_id,
                     xml_proto_xml=_xml_str,
                 ))
+
+        # Assign stable layout-only IDs to orphan paragraph blocks (para_id="").
+        # These are structural/transition paragraphs from the multicolumn fix
+        # (tab-split headings, column-break spacers) that have no semantic
+        # ParaModel counterpart.  Assigning a stable ID prevents the
+        # layout_blocks health check from flagging them as empty and allows the
+        # renderer to insert them verbatim without modifying text.
+        _lb_orphan = 0
+        for _blk in _layout_blocks:
+            if isinstance(_blk, LayoutParagraphBlock) and not _blk.para_id:
+                _lb_orphan += 1
+                _blk.para_id = f"lb_orphan_{_lb_orphan}"
+
         doc.layout_blocks = _layout_blocks
 
     return doc

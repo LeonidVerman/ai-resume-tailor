@@ -279,11 +279,17 @@ def _update_experience_section(
             # Template roles with no LLM counterpart are kept verbatim
             for o_role in orig.roles[len(reparsed):]:
                 updated_roles.append(o_role)
+            _ROLE_SEMANTICS_D = frozenset({"role_header", "role_meta", "bullet"})
+            clean_body_d = (
+                [p for p in orig.body_paras if not p.text.strip() or p.semantic not in _ROLE_SEMANTICS_D]
+                if layout_bound and updated_roles
+                else orig.body_paras
+            )
             return ResumeSection(
                 title=llm.heading,
                 heading=_strip_col_break_para(orig.heading.with_text(llm.heading)),
                 semantic_type=orig.semantic_type,
-                body_paras=orig.body_paras,
+                body_paras=clean_body_d,
                 roles=updated_roles,
                 section_id=orig.section_id,
             )
@@ -318,11 +324,29 @@ def _update_experience_section(
                 o_role.role_id,
             )
 
+    # In layout-bound mode, when roles are the canonical representation,
+    # remove role-like paragraphs from body_paras to prevent split-brain IR.
+    # The roles list is authoritative; body_paras keeps only structural spacers
+    # (empty paragraphs that maintain visual spacing in the layout).
+    # In non-layout-bound mode, body_paras is kept for flat-list rendering order.
+    _ROLE_SEMANTICS = frozenset({"role_header", "role_meta", "bullet"})
+    if layout_bound and updated_roles:
+        clean_body = [
+            p for p in orig.body_paras
+            if not p.text.strip() or p.semantic not in _ROLE_SEMANTICS
+        ]
+        _log.debug(
+            "split_brain_fix: cleaned %d role-like paras from body_paras of %r",
+            len(orig.body_paras) - len(clean_body), orig.title,
+        )
+    else:
+        clean_body = orig.body_paras
+
     return ResumeSection(
         title=llm.heading,
         heading=_strip_col_break_para(orig.heading.with_text(llm.heading)),
         semantic_type=orig.semantic_type,
-        body_paras=orig.body_paras,  # kept for flat-list rendering order
+        body_paras=clean_body,
         roles=updated_roles,
         section_id=orig.section_id,
     )

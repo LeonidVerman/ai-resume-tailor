@@ -250,13 +250,21 @@ class TestParseDocxBuildsLayoutBlocks:
         assert len(doc.layout_blocks) > 0
 
     def test_layout_blocks_para_ids_valid_for_semantic_paras(self):
-        """Every non-empty para_id in layout_blocks must reference an existing all_paras entry."""
+        """Every non-orphan para_id in layout_blocks must reference an existing all_paras entry.
+
+        Orphan IDs (prefixed lb_orphan_) are assigned to structural/transition
+        paragraphs (tab-split headings, column-break spacers) that have no
+        semantic counterpart.  They are excluded from this check since they render
+        verbatim and do not require a semantic ParaModel lookup.
+        """
         from tailor.compiler.docx_parser import parse_docx
         from tailor.compiler.models import LayoutParagraphBlock
         doc = parse_docx(_SAMPLE_31)
         known_ids = {pm.para_id for pm in doc.all_paras if pm.para_id}
         for block in doc.layout_blocks:
             if isinstance(block, LayoutParagraphBlock) and block.para_id:
+                if block.para_id.startswith("lb_orphan_"):
+                    continue  # layout-only structural para, no semantic counterpart
                 assert block.para_id in known_ids, (
                     f"LayoutParagraphBlock.para_id={block.para_id!r} not in all_paras"
                 )
