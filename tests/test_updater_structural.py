@@ -80,6 +80,32 @@ def _make_layout_doc(
     return doc
 
 
+def _make_minimal_section(
+    title: str,
+    semantic_type: str,
+    body_texts: list[str],
+    section_id: str = "sec_1",
+) -> "ResumeSection":
+    from tailor.compiler.models import ParaModel, ParaStyle, ResumeSection
+    heading = ParaModel(text=title, style=ParaStyle(), semantic="section_heading")
+    heading.para_id = f"para_h_{section_id}"
+    body = []
+    for i, t in enumerate(body_texts):
+        pm = ParaModel(text=t, style=ParaStyle(), semantic="paragraph")
+        pm.para_id = f"para_b_{section_id}_{i}"
+        body.append(pm)
+    sec = ResumeSection(
+        title=title, heading=heading, semantic_type=semantic_type, body_paras=body,
+    )
+    sec.section_id = section_id
+    return sec
+
+
+def _make_llm_section(heading: str, body_lines: list[str], semantic_type: str = "summary"):
+    from tailor.compiler.text_parser import LlmSection
+    return LlmSection(heading=heading, semantic_type=semantic_type, body_lines=body_lines)
+
+
 def _make_llm_experience(
     n_roles: int,
     n_bullets_per_role: int = 2,
@@ -543,3 +569,292 @@ class TestNormalizeLlmSections:
         """Empty section list passes through unchanged."""
         from tailor.compiler.updater import normalize_llm_sections
         assert normalize_llm_sections([]) == []
+
+
+# ---------------------------------------------------------------------------
+# 8. Bullet packing (Priority 2)
+# ---------------------------------------------------------------------------
+
+class TestBulletPacking:
+    def test_single_orig_bullet_four_llm_packed(self, monkeypatch):
+        """1 original bullet + 4 LLM bullets → 1 updated bullet with all text packed."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+
+        from tailor.compiler.updater import apply_tailored, validate_layout_binding
+
+        doc = _make_layout_doc(1, n_bullets_per_role=1)
+        llm_secs = [_make_llm_experience(1, n_bullets_per_role=4)]
+        updated = apply_tailored(doc, llm_secs)
+
+        role = updated.sections[0].roles[0]
+        assert len(role.bullets) == 1, f"expected 1 bullet, got {len(role.bullets)}"
+        assert role.bullets[0].para_id != "", "packed bullet must keep original para_id"
+        # All 4 LLM bullets should be in the single packed slot
+        packed_text = role.bullets[0].text
+        for i in range(1, 5):
+            assert f"Updated work 1.{i}" in packed_text
+
+        metrics = validate_layout_binding(updated)
+        assert metrics["unbound_non_empty_paras"] == 0
+
+    def test_two_orig_bullets_five_llm_extras_packed_into_last(self, monkeypatch):
+        """2 original bullets + 5 LLM bullets → 2 bullets, extras packed into slot 2."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+
+        from tailor.compiler.updater import apply_tailored, validate_layout_binding
+
+        doc = _make_layout_doc(1, n_bullets_per_role=2)
+        llm_secs = [_make_llm_experience(1, n_bullets_per_role=5)]
+        updated = apply_tailored(doc, llm_secs)
+
+        role = updated.sections[0].roles[0]
+        assert len(role.bullets) == 2, f"expected 2 bullets, got {len(role.bullets)}"
+        # Both bullets bound to original para_ids
+        for b in role.bullets:
+            assert b.para_id != ""
+        # First bullet: only the first LLM bullet
+        assert "Updated work 1.1" in role.bullets[0].text
+        assert "Updated work 1.2" not in role.bullets[0].text
+        # Second (last) bullet: bullets 2-5 packed in
+        for i in range(2, 6):
+            assert f"Updated work 1.{i}" in role.bullets[1].text
+
+        metrics = validate_layout_binding(updated)
+        assert metrics["unbound_non_empty_paras"] == 0
+
+    def test_fewer_llm_bullets_than_orig_no_packing(self, monkeypatch):
+        """Fewer LLM bullets than original → no packing needed; matched bullets only."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+
+        from tailor.compiler.updater import apply_tailored
+
+        doc = _make_layout_doc(1, n_bullets_per_role=3)
+        llm_secs = [_make_llm_experience(1, n_bullets_per_role=2)]
+        updated = apply_tailored(doc, llm_secs)
+
+        role = updated.sections[0].roles[0]
+        # 2 LLM bullets mapped to first 2 original slots; third original dropped
+        assert len(role.bullets) <= 3
+        assert "Updated work 1.1" in role.bullets[0].text
+        assert "Updated work 1.2" in role.bullets[1].text
+
+
+# ---------------------------------------------------------------------------
+# 9. Summary skipped when no anchor / mapped when anchor exists
+# ---------------------------------------------------------------------------
+
+class TestSummaryHandling:
+    def test_summary_skipped_when_no_original_anchor(self, monkeypatch):
+        """LLM summary with no matching original section → not inserted in layout-bound mode."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+
+        from tailor.compiler.updater import apply_tailored
+
+        # Template has only skills, no summary
+        doc = _make_layout_doc(1)
+        llm_secs = [
+            _make_llm_section("Professional Summary", ["I am a developer."], "summary"),
+            _make_llm_experience(1),
+        ]
+        from tailor.compiler.text_parser import LlmSection
+        updated = apply_tailored(doc, llm_secs)
+
+        section_types = [s.semantic_type for s in updated.sections]
+        assert "summary" not in section_types, "Unmatched summary must not be inserted"
+
+    def test_summary_mapped_to_existing_about_section(self, monkeypatch):
+        """LLM 'Professional Summary' maps to original 'About Me' section (same semantic type)."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+
+        from tailor.compiler.models import (
+            LayoutParagraphBlock, LayoutProfile, ResumeDocument, assign_stable_ids,
+        )
+        from tailor.compiler.updater import apply_tailored
+
+        layout = LayoutProfile(
+            page_width_pt=612, page_height_pt=792,
+            margin_top_pt=72, margin_bottom_pt=72,
+            margin_left_pt=72, margin_right_pt=72,
+            default_font_name="Calibri", default_font_size_pt=11,
+        )
+        about_sec = _make_minimal_section("About Me", "summary", ["Original about text."])
+        exp_sec = _make_layout_doc(1).sections[0]
+        orig = ResumeDocument(
+            header_paras=[], sections=[about_sec, exp_sec], layout=layout, all_paras=[],
+        )
+        assign_stable_ids(orig)  # assigns about_sec.section_id = "sec_1", etc.
+        orig_about_section_id = about_sec.section_id
+        orig_about_heading_para_id = about_sec.heading.para_id
+        orig.layout_blocks = [
+            LayoutParagraphBlock(para_id=pm.para_id)
+            for pm in orig.all_paras if pm.para_id
+        ]
+
+        # LLM uses "Professional Summary" but the original has "About Me" (same semantic_type=summary)
+        llm_secs = [
+            _make_llm_section("Professional Summary", ["Updated summary content."], "summary"),
+            _make_llm_experience(1),
+        ]
+        updated = apply_tailored(orig, llm_secs)
+
+        summary_secs = [s for s in updated.sections if s.semantic_type == "summary"]
+        assert len(summary_secs) == 1, "Should have exactly one summary section"
+        # Original section_id preserved
+        assert summary_secs[0].section_id == orig_about_section_id, "section_id must be preserved"
+        # Heading para_id preserved
+        assert summary_secs[0].heading.para_id == orig_about_heading_para_id
+        # Body text updated
+        assert "Updated summary content" in summary_secs[0].body_paras[0].text
+
+
+# ---------------------------------------------------------------------------
+# 10. enforce_no_unbound_paragraphs safety net
+# ---------------------------------------------------------------------------
+
+class TestEnforceNoUnbound:
+    def test_unbound_body_para_packed_into_last_anchored(self):
+        """enforce_no_unbound packs an unbound body para into the last anchored slot."""
+        from tailor.compiler.models import ParaModel, ParaStyle, ResumeSection
+        from tailor.compiler.updater import enforce_no_unbound_paragraphs
+
+        def _p(text, pid):
+            pm = ParaModel(text=text, style=ParaStyle(), semantic="paragraph")
+            pm.para_id = pid
+            return pm
+
+        anchored1 = _p("Anchored 1", "para_a")
+        anchored2 = _p("Anchored 2", "para_b")
+        unbound = _p("Unbound extra", "")  # no para_id
+
+        sec = ResumeSection(
+            title="Skills",
+            heading=_p("Skills", "para_h"),
+            semantic_type="skills",
+            body_paras=[anchored1, anchored2, unbound],
+        )
+        sec.section_id = "sec_1"
+
+        enforce_no_unbound_paragraphs([sec], [])
+
+        content = [p for p in sec.body_paras if p.text.strip()]
+        # Only 2 content paras (no unbound)
+        assert len(content) == 2
+        # Unbound text packed into last anchored
+        assert "Unbound extra" in content[-1].text
+        assert "Anchored 2" in content[-1].text
+        # para_id preserved
+        assert content[-1].para_id == "para_b"
+
+    def test_enforce_called_during_apply_tailored(self, monkeypatch):
+        """After apply_tailored in layout-bound mode, all_paras has no unbound non-empty."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+
+        from tailor.compiler.updater import apply_tailored, validate_layout_binding
+
+        doc = _make_layout_doc(2, n_bullets_per_role=2)
+        llm_secs = [_make_llm_experience(2, n_bullets_per_role=5)]
+        updated = apply_tailored(doc, llm_secs)
+
+        metrics = validate_layout_binding(updated)
+        assert metrics["unbound_non_empty_paras"] == 0
+
+
+# ---------------------------------------------------------------------------
+# 11. Sample 31 structural smoke test
+# ---------------------------------------------------------------------------
+
+class TestSample31StructuralSmoke:
+    _SAMPLE_31 = str(
+        Path(__file__).parent / "samples" / "resume" / "docx"
+        / "31-Software-Engineer-Editable-Resume-Template-Download-in-docx-7.docx"
+    )
+
+    def test_sample31_no_unbound_after_layout_bound_update(self, monkeypatch):
+        """Sample 31: no non-empty para_id='' after layout-bound apply_tailored."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+
+        from tailor.compiler.docx_parser import parse_docx
+        from tailor.compiler.models import ResumeDocument
+        from tailor.compiler.text_parser import parse_llm_output
+        from tailor.compiler.updater import apply_tailored, validate_layout_binding
+
+        doc = parse_docx(self._SAMPLE_31)
+        d = doc.to_dict()
+        deser = ResumeDocument.from_dict(d)
+        assert deser.layout_blocks is not None
+
+        # Build minimal LLM text from the parsed structure
+        llm_lines = []
+        for sec in deser.sections:
+            if sec.semantic_type in ("education", "certifications", "languages", "websites"):
+                continue
+            llm_lines.append(sec.title)
+            if sec.semantic_type == "experience":
+                for role in sec.roles[:3]:
+                    llm_lines.append(role.header.text)
+                    if role.meta_lines:
+                        llm_lines.append(role.meta_lines[0].text)
+                    for b in role.bullets[:3]:
+                        llm_lines.append(f"- {b.text}")
+            else:
+                for p in sec.body_paras[:2]:
+                    if p.text.strip():
+                        llm_lines.append(p.text)
+            llm_lines.append("")
+
+        llm_secs = parse_llm_output("\n".join(llm_lines))
+        if not llm_secs:
+            pytest.skip("could not parse LLM text from sample 31")
+
+        updated = apply_tailored(deser, llm_secs)
+        metrics = validate_layout_binding(updated)
+
+        assert metrics["unbound_non_empty_paras"] == 0, (
+            f"sample 31: {metrics['unbound_non_empty_paras']} unbound non-empty paras"
+        )
+
+    def test_sample31_experience_has_roles(self, monkeypatch):
+        """Sample 31: experience section retains roles (not collapsed)."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+
+        from tailor.compiler.docx_parser import parse_docx
+        from tailor.compiler.models import ResumeDocument
+        from tailor.compiler.text_parser import parse_llm_output
+        from tailor.compiler.updater import apply_tailored
+
+        doc = parse_docx(self._SAMPLE_31)
+        d = doc.to_dict()
+        deser = ResumeDocument.from_dict(d)
+
+        exp_orig = next((s for s in deser.sections if s.semantic_type == "experience"), None)
+        if exp_orig is None:
+            pytest.skip("no experience section in sample 31")
+        n_orig_roles = len(exp_orig.roles)
+
+        llm_lines = [exp_orig.title]
+        for role in exp_orig.roles:
+            llm_lines.append(role.header.text)
+            if role.meta_lines:
+                llm_lines.append(role.meta_lines[0].text)
+            for b in role.bullets[:2]:
+                llm_lines.append(f"- {b.text}")
+        llm_lines.append("")
+
+        llm_secs = parse_llm_output("\n".join(llm_lines))
+        if not llm_secs:
+            pytest.skip("could not parse experience LLM text")
+
+        updated = apply_tailored(deser, llm_secs)
+        exp_updated = next((s for s in updated.sections if s.semantic_type == "experience"), None)
+        assert exp_updated is not None
+        assert len(exp_updated.roles) == n_orig_roles, (
+            f"expected {n_orig_roles} roles, got {len(exp_updated.roles)}"
+        )

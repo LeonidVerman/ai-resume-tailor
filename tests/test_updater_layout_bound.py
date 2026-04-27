@@ -253,8 +253,8 @@ class TestSkillsInPlaceUpdate:
 # ---------------------------------------------------------------------------
 
 class TestExperienceInPlaceUpdate:
-    def test_extra_bullets_dropped_not_cloned(self, monkeypatch):
-        """Extra LLM bullets are dropped (not clone_as) in layout-bound mode."""
+    def test_extra_bullets_packed_not_cloned(self, monkeypatch):
+        """Extra LLM bullets are PACKED into the last slot (not clone_as) in layout-bound mode."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -291,16 +291,18 @@ class TestExperienceInPlaceUpdate:
         updated = apply_tailored(orig, [llm_exp])
 
         updated_role = updated.sections[0].roles[0]
-        # Only 2 bullets (original count), not 3
+        # 2 bullets (original count preserved)
         assert len(updated_role.bullets) == 2, (
             f"expected 2 bullets, got {len(updated_role.bullets)}"
         )
-        # All bullets have non-empty para_id
+        # All bullets have non-empty para_id (no clone_as)
         for b in updated_role.bullets:
             assert b.para_id != "", f"bullet has empty para_id: {b.text!r}"
-        # Text was updated
+        # First bullet: normal update
         assert updated_role.bullets[0].text == "Updated 1"
-        assert updated_role.bullets[1].text == "Updated 2"
+        # Last bullet: packed (contains "Updated 2" + newline + "Extra 3")
+        assert "Updated 2" in updated_role.bullets[1].text
+        assert "Extra 3" in updated_role.bullets[1].text
 
     def test_role_id_stable_preserved(self, monkeypatch):
         """role_id_stable is preserved from original when layout_bound=True."""

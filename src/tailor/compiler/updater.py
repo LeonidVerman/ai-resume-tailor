@@ -209,16 +209,31 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
         else:
             _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra meta line %r", meta_text[:60])
 
-    # Bullets: reuse original protos; in layout-bound mode drop extras.
+    # Bullets: reuse original protos.
+    # layout-bound mode: pack overflow LLM bullets into the last existing slot
+    # rather than creating unbound clone_as paragraphs.  This preserves the
+    # layout_blocks anchor (para_id) for every rendered bullet.
     arch = orig.bullets[0] if orig.bullets else orig.header
     new_bullets: list[ParaModel] = []
-    for i, bullet_text in enumerate(llm.bullets):
-        if i < len(orig.bullets):
-            new_bullets.append(orig.bullets[i].with_text(bullet_text))
-        elif not layout_bound:
-            new_bullets.append(arch.clone_as(bullet_text, "bullet"))
-        else:
-            _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra bullet %r", bullet_text[:60])
+
+    if layout_bound and orig.bullets and len(llm.bullets) > len(orig.bullets):
+        n_orig = len(orig.bullets)
+        for i in range(n_orig - 1):
+            new_bullets.append(orig.bullets[i].with_text(llm.bullets[i]))
+        packed_text = "\n".join(llm.bullets[n_orig - 1:])
+        new_bullets.append(orig.bullets[n_orig - 1].with_text(packed_text))
+        _log.debug(
+            "BULLET_OVERFLOW_PACKED: %d LLM bullets packed into %d orig slots for role %r",
+            len(llm.bullets), n_orig, orig.role_id[:50],
+        )
+    else:
+        for i, bullet_text in enumerate(llm.bullets):
+            if i < len(orig.bullets):
+                new_bullets.append(orig.bullets[i].with_text(bullet_text))
+            elif not layout_bound:
+                new_bullets.append(arch.clone_as(bullet_text, "bullet"))
+            else:
+                _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra bullet %r", bullet_text[:60])
 
     return RoleEntry(
         header=new_header,
@@ -674,13 +689,22 @@ def _update_role_bullets_only(
     """
     arch = orig.bullets[0] if orig.bullets else orig.header
     new_bullets: list[ParaModel] = []
-    for i, text in enumerate(llm_bullets):
-        if i < len(orig.bullets):
-            new_bullets.append(orig.bullets[i].with_text(text))
-        elif not layout_bound:
-            new_bullets.append(arch.clone_as(text, "bullet"))
-        else:
-            _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra bullet %r", text[:60])
+    if layout_bound and orig.bullets and len(llm_bullets) > len(orig.bullets):
+        n_orig = len(orig.bullets)
+        for i in range(n_orig - 1):
+            new_bullets.append(orig.bullets[i].with_text(llm_bullets[i]))
+        new_bullets.append(orig.bullets[n_orig - 1].with_text("\n".join(llm_bullets[n_orig - 1:])))
+        _log.debug(
+            "BULLET_OVERFLOW_PACKED: %d bullets → %d slots (bullets-only path)", len(llm_bullets), n_orig
+        )
+    else:
+        for i, text in enumerate(llm_bullets):
+            if i < len(orig.bullets):
+                new_bullets.append(orig.bullets[i].with_text(text))
+            elif not layout_bound:
+                new_bullets.append(arch.clone_as(text, "bullet"))
+            else:
+                _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra bullet %r", text[:60])
     return RoleEntry(
         # Strip any column break from the role header — the section heading
         # (or Summary heading) handles right-column placement; a second break
@@ -1718,6 +1742,75 @@ def validate_structural_integrity(
     return violations
 
 
+def enforce_no_unbound_paragraphs(
+    updated_sections: "list[ResumeSection]",
+    effective_header_paras: "list[ParaModel]",
+) -> None:
+    """Mutate sections in-place to eliminate remaining unbound non-empty paragraphs.
+
+    Called as a post-hoc safety net at the end of apply_tailored when
+    layout_bound=True.  Unbound paragraphs (para_id=="", text non-empty) that
+    survive bullet-packing or body-section-packing are packed into the last
+    anchored paragraph in the same container, or dropped if no anchor exists.
+
+    This is an invariant enforcement pass — ideally all unbound content was
+    already resolved by the packing logic in _update_role and
+    _update_body_section.  This function handles residual edge cases such as
+    classification-path outputs and date-first layout repairs.
+    """
+
+    def _pack_or_drop(
+        items: "list[ParaModel]",
+        context: str,
+    ) -> "list[ParaModel]":
+        """Return a new list with unbound non-empty items packed into the last anchor."""
+        unbound_texts = [p.text for p in items if not p.para_id and p.text.strip()]
+        if not unbound_texts:
+            return items
+        # Build a map of para_id → (possibly updated) para for anchored items
+        anchored: list[ParaModel] = [p for p in items if p.para_id and p.text.strip()]
+        if anchored:
+            packed_text = anchored[-1].text + "\n" + "\n".join(unbound_texts)
+            anchored_map: dict[str, ParaModel] = {p.para_id: p for p in anchored}
+            anchored_map[anchored[-1].para_id] = anchored[-1].with_text(packed_text)
+            _log.debug(
+                "STRUCTURAL_REPAIR_ATTEMPTED: packed %d unbound into %s",
+                len(unbound_texts), context,
+            )
+        else:
+            anchored_map = {}
+            _log.debug(
+                "STRUCTURAL_REPAIR_ATTEMPTED: dropped %d unbound (no anchor) from %s",
+                len(unbound_texts), context,
+            )
+        # Rebuild: spacers kept; anchored replaced with (possibly packed) version; unbound dropped
+        result: list[ParaModel] = []
+        for p in items:
+            if not p.text.strip():
+                result.append(p)       # spacer / empty → keep
+            elif p.para_id:
+                result.append(anchored_map.get(p.para_id, p))  # anchored
+            # unbound non-empty: drop
+        return result
+
+    # Header paras — normally never have unbound content, but check as a safety net
+    if any(not p.para_id and p.text.strip() for p in effective_header_paras):
+        effective_header_paras[:] = _pack_or_drop(effective_header_paras, "header_paras")
+
+    for sec in updated_sections:
+        # Body paras of non-experience sections
+        if any(not p.para_id and p.text.strip() for p in sec.body_paras):
+            sec.body_paras[:] = _pack_or_drop(
+                sec.body_paras, f"sec:{sec.title[:30]}.body_paras"
+            )
+        # Role bullets
+        for role in sec.roles:
+            if any(not b.para_id and b.text.strip() for b in role.bullets):
+                role.bullets[:] = _pack_or_drop(
+                    role.bullets, f"role:{role.role_id[:30]}.bullets"
+                )
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -1971,6 +2064,13 @@ def apply_tailored(
     else:
         effective_header_paras = list(original.header_paras)
 
+    # In layout-bound mode: enforce zero-unbound invariant before rebuilding all_paras.
+    # This is a safety net — bullet packing and body-section packing should have
+    # eliminated most unbound paras already.  Residual unbound content (e.g. from
+    # classification paths) is packed into the nearest anchored slot or dropped.
+    if _layout_bound:
+        enforce_no_unbound_paragraphs(new_sections, effective_header_paras)
+
     # Rebuild flat para list in document order
     all_paras: list[ParaModel] = list(effective_header_paras)
     for section in new_sections:
@@ -2096,17 +2196,34 @@ def apply_tailored(
                     "(first 60 chars: %r)", summary_text[:60]
                 )
 
-    # Invariant enforcement: log when non-empty unbound paragraphs survive.
-    # In layout-bound mode every paragraph that has text MUST have a para_id;
-    # the layout_blocks renderer cannot place paragraphs it cannot look up.
+    # Final structural integrity check — scan all_paras for lingering unbound content.
+    # In layout-bound mode this should be zero; any residual is a bug in the update
+    # pipeline worth diagnosing immediately.
     _unbound_non_empty = sum(
         1 for pm in all_paras if not pm.para_id and pm.text.strip()
     )
     if _unbound_non_empty:
         _log.debug(
-            "UNBOUND_PARAGRAPH_DETECTED: %d non-empty paras with para_id='' in updated IR",
+            "UNBOUND_PARAGRAPH_DETECTED: %d non-empty paras with para_id='' "
+            "survived enforce pass in updated IR",
             _unbound_non_empty,
         )
+        if _layout_bound:
+            _log.debug("STRUCTURAL_REPAIR_FAILED: %d unbound paras remain after enforcement",
+                       _unbound_non_empty)
+
+    # Run structural validation gate in layout-bound mode and report violations.
+    if _layout_bound:
+        _sv = validate_structural_integrity(original, ResumeDocument(
+            header_paras=effective_header_paras,
+            sections=new_sections,
+            layout=original.layout,
+            all_paras=all_paras,
+            source_kind=original.source_kind,
+            layout_blocks=original.layout_blocks,
+        ))
+        if any(v > 0 for v in _sv.values()):
+            _log.debug("STRUCTURAL_VALIDATION_GATE: violations=%s", _sv)
 
     return ResumeDocument(
         header_paras=effective_header_paras,
