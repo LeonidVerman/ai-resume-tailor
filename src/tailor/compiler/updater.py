@@ -1939,6 +1939,112 @@ def enforce_no_unbound_paragraphs(
 
 
 # ---------------------------------------------------------------------------
+# Anchored summary insertion (layout-bound mode)
+# ---------------------------------------------------------------------------
+
+def _find_summary_anchors(
+    doc: "ResumeDocument",
+) -> "tuple[ParaModel, ParaModel] | None":
+    """Find two empty header paragraphs to anchor an inserted summary section.
+
+    Scans header_paras for a trailing cluster of empty paragraphs (text.strip()
+    == '') and returns the last two.  These are the slots closest to the first
+    section heading and the most natural position for a professional summary.
+
+    Returns (heading_anchor, body_anchor) or None if fewer than 2 candidates.
+    """
+    header_paras = doc.header_paras
+    if len(header_paras) < 2:
+        return None
+
+    # Walk backwards to find the trailing cluster of empty paragraphs.
+    cluster_start = len(header_paras)
+    for i in range(len(header_paras) - 1, -1, -1):
+        pm = header_paras[i]
+        if pm.para_id and not pm.text.strip():
+            cluster_start = i
+        else:
+            break
+
+    trailing = header_paras[cluster_start:]
+    if len(trailing) < 2:
+        return None
+
+    # Use the last two in the trailing cluster (closest to the first section).
+    return trailing[-2], trailing[-1]
+
+
+def _clean_summary_text(body_lines: "list[str]") -> str:
+    """Produce a single clean string from LLM summary body_lines.
+
+    - Strips a leading "Professional Summary:" prefix if present.
+    - Drops "Current Date: ..." lines (belt-and-suspenders; injection script
+      already removes these but the updater runs on raw LLM output too).
+    - Joins remaining lines into one paragraph.
+    """
+    lines = [l.strip() for l in body_lines if l.strip()]
+    # Remove "Current Date:" residuals
+    lines = [
+        l for l in lines
+        if not re.match(r"^current\s+date\s*:", l, re.IGNORECASE)
+    ]
+    # Strip leading "Professional Summary:" label
+    if lines and re.match(r"^professional\s+summary\s*:", lines[0], re.IGNORECASE):
+        lines[0] = re.sub(
+            r"^professional\s+summary\s*:\s*", "", lines[0], flags=re.IGNORECASE
+        ).strip()
+        if not lines[0]:
+            lines.pop(0)
+    return " ".join(lines).strip()
+
+
+def _build_anchored_summary_section(
+    llm_section: "LlmSection",
+    heading_anchor: "ParaModel",
+    body_anchor: "ParaModel",
+) -> "ResumeSection":
+    """Build a summary ResumeSection fully anchored to existing para_ids.
+
+    heading_anchor and body_anchor must be empty paragraphs from header_paras
+    with valid para_ids.  Their para_ids are reused so the layout renderer
+    can place the new content exactly where those empty slots appear in the
+    original DOCX.
+
+    section_id is set to "sec_summary_inserted" so finalize_layout_bound_ir
+    does not treat the section as synthetic (section_id != '').
+    """
+    heading_text = "PROFESSIONAL SUMMARY"
+    body_text = _clean_summary_text(llm_section.body_lines)
+
+    new_heading = heading_anchor.with_text(heading_text)
+    new_heading_pm = ParaModel(
+        text=new_heading.text,
+        style=new_heading.style,
+        semantic="section_heading",
+        paragraph_profile=new_heading.paragraph_profile,
+    )
+    new_heading_pm.para_id = heading_anchor.para_id
+
+    new_body = body_anchor.with_text(body_text)
+    new_body_pm = ParaModel(
+        text=new_body.text,
+        style=new_body.style,
+        semantic="paragraph",
+        paragraph_profile=new_body.paragraph_profile,
+    )
+    new_body_pm.para_id = body_anchor.para_id
+
+    return ResumeSection(
+        title="Professional Summary",
+        heading=new_heading_pm,
+        semantic_type="summary",
+        body_paras=[new_body_pm] if body_text else [],
+        roles=[],
+        section_id="sec_summary_inserted",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Layout-bound IR finalization (unconditional enforcement)
 # ---------------------------------------------------------------------------
 
@@ -2134,6 +2240,10 @@ def apply_tailored(
     injectable_skills_section: LlmSection | None = None
     header_skill_target: tuple[int, int] | None = None
 
+    # Para-ids claimed by anchored summary insertion.  These are removed from
+    # effective_header_paras so they are not double-counted in all_paras.
+    _used_anchor_ids: set[str] = set()
+
     if not match.extras:
         # ---- Fast path: no extras, keep original section order ----
         new_sections: list[ResumeSection] = []
@@ -2190,6 +2300,20 @@ def apply_tailored(
             else None
         )
 
+        # Pre-compute summary anchors for layout-bound mode.
+        # Used when the LLM adds a summary the template does not have:
+        # instead of dropping it, anchor it to existing empty header slots.
+        _summary_anchors: "tuple[ParaModel, ParaModel] | None" = None
+        if _layout_bound:
+            _summary_anchors = _find_summary_anchors(original)
+            if _summary_anchors:
+                _log.debug(
+                    "SUMMARY_ANCHORS_FOUND: heading_pid=%r body_pid=%r",
+                    _summary_anchors[0].para_id, _summary_anchors[1].para_id,
+                )
+            else:
+                _log.debug("SUMMARY_ANCHORS_NOT_FOUND: no safe empty header slots")
+
         # Iterate LLM output order; emit matched or extra sections.
         # Spec §5: extra experience sections are never created.
         # Skills extras that have a header target are injected there instead.
@@ -2224,12 +2348,31 @@ def apply_tailored(
                     llm_s.heading,
                 )
             elif _layout_bound:
-                # In layout-bound mode, unmatched extras are skipped entirely
-                # rather than creating fully unbound sections.
-                _log.debug(
-                    "UPDATER_SECTION_ANCHOR_NOT_FOUND: %r dropped in layout-bound mode",
-                    llm_s.heading,
-                )
+                # In layout-bound mode, try anchored summary insertion first.
+                # Non-summary extras are dropped to prevent unbound sections.
+                if llm_s.semantic_type == "summary" and _summary_anchors is not None:
+                    anchored = _build_anchored_summary_section(
+                        llm_s, _summary_anchors[0], _summary_anchors[1]
+                    )
+                    llm_order_sections.append(anchored)
+                    _used_anchor_ids.add(_summary_anchors[0].para_id)
+                    _used_anchor_ids.add(_summary_anchors[1].para_id)
+                    _summary_anchors = None  # consume anchors; only one summary
+                    _log.debug(
+                        "SUMMARY_INSERTED_ANCHORED: %r heading_pid=%r body_pid=%r",
+                        llm_s.heading,
+                        anchored.heading.para_id,
+                        anchored.body_paras[0].para_id if anchored.body_paras else None,
+                    )
+                elif llm_s.semantic_type == "summary":
+                    _log.debug(
+                        "SUMMARY_INSERTION_SKIPPED_NO_ANCHORS: %r", llm_s.heading
+                    )
+                else:
+                    _log.debug(
+                        "UPDATER_SECTION_ANCHOR_NOT_FOUND: %r dropped in layout-bound mode",
+                        llm_s.heading,
+                    )
             else:
                 llm_order_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
 
@@ -2265,6 +2408,15 @@ def apply_tailored(
         )
     else:
         effective_header_paras = list(original.header_paras)
+
+    # Remove anchor paragraphs claimed by anchored summary insertion from
+    # effective_header_paras so they do not appear twice in all_paras.
+    # (They now live inside the summary ResumeSection's heading/body_paras.)
+    if _used_anchor_ids:
+        effective_header_paras = [
+            p for p in effective_header_paras
+            if p.para_id not in _used_anchor_ids
+        ]
 
     # Hard ban in layout-bound mode: remove any section that has non-empty content
     # but no section_id (i.e. it was created synthetic via _make_extra_section or
