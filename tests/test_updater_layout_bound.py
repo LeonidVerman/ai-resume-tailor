@@ -134,8 +134,8 @@ class TestSummaryInPlaceUpdate:
         # Text updated
         assert "Updated summary" in updated.sections[0].body_paras[0].text
 
-    def test_section_id_not_preserved_when_flag_off(self, monkeypatch):
-        """With flag=false, section_id is NOT preserved (existing behavior)."""
+    def test_section_id_always_preserved_regardless_of_flag(self, monkeypatch):
+        """section_id is always preserved from the original section (invariant fix)."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", False)
 
@@ -155,11 +155,12 @@ class TestSummaryInPlaceUpdate:
             header_paras=[], sections=[summary_sec], layout=layout, all_paras=[],
         )
         assign_stable_ids(orig)
+        orig_section_id = orig.sections[0].section_id  # assigned by assign_stable_ids
 
         llm_secs = [_make_llm_section("Summary", ["New text."])]
         updated = apply_tailored(orig, llm_secs)
-        # Without layout_bound, section_id is empty on the updated section
-        assert updated.sections[0].section_id == ""
+        # section_id is always preserved now (regardless of flag)
+        assert updated.sections[0].section_id == orig_section_id
 
 
 # ---------------------------------------------------------------------------
@@ -512,12 +513,12 @@ class TestValidateLayoutBinding:
         metrics = validate_layout_binding(updated)
         assert metrics["unbound_non_empty_paras"] == 0
 
-    def test_validate_detects_unbound_paras(self, monkeypatch):
-        """validate_layout_binding detects unbound (clone_as) paragraphs."""
+    def test_validate_detects_unbound_paras_no_layout_blocks(self, monkeypatch):
+        """validate_layout_binding detects clone_as unbound paras when NO layout_blocks."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", False)  # allow unbound
 
-        from tailor.compiler.models import LayoutParagraphBlock, LayoutProfile, ResumeDocument, assign_stable_ids
+        from tailor.compiler.models import LayoutProfile, ResumeDocument, assign_stable_ids
         from tailor.compiler.updater import apply_tailored, validate_layout_binding
 
         layout = LayoutProfile(
@@ -529,18 +530,15 @@ class TestValidateLayoutBinding:
         sec = _make_minimal_section("Skills", "skills", ["A"], "sec_1")
         orig = ResumeDocument(header_paras=[], sections=[sec], layout=layout, all_paras=[])
         assign_stable_ids(orig)
-        orig.layout_blocks = [
-            LayoutParagraphBlock(para_id=pm.para_id)
-            for pm in orig.all_paras if pm.para_id
-        ]
+        # No layout_blocks → finalize_layout_bound_ir won't run → clone_as unbound paras survive
 
-        # LLM has MORE lines → flag=False allows clone_as → unbound
+        # LLM has MORE lines → flag=False + no layout_blocks → clone_as → unbound
         llm_secs = [_make_llm_section("Skills", ["X", "Y", "Z"], "skills")]
         updated = apply_tailored(orig, llm_secs)
 
         metrics = validate_layout_binding(updated)
         assert metrics["unbound_non_empty_paras"] > 0, (
-            "expected unbound paras when flag is off and LLM has extras"
+            "expected unbound paras when flag is off, no layout_blocks, and LLM has extras"
         )
 
 

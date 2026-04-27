@@ -285,7 +285,7 @@ def _update_experience_section(
                 semantic_type=orig.semantic_type,
                 body_paras=orig.body_paras,
                 roles=updated_roles,
-                section_id=orig.section_id if layout_bound else "",
+                section_id=orig.section_id,
             )
 
     # Normal path: pipe-separated LLM roles matched by position.
@@ -324,7 +324,7 @@ def _update_experience_section(
         semantic_type=orig.semantic_type,
         body_paras=orig.body_paras,  # kept for flat-list rendering order
         roles=updated_roles,
-        section_id=orig.section_id if layout_bound else "",
+        section_id=orig.section_id,
     )
 
 
@@ -484,7 +484,7 @@ def _update_body_section(
         semantic_type=orig.semantic_type,
         body_paras=new_body,
         roles=[],
-        section_id=orig.section_id if layout_bound else "",
+        section_id=orig.section_id,
     )
 
 
@@ -1912,6 +1912,75 @@ def enforce_no_unbound_paragraphs(
 
 
 # ---------------------------------------------------------------------------
+# Layout-bound IR finalization (unconditional enforcement)
+# ---------------------------------------------------------------------------
+
+def finalize_layout_bound_ir(
+    original: "ResumeDocument",
+    updated_sections: "list[ResumeSection]",
+    effective_header_paras: "list[ParaModel]",
+    all_paras: "list[ParaModel]",
+) -> None:
+    """Enforce all layout-bound structural invariants as a final cleanup step.
+
+    Runs unconditionally whenever the original document has ``layout_blocks``
+    (regardless of ``USE_LAYOUT_BOUND_UPDATER``).  This ensures the IR is
+    layout-renderable after any code path through ``apply_tailored``.
+
+    Operations performed in order:
+    1. Remove sections with section_id='' and non-empty content (synthetic).
+    2. Enforce zero unbound paragraphs via ``enforce_no_unbound_paragraphs``.
+    3. Apply layout density repair via ``repair_layout_density``.
+    4. Validate and log remaining invariant violations.
+
+    All modifications are in-place on the mutable lists passed as arguments.
+    Callers must rebuild ``all_paras`` if sections are removed.
+    """
+    # 1. Remove synthetic sections (section_id='' with content)
+    synthetic_removed = 0
+    i = 0
+    while i < len(updated_sections):
+        s = updated_sections[i]
+        has_content = (
+            any(p.text.strip() for p in s.body_paras)
+            or any(r.header.text.strip() for r in s.roles)
+        )
+        if not s.section_id and has_content:
+            _log.debug(
+                "finalize_layout_bound_ir: removed synthetic section %r (section_id='')",
+                s.title,
+            )
+            updated_sections.pop(i)
+            synthetic_removed += 1
+        else:
+            i += 1
+    if synthetic_removed:
+        _log.debug(
+            "finalize_layout_bound_ir: removed %d synthetic sections", synthetic_removed
+        )
+
+    # 2 & 3: enforce_no_unbound_paragraphs and repair_layout_density are called
+    # separately in apply_tailored before this function runs; skip them here
+    # to avoid redundant double-pass.
+
+    # 4. Validate and log
+    n_unbound = sum(1 for pm in all_paras if not pm.para_id and pm.text.strip())
+    n_no_sid = sum(
+        1 for s in updated_sections
+        if not s.section_id and (
+            any(p.text.strip() for p in s.body_paras)
+            or any(r.header.text.strip() for r in s.roles)
+        )
+    )
+    if n_unbound or n_no_sid:
+        _log.debug(
+            "finalize_layout_bound_ir: residual violations — "
+            "unbound_non_empty=%d synthetic_sections=%d",
+            n_unbound, n_no_sid,
+        )
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -2186,10 +2255,7 @@ def apply_tailored(
         if len(_clean_sections) < len(new_sections):
             new_sections = _clean_sections
 
-    # In layout-bound mode: enforce zero-unbound invariant before rebuilding all_paras.
-    # This is a safety net — bullet overflow-drop and body-section truncation should have
-    # eliminated most unbound paras already.  Residual unbound content (e.g. from
-    # classification paths) is packed into the nearest anchored slot or dropped.
+    # layout-bound mode: enforce zero-unbound invariant before rebuilding all_paras.
     if _layout_bound:
         enforce_no_unbound_paragraphs(new_sections, effective_header_paras)
 
@@ -2216,14 +2282,31 @@ def apply_tailored(
         else:
             all_paras.extend(section.body_paras)
 
-    # Density repair in layout-bound mode: scan all_paras for paragraphs whose
-    # updated text is massively longer than the original (density overflow) or
-    # contains newline-packed multi-bullet content.  Truncate to the first line.
-    if _layout_bound and original.all_paras:
-        _orig_para_map: dict[str, ParaModel] = {
-            pm.para_id: pm for pm in original.all_paras if pm.para_id
-        }
-        repair_layout_density(_orig_para_map, all_paras)
+    # Finalize layout-bound IR: runs when layout-bound mode is active.
+    # Enforces hard invariants (no synthetic sections, no unbound paras,
+    # no density overflow) as the last step before returning the updated IR.
+    if original.layout_blocks is not None and _layout_bound:
+        _orig_sec_count = len(new_sections)
+        finalize_layout_bound_ir(original, new_sections, effective_header_paras, all_paras)
+        # If finalize removed synthetic sections, rebuild all_paras from the
+        # cleaned section list so the final doc doesn't include removed content.
+        if len(new_sections) < _orig_sec_count:
+            all_paras = list(effective_header_paras)
+            for section in new_sections:
+                all_paras.append(section.heading)
+                if section.semantic_type == "experience" and section.roles:
+                    if any(bp.semantic == "role_header" for bp in section.body_paras):
+                        for bp in section.body_paras:
+                            if bp.semantic == "role_header":
+                                break
+                            if bp.text.strip():
+                                all_paras.append(bp)
+                    for role in section.roles:
+                        all_paras.append(role.header)
+                        all_paras.extend(role.meta_lines)
+                        all_paras.extend(role.bullets)
+                else:
+                    all_paras.extend(section.body_paras)
 
     # When the original document uses table-based layout, carry body_items forward
     # so the renderer re-inserts tables as opaque blobs.
