@@ -1220,6 +1220,7 @@ def _update_experience_classified(
     llm: LlmSection,
     cls_sec: "ClassificationSection",
     role_cls: "dict[str, ClassificationRole]",
+    layout_bound: bool = False,
 ) -> ResumeSection:
     """Experience section update constrained by classification.
 
@@ -1246,7 +1247,7 @@ def _update_experience_classified(
     updated_roles: list[RoleEntry] = []
     for i, o_role in enumerate(orig.roles):
         if i < len(llm_roles):
-            updated = _update_role_bullets_only(o_role, llm_roles[i].bullets)
+            updated = _update_role_bullets_only(o_role, llm_roles[i].bullets, layout_bound=layout_bound)
             _log.debug(
                 "classification: role %r → updated %d bullets",
                 o_role.role_id, len(llm_roles[i].bullets),
@@ -1279,6 +1280,7 @@ def _update_body_classified(
     orig: ResumeSection,
     llm: LlmSection,
     cls_sec: "ClassificationSection",
+    layout_bound: bool = False,
 ) -> ResumeSection:
     """Non-experience body section update constrained by classification.
 
@@ -1338,7 +1340,7 @@ def _update_body_classified(
             body_lines=_sanitize_skills_lines(llm.body_lines),
             roles=llm.roles,
         )
-    updated = _update_body_section(orig, llm)
+    updated = _update_body_section(orig, llm, layout_bound=layout_bound)
     if cls_sec.preserve_heading:
         return ResumeSection(
             title=orig.title,
@@ -1355,14 +1357,15 @@ def _apply_section_classified(
     llm: LlmSection,
     cls_sec: "ClassificationSection",
     role_cls: "dict[str, ClassificationRole]",
+    layout_bound: bool = False,
 ) -> ResumeSection:
     """Dispatch classification-constrained section update."""
     if cls_sec.rewrite_policy == "preserve":
         _log.debug("classification: section %r (%s) → preserve", orig.title, orig.section_id)
         return orig
     if orig.semantic_type == "experience":
-        return _update_experience_classified(orig, llm, cls_sec, role_cls)
-    return _update_body_classified(orig, llm, cls_sec)
+        return _update_experience_classified(orig, llm, cls_sec, role_cls, layout_bound=layout_bound)
+    return _update_body_classified(orig, llm, cls_sec, layout_bound=layout_bound)
 
 
 # ---------------------------------------------------------------------------
@@ -1920,23 +1923,28 @@ def finalize_layout_bound_ir(
     updated_sections: "list[ResumeSection]",
     effective_header_paras: "list[ParaModel]",
     all_paras: "list[ParaModel]",
+    content_enforcement: bool = False,
 ) -> None:
-    """Enforce all layout-bound structural invariants as a final cleanup step.
+    """Enforce layout-bound structural invariants as a final cleanup step.
 
-    Runs unconditionally whenever the original document has ``layout_blocks``
-    (regardless of ``USE_LAYOUT_BOUND_UPDATER``).  This ensures the IR is
-    layout-renderable after any code path through ``apply_tailored``.
+    Always runs when ``original.layout_blocks`` is present, regardless of
+    ``USE_LAYOUT_BOUND_UPDATER``.
 
-    Operations performed in order:
-    1. Remove sections with section_id='' and non-empty content (synthetic).
+    Hard cleanup (always applied):
+    1. Remove sections with section_id='' and non-empty content — they are
+       synthetic (created by ``_make_extra_section``) and cannot be mapped to
+       any layout_blocks entry, so the layout renderer cannot place them.
+
+    Content enforcement (applied only when ``content_enforcement`` is True,
+    i.e. when ``USE_LAYOUT_BOUND_UPDATER=True``):
     2. Enforce zero unbound paragraphs via ``enforce_no_unbound_paragraphs``.
     3. Apply layout density repair via ``repair_layout_density``.
-    4. Validate and log remaining invariant violations.
 
     All modifications are in-place on the mutable lists passed as arguments.
     Callers must rebuild ``all_paras`` if sections are removed.
     """
-    # 1. Remove synthetic sections (section_id='' with content)
+    # 1. Hard cleanup: remove synthetic sections (section_id='' with content)
+    # These can never be rendered by the layout_blocks renderer.
     synthetic_removed = 0
     i = 0
     while i < len(updated_sections):
@@ -1947,7 +1955,8 @@ def finalize_layout_bound_ir(
         )
         if not s.section_id and has_content:
             _log.debug(
-                "finalize_layout_bound_ir: removed synthetic section %r (section_id='')",
+                "finalize_layout_bound_ir: removed synthetic section %r "
+                "(section_id='', cannot be placed by layout_blocks renderer)",
                 s.title,
             )
             updated_sections.pop(i)
@@ -1955,29 +1964,27 @@ def finalize_layout_bound_ir(
         else:
             i += 1
     if synthetic_removed:
-        _log.debug(
-            "finalize_layout_bound_ir: removed %d synthetic sections", synthetic_removed
-        )
+        _log.debug("finalize_layout_bound_ir: removed %d synthetic sections", synthetic_removed)
 
-    # 2 & 3: enforce_no_unbound_paragraphs and repair_layout_density are called
-    # separately in apply_tailored before this function runs; skip them here
-    # to avoid redundant double-pass.
-
-    # 4. Validate and log
-    n_unbound = sum(1 for pm in all_paras if not pm.para_id and pm.text.strip())
-    n_no_sid = sum(
-        1 for s in updated_sections
-        if not s.section_id and (
-            any(p.text.strip() for p in s.body_paras)
-            or any(r.header.text.strip() for r in s.roles)
+    # 2 & 3. Content enforcement (only when USE_LAYOUT_BOUND_UPDATER=True).
+    # enforce_no_unbound_paragraphs and repair_layout_density were already
+    # called in the _layout_bound branch above; avoid a redundant second pass.
+    if content_enforcement:
+        # Safety-net: check and log any residual unbound content.
+        n_unbound = sum(1 for pm in all_paras if not pm.para_id and pm.text.strip())
+        n_no_sid = sum(
+            1 for s in updated_sections
+            if not s.section_id and (
+                any(p.text.strip() for p in s.body_paras)
+                or any(r.header.text.strip() for r in s.roles)
+            )
         )
-    )
-    if n_unbound or n_no_sid:
-        _log.debug(
-            "finalize_layout_bound_ir: residual violations — "
-            "unbound_non_empty=%d synthetic_sections=%d",
-            n_unbound, n_no_sid,
-        )
+        if n_unbound or n_no_sid:
+            _log.debug(
+                "finalize_layout_bound_ir: residual violations after enforcement — "
+                "unbound_non_empty=%d synthetic_sections=%d",
+                n_unbound, n_no_sid,
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -2074,7 +2081,9 @@ def apply_tailored(
         # Classification-constrained path: look up by stable section_id.
         cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
         if cls_sec is not None:
-            return _apply_section_classified(orig_section, llm_section, cls_sec, _role_cls)
+            return _apply_section_classified(
+                orig_section, llm_section, cls_sec, _role_cls, layout_bound=_layout_bound
+            )
 
         # No classification (or section_id not in index) → existing behaviour.
         if orig_section.semantic_type == "experience":
@@ -2282,12 +2291,17 @@ def apply_tailored(
         else:
             all_paras.extend(section.body_paras)
 
-    # Finalize layout-bound IR: runs when layout-bound mode is active.
-    # Enforces hard invariants (no synthetic sections, no unbound paras,
-    # no density overflow) as the last step before returning the updated IR.
+    # Finalize layout-bound IR: runs when the full layout-bound mode is active.
+    # The `content_enforcement=True` flag enables the full set of invariants
+    # (unbound-para removal, density repair, synthetic section removal).
+    # Without USE_LAYOUT_BOUND_UPDATER=True, this block does not execute and
+    # the classic rendering path (with xml_proto) handles synthetic sections.
     if original.layout_blocks is not None and _layout_bound:
         _orig_sec_count = len(new_sections)
-        finalize_layout_bound_ir(original, new_sections, effective_header_paras, all_paras)
+        finalize_layout_bound_ir(
+            original, new_sections, effective_header_paras, all_paras,
+            content_enforcement=True,
+        )
         # If finalize removed synthetic sections, rebuild all_paras from the
         # cleaned section list so the final doc doesn't include removed content.
         if len(new_sections) < _orig_sec_count:
