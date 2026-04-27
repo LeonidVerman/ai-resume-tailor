@@ -221,27 +221,16 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     if layout_bound and orig.bullets:
         n_orig = len(orig.bullets)
         n_llm = len(llm.bullets)
-        # Map existing slots 1:1
+        # Map existing slots 1:1; strictly drop overflow (no merging).
+        # Merging multiple LLM bullets into one paragraph overloads a template
+        # slot designed for a single sentence and breaks visual density.
         for i in range(min(n_orig, n_llm)):
             new_bullets.append(orig.bullets[i].with_text(llm.bullets[i]))
-        # Handle overflow
         if n_llm > n_orig:
-            extras = llm.bullets[n_orig:]
-            last_orig_len = len(orig.bullets[-1].text)
-            last_llm_text = new_bullets[-1].text
-            potential = last_llm_text + " " + " ".join(e.strip() for e in extras)
-            max_merged = max(200, last_orig_len * 1.25)
-            if "\n" not in potential and len(potential) <= max_merged:
-                new_bullets[-1] = orig.bullets[-1].with_text(potential)
-                _log.debug(
-                    "BULLET_OVERFLOW_MERGED_CONSERVATIVELY: %d extras for role %r",
-                    len(extras), orig.role_id[:40],
-                )
-            else:
-                _log.debug(
-                    "BULLET_OVERFLOW_DROPPED_FOR_LAYOUT: %d extra bullets for role %r",
-                    len(extras), orig.role_id[:40],
-                )
+            _log.debug(
+                "BULLET_OVERFLOW_DROPPED_FOR_LAYOUT: %d extra bullets for role %r",
+                n_llm - n_orig, orig.role_id[:40],
+            )
     else:
         for i, bullet_text in enumerate(llm.bullets):
             if i < len(orig.bullets):
@@ -280,11 +269,21 @@ def _update_experience_section(
             for o_role in orig.roles[len(reparsed):]:
                 updated_roles.append(o_role)
             _ROLE_SEMANTICS_D = frozenset({"role_header", "role_meta", "bullet"})
-            clean_body_d = (
-                [p for p in orig.body_paras if not p.text.strip() or p.semantic not in _ROLE_SEMANTICS_D]
-                if layout_bound and updated_roles
-                else orig.body_paras
-            )
+            if layout_bound and updated_roles:
+                _rpids_d: set[str] = set()
+                for _r in updated_roles:
+                    for _pm in [_r.header] + _r.meta_lines + _r.bullets:
+                        if _pm.para_id:
+                            _rpids_d.add(_pm.para_id)
+                clean_body_d = [
+                    p for p in orig.body_paras
+                    if not p.text.strip() or (
+                        p.semantic not in _ROLE_SEMANTICS_D
+                        and p.para_id not in _rpids_d
+                    )
+                ]
+            else:
+                clean_body_d = orig.body_paras
             return ResumeSection(
                 title=llm.heading,
                 heading=_strip_col_break_para(orig.heading.with_text(llm.heading)),
@@ -325,18 +324,33 @@ def _update_experience_section(
             )
 
     # In layout-bound mode, when roles are the canonical representation,
-    # remove role-like paragraphs from body_paras to prevent split-brain IR.
-    # The roles list is authoritative; body_paras keeps only structural spacers
-    # (empty paragraphs that maintain visual spacing in the layout).
-    # In non-layout-bound mode, body_paras is kept for flat-list rendering order.
+    # remove role-like paragraphs AND paragraphs whose para_id is already
+    # used by a role component from body_paras.  This prevents split-brain IR
+    # where the same para_id carries two different texts (e.g. a template
+    # bullet slot para_39 appears in both role.bullets with new text and in
+    # body_paras with the original lorem ipsum).  The renderer processes
+    # body_paras after roles so the old text would overwrite the update.
     _ROLE_SEMANTICS = frozenset({"role_header", "role_meta", "bullet"})
     if layout_bound and updated_roles:
+        _role_para_ids: set[str] = set()
+        for _r in updated_roles:
+            if _r.header.para_id:
+                _role_para_ids.add(_r.header.para_id)
+            for _m in _r.meta_lines:
+                if _m.para_id:
+                    _role_para_ids.add(_m.para_id)
+            for _b in _r.bullets:
+                if _b.para_id:
+                    _role_para_ids.add(_b.para_id)
         clean_body = [
             p for p in orig.body_paras
-            if not p.text.strip() or p.semantic not in _ROLE_SEMANTICS
+            if not p.text.strip() or (
+                p.semantic not in _ROLE_SEMANTICS
+                and p.para_id not in _role_para_ids
+            )
         ]
         _log.debug(
-            "split_brain_fix: cleaned %d role-like paras from body_paras of %r",
+            "split_brain_fix: cleaned %d role-claimed paras from body_paras of %r",
             len(orig.body_paras) - len(clean_body), orig.title,
         )
     else:
@@ -2376,26 +2390,44 @@ def apply_tailored(
             else:
                 llm_order_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
 
-        # When the LLM generates a new Professional Summary that has no match in
-        # the template (summary extra), place it BEFORE the verbatim sections so
-        # it appears at the top of the main content area.  In 2-column layouts this
-        # puts the summary at the top of the wider right column (above experience);
-        # in single-column layouts it precedes the experience entries naturally.
-        # Only applies when the template itself has no summary section — if the
-        # template already had a summary it would have been matched, not an extra.
-        template_has_summary = any(
-            s.semantic_type == "summary" for s in original.sections
-        )
-        if not template_has_summary:
-            summary_extras = [s for s in llm_order_sections if s.semantic_type == "summary"]
-            other_llm = [s for s in llm_order_sections if s.semantic_type != "summary"]
-            if summary_extras:
-                new_sections = summary_extras + verbatim_sections + other_llm
+        # Build new_sections in the correct final order.
+        #
+        # Layout-bound mode: the layout_blocks tree defines physical position,
+        # so the canonical order is the ORIGINAL section order, not the LLM
+        # output order.  Anchored summary sections (inserted by the extras loop
+        # above) are placed first; all other sections follow in their original
+        # order with updates applied.
+        #
+        # Non-layout-bound mode: follow LLM output order (existing behaviour)
+        # so that new sections added by the LLM appear in the expected position.
+        if _layout_bound:
+            anchored_summaries = [
+                s for s in llm_order_sections if s.semantic_type == "summary"
+            ]
+            ordered_sections: list[ResumeSection] = []
+            for orig_section, llm_section in match.pairs:
+                if llm_section is None:
+                    ordered_sections.append(orig_section)
+                else:
+                    key = llm_section.heading.lower()
+                    ordered_sections.append(
+                        heading_to_section.get(key, orig_section)
+                    )
+            new_sections = anchored_summaries + ordered_sections
+        else:
+            # Non-layout-bound: follow LLM output order with summary at top.
+            template_has_summary = any(
+                s.semantic_type == "summary" for s in original.sections
+            )
+            if not template_has_summary:
+                summary_extras = [s for s in llm_order_sections if s.semantic_type == "summary"]
+                other_llm = [s for s in llm_order_sections if s.semantic_type != "summary"]
+                if summary_extras:
+                    new_sections = summary_extras + verbatim_sections + other_llm
+                else:
+                    new_sections = verbatim_sections + llm_order_sections
             else:
                 new_sections = verbatim_sections + llm_order_sections
-        else:
-            # Verbatim sections (name/contact block etc.) always precede the body.
-            new_sections = verbatim_sections + llm_order_sections
 
     # Apply skills injection into header_paras when identified in the extras path.
     # injectable_skills_section / header_skill_target are None in the fast path.

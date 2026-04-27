@@ -623,7 +623,7 @@ class TestBulletOverflow:
         assert metrics["unbound_non_empty_paras"] == 0
 
     def test_conservative_merge_allowed_for_short_extras(self, monkeypatch):
-        """Short overflow bullet can be merged into last slot if combined length ≤ 1.25x orig."""
+        """Overflow bullets are strictly dropped (not merged) in layout-bound mode."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -641,16 +641,15 @@ class TestBulletOverflow:
         orig_role.role_id_stable = "role_1"
         orig_role.header.para_id = "para_h1"
 
-        # LLM: 2 bullets, second is very short (within 1.25× of "Short.")
+        # LLM: 2 bullets (overflow).  Strict layout-bound policy: keep only
+        # the first bullet per slot; do NOT merge extra into the last slot.
         llm_role = LlmRole(header="Dev | Corp", bullets=["Short.", "extra"])
 
         updated_role = _update_role(orig_role, llm_role, layout_bound=True)
-        # Both short bullets merged conservatively into single slot
+        # Overflow dropped — slot stays with first LLM bullet only
         assert len(updated_role.bullets) == 1
-        assert "Short." in updated_role.bullets[0].text
-        assert "extra" in updated_role.bullets[0].text
-        # No newlines
-        assert "\n" not in updated_role.bullets[0].text
+        assert updated_role.bullets[0].text == "Short."
+        assert "extra" not in updated_role.bullets[0].text
 
     def test_fewer_llm_bullets_than_orig(self, monkeypatch):
         """Fewer LLM bullets than original → only matched bullets, no extras."""
