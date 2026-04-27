@@ -572,12 +572,12 @@ class TestNormalizeLlmSections:
 
 
 # ---------------------------------------------------------------------------
-# 8. Bullet packing (Priority 2)
+# 8. Bullet overflow — drop-not-pack (Priority 2)
 # ---------------------------------------------------------------------------
 
-class TestBulletPacking:
-    def test_single_orig_bullet_four_llm_packed(self, monkeypatch):
-        """1 original bullet + 4 LLM bullets → 1 updated bullet with all text packed."""
+class TestBulletOverflow:
+    def test_single_orig_bullet_four_llm_drops_overflow(self, monkeypatch):
+        """1 original bullet + 4 LLM bullets → 1 updated bullet, extras dropped."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -589,17 +589,17 @@ class TestBulletPacking:
 
         role = updated.sections[0].roles[0]
         assert len(role.bullets) == 1, f"expected 1 bullet, got {len(role.bullets)}"
-        assert role.bullets[0].para_id != "", "packed bullet must keep original para_id"
-        # All 4 LLM bullets should be in the single packed slot
-        packed_text = role.bullets[0].text
-        for i in range(1, 5):
-            assert f"Updated work 1.{i}" in packed_text
+        assert role.bullets[0].para_id != "", "bullet must keep original para_id"
+        # No multi-bullet newline packing in a single slot
+        assert "\n" not in role.bullets[0].text, "no newline-packing in single bullet slot"
+        # First LLM bullet is used
+        assert "Updated work 1.1" in role.bullets[0].text
 
         metrics = validate_layout_binding(updated)
         assert metrics["unbound_non_empty_paras"] == 0
 
-    def test_two_orig_bullets_five_llm_extras_packed_into_last(self, monkeypatch):
-        """2 original bullets + 5 LLM bullets → 2 bullets, extras packed into slot 2."""
+    def test_two_orig_bullets_five_llm_drops_overflow(self, monkeypatch):
+        """2 original bullets + 5 LLM bullets → 2 updated bullets, 3 extras dropped."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -611,21 +611,49 @@ class TestBulletPacking:
 
         role = updated.sections[0].roles[0]
         assert len(role.bullets) == 2, f"expected 2 bullets, got {len(role.bullets)}"
-        # Both bullets bound to original para_ids
         for b in role.bullets:
             assert b.para_id != ""
-        # First bullet: only the first LLM bullet
+        # No newline packing in either bullet
+        for b in role.bullets:
+            assert "\n" not in b.text, f"no newline-packing in bullet: {b.text!r}"
         assert "Updated work 1.1" in role.bullets[0].text
-        assert "Updated work 1.2" not in role.bullets[0].text
-        # Second (last) bullet: bullets 2-5 packed in
-        for i in range(2, 6):
-            assert f"Updated work 1.{i}" in role.bullets[1].text
+        assert "Updated work 1.2" in role.bullets[1].text
 
         metrics = validate_layout_binding(updated)
         assert metrics["unbound_non_empty_paras"] == 0
 
-    def test_fewer_llm_bullets_than_orig_no_packing(self, monkeypatch):
-        """Fewer LLM bullets than original → no packing needed; matched bullets only."""
+    def test_conservative_merge_allowed_for_short_extras(self, monkeypatch):
+        """Short overflow bullet can be merged into last slot if combined length ≤ 1.25x orig."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+
+        from tailor.compiler.updater import _update_role
+        from tailor.compiler.models import ParaModel, ParaStyle, RoleEntry
+        from tailor.compiler.text_parser import LlmRole
+
+        orig_bullet = ParaModel(text="Short.", style=ParaStyle(), semantic="bullet")
+        orig_bullet.para_id = "para_b1"
+        orig_role = RoleEntry(
+            header=ParaModel(text="Dev | Corp", style=ParaStyle(), semantic="role_header"),
+            bullets=[orig_bullet],
+            role_id="Dev | Corp",
+        )
+        orig_role.role_id_stable = "role_1"
+        orig_role.header.para_id = "para_h1"
+
+        # LLM: 2 bullets, second is very short (within 1.25× of "Short.")
+        llm_role = LlmRole(header="Dev | Corp", bullets=["Short.", "extra"])
+
+        updated_role = _update_role(orig_role, llm_role, layout_bound=True)
+        # Both short bullets merged conservatively into single slot
+        assert len(updated_role.bullets) == 1
+        assert "Short." in updated_role.bullets[0].text
+        assert "extra" in updated_role.bullets[0].text
+        # No newlines
+        assert "\n" not in updated_role.bullets[0].text
+
+    def test_fewer_llm_bullets_than_orig(self, monkeypatch):
+        """Fewer LLM bullets than original → only matched bullets, no extras."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -636,8 +664,7 @@ class TestBulletPacking:
         updated = apply_tailored(doc, llm_secs)
 
         role = updated.sections[0].roles[0]
-        # 2 LLM bullets mapped to first 2 original slots; third original dropped
-        assert len(role.bullets) <= 3
+        assert len(role.bullets) == 2
         assert "Updated work 1.1" in role.bullets[0].text
         assert "Updated work 1.2" in role.bullets[1].text
 
@@ -858,3 +885,4 @@ class TestSample31StructuralSmoke:
         assert len(exp_updated.roles) == n_orig_roles, (
             f"expected {n_orig_roles} roles, got {len(exp_updated.roles)}"
         )
+

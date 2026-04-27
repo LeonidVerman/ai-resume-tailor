@@ -210,22 +210,38 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
             _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra meta line %r", meta_text[:60])
 
     # Bullets: reuse original protos.
-    # layout-bound mode: pack overflow LLM bullets into the last existing slot
-    # rather than creating unbound clone_as paragraphs.  This preserves the
-    # layout_blocks anchor (para_id) for every rendered bullet.
+    # layout-bound mode maps 1:1 and drops overflow to preserve visual density.
+    # Aggressive multi-bullet packing into one paragraph is avoided because it
+    # destroys visual layout (one huge paragraph where the template has one bullet).
+    # Conservative single-line merge is allowed only when the combined length stays
+    # within 1.25× the original paragraph's text length and contains no newlines.
     arch = orig.bullets[0] if orig.bullets else orig.header
     new_bullets: list[ParaModel] = []
 
-    if layout_bound and orig.bullets and len(llm.bullets) > len(orig.bullets):
+    if layout_bound and orig.bullets:
         n_orig = len(orig.bullets)
-        for i in range(n_orig - 1):
+        n_llm = len(llm.bullets)
+        # Map existing slots 1:1
+        for i in range(min(n_orig, n_llm)):
             new_bullets.append(orig.bullets[i].with_text(llm.bullets[i]))
-        packed_text = "\n".join(llm.bullets[n_orig - 1:])
-        new_bullets.append(orig.bullets[n_orig - 1].with_text(packed_text))
-        _log.debug(
-            "BULLET_OVERFLOW_PACKED: %d LLM bullets packed into %d orig slots for role %r",
-            len(llm.bullets), n_orig, orig.role_id[:50],
-        )
+        # Handle overflow
+        if n_llm > n_orig:
+            extras = llm.bullets[n_orig:]
+            last_orig_len = len(orig.bullets[-1].text)
+            last_llm_text = new_bullets[-1].text
+            potential = last_llm_text + " " + " ".join(e.strip() for e in extras)
+            max_merged = max(200, last_orig_len * 1.25)
+            if "\n" not in potential and len(potential) <= max_merged:
+                new_bullets[-1] = orig.bullets[-1].with_text(potential)
+                _log.debug(
+                    "BULLET_OVERFLOW_MERGED_CONSERVATIVELY: %d extras for role %r",
+                    len(extras), orig.role_id[:40],
+                )
+            else:
+                _log.debug(
+                    "BULLET_OVERFLOW_DROPPED_FOR_LAYOUT: %d extra bullets for role %r",
+                    len(extras), orig.role_id[:40],
+                )
     else:
         for i, bullet_text in enumerate(llm.bullets):
             if i < len(orig.bullets):
@@ -416,19 +432,16 @@ def _update_body_section(
     # Fall back to heading only when the section has no content paragraphs at all.
     arch = content_paras[0] if content_paras else orig.heading
 
-    # In layout-bound mode: pack surplus LLM lines into the last existing slot
-    # rather than creating unbound clones.
+    # In layout-bound mode: drop surplus LLM lines rather than packing multiple
+    # lines into one paragraph (which destroys visual layout density).
+    # Only as many lines are used as there are anchored content slots.
     if layout_bound and content_paras and len(llm_lines) > len(content_paras):
-        n = len(content_paras)
-        packed_last = "\n".join(llm_lines[n - 1:])
-        packed_llm = list(llm_lines[: n - 1]) + [packed_last]
-        extra_count = len(llm_lines) - n
-        if extra_count > 0:
-            _log.debug(
-                "UPDATER_LAYOUT_BOUND_REPLACEMENT: section %r — "
-                "packed %d extra LLM lines into last slot",
-                orig.title, extra_count,
-            )
+        n_drop = len(llm_lines) - len(content_paras)
+        _log.debug(
+            "BODY_OVERFLOW_DROPPED_FOR_LAYOUT: dropped %d/%d lines from %r",
+            n_drop, len(llm_lines), orig.title[:40],
+        )
+        packed_llm = llm_lines[: len(content_paras)]
     else:
         packed_llm = llm_lines
 
@@ -689,14 +702,21 @@ def _update_role_bullets_only(
     """
     arch = orig.bullets[0] if orig.bullets else orig.header
     new_bullets: list[ParaModel] = []
-    if layout_bound and orig.bullets and len(llm_bullets) > len(orig.bullets):
+    if layout_bound and orig.bullets:
         n_orig = len(orig.bullets)
-        for i in range(n_orig - 1):
+        n_llm = len(llm_bullets)
+        for i in range(min(n_orig, n_llm)):
             new_bullets.append(orig.bullets[i].with_text(llm_bullets[i]))
-        new_bullets.append(orig.bullets[n_orig - 1].with_text("\n".join(llm_bullets[n_orig - 1:])))
-        _log.debug(
-            "BULLET_OVERFLOW_PACKED: %d bullets → %d slots (bullets-only path)", len(llm_bullets), n_orig
-        )
+        if n_llm > n_orig:
+            extras = llm_bullets[n_orig:]
+            last_orig_len = len(orig.bullets[-1].text)
+            potential = new_bullets[-1].text + " " + " ".join(e.strip() for e in extras)
+            max_merged = max(200, last_orig_len * 1.25)
+            if "\n" not in potential and len(potential) <= max_merged:
+                new_bullets[-1] = orig.bullets[-1].with_text(potential)
+                _log.debug("BULLET_OVERFLOW_MERGED_CONSERVATIVELY: %d extras (bullets-only)", len(extras))
+            else:
+                _log.debug("BULLET_OVERFLOW_DROPPED_FOR_LAYOUT: %d extras (bullets-only)", len(extras))
     else:
         for i, text in enumerate(llm_bullets):
             if i < len(orig.bullets):
@@ -1742,6 +1762,86 @@ def validate_structural_integrity(
     return violations
 
 
+def validate_layout_density(
+    original: "ResumeDocument",
+    updated: "ResumeDocument",
+) -> dict:
+    """Compare text lengths between original and updated paragraphs to detect density overflow.
+
+    A paragraph is flagged when:
+    - its updated text is longer than max(200, original_length × 2.0), OR
+    - its updated text contains newlines AND is > 1.3× the original length
+      (indicating multi-bullet packing).
+
+    Returns a dict with:
+    - ``density_overflow_count``: paragraphs whose updated length exceeds the threshold
+    - ``multi_bullet_packing_count``: paragraphs with newline-joined content (over-packed)
+    """
+    violations: dict = {"density_overflow_count": 0, "multi_bullet_packing_count": 0}
+    orig_by_id: dict[str, "ParaModel"] = {
+        pm.para_id: pm for pm in (original.all_paras or []) if pm.para_id
+    }
+    for pm in (updated.all_paras or []):
+        if not pm.para_id:
+            continue
+        orig_pm = orig_by_id.get(pm.para_id)
+        if orig_pm is None:
+            continue
+        orig_len = len(orig_pm.text.strip())
+        updated_len = len(pm.text.strip())
+        max_allowed = max(200, orig_len * 2.0)
+        if updated_len > max_allowed:
+            violations["density_overflow_count"] += 1
+            _log.debug(
+                "PARAGRAPH_DENSITY_OVERFLOW: para_id=%r orig=%d updated=%d",
+                pm.para_id, orig_len, updated_len,
+            )
+        if "\n" in pm.text and updated_len > orig_len * 1.3 and orig_len > 0:
+            violations["multi_bullet_packing_count"] += 1
+            _log.debug("MULTI_BULLET_PACKING_DETECTED: para_id=%r", pm.para_id)
+    _log.debug("validate_layout_density: %s", violations)
+    return violations
+
+
+def repair_layout_density(
+    orig_para_map: "dict[str, ParaModel]",
+    all_paras: "list[ParaModel]",
+) -> None:
+    """Truncate or strip multi-line packing from density-overflow paragraphs in-place.
+
+    For each paragraph in *all_paras* whose updated text exceeds the density threshold,
+    the text is replaced with only the first line (splitting on newlines) or truncated.
+    This operates directly on the ParaModel objects so both all_paras and the
+    section/role references are updated simultaneously.
+    """
+    for pm in all_paras:
+        if not pm.para_id:
+            continue
+        orig_pm = orig_para_map.get(pm.para_id)
+        if orig_pm is None:
+            continue
+        orig_len = len(orig_pm.text.strip())
+        updated_text = pm.text.strip()
+        max_allowed = max(200, orig_len * 2.0)
+
+        needs_repair = (
+            len(updated_text) > max_allowed
+            or ("\n" in pm.text and len(updated_text) > orig_len * 1.3 and orig_len > 0)
+        )
+        if not needs_repair:
+            continue
+
+        # Truncate to first line; if still too long, hard-truncate to max_allowed
+        first_line = pm.text.split("\n")[0].strip()
+        if len(first_line) <= max_allowed and first_line:
+            pm.text = first_line
+        elif len(first_line) > max_allowed:
+            pm.text = first_line[: int(max_allowed)].rstrip()
+        else:
+            pm.text = updated_text[: int(max_allowed)].rstrip()
+        _log.debug("DENSITY_REPAIR_APPLIED: para_id=%r", pm.para_id)
+
+
 def enforce_no_unbound_paragraphs(
     updated_sections: "list[ResumeSection]",
     effective_header_paras: "list[ParaModel]",
@@ -2064,8 +2164,30 @@ def apply_tailored(
     else:
         effective_header_paras = list(original.header_paras)
 
+    # Hard ban in layout-bound mode: remove any section that has non-empty content
+    # but no section_id (i.e. it was created synthetic via _make_extra_section or
+    # some other path that bypassed the section anchor).  Such sections have no
+    # corresponding layout_blocks entry and cannot be rendered faithfully.
+    if _layout_bound:
+        _clean_sections: list[ResumeSection] = []
+        for _s in new_sections:
+            _has_content = (
+                any(p.text.strip() for p in _s.body_paras)
+                or any(r.header.text.strip() for r in _s.roles)
+            )
+            if not _s.section_id and _has_content:
+                _log.debug(
+                    "EXTRA_SECTION_SKIPPED_LAYOUT_BOUND: %r removed "
+                    "(section_id='', non-empty content)",
+                    _s.title,
+                )
+            else:
+                _clean_sections.append(_s)
+        if len(_clean_sections) < len(new_sections):
+            new_sections = _clean_sections
+
     # In layout-bound mode: enforce zero-unbound invariant before rebuilding all_paras.
-    # This is a safety net — bullet packing and body-section packing should have
+    # This is a safety net — bullet overflow-drop and body-section truncation should have
     # eliminated most unbound paras already.  Residual unbound content (e.g. from
     # classification paths) is packed into the nearest anchored slot or dropped.
     if _layout_bound:
@@ -2093,6 +2215,15 @@ def apply_tailored(
                 all_paras.extend(role.bullets)
         else:
             all_paras.extend(section.body_paras)
+
+    # Density repair in layout-bound mode: scan all_paras for paragraphs whose
+    # updated text is massively longer than the original (density overflow) or
+    # contains newline-packed multi-bullet content.  Truncate to the first line.
+    if _layout_bound and original.all_paras:
+        _orig_para_map: dict[str, ParaModel] = {
+            pm.para_id: pm for pm in original.all_paras if pm.para_id
+        }
+        repair_layout_density(_orig_para_map, all_paras)
 
     # When the original document uses table-based layout, carry body_items forward
     # so the renderer re-inserts tables as opaque blobs.

@@ -167,8 +167,8 @@ class TestSummaryInPlaceUpdate:
 # ---------------------------------------------------------------------------
 
 class TestSkillsInPlaceUpdate:
-    def test_extra_skill_lines_packed_into_last_slot(self, monkeypatch):
-        """LLM producing 5 skill lines with 2 original slots → packed, no unbound paras."""
+    def test_extra_skill_lines_dropped_not_packed(self, monkeypatch):
+        """LLM producing 5 skill lines with 2 original slots → first 2 used, overflow dropped."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -205,15 +205,17 @@ class TestSkillsInPlaceUpdate:
 
         skills = updated.sections[0]
         content = [p for p in skills.body_paras if p.text.strip()]
-        # Must not exceed original slot count
-        assert len(content) <= 2, f"expected ≤2 content paras, got {len(content)}"
+        # Exactly 2 content paras (no overflow)
+        assert len(content) == 2, f"expected 2 content paras, got {len(content)}"
         # All content paras must have valid para_ids
         for p in content:
             assert p.para_id != "", f"para_id empty on updated skill para: {p.text!r}"
-        # Packed content must contain at least some of the LLM lines
-        all_text = " ".join(p.text for p in content)
-        assert "Python" in all_text
-        assert "Go" in all_text
+        # No newline packing
+        for p in content:
+            assert "\n" not in p.text, f"no newline packing: {p.text!r}"
+        # First 2 LLM lines in slots
+        assert "Python" in content[0].text
+        assert "Go" in content[1].text
 
     def test_skills_no_unbound_paras_created(self, monkeypatch):
         """No clone_as unbound paragraphs when packing skills in layout-bound mode."""
@@ -253,8 +255,8 @@ class TestSkillsInPlaceUpdate:
 # ---------------------------------------------------------------------------
 
 class TestExperienceInPlaceUpdate:
-    def test_extra_bullets_packed_not_cloned(self, monkeypatch):
-        """Extra LLM bullets are PACKED into the last slot (not clone_as) in layout-bound mode."""
+    def test_extra_bullet_dropped_or_conservatively_merged(self, monkeypatch):
+        """Extra LLM bullet is dropped (or conservatively merged if short) in layout-bound mode."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -270,7 +272,11 @@ class TestExperienceInPlaceUpdate:
             margin_left_pt=72, margin_right_pt=72,
             default_font_name="Calibri", default_font_size_pt=11,
         )
-        role = _make_minimal_role("Engineer | Acme", ["Bullet 1", "Bullet 2"], "role_1")
+        # Long original bullets (conservative merge not possible)
+        role = _make_minimal_role(
+            "Engineer | Acme",
+            ["Built distributed backend services achieving 99.9% uptime.", "Led team of 8."],
+        )
         exp_sec = ResumeSection(
             title="Experience", heading=_make_minimal_section("Experience", "experience", []).heading,
             semantic_type="experience", roles=[role],
@@ -286,23 +292,28 @@ class TestExperienceInPlaceUpdate:
         ]
 
         llm_exp = _make_llm_experience([
-            _make_llm_role("Engineer | Acme", ["Updated 1", "Updated 2", "Extra 3"]),
+            _make_llm_role("Engineer | Acme", [
+                "Updated distributed backend services.",
+                "Led team of 10 engineers.",
+                "Extra long bullet that pushes length beyond 1.25x original text.",
+            ]),
         ])
         updated = apply_tailored(orig, [llm_exp])
 
         updated_role = updated.sections[0].roles[0]
-        # 2 bullets (original count preserved)
+        # 2 bullets (original count)
         assert len(updated_role.bullets) == 2, (
             f"expected 2 bullets, got {len(updated_role.bullets)}"
         )
         # All bullets have non-empty para_id (no clone_as)
         for b in updated_role.bullets:
             assert b.para_id != "", f"bullet has empty para_id: {b.text!r}"
-        # First bullet: normal update
-        assert updated_role.bullets[0].text == "Updated 1"
-        # Last bullet: packed (contains "Updated 2" + newline + "Extra 3")
-        assert "Updated 2" in updated_role.bullets[1].text
-        assert "Extra 3" in updated_role.bullets[1].text
+        # First 2 LLM bullets mapped 1:1
+        assert "Updated distributed backend services" in updated_role.bullets[0].text
+        assert "Led team of 10" in updated_role.bullets[1].text
+        # No newline multi-bullet packing in any slot
+        for b in updated_role.bullets:
+            assert "\n" not in b.text, f"no newline packing: {b.text!r}"
 
     def test_role_id_stable_preserved(self, monkeypatch):
         """role_id_stable is preserved from original when layout_bound=True."""
