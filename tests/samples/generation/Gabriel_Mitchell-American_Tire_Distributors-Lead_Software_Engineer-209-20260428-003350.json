@@ -1,0 +1,787 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.1]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n21) Must explicitly mention the company + role from TASK.\n22) Must connect: candidate background -> company needs -> role responsibilities, using only supported claims.\n23) Keep it 3-5 short paragraphs; be specific but not verbose.\n\n[CANDIDATE_LAYER_GABRIEL_MITCHELL v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Software Engineer focused on web application development + UI/web design collaboration + testing discipline (unit/integration/system).\n- Emphasize: building and maintaining web applications; translating design intent into implemented interfaces; quality via testing and debugging.\n- Keep scope grounded: general web development and database-backed apps; avoid implying specialized backend/distributed systems expertise unless explicitly evidenced in MASTER_RESUME.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface explicitly (only if supported by MASTER_RESUME or experience highlights):\n  - Web application architecture decisions (e.g., separation of concerns between UI, application logic, and data access).\n  - Database interaction patterns at a high level (e.g., “implemented data persistence for X feature using database-backed storage”) without naming specific DB tech unless evidenced.\n  - Testing architecture: unit + integration testing as a concrete mechanism (test coverage for critical flows, regression prevention).\n- Do NOT force distributed-systems mechanisms (queues, replicas, caching layers, event-driven) unless present in evidence.\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prioritize bullets that show concrete engineering mechanisms:\n  1) Testing mechanisms (unit/integration/system tests; test harnesses; regression prevention)\n  2) Web app implementation mechanisms (component/module structure; form validation; state handling; accessibility improvements) if evidenced\n  3) Database-backed feature delivery (CRUD flows, data validation, migrations) only if evidenced\n  4) Collaboration mechanisms (design handoff, reviews, documentation) as secondary\n- Prefer rewriting generic “developed/maintained” statements into mechanism-first bullets tied to a feature or workflow.\n\nDISTRIBUTED SYSTEM DEPTH\n- Default stance: do not present as distributed-systems engineer.\n- Only include distributed systems language (scaling, high availability, async messaging, observability stacks) if explicitly supported by MASTER_RESUME.\n- If no evidence: keep reliability framing at the web-app level (bug reduction via tests, safer releases via QA practices, debugging discipline).\n\nTECHNICAL DIFFERENTIATION\n- Emphasize strengths evidenced in profile:\n  - Web development + web design collaboration (UI implementation, user-friendly interfaces).\n  - Database familiarity (keep generic unless specific datastore/ORM named in evidence).\n  - Testing: unit and integration testing; debugging and quality focus.\n  - Cross-platform software exposure (only mention if MASTER_RESUME provides concrete examples).\n- Avoid listing languages/frameworks/tools not present in evidence.\n\nDOMAIN / INDUSTRY FRAMING\n- Frame domain as: web applications and product-facing interfaces in collaborative product teams.\n- Keep industry claims neutral (no fintech/healthcare/etc.) unless MASTER_RESUME states it.\n- Emphasize user experience constraints: “balanced design and functionality,” “focused on user experience.”\n\nSAFE DOMAIN TRANSLATION\n- Translate “web design” experience into engineering-safe language:\n  - “Implemented user-friendly interfaces in collaboration with design” (avoid claiming sole ownership of product design strategy).\n- Translate “technical support systems / cross-platform software” only if evidence exists:\n  - Prefer “supported cross-functional teams” / “improved internal workflows” rather than claiming platform architecture.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim expertise in:\n  - Distributed systems, microservices, event-driven architectures, message queues, caching layers, read replicas, or SRE/DevOps ownership unless evidenced.\n  - Security specialization beyond basic practices; do not imply security engineering or compliance ownership.\n  - Specific frameworks, cloud platforms, CI/CD tooling, observability stacks, or API patterns unless present in MASTER_RESUME.\n- Avoid inflating “databases” into “data engineering,” “ETL,” or “analytics platforms.”\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- If integration/extensibility is needed for a target role, reinterpret conservatively using only supported evidence:\n  - “Modularized UI/components” → extensible front-end structure (only if evidenced).\n  - “Database-backed features” → maintainable data access patterns (only if evidenced).\n  - “Testing suite” → safer change management and easier extension of features.\n- Do not claim third-party integrations, plugin architectures, or platform APIs unless explicitly evidenced.\n\nLEADERSHIP FRAMING\n- Frame leadership as collaborative execution and quality leadership (not people management):\n  - Cross-functional collaboration with design/development teams.\n  - Quality focus via testing and careful debugging.\n  - Documentation and clear communication (if supported by MASTER_RESUME/constraints).\n- Use observable behaviors: reviews, coordination, clarifying requirements, aligning on UI/UX constraints.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep leadership secondary to hands-on engineering.\n- Ensure most bullets remain technical and mechanism-driven (tests implemented, UI flows built, defects prevented).\n- Avoid “led” language unless evidence shows explicit leadership scope; prefer “collaborated,” “coordinated,” “partnered,” “drove quality by…”\n\nAI WORK POSITIONING\n- No AI claims: candidate profile provides no AI tooling practice.\n- Do not add AI/ML, LLM, prompt engineering, or automation claims unless present in MASTER_RESUME.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Maintain strict accuracy of roles, dates, and employer relationships (Liceria & Co.; Borcelle Company; Fauget internship) as provided by evidence.\n- Do not overstate security: “encryption” may be mentioned only as basic usage and only if tied to a concrete, evidenced implementation detail.\n- Do not invent:\n  - Metrics (performance %, conversion lifts, latency reductions) unless explicitly provided.\n  - Technologies (languages, frameworks, cloud, CI/CD, testing frameworks) not in evidence.\n  - Ownership scope (architect, tech lead, manager) without evidence.\n- Avoid generic claims (“scalable,” “robust,” “high-performance”) unless immediately backed by a concrete mechanism and evidence.\n\nEVIDENCE SOURCES\n- Bullets may ONLY be constructed from:\n  - MASTER_RESUME (primary source for tools, dates, scope, metrics)\n  - CANDIDATE_PROFILE.summary/headline\n  - CANDIDATE_PROFILE.experience_highlights (areas, impacts, team context, constraints)\n  - CANDIDATE_PROFILE.technical_skills (but do not expand beyond listed items)\n  - CANDIDATE_PROFILE.leadership + constraints_and_preferences\n- If a detail is missing (tech stack, metrics, scale), write the bullet without it; do not guess.\n\nFINAL REMINDER\n- Core differentiation to keep consistent: web application engineer who bridges UI/design and implementation, with a strong quality/testing mindset and collaborative delivery style—without inflating into distributed systems, security specialization, or unverified tech stacks.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Web applications\",\n      \"Software development\"\n    ],\n    \"secondary\": [\n      \"Cross-platform software\",\n      \"Technical support systems\"\n    ]\n  },\n  \"candidate\": {\n    \"name\": \"Gabriel Mitchell\",\n    \"summary\": \"Gabriel Mitchell is a software engineer with a strong background in web development and design. Experienced in working with databases and cross-platform software. Skilled in unit, integration, and system testing, with a focus on critical thinking and time management.\",\n    \"headline\": \"Software Engineer with Web Development Expertise\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Detail-oriented\"\n      ]\n    },\n    \"practices\": [\n      \"Cross-functional collaboration\",\n      \"Quality focus\"\n    ],\n    \"risk_management\": [\n      \"Time management\",\n      \"Critical thinking\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Web development\",\n    \"Software development\",\n    \"Testing and debugging\",\n    \"Cross-functional collaboration\",\n    \"User interface design\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Keep claims aligned with actual experience\"\n    ],\n    \"security_auth\": [\n      \"Do not overstate security depth\"\n    ],\n    \"employment_constraints\": [\n      \"Avoid claiming unsupported technologies\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [\n      \"Web design\"\n    ],\n    \"languages\": [],\n    \"datastores\": [\n      \"Databases\"\n    ],\n    \"api_patterns\": [],\n    \"infra_devops\": [],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [\n      \"Web development\"\n    ],\n    \"security_auth_patterns\": [\n      \"Encryption\"\n    ],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Web Development\",\n      \"impact\": [\n        \"Developed and maintained web applications\",\n        \"Collaborated with design and development teams\",\n        \"Implemented unit and integration testing\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Worked in collaborative teams\"\n      ],\n      \"skills_applied\": [\n        \"Web design\",\n        \"Web development\",\n        \"Unit testing\"\n      ],\n      \"architecture_patterns\": [\n        \"Web application development\"\n      ],\n      \"employer_relationship\": \"Liceria & Co.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Balanced design and functionality\"\n      ]\n    },\n    {\n      \"area\": \"Web Design\",\n      \"impact\": [\n        \"Designed user-friendly web interfaces\",\n        \"Enhanced website aesthetics and functionality\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Collaborated with design teams\"\n      ],\n      \"skills_applied\": [\n        \"Web design\",\n        \"User interface design\"\n      ],\n      \"architecture_patterns\": [\n        \"Web design patterns\"\n      ],\n      \"employer_relationship\": \"Borcelle Company\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Focused on user experience\"\n      ]\n    },\n    {\n      \"area\": \"Web Development Internship\",\n      \"impact\": [\n        \"Assisted in web development projects\",\n        \"Gained hands-on experience in software development\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Supported senior developers\"\n      ],\n      \"skills_applied\": [\n        \"Web development\",\n        \"Software development\"\n      ],\n      \"architecture_patterns\": [\n        \"Web development\"\n      ],\n      \"employer_relationship\": \"Fauget\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Learned to manage project timelines\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\nGABRIEL MITCHELL\nS O F T W A R EE N G I N E E R\n+123-456-7890\nhello@techguruplus.com 123 Anywhere St., Any City www.techguruplus.com\nEDUCATIONSKILLS\nFauget UniversityBorcelle High School\nDatabases\nComputer Science 2010-2014\nCERTIFICATION\nLiceria & Co.\nWeb Design & Development\n2019\n123 Anywhere St., Any City 2008-2011\nFauget Company\nWeb Design & Development\n2021\nNetworking basics Operating Systems Cross-platform software Encryption\nUnit testing Integration testing System testing Critical Thinking Time management\nWORK EXPERIENCE\nWeb Developer\nLiceria & Co. / 2019 - Present\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent erat lacus, condimentum quis hendrerit at, convallis ac quam. Nam faucibus quis dui vel mollis. Cras tincidunt ligula nec nisi vulputate ornare.\nWeb Designer\nBorcelle Company / 2016-2018\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent erat lacus, condimentum quis hendrerit at, convallis ac quam. Nam faucibus quis dui vel mollis. Cras tincidunt ligula nec nisi vulputate ornare.\nWeb Development Intern\nFauget / 2014-2015\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent erat lacus, condimentum quis hendrerit at, convallis ac quam. Nam faucibus quis dui vel mollis. Cras tincidunt ligula nec nisi vulputate ornare.\nCOURSE\nBorcelle Tech\nWeb Design & Development\n2019\nFauget Corp\nWeb Design & Development\n2020\nAWARDS\nLiceria & Co.\nBest Web Designer and Developer\n08/2021"
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nGabriel Mitchell\nDear Hiring Manager,\nI am excited to apply for the Senior Software Engineer role at Tigera. With over 15 years of experience in backend engineering and team leadership, including roles as VP and Director of Software Development, I have built fintech and blockchain systems that became top-5 platforms in the Japanese market, serving over 1M users, and led teams of up to 20 engineers to deliver reliable, scalable products.\nIn addition to my industry work, I currently contribute as an independent contractor supporting world-leading AI research labs in training and evaluating advanced AI models on senior-level software engineering tasks. This work keeps me deeply engaged with cutting-edge development practices, reinforces my ability to solve complex problems under ambiguity, and strengthens my proficiency with AI-assisted development tools. I also adopt AI-accelerated workflows (ChatGPT, Claude, Cursor AI) to improve productivity, code quality, and architectural clarity.\nI would welcome the chance to bring this expertise to your team and contribute to building reliable, scalable systems for your clients. I hold Canadian citizenship and am fully eligible to work in Canada.\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: April 28, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "GABRIEL MITCHELL\nSOFTWARE ENGINEER\n+123-456-7890 | hello@techguruplus.com | 123 Anywhere St., Any City | www.techguruplus.com\n\nPROFESSIONAL SUMMARY\nSoftware Engineer with a strong background in web application development and UI implementation in collaboration with design teams. Experienced building and maintaining database-backed web applications and supporting cross-platform software needs. Known for a quality-first approach using unit, integration, and system testing, plus disciplined debugging and documentation to support reliable releases and ongoing production support.\n\nEXPERIENCE\nWeb Developer\nLiceria & Co. | 2019 – Present\n- Developed and maintained web applications, balancing design intent with functional requirements in a collaborative product team environment.\n- Collaborated with design and development partners to translate web designs into implemented, user-friendly interfaces.\n- Implemented unit and integration testing as part of day-to-day development to validate changes and reduce regressions.\n- Supported database-backed application functionality, including day-to-day development and maintenance work.\n- Troubleshot and debugged issues across the application, applying critical thinking to isolate problems and verify fixes.\n\nWeb Designer\nBorcelle Company | 2016 – 2018\n- Designed user-friendly web interfaces with a focus on user experience and clear presentation of content.\n- Enhanced website aesthetics and functionality in collaboration with design stakeholders.\n\nWeb Development Intern\nFauget | 2014 – 2015\n- Assisted with web development projects, contributing to implementation tasks while learning software development practices.\n- Supported senior developers and helped manage work against project timelines through strong time management.\n\nEDUCATION\nFauget University — Computer Science | 2010 – 2014\nBorcelle High School | 2008 – 2011\n\nTECHNICAL SKILLS\nWeb & UI: Web development, Web design, User interface design\nData: Databases\nTesting & Quality: Unit testing, Integration testing, System testing, Debugging\nPlatforms & Fundamentals: Cross-platform software, Operating Systems, Networking basics\nSecurity (basic): Encryption\nProfessional: Critical Thinking, Time management, Technical documentation\n\nADDITIONAL\nCertification: Liceria & Co. — Web Design & Development (2019)\nCertification: Fauget Company — Web Design & Development (2021)\nCoursework: Borcelle Tech — Web Design & Development (2019)\nCoursework: Fauget Corp — Web Design & Development (2020)\nAwards: Liceria & Co. — Best Web Designer and Developer (08/2021)\n\nCurrent Date: April 28, 2026\n",
+    "cover_letter": "Gabriel Mitchell\n123 Anywhere St., Any City\n+123-456-7890 | hello@techguruplus.com\nApril 28, 2026\n\nDear Hiring Manager,\n\nI am applying for the Lead Software Engineer role at American Tire Distributors. I am a Software Engineer with a strong background in web application development and UI implementation, with experience collaborating closely with design and development teams to deliver maintainable, user-friendly web experiences.\n\nIn my current role as a Web Developer at Liceria & Co. (2019–Present), I develop and maintain web applications and support database-backed functionality as part of ongoing product work. I bring a quality-first approach to delivery by implementing unit and integration testing and by applying disciplined debugging to isolate issues, verify fixes, and support stable releases.\n\nATD’s focus on building and supporting solutions that solve end-user problems aligns with how I work day to day: clarifying requirements, balancing design and functionality, and delivering changes that are supportable over time. I’m also comfortable working in collaborative environments where clear communication and documentation help teams move quickly while maintaining quality.\n\nThank you for your time and consideration. I would welcome the opportunity to discuss how my web application development and testing-focused approach can contribute to the Lead Software Engineer role at American Tire Distributors.\n\nSincerely,\nGabriel Mitchell\n"
+  },
+  "diff": {
+    "resume": [
+      {
+        "name": "Professional Summary",
+        "after": "Software Engineer with a strong background in web application development and UI implementation in collaboration with design teams. Experienced building and maintaining database-backed web applications and supporting cross-platform software needs. Known for a quality-first approach using unit, integration, and system testing, plus disciplined debugging and documentation to support reliable releases and ongoing production support."
+      },
+      {
+        "name": "Technical Skills",
+        "after": "Web & UI: Web development, Web design, User interface design\nData: Databases\nTesting & Quality: Unit testing, Integration testing, System testing, Debugging\nPlatforms & Fundamentals: Cross-platform software, Operating Systems, Networking basics\nSecurity (basic): Encryption\nProfessional: Critical Thinking, Time management, Technical documentation\n\nADDITIONAL\nCertification: Liceria & Co. — Web Design & Development (2019)\nCertification: Fauget Company — Web Design & Development (2021)\nCoursework: Borcelle Tech — Web Design & Development (2019)\nCoursework: Fauget Corp — Web Design & Development (2020)\nAwards: Liceria & Co. — Best Web Designer and Developer (08/2021)\n\nCurrent Date: April 28, 2026"
+      }
+    ]
+  },
+  "generation_run_id": "209",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "GABRIEL MITCHELL",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "S O F T W A R EE N G I N E E R",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      },
+      {
+        "text": "\n",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_3"
+      },
+      {
+        "text": "+123-456-7890",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_4"
+      },
+      {
+        "text": "hello@techguruplus.com 123 Anywhere St., Any City www.techguruplus.com",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_5"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_6"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Professional Summary",
+        "semantic_type": "summary",
+        "heading": {
+          "text": "PROFESSIONAL SUMMARY",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_7"
+        },
+        "body_paras": [
+          {
+            "text": "Software Engineer with a strong background in web application development and UI implementation in collaboration with design teams. Experienced building and maintaining database-backed web applications and supporting cross-platform software needs. Known for a quality-first approach using unit, integration, and system testing, plus disciplined debugging and documentation to support reliable releases and ongoing production support.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_8"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_summary_inserted"
+      },
+      {
+        "title": "EDUCATION",
+        "semantic_type": "education",
+        "heading": {
+          "text": "EDUCATION",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_9"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_10"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_11"
+          },
+          {
+            "text": "Fauget UniversityBorcelle High School",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_12"
+          },
+          {
+            "text": "Computer Science 2010-2014",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_13"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_14"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_15"
+          },
+          {
+            "text": "\n123 Anywhere St., Any City 2008-2011",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_16"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "CERTIFICATION",
+        "semantic_type": "certifications",
+        "heading": {
+          "text": "CERTIFICATION",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_17"
+        },
+        "body_paras": [
+          {
+            "text": "Liceria & Co.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_18"
+          },
+          {
+            "text": "Web Design & Development",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_19"
+          },
+          {
+            "text": "2019",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_20"
+          },
+          {
+            "text": "Fauget Company",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_21"
+          },
+          {
+            "text": "Web Design & Development",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_22"
+          },
+          {
+            "text": "2021",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_23"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_24"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_25"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_26"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "EXPERIENCE",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "EXPERIENCE",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_27"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_40"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_44"
+          }
+        ],
+        "roles": [
+          {
+            "header": {
+              "text": "Web Developer | Liceria & Co. | 2019 – Present",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_37"
+            },
+            "header_extra": [],
+            "meta_lines": [],
+            "bullets": [
+              {
+                "text": "Developed and maintained web applications, balancing design intent with functional requirements in a collaborative product team environment.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_39"
+              }
+            ],
+            "role_id": "Web Developer",
+            "role_id_stable": "role_1"
+          },
+          {
+            "header": {
+              "text": "Web Designer | Borcelle Company | 2016 – 2018",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_41"
+            },
+            "header_extra": [],
+            "meta_lines": [],
+            "bullets": [
+              {
+                "text": "Designed user-friendly web interfaces with a focus on user experience and clear presentation of content.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_43"
+              }
+            ],
+            "role_id": "Web Designer",
+            "role_id_stable": "role_2"
+          },
+          {
+            "header": {
+              "text": "Web Development Intern | Fauget | 2014 – 2015",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_45"
+            },
+            "header_extra": [],
+            "meta_lines": [],
+            "bullets": [
+              {
+                "text": "Assisted with web development projects, contributing to implementation tasks while learning software development practices.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_47"
+              }
+            ],
+            "role_id": "Web Development Intern",
+            "role_id_stable": "role_3"
+          }
+        ],
+        "section_id": "sec_3"
+      },
+      {
+        "title": "TECHNICAL SKILLS",
+        "semantic_type": "skills",
+        "heading": {
+          "text": "TECHNICAL SKILLS",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_48"
+        },
+        "body_paras": [
+          {
+            "text": "Web & UI: Web development, Web design, User interface design",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_49"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_50"
+          },
+          {
+            "text": "Data: Databases",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_51"
+          },
+          {
+            "text": "Testing & Quality: Unit testing, Integration testing, System testing, Debugging",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_52"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_53"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_4"
+      },
+      {
+        "title": "COURSE",
+        "semantic_type": "other",
+        "heading": {
+          "text": "\nCOURSE",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_54"
+        },
+        "body_paras": [
+          {
+            "text": "Borcelle Tech",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_55"
+          },
+          {
+            "text": "Web Design & Development",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_56"
+          },
+          {
+            "text": "2019",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_57"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_58"
+          },
+          {
+            "text": "Fauget Corp",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_59"
+          },
+          {
+            "text": "Web Design & Development",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_60"
+          },
+          {
+            "text": "2020",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_61"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_62"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_63"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_5"
+      },
+      {
+        "title": "AWARDS",
+        "semantic_type": "other",
+        "heading": {
+          "text": "AWARDS",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_64"
+        },
+        "body_paras": [
+          {
+            "text": "Liceria & Co. — Best Web Designer and Developer (08/2021)",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_65"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_6"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 595.5,
+      "page_height_pt": 842.5,
+      "margin_top_pt": 46.0,
+      "margin_bottom_pt": 14.0,
+      "margin_left_pt": 46.0,
+      "margin_right_pt": 41.0,
+      "default_font_name": "Verdana",
+      "default_font_size_pt": 11.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "paragraph",
+        "para_id": "para_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Title\"/><w:spacing w:line=\"235\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"40\"/></w:rPr><w:t>GABRIEL MITCHELL</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading2\"/><w:tabs><w:tab w:pos=\"2352\" w:val=\"left\" w:leader=\"none\"/></w:tabs><w:spacing w:before=\"94\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>S</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>O</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>F</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>T</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>W</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>A</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>R</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-10\"/></w:rPr><w:t>E</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:tab/><w:t>E</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"4\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>N</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"5\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>G</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"5\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>I</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"5\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>N</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"5\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>E</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"5\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>E</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"5\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-10\"/></w:rPr><w:t>R</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_3",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:line=\"240\" w:lineRule=\"auto\" w:before=\"191\"/><w:rPr><w:sz w:val=\"20\"/></w:rPr></w:pPr><w:r><w:rPr/><w:br w:type=\"column\"/></w:r><w:r><w:rPr><w:sz w:val=\"20\"/></w:rPr></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_4",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"80\"/></w:rPr><w:t>+123-456-</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/><w:w w:val=\"80\"/></w:rPr><w:t>7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_5",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"415\" w:lineRule=\"auto\" w:before=\"177\"/><w:ind w:right=\"102\"/><w:jc w:val=\"both\"/></w:pPr><w:hyperlink r:id=\"rId5\"><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>hello@techguruplus.com</w:t></w:r></w:hyperlink><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>123</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>Anywhere</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>St.,</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>Any</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>City </w:t></w:r><w:hyperlink r:id=\"rId6\"><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>www.techguruplus.com</w:t></w:r></w:hyperlink></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_6",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"415\" w:lineRule=\"auto\"/><w:jc w:val=\"both\"/><w:sectPr><w:type w:val=\"continuous\"/><w:pgSz w:w=\"11910\" w:h=\"16850\"/><w:pgMar w:top=\"920\" w:bottom=\"280\" w:left=\"920\" w:right=\"820\"/><w:cols w:num=\"2\" w:equalWidth=\"0\"><w:col w:w=\"4301\" w:space=\"3073\"/><w:col w:w=\"2796\"/></w:cols></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_7",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"36\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_8",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"5\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"36\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "lb_orphan_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading1\"/><w:tabs><w:tab w:pos=\"7156\" w:val=\"left\" w:leader=\"none\"/></w:tabs><w:ind w:left=\"106\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>EDUCATION</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:tab/></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>SKILLS</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_10",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"2\"/><w:ind w:left=\"0\"/><w:rPr><w:b/><w:sz w:val=\"17\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_11",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"17\"/></w:rPr><w:sectPr><w:type w:val=\"continuous\"/><w:pgSz w:w=\"11910\" w:h=\"16850\"/><w:pgMar w:top=\"920\" w:bottom=\"280\" w:left=\"920\" w:right=\"820\"/></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_12",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading2\"/><w:tabs><w:tab w:pos=\"3203\" w:val=\"left\" w:leader=\"none\"/></w:tabs><w:spacing w:before=\"91\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"105\"/></w:rPr><w:t>Fauget</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-22\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/><w:w w:val=\"105\"/></w:rPr><w:t>University</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:tab/></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"105\"/></w:rPr><w:t>Borcelle</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-24\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"105\"/></w:rPr><w:t>High</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-23\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/><w:w w:val=\"105\"/></w:rPr><w:t>School</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"141\"/></w:pPr><w:r><w:rPr/><w:br w:type=\"column\"/></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>Databases</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_50",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:sectPr><w:type w:val=\"continuous\"/><w:pgSz w:w=\"11910\" w:h=\"16850\"/><w:pgMar w:top=\"920\" w:bottom=\"280\" w:left=\"920\" w:right=\"820\"/><w:cols w:num=\"2\" w:equalWidth=\"0\"><w:col w:w=\"5783\" w:space=\"1591\"/><w:col w:w=\"2796\"/></w:cols></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_13",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"266\" w:lineRule=\"auto\" w:before=\"101\"/><w:ind w:right=\"1077\"/></w:pPr><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Computer</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Science </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>2010-2014</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_14",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_15",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"131\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_17",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading1\"/><w:ind w:left=\"106\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/><w:w w:val=\"90\"/></w:rPr><w:t>CERTIFICATION</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_18",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading2\"/><w:spacing w:before=\"306\"/><w:ind w:left=\"106\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>Liceria</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-17\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>&amp;</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-16\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-5\"/></w:rPr><w:t>Co.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_19",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"266\" w:lineRule=\"auto\" w:before=\"102\"/><w:ind w:left=\"106\" w:right=\"1077\"/></w:pPr><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Web</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Design</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>&amp; </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>Development</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_20",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"65\"/><w:ind w:left=\"106\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/><w:w w:val=\"95\"/></w:rPr><w:t>2019</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_16",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"266\" w:lineRule=\"auto\" w:before=\"104\"/><w:ind w:right=\"38\"/></w:pPr><w:r><w:rPr/><w:br w:type=\"column\"/></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>123</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-16\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>Anywhere</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-16\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>St.,</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-16\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>Any</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-16\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>City </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>2008-2011</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "lb_orphan_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "lb_orphan_3",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "lb_orphan_4",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "lb_orphan_5",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "lb_orphan_6",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"142\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_21",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"105\"/></w:rPr><w:t>Fauget</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-22\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/><w:w w:val=\"105\"/></w:rPr><w:t>Company</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_22",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"266\" w:lineRule=\"auto\" w:before=\"102\"/><w:ind w:right=\"1201\"/></w:pPr><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Web</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Design</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>&amp; </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>Development</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_23",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"66\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/><w:w w:val=\"95\"/></w:rPr><w:t>2021</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_51",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"340\" w:lineRule=\"auto\" w:before=\"102\"/><w:ind w:right=\"279\"/></w:pPr><w:r><w:rPr/><w:br w:type=\"column\"/></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>Networking</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>basics Operating</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>Systems </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>Cross-platform</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>software Encryption</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_52",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"340\" w:lineRule=\"auto\"/><w:ind w:right=\"611\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>Unit</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>testing Integration</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>testing System</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>testing Critical</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>Thinking Time</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>management</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_53",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"340\" w:lineRule=\"auto\"/><w:sectPr><w:type w:val=\"continuous\"/><w:pgSz w:w=\"11910\" w:h=\"16850\"/><w:pgMar w:top=\"920\" w:bottom=\"280\" w:left=\"920\" w:right=\"820\"/><w:cols w:num=\"3\" w:equalWidth=\"0\"><w:col w:w=\"3045\" w:space=\"58\"/><w:col w:w=\"2732\" w:space=\"1539\"/><w:col w:w=\"2796\"/></w:cols></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_24",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_25",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"98\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_26",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:sectPr><w:type w:val=\"continuous\"/><w:pgSz w:w=\"11910\" w:h=\"16850\"/><w:pgMar w:top=\"920\" w:bottom=\"280\" w:left=\"920\" w:right=\"820\"/></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_27",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:wpg=\"http://schemas.microsoft.com/office/word/2010/wordprocessingGroup\" xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\" xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:w10=\"urn:schemas-microsoft-com:office:word\"><w:pPr><w:pStyle w:val=\"Heading1\"/><w:spacing w:before=\"87\"/></w:pPr><w:r><w:rPr/><mc:AlternateContent><mc:Choice Requires=\"wps\"><w:drawing><wp:anchor distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" allowOverlap=\"1\" layoutInCell=\"1\" locked=\"0\" behindDoc=\"1\" simplePos=\"0\" relativeHeight=\"487523328\"><wp:simplePos x=\"0\" y=\"0\"/><wp:positionH relativeFrom=\"page\"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom=\"page\"><wp:posOffset>0</wp:posOffset></wp:positionV><wp:extent cx=\"7562850\" cy=\"10696575\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/><wp:wrapNone/><wp:docPr id=\"1\" name=\"Group 1\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingGroup\"><wpg:wgp><wpg:cNvPr id=\"1\" name=\"Group 1\"/><wpg:cNvGrpSpPr/><wpg:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"7562850\" cy=\"10696575\"/><a:chExt cx=\"7562850\" cy=\"10696575\"/></a:xfrm></wpg:grpSpPr><wps:wsp><wps:cNvPr id=\"2\" name=\"Graphic 2\"/><wps:cNvSpPr/><wps:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"7562850\" cy=\"2174875\"/></a:xfrm><a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/><a:rect l=\"l\" t=\"t\" r=\"r\" b=\"b\"/><a:pathLst><a:path w=\"7562850\" h=\"2174875\"><a:moveTo><a:pt x=\"7562849\" y=\"2174429\"/></a:moveTo><a:lnTo><a:pt x=\"0\" y=\"2174429\"/></a:lnTo><a:lnTo><a:pt x=\"0\" y=\"0\"/></a:lnTo><a:lnTo><a:pt x=\"7562849\" y=\"0\"/></a:lnTo><a:lnTo><a:pt x=\"7562849\" y=\"2174429\"/></a:lnTo><a:close/></a:path></a:pathLst></a:custGeom><a:solidFill><a:srgbClr val=\"FAFAFA\"/></a:solidFill></wps:spPr><wps:bodyPr wrap=\"square\" lIns=\"0\" tIns=\"0\" rIns=\"0\" bIns=\"0\" rtlCol=\"0\"><a:prstTxWarp prst=\"textNoShape\"><a:avLst/></a:prstTxWarp><a:noAutofit/></wps:bodyPr></wps:wsp><wps:wsp><wps:cNvPr id=\"3\" name=\"Graphic 3\"/><wps:cNvSpPr/><wps:spPr><a:xfrm><a:off x=\"4758721\" y=\"0\"/><a:ext cx=\"19050\" cy=\"10696575\"/></a:xfrm><a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/><a:rect l=\"l\" t=\"t\" r=\"r\" b=\"b\"/><a:pathLst><a:path w=\"19050\" h=\"10696575\"><a:moveTo><a:pt x=\"19049\" y=\"10696574\"/></a:moveTo><a:lnTo><a:pt x=\"0\" y=\"10696574\"/></a:lnTo><a:lnTo><a:pt x=\"0\" y=\"0\"/></a:lnTo><a:lnTo><a:pt x=\"19049\" y=\"0\"/></a:lnTo><a:lnTo><a:pt x=\"19049\" y=\"10696574\"/></a:lnTo><a:close/></a:path></a:pathLst></a:custGeom><a:solidFill><a:srgbClr val=\"EBEBEB\"/></a:solidFill></wps:spPr><wps:bodyPr wrap=\"square\" lIns=\"0\" tIns=\"0\" rIns=\"0\" bIns=\"0\" rtlCol=\"0\"><a:prstTxWarp prst=\"textNoShape\"><a:avLst/></a:prstTxWarp><a:noAutofit/></wps:bodyPr></wps:wsp><pic:pic><pic:nvPicPr><pic:cNvPr id=\"4\" name=\"Image 4\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId7\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5133098\" y=\"874585\"/><a:ext cx=\"124271\" cy=\"124271\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"5\" name=\"Image 5\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId8\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5126911\" y=\"1163510\"/><a:ext cx=\"136675\" cy=\"104774\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"6\" name=\"Image 6\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId9\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5144800\" y=\"1412620\"/><a:ext cx=\"106258\" cy=\"131807\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"7\" name=\"Image 7\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId10\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5133098\" y=\"1675488\"/><a:ext cx=\"131861\" cy=\"131861\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"8\" name=\"Image 8\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId11\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5128575\" y=\"4103521\"/><a:ext cx=\"133350\" cy=\"129491\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"9\" name=\"Image 9\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId11\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5128575\" y=\"3010686\"/><a:ext cx=\"133350\" cy=\"129491\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"10\" name=\"Image 10\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId11\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5128575\" y=\"4322087\"/><a:ext cx=\"133350\" cy=\"129491\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"11\" name=\"Image 11\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId11\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5128575\" y=\"4540655\"/><a:ext cx=\"133350\" cy=\"129491\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"12\" name=\"Image 12\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId12\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5128575\" y=\"4759221\"/><a:ext cx=\"133350\" cy=\"129491\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"13\" name=\"Image 13\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId12\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5128575\" y=\"4977788\"/><a:ext cx=\"133350\" cy=\"129491\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"14\" name=\"Image 14\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId11\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5128575\" y=\"3884954\"/><a:ext cx=\"133350\" cy=\"129491\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"15\" name=\"Image 15\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId11\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5128575\" y=\"3666387\"/><a:ext cx=\"133350\" cy=\"129491\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"16\" name=\"Image 16\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId11\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5128575\" y=\"3447820\"/><a:ext cx=\"133350\" cy=\"129491\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic><pic:pic><pic:nvPicPr><pic:cNvPr id=\"17\" name=\"Image 17\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId11\" cstate=\"print\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"5128575\" y=\"3229253\"/><a:ext cx=\"133350\" cy=\"129491\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></wpg:wgp></a:graphicData></a:graphic></wp:anchor></w:drawing></mc:Choice><mc:Fallback><w:pict><v:group style=\"position:absolute;margin-left:0.0pt;margin-top:.000009pt;width:595.5pt;height:842.25pt;mso-position-horizontal-relative:page;mso-position-vertical-relative:page;z-index:-15793152\" id=\"docshapegroup1\" coordorigin=\"0,0\" coordsize=\"11910,16845\"><v:rect style=\"position:absolute;left:0;top:0;width:11910;height:3425\" id=\"docshape2\" filled=\"true\" fillcolor=\"#fafafa\" stroked=\"false\"><v:fill type=\"solid\"/></v:rect><v:rect style=\"position:absolute;left:7494;top:0;width:30;height:16845\" id=\"docshape3\" filled=\"true\" fillcolor=\"#ebebeb\" stroked=\"false\"><v:fill type=\"solid\"/></v:rect><v:shape style=\"position:absolute;left:8083;top:1377;width:196;height:196\" type=\"#_x0000_t75\" id=\"docshape4\" stroked=\"false\"><v:imagedata r:id=\"rId7\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8073;top:1832;width:216;height:165\" type=\"#_x0000_t75\" id=\"docshape5\" stroked=\"false\"><v:imagedata r:id=\"rId8\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8102;top:2224;width:168;height:208\" type=\"#_x0000_t75\" id=\"docshape6\" stroked=\"false\"><v:imagedata r:id=\"rId9\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8083;top:2638;width:208;height:208\" type=\"#_x0000_t75\" id=\"docshape7\" stroked=\"false\"><v:imagedata r:id=\"rId10\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8076;top:6462;width:210;height:204\" type=\"#_x0000_t75\" id=\"docshape8\" stroked=\"false\"><v:imagedata r:id=\"rId11\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8076;top:4741;width:210;height:204\" type=\"#_x0000_t75\" id=\"docshape9\" stroked=\"false\"><v:imagedata r:id=\"rId11\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8076;top:6806;width:210;height:204\" type=\"#_x0000_t75\" id=\"docshape10\" stroked=\"false\"><v:imagedata r:id=\"rId11\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8076;top:7150;width:210;height:204\" type=\"#_x0000_t75\" id=\"docshape11\" stroked=\"false\"><v:imagedata r:id=\"rId11\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8076;top:7494;width:210;height:204\" type=\"#_x0000_t75\" id=\"docshape12\" stroked=\"false\"><v:imagedata r:id=\"rId12\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8076;top:7839;width:210;height:204\" type=\"#_x0000_t75\" id=\"docshape13\" stroked=\"false\"><v:imagedata r:id=\"rId12\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8076;top:6118;width:210;height:204\" type=\"#_x0000_t75\" id=\"docshape14\" stroked=\"false\"><v:imagedata r:id=\"rId11\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8076;top:5773;width:210;height:204\" type=\"#_x0000_t75\" id=\"docshape15\" stroked=\"false\"><v:imagedata r:id=\"rId11\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8076;top:5429;width:210;height:204\" type=\"#_x0000_t75\" id=\"docshape16\" stroked=\"false\"><v:imagedata r:id=\"rId11\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:8076;top:5085;width:210;height:204\" type=\"#_x0000_t75\" id=\"docshape17\" stroked=\"false\"><v:imagedata r:id=\"rId11\" o:title=\"\"/></v:shape><w10:wrap type=\"none\"/></v:group></w:pict></mc:Fallback></mc:AlternateContent></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-11\"/></w:rPr><w:t>WORK</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-19\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>EXPERIENCE</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_37",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading2\"/><w:spacing w:before=\"304\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"105\"/></w:rPr><w:t>Web</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/><w:w w:val=\"105\"/></w:rPr><w:t>Developer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_38",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"90\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"90\"/></w:rPr><w:t>Liceria</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-6\"/><w:w w:val=\"90\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"90\"/></w:rPr><w:t>&amp;</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-6\"/><w:w w:val=\"90\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"90\"/></w:rPr><w:t>Co.</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-6\"/><w:w w:val=\"90\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"90\"/></w:rPr><w:t>/</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-5\"/><w:w w:val=\"90\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"90\"/></w:rPr><w:t>2019</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-6\"/><w:w w:val=\"90\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"90\"/></w:rPr><w:t>-</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-6\"/><w:w w:val=\"90\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/><w:w w:val=\"90\"/></w:rPr><w:t>Present</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_39",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"266\" w:lineRule=\"auto\" w:before=\"175\"/></w:pPr><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Lorem</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>ipsum</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>dolor</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>sit</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>amet,</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>consectetur</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>adipiscing</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>elit. </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>Praesent</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>erat</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>lacus,</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>condimentum</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>quis</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>hendrerit</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>at,</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>convallis </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>ac</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>quam.</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Nam</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>faucibus</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>quis</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>dui</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>vel</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>mollis.</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Cras</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>tincidunt ligula</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>nec</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>nisi</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>vulputate</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>ornare.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_40",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"18\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_41",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading2\"/><w:spacing w:before=\"1\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"105\"/></w:rPr><w:t>Web</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/><w:w w:val=\"105\"/></w:rPr><w:t>Designer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_42",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"127\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>Borcelle</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-17\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>Company</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-16\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>/</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-17\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>2016-2018</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_43",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"266\" w:lineRule=\"auto\" w:before=\"174\"/></w:pPr><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Lorem</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>ipsum</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>dolor</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>sit</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>amet,</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>consectetur</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>adipiscing</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>elit. </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>Praesent</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>erat</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>lacus,</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>condimentum</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>quis</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>hendrerit</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>at,</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>convallis </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>ac</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>quam.</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Nam</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>faucibus</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>quis</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>dui</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>vel</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>mollis.</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Cras</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>tincidunt ligula</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>nec</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>nisi</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>vulputate</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>ornare.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_44",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"15\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_45",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"105\"/></w:rPr><w:t>Web</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-21\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"105\"/></w:rPr><w:t>Development</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-20\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/><w:w w:val=\"105\"/></w:rPr><w:t>Intern</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_46",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"124\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>Fauget</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>/</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-8\"/></w:rPr><w:t>2014-2015</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_47",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"266\" w:lineRule=\"auto\" w:before=\"175\"/></w:pPr><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Lorem</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>ipsum</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>dolor</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>sit</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>amet,</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>consectetur</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>adipiscing</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-21\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>elit. </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>Praesent</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>erat</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>lacus,</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>condimentum</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>quis</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>hendrerit</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>at,</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>convallis </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>ac</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>quam.</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Nam</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>faucibus</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>quis</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>dui</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>vel</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>mollis.</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Cras</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>tincidunt ligula</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>nec</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>nisi</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>vulputate</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>ornare.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_54",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading1\"/><w:spacing w:before=\"87\"/></w:pPr><w:r><w:rPr><w:b w:val=\"0\"/></w:rPr><w:br w:type=\"column\"/></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>COURSE</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_55",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading2\"/><w:spacing w:before=\"304\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>Borcelle</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"16\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>Tech</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_56",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"266\" w:lineRule=\"auto\" w:before=\"102\"/><w:ind w:right=\"336\"/></w:pPr><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Web</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Design</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>&amp; </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>Development</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_57",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"66\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/><w:w w:val=\"95\"/></w:rPr><w:t>2019</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_58",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"85\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_59",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:w w:val=\"105\"/></w:rPr><w:t>Fauget</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-22\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/><w:w w:val=\"105\"/></w:rPr><w:t>Corp</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_60",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"266\" w:lineRule=\"auto\" w:before=\"102\"/><w:ind w:right=\"336\"/></w:pPr><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Web</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Design</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>&amp; </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>Development</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_61",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"66\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>2020</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_62",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_63",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"56\"/><w:ind w:left=\"0\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_64",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>AWARDS</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_65",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading2\"/><w:spacing w:before=\"300\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>Liceria</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-17\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/></w:rPr><w:t>&amp;</w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-16\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-5\"/></w:rPr><w:t>Co.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_66",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"266\" w:lineRule=\"auto\" w:before=\"103\"/></w:pPr><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Best</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-1\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Web</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-1\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>Designer</w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-1\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/></w:rPr><w:t>and </w:t></w:r><w:r><w:rPr><w:color w:val=\"696D66\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>Developer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_67",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"65\"/></w:pPr><w:r><w:rPr><w:color w:val=\"454A41\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>08/2021</w:t></w:r></w:p>"
+      }
+    ]
+  }
+}

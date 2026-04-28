@@ -13,7 +13,9 @@ from docx import Document
 from docx.oxml.ns import qn
 
 from tailor.compiler.models import (
+    LayoutParagraphBlock,
     LayoutProfile,
+    LayoutTableBlock,
     ParaModel,
     ParaStyle,
     ResumeDocument,
@@ -841,6 +843,51 @@ def parse_docx(path: str) -> ResumeDocument:
     )
     from tailor.compiler.models import assign_stable_ids
     assign_stable_ids(doc)
+
+    # Build serializable layout tree (Option B: XML prototypes as strings).
+    # Iterates body_items (original physical document order, never reordered)
+    # and serializes each w:p / w:tbl element as a Unicode XML string.
+    # para_id="" for structural/orphan paragraphs that are not in the semantic
+    # model (e.g. column-break transitions); the renderer renders these verbatim.
+    from tailor.config import USE_SERIALIZED_LAYOUT_TREE
+    if USE_SERIALIZED_LAYOUT_TREE:
+        from lxml import etree as _etree
+        _layout_blocks: list = []
+        _tbl_counter = 0
+        for _item in body_items:
+            if isinstance(_item, TableBlock):
+                _tbl_counter += 1
+                _layout_blocks.append(LayoutTableBlock(
+                    table_id=f"tbl_{_tbl_counter}",
+                    xml_proto_xml=_etree.tostring(_item.xml_proto, encoding="unicode"),
+                    para_ids=[p.para_id for p in _item.para_models],
+                ))
+            else:
+                # ParaModel — serialize xml_proto when present
+                _xml_str = (
+                    _etree.tostring(_item.style.xml_proto, encoding="unicode")
+                    if _item.style.xml_proto is not None
+                    else None
+                )
+                _layout_blocks.append(LayoutParagraphBlock(
+                    para_id=_item.para_id,
+                    xml_proto_xml=_xml_str,
+                ))
+
+        # Assign stable layout-only IDs to orphan paragraph blocks (para_id="").
+        # These are structural/transition paragraphs from the multicolumn fix
+        # (tab-split headings, column-break spacers) that have no semantic
+        # ParaModel counterpart.  Assigning a stable ID prevents the
+        # layout_blocks health check from flagging them as empty and allows the
+        # renderer to insert them verbatim without modifying text.
+        _lb_orphan = 0
+        for _blk in _layout_blocks:
+            if isinstance(_blk, LayoutParagraphBlock) and not _blk.para_id:
+                _lb_orphan += 1
+                _blk.para_id = f"lb_orphan_{_lb_orphan}"
+
+        doc.layout_blocks = _layout_blocks
+
     return doc
 
 
