@@ -332,6 +332,13 @@ _KNOWN_BAD_PDFS: dict[str, str] = {
         "(company name) via '|', causing DOCX-of-DOCX text differences.  Underlying "
         "issue is the same as 10-Template5.docx in _KNOWN_BAD_DOCX."
     ),
+    "1849228-senior-software-engineer-resume-example.pdf": (
+        "preprocess_resume_text (called inside parse_llm_output) merges 'role-title\n"
+        "company|date' separate-line meta into a single pipe-delimited role header. "
+        "This is correct for real LLM output but changes the identity roundtrip: "
+        "one paragraph is lost (meta absorbed into header) and the role header text "
+        "gains the company/date suffix.  Real-pipeline output is unaffected."
+    ),
 }
 
 # ---------------------------------------------------------------------------

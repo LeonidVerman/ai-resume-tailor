@@ -551,6 +551,10 @@ class TestBackwardCompatibility:
         """Without layout_bound, extra bullets from LLM appear in rendered output."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", False)
+        # Also disable the layout_blocks renderer so extra clone_as bullets
+        # (para_id="") are written via xml_proto rather than being silently
+        # skipped by _render_from_layout_blocks.
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BLOCK_RENDERER", False)
 
         from tailor.compiler.docx_parser import parse_docx
         from tailor.compiler.docx_renderer import render_docx
