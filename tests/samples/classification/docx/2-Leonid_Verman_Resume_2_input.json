@@ -1,0 +1,483 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Contact",
+      "paragraphs": [
+        {
+          "para_id": "para_4",
+          "text": "Contact",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_5",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_6",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_7",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_8",
+          "text": "+7 783 173 248 ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_10",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_11",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_12",
+          "text": "leonidverman@gmail.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_13",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_14",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_15",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_16",
+          "text": "VANCOUVER V6G 2Z1",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_17",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_18",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_19",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_20",
+          "text": "Bold Profile",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_21",
+          "text": " ",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Websites, Portfolios, Profiles",
+      "paragraphs": [
+        {
+          "para_id": "para_22",
+          "text": "Websites, Portfolios, Profiles",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_23",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_24",
+          "text": "https://www.linkedin.com/in/leonid-verman-3569b71b2/",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_25",
+          "text": " ",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Skill",
+      "paragraphs": [
+        {
+          "para_id": "para_26",
+          "text": "Skill",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_27",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_28",
+          "text": "Clear communication",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_29",
+          "text": "Cloud migration",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_30",
+          "text": "Resourceful",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_31",
+          "text": "Software security",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_32",
+          "text": "Team collaboration",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_33",
+          "text": "Version control systems",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_34",
+          "text": "Python programming",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_35",
+          "text": "Code optimization",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Object-oriented programming",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_37",
+          "text": "HTML and CSS",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_38",
+          "text": "PHP development",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Strong problem solving",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Data structures",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_41",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_42",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_43",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_44",
+          "text": "Leonid Verman",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_46",
+          "text": "Dynamic Junior Software Developer with experience at IBM, enhancing system security and implementing features for high-traffic applications. Proven ability in cloud migration and team collaboration, achieving a 40% improvement in scalability. Resourceful problem-solver, adept at resolving bugs and ensuring seamless user experiences.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_47",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_48",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_49",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_50",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Employment History",
+      "paragraphs": [
+        {
+          "para_id": "para_51",
+          "text": "Employment History",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_67",
+          "text": "Junior Software Developer | IBM | New York, NY ",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_68",
+          "text": "June 2023 – Current",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_69",
+          "text": "Enhance system security to safeguard data with multi-factor authentication for over 1 million users",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_70",
+          "text": "Implement new features for high-traffic web applications using Java and Python",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_71",
+          "text": "Support migration projects to move significant portions of an application to the cloud, improving scalability by 40%",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_72",
+          "text": "Engage in peer code reviews to ensure adherence to coding best practices and IBM standards",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_73",
+          "text": "Resolved an average of 150 bug fixes since June 2023 for apps post-launch to ensure seamless UX",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_74",
+          "text": "Software Engineering Intern | Microsoft | Redmond, WA ",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_75",
+          "text": "May 2023 – August 2023",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_76",
+          "text": "Worked alongside the quality assurance team to identify and fix software bugs, resolving over 100 user-reported issues",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_77",
+          "text": "Participated in brainstorming ideas and solutions for new feature development",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_78",
+          "text": "Assisted in conducting user acceptance testing (UAT) to gather feedback and identify areas of improvement",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_79",
+          "text": "Partnered with software engineers to develop a user personalization feature that led to a 10% increase in daily active users within the first month of release",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_80",
+          "text": "Supported a security audit to identify and remedy 15 potential security threats",
+          "parser_semantic": "bullet"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_67"
+          ],
+          "meta_para_ids": [
+            "para_68"
+          ],
+          "bullet_para_ids": [
+            "para_69",
+            "para_70",
+            "para_71",
+            "para_72",
+            "para_73"
+          ]
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_74"
+          ],
+          "meta_para_ids": [
+            "para_75"
+          ],
+          "bullet_para_ids": [
+            "para_76",
+            "para_77",
+            "para_78",
+            "para_79",
+            "para_80"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Education",
+      "paragraphs": [
+        {
+          "para_id": "para_82",
+          "text": "Education",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_83",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_84",
+          "text": "Bachelor of Science (B.S.) Computer Science | California Institute of Technology",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_85",
+          "text": "Pasadena, CA ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_86",
+          "text": " ",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "Languages",
+      "paragraphs": [
+        {
+          "para_id": "para_87",
+          "text": "Languages",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_88",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_89",
+          "text": "English",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_90",
+          "text": " ",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "Certifications And Training",
+      "paragraphs": [
+        {
+          "para_id": "para_91",
+          "text": "Certifications And Training",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_92",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_93",
+          "text": "Oracle Certified Associate",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_94",
+          "text": "AWS Certified Developer",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_95",
+          "text": " ",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_96",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_97",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_98",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

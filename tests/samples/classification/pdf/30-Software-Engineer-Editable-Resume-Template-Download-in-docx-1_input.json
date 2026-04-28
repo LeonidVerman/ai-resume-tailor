@@ -1,0 +1,304 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Professional Experience",
+      "paragraphs": [
+        {
+          "para_id": "para_12",
+          "text": "Professional Experience",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Software Engineer | Cloud",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Giggling Platypus Co.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_41",
+          "text": "01 Jun 2052- present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_42",
+          "text": "Designed and implemented a new",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_43",
+          "text": "microservice architecture using Borcelle to",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_44",
+          "text": "improve application performance by 20%.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Developed and maintained critical",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "features for the company's core product,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_47",
+          "text": "resulting in a 15% increase in user",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_48",
+          "text": "engagement.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_49",
+          "text": "Led the development of a new automated",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_50",
+          "text": "testing framework using Rimberio that",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_51",
+          "text": "reduced manual testing time by 30%.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_52",
+          "text": "Software Engineer | Data",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_53",
+          "text": "Thynk Unlimited",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_54",
+          "text": "01 Aug 2050 - 30 Apr 2052",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_55",
+          "text": "Developed and deployed a real-time data",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_56",
+          "text": "processing pipeline using Rimberio to",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_57",
+          "text": "handle a 10x increase in data volume.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_58",
+          "text": "hello@techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_59",
+          "text": "Skills & Competencies",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_60",
+          "text": "Programming Languages and Algorithms",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_61",
+          "text": "Software Development Practices",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_62",
+          "text": "Problem-Solving and Analytical Skills",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_63",
+          "text": "Communication and Collaboration",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_64",
+          "text": "Adaptability and Continuous Learning",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_39"
+          ],
+          "meta_para_ids": [
+            "para_40",
+            "para_41",
+            "para_42",
+            "para_43",
+            "para_44",
+            "para_45",
+            "para_46",
+            "para_47",
+            "para_48",
+            "para_49",
+            "para_50",
+            "para_51"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_52"
+          ],
+          "meta_para_ids": [
+            "para_53",
+            "para_54",
+            "para_55",
+            "para_56",
+            "para_57",
+            "para_58",
+            "para_59",
+            "para_60",
+            "para_61",
+            "para_62",
+            "para_63",
+            "para_64"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Certifications",
+      "paragraphs": [
+        {
+          "para_id": "para_65",
+          "text": "Certifications",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Cloud Certified",
+      "paragraphs": [
+        {
+          "para_id": "para_66",
+          "text": "Cloud Certified",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_67",
+          "text": "Rimberio | 2050",
+          "parser_semantic": "role_header"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Software Lifecycle",
+      "paragraphs": [
+        {
+          "para_id": "para_68",
+          "text": "Software Lifecycle",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_69",
+          "text": "Professional Borcelle | 2050",
+          "parser_semantic": "role_header"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Scrum Developer",
+      "paragraphs": [
+        {
+          "para_id": "para_70",
+          "text": "Scrum Developer",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_71",
+          "text": "Borcelle | 2050",
+          "parser_semantic": "role_header"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "Education",
+      "paragraphs": [
+        {
+          "para_id": "para_72",
+          "text": "Education",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_73",
+          "text": "Bachelor of Science in",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "Information Technology",
+      "paragraphs": [
+        {
+          "para_id": "para_74",
+          "text": "Information Technology",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_75",
+          "text": "Fauget University",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_76",
+          "text": "Jun 2050",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_7_role_1",
+          "header_para_ids": [
+            "para_74"
+          ],
+          "meta_para_ids": [
+            "para_76"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    }
+  ]
+}

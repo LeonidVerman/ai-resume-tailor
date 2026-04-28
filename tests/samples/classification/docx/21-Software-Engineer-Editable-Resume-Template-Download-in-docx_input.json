@@ -1,0 +1,282 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_21",
+          "text": "EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_37",
+          "text": "SOFTWARE ENGINEER",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Tropang True Po",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_41",
+          "text": "January 2020 - Present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Created an automated testing framework that reduced testing time by 50% Collaborated with cross-functional teams to troubleshoot and resolve technical issues, resulting in improved customer satisfaction",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "BACK-END DEVELOPER",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_47",
+          "text": "Truesdays",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_49",
+          "text": "March 2014 - December 2020",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_51",
+          "text": "Designed and implemented new features on a cloud-based platform that increased user engagement by 25%",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_53",
+          "text": "Conducted testing and analysis for a new product launch",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_55",
+          "text": "DEVOPS ENGINEER",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_57",
+          "text": "Kalayaan National Bank",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_59",
+          "text": "June 2012 - March 2014",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_61",
+          "text": "Conducted research and development to improve product performance and efficiency by 20%",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_63",
+          "text": "Created technical documentation and provided training for end-users",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_37"
+          ],
+          "meta_para_ids": [
+            "para_39",
+            "para_41"
+          ],
+          "bullet_para_ids": [
+            "para_43"
+          ]
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_45"
+          ],
+          "meta_para_ids": [
+            "para_47",
+            "para_49"
+          ],
+          "bullet_para_ids": [
+            "para_51",
+            "para_53"
+          ]
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_55"
+          ],
+          "meta_para_ids": [
+            "para_57",
+            "para_59"
+          ],
+          "bullet_para_ids": [
+            "para_61",
+            "para_63"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "SKILLS",
+      "paragraphs": [
+        {
+          "para_id": "para_66",
+          "text": "SKILLS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_67",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_68",
+          "text": "Proficiency in Java, Python, C++          Testing and debugging techniques",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_69",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_70",
+          "text": "Data Structures and Algorithms           Database and SQL",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_71",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_72",
+          "text": "Development Methodology               Adaptability and continuous learning",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_73",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_74",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_75",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_76",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_77",
+          "text": "MASTERS IN COMPUTER SCIENCEBACHELOR OF COMPUTER SCIENCE",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_78",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_79",
+          "text": "Las Felipinas University, 2019 - 2021Las Felipinas University, 2008 - 2012",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_80",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_81",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "AFFILIATIONS",
+      "paragraphs": [
+        {
+          "para_id": "para_82",
+          "text": "AFFILIATIONS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_83",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_84",
+          "text": "YELLOW TREE ORGANIZATIONLIFE TECH PRO 2011",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_85",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_86",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_87",
+          "text": "Non-profitHackathon",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_88",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_89",
+          "text": "Set up database systems                  Participated in a 24hr hackathon",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_4_role_1",
+          "header_para_ids": [
+            "para_82"
+          ],
+          "meta_para_ids": [
+            "para_84"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    }
+  ]
+}

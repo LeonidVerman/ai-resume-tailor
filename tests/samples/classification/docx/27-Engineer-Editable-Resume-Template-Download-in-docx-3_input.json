@@ -1,0 +1,175 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_54",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_55",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_56",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_57",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_58",
+          "text": "2008-2012",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_59",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_60",
+          "text": "Master Degree of Project Engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_61",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_62",
+          "text": "Followed my passion in Product Design and Manufacturing coursework",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_63",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_64",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_65",
+          "text": "Pursued an independent study program in Machine Layout Design.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_66",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_67",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_68",
+          "text": "2012-2014",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_69",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_70",
+          "text": "Mechanical Engineer at Warner & Spencer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_71",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_72",
+          "text": "Completed 2 years course in Really Great University. Graduated with distinction (GWA 3,8).",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_73",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_74",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_75",
+          "text": "Increased production efficiency by 15% by strategically minimizing bottlenecks",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_76",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_77",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_78",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "CONTACT",
+      "paragraphs": [
+        {
+          "para_id": "para_79",
+          "text": "CONTACT",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_80",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_81",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_82",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_83",
+          "text": "+123-456-7890 hello@techguruplus.com 123 Anywhere St., Any City",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_84",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

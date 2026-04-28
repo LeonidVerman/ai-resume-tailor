@@ -1,0 +1,331 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Professional Experience",
+      "paragraphs": [
+        {
+          "para_id": "para_25",
+          "text": "Professional Experience",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Software Engineer | Cloud",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Giggling Platypus Co.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Skills & Competencies",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_49",
+          "text": "Programming Languages and Algorithms",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_52",
+          "text": "Software Development Practices",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_55",
+          "text": "Problem-Solving and Analytical Skills",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_58",
+          "text": "Communication and Collaboration",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_61",
+          "text": "Adaptability and Continuous Learning",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_36"
+          ],
+          "meta_para_ids": [
+            "para_38",
+            "para_45",
+            "para_49",
+            "para_52",
+            "para_55",
+            "para_58",
+            "para_61"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Certifications",
+      "paragraphs": [
+        {
+          "para_id": "para_65",
+          "text": "Certifications",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_66",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_67",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_68",
+          "text": "01 Jun 2052- present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_69",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_70",
+          "text": "Designed and implemented a new microservice architecture using Borcelle to improve application performance by 20%.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_71",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_72",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_73",
+          "text": "Developed and maintained critical features for the company's core product, resulting in a 15% increase in user engagement.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_74",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_75",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_76",
+          "text": "Led the development of a new automated testing framework using Rimberio that reduced manual testing time by 30%.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_77",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_78",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_79",
+          "text": "Software Engineer | Data",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_80",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_81",
+          "text": "Thynk Unlimited",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_82",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_83",
+          "text": "01 Aug 2050 - 30 Apr 2052",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_84",
+          "text": "\n",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_85",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_86",
+          "text": "Cloud Certified",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_87",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_88",
+          "text": "Rimberio | 2050",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_89",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_90",
+          "text": "Software Lifecycle Professional Borcelle | 2050",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_91",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_92",
+          "text": "Scrum Developer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_93",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_94",
+          "text": "Borcelle | 2050",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_95",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_96",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_97",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_2_role_1",
+          "header_para_ids": [
+            "para_65"
+          ],
+          "meta_para_ids": [
+            "para_68",
+            "para_83"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Education",
+      "paragraphs": [
+        {
+          "para_id": "para_98",
+          "text": "Education",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_99",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_100",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_101",
+          "text": "Bachelor of Science in Information Technology",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_102",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_103",
+          "text": "Fauget University",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_104",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_105",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_106",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_107",
+          "text": "Developed and deployed a real-time data processing pipeline using Rimberio to handle a 10x increase in data volume.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_108",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_109",
+          "text": "\n",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_110",
+          "text": "Jun 2050",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

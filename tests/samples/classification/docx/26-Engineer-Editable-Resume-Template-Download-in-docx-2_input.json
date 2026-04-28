@@ -1,0 +1,82 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Work History",
+      "paragraphs": [
+        {
+          "para_id": "para_58",
+          "text": "Work History",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_72",
+          "text": "+123-456-7890",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_71",
+          "text": "2016 - Present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_83",
+          "text": "MECHANICAL ENGINEER AT",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_84",
+          "text": "hello@techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_87",
+          "text": "WARNER & SPENCER",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_88",
+          "text": "123 Anywhere St., Any City",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_90",
+          "text": "2014 - 2016",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_99",
+          "text": "MECHANICAL ENGINEERING",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_101",
+          "text": "APPRENTICE AT UNLIMITED",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_72"
+          ],
+          "meta_para_ids": [
+            "para_71",
+            "para_83",
+            "para_84",
+            "para_87",
+            "para_88",
+            "para_90"
+          ],
+          "bullet_para_ids": [
+            "para_99",
+            "para_101"
+          ]
+        }
+      ]
+    }
+  ]
+}

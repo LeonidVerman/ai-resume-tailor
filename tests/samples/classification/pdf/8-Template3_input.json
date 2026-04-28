@@ -1,0 +1,215 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Profile",
+      "paragraphs": [
+        {
+          "para_id": "para_3",
+          "text": "Profile",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_4",
+          "text": "Friendly and engaging team player and leader able to inspire staff to perform their best. Detail oriented",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_5",
+          "text": "and experienced restaurant manager passionate about food and beverages. A multi-tasker who excels at",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_6",
+          "text": "staff training and recruiting with a track record of inspiring great customer service and customer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_7",
+          "text": "satisfaction. Regularly exceed sales goals. A master in the art of upselling.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Experience",
+      "paragraphs": [
+        {
+          "para_id": "para_8",
+          "text": "Experience",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_19",
+          "text": "RESTAURANT MANAGER | CONTOSO BAR AND GRILL",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "role_1_normA_1",
+          "text": "SEPTEMBER 20XX – PRESENT",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_10",
+          "text": "Recruit, hire, train, and coach over 30 staff members on customer service skills, food & beverage knowledge, sales, and health & safety standards.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_22",
+          "text": "Reduced costs by 7% through controls on overtime, operational efficiencies, and reduced waste.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_12",
+          "text": "Consistently exceed monthly sales goals by a minimum of 10% by training FOH staff on upselling techniques and by creating a featured food and beverage program.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_25",
+          "text": "RESTAURANT MANAGER | FOURTH COFFEE BISTRO",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "role_2_normA_2",
+          "text": "JUNE 20XX – AUGUST 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_14",
+          "text": "Created a cross-training program ensuring FOH staff members were able to perform confidently and effectively in all positions.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_15",
+          "text": "Grew customer based and increased restaurant social media accounts by 19% through interactive promotions, engaging postings, and contests.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_16",
+          "text": "Created and implemented staff health and safety standards compliance training program, achieving a score of 99% from the Board of Health.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_32",
+          "text": "Successfully redesigned existing inventory system, ordering and food storage practices, resulting in a",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_33",
+          "text": "6% decrease in food waste and higher net profits.",
+          "parser_semantic": "bullet"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_19"
+          ],
+          "meta_para_ids": [
+            "role_1_normA_1"
+          ],
+          "bullet_para_ids": [
+            "para_10",
+            "para_22",
+            "para_12"
+          ]
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_25"
+          ],
+          "meta_para_ids": [
+            "role_2_normA_2"
+          ],
+          "bullet_para_ids": [
+            "para_14",
+            "para_15",
+            "para_16",
+            "para_32",
+            "para_33"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Education",
+      "paragraphs": [
+        {
+          "para_id": "para_34",
+          "text": "Education",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_35",
+          "text": "B.S. IN BUSINESS ADMINISTRATION | JUNE 20XX | BIGTOWN COLLEGE, CHICAGO, ILLINOIS",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_36",
+          "text": "A.A. IN HOSPITALITY MANAGEMENT | JUNE 20XX | BIGTOWN COLLEGE, CHICAGO, ILLINOIS",
+          "parser_semantic": "role_header"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Skills & Abilities",
+      "paragraphs": [
+        {
+          "para_id": "para_37",
+          "text": "Skills & Abilities",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Accounting & Budgeting",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Proficient with POS systems",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Excellent interpersonal and communication skills",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Poised under pressure",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_42",
+          "text": "Experienced in most restaurant positions",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Fun and energetic",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_44",
+          "text": "Activities and Interests",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Theater, environmental conservation, art, hiking, skiing, travel",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

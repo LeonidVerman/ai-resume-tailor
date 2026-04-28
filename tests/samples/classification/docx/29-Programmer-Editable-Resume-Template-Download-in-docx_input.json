@@ -1,0 +1,316 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Senior Software Engineer",
+      "paragraphs": [
+        {
+          "para_id": "para_18",
+          "text": "Senior Software Engineer",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_19",
+          "text": "\n",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_20",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_21",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_22",
+          "text": "Borcelle Company",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Fauget University",
+      "paragraphs": [
+        {
+          "para_id": "para_23",
+          "text": "\nFauget University",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_24",
+          "text": "Computer Science",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_25",
+          "text": "2013-2017",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_26",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_27",
+          "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_28",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_29",
+          "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_2_role_1",
+          "header_para_ids": [
+            "para_23"
+          ],
+          "meta_para_ids": [
+            "para_25"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Borcelle High School",
+      "paragraphs": [
+        {
+          "para_id": "para_30",
+          "text": "\nBorcelle High School",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_31",
+          "text": "High School 2009-2013",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_32",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_33",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_3_role_1",
+          "header_para_ids": [
+            "para_30"
+          ],
+          "meta_para_ids": [
+            "para_31"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Skill",
+      "paragraphs": [
+        {
+          "para_id": "para_34",
+          "text": "Skill",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_35",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_36",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_37",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_38",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_39",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Jan 2019 - Nov 2021",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Software Engineer",
+      "paragraphs": [
+        {
+          "para_id": "para_41",
+          "text": "Software Engineer",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_42",
+          "text": "\n",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_43",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_44",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Fauget Company",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "Language",
+      "paragraphs": [
+        {
+          "para_id": "para_46",
+          "text": "\nLanguage",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_47",
+          "text": "Fauget Borcelle Liceria & Co.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_48",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_49",
+          "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "Frameworks",
+      "paragraphs": [
+        {
+          "para_id": "para_50",
+          "text": "\nFrameworks",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_51",
+          "text": "Arrowai Fauget Borcelle",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_8",
+      "raw_title": "Tools",
+      "paragraphs": [
+        {
+          "para_id": "para_52",
+          "text": "Tools",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_53",
+          "text": "Borcelle",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_54",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_9",
+      "raw_title": "May 2018 - Dec 2019Software Engineer",
+      "paragraphs": [
+        {
+          "para_id": "para_55",
+          "text": "May 2018 - Dec 2019Software Engineer",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_56",
+          "text": "\nLiceria & Co.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_57",
+          "text": "\nLiceria & Co.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_58",
+          "text": "Fauget",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_59",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_60",
+          "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_61",
+          "text": "\n",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_62",
+          "text": "Database Arrowai Liceria & Co",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

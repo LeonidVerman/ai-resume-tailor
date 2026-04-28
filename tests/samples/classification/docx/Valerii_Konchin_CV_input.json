@@ -1,0 +1,263 @@
+{
+  "document_id": "Valerii_Konchin_CV",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "PROFILE",
+      "paragraphs": [
+        {
+          "para_id": "para_3",
+          "text": "PROFILE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_4",
+          "text": "Backend and infrastructure engineer with deep expertise in Java and Spring/Spring Boot, specializing in high-performance financial systems, cryptocurrency platforms, and distributed applications. Strong track record building scalable microservices, optimizing JVM performance, and delivering reliable production infrastructure. Working knowledge of Kotlin and Go. Combines backend depth with DevOps capabilities to own features end-to-end from design through production deployment.\n",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "CORE COMPETENCIES",
+      "paragraphs": [
+        {
+          "para_id": "para_5",
+          "text": "CORE COMPETENCIES",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_6",
+          "text": "Backend Development\nJava (Core Java, legacy–modern, from 1.4); Kotlin; Spring/Spring Boot; REST APIs; GraphQL; Microservices; JVM performance tuning; Multithreading; PostgreSQL/MySQL; Distributed systems; Blockchain integration (BTC, ETH, SOL)\nDevOps & Infrastructure\nKubernetes; Docker; AWS (EC2, RDS, S3, VPC); CI/CD (Jenkins); Ansible; Prometheus/Grafana; Linux administration; Bash/Python scripting\nFull-Stack\nFlutter/Dart; Vue.js; AngularJS; GWT; JavaScript; HTML5/CSS3\nAdditional\nroot cause analysis, monitoring, alerting, capacity planning, remediation, high engagement, effective outcomes, container orchestration, infrastructure-as-code, CI/CD pipelines, debugging skills\n",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "PROFESSIONAL EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_7",
+          "text": "PROFESSIONAL EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_20",
+          "text": "Software Engineer (Independent Contractor)",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_21",
+          "text": "Mercor; January 2026 – Present; Vancouver, Canada; Remote\n*Contract engineering for AI-related projects on behalf of Mercor clients.*\nContributing to AI-focused technical projects for Mercor clients across varying project scopes and requirements;\nTech Stack: Java, Python, AI coding agents",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_22",
+          "text": "Senior Software Engineer (Independent Contractor)",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_23",
+          "text": "Toptal; February 2026 – Present; Vancouver, Canada; Remote\n*Senior engineering contractor for Toptal clients.*\nTech Stack: Java, Spring Boot, REST APIs, GraphQL, AWS, Docker, Microservices, PostgreSQL, Ansible, Jetty, Linux, Multithreading",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_24",
+          "text": "Senior Software Engineer",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_25",
+          "text": "GMO-Z.com Fintech CA; April 2021 – September 2025; Vancouver, Canada\n*Platform engineering role focusing on infrastructure, CI/CD, and developer tooling for cryptocurrency trading platform (30+ engineers).*\nReduced CI/CD pipeline runtime from 12 hours to 2 hours (83% improvement) by building custom test parallelization tool for 30,000-test suite across multiple Jenkins agents;\nDesigned and maintained 15+ Jenkins pipelines (Groovy DSL) for Java microservices: build automation, unit/integration testing, deployment workflows, rollback procedures;\nBuilt hybrid cloud infrastructure combining AWS, VMware ESXi, and Proxmox with OpenVPN network architecture connecting multiple data centers, achieving 100% uptime;\nReduced server provisioning time from 4+ hours to under 20 minutes by implementing Infrastructure-as-Code with Ansible across 30+ nodes spanning AWS and on-premises environments;\nDeployed and maintained 3-node Kubernetes cluster hosting blockchain networks (public, test, private) for development and testing;\nBuilt observability platform (Prometheus, Loki, Grafana) covering 20+ production services, reducing mean time to detection from hours to under 5 minutes via automated Slack/email alerting;\nMigrated 5 critical internal services (Bitbucket, Redmine, Jenkins, Nexus, Vault) to AWS and VMware with zero unplanned downtime, reducing hardware maintenance overhead by ~8 hours/month;\nImplemented RBAC security model for CI/CD pipelines and infrastructure access across 50+ users;\nResolved complex production issues: Solana container failures due to CPU instruction incompatibilities, Kubernetes cluster networking problems, build pipeline stability;\nMentored 2-3 junior engineers on Kubernetes, Docker workflows, testing practices, and debugging techniques; established Docker Compose standards adopted across organization;\nTech Stack: AWS (EC2, RDS, S3), Kubernetes, Docker, Jenkins (Groovy DSL), Ansible, OpenVPN, Prometheus, Loki, Grafana, PostgreSQL, Python, Bash",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Backend Engineer",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_27",
+          "text": "CardinalChain Software Inc.; April 2019 – March 2021; Vancouver, Canada\n*Acquired by GMO-Z.com in 2021*\n*Cryptocurrency trading platform startup. Owned blockchain integration architecture and core trading infrastructure.*\nArchitected and implemented cryptocurrency blockchain integrations for 7+ chains (BTC, ETH, BCH, SOL, LTC, XRP, XLM) including transaction flows, wallet management, signing infrastructure, and reconciliation logic;\nBuilt flexible multi-signature transaction signing system with configurable N-of-M threshold schemes using air-gapped signing nodes for enhanced security;\nDeveloped Ethereum smart contracts in Solidity implementing multi-signature wallet with dynamic threshold configuration;\nReduced GC pause times by 60% and improved p99 transaction latency from 800ms to 120ms through JVM tuning: G1GC configuration, heap profiling, and thread pool rightsizing;\nFixed critical production issues in trading services: transaction boundary problems, database connection pool misconfigurations, memory leaks;\nDeveloped REST APIs and backend services for cryptocurrency trading platform using Spring Boot;\nTech Stack: Java 8, Spring Boot, Hibernate, REST, Solidity, PostgreSQL",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_28",
+          "text": "Java Software Engineer",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_29",
+          "text": "FitechSource Saint-Petersburg; August 2007 – March 2019; St. Petersburg, Russia\n*Full-stack development across multiple domains: distributed computing platforms, cryptocurrency exchanges, scientific applications, and enterprise systems.*\n*Grew into DevOps responsibilities (2015–2019) while maintaining development work.*\nBackend & Full-Stack Development (2007–2019)\nDelivered full backend rewrite of Stanford University lab management system (LabUser) for 100+ researchers, cutting report generation time from 45 minutes to under 2 minutes vs. legacy PHP system: real-time inventory tracking, grant management, purchase request workflows, usage analytics;\nDeveloped core features for commercial distributed computing products (Palette DB distributed caching, xTier middleware platform): clustering logic, failover mechanisms, testing infrastructure, production deployment support;\nImplemented high-performance backend services for financial trading platforms and cryptocurrency exchanges: market data processing, order routing, session management, transaction handling;\nBuilt full-stack features using AngularJS, Vue.js, and GWT: bioinformatics data visualization, real-time dashboards, complex forms, inventory management interfaces;\nDeveloped REST APIs and microservices using Spring framework with PostgreSQL/MySQL databases;\nOptimized database performance: query tuning, indexing strategies, connection pool configuration;\nDesigned distributed systems components: message routing, multi-node synchronization, fault tolerance, graceful degradation;\nDevOps & Infrastructure (2015–2019)\nBuilt and maintained CI/CD pipelines using Jenkins (Groovy DSL): automated builds, test execution, deployment automation, artifact management;\nDeveloped Ansible playbooks for infrastructure automation: server provisioning, configuration management, application deployment;\nManaged PostgreSQL and MySQL production databases: performance tuning, schema migrations, replication setup, backup/restore procedures;\nMaintained Linux production servers with 24/7 on-call support: troubleshooting, log analysis, incident response;\nTech Stack: Java (Core Java, legacy–modern, from 1.4), Spring, JDBC, Hibernate, REST, AngularJS, Vue.js, GWT, PostgreSQL, MySQL, Jenkins (Groovy DSL), Ansible, Linux, Bash, Git",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_30",
+          "text": "Java Software Engineer",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_31",
+          "text": "ZAO Eureca; June 2006 – July 2007; St. Petersburg, Russia\nDeveloped Java backend modules for automated logistics platform managing hospital food supply for Russian Ministry of Defence facilities;\nTech Stack: Java, JDBC, SQL",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_20"
+          ],
+          "meta_para_ids": [
+            "para_21"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_22"
+          ],
+          "meta_para_ids": [
+            "para_23"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_24"
+          ],
+          "meta_para_ids": [
+            "para_25"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_4",
+          "header_para_ids": [
+            "para_26"
+          ],
+          "meta_para_ids": [
+            "para_27"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_5",
+          "header_para_ids": [
+            "para_28"
+          ],
+          "meta_para_ids": [
+            "para_29"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_6",
+          "header_para_ids": [
+            "para_30"
+          ],
+          "meta_para_ids": [
+            "para_31"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "TECHNICAL PROJECTS",
+      "paragraphs": [
+        {
+          "para_id": "para_32",
+          "text": "TECHNICAL PROJECTS",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Independent Developer",
+      "paragraphs": [
+        {
+          "para_id": "para_33",
+          "text": "Independent Developer",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_34",
+          "text": "Neru Plan – Smart Meal Planning App; January 2026 – Present\n*Solo iOS/iPad app designed, developed, and shipped to the App Store.*\nBuilt on-device AI recipe import using Apple Foundation Models: photo capture and URL parsing fully offline, no data leaves the device;\nEngineered custom \"Atoms\" ingredient matching system for automatic cross-recipe deduplication and shopping list aggregation with unit conversion (cups, tablespoons, metric);\nImplemented dynamic serving size scaling with live shopping list recalculation, infinite-scroll drag-and-drop meal calendar, 10+ website recipe parser, and iCloud sync;\nTech Stack: Swift, SwiftUI, Apple Foundation Models, Apple Intelligence, iCloud, iOS, iPadOS",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "Independent Developer",
+      "paragraphs": [
+        {
+          "para_id": "para_35",
+          "text": "Independent Developer",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Renzu Yui – Photography Workflow Ecosystem; November 2025 – Present\n*Privacy-first photography toolset for professionals. Renzu Select shipped to App Store; distributed backend and additional apps in development.*\nRenzu Select (macOS photo culling app):\nImplemented instant RAW preview loading from embedded JPEGs (NEF, RAF, CR2/CR3, ARW, DNG) eliminating editor launch wait time for large shoots;\nBuilt custom on-device AI pipeline (vector embeddings, visual-similarity clustering) for smart shot stacking—all ML processing runs locally, no cloud dependency, fully offline;\nDesigned non-blocking import pipeline with background caching, isolated processing threads, and automatic session recovery keeping UI responsive across thousands of files;\nDelivered 5-star XMP rating system, professional export with naming and metadata templates, and dynamic viewing themes;\nRenzu Flow (AI-assisted RAW photo styling app):\nBuilt Apple Silicon optimized RAW-to-JPEG styling pipeline using CIRAWFilter, Core Image, Metal-backed rendering, and reusable XCFramework libraries for macOS/iPad integration;\nDesigned training system that learns a photographer’s edit style from paired RAW+JPEG sets by extracting a global tone curve and per-image 3D color LUTs, then applies the style to new RAW files;\nImplemented style application modes for clean RAW conversion, tone mapping only, color LUT only, and combined tone+color rendering to support both debugging and production workflows;\nArchitected reusable core and training modules with command-line tooling, model export/import, and dynamic framework packaging for integration into desktop, kiosk, and tablet products;\nTech Stack: Swift, SwiftUI, Core ML, Vision, Dart, Flutter, macOS",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_37",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_38",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Saint Petersburg State University (2002 – 2007)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Coursework in Mathematics and System Software Development",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_8",
+      "raw_title": "ADDITIONAL INFORMATION",
+      "paragraphs": [
+        {
+          "para_id": "para_41",
+          "text": "ADDITIONAL INFORMATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_42",
+          "text": "Availability: Open to Remote positions (preferred); also available for Hybrid or On-site roles in Vancouver\nWork Authorization: Canadian Permanent Resident; Canadian Citizenship effective April 17, 2026 (citizenship ceremony scheduled)\nLanguages: English (fluent), Russian (native)\nAI-Assisted Development: Experienced with Claude, ChatGPT, Gemini for code generation, automation of engineering tasks including code coverage tests, and technical research",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

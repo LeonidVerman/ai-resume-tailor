@@ -1,0 +1,216 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_6",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_7",
+          "text": "Really Great University (2012-2014)",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "SUMMARY",
+      "paragraphs": [
+        {
+          "para_id": "para_8",
+          "text": "SUMMARY",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Master Degree of Project Engineering",
+      "paragraphs": [
+        {
+          "para_id": "para_9",
+          "text": "Master Degree of Project Engineering",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_10",
+          "text": "WORK",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_11",
+          "text": "HISTORY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_12",
+          "text": "+123-456-7890",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_13",
+          "text": "Mechanical Engineer with 6+ years of experience in lightweight materials",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_14",
+          "text": "innovation, production, and maintenance. Possess a B.S. in Mechanical",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_15",
+          "text": "Engineering from Really Great University. Seeking to leverage my",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_16",
+          "text": "knowledge, leadership abilities, and materials development competency in",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_17",
+          "text": "the role of Senior Mechanical Engineer for Ingoude Company.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_18",
+          "text": "Completed 2 years course in Really Great University. Graduated",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_19",
+          "text": "with distinction (GWA 3,8).",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_20",
+          "text": "Really Great School of Economics (2008-2012)",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_3_role_1",
+          "header_para_ids": [
+            "para_9"
+          ],
+          "meta_para_ids": [
+            "para_20"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "BS in Mechanical Engineering",
+      "paragraphs": [
+        {
+          "para_id": "para_21",
+          "text": "BS in Mechanical Engineering",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_22",
+          "text": "Followed my passion in Product Design and Manufacturing coursework.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_23",
+          "text": "Excelled in Mechanics and Materials.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_24",
+          "text": "2016-present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_25",
+          "text": "Mechanical Engineer at Warner & Spencer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Worked with a team of 10+ to ideate, create, maintain, and update",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "lightweight materials, working primarily with carbon fiber composite",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_28",
+          "text": "2014-2016",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_4_role_1",
+          "header_para_ids": [
+            "para_21"
+          ],
+          "meta_para_ids": [
+            "para_24",
+            "para_28"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Mechanical Engineering Apprentice at",
+      "paragraphs": [
+        {
+          "para_id": "para_29",
+          "text": "Mechanical Engineering Apprentice at",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "Thynk Unlimited",
+      "paragraphs": [
+        {
+          "para_id": "para_30",
+          "text": "Thynk Unlimited",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_31",
+          "text": "Researched new materials-generation techniques, compiling and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_32",
+          "text": "distributing an average of 3 reports/year.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_33",
+          "text": "hello@techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_34",
+          "text": "123 Anywhere St., Any City",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

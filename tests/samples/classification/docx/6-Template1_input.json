@@ -1,0 +1,249 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "OFFICE MANAGER",
+      "paragraphs": [
+        {
+          "para_id": "para_3",
+          "text": "OFFICE MANAGER",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_4",
+          "text": "State your career goals and show how they align with the job description you’re targeting. Be brief and keep it from sounding generic. Be yourself.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_5",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_6",
+          "text": "chanchals@example.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_7",
+          "text": "(718) 555–0100",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "LinkedIn profile",
+      "paragraphs": [
+        {
+          "para_id": "para_8",
+          "text": "LinkedIn profile",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_9",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_10",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_11",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_12",
+          "text": "EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_22",
+          "text": "Jan 20XX - Current",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_23",
+          "text": "Office manager, The Phone Company ",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_25",
+          "text": "Summarize your key responsibilities and accomplishments. Where appropriate, use the language and words you find in the specific job description. Be concise, targeting 3-5 key areas.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "Mar 20XX - Dec 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_28",
+          "text": "Office manager, Nod Publishing ",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_30",
+          "text": "Summarize your key responsibilities and accomplishments. Here again, take any opportunity to use words you find in the job description. Be brief.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_32",
+          "text": "Aug 20XX - Mar 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_33",
+          "text": "Office manager, Southridge Video ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_35",
+          "text": "Summarize your key responsibilities and accomplishments. Where appropriate, use the language and words you find in the specific job description. Be concise, targeting 3-5 key areas. ",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_22"
+          ],
+          "meta_para_ids": [],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_23"
+          ],
+          "meta_para_ids": [
+            "para_25",
+            "para_27"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_28"
+          ],
+          "meta_para_ids": [
+            "para_30",
+            "para_32"
+          ],
+          "bullet_para_ids": [
+            "para_33",
+            "para_35"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_38",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Sep 20XX - May 20XX",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_40",
+          "text": "A.S. H.R. Management,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Bellows College",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Skills",
+      "paragraphs": [
+        {
+          "para_id": "para_42",
+          "text": "Skills",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Data analysis",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_44",
+          "text": "Project management",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "Communication",
+      "paragraphs": [
+        {
+          "para_id": "para_45",
+          "text": "Communication",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_46",
+          "text": "Organization",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_47",
+          "text": "Problem solving",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "INTERESTS",
+      "paragraphs": [
+        {
+          "para_id": "para_48",
+          "text": "INTERESTS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_49",
+          "text": "This section is optional but can showcase the unique, intriguing, even fun side of who you are.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_50",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

@@ -1,0 +1,308 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Assistant Manager",
+      "paragraphs": [
+        {
+          "para_id": "para_3",
+          "text": "Assistant Manager",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_4",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_5",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_6",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_7",
+          "text": "312.555.0110",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_8",
+          "text": "carmelo@example.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "Seattle, WA",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_10",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_11",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_12",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Objective",
+      "paragraphs": [
+        {
+          "para_id": "para_13",
+          "text": "Objective",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_14",
+          "text": "As an assistant manager, my primary objective is to support the functioning of business operations by managing staff, coordinating operations, and ensuring exceptional customer service. I aim to create a positive and productive work environment by communicating with team members, setting clear goals, and monitoring performance.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Education",
+      "paragraphs": [
+        {
+          "para_id": "para_15",
+          "text": "Education",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_16",
+          "text": "Mount Flores College",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_17",
+          "text": "New York City, NY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_18",
+          "text": "BA in Business Administration ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_19",
+          "text": "GPA 3.87",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Key Skills",
+      "paragraphs": [
+        {
+          "para_id": "para_20",
+          "text": "Key Skills",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_21",
+          "text": "Marketing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_22",
+          "text": "Project management",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_23",
+          "text": "Budget planning",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Communication",
+      "paragraphs": [
+        {
+          "para_id": "para_24",
+          "text": "Communication",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_25",
+          "text": "Problem-solving",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "Experience",
+      "paragraphs": [
+        {
+          "para_id": "para_27",
+          "text": "Experience",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_39",
+          "text": "June 20XX - Present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Assistant Manager",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Woodgrove Bank",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_42",
+          "text": "Jan 20XX – June 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Lead Salesperson ",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_44",
+          "text": "Safewest Banking",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Aug 20XX – Jan 20XX ",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_46",
+          "text": "Sales Associate",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_47",
+          "text": "Safewest Banking",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_39"
+          ],
+          "meta_para_ids": [],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_40"
+          ],
+          "meta_para_ids": [
+            "para_41",
+            "para_42"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_43"
+          ],
+          "meta_para_ids": [
+            "para_44",
+            "para_45"
+          ],
+          "bullet_para_ids": [
+            "para_46",
+            "para_47"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "Communication",
+      "paragraphs": [
+        {
+          "para_id": "para_48",
+          "text": "Communication",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_49",
+          "text": "Implemented new procedures and technologies that improved efficiency and streamlined operations.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_8",
+      "raw_title": "Leadership",
+      "paragraphs": [
+        {
+          "para_id": "para_50",
+          "text": "Leadership",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_51",
+          "text": "Successfully led a team to exceed sales goals while maintaining excellent customer satisfaction scores.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_9",
+      "raw_title": "References",
+      "paragraphs": [
+        {
+          "para_id": "para_52",
+          "text": "References",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_53",
+          "text": "Available upon request. ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_54",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

@@ -1,0 +1,352 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_5",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Borcelle University",
+      "paragraphs": [
+        {
+          "para_id": "para_6",
+          "text": "Borcelle University",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_7",
+          "text": "2022 - 2024 | Bachelor in Computer",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_8",
+          "text": "Engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "University",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_10",
+          "text": "2020 - 2021 | Master in Computer",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_11",
+          "text": "Engineering",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "SKILLS",
+      "paragraphs": [
+        {
+          "para_id": "para_12",
+          "text": "SKILLS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_13",
+          "text": "knowledge and hand-on",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_14",
+          "text": "experience with operating",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_15",
+          "text": "systems (maintenance,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_16",
+          "text": "troubleshooting)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_17",
+          "text": "strong ops skills and support",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_18",
+          "text": "mindset",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_19",
+          "text": "deep understanding of modern",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_20",
+          "text": "monitoring concepts experience",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_21",
+          "text": "with Databases",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "LANGUAGES",
+      "paragraphs": [
+        {
+          "para_id": "para_22",
+          "text": "LANGUAGES",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_23",
+          "text": "English native language",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_24",
+          "text": "German speaking, reading,writing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_25",
+          "text": "Chinese speaking, reading,",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "REFERENCES",
+      "paragraphs": [
+        {
+          "para_id": "para_26",
+          "text": "REFERENCES",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "Samira Hadid",
+      "paragraphs": [
+        {
+          "para_id": "para_27",
+          "text": "Samira Hadid",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_28",
+          "text": "Position | Company name",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_29",
+          "text": "hello@techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_30",
+          "text": "+123-456-7890",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "HARPER RUSSO",
+      "paragraphs": [
+        {
+          "para_id": "para_31",
+          "text": "HARPER RUSSO",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_32",
+          "text": "DEVOPS ENGINEER",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_8",
+      "raw_title": "PROFILE",
+      "paragraphs": [
+        {
+          "para_id": "para_33",
+          "text": "PROFILE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_34",
+          "text": "I am a strong, skillful, and self-organized DevOps",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_35",
+          "text": "engineer with 5 years experience of developing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_36",
+          "text": "infrastructure-related components platform, optimizing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_37",
+          "text": "the existing environments. Have strong scripting",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_38",
+          "text": "knowledge. Good understanding of Infrastructure-as-a-",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Code concepts.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_40",
+          "text": "EXPERIENCES",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_41",
+          "text": "2023 Ginyard International Co.",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_42",
+          "text": "Junior software developer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_43",
+          "text": "set-up, maintenance and ongoing development of",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_44",
+          "text": "continuous build/ integration infrastructure developing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "pipeline for computer vision applications optimize the",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "existing environments/structure establish and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_47",
+          "text": "strengthen the security notification and management",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_48",
+          "text": "tools",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_49",
+          "text": "participate in technical discussions to aid system",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_50",
+          "text": "design, analysis, and troubleshooting",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_51",
+          "text": "2024 Larana. Inc.",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_52",
+          "text": "Senior Devops engineer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_53",
+          "text": "Deliver the project from design to testing, including new",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_54",
+          "text": "programs, enhancements, and modifications Monitor",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_55",
+          "text": "the performance and test the server Participate in",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_56",
+          "text": "estimation and planning sessions Work closely with the",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_57",
+          "text": "Product team to deliver quality features in high-quality",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_58",
+          "text": "code and best practices Contribute to development of",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_59",
+          "text": "technical project documentation and user",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_60",
+          "text": "documentation",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_61",
+          "text": "Drive major architectural changes as we scale to",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_62",
+          "text": "improve our engineering velocity",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

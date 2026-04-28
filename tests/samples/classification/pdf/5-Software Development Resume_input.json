@@ -1,0 +1,492 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "WORK EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_11",
+          "text": "WORK EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_14",
+          "text": "Company Name, Inc., New York, NY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_15",
+          "text": "Jan 2015 - present",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_14"
+          ],
+          "meta_para_ids": [
+            "para_15"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Senior Software Developer",
+      "paragraphs": [
+        {
+          "para_id": "para_16",
+          "text": "Senior Software Developer",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_17",
+          "text": "Software Solutions Provider",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_18",
+          "text": "Contributed to the securing of a $xxM software development…",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_19",
+          "text": "Achieved an estimated xx% rise in team productivity through...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_20",
+          "text": "Exceeded network optimization target of xx% efficiency increase by...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_21",
+          "text": "Added x# talented engineers to team, due to...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_22",
+          "text": "Decreased system bugs by xx% by generating dev models and...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_23",
+          "text": "Awarded 2 contracts due to design results excellence in...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_24",
+          "text": "Generated client profits of $xxM by introducing beta software in...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_25",
+          "text": "Optimized software design and development for profit growth of xx%...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Prior Company, Inc., New York, NY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "Jan 2011 - Jan 2015",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_2_role_1",
+          "header_para_ids": [
+            "para_16"
+          ],
+          "meta_para_ids": [
+            "para_27"
+          ],
+          "bullet_para_ids": [
+            "para_18",
+            "para_19",
+            "para_20",
+            "para_21",
+            "para_22",
+            "para_23",
+            "para_24",
+            "para_25"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Software Development Leader",
+      "paragraphs": [
+        {
+          "para_id": "para_28",
+          "text": "Software Development Leader",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_29",
+          "text": "Custom Software Solutions Design and Development",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_30",
+          "text": "Produced a 2019 award winning app for the visually impaired...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_31",
+          "text": "Delivered a xx% rise in efficiency for SharePoint-based workflow...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_32",
+          "text": "Saved an est. $XM for client by connecting mainframe financial...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_33",
+          "text": "Optimized program to produce xx% rise in efficiency by creating map...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_34",
+          "text": "Reduced bugs in Java and Web app component designs by xx% through...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_35",
+          "text": "Grew Data-Center team for major contract worth $xxM after...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Changed the development process of web pages for $xxM contract by...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_37",
+          "text": "Achieved xx% lower operating costs through insourcing and...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Firstname I. Lastname",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Prior Company, Inc., New York, NY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_40",
+          "text": "2004 - 2011",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Enterprise Application Software Solutions",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_3_role_1",
+          "header_para_ids": [
+            "para_28"
+          ],
+          "meta_para_ids": [
+            "para_40"
+          ],
+          "bullet_para_ids": [
+            "para_30",
+            "para_31",
+            "para_32",
+            "para_33",
+            "para_34",
+            "para_35",
+            "para_36",
+            "para_37"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Senior Software Development Specialist",
+      "paragraphs": [
+        {
+          "para_id": "para_42",
+          "text": "Senior Software Development Specialist",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Jan 2010 - Jan 2011",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_44",
+          "text": "Increased productivity by xx% by eliminating bugs in legacy...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Grew a global team as part of a $xxM contract, where implementation...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_46",
+          "text": "Produced feasibility studies that helped win a $xxM development...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_47",
+          "text": "Contributed to yearly client profits of $xM by designing/...",
+          "parser_semantic": "bullet"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_4_role_1",
+          "header_para_ids": [
+            "para_42"
+          ],
+          "meta_para_ids": [
+            "para_43"
+          ],
+          "bullet_para_ids": [
+            "para_44",
+            "para_45",
+            "para_46",
+            "para_47"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Software Development Specialist",
+      "paragraphs": [
+        {
+          "para_id": "para_48",
+          "text": "Software Development Specialist",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_49",
+          "text": "Jan 2004 - Jan 2010",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_50",
+          "text": "Hired to new position due to qualifications and strong results in previous company",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_51",
+          "text": "Contributed to cart abandonment rate reduction of xx% from...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_52",
+          "text": "Increased platform usage by xx% in x months by designing and...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_53",
+          "text": "Developed n-tier code-generation architecture showing xx% rise in…",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_54",
+          "text": "Awarded $xxx bonus for delivering high priority projects on time...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_55",
+          "text": "Prior Company, Inc., New York, NY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_56",
+          "text": "Jan 2001 - Jan 2004",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_57",
+          "text": "Programmer/Analyst",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_58",
+          "text": "Performed Analysis, Coding and Testing Across a Variety of Projects",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_59",
+          "text": "Eliminated issues in the WebSphere test environment, saving $xxx, by...",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_60",
+          "text": "Optimized mid-level projects for efficiency rise of x% through analysis of...",
+          "parser_semantic": "bullet"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_5_role_1",
+          "header_para_ids": [
+            "para_48"
+          ],
+          "meta_para_ids": [
+            "para_49",
+            "para_56"
+          ],
+          "bullet_para_ids": [
+            "para_51",
+            "para_52",
+            "para_53",
+            "para_54",
+            "para_59",
+            "para_60"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_61",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_62",
+          "text": "Grad School University Name, New York, NY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_63",
+          "text": "2004",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "Master’s in Precisely Specific Degree",
+      "paragraphs": [
+        {
+          "para_id": "para_64",
+          "text": "Master’s in Precisely Specific Degree",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_65",
+          "text": "Winner of award, distinction or honor",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_66",
+          "text": "Winner of award, distinction or honor",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_67",
+          "text": "Undergraduate College or University Name, New York, NY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_68",
+          "text": "2000",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_7_role_1",
+          "header_para_ids": [
+            "para_64"
+          ],
+          "meta_para_ids": [
+            "para_68"
+          ],
+          "bullet_para_ids": [
+            "para_65",
+            "para_66"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_8",
+      "raw_title": "BS/BA in Precisely Specific Degree",
+      "paragraphs": [
+        {
+          "para_id": "para_69",
+          "text": "BS/BA in Precisely Specific Degree",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_70",
+          "text": "Winner of award, distinction or honor",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_71",
+          "text": "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_72",
+          "text": "◇—————————————————————————◇",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_73",
+          "text": "InfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents (Design) •",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_74",
+          "text": "JavaScript, Swift • Python • Java • C++ • Ruby • Rust • Elixir • Scala • R • PHP • C# • jQuery •",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_75",
+          "text": "HTML • CSS • SQL • Bash/Shell • C • Typescript • Assembly • Go • Objective-C • VB.NET •",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_76",
+          "text": "Matlab • VBA • Kotlin • Groovy • Perl • Agile Scrum • Node.js • React • .NETcore • Spring •",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_77",
+          "text": "Django • Cordova • Angular • Windows • Linux • Embedded Systems • MySQL • SQL Server •",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_78",
+          "text": "Oracle • TensorFlow • Spark • Helm • Ansible • Docker • Jenkins • Visual Studio • UX System",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

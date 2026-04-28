@@ -1,0 +1,299 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "CONTACT",
+      "paragraphs": [
+        {
+          "para_id": "para_2",
+          "text": "CONTACT",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_3",
+          "text": "cmcturland@email.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_4",
+          "text": "(123) 456-7890",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_5",
+          "text": "New York, NY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_6",
+          "text": "LinkedIn",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_7",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_8",
+          "text": "B.S.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "Computer Science",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_10",
+          "text": "University of Pittsburgh",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_11",
+          "text": "September 2015 - April 2019",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_12",
+          "text": "Pittsburgh, PA",
+          "parser_semantic": "bullet"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "SKILLS",
+      "paragraphs": [
+        {
+          "para_id": "para_13",
+          "text": "SKILLS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_14",
+          "text": "Python",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_15",
+          "text": "Java",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_16",
+          "text": "SQL",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_17",
+          "text": "REST API Development",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_18",
+          "text": "Analytical Problem Solving",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_19",
+          "text": "Technical Documentation",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_20",
+          "text": "Agile Development Practices",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_21",
+          "text": "SOFTWARE ENGINEER",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "WORK EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_22",
+          "text": "WORK EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Software Engineer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "Embark",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_47",
+          "text": "January 2022 - current / New York, NY",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Architected backend services supporting vehicle logistics workflows, enabling dispatch systems to process ~12k shipment events per day with reliable status synchronization.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_51",
+          "text": "Optimized route-planning queries in a microservices environment using",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_28",
+          "text": "Python and PostgreSQL, reducing average API response time by 38% during peak operations.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_29",
+          "text": "Implemented automated validation checks across shipment ingestion pipelines, improving operational data accuracy across 5 core internal systems used by dispatch teams.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_30",
+          "text": "Partnered with product and operations stakeholders to ship incremental platform releases on a bi-weekly cadence, accelerating delivery of new carrier integration features.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_60",
+          "text": "Software Engineer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_61",
+          "text": "MarketSmart",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_62",
+          "text": "April 2019 - January 2022 / Washington, DC",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_34",
+          "text": "Developed new lead-scoring features for a marketing analytics platform, increasing predictive model precision by 21% for donor engagement campaigns.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_35",
+          "text": "Refactored legacy data processing modules into modular services, decreasing average batch processing time by 17 minutes per run.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Integrated REST APIs connecting CRM systems and campaign analytics tools, supporting data exchange across 3 enterprise client platforms.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_37",
+          "text": "Collaborated with data science and product teams to deploy experimentation pipelines that supported dozens of A/B campaign tests annually.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_73",
+          "text": "Software Engineer Intern",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_74",
+          "text": "Marketing Science Company",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_75",
+          "text": "April 2018 - March 2019 / Pittsburgh, PA",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Built internal dashboards to visualize campaign performance metrics, enabling analysts to monitor 150+ active advertising experiments.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_42",
+          "text": "Automated recurring data preparation tasks in Python, reducing manual analyst workload by ~6 hours per week.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Investigated anomalies in digital campaign reporting pipelines, resolving discrepancies affecting three client reporting workflows.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_44",
+          "text": "Documented ETL processes and onboarding guides that shortened ramp-up time for incoming interns by one training session.",
+          "parser_semantic": "bullet"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_45"
+          ],
+          "meta_para_ids": [
+            "para_46",
+            "para_47"
+          ],
+          "bullet_para_ids": [
+            "para_26",
+            "para_51",
+            "para_28",
+            "para_29",
+            "para_30"
+          ]
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_60"
+          ],
+          "meta_para_ids": [
+            "para_61",
+            "para_62"
+          ],
+          "bullet_para_ids": [
+            "para_34",
+            "para_35",
+            "para_36",
+            "para_37"
+          ]
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_73"
+          ],
+          "meta_para_ids": [
+            "para_74",
+            "para_75"
+          ],
+          "bullet_para_ids": [
+            "para_41",
+            "para_42",
+            "para_43",
+            "para_44"
+          ]
+        }
+      ]
+    }
+  ]
+}

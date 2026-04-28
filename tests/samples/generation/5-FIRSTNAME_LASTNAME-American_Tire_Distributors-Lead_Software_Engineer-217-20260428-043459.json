@@ -1,0 +1,946 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.1]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n21) Must explicitly mention the company + role from TASK.\n22) Must connect: candidate background -> company needs -> role responsibilities, using only supported claims.\n23) Keep it 3-5 short paragraphs; be specific but not verbose.\n\n[CANDIDATE_LAYER_FIRSTNAME_I_LASTNAME v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Senior Software Developer / Senior Backend Engineer with strength in backend systems, cloud transitions, and enterprise software delivery.\n- Emphasize: production-oriented engineering that improves productivity, reduces defects, and lowers operating costs.\n- Keep domain framing broad and accurate: backend + cloud-based applications + enterprise software (not niche vertical specialization).\n- Use headline-aligned themes: backend development, distributed systems exposure, cloud-based platform work, performance/efficiency optimization, technical support systems.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface explicitly (when supported by source evidence) that the candidate has delivered:\n  - Backend application development and cloud-based platform development.\n  - Testing/validation workflows and performance improvement work.\n  - Network efficiency optimization (treat as application/network efficiency improvements; do not imply deep networking protocol engineering).\n- Convert “cloud transition” into concrete mechanisms only if present in source (e.g., containerization, CI/CD automation, deployment standardization). If mechanisms are not provided, keep phrasing conservative (“supported cloud transition initiatives” vs “architected cloud migration”).\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prefer bullets that show concrete mechanisms over generic outcomes.\n- Priority order for this candidate’s content:\n  1) Backend/cloud platform build or transition work with explicit mechanisms (Docker/Jenkins/Ansible, service decomposition, deployment automation) ONLY if evidenced.\n  2) Defect reduction / bug elimination tied to mechanisms (test automation, validation gates, regression suites) ONLY if evidenced.\n  3) Performance/network efficiency improvements tied to mechanisms (profiling, query optimization, connection pooling, caching) ONLY if evidenced.\n  4) Leadership/collaboration/process contributions (secondary to technical depth).\n\nDISTRIBUTED SYSTEM DEPTH\n- Only claim “distributed systems” depth to the extent supported; do not invent microservices, queues, replicas, event-driven architecture, or caching layers.\n- When distributed/system-scale language is used, anchor it to safe, evidenced concepts:\n  - cloud-based platform development\n  - backend systems supporting multiple teams/clients\n  - reliability/defect reduction via testing/validation workflows\n- Avoid naming specific distributed mechanisms (idempotency, retry-safe workflows, async messaging) unless present in MASTER_RESUME or provided evidence.\n\nTECHNICAL DIFFERENTIATION\n- Emphasize backend frameworks and enterprise stacks from the profile:\n  - Backend: Node.js, .NET Core, Spring, Django\n  - Datastores: MySQL, SQL Server, Oracle\n  - DevOps/automation: Docker, Jenkins, Ansible\n  - Frontend (supporting): React, Angular (only when role requires full-stack; otherwise keep secondary)\n- Treat the long language list as breadth; do not imply senior-level depth in every language. Prefer listing a focused subset aligned to the job description if supported by MASTER_RESUME.\n- Prefer mechanism-first bullets (how the work was done) over tool-name dumping.\n\nDOMAIN / INDUSTRY FRAMING\n- Frame experience as enterprise software + custom software solutions + technical support systems.\n- Emphasize outcomes in enterprise terms: productivity, defect reduction, workflow efficiency, operating cost reduction, contract delivery.\n- Do not imply regulated industries, fintech, healthcare, or compliance frameworks unless explicitly evidenced elsewhere.\n\nSAFE DOMAIN TRANSLATION\n- Translate “technical support workflows” safely as: engineering systems that improve supportability, triage efficiency, and defect turnaround (only if supported by evidence).\n- Translate “secured significant contracts” safely as: contributed to delivery/technical execution that supported winning/retaining contracts; do not claim sales ownership unless evidenced.\n- Translate “award-winning applications / patents” as recognition artifacts; do not claim patent subject matter or novelty beyond what is provided.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim or imply:\n  - ownership of end-to-end enterprise architecture unless explicitly evidenced (“do not overstate architecture ownership”).\n  - deep specialization in networking protocols, SRE/infra ownership, security architecture, or compliance.\n  - specific distributed systems patterns (event-driven, Kafka/RabbitMQ, read replicas, multi-layer caching, stateless auth) unless evidenced.\n  - people-management scope (team size, budget, hiring authority) beyond what is explicitly stated.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- When tailoring to roles needing extensibility/integration, reinterpret safely as:\n  - “backend application development” → modular backend components/services and maintainable interfaces (avoid claiming “platform architecture” ownership).\n  - “testing and validation workflows” → quality gates, regression prevention, release readiness practices.\n  - “cloud-based platform development” → cloud-hosted application delivery and deployment automation support (only as evidenced).\n- Avoid claiming API platform ownership or integration platform leadership unless supported by MASTER_RESUME.\n\nLEADERSHIP FRAMING\n- Frame leadership as collaborative, execution-focused, quality-driven technical leadership:\n  - cross-functional collaboration\n  - project ownership and delivery\n  - mentoring/raising quality bar (only if evidenced)\n  - driving defect reduction and cost-conscious engineering decisions\n- Use observable leadership mechanisms (reviews, standards, validation workflows, delivery coordination) rather than vague “led initiatives.”\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep the narrative IC-forward unless the job explicitly targets engineering management.\n- Leadership bullets should support technical impact (quality, delivery, cost, productivity), not replace it.\n- Avoid “managed a global team” expansion; keep it as stated and do not add scope details.\n\nAI WORK POSITIONING\n- No AI tooling practice is provided; do not introduce AI/ML claims.\n- If a job requires AI exposure, limit to: “no explicit AI tooling listed” unless MASTER_RESUME provides evidence.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not invent:\n  - metrics (percent productivity gains, cost savings amounts, latency/throughput numbers) beyond “estimated percentages” already stated; prefer removing numbers unless exact values exist in MASTER_RESUME.\n  - architecture ownership (chief architect, designed entire platform) or migration ownership (led full cloud migration) without evidence.\n  - security/auth implementations, observability stacks, async messaging, or specific distributed patterns not present.\n- Keep awards/patents factual and non-exaggerated; do not infer prestige level or patent count unless specified.\n\nEVIDENCE SOURCES\n- Only build bullets from:\n  - MASTER_RESUME (primary source for specifics, dates, scope, mechanisms, metrics)\n  - CANDIDATE_PROFILE.summary/headline/domains\n  - CANDIDATE_PROFILE.experience_highlights (impact, skills_applied, architecture_patterns, constraints_and_tradeoffs, team_context, employer_relationship)\n  - CANDIDATE_PROFILE.technical_skills (only as corroborating tech inventory; do not assume usage without MASTER_RESUME confirmation)\n- If a mechanism is not explicitly supported, write conservatively and avoid naming the mechanism.\n\nFINAL REMINDER\n- Core differentiation to keep consistent: senior backend engineer who improves enterprise/cloud systems through quality-driven execution (defect reduction, workflow efficiency, cost-conscious delivery) without overstating architecture ownership or leadership scope.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Backend systems\",\n      \"Cloud-based applications\",\n      \"Enterprise software\"\n    ],\n    \"secondary\": [\n      \"Web applications\",\n      \"Distributed systems\",\n      \"Technical support systems\"\n    ]\n  },\n  \"candidate\": {\n    \"name\": \"FIRSTNAME I. LASTNAME\",\n    \"summary\": \"Experienced Senior Software Developer with a strong background in backend development, distributed systems, and object-oriented design. Proven track record in leading cloud transitions, increasing productivity, and reducing costs. Recognized with multiple awards and patents for excellence in software engineering.\",\n    \"headline\": \"Senior Software Developer with Expertise in Backend Development and Cloud Transition\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Execution-focused\",\n        \"Quality-driven\"\n      ]\n    },\n    \"practices\": [\n      \"Cross-functional collaboration\",\n      \"Continuous learning\",\n      \"Ownership of projects\"\n    ],\n    \"risk_management\": [\n      \"Focus on reducing system bugs\",\n      \"Emphasis on cost reduction\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Backend development\",\n    \"Software development\",\n    \"Cloud-based applications\",\n    \"Technical support\",\n    \"Cross-functional collaboration\",\n    \"Performance optimization\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate architecture ownership\",\n      \"Do not exaggerate leadership scope\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Keep claims aligned with actual experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [\n      \"React\",\n      \"Angular\"\n    ],\n    \"languages\": [\n      \"JavaScript\",\n      \"Swift\",\n      \"Python\",\n      \"Java\",\n      \"C++\",\n      \"Ruby\",\n      \"Rust\",\n      \"Elixir\",\n      \"Scala\",\n      \"R\",\n      \"PHP\",\n      \"C#\",\n      \"jQuery\",\n      \"HTML\",\n      \"CSS\",\n      \"SQL\",\n      \"Bash/Shell\",\n      \"C\",\n      \"Typescript\",\n      \"Assembly\",\n      \"Go\",\n      \"Objective-C\",\n      \"VB.NET\",\n      \"Matlab\",\n      \"VBA\",\n      \"Kotlin\",\n      \"Groovy\",\n      \"Perl\"\n    ],\n    \"datastores\": [\n      \"MySQL\",\n      \"SQL Server\",\n      \"Oracle\"\n    ],\n    \"api_patterns\": [],\n    \"infra_devops\": [\n      \"Docker\",\n      \"Jenkins\",\n      \"Ansible\"\n    ],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [\n      \"Node.js\",\n      \".NETcore\",\n      \"Spring\",\n      \"Django\"\n    ],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Software Development\",\n      \"impact\": [\n        \"Secured significant software development contracts\",\n        \"Increased team productivity by estimated percentages\",\n        \"Optimized network efficiency and reduced system bugs\"\n      ],\n      \"market\": \"Software Solutions\",\n      \"team_context\": [\n        \"Led a team of talented engineers\",\n        \"Collaborated with cross-functional teams\"\n      ],\n      \"skills_applied\": [\n        \"Backend development\",\n        \"Cloud transition\",\n        \"Network optimization\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\",\n        \"Cloud-based platform development\"\n      ],\n      \"employer_relationship\": \"Senior Software Developer at Company Name, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Focused on cost reduction and productivity enhancement\"\n      ]\n    },\n    {\n      \"area\": \"Custom Software Solutions\",\n      \"impact\": [\n        \"Developed award-winning applications\",\n        \"Improved workflow efficiency and reduced operating costs\"\n      ],\n      \"market\": \"Custom Software Design and Development\",\n      \"team_context\": [\n        \"Grew data-center team for major contracts\"\n      ],\n      \"skills_applied\": [\n        \"Software development\",\n        \"Workflow optimization\",\n        \"Cost management\"\n      ],\n      \"architecture_patterns\": [\n        \"Testing and validation workflows\",\n        \"Performance improvement work\"\n      ],\n      \"employer_relationship\": \"Software Development Leader at Prior Company, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Emphasized efficiency and cost savings\"\n      ]\n    },\n    {\n      \"area\": \"Enterprise Application Software Solutions\",\n      \"impact\": [\n        \"Increased productivity by eliminating bugs\",\n        \"Contributed to significant client profits\"\n      ],\n      \"market\": \"Enterprise Software\",\n      \"team_context\": [\n        \"Managed a global team for large contracts\"\n      ],\n      \"skills_applied\": [\n        \"Bug elimination\",\n        \"Team management\",\n        \"Profit generation\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\",\n        \"Technical support workflows\"\n      ],\n      \"employer_relationship\": \"Senior Software Development Specialist at Prior Company, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Focused on productivity and profitability\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\",\n      \"Agile software environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\",\n      \"Problem solving\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\nFIRSTNAME I. LASTNAME\nfirstname.lastname.2021@gmail.com\nAddress - City - State - Zip Code\n(212) 555-1212 • www.theladders.com/expert/my-profile\nSENIOR SOFTWARE DEVELOPER\n◇—————————————————————————◇\nSenior Software Architect • Principal Developer • Senior Application Developer • Full Stack Developer\nSoftware Engineering • Backend Development • Distributed Systems • Object Oriented Design\nLed Cloud Transition • Increased Productivity • Reduced Costs • Effective Recruiter \nInfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents • Public Speaker\nWORK EXPERIENCE\nCompany Name, Inc., New York, NYJan 2015 - present\nSenior Software Developer\nSoftware Solutions Provider\nContributed to the securing of a $xxM software development…\nAchieved an estimated xx% rise in team productivity through...\nExceeded network optimization target of xx% efficiency increase by...\nAdded x# talented engineers to team, due to...\nDecreased system bugs by xx% by generating dev models and...\nAwarded 2 contracts due to design results excellence in...\nGenerated client profits of $xxM by introducing beta software in...\nOptimized software design and development for profit growth of xx%...\nPrior Company, Inc., New York, NYJan 2011 - Jan 2015\nSoftware Development Leader\nCustom Software Solutions Design and Development\nProduced a 2019 award winning app for the visually impaired...\nDelivered a xx% rise in efficiency for SharePoint-based workflow...\nSaved an est. $XM for client by connecting mainframe financial...\nOptimized program to produce xx% rise in efficiency by creating map...\nReduced bugs in Java and Web app component designs by xx% through...\nGrew Data-Center team for major contract worth $xxM after...\nChanged the development process of web pages for $xxM contract by...\nAchieved xx% lower operating costs through insourcing and...\nPrior Company, Inc., New York, NY 2004 - 2011\nEnterprise Application Software Solutions\nSenior Software Development SpecialistJan 2010 - Jan 2011\nIncreased productivity by xx% by eliminating bugs in legacy...\nGrew a global team as part of a $xxM contract, where implementation...\nProduced feasibility studies that helped win a $xxM development...\nContributed to yearly client profits of $xM by designing/...\nSoftware Development Specialist Jan 2004 - Jan 2010\nHired to new position due to qualifications and strong results in previous company\nContributed to cart abandonment rate reduction of xx% from...\nIncreased platform usage by xx% in x months by designing and...\nDeveloped n-tier code-generation architecture showing xx% rise in…\nAwarded $xxx bonus for delivering high priority projects on time...\nPrior Company, Inc., New York, NY Jan 2001 - Jan 2004\nProgrammer/Analyst\nPerformed Analysis, Coding and Testing Across a Variety of Projects\nEliminated issues in the WebSphere test environment, saving $xxx, by...\nOptimized mid-level projects for efficiency rise of x% through analysis of...\nEDUCATION\nGrad School University Name, New York, NY 2004\nMaster’s in Precisely Specific Degree\nWinner of award, distinction or honor\nWinner of award, distinction or honor\nUndergraduate College or University Name, New York, NY2000\nBS/BA in Precisely Specific Degree\nWinner of award, distinction or honor\nOPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS\n◇—————————————————————————◇\nInfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents (Design) •\nJavaScript, Swift • Python • Java • C++ • Ruby • Rust • Elixir • Scala • R • PHP • C# • jQuery • HTML • CSS • SQL • Bash/Shell • C • Typescript • Assembly • Go • Objective-C • VB.NET • Matlab • VBA • Kotlin • Groovy • Perl • Agile Scrum • Node.js • React • .NETcore • Spring • Django • Cordova • Angular • Windows • Linux • Embedded Systems • MySQL • SQL Server • Oracle • TensorFlow • Spark • Helm • Ansible • Docker • Jenkins • Visual Studio • UX System"
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nFIRSTNAME I. LASTNAME\nDear Hiring Manager,\nI am excited to apply for the Senior Software Engineer role at Tigera. With over 15 years of experience in backend engineering and team leadership, including roles as VP and Director of Software Development, I have built fintech and blockchain systems that became top-5 platforms in the Japanese market, serving over 1M users, and led teams of up to 20 engineers to deliver reliable, scalable products.\nIn addition to my industry work, I currently contribute as an independent contractor supporting world-leading AI research labs in training and evaluating advanced AI models on senior-level software engineering tasks. This work keeps me deeply engaged with cutting-edge development practices, reinforces my ability to solve complex problems under ambiguity, and strengthens my proficiency with AI-assisted development tools. I also adopt AI-accelerated workflows (ChatGPT, Claude, Cursor AI) to improve productivity, code quality, and architectural clarity.\nI would welcome the chance to bring this expertise to your team and contribute to building reliable, scalable systems for your clients. I hold Canadian citizenship and am fully eligible to work in Canada.\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: April 28, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "FIRSTNAME I. LASTNAME\nfirstname.lastname.2021@gmail.com\nAddress - City - State - Zip Code\n(212) 555-1212 • www.theladders.com/expert/my-profile\n\nSENIOR SOFTWARE DEVELOPER\nSenior Software Architect • Principal Developer • Senior Application Developer • Full Stack Developer\nSoftware Engineering • Backend Development • Distributed Systems • Object Oriented Design\nCloud Transition Support • Testing/Validation Workflows • Performance & Network Efficiency Optimization • Technical Support Systems\nInfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents • Public Speaker\n\nPROFESSIONAL SUMMARY\nSenior Software Developer with 15+ years of experience delivering backend and enterprise software, including cloud-transition initiatives, testing/validation workflows, and performance/network efficiency improvements. Known for quality-driven execution across the SDLC—impact analysis, design, development, unit/integration testing support, and production issue resolution—while collaborating with cross-functional partners. Recognized with InfoWorld and CTO awards and awarded 3 patents (design).\n\nEXPERIENCE\nCompany Name, Inc., New York, NY | Jan 2015 - present\nSenior Software Developer | Software Solutions Provider\n- Contributed to the securing of a $xxM software development contract through software development delivery.\n- Performed impact analysis and implemented complex development/enhancement work across backend systems.\n- Achieved an estimated xx% rise in team productivity through development process and execution improvements.\n- Decreased system bugs by xx% by generating development models and strengthening implementation quality.\n- Exceeded network optimization target of xx% efficiency increase by improving application/network efficiency.\n- Prioritized and resolved production issues while providing ongoing technical support for delivered solutions.\n- Awarded 2 contracts due to design results excellence in delivered software designs.\n- Generated client profits of $xxM by introducing beta software in production contexts.\n- Optimized software design and development for profit growth of xx%.\n- Added x# talented engineers to team.\n\nPrior Company, Inc., New York, NY | Jan 2011 - Jan 2015\nSoftware Development Leader | Custom Software Solutions Design and Development\n- Produced a 2019 award winning app for the visually impaired.\n- Delivered a xx% rise in efficiency for SharePoint-based workflow solutions.\n- Saved an est. $XM for a client by connecting mainframe financial systems.\n- Optimized a program to produce a xx% rise in efficiency by creating a map/model to clarify process and data flow.\n- Reduced bugs in Java and web application component designs by xx% through improved design and validation practices.\n- Changed the development process of web pages for a $xxM contract.\n- Achieved xx% lower operating costs through insourcing.\n- Grew Data-Center team for a major contract worth $xxM.\n\nPrior Company, Inc., New York, NY | 2004 - 2011\nEnterprise Application Software Solutions\nSenior Software Development Specialist | Jan 2010 - Jan 2011\n- Increased productivity by xx% by eliminating bugs in legacy applications.\n- Produced feasibility studies that helped win a $xxM development effort.\n- Contributed to yearly client profits of $xM by designing and delivering enterprise application components.\n- Grew a global team as part of a $xxM contract, where implementation work was delivered across locations.\n\nSoftware Development Specialist | Jan 2004 - Jan 2010\n- Hired to a new position due to qualifications and strong results in previous company.\n- Contributed to cart abandonment rate reduction of xx%.\n- Increased platform usage by xx% in x months by designing and delivering application improvements.\n- Developed n-tier code-generation architecture showing xx% rise in productivity/efficiency.\n- Awarded $xxx bonus for delivering high priority projects on time.\n\nPrior Company, Inc., New York, NY | Jan 2001 - Jan 2004\nProgrammer/Analyst\n- Performed analysis, coding, and testing across a variety of projects.\n- Eliminated issues in the WebSphere test environment, saving $xxx.\n- Optimized mid-level projects for an efficiency rise of x% through analysis and implementation.\n\nEDUCATION\nGrad School University Name, New York, NY | 2004\nMaster’s in Precisely Specific Degree\nWinner of award, distinction or honor\nWinner of award, distinction or honor\n\nUndergraduate College or University Name, New York, NY | 2000\nBS/BA in Precisely Specific Degree\nWinner of award, distinction or honor\n\nTECHNICAL SKILLS\nBackend & Frameworks: Node.js, .NETcore, Spring, Django\nLanguages: JavaScript, Typescript, Python, Java, C#, SQL, Bash/Shell, C++, Ruby, Go, PHP, Swift, Kotlin, Groovy, Perl, Scala, Rust, Elixir, R, Objective-C, VB.NET, VBA, Matlab, Assembly, C, jQuery, HTML, CSS\nDatastores: MySQL, SQL Server, Oracle\nDevOps / Automation: Docker, Jenkins, Ansible\nPlatforms / Tools: Windows, Linux, Visual Studio\nWeb / Frontend (supporting): React, Angular, Cordova\nOther: Agile Scrum\n\nADDITIONAL\nInfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents (Design) • Public Speaker\n",
+    "cover_letter": "FIRSTNAME I. LASTNAME\n\nDear Hiring Manager,\n\nI am applying for the Lead Software Engineer role at American Tire Distributors. I bring 15+ years of experience delivering backend and enterprise software, with a focus on quality-driven execution across the SDLC—impact analysis, design, development, unit/integration testing support, and ongoing production support.\n\nIn my current role as Senior Software Developer at Company Name, Inc., I have worked on complex development and enhancement efforts, contributed to securing large software development contracts, and improved delivery outcomes through productivity, defect reduction, and application/network efficiency optimization initiatives. I also regularly support production needs by prioritizing and resolving issues and collaborating with partners to keep systems reliable.\n\nPreviously, as a Software Development Leader, I delivered workflow and efficiency improvements (including SharePoint-based solutions), reduced defects in Java and web application components through stronger design/validation practices, and supported integrations such as connecting mainframe financial systems. This background aligns well with ATD’s need for an engineer who can translate enhancement requests into clear change plans, implement maintainable solutions, and support testing and release readiness.\n\nI would welcome the opportunity to discuss how my backend delivery experience, testing/validation mindset, and cross-functional collaboration style can help ATD build and support high-quality software solutions for its customers and internal users.\n\nSincerely,\nFIRSTNAME I. LASTNAME\n"
+  },
+  "diff": {
+    "resume": [
+      {
+        "name": "Professional Summary",
+        "after": "Senior Software Developer with 15+ years of experience delivering backend and enterprise software, including cloud-transition initiatives, testing/validation workflows, and performance/network efficiency improvements. Known for quality-driven execution across the SDLC—impact analysis, design, development, unit/integration testing support, and production issue resolution—while collaborating with cross-functional partners. Recognized with InfoWorld and CTO awards and awarded 3 patents (design)."
+      },
+      {
+        "name": "Technical Skills",
+        "after": "Backend & Frameworks: Node.js, .NETcore, Spring, Django\nLanguages: JavaScript, Typescript, Python, Java, C#, SQL, Bash/Shell, C++, Ruby, Go, PHP, Swift, Kotlin, Groovy, Perl, Scala, Rust, Elixir, R, Objective-C, VB.NET, VBA, Matlab, Assembly, C, jQuery, HTML, CSS\nDatastores: MySQL, SQL Server, Oracle\nDevOps / Automation: Docker, Jenkins, Ansible\nPlatforms / Tools: Windows, Linux, Visual Studio\nWeb / Frontend (supporting): React, Angular, Cordova\nOther: Agile Scrum\n\nADDITIONAL\nInfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents (Design) • Public Speaker"
+      }
+    ]
+  },
+  "generation_run_id": "217",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "FIRSTNAME I. LASTNAME",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      },
+      {
+        "text": "firstname.lastname.2021@gmail.com",
+        "semantic": "role_meta",
+        "paragraph_profile": null,
+        "para_id": "para_3"
+      },
+      {
+        "text": "Address - City - State - Zip Code",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_4"
+      },
+      {
+        "text": "(212) 555-1212 • www.theladders.com/expert/my-profile",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_5"
+      },
+      {
+        "text": " ",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_6"
+      }
+    ],
+    "sections": [
+      {
+        "title": "SENIOR SOFTWARE DEVELOPER",
+        "semantic_type": "other",
+        "heading": {
+          "text": "SENIOR SOFTWARE DEVELOPER",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_7"
+        },
+        "body_paras": [
+          {
+            "text": "◇—————————————————————————◇",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_8"
+          },
+          {
+            "text": "Senior Software Architect • Principal Developer • Senior Application Developer • Full Stack Developer",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_9"
+          },
+          {
+            "text": "Software Engineering • Backend Development • Distributed Systems • Object Oriented Design",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_10"
+          },
+          {
+            "text": "Cloud Transition Support • Testing/Validation Workflows • Performance & Network Efficiency Optimization • Technical Suppo...",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_11"
+          },
+          {
+            "text": "InfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents • Public Speaker",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_12"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_13"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "WORK EXPERIENCE",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "WORK EXPERIENCE",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_14"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_55"
+          },
+          {
+            "text": "Company Name, Inc., New York, NYJan 2015 - present",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_56"
+          },
+          {
+            "text": "Senior Software Developer",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_57"
+          },
+          {
+            "text": "Software Solutions Provider",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_58"
+          },
+          {
+            "text": "Contributed to the securing of a $xxM software development contract through software development delivery.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_59"
+          },
+          {
+            "text": "Performed impact analysis and implemented complex development/enhancement work across backend systems.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_60"
+          },
+          {
+            "text": "Achieved an estimated xx% rise in team productivity through development process and execution improvements.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_61"
+          },
+          {
+            "text": "Decreased system bugs by xx% by generating development models and strengthening implementation quality.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_62"
+          },
+          {
+            "text": "Exceeded network optimization target of xx% efficiency increase by improving application/network efficiency.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_63"
+          },
+          {
+            "text": "Prioritized and resolved production issues while providing ongoing technical support for delivered solutions.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_64"
+          },
+          {
+            "text": "Awarded 2 contracts due to design results excellence in delivered software designs.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_65"
+          },
+          {
+            "text": "Generated client profits of $xxM by introducing beta software in production contexts.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_66"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_67"
+          },
+          {
+            "text": "Prior Company, Inc., New York, NYJan 2011 - Jan 2015",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_68"
+          },
+          {
+            "text": "Software Development Leader",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_69"
+          },
+          {
+            "text": "Custom Software Solutions Design and Development",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_70"
+          },
+          {
+            "text": "Produced a 2019 award winning app for the visually impaired.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_71"
+          },
+          {
+            "text": "Delivered a xx% rise in efficiency for SharePoint-based workflow solutions.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_72"
+          },
+          {
+            "text": "Saved an est. $XM for a client by connecting mainframe financial systems.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_73"
+          },
+          {
+            "text": "Optimized a program to produce a xx% rise in efficiency by creating a map/model to clarify process and data flow.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_74"
+          },
+          {
+            "text": "Reduced bugs in Java and web application component designs by xx% through improved design and validation practices.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_75"
+          },
+          {
+            "text": "Changed the development process of web pages for a $xxM contract.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_76"
+          },
+          {
+            "text": "Achieved xx% lower operating costs through insourcing.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_77"
+          },
+          {
+            "text": "Grew Data-Center team for a major contract worth $xxM.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_78"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_79"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_80"
+          },
+          {
+            "text": "Prior Company, Inc., New York, NY 2004 - 2011",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_81"
+          },
+          {
+            "text": "Enterprise Application Software Solutions",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_82"
+          },
+          {
+            "text": "Senior Software Development SpecialistJan 2010 - Jan 2011",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_83"
+          },
+          {
+            "text": "Increased productivity by xx% by eliminating bugs in legacy...",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_84"
+          },
+          {
+            "text": "Grew a global team as part of a $xxM contract, where implementation...",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_85"
+          },
+          {
+            "text": "Produced feasibility studies that helped win a $xxM development...",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_86"
+          },
+          {
+            "text": "Contributed to yearly client profits of $xM by designing/...",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_87"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_88"
+          },
+          {
+            "text": "Software Development Specialist Jan 2004 - Jan 2010",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_89"
+          },
+          {
+            "text": "Hired to new position due to qualifications and strong results in previous company",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_90"
+          },
+          {
+            "text": "Contributed to cart abandonment rate reduction of xx% from...",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_91"
+          },
+          {
+            "text": "Increased platform usage by xx% in x months by designing and...",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_92"
+          },
+          {
+            "text": "Developed n-tier code-generation architecture showing xx% rise in…",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_93"
+          },
+          {
+            "text": "Awarded $xxx bonus for delivering high priority projects on time...",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_94"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_95"
+          },
+          {
+            "text": "Prior Company, Inc., New York, NY Jan 2001 - Jan 2004",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_96"
+          },
+          {
+            "text": "Programmer/Analyst",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_97"
+          },
+          {
+            "text": "Performed Analysis, Coding and Testing Across a Variety of Projects",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_98"
+          },
+          {
+            "text": "Eliminated issues in the WebSphere test environment, saving $xxx, by...",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_99"
+          },
+          {
+            "text": "Optimized mid-level projects for efficiency rise of x% through analysis of...",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_100"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_101"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "EDUCATION",
+        "semantic_type": "education",
+        "heading": {
+          "text": "EDUCATION",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_102"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_103"
+          },
+          {
+            "text": "Grad School University Name, New York, NY 2004",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_104"
+          },
+          {
+            "text": "Master’s in Precisely Specific Degree",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_105"
+          },
+          {
+            "text": "Winner of award, distinction or honor",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_106"
+          },
+          {
+            "text": "Winner of award, distinction or honor",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_107"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_108"
+          },
+          {
+            "text": "Undergraduate College or University Name, New York, NY2000",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_109"
+          },
+          {
+            "text": "BS/BA in Precisely Specific Degree",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_110"
+          },
+          {
+            "text": "Winner of award, distinction or honor",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_111"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_112"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_3"
+      },
+      {
+        "title": "TECHNICAL SKILLS",
+        "semantic_type": "skills",
+        "heading": {
+          "text": "TECHNICAL SKILLS",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_113"
+        },
+        "body_paras": [
+          {
+            "text": "◇—————————————————————————◇",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_114"
+          },
+          {
+            "text": "Backend & Frameworks: Node.js, .NETcore, Spring, Django",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_115"
+          },
+          {
+            "text": "Datastores: MySQL, SQL Server, Oracle",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_116"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_4"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 612.0,
+      "page_height_pt": 792.0,
+      "margin_top_pt": 72.0,
+      "margin_bottom_pt": 72.0,
+      "margin_left_pt": 72.0,
+      "margin_right_pt": 54.0,
+      "default_font_name": "Arial",
+      "default_font_size_pt": 11.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "paragraph",
+        "para_id": "para_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00642301\" w:rsidRDefault=\"00642301\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"36\"/><w:szCs w:val=\"36\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"36\"/><w:szCs w:val=\"36\"/></w:rPr></w:pPr><w:bookmarkStart w:id=\"0\" w:name=\"_GoBack\"/><w:bookmarkEnd w:id=\"0\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"36\"/><w:szCs w:val=\"36\"/></w:rPr><w:t>FIRSTNAME I. LASTNAME</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_3",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00A77B3E\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:hyperlink r:id=\"rId7\" w:history=\"1\"><w:r w:rsidR=\"00B96629\"><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>firstname</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId8\" w:history=\"1\"><w:r w:rsidR=\"00B96629\"><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>.</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId9\" w:history=\"1\"><w:r w:rsidR=\"00B96629\"><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>lastname</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId10\" w:history=\"1\"><w:r w:rsidR=\"00B96629\"><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>.2021@</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId11\" w:history=\"1\"><w:r w:rsidR=\"00B96629\"><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>gmail</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId12\" w:history=\"1\"><w:r w:rsidR=\"00B96629\"><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>.</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId13\" w:history=\"1\"><w:r w:rsidR=\"00B96629\"><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>com</w:t></w:r></w:hyperlink></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_4",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Address - City - State - Zip Code</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_5",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">(212) 555-1212 </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:hyperlink r:id=\"rId14\" w:history=\"1\"><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>www</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId15\" w:history=\"1\"><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>.</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId16\" w:history=\"1\"><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>theladders</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId17\" w:history=\"1\"><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>.</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId18\" w:history=\"1\"><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>com</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId19\" w:history=\"1\"><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>/</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId20\" w:history=\"1\"><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>expert</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId21\" w:history=\"1\"><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>/</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId22\" w:history=\"1\"><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>my</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId23\" w:history=\"1\"><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>-</w:t></w:r></w:hyperlink><w:hyperlink r:id=\"rId24\" w:history=\"1\"><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:color w:val=\"1155CC\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:u w:val=\"single\"/></w:rPr><w:t>profile</w:t></w:r></w:hyperlink></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_6",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_7",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:ind w:left=\"360\" w:hanging=\"360\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>SENIOR SOFTWARE DEVELOPER</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_8",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Segoe UI Symbol\" w:hAnsi=\"Segoe UI Symbol\" w:cs=\"Segoe UI Symbol\"/><w:sz w:val=\"26\"/><w:szCs w:val=\"26\"/></w:rPr><w:t>◇</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"36\"/><w:szCs w:val=\"36\"/></w:rPr><w:t>—————————————————————————</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Segoe UI Symbol\" w:hAnsi=\"Segoe UI Symbol\" w:cs=\"Segoe UI Symbol\"/><w:sz w:val=\"26\"/><w:szCs w:val=\"26\"/></w:rPr><w:t>◇</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_9",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:ind w:left=\"90\" w:right=\"-450\" w:hanging=\"360\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Senior Software Architect </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> Principal Developer </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> Senior Application Developer </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> Full Stack Developer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_10",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:ind w:left=\"360\" w:hanging=\"360\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\">Software Engineering </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> Backend </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\">Development </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> Distributed Systems </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> Object Oriented Design</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_11",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Led Cloud Transition</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> Increased Productivity </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> Reduced Costs </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> Effective Recruiter</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_12",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">InfoWorld Award 2018 </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> CTO</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>’</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">s </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>“</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Excellence</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>”</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> Award 2017 </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> Awarded 3 Patents </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> Public Speaker</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_13",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00A77B3E\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:ind w:left=\"360\" w:hanging=\"360\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_14",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\" w:rsidP=\"00642301\"><w:pPr><w:pBdr><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"1\" w:color=\"auto\"/></w:pBdr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:ind w:left=\"360\" w:hanging=\"360\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>WORK EXPERIENCE</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_55",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00A77B3E\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:ind w:left=\"360\" w:hanging=\"360\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_56",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:ind w:left=\"360\" w:hanging=\"360\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Company Name, Inc., New York, NY</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:tab/><w:t>Jan 2015 - present</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_57",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:ind w:left=\"360\" w:hanging=\"360\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Senior Software Developer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_58",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:ind w:left=\"360\" w:hanging=\"360\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:i/><w:iCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Software Solutions Provider</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_59",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Contributed to the securing of a $</w:t></w:r><w:proofErr w:type=\"spellStart\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>xxM</w:t></w:r><w:proofErr w:type=\"spellEnd\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> software development</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>…</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_60",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Achieved an estimated xx% rise in team productivity through...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_61",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Exceeded network optimiz</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>ation target of xx% efficiency increase by...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_62",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Added x# talented engineers to team, due to...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_63",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Decreased system bugs by xx% by generating dev models and...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_64",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Awarded 2 contracts due to design results excellence in...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_65",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Generated client profits of $</w:t></w:r><w:proofErr w:type=\"spellStart\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>xxM</w:t></w:r><w:proofErr w:type=\"spellEnd\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> by </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>introducing beta software in...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_66",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Optimized software design and development for profit growth of xx%...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_67",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00A77B3E\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_68",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:ind w:left=\"360\" w:hanging=\"360\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Prior Company, Inc., New York, NY</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:tab/><w:t>Jan 2011 - Jan 2015</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_69",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:ind w:left=\"360\" w:hanging=\"360\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Software Development Leader</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_70",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:ind w:left=\"360\" w:hanging=\"360\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:i/><w:iCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Custom Software Solutions Design and Development</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_71",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Produced a 2019 awar</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>d winning app for the visually impaired...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_72",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Delivered a xx% rise in efficiency for SharePoint-based workflow...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_73",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Saved an est. $XM for client by connecting mainframe financial...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_74",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Optimized program to produce xx% rise in efficiency by creating map...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_75",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Redu</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>ced bugs in Java and Web app component designs by xx% through...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_76",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Grew Data-Center team for major contract worth $</w:t></w:r><w:proofErr w:type=\"spellStart\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>xxM</w:t></w:r><w:proofErr w:type=\"spellEnd\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> after...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_77",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Changed the development process of web pages for $</w:t></w:r><w:proofErr w:type=\"spellStart\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>xxM</w:t></w:r><w:proofErr w:type=\"spellEnd\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> contract by...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_78",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Achieved xx% lower operating costs through insourcing and.</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>..</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_79",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00A77B3E\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_80",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00A77B3E\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_81",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:lastRenderedPageBreak/><w:t xml:space=\"preserve\">Prior Company, Inc., New York, NY </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:tab/></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>2004 - 2011</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_82",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:i/><w:iCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Enterprise Application Software Solutions</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_83",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Senior Software Development Specialist</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:tab/><w:t>Jan 2010 - Jan 2011</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_84",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"3\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Increased productivity by xx% by eliminating bugs in legacy...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_85",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"3\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Grew a global team as part of a $</w:t></w:r><w:proofErr w:type=\"spellStart\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>xxM</w:t></w:r><w:proofErr w:type=\"spellEnd\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>contract, where implementation...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_86",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"3\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Produced feasibility studies that helped win a $</w:t></w:r><w:proofErr w:type=\"spellStart\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>xxM</w:t></w:r><w:proofErr w:type=\"spellEnd\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> development...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_87",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"3\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Contributed to yearly client profits of $</w:t></w:r><w:proofErr w:type=\"spellStart\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>xM</w:t></w:r><w:proofErr w:type=\"spellEnd\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> by designing/...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_88",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00A77B3E\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_89",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Software Development Specialist </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:tab/><w:t>Jan 2004 - Jan 2010</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_90",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:i/><w:iCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Hired to new position due to </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:i/><w:iCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>qualifications and strong results in previous company</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_91",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"4\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Contributed to cart abandonment rate reduction of xx% from...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_92",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"4\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Increased platform usage by xx% in x months by designing and...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_93",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"4\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Developed n-tier code-generation architecture showing xx% rise in</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>…</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_94",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"4\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Award</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>ed $xxx bonus for delivering high priority projects on time...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_95",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00A77B3E\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_96",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Prior Company, Inc., New York, NY </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:tab/><w:t>Jan 2001 - Jan 2004</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_97",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Programmer/Analyst</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_98",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"274\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:i/><w:iCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Performed Analysis, Coding and Testing Across a Variety of Projects</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_99",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"5\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Eliminated issues in the WebSphere test environme</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>nt, saving $xxx, by...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_100",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"5\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Optimized mid-level projects for efficiency rise of x% through analysis of...</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_101",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00A77B3E\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_102",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\" w:rsidP=\"00642301\"><w:pPr><w:pBdr><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"1\" w:color=\"auto\"/></w:pBdr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>EDUCATION</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_103",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00A77B3E\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_104",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Grad School University Name, New York, NY </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:tab/><w:t>2004</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_105",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Master</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>’</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>s in Precisely Specific Degree</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_106",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"6\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Winner of award, distinction or honor</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_107",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"6\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Winner of award</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>, distinction or honor</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_108",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00A77B3E\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_109",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Undergraduate College or University Name, New York, NY</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:tab/><w:t>2000</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_110",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>BS/BA in Precisely Specific Degree</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_111",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"7\"/></w:numPr><w:tabs><w:tab w:val=\"left\" w:pos=\"360\"/><w:tab w:val=\"left\" w:pos=\"720\"/><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Winner of award, distinction or honor</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_112",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00A77B3E\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_113",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:b/><w:bCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_114",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Segoe UI Symbol\" w:hAnsi=\"Segoe UI Symbol\" w:cs=\"Segoe UI Symbol\"/><w:sz w:val=\"26\"/><w:szCs w:val=\"26\"/></w:rPr><w:t>◇</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"36\"/><w:szCs w:val=\"36\"/></w:rPr><w:t>—————————————————————————</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Segoe UI Symbol\" w:hAnsi=\"Segoe UI Symbol\" w:cs=\"Segoe UI Symbol\"/><w:sz w:val=\"26\"/><w:szCs w:val=\"26\"/></w:rPr><w:t>◇</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_115",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">InfoWorld </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Award 2018 </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>CTO</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>’</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">s </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>“</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Excellence</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>”</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> Award 2017 </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> Awarded 3 Patents (Design) </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_116",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:rsidR=\"00A77B3E\" w:rsidRDefault=\"00B96629\"><w:pPr><w:tabs><w:tab w:val=\"right\" w:pos=\"9720\"/></w:tabs><w:spacing w:line=\"240\" w:lineRule=\"auto\"/><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:i/><w:iCs/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">JavaScript, Swift </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Python </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> Java </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">C++ </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Ruby </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Rust </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Elixir </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Scala </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">R </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">PHP </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">C# </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> jQuery </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">HTML </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">CSS </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">SQL </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Bash/Shell </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">C </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Typescript </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Assembly </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Go </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Objective-C </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>VB.NET</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:proofErr w:type=\"spellStart\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>Matlab</w:t></w:r><w:proofErr w:type=\"spellEnd\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">VBA </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Kotlin </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Groovy </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Perl </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Agile Scrum </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Node.js </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">React </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>.</w:t></w:r><w:proofErr w:type=\"spellStart\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>NETcore</w:t></w:r><w:proofErr w:type=\"spellEnd\"/><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Spring </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Django </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Cordova </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Angular </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Windows </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Linux </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Embedded Systems </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">MySQL </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">SQL Server </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\"> Oracle </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">TensorFlow </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Spark </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Helm </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Ansible </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Docker </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Jenkins </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Visual </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t xml:space=\"preserve\">Studio </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t>•</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:shd w:val=\"solid\" w:color=\"FFFFFF\" w:fill=\"FFFFFF\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:t>UX System</w:t></w:r></w:p>"
+      }
+    ]
+  }
+}

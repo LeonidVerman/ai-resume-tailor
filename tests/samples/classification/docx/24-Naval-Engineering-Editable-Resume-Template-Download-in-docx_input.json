@@ -1,0 +1,297 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "WORK EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_20",
+          "text": "WORK EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_33",
+          "text": "Project Manager (2023 - Present)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_35",
+          "text": "Prepare project worksheets and manage work estimates from start to finish.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Prepare administrative documents, including logistics and work proposals.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Coordinate with other divisions to ensure that projects are completed successfully.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_44",
+          "text": "TIMMERMAN INDUSTRIES - 123 Anywhere St., Any City",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "Project Engineer(2021 - 2023)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_48",
+          "text": "Control the project's progress according to the plan created by the project manager.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_51",
+          "text": "Responsible for the engineering department and collaboration with other departments.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_33"
+          ],
+          "meta_para_ids": [
+            "para_35",
+            "para_38",
+            "para_41",
+            "para_44",
+            "para_46"
+          ],
+          "bullet_para_ids": [
+            "para_48",
+            "para_51"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_55",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_56",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_57",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_58",
+          "text": "BORCELLE UNIVERSITY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_59",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_60",
+          "text": "Master of Naval Architecture (2018-2020)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_61",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_62",
+          "text": "GPA: 3.89/4.00",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_63",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_64",
+          "text": "Thesis  : Title of The Thesis",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_65",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_66",
+          "text": "BORCELLE UNIVERSITY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_67",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_68",
+          "text": "Bachelor of Naval Architecture (2014-2018)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_69",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_70",
+          "text": "GPA: 3.89/4.00",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_71",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_72",
+          "text": "Thesis  : Title of The Thesis",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_73",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "SKILL",
+      "paragraphs": [
+        {
+          "para_id": "para_74",
+          "text": "SKILL",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_75",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_76",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "LEADERSHIP",
+      "paragraphs": [
+        {
+          "para_id": "para_77",
+          "text": "LEADERSHIP",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_78",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_79",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_80",
+          "text": "DISCIPLINE",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_81",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_82",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_83",
+          "text": "SELF-CONFIDENT",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_84",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_85",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_86",
+          "text": "LANGUAGE",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_87",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_88",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_89",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_90",
+          "text": "English(Mother Tongue)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_91",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_92",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_93",
+          "text": "Japanese(Proficient)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_94",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

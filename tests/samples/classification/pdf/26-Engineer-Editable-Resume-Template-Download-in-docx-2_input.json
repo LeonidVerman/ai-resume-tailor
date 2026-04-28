@@ -1,0 +1,182 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Work History",
+      "paragraphs": [
+        {
+          "para_id": "para_16",
+          "text": "Work History",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_21",
+          "text": "MECHANICAL ENGINEER AT",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_22",
+          "text": "hello@techguruplus.com",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_23",
+          "text": "WARNER & SPENCER",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_24",
+          "text": "2014 - 2016",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_21"
+          ],
+          "meta_para_ids": [
+            "para_22",
+            "para_23",
+            "para_24"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Contact Info",
+      "paragraphs": [
+        {
+          "para_id": "para_25",
+          "text": "Contact Info",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_26",
+          "text": "2016 - Present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_27",
+          "text": "+123-456-7890",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_2_role_1",
+          "header_para_ids": [
+            "para_25"
+          ],
+          "meta_para_ids": [
+            "para_26"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "MECHANICAL ENGINEERING",
+      "paragraphs": [
+        {
+          "para_id": "para_28",
+          "text": "MECHANICAL ENGINEERING",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "APPRENTICE AT UNLIMITED",
+      "paragraphs": [
+        {
+          "para_id": "para_29",
+          "text": "APPRENTICE AT UNLIMITED",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_30",
+          "text": "Completed 2 years course in Really",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Great University. Graduated with",
+      "paragraphs": [
+        {
+          "para_id": "para_31",
+          "text": "Great University. Graduated with",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_32",
+          "text": "distinction (GWA 3,8).",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_33",
+          "text": "Increased production efficiency by",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_34",
+          "text": "15% by strategically minimizing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_35",
+          "text": "bottlenecks",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Followed my passion in Product Design",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_37",
+          "text": "and Manufacturing coursework.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Excelled in Mechanics and Materials.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Pursued an independent study program in",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "Machine Layout Design.",
+      "paragraphs": [
+        {
+          "para_id": "para_40",
+          "text": "Machine Layout Design.",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_41",
+          "text": "123 Anywhere St., Any City",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}
