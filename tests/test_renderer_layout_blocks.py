@@ -717,6 +717,10 @@ class TestUnboundContent:
         """New paragraphs (para_id not in layout_blocks) must be logged, not rendered."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BLOCK_RENDERER", True)
+        # Force non-layout-bound mode: this test exercises the renderer path where
+        # extra bullets are created as clone_as paragraphs (para_id="").  In
+        # layout-bound mode the updater drops overflow bullets instead of cloning.
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", False)
 
         from tailor.compiler.docx_parser import parse_docx
         from tailor.compiler.docx_renderer import render_docx

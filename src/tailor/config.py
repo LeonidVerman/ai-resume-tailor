@@ -63,5 +63,5 @@ USE_LAYOUT_BLOCK_RENDERER: bool = (
 # sections.  The repair runs whenever layout_blocks are present regardless of
 # this flag.
 USE_LAYOUT_BOUND_UPDATER: bool = (
-    os.environ.get("USE_LAYOUT_BOUND_UPDATER", "false").lower() == "true"
+    os.environ.get("USE_LAYOUT_BOUND_UPDATER", "true").lower() == "true"
 )
