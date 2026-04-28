@@ -6,8 +6,8 @@ Source: `src/tailor/compiler/docx_parser.py`
 
 `parse_docx(path)` converts a `.docx` file into a `ResumeDocument` IR.  It
 reads the raw XML, classifies every paragraph's semantic role, groups the
-experience section into `RoleEntry` objects, and applies a post-processing fix
-for the two-column label-rail layout that some templates use.
+experience section into `RoleEntry` objects, and applies post-processing fixes
+for multi-column layouts (newspaper-column and label-rail).
 
 ---
 
@@ -20,7 +20,10 @@ Document XML
     └─ tables (w:tbl)        → TableBlock (opaque XML + ParaModel list)
     │
     ▼
-_apply_label_column_fix()     ← reorders all_paras for 2-col label layouts
+_apply_multicolumn_newspaper_fix()  ← new: newspaper-col / table-col layouts
+    │
+    ▼
+_apply_label_column_fix()           ← existing: w:cols narrow label-rail
     │
     ▼
 Section grouping loop         ← builds ResumeSection list
@@ -226,6 +229,134 @@ bullets or meta lines.
 
 ---
 
+## Table-Based / Newspaper Multi-Column Resume Layouts
+
+Some resume templates create a two-column visual layout using Word's
+**newspaper-column feature** (`w:sectPr/w:cols`) rather than a table.  Content
+from the left and right visual columns is interleaved in the flat XML paragraph
+stream via `<w:br type="column">` breaks, and some paragraphs use a `<w:tab/>`
+character to place two section headings side-by-side on the same line.
+
+This is a different problem from the label-column fix: the label-column fix
+handles the case where a narrow left column contains ONLY section labels and the
+wide right column contains all resume content.  The newspaper-column fix handles
+arbitrary two- or three-column layouts where left-column and right-column content
+is interleaved mid-document.
+
+### Why this is different from the label-rail fix
+
+The label-rail fix (`_apply_label_column_fix`) triggers when `w:cols[0].width
+< 35%` of total width and all headings precede all content in the XML.
+The newspaper-column fix triggers on a different structural signature:
+mid-document `w:sectPr` breaks with 2+ columns AND `<w:br type="column">`
+paragraphs that interleave left and right column content.
+
+### Detection criteria
+
+Triggers when ALL of the following hold:
+
+1. At least one `<w:p>` has an embedded `<w:sectPr>` defining 2+ columns
+   (mid-document section break with multi-column layout).
+2. At least one paragraph contains `<w:br type="column">`.
+3. **Skills-column guard**: at least one paragraph uses a run-level `<w:tab/>`
+   to separate two known section heading names where one side is a skills-type
+   name (`skills`, `technical skills`, `core competencies`, etc.).
+
+Criterion 3 prevents false positives on templates where `Experience | Education`
+is a cleanly separated two-column split without contamination.
+
+### Dual-heading tab split
+
+A paragraph containing a `<w:tab/>` inside a `<w:r>` (distinct from tab-stop
+definitions in `<w:tabs>`) with both sides matching known section names is split
+into two virtual `ParaModel` instances assigned to the left and right streams.
+
+Example: `"EDUCATION[TAB]SKILLS"` → `ParaModel("EDUCATION")` + `ParaModel("SKILLS")`
+
+### Band-aware column stream construction
+
+The fix builds two streams — **left** (main content) and **right** (skills sidebar)
+— rather than a naive "all col-0 then all col-1 then all col-2" append.
+
+**Header region protection**: The first Word section (name, title, contact) is
+always kept in its original document order.  This prevents phone/email/address
+lines from appearing after the WORK EXPERIENCE section and contaminating role bullets.
+
+**Per-Word-section routing**:
+- Single-column sections: content goes to left stream; tab-split right sides go to right stream.
+- 2-column sections: col-0 → left, col-1 → right.
+- 3-column sections where `(col0_width + col1_width) / col2_width > 1.5`
+  (wide-left narrow-right): col-0 and col-1 are band-merged into the left stream;
+  col-2 goes to the right stream.
+
+**Band merging for 3-column sections** (`_band_merge_cols`):
+
+When col-0 and col-1 form a single wide visual column, interleaving them in raw
+document order would still contaminate sections.  Instead:
+
+- col-0 is split into bands at top-level (Heading 1) section headings.
+- col-1 is split into bands at clusters of 3+ consecutive empty paragraphs,
+  which visually separate layout rows.
+- Band `i` of col-0 is paired with band `i` of col-1 and output together.
+
+For sample 31, section 3 (3-col):
+```
+col0 band 0: [CS 2010-2014]              ← education dates
+col1 band 0: [123 Anywhere 2008-2011]    ← more education dates
+
+col0 band 1: [CERTIFICATION, Liceria, Web Design, 2019]
+col1 band 1: [Fauget Company, Web Design, 2021]  ← second cert entry
+```
+Merged: `CS 2010-2014 | 123 Anywhere | CERTIFICATION | Liceria | Web Design | 2019 | Fauget Company | Web Design | 2021`
+
+This places `123 Anywhere` in EDUCATION and `Fauget Company` inside CERTIFICATION.
+
+### Sub-heading absorption for non-experience sections
+
+The existing sub-heading absorption (Approach A in section grouping) is extended
+to also apply when the current section has `semantic_type == "other"`.  This
+allows sections like COURSE and AWARDS (which are typed `"other"`) to absorb
+their Heading-2 sub-items (organization names such as "Borcelle Tech", "Liceria
+& Co.") as body paragraphs rather than promoting them to top-level sections.
+
+The `_same_or_higher` guard (only absorb when new heading level > current heading
+level) prevents peer sections at the same Heading level from being absorbed.
+
+### Quality validation and fallback
+
+After building the candidate `all_paras`:
+- `cand_section_count >= orig_section_count`
+- `cand_role_count >= orig_role_count`
+
+If either check fails, the original order is returned unchanged.
+
+### Diagnostics
+
+| Code | Category | Meaning |
+|------|----------|---------|
+| `TABLE_COLUMN_LAYOUT_DETECTED` | B / info | Fix applied |
+| `TABLE_COLUMN_REORDER_ABORTED` | B / info | Fix detected but quality check aborted it |
+| `TABLE_COLUMN_CONTAMINATION_SUSPECTED` | B / low | Skills-list text inside a non-skills section |
+| `TABLE_CONTACT_INSIDE_EXPERIENCE` | B / medium | Phone/email/address inside experience section |
+| `TABLE_SKILLS_INSIDE_NON_SKILLS_SECTION` | B / low | Skills-list paragraph in non-skills section |
+| `TABLE_ORG_NAME_PROMOTED_TO_FAKE_SECTION` | B / info | Organization name became top-level section |
+
+**Skills-list detection** (`_is_skills_list_para`): a paragraph is skills-like
+only when it has high comma/semicolon density, does NOT start with an action verb
+(Developed, Built, Led, …), does NOT end with sentence punctuation after many
+tokens, and contains no sentence connectors (to, for, with, using, by).  This
+avoids flagging normal achievement bullets as skills contamination.
+
+### Known limitations
+
+- Only handles the specific newspaper-column pattern (tab-split headings + column
+  breaks).  Templates using text boxes or absolute positioning are not handled.
+- Tab-split only applies when BOTH sides match known section heading names.
+- The skills-column guard may miss templates where the skills column uses a name
+  not in `_SKILLS_COLUMN_NAMES` (e.g., "Expertise", "Core Technologies").
+
+---
+
 ## Data Model Quick Reference
 
 ```
@@ -244,5 +375,6 @@ ResumeDocument
 ├─ layout: LayoutProfile
 ├─ all_paras: list[ParaModel]         # flat ordered list (post-reorder)
 ├─ body_items: list[ParaModel|TableBlock]  # raw render order (never reordered)
-└─ label_column_fixed: bool
+├─ label_column_fixed: bool           # True when label-rail fix applied
+└─ table_column_layout_fixed: bool    # True when newspaper/multi-col fix applied
 ```

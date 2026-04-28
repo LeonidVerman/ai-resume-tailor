@@ -22,6 +22,72 @@ _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 # bullet character instead of the canonical "- " form.
 _BULLET_PREFIXES: tuple[str, ...] = ("- ", "\u2022 ", "\u25cf ", "\u2013 ")
 
+_CURRENT_DATE_RE = re.compile(r"^\s*Current\s+Date\s*:", re.IGNORECASE)
+
+
+def preprocess_resume_text(text: str) -> str:
+    """Normalize LLM resume text before parsing.
+
+    Two transformations applied in order:
+
+    1. Remove "Current Date: \u2026" lines (the LLM sometimes appends a timestamp
+       that must never appear in rendered output).
+
+    2. Merge "title-line\\ncompany|date-line" pairs into a single
+       "title | company | date" role-header line so that ``parse_llm_output``
+       detects them as proper pipe-delimited role headers.
+
+       The LLM occasionally formats roles as::
+
+           Web Developer
+           Liceria & Co. | 2019 \u2013 Present
+
+       instead of the canonical pipe-delimited form.  Without this merge
+       "Web Developer" lands in the section's ``body_lines`` and
+       "Liceria & Co. | 2019 \u2013 Present" becomes the role header, losing the
+       job title.
+
+    The transformation is idempotent: lines already containing ``|`` are never
+    treated as merge candidates, so calling this twice is safe.
+    """
+    lines = text.splitlines()
+
+    # 1. Drop "Current Date:" lines
+    lines = [line for line in lines if not _CURRENT_DATE_RE.match(line)]
+
+    # 2. Merge role title + company|date onto one line
+    result: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+
+        is_title_candidate = (
+            bool(stripped)
+            and "|" not in stripped
+            and not any(stripped.startswith(p) for p in _BULLET_PREFIXES)
+            and stripped != stripped.upper()        # not an ALL-CAPS section heading
+            and len(stripped) <= 60
+            and stripped[-1:] not in ".!?,:;"       # not end-of-sentence/list
+        )
+
+        if is_title_candidate:
+            j = i + 1
+            while j < len(lines) and not lines[j].strip():
+                j += 1
+            if j < len(lines):
+                next_stripped = lines[j].strip()
+                if "|" in next_stripped and _YEAR_RE.search(next_stripped):
+                    result.append(f"{stripped} | {next_stripped}")
+                    result.extend(lines[i + 1:j])   # preserve intervening blanks
+                    i = j + 1
+                    continue
+
+        result.append(line)
+        i += 1
+
+    return "\n".join(result)
+
 
 def _normalize_letter_spaced(s: str) -> str:
     """Collapse letter-spaced headings to plain lowercase words.
@@ -205,6 +271,7 @@ class LlmSection:
 
 def parse_llm_output(text: str) -> list[LlmSection]:
     """Parse LLM plain-text resume output into a list of LlmSection objects."""
+    text = preprocess_resume_text(text)
     lines = text.split("\n")
     sections: list[LlmSection] = []
     current: LlmSection | None = None

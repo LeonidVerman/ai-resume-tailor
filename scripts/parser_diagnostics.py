@@ -46,6 +46,34 @@ Category B (structural candidates / informational):
   LABEL_COLUMN_DETECTED                    (w=1) Parser detected and fixed a label-column layout
                                                   (narrow left column of section labels + wide right
                                                   column of content); section structure was reordered.
+  TABLE_COLUMN_LAYOUT_DETECTED             (w=1) Band-aware fix applied; left/right streams separated.
+  TABLE_COLUMN_REORDER_ABORTED             (w=1) Fix detected but rolled back (quality check failed).
+  TABLE_COLUMN_CONTAMINATION_SUSPECTED     (w=1) Umbrella: skills-list in certifications when no more
+                                                  specific code applies.  Requires multicolumn context.
+  TABLE_CONTACT_INSIDE_EXPERIENCE          (w=2) Standalone phone/email/URL in orphan experience para.
+  TABLE_SKILLS_INSIDE_NON_SKILLS_SECTION   (w=1) Skills-list in certifications (multicolumn context).
+  TABLE_EDUCATION_INSIDE_EXPERIENCE        (w=2) Degree entry in orphan experience para (explicit
+                                                  degree signal required; institution alone insufficient).
+  TABLE_ORG_NAME_PROMOTED_TO_FAKE_SECTION  (w=1) Org name became a top-level section (not absorbed).
+
+Notes on false-positive reduction (v3):
+  Education / contact detectors (strict context-aware mode):
+  - Only inspect paragraphs with parser_semantic == "paragraph" (orphan paras).
+  - Skip role_header, role_meta, bullet, section_heading, empty semantics entirely.
+  - Skip paragraphs whose para_id appears in any role's header/meta/bullet lists.
+  _is_education_line: requires explicit degree signal (abbreviation B.S./M.S./PhD/MBA
+    or degree phrase "Bachelor of Science", "Master's degree", GPA, coursework).
+    Institution keywords alone (university, school, college) do NOT trigger — they
+    appear in company names.  Action verbs and | separators are excluded early.
+  _is_contact_para: requires STANDALONE contact line using full-line anchors.
+    Embedded emails/URLs in sentences and company+address combinations are not flagged.
+  Skills / contamination detectors:
+  - Only run when has_multicolumn=True (multicolumn layout detected).
+  - Restricted to certifications sections.
+  - Skip section_heading paragraphs.
+  - Deduplicated: TABLE_COLUMN_CONTAMINATION_SUSPECTED suppressed when specific
+    TABLE_SKILLS_INSIDE_NON_SKILLS_SECTION already covers the section.
+  Summary formatter: at most 3 examples per code per file.
 """
 
 from __future__ import annotations
@@ -79,6 +107,14 @@ _ISSUE_METADATA: dict[str, tuple[str, int, str]] = {
     "ROLE_GROUPING_WEAK":                      (_CAT_B, 2, "low"),
     "ROLE_LIKE_GROUPING_NON_EXPERIENCE":       (_CAT_B, 1, "info"),
     "LABEL_COLUMN_DETECTED":                   (_CAT_B, 1, "info"),
+    # Category B — multi-column / table-column layout signals
+    "TABLE_COLUMN_LAYOUT_DETECTED":            (_CAT_B, 1, "info"),
+    "TABLE_COLUMN_REORDER_ABORTED":            (_CAT_B, 1, "info"),
+    "TABLE_COLUMN_CONTAMINATION_SUSPECTED":    (_CAT_B, 1, "info"),
+    "TABLE_CONTACT_INSIDE_EXPERIENCE":         (_CAT_B, 2, "low"),
+    "TABLE_SKILLS_INSIDE_NON_SKILLS_SECTION":  (_CAT_B, 1, "info"),
+    "TABLE_EDUCATION_INSIDE_EXPERIENCE":       (_CAT_B, 2, "low"),
+    "TABLE_ORG_NAME_PROMOTED_TO_FAKE_SECTION": (_CAT_B, 1, "info"),
 }
 
 
@@ -461,6 +497,428 @@ def detect_role_grouping_weak(
     return issues
 
 
+def detect_table_column_layout(data: dict) -> list[Issue]:
+    """Emit informational issues for the multi-column layout fix.
+
+    TABLE_COLUMN_LAYOUT_DETECTED — fix was applied (contamination resolved).
+    TABLE_COLUMN_REORDER_ABORTED — fix detected but was rolled back by quality check.
+    TABLE_COLUMN_CONTAMINATION_SUSPECTED — fix not applied but contamination signals found.
+    """
+    issues: list[Issue] = []
+    meta = data.get("table_column_layout_meta", {})
+
+    if data.get("table_column_layout_fixed"):
+        col_count = meta.get("col_count", "?")
+        hpp = meta.get("headings_per_col", {})
+        ppc = meta.get("paras_per_col", {})
+        hpp_str = "; ".join(
+            f"col{k}={v}" for k, v in sorted(hpp.items())
+        ) if hpp else "n/a"
+        ppc_str = "; ".join(
+            f"col{k}={v}" for k, v in sorted(ppc.items())
+        ) if ppc else "n/a"
+        issues.append(Issue(
+            code="TABLE_COLUMN_LAYOUT_DETECTED",
+            detail=(
+                f"Multi-column newspaper layout detected and fixed "
+                f"(cols={col_count}, headings=[{hpp_str}], paras=[{ppc_str}])"
+            ),
+        ))
+        return issues
+
+    if meta.get("aborted"):
+        issues.append(Issue(
+            code="TABLE_COLUMN_REORDER_ABORTED",
+            detail=f"Multi-column reorder detected but aborted: {meta.get('reason', 'unknown')}",
+        ))
+
+    return issues
+
+
+_ACTION_VERBS: frozenset[str] = frozenset({
+    "developed", "built", "implemented", "led", "designed", "created",
+    "improved", "managed", "architected", "deployed", "delivered",
+    "collaborated", "optimized", "maintained", "integrated", "migrated",
+    "automated", "reduced", "increased", "launched", "established",
+    "coordinated", "analyzed", "analysed", "resolved", "supported",
+    "mentored", "spearheaded", "streamlined", "facilitated", "engineered",
+    "authored", "assisted", "participated", "conducted", "oversaw",
+    "supervised", "directed", "administered", "operated", "executed",
+    "planned", "monitored", "evaluated", "trained", "prepared", "produced",
+})
+
+_CONTACT_PATTERNS: tuple[re.Pattern, ...] = (
+    re.compile(r"^\+?\d[\d\s\-().]{6,}$"),           # standalone phone number
+    re.compile(r"^[\w.+-]+@[\w-]+\.\w{2,}$"),         # standalone email address
+    re.compile(r"^(https?://|www\.)\S+$", re.I),       # standalone URL
+    re.compile(                                        # labelled contact at start of line
+        r"^(email|e-mail|phone|mobile|landline|tel|website|linkedin|github|twitter)"
+        r"\s*[:\-]\s*\S",
+        re.IGNORECASE,
+    ),
+)
+
+_INSTITUTION_WORDS: frozenset[str] = frozenset({
+    "university", "college", "school", "institute", "academy", "polytechnic",
+})
+
+_ORG_NAME_INDICATORS: frozenset[str] = frozenset({
+    "inc", "corp", "co", "ltd", "llc", "company", "tech", "technologies",
+    "university", "college", "school", "institute",
+})
+
+# Sections that naturally contain contact / education / reference text.
+# Skills-list diagnostics are suppressed for these sections.
+_NON_SKILLS_SKIP_TITLES: frozenset[str] = frozenset({
+    "contact", "contact info", "contact information", "personal information",
+    "personal details", "references", "personal references", "professional references",
+    "education", "educational history", "academic background", "degrees",
+    "educational background", "academic credentials",
+    "languages", "language skills",
+    "websites", "profiles", "links", "portfolio",
+    "summary", "professional summary", "objective", "profile", "about me",
+})
+
+_NARRATIVE_CONNECTORS = (
+    " to ", " for ", " with ", " using ", " by ", " in order to ",
+    " through ", " across ", " within ", " on behalf of ",
+)
+
+
+def _is_contact_para(text: str) -> bool:
+    """Return True when text is a STANDALONE contact-info line.
+
+    The contact signal must dominate the text — embedded contact info inside
+    sentences or company+address combinations is NOT flagged.  All four
+    patterns use full-line anchors (^…$) so partial matches don't trigger.
+    """
+    t = text.strip()
+    return any(pat.match(t) for pat in _CONTACT_PATTERNS)
+
+
+def _is_skills_list_para(text: str) -> bool:
+    """Return True ONLY when text strongly resembles a skills/technology list.
+
+    Strict criteria designed to minimise false positives.  A paragraph is
+    considered skills-like when it passes ALL exclusion checks AND has at
+    least ONE strong list structural signal.
+
+    Exclusions (immediately return False):
+    - Fewer than 4 space-separated tokens  (rules out role titles, 2-word headings)
+    - Fewer than 20 characters total
+    - Paragraph semantic is section_heading (checked by caller, not here)
+    - Contains a year / date range (date lines are not skills)
+    - Matches contact-info patterns (phone, email, URL, labelled contact)
+    - First word is an action verb (experience bullets start with verbs)
+    - Full sentence: ≥8 tokens and ends with .!?
+    - Contains narrative connectors (to/for/with/using/by/through …)
+    - Contains institution keywords (university, college, school …)
+    - Short title-case phrase ≤4 tokens with no separators (role titles, section names)
+    - Matches person-name pattern (2–4 Capitalised words, no digits/punctuation)
+
+    List signals (at least one required):
+    - Comma/semicolon-separated: ≥2 separators and ≥4 tokens
+    - Space-separated keyword list: ≥6 tokens, no sentence punctuation
+    """
+    t = text.strip()
+    tokens = t.split()
+
+    # Hard minimums
+    if len(tokens) < 4 or len(t) < 20:
+        return False
+
+    t_lower = t.lower()
+
+    # Date lines are not skills
+    if _DATE_RE.search(t):
+        return False
+
+    # Contact info
+    if _is_contact_para(t):
+        return False
+
+    # Action verb sentence (experience bullet)
+    first_word = re.split(r"\W+", t_lower)[0]
+    if first_word in _ACTION_VERBS:
+        return False
+
+    # Full sentence ending with punctuation
+    if len(tokens) >= 8 and t[-1] in ".!?":
+        return False
+
+    # Narrative connectors → this is a sentence, not a list
+    if any(c in t_lower for c in _NARRATIVE_CONNECTORS):
+        return False
+
+    # Institution names → education/reference text
+    if any(w in t_lower for w in _INSTITUTION_WORDS):
+        return False
+
+    # Short title-case phrase with no separators (role title: "Senior Engineer")
+    if len(tokens) <= 4 and "," not in t and ";" not in t:
+        cap = sum(1 for w in tokens if w and w[0].isupper())
+        if cap == len(tokens):
+            return False
+
+    # Person-name pattern (2–4 capitalised words, no digits or special chars)
+    if 2 <= len(tokens) <= 4 and re.match(r'^([A-Z][a-z]+ ){1,3}[A-Z][a-z]+$', t):
+        return False
+
+    # ── List signals (at least one required) ──────────────────────────────
+    separators = t.count(",") + t.count(";")
+    if separators >= 2 and len(tokens) >= 4:
+        return True
+
+    # Space-separated keyword list: many tokens, no sentence punctuation
+    if len(tokens) >= 6 and t[-1] not in ".!?":
+        return True
+
+    return False
+
+
+# Degree abbreviations (anchored to word boundaries so "bs" alone doesn't match)
+_DEGREE_ABBREV_RE = re.compile(
+    r"\b(b\.?s\.?|m\.?s\.?|b\.?a\.?|m\.?a\.?|ph\.?d\.?|m\.?b\.?a\.|b\.?sc\.?|m\.?sc\.?)\b",
+    re.IGNORECASE,
+)
+# Degree words and explicit academic phrases
+_DEGREE_KEYWORD_RE = re.compile(
+    r"\b(bachelor|master|doctorate|diploma|associate)\s+(of|in|degree)\b"
+    r"|\b(bachelor|master|doctorate|diploma|associate)'?s\b"
+    r"|\bGPA\b"
+    r"|\bcoursework\b",
+    re.IGNORECASE,
+)
+
+
+def _is_education_line(text: str) -> bool:
+    """Return True ONLY when text strongly resembles an education entry.
+
+    Requires at least one EXPLICIT degree signal — institution keywords alone
+    (university, college, school) are NOT sufficient because they appear in
+    company names and role meta lines.
+
+    Strong signals accepted:
+    - Degree abbreviation: B.S., M.S., Ph.D., MBA, BSc, etc.
+    - Degree phrase: "Bachelor of Science", "Master's degree", GPA, coursework
+
+    Explicit exclusions (immediately False):
+    - Action-verb sentence start (experience bullet)
+    - Contains a "|" separator (role header format)
+    - Starts with an all-caps token followed by nothing or only punctuation
+      (section heading / company name acronym)
+    """
+    t = text.strip()
+    if not t:
+        return False
+    # Role header format: "Title | Company" — never education
+    if "|" in t:
+        return False
+    # Action verb start → experience bullet
+    first_word = re.split(r"\W+", t.lower())[0]
+    if first_word in _ACTION_VERBS:
+        return False
+    # Check for strong education signal
+    if _DEGREE_ABBREV_RE.search(t):
+        return True
+    if _DEGREE_KEYWORD_RE.search(t):
+        return True
+    return False
+
+
+def detect_table_column_contamination_suspected(
+    sections: list[dict],
+    has_multicolumn: bool,
+) -> list[Issue]:
+    """Emit TABLE_COLUMN_CONTAMINATION_SUSPECTED as an umbrella when skills-list
+    text appears inside a certification section and multi-column context is known.
+
+    Only runs when has_multicolumn=True to avoid false positives on normal files.
+    Skips section_heading paragraphs.
+    Skips sections already covered by TABLE_SKILLS_INSIDE_NON_SKILLS_SECTION
+    (deduplication is done in analyse_file).
+    """
+    if not has_multicolumn:
+        return []
+
+    issues: list[Issue] = []
+    # Only flag certifications: skills content there is the clearest contamination signal
+    for sec in sections:
+        if sec.get("semantic_type", "") != "certifications":
+            continue
+        title_lower = sec.get("raw_title", "").lower()
+        if any(kw in title_lower for kw in ("skill", "technical", "expertise")):
+            continue
+        suspicious: list[str] = []
+        for p in sec.get("paragraphs", []):
+            if p.get("parser_semantic") == "section_heading":
+                continue
+            text = p.get("text", "").strip()
+            if _is_skills_list_para(text):
+                suspicious.append(text[:60])
+        if suspicious:
+            issues.append(Issue(
+                code="TABLE_COLUMN_CONTAMINATION_SUSPECTED",
+                detail=(
+                    f"Section '{sec.get('raw_title', '')}' may contain skills-list text: "
+                    f"{suspicious[0]!r}"
+                ),
+                section_id=sec.get("section_id", ""),
+            ))
+    return issues
+
+
+# Semantics that belong to well-formed role content — never orphan contamination
+_ROLE_CONTENT_SEMANTICS: frozenset[str] = frozenset({
+    "role_header", "role_meta", "bullet", "section_heading", "empty",
+})
+
+
+def _role_para_ids(roles: list[dict]) -> set[str]:
+    """Collect all para_ids assigned to role entries in a section."""
+    ids: set[str] = set()
+    for role in roles:
+        for key in ("header_para_ids", "meta_para_ids", "bullet_para_ids"):
+            ids.update(role.get(key, []))
+    return ids
+
+
+def detect_table_contact_inside_experience(sections: list[dict]) -> list[Issue]:
+    """Flag standalone contact-info lines (phone, email, URL) inside experience.
+
+    Only checks orphan paragraphs — paragraphs with semantic 'paragraph' that are
+    NOT assigned to any role entry.  Role headers, meta lines, and bullets are
+    always skipped.
+    """
+    issues: list[Issue] = []
+    for sec in sections:
+        if not _is_experience_section(sec.get("raw_title", "")):
+            continue
+        assigned = _role_para_ids(sec.get("roles", []))
+        for p in sec.get("paragraphs", []):
+            if p.get("parser_semantic") in _ROLE_CONTENT_SEMANTICS:
+                continue
+            if p.get("parser_semantic") != "paragraph":
+                continue
+            para_id = p.get("para_id", "")
+            if para_id and para_id in assigned:
+                continue
+            text = p.get("text", "").strip()
+            if _is_contact_para(text):
+                issues.append(Issue(
+                    code="TABLE_CONTACT_INSIDE_EXPERIENCE",
+                    detail=f"Contact-like text inside experience section: {text[:60]!r}",
+                    section_id=sec.get("section_id", ""),
+                    para_id=para_id,
+                ))
+    return issues
+
+
+def detect_table_education_inside_experience(sections: list[dict]) -> list[Issue]:
+    """Flag education entries (degree/institution lines) inside experience sections.
+
+    Only checks orphan paragraphs — paragraphs with semantic 'paragraph' that are
+    NOT assigned to any role entry.  Requires explicit degree signals; institution
+    keywords alone are insufficient to avoid false positives on company names.
+    """
+    issues: list[Issue] = []
+    for sec in sections:
+        if not _is_experience_section(sec.get("raw_title", "")):
+            continue
+        assigned = _role_para_ids(sec.get("roles", []))
+        for p in sec.get("paragraphs", []):
+            if p.get("parser_semantic") in _ROLE_CONTENT_SEMANTICS:
+                continue
+            if p.get("parser_semantic") != "paragraph":
+                continue
+            para_id = p.get("para_id", "")
+            if para_id and para_id in assigned:
+                continue
+            text = p.get("text", "").strip()
+            if _is_education_line(text):
+                issues.append(Issue(
+                    code="TABLE_EDUCATION_INSIDE_EXPERIENCE",
+                    detail=f"Education-like text inside experience section: {text[:60]!r}",
+                    section_id=sec.get("section_id", ""),
+                    para_id=para_id,
+                ))
+    return issues
+
+
+def detect_table_skills_inside_non_skills(
+    sections: list[dict],
+    has_multicolumn: bool,
+) -> list[Issue]:
+    """Flag skills-list paragraphs inside certifications sections.
+
+    Only runs when has_multicolumn=True.
+    Skips section_heading paragraphs and sections that naturally hold
+    non-skills text (education, contact, references, languages).
+    Only targets certifications semantic_type (clearest contamination case).
+    """
+    if not has_multicolumn:
+        return []
+
+    issues: list[Issue] = []
+    for sec in sections:
+        # Only certifications warrant this check — the clearest contamination case
+        if sec.get("semantic_type", "") != "certifications":
+            continue
+        title_lower = sec.get("raw_title", "").lower()
+        # Skip if the section title itself suggests skills content is expected
+        if any(kw in title_lower for kw in ("skill", "technical", "expertise")):
+            continue
+        for p in sec.get("paragraphs", []):
+            if p.get("parser_semantic") == "section_heading":
+                continue
+            text = p.get("text", "").strip()
+            if _is_skills_list_para(text):
+                issues.append(Issue(
+                    code="TABLE_SKILLS_INSIDE_NON_SKILLS_SECTION",
+                    detail=(
+                        f"Skills-list text in '{sec.get('raw_title', '')}': {text[:60]!r}"
+                    ),
+                    section_id=sec.get("section_id", ""),
+                    para_id=p.get("para_id", ""),
+                ))
+    return issues
+
+
+def detect_table_org_name_fake_sections(sections: list[dict]) -> list[Issue]:
+    """Flag sections that look like organization names promoted from sub-headings.
+
+    Restricted to sections with 1–3 body paragraphs where the last paragraph
+    is a date line and the title contains an org-name indicator.
+    """
+    issues: list[Issue] = []
+    for sec in sections:
+        if _is_experience_section(sec.get("raw_title", "")):
+            continue
+        if sec.get("roles"):
+            continue
+        title = sec.get("raw_title", "").strip()
+        if title.lower() in _SECTION_HEADING_WORDS:
+            continue
+        if title.lower() in _NON_SKILLS_SKIP_TITLES:
+            continue
+        body_paras = sec.get("paragraphs", [])
+        non_empty = [p for p in body_paras if p.get("text", "").strip()]
+        if not non_empty or len(non_empty) > 3:
+            continue
+        title_words = set(re.split(r"\W+", title.lower())) - {""}
+        last_text = non_empty[-1].get("text", "")
+        if _DATE_RE.search(last_text) and title_words & _ORG_NAME_INDICATORS:
+            issues.append(Issue(
+                code="TABLE_ORG_NAME_PROMOTED_TO_FAKE_SECTION",
+                detail=(
+                    f"Section '{title}' looks like an org-name sub-heading "
+                    f"(short body, date-like last line)"
+                ),
+                section_id=sec.get("section_id", ""),
+            ))
+    return issues
+
+
 def detect_label_column(data: dict) -> list[Issue]:
     """Emit one informational issue when the label-column layout fix was applied."""
     if data.get("label_column_fixed"):
@@ -515,6 +973,13 @@ def analyse_file(path: Path) -> FileReport:
         document_id=data.get("document_id", path.stem),
     )
 
+    # Multi-column context: only run column-specific contamination detectors when
+    # the parser detected and applied (or attempted) a multi-column layout fix.
+    has_multicolumn = bool(
+        data.get("table_column_layout_fixed")
+        or data.get("table_column_layout_meta", {}).get("aborted")
+    )
+
     all_issues: list[Issue] = []
     all_issues.extend(detect_experience_no_roles(sections))
     all_issues.extend(detect_merged_section(sections, para_map))
@@ -526,6 +991,27 @@ def analyse_file(path: Path) -> FileReport:
     all_issues.extend(detect_role_grouping_weak(sections, para_map))
     all_issues.extend(detect_role_like_grouping_non_experience(sections))
     all_issues.extend(detect_label_column(data))
+    all_issues.extend(detect_table_column_layout(data))
+    all_issues.extend(detect_table_contact_inside_experience(sections))
+    all_issues.extend(detect_table_education_inside_experience(sections))
+
+    # Column-contamination diagnostics: only when multi-column context is known
+    skills_issues = detect_table_skills_inside_non_skills(sections, has_multicolumn)
+    all_issues.extend(skills_issues)
+
+    # De-duplicate: suppress umbrella contamination for sections already covered
+    # by a specific TABLE_SKILLS_INSIDE_NON_SKILLS_SECTION issue.
+    sections_with_skills_issue: set[str] = {
+        i.section_id for i in skills_issues if i.section_id
+    }
+    contamination_issues = detect_table_column_contamination_suspected(
+        sections, has_multicolumn
+    )
+    for issue in contamination_issues:
+        if issue.section_id not in sections_with_skills_issue:
+            all_issues.append(issue)
+
+    all_issues.extend(detect_table_org_name_fake_sections(sections))
 
     for issue in all_issues:
         if _category(issue.code) == _CAT_A:
@@ -630,6 +1116,8 @@ def _format_summary(reports: list[FileReport], input_dirs: list[Path]) -> str:
     lines.append(f"Informational score: {total_b_score}")
     lines.append("")
 
+    _SUMMARY_MAX_EXAMPLES = 3  # max detail lines per code per file
+
     def _file_block(r: FileReport, issues: list[Issue]) -> None:
         name = Path(r.path).name
         lines.append(f"\n  {name}  ({r.source_kind})")
@@ -637,15 +1125,17 @@ def _format_summary(reports: list[FileReport], input_dirs: list[Path]) -> str:
         for code, cnt in sorted(counts.items()):
             w = _weight(code)
             lines.append(f"    {code} x{cnt}  (w={w})")
-        seen: set[str] = set()
+        code_example_count: dict[str, int] = {}
         for i in issues:
-            if i.code not in seen:
-                seen.add(i.code)
-                detail = i.detail if len(i.detail) <= 90 else i.detail[:87] + "..."
-                loc = " | ".join(filter(None, [i.section_id, i.para_id, i.role_id]))
-                lines.append(f"      → {detail}")
-                if loc:
-                    lines.append(f"        @ {loc}")
+            n = code_example_count.get(i.code, 0)
+            if n >= _SUMMARY_MAX_EXAMPLES:
+                continue
+            code_example_count[i.code] = n + 1
+            detail = i.detail if len(i.detail) <= 90 else i.detail[:87] + "..."
+            loc = " | ".join(filter(None, [i.section_id, i.para_id, i.role_id]))
+            lines.append(f"      → {detail}")
+            if loc:
+                lines.append(f"        @ {loc}")
 
     if parser_issues:
         parser_issues_sorted = sorted(parser_issues, key=lambda r: -r.parser_issue_score)
