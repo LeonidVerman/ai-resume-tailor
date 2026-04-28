@@ -31,34 +31,49 @@ sys.path.insert(0, _SCRIPTS)
 
 
 # ---------------------------------------------------------------------------
-# Anchor budget unit tests
+# Anchor budget unit tests (using pipeline functions from updater.py)
 # ---------------------------------------------------------------------------
 
 class TestAnchorBudgets:
-    def test_budgets_cover_experience_slots(self):
-        """All 3 experience bullet slots have defined budgets."""
-        from generate_sample31_artifacts import _ANCHOR_BUDGETS
-        assert "para_39" in _ANCHOR_BUDGETS
-        assert "para_43" in _ANCHOR_BUDGETS
-        assert "para_47" in _ANCHOR_BUDGETS
+    def test_summary_budget_constants(self):
+        """SUMMARY_BODY_BUDGET and SUMMARY_HEADING_BUDGET are defined."""
+        from tailor.compiler.updater import SUMMARY_BODY_BUDGET, SUMMARY_HEADING_BUDGET
+        assert SUMMARY_BODY_BUDGET >= 100
+        assert SUMMARY_HEADING_BUDGET >= 20
+        assert SUMMARY_HEADING_BUDGET < SUMMARY_BODY_BUDGET
 
-    def test_summary_slots_have_budgets(self):
-        """Summary anchor slots para_7/para_8 have budgets."""
-        from generate_sample31_artifacts import _ANCHOR_BUDGETS
-        assert "para_7" in _ANCHOR_BUDGETS
-        assert "para_8" in _ANCHOR_BUDGETS
-        assert _ANCHOR_BUDGETS["para_8"] >= 100
-        assert _ANCHOR_BUDGETS["para_7"] >= 20
+    def test_compute_budgets_for_sample31(self):
+        """_compute_anchor_budgets yields sensible budgets for sample 31."""
+        from tailor.compiler.docx_parser import parse_docx
+        from tailor.compiler.updater import (
+            SUMMARY_BODY_BUDGET, SUMMARY_HEADING_BUDGET, _compute_anchor_budgets,
+        )
 
-    def test_enforce_anchor_budgets_truncates(self, monkeypatch):
-        """_enforce_anchor_budgets truncates paragraphs that exceed budget."""
+        doc = parse_docx(_DOCX_PATH)
+        # Pass doc as both original and updated (no inserted summary yet)
+        budgets = _compute_anchor_budgets(doc, doc)
+
+        # Experience bullets: max(160, 210*1.25) = 262
+        assert budgets.get("para_39", 0) >= 160
+        assert budgets.get("para_43", 0) >= 160
+        assert budgets.get("para_47", 0) >= 160
+        # Skills: max(80, small_orig*1.25) → at least 80
+        assert budgets.get("para_49", 0) >= 80
+        assert budgets.get("para_51", 0) >= 80
+        # Empty header paras get conservative default
+        assert budgets.get("para_7", 0) >= 100
+        assert budgets.get("para_8", 0) >= 100
+
+    def test_apply_anchor_budgets_truncates_overlong(self, monkeypatch):
+        """apply_anchor_budgets truncates a para that exceeds budget."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
-        from generate_sample31_artifacts import _ANCHOR_BUDGETS, _enforce_anchor_budgets
+        from tailor.compiler.updater import (
+            SUMMARY_BODY_BUDGET, _truncate_to_budget, apply_anchor_budgets,
+        )
         from tailor.compiler.models import (
-            ParaModel, ParaStyle, ResumeDocument, ResumeSection,
-            LayoutProfile, assign_stable_ids,
+            LayoutProfile, ParaModel, ParaStyle, ResumeDocument, ResumeSection,
         )
 
         layout = LayoutProfile(
@@ -67,30 +82,61 @@ class TestAnchorBudgets:
             margin_left_pt=72, margin_right_pt=72,
             default_font_name="Calibri", default_font_size_pt=11,
         )
-        # Create a para with para_id matching a budget entry and text over budget
-        pm = ParaModel(text="x" * 500, style=ParaStyle(), semantic="paragraph")
-        pm.para_id = "para_8"  # budget = 200
+        # Build a minimal original doc with one empty header para (para_8)
+        empty_pm = ParaModel(text="", style=ParaStyle(), semantic="empty")
+        empty_pm.para_id = "para_8"
+        orig = ResumeDocument(header_paras=[empty_pm], sections=[], layout=layout, all_paras=[])
 
-        sec = ResumeSection(
-            title="Summary", heading=ParaModel(text="", style=ParaStyle(), semantic="section_heading"),
-            semantic_type="summary", body_paras=[pm],
+        # Build updated doc: para_8 is now summary body with overlong text
+        body_pm = ParaModel(text="x" * 500, style=ParaStyle(), semantic="paragraph")
+        body_pm.para_id = "para_8"
+        summ = ResumeSection(
+            title="Professional Summary",
+            heading=ParaModel(text="PROFESSIONAL SUMMARY", style=ParaStyle(), semantic="section_heading"),
+            semantic_type="summary",
+            body_paras=[body_pm],
         )
-        sec.section_id = "sec_summ"
-        sec.heading.para_id = "hd_summ"
+        summ.heading.para_id = "para_7"
+        summ.section_id = "sec_summary_inserted"
+        updated = ResumeDocument(
+            header_paras=[], sections=[summ], layout=layout, all_paras=[],
+        )
+        result = apply_anchor_budgets(orig, updated)
 
-        doc = ResumeDocument(header_paras=[], sections=[sec], layout=layout, all_paras=[])
-        result = _enforce_anchor_budgets(doc)
+        s = next(s for s in result.sections if s.semantic_type == "summary")
+        assert len(s.body_paras[0].text) <= SUMMARY_BODY_BUDGET + 3  # allow "..."
+        assert s.body_paras[0].para_id == "para_8"
 
-        summ = next(s for s in result.sections if s.semantic_type == "summary")
-        assert len(summ.body_paras[0].text) <= _ANCHOR_BUDGETS["para_8"] + 3  # allow for "..."
-        assert summ.body_paras[0].para_id == "para_8"  # para_id preserved
+    def test_truncate_to_budget_sentence_boundary(self):
+        """_truncate_to_budget cuts at sentence boundary when possible."""
+        from tailor.compiler.updater import _truncate_to_budget
+        from tailor.compiler.models import ParaModel, ParaStyle
+
+        text = "First sentence. Second sentence. Third sentence goes on and on."
+        pm = ParaModel(text=text, style=ParaStyle(), semantic="paragraph")
+        pm.para_id = "para_test"
+        result = _truncate_to_budget(pm, 35)
+        assert result.text.endswith(".")
+        assert len(result.text) <= 35
+
+    def test_truncate_to_budget_hard_cut(self):
+        """_truncate_to_budget hard-cuts when no sentence break is available."""
+        from tailor.compiler.updater import _truncate_to_budget
+        from tailor.compiler.models import ParaModel, ParaStyle
+
+        text = "abcdefghijklmnopqrstuvwxyz" * 10
+        pm = ParaModel(text=text, style=ParaStyle(), semantic="paragraph")
+        pm.para_id = "para_test"
+        result = _truncate_to_budget(pm, 20)
+        assert len(result.text) <= 20
+        assert result.text.endswith("...")
 
     def test_enforce_anchor_budgets_no_truncation_within_budget(self, monkeypatch):
         """Paragraphs within budget are not modified."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
-        from generate_sample31_artifacts import _enforce_anchor_budgets
+        from tailor.compiler.updater import apply_anchor_budgets
         from tailor.compiler.models import (
             ParaModel, ParaStyle, ResumeDocument, ResumeSection, LayoutProfile,
         )
@@ -111,8 +157,9 @@ class TestAnchorBudgets:
         sec.section_id = "sec_summ"
         sec.heading.para_id = "hd_summ"
 
-        doc = ResumeDocument(header_paras=[], sections=[sec], layout=layout, all_paras=[])
-        result = _enforce_anchor_budgets(doc)
+        # orig and updated are the same minimal doc (para_8 is short, within budget)
+        orig_doc = ResumeDocument(header_paras=[], sections=[sec], layout=layout, all_paras=[])
+        result = apply_anchor_budgets(orig_doc, orig_doc)
 
         summ = next(s for s in result.sections if s.semantic_type == "summary")
         assert summ.body_paras[0].text == "Short."
@@ -137,7 +184,6 @@ class TestSample31ArtifactPipeline:
         from tailor.compiler.text_parser import parse_llm_output
         from tailor.compiler.updater import apply_tailored
         from check_layout_bound_ir_health import check_layout_bound_ir_health
-        from generate_sample31_artifacts import _enforce_anchor_budgets
 
         doc = parse_docx(_DOCX_PATH)
         with open(_GEN_JSON_209, encoding="utf-8") as f:
@@ -145,7 +191,6 @@ class TestSample31ArtifactPipeline:
         llm_text = gen["llm_response"]["resume"]
         llm_sections = parse_llm_output(llm_text)
         updated = apply_tailored(doc, llm_sections)
-        updated = _enforce_anchor_budgets(updated)
 
         violations = check_layout_bound_ir_health(updated)
         hard = {k: v for k, v in violations.items()
@@ -162,14 +207,12 @@ class TestSample31ArtifactPipeline:
         from tailor.compiler.docx_parser import parse_docx
         from tailor.compiler.text_parser import parse_llm_output
         from tailor.compiler.updater import apply_tailored
-        from generate_sample31_artifacts import _enforce_anchor_budgets
 
         doc = parse_docx(_DOCX_PATH)
         with open(_GEN_JSON_209, encoding="utf-8") as f:
             gen = json.load(f)
         llm_sections = parse_llm_output(gen["llm_response"]["resume"])
         updated = apply_tailored(doc, llm_sections)
-        updated = _enforce_anchor_budgets(updated)
 
         summary = next((s for s in updated.sections if s.semantic_type == "summary"), None)
         assert summary is not None, "Summary section missing"
@@ -185,14 +228,12 @@ class TestSample31ArtifactPipeline:
         from tailor.compiler.docx_parser import parse_docx
         from tailor.compiler.text_parser import parse_llm_output
         from tailor.compiler.updater import apply_tailored
-        from generate_sample31_artifacts import _enforce_anchor_budgets
 
         doc = parse_docx(_DOCX_PATH)
         with open(_GEN_JSON_209, encoding="utf-8") as f:
             gen = json.load(f)
         llm_sections = parse_llm_output(gen["llm_response"]["resume"])
         updated = apply_tailored(doc, llm_sections)
-        updated = _enforce_anchor_budgets(updated)
 
         types = [s.semantic_type for s in updated.sections]
         assert types[0] == "summary"
@@ -214,14 +255,12 @@ class TestSample31ArtifactPipeline:
         from tailor.compiler.docx_parser import parse_docx
         from tailor.compiler.text_parser import parse_llm_output
         from tailor.compiler.updater import apply_tailored
-        from generate_sample31_artifacts import _enforce_anchor_budgets
 
         doc = parse_docx(_DOCX_PATH)
         with open(_GEN_JSON_209, encoding="utf-8") as f:
             gen = json.load(f)
         llm_sections = parse_llm_output(gen["llm_response"]["resume"])
         updated = apply_tailored(doc, llm_sections)
-        updated = _enforce_anchor_budgets(updated)
 
         pids = [p.para_id for p in (updated.all_paras or []) if p.para_id]
         dups = {k: v for k, v in Counter(pids).items() if v > 1}
@@ -235,14 +274,12 @@ class TestSample31ArtifactPipeline:
         from tailor.compiler.docx_parser import parse_docx
         from tailor.compiler.text_parser import parse_llm_output
         from tailor.compiler.updater import apply_tailored
-        from generate_sample31_artifacts import _enforce_anchor_budgets
 
         doc = parse_docx(_DOCX_PATH)
         with open(_GEN_JSON_209, encoding="utf-8") as f:
             gen = json.load(f)
         llm_sections = parse_llm_output(gen["llm_response"]["resume"])
         updated = apply_tailored(doc, llm_sections)
-        updated = _enforce_anchor_budgets(updated)
 
         ir_json = json.dumps(updated.to_dict(), ensure_ascii=False)
         assert "current date" not in ir_json.lower(), "'Current Date' leaked into IR"
@@ -257,14 +294,12 @@ class TestSample31ArtifactPipeline:
         from tailor.compiler.docx_renderer import render_docx
         from tailor.compiler.text_parser import parse_llm_output
         from tailor.compiler.updater import apply_tailored
-        from generate_sample31_artifacts import _enforce_anchor_budgets
 
         doc = parse_docx(_DOCX_PATH)
         with open(_GEN_JSON_209, encoding="utf-8") as f:
             gen = json.load(f)
         llm_sections = parse_llm_output(gen["llm_response"]["resume"])
         updated = apply_tailored(doc, llm_sections)
-        updated = _enforce_anchor_budgets(updated)
 
         out = str(tmp_path / "sample31_test.docx")
         render_docx(updated, _DOCX_PATH, out)

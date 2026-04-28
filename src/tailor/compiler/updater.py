@@ -2132,6 +2132,189 @@ def finalize_layout_bound_ir(
 
 
 # ---------------------------------------------------------------------------
+# Anchor-budget enforcement (layout-bound mode)
+# ---------------------------------------------------------------------------
+
+#: Max chars for an inserted summary heading anchor (was originally empty).
+SUMMARY_HEADING_BUDGET: int = 40
+
+#: Max chars for an inserted summary body anchor (was originally empty).
+#: Conservative estimate: ~28 chars/line at 18 pt in a half-page column × 7 lines.
+SUMMARY_BODY_BUDGET: int = 200
+
+
+def _compute_anchor_budgets(
+    original: "ResumeDocument",
+    updated: "ResumeDocument",
+) -> "dict[str, int]":
+    """Derive per-para_id replacement-text budgets from the original document.
+
+    Rules by context
+    ----------------
+    * Empty header_paras that became the inserted-summary heading: ``SUMMARY_HEADING_BUDGET``
+    * Empty header_paras that became the inserted-summary body:    ``SUMMARY_BODY_BUDGET``
+    * Role bullet / body slot (experience):  ``max(160, orig_len * 1.25)``
+    * Skills section body slots:             ``max(80,  orig_len * 1.25)``
+    * Role headers:                          ``max(80,  orig_len * 1.5)``
+    * Role meta lines:                       ``max(60,  orig_len * 1.5)``
+    * Other section body (non-empty orig):   ``max(80,  orig_len * 1.5)``
+    * Other empty body slot:                 ``SUMMARY_BODY_BUDGET`` (conservative)
+    * Non-empty header paras:                ``max(80,  orig_len * 1.5)``
+
+    The *updated* document is consulted only to identify which originally-empty
+    header paragraphs were claimed as summary anchors so the correct tighter
+    heading budget can be applied.
+    """
+    budgets: dict[str, int] = {}
+
+    # Para_ids that were originally empty header paragraphs — these are the
+    # candidates for summary heading/body anchors.
+    _orig_empty_header: set[str] = {
+        pm.para_id
+        for pm in original.header_paras
+        if pm.para_id and not pm.text.strip()
+    }
+
+    # ── Header paragraphs ──────────────────────────────────────────────────
+    for pm in original.header_paras:
+        if not pm.para_id:
+            continue
+        if pm.para_id in _orig_empty_header:
+            # Conservative default; will be overridden for summary anchors below.
+            budgets[pm.para_id] = SUMMARY_BODY_BUDGET
+        else:
+            orig_len = len(pm.text.strip())
+            budgets[pm.para_id] = max(80, int(orig_len * 1.5))
+
+    # ── Sections ───────────────────────────────────────────────────────────
+    for sec in original.sections:
+        for role in sec.roles:
+            if role.header.para_id:
+                ol = len(role.header.text.strip())
+                budgets[role.header.para_id] = max(80, int(ol * 1.5))
+            for m in role.meta_lines:
+                if m.para_id:
+                    ol = len(m.text.strip())
+                    budgets[m.para_id] = max(60, int(ol * 1.5))
+            for b in role.bullets:
+                if b.para_id:
+                    ol = len(b.text.strip())
+                    budgets[b.para_id] = max(160, int(ol * 1.25))
+        for bp in sec.body_paras:
+            if not bp.para_id or bp.para_id in budgets:
+                continue  # already set (e.g. same para_id shared by role + body)
+            ol = len(bp.text.strip())
+            if sec.semantic_type == "skills":
+                budgets[bp.para_id] = max(80, int(ol * 1.25))
+            elif ol > 0:
+                budgets[bp.para_id] = max(80, int(ol * 1.5))
+            else:
+                budgets[bp.para_id] = SUMMARY_BODY_BUDGET  # empty slot default
+
+    # ── Override for inserted summary anchors ──────────────────────────────
+    # Paragraphs that were originally empty header slots but are now the
+    # heading or body of an inserted summary section get tighter budgets.
+    for sec in updated.sections:
+        if sec.semantic_type == "summary" and sec.section_id == "sec_summary_inserted":
+            if sec.heading.para_id in _orig_empty_header:
+                budgets[sec.heading.para_id] = SUMMARY_HEADING_BUDGET
+            for bp in sec.body_paras:
+                if bp.para_id in _orig_empty_header:
+                    budgets[bp.para_id] = SUMMARY_BODY_BUDGET
+
+    return budgets
+
+
+def _truncate_to_budget(pm: "ParaModel", budget: int) -> "ParaModel":
+    """Return *pm* with text truncated to *budget* characters if necessary.
+
+    Truncation strategy: cut at the last sentence-ending period that falls
+    before the budget.  If no such period exists in the first half of the
+    budget, hard-cut at ``budget - 3`` and append ``"..."``.
+    Returns *pm* unchanged when the text is already within budget.
+    """
+    if len(pm.text) <= budget:
+        return pm
+    text = pm.text
+    cut_at = text.rfind(". ", 0, budget)
+    if cut_at >= budget // 2:
+        truncated = text[: cut_at + 1]
+    else:
+        truncated = text[: budget - 3] + "..."
+    _log.debug(
+        "CONTENT_TRUNCATED_FOR_LAYOUT: para_id=%r budget=%d actual=%d",
+        pm.para_id, budget, len(text),
+    )
+    return pm.with_text(truncated)
+
+
+def apply_anchor_budgets(
+    original: "ResumeDocument",
+    updated: "ResumeDocument",
+) -> "ResumeDocument":
+    """Enforce per-paragraph text-length budgets on the layout-bound updated IR.
+
+    Budgets are computed from the original paragraph lengths via
+    ``_compute_anchor_budgets``.  Any paragraph whose replacement text exceeds
+    its budget is truncated at the last sentence boundary (falling back to a
+    hard cut with ``"..."``).
+
+    Returns a new ``ResumeDocument``; neither *original* nor *updated* is
+    mutated.  Called automatically by ``apply_tailored`` in layout-bound mode.
+    """
+    budgets = _compute_anchor_budgets(original, updated)
+
+    def _t(pm: "ParaModel") -> "ParaModel":
+        b = budgets.get(pm.para_id)
+        return _truncate_to_budget(pm, b) if (b is not None and b > 0) else pm
+
+    new_header: list[ParaModel] = [_t(p) for p in updated.header_paras]
+
+    new_sections: list[ResumeSection] = []
+    for sec in updated.sections:
+        new_roles: list[RoleEntry] = []
+        for role in sec.roles:
+            new_roles.append(RoleEntry(
+                header=_t(role.header),
+                header_extra=list(role.header_extra),
+                meta_lines=[_t(m) for m in role.meta_lines],
+                bullets=[_t(b) for b in role.bullets],
+                role_id=role.role_id,
+                role_id_stable=role.role_id_stable,
+            ))
+        new_sections.append(ResumeSection(
+            title=sec.title,
+            heading=_t(sec.heading),
+            semantic_type=sec.semantic_type,
+            body_paras=[_t(p) for p in sec.body_paras],
+            roles=new_roles,
+            section_id=sec.section_id,
+        ))
+
+    # Rebuild all_paras in canonical order
+    all_paras: list[ParaModel] = list(new_header)
+    for s in new_sections:
+        all_paras.append(s.heading)
+        if s.semantic_type == "experience" and s.roles:
+            for r in s.roles:
+                all_paras.append(r.header)
+                all_paras.extend(r.meta_lines)
+                all_paras.extend(r.bullets)
+        else:
+            all_paras.extend(s.body_paras)
+
+    return ResumeDocument(
+        header_paras=new_header,
+        sections=new_sections,
+        layout=updated.layout,
+        all_paras=all_paras,
+        source_kind=updated.source_kind,
+        layout_blocks=updated.layout_blocks,
+        body_items=updated.body_items,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -2661,7 +2844,7 @@ def apply_tailored(
         if any(v > 0 for v in _sv.values()):
             _log.debug("STRUCTURAL_VALIDATION_GATE: violations=%s", _sv)
 
-    return ResumeDocument(
+    _result = ResumeDocument(
         header_paras=effective_header_paras,
         sections=new_sections,
         layout=original.layout,
@@ -2679,3 +2862,11 @@ def apply_tailored(
         # layout_blocks entries so the renderer can look them up by ID.
         layout_blocks=original.layout_blocks,
     )
+
+    # Apply per-slot text-length budgets in layout-bound mode.  Runs last so
+    # all prior structural repairs (split-brain fix, section-order rewrite,
+    # bullet overflow drop) have already been applied before truncation.
+    if _layout_bound:
+        _result = apply_anchor_budgets(original, _result)
+
+    return _result

@@ -43,147 +43,40 @@ _OUT_PNG  = _ROOT / "tmp/artefacts/report"
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 _log = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Anchor budgets (max chars per para_id slot in sample 31)
-# ---------------------------------------------------------------------------
-
-# Budget = max(200, original_len * 1.5).  For the inserted summary slots
-# (originally empty) we use a conservative visual budget: 2-column 18pt text
-# at ~28 chars/line ×  6 lines = 168 chars for heading, 200 for body.
-_ANCHOR_BUDGETS: dict[str, int] = {
-    # Summary slots (inserted anchors, originally empty)
-    "para_7": 40,    # heading: "PROFESSIONAL SUMMARY" = 20 chars, max 40
-    "para_8": 200,   # body: 2-column slot at 18pt
-
-    # Experience role headers (originally 12-22 chars, allow merged form)
-    "para_37": 80,   # "Web Developer | Liceria & Co. | 2019 – Present"
-    "para_41": 80,   # "Web Designer | Borcelle Company | 2016 – 2018"
-    "para_45": 80,   # "Web Development Intern | Fauget | 2014 – 2015"
-
-    # Experience role meta (originally 18-30 chars — keep short)
-    "para_38": 50,
-    "para_42": 50,
-    "para_46": 40,
-
-    # Experience bullets (originally 210 chars each)
-    "para_39": 210,
-    "para_43": 210,
-    "para_47": 210,
-
-    # Skills section body (originally 10, 71, 81 chars)
-    "para_49": 120,   # first skills line
-    "para_51": 120,   # second skills line
-    "para_52": 120,   # third skills line
-
-    # Certification body (originally 4-24 chars, keep compact)
-    "para_18": 60,
-    "para_19": 60,
-    "para_20": 20,
-    "para_21": 60,
-    "para_22": 60,
-    "para_23": 20,
-
-    # Course body
-    "para_55": 60,
-    "para_56": 60,
-    "para_57": 20,
-    "para_59": 60,
-    "para_60": 60,
-    "para_61": 20,
-
-    # Awards body
-    "para_65": 60,
-    "para_66": 60,
-    "para_67": 20,
-}
-
-_TRUNCATED: list[tuple[str, int, int, str]] = []  # (para_id, budget, actual, text_preview)
+# Anchor budget enforcement is handled by apply_tailored (via
+# tailor.compiler.updater.apply_anchor_budgets) in layout-bound mode.
+# The debug script tracks what was truncated for the layout report.
+_TRUNCATED: list[tuple[str, int, str]] = []  # (para_id, actual_len, text_preview)
 
 
-def _enforce_anchor_budgets(updated: "ResumeDocument") -> "ResumeDocument":
-    """Truncate any paragraph whose text exceeds its anchor budget.
-
-    Truncation strategy:
-    - For paragraphs with a '.' before the budget limit: cut at last sentence end.
-    - Otherwise: hard-cut at budget with '…' appended.
-    Logs CONTENT_TRUNCATED_FOR_LAYOUT for every truncation.
-    """
+def _collect_truncations(doc_before: "ResumeDocument", doc_after: "ResumeDocument") -> None:
+    """Record paragraphs that were shortened by apply_anchor_budgets."""
     _TRUNCATED.clear()
 
-    def _truncate(pm: "ParaModel") -> "ParaModel":
-        budget = _ANCHOR_BUDGETS.get(pm.para_id)
-        if budget is None or len(pm.text) <= budget:
-            return pm
-        text = pm.text
-        # Try to cut at last sentence-ending period before budget
-        cut_at = text.rfind(". ", 0, budget)
-        if cut_at >= budget // 2:
-            truncated = text[:cut_at + 1]
-        else:
-            truncated = text[:budget - 1] + "..."  # ellipsis
-        _TRUNCATED.append((pm.para_id, budget, len(text), truncated[:60]))
-        _log.debug(
-            "CONTENT_TRUNCATED_FOR_LAYOUT: para_id=%r budget=%d actual=%d",
-            pm.para_id, budget, len(text),
-        )
-        return pm.with_text(truncated)
-
-    # Walk all semantic paragraphs and apply truncation in-place by rebuilding
-    new_header = [_truncate(p) for p in updated.header_paras]
-
-    new_sections = []
-    for sec in updated.sections:
-        new_heading = _truncate(sec.heading)
-        new_roles = []
-        for role in sec.roles:
-            new_header_r = _truncate(role.header)
-            new_meta = [_truncate(m) for m in role.meta_lines]
-            new_bullets = [_truncate(b) for b in role.bullets]
-            from tailor.compiler.models import RoleEntry
-            nr = RoleEntry(
-                header=new_header_r,
-                header_extra=role.header_extra,
-                meta_lines=new_meta,
-                bullets=new_bullets,
-                role_id=role.role_id,
-                role_id_stable=role.role_id_stable,
-            )
-            new_roles.append(nr)
-        new_body = [_truncate(p) for p in sec.body_paras]
-
-        from tailor.compiler.models import ResumeSection
-        ns = ResumeSection(
-            title=sec.title,
-            heading=new_heading,
-            semantic_type=sec.semantic_type,
-            body_paras=new_body,
-            roles=new_roles,
-            section_id=sec.section_id,
-        )
-        new_sections.append(ns)
-
-    # Rebuild all_paras from the new sections
-    from tailor.compiler.models import ResumeDocument
-    all_paras = list(new_header)
-    for s in new_sections:
-        all_paras.append(s.heading)
-        if s.semantic_type == "experience" and s.roles:
+    def _pid_to_text(doc: "ResumeDocument") -> "dict[str, str]":
+        m: dict[str, str] = {}
+        for p in doc.header_paras:
+            if p.para_id:
+                m[p.para_id] = p.text
+        for s in doc.sections:
+            m[s.heading.para_id] = s.heading.text
             for r in s.roles:
-                all_paras.append(r.header)
-                all_paras.extend(r.meta_lines)
-                all_paras.extend(r.bullets)
-        else:
-            all_paras.extend(s.body_paras)
+                if r.header.para_id:
+                    m[r.header.para_id] = r.header.text
+                for x in r.meta_lines + r.bullets:
+                    if x.para_id:
+                        m[x.para_id] = x.text
+            for p in s.body_paras:
+                if p.para_id:
+                    m[p.para_id] = p.text
+        return m
 
-    return ResumeDocument(
-        header_paras=new_header,
-        sections=new_sections,
-        layout=updated.layout,
-        all_paras=all_paras,
-        source_kind=updated.source_kind,
-        layout_blocks=updated.layout_blocks,
-        body_items=updated.body_items,
-    )
+    before = _pid_to_text(doc_before)
+    after = _pid_to_text(doc_after)
+    for pid, orig_text in before.items():
+        new_text = after.get(pid, orig_text)
+        if len(new_text) < len(orig_text):
+            _TRUNCATED.append((pid, len(orig_text), new_text[:60]))
 
 
 # ---------------------------------------------------------------------------
@@ -192,6 +85,7 @@ def _enforce_anchor_budgets(updated: "ResumeDocument") -> "ResumeDocument":
 
 def _generate_layout_report(
     pdf_path: str,
+    original: "ResumeDocument",
     ir: "ResumeDocument",
     generate_png: bool = False,
 ) -> dict:
@@ -210,10 +104,7 @@ def _generate_layout_report(
         "text_density_by_page": [],
         "section_order_ok": False,
         "experience_roles_order": [],
-        "truncations": [
-            {"para_id": pid, "budget": bud, "actual": act, "preview": prev}
-            for pid, bud, act, prev in _TRUNCATED
-        ],
+        "truncations": [],  # populated after overflow_warnings diff below
         "acceptance": {
             "page_count_ok": False,
             "no_blank_middle_page": False,
@@ -323,22 +214,32 @@ def _generate_layout_report(
         kw in full_text_lower for kw in ["professional summary", "experience", "skills"]
     )
 
-    # Overflow warnings from IR
-    all_ir_paras = list(ir.header_paras)
+    # Overflow warnings: use pipeline's computed budgets
+    from tailor.compiler.updater import _compute_anchor_budgets
+    budgets = _compute_anchor_budgets(original, ir)
+    pid_to_text: dict[str, str] = {}
+    for p in ir.header_paras:
+        if p.para_id:
+            pid_to_text[p.para_id] = p.text
     for s in ir.sections:
-        all_ir_paras.append(s.heading)
+        if s.heading.para_id:
+            pid_to_text[s.heading.para_id] = s.heading.text
         for r in s.roles:
-            all_ir_paras.extend([r.header] + r.meta_lines + r.bullets)
-        all_ir_paras.extend(s.body_paras)
-    for para_id, budget in _ANCHOR_BUDGETS.items():
-        for pm in all_ir_paras:
-            if pm.para_id == para_id and len(pm.text) > budget:
-                report["overflow_warnings"].append({
-                    "para_id": para_id,
-                    "budget": budget,
-                    "actual": len(pm.text),
-                    "severity": "hard" if len(pm.text) > budget * 1.5 else "soft",
-                })
+            for x in [r.header] + r.meta_lines + r.bullets:
+                if x.para_id:
+                    pid_to_text[x.para_id] = x.text
+        for p in s.body_paras:
+            if p.para_id:
+                pid_to_text[p.para_id] = p.text
+    for para_id, budget in budgets.items():
+        text = pid_to_text.get(para_id, "")
+        if text and len(text) > budget:
+            report["overflow_warnings"].append({
+                "para_id": para_id,
+                "budget": budget,
+                "actual": len(text),
+                "severity": "hard" if len(text) > budget * 1.5 else "soft",
+            })
 
     report["no_current_date"] = "current date" not in full_text_lower
 
@@ -400,19 +301,10 @@ def run(gen_json_path: str, verbose: bool = True, generate_png: bool = False) ->
                   f"roles={len(s.roles)}  body={len(s.body_lines)}")
 
     # ── 3. Apply tailored update ────────────────────────────────────────────
+    # apply_tailored calls apply_anchor_budgets internally in layout-bound mode.
     if verbose:
-        print("[3/6] Applying tailored update (layout-bound mode)...")
+        print("[3/5] Applying tailored update + anchor budgets (layout-bound mode)...")
     updated = apply_tailored(doc, llm_sections)
-
-    # ── 4. Enforce anchor budgets ───────────────────────────────────────────
-    if verbose:
-        print("[4/6] Enforcing anchor budgets...")
-    updated = _enforce_anchor_budgets(updated)
-
-    if _TRUNCATED:
-        print(f"      Truncated {len(_TRUNCATED)} paragraph(s):")
-        for pid, bud, act, prev in _TRUNCATED:
-            print(f"        para_id={pid!r} budget={bud} actual={act} -> {prev!r}...")
 
     # ── IR health check ─────────────────────────────────────────────────────
     violations = check_layout_bound_ir_health(updated)
@@ -434,20 +326,19 @@ def run(gen_json_path: str, verbose: bool = True, generate_png: bool = False) ->
     if verbose:
         print(f"      IR -> {_OUT_IR}")
 
-    # ── 5. Render DOCX ─────────────────────────────────────────────────────
+    # ── 4. Render DOCX ─────────────────────────────────────────────────────
     if verbose:
-        print("[5/6] Rendering DOCX (layout_blocks path)...")
+        print("[4/5] Rendering DOCX (layout_blocks path)...")
     _OUT_DOCX.parent.mkdir(parents=True, exist_ok=True)
     render_docx(updated, _DOCX_PATH, str(_OUT_DOCX))
     if verbose:
         print(f"      DOCX -> {_OUT_DOCX}")
 
-    # ── 6. Convert to PDF ──────────────────────────────────────────────────
+    # ── 5. Convert to PDF ──────────────────────────────────────────────────
     if verbose:
-        print("[6/6] Converting to PDF via LibreOffice subprocess...")
+        print("[5/5] Converting to PDF via LibreOffice subprocess...")
     _OUT_PDF.parent.mkdir(parents=True, exist_ok=True)
     import shutil
-    # LibreOffice writes the PDF next to the source DOCX; move it to target
     _docx_to_pdf_subprocess(str(_OUT_DOCX))
     lo_pdf = _OUT_DOCX.with_suffix(".pdf")
     if lo_pdf.exists() and lo_pdf != _OUT_PDF:
@@ -457,7 +348,7 @@ def run(gen_json_path: str, verbose: bool = True, generate_png: bool = False) ->
 
     # ── Layout report ───────────────────────────────────────────────────────
     _OUT_RPT.parent.mkdir(parents=True, exist_ok=True)
-    report = _generate_layout_report(str(_OUT_PDF), updated, generate_png=generate_png)
+    report = _generate_layout_report(str(_OUT_PDF), doc, updated, generate_png=generate_png)
     with open(_OUT_RPT, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 
