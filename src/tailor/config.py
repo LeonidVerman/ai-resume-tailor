@@ -48,7 +48,7 @@ USE_SERIALIZED_LAYOUT_TREE: bool = (
 # LLM-added paragraphs with empty para_id are not placed in layout_blocks
 # mode; they are only logged as LAYOUT_UNBOUND_CONTENT_NOT_RENDERED.
 USE_LAYOUT_BLOCK_RENDERER: bool = (
-    os.environ.get("USE_LAYOUT_BLOCK_RENDERER", "false").lower() == "true"
+    os.environ.get("USE_LAYOUT_BLOCK_RENDERER", "true").lower() == "true"
 )
 
 # When True, apply_tailored uses in-place para_id-preserving updates when the
