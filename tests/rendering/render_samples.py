@@ -49,10 +49,10 @@ _GEN_DIR      = _SAMPLES / "generation"
 _RES_DOCX_DIR = _SAMPLES / "resume" / "docx"
 _RES_PDF_DIR  = _SAMPLES / "resume" / "pfd"   # note: legacy typo preserved
 
-_OUT_IR_DOCX  = _REPO / "tmp" / "artifacts" / "ir"      / "docx"
-_OUT_IR_PDF   = _REPO / "tmp" / "artifacts" / "ir"      / "pdf"
-_OUT_REND_DOCX = _REPO / "tmp" / "artifacts" / "rendering" / "docx"
-_OUT_REND_PDF  = _REPO / "tmp" / "artifacts" / "rendering" / "pdf"
+_OUT_IR_DOCX  = _REPO / "tmp" / "artefacts" / "ir"      / "docx"
+_OUT_IR_PDF   = _REPO / "tmp" / "artefacts" / "ir"      / "pdf"
+_OUT_REND_DOCX = _REPO / "tmp" / "artefacts" / "rendering" / "docx"
+_OUT_REND_PDF  = _REPO / "tmp" / "artefacts" / "rendering" / "pdf"
 
 _NUM_RE = re.compile(r"^(\d+)-")
 

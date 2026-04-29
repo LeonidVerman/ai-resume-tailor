@@ -1,0 +1,532 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "SUMMARY",
+      "paragraphs": [
+        {
+          "para_id": "para_5",
+          "text": "SUMMARY",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_6",
+          "text": "Senior Software Engineer with 10+ years of expertise using modern web development technologies. Proven ability to build accessible and user-friendly interfaces, collaborate effectively within teams, and deliver high-quality code. Seeking software engineering roles at any level.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "SKILLS",
+      "paragraphs": [
+        {
+          "para_id": "para_7",
+          "text": "SKILLS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_8",
+          "text": "- Frontend & UX: React, TypeScript, Next.js, Storybook, CSS/SCSS, Design systems, Localisation",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_9",
+          "text": "- Backend & APIs: Node.js, .NET, Ruby on Rails, Python Flask,GraphQL, REST/JSON:API, Schema design",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_10",
+          "text": "- DevOps & Tooling: AWS, Docker, GitHub Actions, CircleCI, Cypress, Jest/React Testing Library (RTL), Monitoring - Leadership & Accessibility: Technical mentoring, Stakeholder facilitation, Accessibility advocacy,",
+          "parser_semantic": "bullet"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "PROFESSIONAL EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_11",
+          "text": "PROFESSIONAL EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_56",
+          "text": "Senior Software Engineer | Numeral Studio | Wellington, NZ",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "role_1_normA_1",
+          "text": "2025–Present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_57",
+          "text": "- Delivered reusable React/TypeScript components inside Electron with accessible, responsive UI patterns plus Jest/React Testing Library coverage so compliance reports went in without manual errors.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_58",
+          "text": "- Supported the launch of the design conference 2025 and 2026 site on Next.js/TypeScript with Sanity CMS and Storybook, extending the design system to cut duplicate code and keep the experience polished.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_59",
+          "text": "- Built React/TypeScript interfaces and Prisma-backed Node/Express services for secure HR case workflows, adding dynamic staff routing, hardened permissions, and automated ESLint/Prettier + unit-test checks.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_60",
+          "text": "- Contributed to a one-of-a-kind, mobile-first interactive marketing demo for a Fortune 500 progressive web app, handling localized feature work with remote teams and tuning performance for fast global launches.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_61",
+          "text": "- Technologies: React, Next.js, Electron, TypeScript, SCSS, Node.js/Express, Prisma ORM, Sanity CMS, Storybook, GSAP, Cypress, Jest, React Testing Library, GitHub Actions, ESLint, Prettier, localization & accessibility tools.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_62",
+          "text": "Software Engineer (Contract) | PartsTrader Markets Ltd. | Wellington, NZ",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "role_2_normA_2",
+          "text": "2024–2025",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_63",
+          "text": "- Developed a dedicated .NET microservice to interface with a legacy API and built a modern, responsive front-end using React withTypeScript.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_64",
+          "text": "- Translated Figma UI designs into dynamic, accessible interfaces using React, TypeScript, and styled-components. - Applied Domain-Driven Design principles by structuring the microservice with Repository, Domain Model, Mapper, and Application Service patterns.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_65",
+          "text": "- Technologies: .NET service layer, React, TypeScript, Cypress, GitHub Actions, domain-driven design patterns.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_66",
+          "text": "Software Engineer & Founder | Habitual Genesis | Remote",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "role_3_normA_3",
+          "text": "2016–Present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_67",
+          "text": "- Partner with authors, museums, and education nonprofits to ship low-maintenance digital products. - Delivered discovery-through-launch engagements while keeping ongoing costs low.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_68",
+          "text": "- Stayed lean by embedding with stakeholders to clarify needs, prioritise MVPs, and trial marketing ideas without raising spend.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_69",
+          "text": "- Various projects with General Assembly, Thinkful, Codecademy, and others",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_70",
+          "text": "- Technologies: JavaScript, HTML5, CSS3, Bootstrap, GitHub, GitHub Pages, Squarespace, Mailchimp, Google Drive.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_71",
+          "text": "Software Engineer & Lead Instructor | The Flatiron School | Remote",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "role_4_normA_4",
+          "text": "2022–2023",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_72",
+          "text": "- Delivered remote & asynchronous technical training on software engineering to a diverse group of students. - Wrote and presented curriculum covering JavaScript, HTML/CSS, ReactJS, Python, Flask, PostgreSQL,",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_73",
+          "text": "Object-Oriented Programming, CI/CD, Agile, APIs, Web Accessibility, and more.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_74",
+          "text": "- Mentored and coached junior engineers, preparing them for success in their roles and job duties. - Lead a working group promoting inclusive web design and web accessibility practices.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_75",
+          "text": "- Technologies: JavaScript, HTML5, CSS3, ReactJS, React Router, Python, Flask, Object-Oriented Programming, CI/CD, Render.com, Agile, APIs, Web Accessibility",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_76",
+          "text": "Page 1 of 2",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_80",
+          "text": "Oli Treadwell",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_81",
+          "text": "Senior Software Engineer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_84",
+          "text": "PROFESSIONAL EXPERIENCE (cont.)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_82",
+          "text": "\nolitreadwell@gmail.com | +64 22 451 9939 (Text First Please) linkedin.com/in/olitreadwell | github.com/olitreadwell | Book a Call",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_85",
+          "text": "Senior Software Engineer | WorkTango (formerly KazooHR) | Remote",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "role_6_normA_5",
+          "text": "2019–2020",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_86",
+          "text": "- Re-architected the Rewards platform from Rails to ReactJS, resulting in a 15% increase in customer engagement. - Implemented a modular design system to improve UI consistency and boost developer velocity.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_87",
+          "text": "- Integrated features across Performance Management and Rewards platforms to overhaul the product suite.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_88",
+          "text": "- Technologies: ReactJS, Storybook, NodeJS, Jest, Chai, TypeScript, Ruby on Rails, ActiveRecord, RSpec, GraphQL, PostgreSQL, Circle CI, SASS/SCSS, GitHub, Design Language Systems, JIRA, Zeplin, Figma.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_89",
+          "text": "Software Engineer | Condé Nast | Austin, TX",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "role_7_normA_6",
+          "text": "2017–2019",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_90",
+          "text": "- Delivered new design features & ReactJS components for over 26 media brands, improving readership and SEO. - Built and iterated upon a brand-agnostic paywall architecture and a suite of components, driving significant",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_91",
+          "text": "growth and achieving a year-over-year increase of over 100% in monthly subscriptions for Vanity Fair and Wired. - Authored a technology blog post on End-to-End Testing of the Condé Nast Paywalls.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_92",
+          "text": "https://technology.condenast.com/story/end-to-end-testing-conde-nast-paywalls",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_93",
+          "text": "- Technologies: ReactJS, Storybook, NodeJS, Jest, Puppeteer, TypeScript, SASS, GitHub, Jenkins, CI/CD, Design Language Systems, JIRA.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_94",
+          "text": "Software Engineer & Instructor | Hack Reactor (formerly Galvanize) | Austin, TX | 2016–2017 - Facilitated technical workshops for full-time and part-time programs in an Agile environment.",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_95",
+          "text": "- Built a mock interview app for students, exponentially increasing career services' capacity to give feedback.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_96",
+          "text": "- Technologies: ReactJS, JavaScript, jQuery, Mocha, Chai, HTML, CSS3, SASS/SCSS, PostgreSQL, MySQL, Git, GitHub, Heroku, bash, zsh.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_97",
+          "text": "Software Engineer (Contract) | Bypass Mobile | Austin, TX",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "role_9_normA_7",
+          "text": "2016–2016",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_98",
+          "text": "- Designed and developed a JSON-API spec product licensing platform using Ruby on Rails as part of a small team.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_99",
+          "text": "- Technologies: JSON-API, Ruby on Rails, ActiveRecord, RSpec, MySQL, Git, GitHub, Vagrant, bash, JIRA.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_100",
+          "text": "Software Engineer | Union Metrics | Austin, TX",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "role_10_normA_8",
+          "text": "2014–2016",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_101",
+          "text": "- Migrated and refactored two legacy codebases to use Rails 4, improving maintainability, security of core business features, and performance by 20%.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_102",
+          "text": "- Created a knowledge base of 100 most common customer technical challenges, reducing resolution time by 50%.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_103",
+          "text": "- Technologies: JavaScript, Ruby on Rails, ActiveRecord, RSpec, jQuery, HTML, CSS3, SASS/SCSS, MySQL, Git, GitHub, Vagrant, Jenkins, bash.",
+          "parser_semantic": "bullet"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_56"
+          ],
+          "meta_para_ids": [
+            "role_1_normA_1"
+          ],
+          "bullet_para_ids": [
+            "para_57",
+            "para_58",
+            "para_59",
+            "para_60",
+            "para_61"
+          ]
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_62"
+          ],
+          "meta_para_ids": [
+            "role_2_normA_2"
+          ],
+          "bullet_para_ids": [
+            "para_63",
+            "para_64",
+            "para_65"
+          ]
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_66"
+          ],
+          "meta_para_ids": [
+            "role_3_normA_3"
+          ],
+          "bullet_para_ids": [
+            "para_67",
+            "para_68",
+            "para_69",
+            "para_70"
+          ]
+        },
+        {
+          "role_id": "role_4",
+          "header_para_ids": [
+            "para_71"
+          ],
+          "meta_para_ids": [
+            "role_4_normA_4"
+          ],
+          "bullet_para_ids": [
+            "para_72",
+            "para_73",
+            "para_74",
+            "para_75",
+            "para_76",
+            "para_80",
+            "para_81"
+          ]
+        },
+        {
+          "role_id": "role_5",
+          "header_para_ids": [
+            "para_84"
+          ],
+          "meta_para_ids": [
+            "para_82"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_6",
+          "header_para_ids": [
+            "para_85"
+          ],
+          "meta_para_ids": [
+            "role_6_normA_5"
+          ],
+          "bullet_para_ids": [
+            "para_86",
+            "para_87",
+            "para_88"
+          ]
+        },
+        {
+          "role_id": "role_7",
+          "header_para_ids": [
+            "para_89"
+          ],
+          "meta_para_ids": [
+            "role_7_normA_6"
+          ],
+          "bullet_para_ids": [
+            "para_90",
+            "para_91",
+            "para_92",
+            "para_93"
+          ]
+        },
+        {
+          "role_id": "role_8",
+          "header_para_ids": [
+            "para_94"
+          ],
+          "meta_para_ids": [],
+          "bullet_para_ids": [
+            "para_95",
+            "para_96"
+          ]
+        },
+        {
+          "role_id": "role_9",
+          "header_para_ids": [
+            "para_97"
+          ],
+          "meta_para_ids": [
+            "role_9_normA_7"
+          ],
+          "bullet_para_ids": [
+            "para_98",
+            "para_99"
+          ]
+        },
+        {
+          "role_id": "role_10",
+          "header_para_ids": [
+            "para_100"
+          ],
+          "meta_para_ids": [
+            "role_10_normA_8"
+          ],
+          "bullet_para_ids": [
+            "para_101",
+            "para_102",
+            "para_103"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_104",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_105",
+          "text": "Postgraduate Diploma in Information Technology | Whitireia and WelTec, New Zealand Full-Stack Web Development, Ruby on Rails, and JavaScript Certification | Dev Bootcamp",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_106",
+          "text": "BS in Business Administration, Entrepreneurship, & International Business | Chapman University",
+          "parser_semantic": "role_header"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "ADDITIONAL INFORMATION",
+      "paragraphs": [
+        {
+          "para_id": "para_107",
+          "text": "ADDITIONAL INFORMATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_108",
+          "text": "For more details, you can find answers to common hiring questions, my references, and a detailed list of my skills and experience at the following links:",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_109",
+          "text": "- Common Hiring Questions: github.com/olitreadwell/resume/blob/main/common-hiring-questions.md - Portfolio Projects: https://github.com/olitreadwell/resume/blob/main/portfolio-projects.md",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_110",
+          "text": "- Professional References: github.com/olitreadwell/resume/blob/main/linkedin-recommendations.md - Skills and Experience: github.com/olitreadwell/resume/blob/main/skills-and-experience.md",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_111",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_112",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_113",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_114",
+          "text": "Page 2 of 2",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

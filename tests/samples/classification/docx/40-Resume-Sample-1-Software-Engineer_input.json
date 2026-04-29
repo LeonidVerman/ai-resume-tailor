@@ -1,0 +1,58 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "TagMe●Front‐End Engineer / DevOps●Code●App",
+      "paragraphs": [
+        {
+          "para_id": "para_24",
+          "text": "TagMe●Front‐End Engineer / DevOps●Code●App",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_25",
+          "text": "Photo diary and photo organizer that uses photo‐recognition APIs to tag and caption photos.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Expanded and refined functionality of React Native codebase.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "Implemented search, geo‐tags, and content sort using ExponentJS to improve UX.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_28",
+          "text": " Configured continuous integration using CircleCI and Heroku to streamline build, test, and deployment. Rapidly prototyped and deployed mobile app using Exponent XDE.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_29",
+          "text": "Roadtrip Mood Music Generator●Software Engineer●Code",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_30",
+          "text": "Spotify playlist generator based on time of day and weather forecast of any given roadtrip route.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_31",
+          "text": "Integrated OAuth authentication with Spotify using PassportJS.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_32",
+          "text": "Generated Spotify playlists tailored to user’s roadtrip route using Google Maps and Accuweather forecast.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

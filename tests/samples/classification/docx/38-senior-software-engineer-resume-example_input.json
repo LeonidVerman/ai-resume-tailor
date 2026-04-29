@@ -1,0 +1,304 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Senior Software Engineer",
+      "paragraphs": [
+        {
+          "para_id": "para_4",
+          "text": "Senior Software Engineer",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_5",
+          "text": "Senior Software Engineer with 12 years of experience designing and optimizing large-scale applications. Skilled in full-stack development, cloud architecture, and microservices design. Recognized for leading teams that deliver high-performing software products, reduce technical debt, and improve system reliability. Adept at mentoring junior engineers and driving engineering best practices to support organizational growth.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_6",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_7",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_8",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_9",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "KEY SKILLS",
+      "paragraphs": [
+        {
+          "para_id": "para_10",
+          "text": "KEY SKILLS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_11",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_12",
+          "text": "Agile development",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_13",
+          "text": "API design and integration",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_14",
+          "text": "\nPROFESSIONAL EXPERIENCE",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_15",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_16",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_17",
+          "text": "Senior Software Engineer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_18",
+          "text": "Brightline Technologies | San Francisco, CA,",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_19",
+          "text": "\n",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_20",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_21",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_22",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_23",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_24",
+          "text": "| May 2017 – Present",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_25",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Cloud computing (AWS, Azure)",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_27",
+          "text": "Microservices architecture",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_28",
+          "text": "Programming languages (Java, Python, JavaScript)",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_29",
+          "text": "Software performance optimization",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_30",
+          "text": "\nSpearheaded the migration of a legacy monolithic system to a microservices-based architecture, reducing downtime incidents by 40% and",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_31",
+          "text": "increasing scalability to handle 3x traffic",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_32",
+          "text": "Directed development of a customer-facing web application that improved user engagement by 25% and generated $5M in additional annual revenue",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_33",
+          "text": "Introduced automated testing frameworks that improved code quality and reduced production defects by 30% across the engineering team",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_34",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_35",
+          "text": "Team leadership and mentoring",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_36",
+          "text": "\n",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_37",
+          "text": "Software Engineer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Apex Systems | San Jose, CA, | June 2013 – May 2017",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_39",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_40",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_41",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_42",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_43",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_44",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_45",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_46",
+          "text": "Bachelor of Science in Computer Science | University of California, Berkeley",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_47",
+          "text": "May 2013",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_48",
+          "text": "\nBuilt backend services using Java and Spring, improving API response times by 18% and supporting 200K+ daily active users",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_49",
+          "text": "Collaborated with product and UX teams to launch a mobile app feature that boosted retention rates by 22% within six months",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_50",
+          "text": "Optimized database queries and indexing strategies, reducing average query time from 3.2 seconds to under 1 second",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_51",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_52",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_53",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "CERTIFICATIONS",
+      "paragraphs": [
+        {
+          "para_id": "para_54",
+          "text": "CERTIFICATIONS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_55",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_56",
+          "text": "AWS Certified Solutions Architect – Associate | 2019",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_57",
+          "text": "Oracle Certified Professional, Java SE Programmer | 2016",
+          "parser_semantic": "role_header"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}
