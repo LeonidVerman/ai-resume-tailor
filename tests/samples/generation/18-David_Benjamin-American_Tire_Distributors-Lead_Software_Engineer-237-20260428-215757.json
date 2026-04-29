@@ -1,0 +1,1258 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.1]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n21) Must explicitly mention the company + role from TASK.\n22) Must connect: candidate background -> company needs -> role responsibilities, using only supported claims.\n23) Keep it 3-5 short paragraphs; be specific but not verbose.\n\n[CANDIDATE_LAYER_DAVID_BENJAMIN v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Project Engineer / Engineering Project Manager with 5+ years managing complex engineering projects.\n- Lead with: risk analysis + safety/performance compliance + schedule ownership + process improvement.\n- Credential anchors: Master’s in Project Engineering; Licensed Civil Engineer (do not imply other licenses/certs).\n- Value proposition: improves delivery predictability and quality by tightening risk controls, compliance practices, and execution workflows.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Treat “architecture” as delivery/process architecture (NOT software/system architecture).\n- Surface explicitly (when relevant to the role):\n  - schedule architecture: critical path planning, milestone gating, dependency management\n  - risk-control mechanisms: risk register, mitigation plans, review cadences, escalation paths\n  - compliance mechanisms: safety/performance checklists, inspection/verification steps, documentation controls\n  - process workflow redesign: stage-gates, handoff standardization, QA checkpoints\n- Ensure at least one bullet in the most recent role includes a concrete workflow/control mechanism (not just “improved process”).\n\nARCHITECTURE SIGNAL PRIORITIZATION\nPrioritize bullets in this order:\n1) Concrete mechanisms that changed delivery workflow (stage-gates, standardized reviews, scheduling controls, risk register cadence).\n2) Quantified outcomes tied to a mechanism (30% completion rate increase; 20% cycle time reduction) with the mechanism stated.\n3) Compliance/safety/performance assurance actions with explicit controls.\n4) Leadership (team coordination/supervision) framed through execution mechanisms.\n\nDISTRIBUTED SYSTEM DEPTH\n- Do NOT introduce distributed systems, software scalability, cloud, microservices, messaging, observability, or backend architecture language.\n- Replace any software-architecture defaults with engineering project controls and workflow mechanisms.\n\nTECHNICAL DIFFERENTIATION\n- Emphasize engineering execution systems:\n  - project scheduling and controls\n  - risk analysis and mitigation planning\n  - compliance management (safety + performance standards)\n  - process improvement / cycle-time reduction\n  - technical documentation and cross-functional coordination\n- Avoid listing software stacks/tools not present in evidence (no PM tools, CAD, ERP, etc. unless provided elsewhere).\n\nDOMAIN / INDUSTRY FRAMING\n- Primary framing: engineering project management and QA/compliance in engineering/construction contexts.\n- Secondary framing: risk analysis and process improvement as transferable execution disciplines.\n- Keep domain language practical: “safety and performance standards,” “project controls,” “engineering supervision,” “construction project execution.”\n\nSAFE DOMAIN TRANSLATION\n- If targeting adjacent industries (manufacturing, infrastructure, energy, facilities, etc.), translate conservatively:\n  - “construction/engineering projects” → “complex, multi-stakeholder engineering projects”\n  - “safety/performance compliance” → “standards-driven delivery with verification and documentation”\n  - “process improvements” → “workflow redesign to reduce cycle time while protecting quality”\n- Preserve factual anchors: supervised 15 projects; +30% completion rate; -20% cycle time; risk analysis/mitigation; schedule development/maintenance.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT imply:\n  - software engineering, IT program management, cloud/platform ownership, or systems architecture\n  - regulatory/compliance frameworks by name (OSHA, ISO, SOX, etc.) unless explicitly provided\n  - specialized QA domains (medical devices, aerospace certification, etc.) unless evidenced\n- Do NOT invent project types, budgets, contract values, geographies, or client names.\n- Do NOT claim responsibility for final sign-off/authority beyond “ensured compliance” unless explicitly supported.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- When roles ask for “integration,” “operating model,” or “scalable processes,” reinterpret as:\n  - standardized workflows across multiple projects\n  - repeatable templates for schedules, risk registers, compliance checklists\n  - consistent handoffs between engineering, field teams, QA, and stakeholders\n- Emphasize building reusable project-control mechanisms without claiming enterprise-wide transformation unless evidenced.\n\nLEADERSHIP FRAMING\n- Frame leadership as execution leadership:\n  - coordinating collaborative teams\n  - setting quality expectations via checkpoints and review routines\n  - driving risk mitigation follow-through\n  - aligning stakeholders through documentation and schedule transparency\n- Use scope accurately: led engineering teams; supervised 15 projects; team size up to 15 (do not inflate).\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep technical/project-control mechanisms primary; leadership secondary and evidenced.\n- Prefer “led via mechanisms” phrasing:\n  - “Implemented stage-gate reviews…” over “Provided strong leadership…”\n- Avoid generic leadership adjectives unless tied to an observable practice (cadence, review, checklist, escalation).\n\nAI WORK POSITIONING\n- No AI claims. Do not add AI tooling, automation, or analytics language unless provided in evidence.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate architecture ownership: describe “designed/implemented project controls/workflows,” not “architected enterprise systems.”\n- Do not exaggerate leadership scope: no “department head,” “organization-wide,” “company-wide transformation” unless evidenced.\n- Do not invent metrics beyond provided (30% completion rate increase; 20% cycle time reduction). If adding metrics, they must exist in MASTER_RESUME or provided evidence.\n- Maintain accuracy of roles/dates/employers; keep “Top Tier Engineering” and “Present Builders” as relationship labels only if supported by MASTER_RESUME context.\n\nEVIDENCE SOURCES\nUse only:\n- MASTER_RESUME (for titles, dates, employers, tools, project types, additional metrics)\n- CANDIDATE_PROFILE.summary/headline/domains/role_fit_themes\n- CANDIDATE_PROFILE.experience_highlights (impacts, constraints/tradeoffs, team context, architecture_patterns)\nAllowed quantified claims (currently evidenced here):\n- Supervised 15 projects\n- 30% increase in project completion rate\n- 20% reduction in project cycle time\nDo not add tools/standards/methodologies unless present in MASTER_RESUME or explicit profile evidence.\n\nFINAL REMINDER\n- Core differentiation: licensed civil/project engineer who improves delivery outcomes by applying concrete project-control mechanisms (scheduling, risk mitigation, compliance checkpoints, workflow redesign) with proven quantified execution gains.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Engineering Project Management\",\n      \"Quality Assurance\"\n    ],\n    \"secondary\": [\n      \"Risk Analysis\",\n      \"Process Improvement\"\n    ]\n  },\n  \"candidate\": {\n    \"name\": \"David Benjamin\",\n    \"summary\": \"Results-driven project engineer with over five years of experience in managing complex engineering projects. Skilled in risk analysis, compliance with safety standards, and process improvements. Holds a Master's Degree in Project Engineering and is a licensed Civil Engineer.\",\n    \"headline\": \"Experienced Project Engineer\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": 15,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Results-driven\",\n        \"Quality-focused\"\n      ]\n    },\n    \"practices\": [\n      \"Risk management\",\n      \"Process improvement\",\n      \"Compliance management\"\n    ],\n    \"risk_management\": [\n      \"Risk analysis\",\n      \"Mitigation strategies\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Project management\",\n    \"Risk analysis\",\n    \"Process improvement\",\n    \"Compliance management\",\n    \"Team leadership\",\n    \"Engineering supervision\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate architecture ownership\",\n      \"Do not exaggerate leadership scope\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Keep claims aligned with actual experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [],\n    \"languages\": [],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Project Coordination\",\n      \"impact\": [\n        \"Ensured compliance with safety and performance standards\",\n        \"Developed and maintained schedules for complex engineering projects\",\n        \"Conducted risk analysis and mitigation for high-profile projects\"\n      ],\n      \"market\": \"Engineering\",\n      \"team_context\": [\n        \"Collaborative project teams\"\n      ],\n      \"skills_applied\": [\n        \"Project management\",\n        \"Risk analysis\",\n        \"Compliance management\"\n      ],\n      \"architecture_patterns\": [\n        \"Project scheduling and management\"\n      ],\n      \"employer_relationship\": \"Top Tier Engineering\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Balancing safety and performance standards\"\n      ]\n    },\n    {\n      \"area\": \"Senior Engineering Supervision\",\n      \"impact\": [\n        \"Supervised 15 projects, leading to a 30% increase in project completion rate\",\n        \"Implemented process improvements that reduced project cycle time by 20%\"\n      ],\n      \"market\": \"Construction\",\n      \"team_context\": [\n        \"Led engineering teams\"\n      ],\n      \"skills_applied\": [\n        \"Project supervision\",\n        \"Process improvement\",\n        \"Team leadership\"\n      ],\n      \"architecture_patterns\": [\n        \"Process improvement workflows\"\n      ],\n      \"employer_relationship\": \"Present Builders\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Efficiency versus quality\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Project management environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\nDavid Benjamin\nProject Engineer\nResults-driven project engineer with over five years of experience managing complex engineering projects from conception to completion.\nSKILLS\nLicensed Civil Engineer\nMaster's Degree in Project\nEngineering\nAccredited by the Standard\nCompliance Agency\nWell-versed in QA/QC\npolicies\nREFERENCES\nPhilippe Stolvan\nManager, Present Builders\nEmail:\nhello@techguruplus.com\nKyleigh Riteman\nHR Lead, Top Tier Engineering\nPhone: 123-456-7890\nCONTACT\n123-456-7890 hello@reallygreatsite.com 123 Anywhere St., Any City, ST 12345 www.techguruplus.com\nWORK EXPERIENCE\nProject Coordinator\nTop Tier Engineering\n2035-present\nEnsures compliance with safety and performance standards\nDevelops and maintains schedules for complex engineering projects\nConducts risk analysis and mitigation for high-profile projects\nSenior Engineer\nPresent Builders\n2032-2035\nSupervised 15 projects, leading to a 30% increase in project completion rate within a year Implemented process improvements that reduced project cycle time by 20%\nEDUCATION\nWest State University\nMaster's in Project Engineering | June 2034\nCapstone Project Excellence Award\n2 Peer-Reviewed Research Papers Published Commencement Speaker, 2034\nNorth City College\nDegree in Civil Engineering | June 2030\nDean’s List - 2026-2028\nProject Excellence Award, 2029\nPresident, Student Government (2029-2030)"
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nDavid Benjamin\nDear Hiring Manager,\nI am excited to apply for the Senior Software Engineer role at Tigera. With over 15 years of experience in backend engineering and team leadership, including roles as VP and Director of Software Development, I have built fintech and blockchain systems that became top-5 platforms in the Japanese market, serving over 1M users, and led teams of up to 20 engineers to deliver reliable, scalable products.\nIn addition to my industry work, I currently contribute as an independent contractor supporting world-leading AI research labs in training and evaluating advanced AI models on senior-level software engineering tasks. This work keeps me deeply engaged with cutting-edge development practices, reinforces my ability to solve complex problems under ambiguity, and strengthens my proficiency with AI-assisted development tools. I also adopt AI-accelerated workflows (ChatGPT, Claude, Cursor AI) to improve productivity, code quality, and architectural clarity.\nI would welcome the chance to bring this expertise to your team and contribute to building reliable, scalable systems for your clients. I hold Canadian citizenship and am fully eligible to work in Canada.\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: April 28, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "David Benjamin\nProject Engineer\n\nProfessional Summary\nResults-driven Project Engineer with 5+ years managing complex, multi-stakeholder engineering projects from planning through execution. Strengths include impact/risk analysis, schedule ownership (critical path planning and milestone tracking), and standards-driven delivery with verification and documentation controls. Licensed Civil Engineer with a Master’s in Project Engineering; known for improving delivery predictability through practical workflow redesign, risk controls, and compliance checkpoints.\n\nExperience\nProject Coordinator | Top Tier Engineering | 2035–Present\n- Ensured compliance with safety and performance standards by maintaining verification/documentation controls throughout project execution.\n- Developed and maintained schedules for complex engineering projects, tracking milestones and dependencies to support predictable delivery.\n- Conducted risk analysis for high-profile projects and maintained mitigation plans to address delivery constraints and tradeoffs.\n\nSenior Engineer | Present Builders | 2032–2035\n- Supervised 15 projects, contributing to a 30% increase in project completion rate within a year.\n- Implemented process improvements to project execution workflows, reducing project cycle time by 20% while balancing efficiency and quality.\n\nEducation\nWest State University | Master’s in Project Engineering | June 2034\n- Capstone Project Excellence Award\n- 2 Peer-Reviewed Research Papers Published\n- Commencement Speaker, 2034\n\nNorth City College | Degree in Civil Engineering | June 2030\n- Dean’s List (2026–2028)\n- Project Excellence Award, 2029\n- President, Student Government (2029–2030)\n\nTechnical Skills\nLicensure & Credentials: Licensed Civil Engineer; Master’s Degree in Project Engineering\nProject Controls: Schedule development & maintenance, milestone tracking, dependency management\nRisk & Compliance: Risk analysis, mitigation planning, safety/performance compliance, QA/QC policies, documentation controls\nProcess Improvement: Workflow redesign, cycle-time reduction\n\nAdditional\nAccredited by the Standard Compliance Agency\nReferences available upon request\n\nContact\n123-456-7890 | hello@reallygreatsite.com | 123 Anywhere St., Any City, ST 12345 | www.techguruplus.com\n\nCurrent Date: April 28, 2026\n",
+    "cover_letter": "David Benjamin\n\nDear Hiring Manager,\n\nI am applying for the Lead Software Engineer role at American Tire Distributors. While my background is in engineering project delivery rather than software development, I bring a strong track record leading complex, standards-driven work through disciplined impact/risk analysis, schedule ownership, and execution controls—skills that translate directly to delivering reliable outcomes in high-stakes environments.\n\nIn my current role as Project Coordinator at Top Tier Engineering, I develop and maintain schedules for complex projects, conduct risk analysis with mitigation planning, and ensure compliance with safety and performance standards through verification and documentation controls. Previously, as a Senior Engineer at Present Builders, I supervised 15 projects, contributing to a 30% increase in project completion rate within a year, and implemented process improvements that reduced project cycle time by 20% while balancing efficiency and quality.\n\nI am particularly interested in ATD’s scale and operational complexity, where clear requirements, disciplined change/impact analysis, and dependable execution are essential. I would bring a structured approach to planning and alignment, transparent risk communication, and practical workflow improvements that help teams deliver predictably.\n\nThank you for your time and consideration. I would welcome the opportunity to discuss how my project execution and compliance-focused leadership can support American Tire Distributors.\n\nSincerely,\nDavid Benjamin\n"
+  },
+  "diff": {
+    "resume": [
+      {
+        "name": "Professional Summary",
+        "after": "Results-driven Project Engineer with 5+ years managing complex, multi-stakeholder engineering projects from planning through execution. Strengths include impact/risk analysis, schedule ownership (critical path planning and milestone tracking), and standards-driven delivery with verification and documentation controls. Licensed Civil Engineer with a Master’s in Project Engineering; known for improving delivery predictability through practical workflow redesign, risk controls, and compliance checkpoints."
+      },
+      {
+        "name": "Technical Skills",
+        "before": "Licensed Civil Engineer\nMaster's Degree in Project\nEngineering\nAccredited by the Standard\nCompliance Agency\nWell-versed in QA/QC\npolicies",
+        "after": "Licensure & Credentials: Licensed Civil Engineer; Master’s Degree in Project Engineering\nProject Controls: Schedule development & maintenance, milestone tracking, dependency management\nRisk & Compliance: Risk analysis, mitigation planning, safety/performance compliance, QA/QC policies, documentation controls\nProcess Improvement: Workflow redesign, cycle-time reduction\n\nAdditional\nAccredited by the Standard Compliance Agency\nReferences available upon request\n\nContact\n123-456-7890 | hello@reallygreatsite.com | 123 Anywhere St., Any City, ST 12345 | www.techguruplus.com\n\nCurrent Date: April 28, 2026"
+      }
+    ]
+  },
+  "generation_run_id": "237",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "David Benjamin",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      },
+      {
+        "text": "Project Engineer",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_3"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_4"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_5"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_6"
+      },
+      {
+        "text": "Results-driven project engineer with over five years of experience managing complex engineering projects from conception to completion.",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_7"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_8"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_9"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_10"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_11"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_12"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_13"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Technical Skills",
+        "semantic_type": "skills",
+        "heading": {
+          "text": "Technical Skills",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_14"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_15"
+          },
+          {
+            "text": "Licensure & Credentials: Licensed Civil Engineer; Master’s Degree in Project ...",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_16"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_17"
+          },
+          {
+            "text": "Project Controls: Schedule development & maintenance, milestone tracking, dep...",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_18"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_19"
+          },
+          {
+            "text": "Risk & Compliance: Risk analysis, mitigation planning, safety/performance com...",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_20"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_21"
+          },
+          {
+            "text": "Process Improvement: Workflow redesign, cycle-time reduction",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_22"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_23"
+          },
+          {
+            "text": "Accredited by the Standard Compliance Agency",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_24"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_25"
+          },
+          {
+            "text": "References available upon request",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_26"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_27"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_29"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_30"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_31"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "REFERENCES",
+        "semantic_type": "other",
+        "heading": {
+          "text": "REFERENCES",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_32"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_33"
+          },
+          {
+            "text": "Results-driven Project Engineer with 5+ years managing complex, multi-stakeho...",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_34"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_35"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_37"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_41"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_43"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_45"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_47"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_48"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "CONTACT",
+        "semantic_type": "other",
+        "heading": {
+          "text": "CONTACT",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_49"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_50"
+          },
+          {
+            "text": "123-456-7890 hello@reallygreatsite.com 123 Anywhere St., Any City, ST 12345 www.techguruplus.com",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_51"
+          },
+          {
+            "text": "\n",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_52"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_53"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_54"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_55"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_56"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_57"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_3"
+      },
+      {
+        "title": "WORK EXPERIENCE",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "WORK EXPERIENCE",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_58"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_69"
+          },
+          {
+            "text": "Project Coordinator",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_70"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_71"
+          },
+          {
+            "text": "Top Tier Engineering",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_72"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_73"
+          },
+          {
+            "text": "2035-present",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_74"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_75"
+          },
+          {
+            "text": "Ensures compliance with safety and performance standards",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_76"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_77"
+          },
+          {
+            "text": "Develops and maintains schedules for complex engineering projects",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_78"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_79"
+          },
+          {
+            "text": "Conducts risk analysis and mitigation for high-profile projects",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_80"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_81"
+          },
+          {
+            "text": "Senior Engineer",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_82"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_83"
+          },
+          {
+            "text": "Present Builders",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_84"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_85"
+          },
+          {
+            "text": "2032-2035",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_86"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_87"
+          },
+          {
+            "text": "Supervised 15 projects, leading to a 30% increase in project completion rate within a year Implemented process improvements that reduced project cycle time by 20%",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_88"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_89"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_90"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_91"
+          }
+        ],
+        "roles": [
+          {
+            "header": {
+              "text": "Project Coordinator",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_70"
+            },
+            "header_extra": [
+              {
+                "text": "Top Tier Engineering",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_72"
+              }
+            ],
+            "meta_lines": [
+              {
+                "text": "2035-present",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_74"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Ensures compliance with safety and performance standards",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_76"
+              },
+              {
+                "text": "Develops and maintains schedules for complex engineering projects",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_78"
+              },
+              {
+                "text": "Conducts risk analysis and mitigation for high-profile projects",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_80"
+              }
+            ],
+            "role_id": "Project Coordinator",
+            "role_id_stable": "role_1"
+          },
+          {
+            "header": {
+              "text": "Senior Engineer",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_82"
+            },
+            "header_extra": [
+              {
+                "text": "Present Builders",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_84"
+              }
+            ],
+            "meta_lines": [
+              {
+                "text": "2032-2035",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_86"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Supervised 15 projects, leading to a 30% increase in project completion rate within a year Implemented process improvements that reduced project cycle time by 20%",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_88"
+              }
+            ],
+            "role_id": "Senior Engineer",
+            "role_id_stable": "role_2"
+          }
+        ],
+        "section_id": "sec_4"
+      },
+      {
+        "title": "EDUCATION",
+        "semantic_type": "education",
+        "heading": {
+          "text": "EDUCATION",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_92"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_93"
+          },
+          {
+            "text": "West State University",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_94"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_95"
+          },
+          {
+            "text": "Master's in Project Engineering | June 2034",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_96"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_97"
+          },
+          {
+            "text": "Capstone Project Excellence Award",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_98"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_99"
+          },
+          {
+            "text": "2 Peer-Reviewed Research Papers Published Commencement Speaker, 2034",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_100"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_101"
+          },
+          {
+            "text": "North City College",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_102"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_103"
+          },
+          {
+            "text": "Degree in Civil Engineering | June 2030",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_104"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_105"
+          },
+          {
+            "text": "Dean’s List - 2026-2028",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_106"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_107"
+          },
+          {
+            "text": "Project Excellence Award, 2029",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_108"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_109"
+          },
+          {
+            "text": "President, Student Government (2029-2030)",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_110"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_5"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 596.0,
+      "page_height_pt": 842.25,
+      "margin_top_pt": 51.1,
+      "margin_bottom_pt": 48.8,
+      "margin_left_pt": 51.0,
+      "margin_right_pt": 61.5,
+      "default_font_name": "Calibri",
+      "default_font_size_pt": 11.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "paragraph",
+        "para_id": "para_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"70\"/><w:szCs w:val=\"70\"/><w:color w:val=\"454894\"/></w:rPr><w:drawing><wp:anchor simplePos=\"0\" relativeHeight=\"251657728\" behindDoc=\"1\" locked=\"0\" layoutInCell=\"0\" allowOverlap=\"1\"><wp:simplePos x=\"0\" y=\"0\"/><wp:positionH relativeFrom=\"page\"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom=\"page\"><wp:posOffset>0</wp:posOffset></wp:positionV><wp:extent cx=\"7562850\" cy=\"10696575\"/><wp:wrapNone/><wp:docPr id=\"1\" name=\"Picture 1\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"0\" name=\"Picture 1\"/><pic:cNvPicPr><a:picLocks noChangeAspect=\"1\" noChangeArrowheads=\"1\"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId12\"><a:extLst><a:ext uri=\"{28A0092B-C50C-407E-A947-70E740481C1C}\"/></a:extLst></a:blip><a:srcRect/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr bwMode=\"auto\"><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"7562850\" cy=\"10696575\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:noFill/></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing><w:t>David Benjamin</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"83\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_3",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/><w:color w:val=\"000001\"/></w:rPr><w:t>Project Engineer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_4",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_5",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_6",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"237\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_7",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:right=\"4120\"/><w:spacing w:after=\"0\" w:line=\"330\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"000001\"/></w:rPr><w:t>Results-driven project engineer with over five years of experience managing complex engineering projects from conception to completion.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_8",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:sectPr><w:pgSz w:w=\"11920\" w:h=\"16845\" w:orient=\"portrait\"/><w:cols w:equalWidth=\"0\" w:num=\"1\"><w:col w:w=\"9660\"/></w:cols><w:pgMar w:left=\"1020\" w:top=\"1022\" w:right=\"1230\" w:bottom=\"976\" w:gutter=\"0\" w:footer=\"0\" w:header=\"0\"/></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_9",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_10",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_11",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_12",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_13",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"285\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_14",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"454894\"/></w:rPr><w:t>SKILLS</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_15",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"230\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_16",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Licensed Civil Engineer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_17",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_18",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Master's Degree in Project</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_19",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_20",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Engineering</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_21",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_22",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Accredited by the Standard</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_23",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_24",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Compliance Agency</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_25",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_26",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Well-versed in QA/QC</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_27",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_28",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>policies</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_29",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_30",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_31",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"226\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_32",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"454894\"/></w:rPr><w:t>REFERENCES</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_33",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"237\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_34",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Philippe Stolvan</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_35",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_36",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Manager, Present Builders</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_37",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_38",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Email:</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_39",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_40",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>hello@techguruplus.com</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_41",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"257\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_42",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Kyleigh Riteman</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_43",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_44",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"21\"/><w:szCs w:val=\"21\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>HR Lead, Top Tier Engineering</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_45",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"14\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_46",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Phone: 123-456-7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_47",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_48",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"366\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"454894\"/></w:rPr><w:t>CONTACT</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_50",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"240\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_51",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"360\" w:right=\"820\"/><w:spacing w:after=\"0\" w:line=\"250\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>123-456-7890 hello@reallygreatsite.com 123 Anywhere St., Any City, ST 12345 www.techguruplus.com</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_52",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"20\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr><w:br w:type=\"column\"/></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_53",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_54",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_55",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_56",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_57",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"258\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_58",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"454894\"/></w:rPr><w:t>WORK EXPERIENCE</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_69",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"246\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_70",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"454894\"/></w:rPr><w:t>Project Coordinator</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_71",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"73\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_72",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Top Tier Engineering</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_73",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_74",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>2035-present</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_75",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"248\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_76",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\" w:right=\"60\"/><w:spacing w:after=\"0\" w:line=\"241\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Ensures compliance with safety and performance standards</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_77",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_78",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\" w:right=\"280\"/><w:spacing w:after=\"0\" w:line=\"241\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Develops and maintains schedules for complex engineering projects</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_79",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_80",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\" w:right=\"260\"/><w:spacing w:after=\"0\" w:line=\"277\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Conducts risk analysis and mitigation for high-profile projects</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_81",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"355\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_82",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"454894\"/></w:rPr><w:t>Senior Engineer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_83",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"83\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_84",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Present Builders</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_85",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_86",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>2032-2035</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_87",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"250\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_88",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\" w:line=\"253\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Supervised 15 projects, leading to a 30% increase in project completion rate within a year Implemented process improvements that reduced project cycle time by 20%</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_89",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_90",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_91",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"244\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_92",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"454894\"/></w:rPr><w:t>EDUCATION</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_93",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"266\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_94",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"454894\"/></w:rPr><w:t>West State University</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_95",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"75\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_96",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Master's in Project Engineering | June 2034</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_97",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"137\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_98",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Capstone Project Excellence Award</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_99",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_100",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\" w:right=\"560\"/><w:spacing w:after=\"0\" w:line=\"277\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>2 Peer-Reviewed Research Papers Published Commencement Speaker, 2034</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_101",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"175\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_102",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"454894\"/></w:rPr><w:t>North City College</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_103",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"99\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_104",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Degree in Civil Engineering | June 2030</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_105",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"167\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_106",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Dean’s List - 2026-2028</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_107",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_108",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Project Excellence Award, 2029</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_109",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_110",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>President, Student Government (2029-2030)</w:t></w:r></w:p>"
+      }
+    ]
+  }
+}

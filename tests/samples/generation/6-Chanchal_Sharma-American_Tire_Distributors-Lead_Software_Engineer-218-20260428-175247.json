@@ -1,0 +1,425 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.1]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n21) Must explicitly mention the company + role from TASK.\n22) Must connect: candidate background -> company needs -> role responsibilities, using only supported claims.\n23) Keep it 3-5 short paragraphs; be specific but not verbose.\n\n[CANDIDATE_LAYER_CHANCHAL_SHARMA v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Office Manager / Administrative Operations professional focused on operational efficiency, executive support, and cross-functional coordination.\n- Emphasize strengths: process streamlining, office logistics, scheduling/project coordination, communication systems, and data-informed reporting/decisions.\n- Keep “data analysis” framed as operational reporting/insights (tracking, organizing, summarizing), not advanced technical/engineering analytics.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Treat “office operations management” as the candidate’s core “architecture” signal; surface it explicitly in bullets as operational systems and workflows.\n- Always convert generic claims into concrete operational mechanisms, e.g.:\n  - Standardized intake/request workflows → office/admin requests, supplies, facilities, scheduling\n  - Centralized trackers/dashboards → budgets, inventory, schedules, project status\n  - Communication cadences/channels → meeting rhythms, updates, handoffs, stakeholder alignment\n  - Documentation/SOPs → repeatable processes, reduced errors, faster onboarding\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prioritize bullets that show concrete operational mechanisms before general support statements:\n  1) Implemented/standardized workflows, trackers, templates, SOPs, scheduling systems\n  2) Coordination mechanisms (cross-team handoffs, communication channels, meeting ops)\n  3) Efficiency/process improvement outcomes (only if supported; do not invent metrics)\n  4) General administrative support and day-to-day office coverage\n\nDISTRIBUTED SYSTEM DEPTH\n- Do NOT imply software/distributed-systems engineering.\n- If “distributed” concepts are needed, translate only into office context: multi-stakeholder coordination, parallel requests, handoffs, and operational throughput—without using engineering jargon (no “scalability,” “architecture,” “pipelines” unless clearly office-ops framed).\n\nTECHNICAL DIFFERENTIATION\n- Keep tools/tech claims minimal unless explicitly present in source resume (do not invent Excel/Google Sheets/ERP/CRM).\n- Differentiate via operational rigor:\n  - Data-driven decision-making in office operations (tracking, reporting, trend spotting)\n  - Project coordination (scheduling, dependencies, follow-ups, stakeholder updates)\n  - Executive/admin support (calendar management, prioritization, communication)\n\nDOMAIN / INDUSTRY FRAMING\n- Frame experience as transferable across industries: office operations, administrative support, internal coordination.\n- Employers (The Phone Company, Nod Publishing, Southridge Video) should be treated as context only; do not infer industry-specific expertise beyond office operations.\n\nSAFE DOMAIN TRANSLATION\n- Translate “data analysis” safely as:\n  - maintained operational trackers, summarized status, identified bottlenecks, supported decisions with organized data\n- Translate “project management” safely as:\n  - coordinated schedules, tracked action items, facilitated communication, ensured follow-through\n- Translate “process improvement” safely as:\n  - standardized procedures, reduced rework via templates/checklists, improved handoffs\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim:\n  - IT administration, systems administration, cybersecurity, compliance frameworks\n  - advanced analytics, BI tooling, SQL, automation engineering, AI/ML work\n  - ownership of budgets, procurement authority, HR policy, or people management unless explicitly evidenced\n- Do NOT add metrics (percent improvements, cost savings, time saved) unless provided in MASTER_RESUME or explicit evidence.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- When a job description asks for “systems,” “integration,” or “operations,” reinterpret using office-ops equivalents:\n  - “Integration” → aligning stakeholders, standardizing handoffs, consolidating information sources into a single tracker\n  - “Extensibility” → reusable templates, SOPs, checklists, onboarding guides\n  - “Operational excellence” → consistent routines, clear ownership, documented processes, proactive issue resolution\n- Keep wording grounded in administrative operations; avoid tech-platform metaphors.\n\nLEADERSHIP FRAMING\n- Frame leadership as coordination and process leadership (not people-management unless evidenced):\n  - led through communication, clarity, documentation, and follow-up\n  - facilitated cross-functional alignment and resolved blockers\n  - proactive problem solving and resource allocation in office context\n- Use the candidate’s leadership style keywords when relevant: collaborative, detail-oriented, process-driven.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep execution and operational mechanisms primary.\n- Leadership should appear as “how work was driven” (cadences, coordination, process improvements), not as abstract traits.\n- Avoid overstating scope (no team size claims; team_size_max is unknown).\n\nAI WORK POSITIONING\n- No AI claims. Do not introduce AI tools, prompting, automation, or model usage.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Stay within: office management + administrative support + project coordination + basic operational data analysis.\n- Do not overstate technical skills; avoid implying specialized software expertise unless explicitly listed in MASTER_RESUME.\n- Do not invent:\n  - tools (Excel, Google Workspace, Asana, Jira, Slack, etc.)\n  - certifications\n  - quantified outcomes\n  - expanded responsibilities (finance/HR/IT ownership) not evidenced\n- Maintain accuracy of roles and dates; do not change titles/employers.\n\nEVIDENCE SOURCES\n- Only use:\n  - MASTER_RESUME (primary source for dates, titles, tools, scope, metrics)\n  - CANDIDATE_PROFILE.summary/headline\n  - CANDIDATE_PROFILE.experience_highlights (impacts, team context, skills applied, employer_relationship)\n  - CANDIDATE_PROFILE.leadership (practices, risk_management, style keywords)\n  - CANDIDATE_PROFILE.constraints_and_preferences\n- If a bullet needs a tool, metric, or scope detail and it is not in evidence, omit it or write the bullet without it.\n\nFINAL REMINDER\n- Core differentiation to repeat throughout: process-driven Office Manager who streamlines office operations, strengthens communication and coordination, and uses organized operational data to improve efficiency—without overstating technical depth.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Office Management\",\n      \"Administrative Support\"\n    ],\n    \"secondary\": [\n      \"Project Coordination\",\n      \"Data Analysis\"\n    ]\n  },\n  \"candidate\": {\n    \"name\": \"Chanchal Sharma\",\n    \"summary\": \"Experienced Office Manager with a background in managing office operations across various industries. Skilled in data analysis, project management, and effective communication. Proven ability to streamline processes and enhance productivity.\",\n    \"headline\": \"Office Manager with Strong Organizational Skills\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Detail-oriented\",\n        \"Process-driven\"\n      ]\n    },\n    \"practices\": [\n      \"Effective communication\",\n      \"Process improvement\",\n      \"Team coordination\"\n    ],\n    \"risk_management\": [\n      \"Proactive problem solving\",\n      \"Efficient resource allocation\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Office management\",\n    \"Project management\",\n    \"Data analysis\",\n    \"Communication\",\n    \"Organizational efficiency\",\n    \"Cross-functional collaboration\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Focus on office management and administrative support\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Do not overstate technical skills\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [],\n    \"languages\": [],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Office Management\",\n      \"impact\": [\n        \"Streamlined office operations to improve efficiency\",\n        \"Managed administrative tasks and supported executive team\",\n        \"Implemented data-driven decision-making processes\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Collaborated with cross-functional teams\"\n      ],\n      \"skills_applied\": [\n        \"Data analysis\",\n        \"Project management\",\n        \"Communication\"\n      ],\n      \"architecture_patterns\": [\n        \"Office operations management\"\n      ],\n      \"employer_relationship\": \"The Phone Company\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    },\n    {\n      \"area\": \"Office Management\",\n      \"impact\": [\n        \"Oversaw daily office functions and staff coordination\",\n        \"Enhanced communication channels within the organization\",\n        \"Facilitated project management and scheduling\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Worked with diverse teams\"\n      ],\n      \"skills_applied\": [\n        \"Organization\",\n        \"Problem solving\",\n        \"Communication\"\n      ],\n      \"architecture_patterns\": [\n        \"Office operations management\"\n      ],\n      \"employer_relationship\": \"Nod Publishing\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    },\n    {\n      \"area\": \"Office Management\",\n      \"impact\": [\n        \"Managed office logistics and administrative support\",\n        \"Improved organizational processes and efficiency\",\n        \"Supported management in strategic planning\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Collaborated with management and staff\"\n      ],\n      \"skills_applied\": [\n        \"Project management\",\n        \"Organization\",\n        \"Communication\"\n      ],\n      \"architecture_patterns\": [\n        \"Office operations management\"\n      ],\n      \"employer_relationship\": \"Southridge Video\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative office environments\",\n      \"Administrative support settings\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Effective communication\",\n      \"Problem solving\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\nChanchalSharma\nOFFICE MANAGER\nState your career goals and show how they align with the job description you’re targeting. Be brief and keep it from sounding generic. Be yourself.\nchanchals@example.com\n(718) 555–0100\nLinkedIn profile\nEXPERIENCE\nJan 20XX - Current\nOffice manager, The Phone Company \nSummarize your key responsibilities and accomplishments. Where appropriate, use the language and words you find in the specific job description. Be concise, targeting 3-5 key areas.\nMar 20XX - Dec 20XX\nOffice manager, Nod Publishing \nSummarize your key responsibilities and accomplishments. Here again, take any opportunity to use words you find in the job description. Be brief.\nAug 20XX - Mar 20XX\nOffice manager, Southridge Video \nSummarize your key responsibilities and accomplishments. Where appropriate, use the language and words you find in the specific job description. Be concise, targeting 3-5 key areas. \nEDUCATION\nSep 20XX - May 20XX\nA.S. H.R. Management,\nBellows College\nSkills\nData analysis\nProject management\nCommunication\nOrganization\nProblem solving\nINTERESTS\nThis section is optional but can showcase the unique, intriguing, even fun side of who you are."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nChanchal Sharma\nDear Hiring Manager,\nI am excited to apply for the Senior Software Engineer role at Tigera. With over 15 years of experience in backend engineering and team leadership, including roles as VP and Director of Software Development, I have built fintech and blockchain systems that became top-5 platforms in the Japanese market, serving over 1M users, and led teams of up to 20 engineers to deliver reliable, scalable products.\nIn addition to my industry work, I currently contribute as an independent contractor supporting world-leading AI research labs in training and evaluating advanced AI models on senior-level software engineering tasks. This work keeps me deeply engaged with cutting-edge development practices, reinforces my ability to solve complex problems under ambiguity, and strengthens my proficiency with AI-assisted development tools. I also adopt AI-accelerated workflows (ChatGPT, Claude, Cursor AI) to improve productivity, code quality, and architectural clarity.\nI would welcome the chance to bring this expertise to your team and contribute to building reliable, scalable systems for your clients. I hold Canadian citizenship and am fully eligible to work in Canada.\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: April 28, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "Chanchal Sharma\nOFFICE MANAGER\nchanchals@example.com | (718) 555–0100 | LinkedIn profile\n\nPROFESSIONAL SUMMARY\nOffice Manager with experience managing day-to-day office operations and administrative support across multiple organizations. Strengths include process-driven office workflows, cross-functional coordination, scheduling and project follow-through, and operational reporting to support decisions. Collaborative, detail-oriented, and proactive in improving communication routines and keeping office logistics running smoothly.\n\nEXPERIENCE\nJan 20XX - Current\nOffice Manager, The Phone Company\n- Managed day-to-day office operations, coordinating administrative requests and office logistics to keep work moving across teams.\n- Supported the executive team with scheduling, coordination, and follow-ups to maintain clear priorities and timely communication.\n- Streamlined office processes by standardizing repeatable workflows and improving how requests and updates were tracked and communicated.\n- Maintained organized operational information to support data-informed decisions (tracking, summarizing, and sharing status as needed).\n- Collaborated with cross-functional partners to resolve issues, align on timelines, and ensure consistent handoffs.\n\nMar 20XX - Dec 20XX\nOffice Manager, Nod Publishing\n- Oversaw daily office functions and coordinated administrative activities to support a smooth office environment.\n- Facilitated scheduling and project coordination by tracking action items and ensuring follow-through with stakeholders.\n- Enhanced internal communication by establishing clearer channels for updates, requests, and coordination across teams.\n- Supported staff coordination through organized planning, proactive problem solving, and consistent follow-up.\n\nAug 20XX - Mar 20XX\nOffice Manager, Southridge Video\n- Managed office logistics and provided administrative support to management and staff.\n- Improved organizational efficiency by refining office procedures and strengthening day-to-day coordination.\n- Supported management planning activities through organized scheduling, documentation, and communication.\n\nEDUCATION\nSep 20XX - May 20XX\nA.S. H.R. Management, Bellows College\n\nTECHNICAL SKILLS\nOperations & Reporting: Data analysis\nCoordination & Delivery: Project management\nCore Strengths: Communication, Organization, Problem solving\n\nADDITIONAL\nINTERESTS\nThis section is optional but can showcase the unique, intriguing, even fun side of who you are.\n\nCurrent Date: April 28, 2026\n",
+    "cover_letter": "Chanchal Sharma\n\nDear Hiring Manager,\n\nI am applying for the Lead Software Engineer role at American Tire Distributors. My background is in office management and administrative operations, where I have led day-to-day office workflows, supported leaders with scheduling and coordination, and improved how teams communicate and follow through on requests.\n\nAcross roles at The Phone Company, Nod Publishing, and Southridge Video, I have focused on building repeatable operational processes—standardizing office routines, improving handoffs, and maintaining organized trackers and summaries to support data-informed decisions. I am collaborative and detail-oriented, and I’m comfortable balancing multiple stakeholders while keeping priorities clear.\n\nWhile my experience is not in software engineering, I am interested in American Tire Distributors because of the company’s scale and the emphasis on collaboration and dependable execution. If there are operational or coordination-focused opportunities aligned with my background, I would welcome the chance to be considered.\n\nThank you for your time and consideration.\n\nSincerely,\nChanchal Sharma\n"
+  },
+  "diff": {
+    "resume": [
+      {
+        "name": "Professional Summary",
+        "after": "Office Manager with experience managing day-to-day office operations and administrative support across multiple organizations. Strengths include process-driven office workflows, cross-functional coordination, scheduling and project follow-through, and operational reporting to support decisions. Collaborative, detail-oriented, and proactive in improving communication routines and keeping office logistics running smoothly."
+      },
+      {
+        "name": "Technical Skills",
+        "before": "Data analysis\nProject management\nCommunication\nOrganization\nProblem solving\nINTERESTS\nThis section is optional but can showcase the unique, intriguing, even fun side of who you are.",
+        "after": "Operations & Reporting: Data analysis\nCoordination & Delivery: Project management\nCore Strengths: Communication, Organization, Problem solving\n\nADDITIONAL\nINTERESTS\nThis section is optional but can showcase the unique, intriguing, even fun side of who you are.\n\nCurrent Date: April 28, 2026"
+      }
+    ]
+  },
+  "generation_run_id": "218",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "Chanchal\nSharma",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      }
+    ],
+    "sections": [
+      {
+        "title": "OFFICE MANAGER",
+        "semantic_type": "other",
+        "heading": {
+          "text": "OFFICE MANAGER",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_3"
+        },
+        "body_paras": [
+          {
+            "text": "Office Manager with experience managing day-to-day office operations and administrative support across multiple organizations. Strengths include process-driven office workflows, cross-functional coordination, scheduling and project follow-through, and operational reporting to support decisions. Collaborative, detail-oriented, and proactive in improving communication routines and keeping office logistics running smoothly.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_4"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_5"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "LinkedIn profile",
+        "semantic_type": "websites",
+        "heading": {
+          "text": "LinkedIn profile",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_8"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_9"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_10"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_11"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "EXPERIENCE",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "EXPERIENCE",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_12"
+        },
+        "body_paras": [
+          {
+            "text": "Jan 20XX - Current",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_22"
+          },
+          {
+            "text": "Office manager, The Phone Company ",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_23"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_24"
+          },
+          {
+            "text": "Summarize your key responsibilities and accomplishments. Where appropriate, use the language and words you find in the specific job description. Be concise, targeting 3-5 key areas.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_25"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_26"
+          },
+          {
+            "text": "Mar 20XX - Dec 20XX",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_27"
+          },
+          {
+            "text": "Office manager, Nod Publishing ",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_28"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_29"
+          },
+          {
+            "text": "Summarize your key responsibilities and accomplishments. Here again, take any opportunity to use words you find in the job description. Be brief.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_30"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_31"
+          },
+          {
+            "text": "Aug 20XX - Mar 20XX",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_32"
+          },
+          {
+            "text": "Office manager, Southridge Video ",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_33"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_34"
+          },
+          {
+            "text": "Summarize your key responsibilities and accomplishments. Where appropriate, use the language and words you find in the specific job description. Be concise, targeting 3-5 key areas. ",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_35"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_36"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_37"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_3"
+      },
+      {
+        "title": "EDUCATION",
+        "semantic_type": "education",
+        "heading": {
+          "text": "EDUCATION",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_38"
+        },
+        "body_paras": [
+          {
+            "text": "Sep 20XX - May 20XX",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          },
+          {
+            "text": "A.S. H.R. Management,",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_40"
+          },
+          {
+            "text": "Bellows College",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_41"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_4"
+      },
+      {
+        "title": "TECHNICAL SKILLS",
+        "semantic_type": "skills",
+        "heading": {
+          "text": "TECHNICAL SKILLS",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_42"
+        },
+        "body_paras": [
+          {
+            "text": "Operations & Reporting: Data analysis",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_43"
+          },
+          {
+            "text": "Coordination & Delivery: Project management",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_44"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_5"
+      },
+      {
+        "title": "Communication",
+        "semantic_type": "other",
+        "heading": {
+          "text": "Communication",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_45"
+        },
+        "body_paras": [
+          {
+            "text": "Organization",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_46"
+          },
+          {
+            "text": "Problem solving",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_47"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_6"
+      },
+      {
+        "title": "INTERESTS",
+        "semantic_type": "other",
+        "heading": {
+          "text": "INTERESTS",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_48"
+        },
+        "body_paras": [
+          {
+            "text": "This section is optional but can showcase the unique, intriguing, even fun side of who you are.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_49"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_50"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_7"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 612.0,
+      "page_height_pt": 792.0,
+      "margin_top_pt": 36.0,
+      "margin_bottom_pt": 14.4,
+      "margin_left_pt": 36.0,
+      "margin_right_pt": 36.7,
+      "default_font_name": "Calibri",
+      "default_font_size_pt": 9.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "paragraph",
+        "para_id": "para_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:wp14=\"http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" w14:paraId=\"077ED179\" w14:textId=\"1F3F1A83\" w:rsidR=\"00410F37\" w:rsidRDefault=\"00960F71\"><w:r><w:rPr><w:noProof/><w:lang w:val=\"en-AU\" w:eastAsia=\"en-AU\" w:bidi=\"ar-SA\"/></w:rPr><w:drawing><wp:anchor distT=\"0\" distB=\"0\" distL=\"114300\" distR=\"114300\" simplePos=\"0\" relativeHeight=\"251658240\" behindDoc=\"1\" locked=\"1\" layoutInCell=\"1\" allowOverlap=\"1\" wp14:anchorId=\"091546CA\" wp14:editId=\"566A5E61\"><wp:simplePos x=\"0\" y=\"0\"/><wp:positionH relativeFrom=\"page\"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom=\"paragraph\"><wp:posOffset>-457200</wp:posOffset></wp:positionV><wp:extent cx=\"7776434\" cy=\"10058400\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/><wp:wrapNone/><wp:docPr id=\"2\" name=\"Picture 2\"><a:extLst xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:ext uri=\"{C183D7F6-B498-43B3-948B-1728B52AA6E4}\"><adec:decorative xmlns:adec=\"http://schemas.microsoft.com/office/drawing/2017/decorative\" val=\"1\"/></a:ext></a:extLst></wp:docPr><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"2\" name=\"Picture 2\"><a:extLst><a:ext uri=\"{C183D7F6-B498-43B3-948B-1728B52AA6E4}\"><adec:decorative xmlns:adec=\"http://schemas.microsoft.com/office/drawing/2017/decorative\" val=\"1\"/></a:ext></a:extLst></pic:cNvPr><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId8\" cstate=\"print\"><a:extLst><a:ext uri=\"{28A0092B-C50C-407E-A947-70E740481C1C}\"><a14:useLocalDpi xmlns:a14=\"http://schemas.microsoft.com/office/drawing/2010/main\" val=\"0\"/></a:ext></a:extLst></a:blip><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"7776434\" cy=\"10058400\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic><wp14:sizeRelH relativeFrom=\"margin\"><wp14:pctWidth>0</wp14:pctWidth></wp14:sizeRelH><wp14:sizeRelV relativeFrom=\"margin\"><wp14:pctHeight>0</wp14:pctHeight></wp14:sizeRelV></wp:anchor></w:drawing></w:r></w:p>"
+      },
+      {
+        "kind": "table",
+        "table_id": "tbl_1",
+        "xml_proto_xml": "<w:tbl xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" xmlns:w15=\"http://schemas.microsoft.com/office/word/2012/wordml\"><w:tblPr><w:tblW w:w=\"5005\" w:type=\"pct\"/><w:tblLayout w:type=\"fixed\"/><w:tblCellMar><w:left w:w=\"115\" w:type=\"dxa\"/><w:right w:w=\"115\" w:type=\"dxa\"/></w:tblCellMar><w:tblLook w:val=\"0600\" w:firstRow=\"0\" w:lastRow=\"0\" w:firstColumn=\"0\" w:lastColumn=\"0\" w:noHBand=\"1\" w:noVBand=\"1\"/></w:tblPr><w:tblGrid><w:gridCol w:w=\"3960\"/><w:gridCol w:w=\"3418\"/><w:gridCol w:w=\"91\"/><w:gridCol w:w=\"3313\"/><w:gridCol w:w=\"15\"/></w:tblGrid><w:tr w:rsidR=\"00066AA8\" w:rsidRPr=\"00E8269A\" w14:paraId=\"0BFA9C2D\" w14:textId=\"77777777\" w:rsidTr=\"00D46D72\"><w:trPr><w:trHeight w:val=\"1620\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"1834\" w:type=\"pct\"/></w:tcPr><w:p w14:paraId=\"072472A3\" w14:textId=\"03BE37D0\" w:rsidR=\"00066AA8\" w:rsidRPr=\"00442914\" w:rsidRDefault=\"00000000\" w:rsidP=\"00D46D72\"><w:pPr><w:pStyle w:val=\"Title\"/><w:rPr><w:spacing w:val=\"0\"/></w:rPr></w:pPr><w:sdt><w:sdtPr><w:rPr><w:spacing w:val=\"0\"/></w:rPr><w:id w:val=\"-2043358959\"/><w:placeholder><w:docPart w:val=\"1DEDFAE7A321452F8D7FE9DA4322319D\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00D46D72\" w:rsidRPr=\"00442914\"><w:rPr><w:spacing w:val=\"0\"/></w:rPr><w:t>Chanchal</w:t></w:r><w:r w:rsidR=\"00D46D72\" w:rsidRPr=\"00442914\"><w:rPr><w:spacing w:val=\"0\"/></w:rPr><w:br/><w:t>Sharma</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"3166\" w:type=\"pct\"/><w:gridSpan w:val=\"4\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p w14:paraId=\"7D7A9C58\" w14:textId=\"6BA9C391\" w:rsidR=\"00066AA8\" w:rsidRPr=\"00CF4208\" w:rsidRDefault=\"00000000\" w:rsidP=\"002B2EBE\"><w:pPr><w:pStyle w:val=\"Subtitle\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"2006091925\"/><w:placeholder><w:docPart w:val=\"F9FF93A3A2A74913B90EF5807CE43B33\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00D46D72\" w:rsidRPr=\"00CF4208\"><w:t>OFFICE MANAGER</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"1C4E896B\" w14:textId=\"645F78AB\" w:rsidR=\"00066AA8\" w:rsidRPr=\"00D46D72\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:sdt><w:sdtPr><w:id w:val=\"-995874793\"/><w:placeholder><w:docPart w:val=\"81627ED9F7E34DF58EE60ADA718365C5\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"009045EE\" w:rsidRPr=\"00D46D72\"><w:t>State your career goals and show how they align with the job description you’re targeting. Be brief and keep it from sounding generic. Be yourself.</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"00B043D4\" w:rsidRPr=\"00E8269A\" w14:paraId=\"04CC3685\" w14:textId=\"77777777\" w:rsidTr=\"00D46D72\"><w:trPr><w:trHeight w:val=\"101\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"5000\" w:type=\"pct\"/><w:gridSpan w:val=\"5\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"35728104\" w14:textId=\"77777777\" w:rsidR=\"00B043D4\" w:rsidRPr=\"00CF4208\" w:rsidRDefault=\"00B043D4\" w:rsidP=\"00B54B2F\"><w:pPr><w:jc w:val=\"center\"/></w:pPr></w:p></w:tc></w:tr><w:tr w:rsidR=\"007A466D\" w:rsidRPr=\"00E8269A\" w14:paraId=\"091C2669\" w14:textId=\"77777777\" w:rsidTr=\"00D46D72\"><w:trPr><w:gridAfter w:val=\"1\"/><w:wAfter w:w=\"7\" w:type=\"pct\"/><w:trHeight w:val=\"432\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"1834\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"000000\" w:themeColor=\"text1\"/></w:tcBorders><w:tcMar><w:top w:w=\"144\" w:type=\"dxa\"/><w:left w:w=\"115\" w:type=\"dxa\"/><w:right w:w=\"115\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"0054E8E3\" w14:textId=\"79E267EA\" w:rsidR=\"007A466D\" w:rsidRPr=\"0087760D\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"674845000\"/><w:placeholder><w:docPart w:val=\"EC8B75A85A344B8C9663A9D6135D0F5C\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"009045EE\" w:rsidRPr=\"0087760D\"><w:t>chanchals@example.com</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"1625\" w:type=\"pct\"/><w:gridSpan w:val=\"2\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"000000\" w:themeColor=\"text1\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"321D9370\" w14:textId=\"418B3746\" w:rsidR=\"007A466D\" w:rsidRPr=\"0087760D\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1049147608\"/><w:placeholder><w:docPart w:val=\"81C2BC59B9074BE18285849C2C3F847B\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"009045EE\" w:rsidRPr=\"0087760D\"><w:t>(718) 555–0100</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"1534\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"000000\" w:themeColor=\"text1\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"29CF19C3\" w14:textId=\"7F26F2CE\" w:rsidR=\"007A466D\" w:rsidRPr=\"0087760D\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1577590796\"/><w:placeholder><w:docPart w:val=\"4DD456BF94674284AFB248819CA586BD\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"0087760D\"><w:t>LinkedIn profile</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"002B2EBE\" w:rsidRPr=\"00E8269A\" w14:paraId=\"0E6B2249\" w14:textId=\"77777777\" w:rsidTr=\"00D46D72\"><w:trPr><w:trHeight w:val=\"359\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"1834\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"000000\" w:themeColor=\"text1\"/></w:tcBorders><w:tcMar><w:top w:w=\"144\" w:type=\"dxa\"/><w:left w:w=\"115\" w:type=\"dxa\"/><w:right w:w=\"115\" w:type=\"dxa\"/></w:tcMar></w:tcPr><w:p w14:paraId=\"305B1C1B\" w14:textId=\"77777777\" w:rsidR=\"002B2EBE\" w:rsidRDefault=\"002B2EBE\" w:rsidP=\"002B2EBE\"/></w:tc><w:tc><w:tcPr><w:tcW w:w=\"3166\" w:type=\"pct\"/><w:gridSpan w:val=\"4\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"000000\" w:themeColor=\"text1\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"3251FD31\" w14:textId=\"77777777\" w:rsidR=\"002B2EBE\" w:rsidRDefault=\"002B2EBE\" w:rsidP=\"002B2EBE\"><w:pPr><w:rPr><w:szCs w:val=\"18\"/></w:rPr></w:pPr></w:p></w:tc></w:tr><w:tr w:rsidR=\"007A466D\" w:rsidRPr=\"00E8269A\" w14:paraId=\"708EC446\" w14:textId=\"77777777\" w:rsidTr=\"00CF677A\"><w:trPr><w:trHeight w:val=\"414\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"1834\" w:type=\"pct\"/><w:tcMar><w:top w:w=\"144\" w:type=\"dxa\"/><w:left w:w=\"115\" w:type=\"dxa\"/><w:right w:w=\"115\" w:type=\"dxa\"/></w:tcMar></w:tcPr><w:p w14:paraId=\"0C150929\" w14:textId=\"4FDEBA48\" w:rsidR=\"007A466D\" w:rsidRPr=\"009045EE\" w:rsidRDefault=\"007A466D\" w:rsidP=\"00CF677A\"><w:pPr><w:pStyle w:val=\"Subtitle\"/></w:pPr></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"3166\" w:type=\"pct\"/><w:gridSpan w:val=\"4\"/></w:tcPr><w:p w14:paraId=\"09111CE9\" w14:textId=\"1349A8B4\" w:rsidR=\"007A466D\" w:rsidRPr=\"00CF677A\" w:rsidRDefault=\"00000000\" w:rsidP=\"00CF677A\"><w:pPr><w:pStyle w:val=\"Subtitle\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1403365644\"/><w:placeholder><w:docPart w:val=\"47F3220250FB45A894B37363E4D8A418\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00CF677A\"><w:t>EXPERIENCE</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"00CF677A\" w:rsidRPr=\"00E8269A\" w14:paraId=\"07862BEA\" w14:textId=\"77777777\" w:rsidTr=\"005D2E4F\"><w:trPr><w:trHeight w:val=\"1404\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"1834\" w:type=\"pct\"/><w:tcMar><w:top w:w=\"144\" w:type=\"dxa\"/><w:left w:w=\"115\" w:type=\"dxa\"/><w:right w:w=\"115\" w:type=\"dxa\"/></w:tcMar></w:tcPr><w:p w14:paraId=\"71ED2771\" w14:textId=\"41BB691A\" w:rsidR=\"00CF677A\" w:rsidRDefault=\"00000000\" w:rsidP=\"00CF677A\"><w:sdt><w:sdtPr><w:id w:val=\"347763775\"/><w:placeholder><w:docPart w:val=\"A05178D60AAF47059BAB1E51D979B0C6\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"007D04C3\"><w:t>Jan 20</w:t></w:r><w:r w:rsidR=\"00CF677A\"><w:t>XX</w:t></w:r><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"007D04C3\"><w:t xml:space=\"preserve\"> - Current</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"3166\" w:type=\"pct\"/><w:gridSpan w:val=\"4\"/></w:tcPr><w:p w14:paraId=\"1245576F\" w14:textId=\"77777777\" w:rsidR=\"00CF677A\" w:rsidRPr=\"0087760D\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1505584750\"/><w:placeholder><w:docPart w:val=\"0697E98D02024C4AA05D04D3B677AE46\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"0087760D\"><w:t>Office manager,</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"0087760D\"><w:t xml:space=\"preserve\"> </w:t></w:r><w:sdt><w:sdtPr><w:rPr><w:rStyle w:val=\"Italics\"/></w:rPr><w:id w:val=\"-1002502306\"/><w:placeholder><w:docPart w:val=\"E0E1602052464BC9ADE56ACAC11D3955\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"0087760D\"><w:rPr><w:rStyle w:val=\"Italics\"/></w:rPr><w:t>The Phone Company</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"0087760D\"><w:rPr><w:rStyle w:val=\"Italics\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r></w:p><w:p w14:paraId=\"0937F633\" w14:textId=\"77777777\" w:rsidR=\"00CF677A\" w:rsidRPr=\"00390248\" w:rsidRDefault=\"00CF677A\" w:rsidP=\"00CF677A\"/><w:p w14:paraId=\"2151F982\" w14:textId=\"77777777\" w:rsidR=\"00CF677A\" w:rsidRDefault=\"00000000\" w:rsidP=\"00CF677A\"><w:sdt><w:sdtPr><w:id w:val=\"391013558\"/><w:placeholder><w:docPart w:val=\"73A395B685C64D319F14CDAFEF4BD073\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"0070176A\"><w:t>Summarize your key responsibilities and accomplishments. Where appropriate, use the language and words you find in the specific job description. Be concise, targeting 3-5</w:t></w:r><w:r w:rsidR=\"00CF677A\"><w:t xml:space=\"preserve\"> </w:t></w:r><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"0070176A\"><w:t>key areas.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"320F142F\" w14:textId=\"3EB4061F\" w:rsidR=\"00F05326\" w:rsidRPr=\"00CF677A\" w:rsidRDefault=\"00F05326\" w:rsidP=\"00CF677A\"/></w:tc></w:tr><w:tr w:rsidR=\"00CF677A\" w:rsidRPr=\"00E8269A\" w14:paraId=\"6B12C67A\" w14:textId=\"77777777\" w:rsidTr=\"005D2E4F\"><w:trPr><w:trHeight w:val=\"189\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"1834\" w:type=\"pct\"/><w:tcMar><w:top w:w=\"144\" w:type=\"dxa\"/><w:left w:w=\"115\" w:type=\"dxa\"/><w:right w:w=\"115\" w:type=\"dxa\"/></w:tcMar></w:tcPr><w:p w14:paraId=\"6E8AA967\" w14:textId=\"11F0AD59\" w:rsidR=\"00CF677A\" w:rsidRDefault=\"00000000\" w:rsidP=\"00CF677A\"><w:sdt><w:sdtPr><w:id w:val=\"-14925699\"/><w:placeholder><w:docPart w:val=\"4FB4297C2A9F447486FA5DFFD1719452\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"00185237\"><w:rPr><w:szCs w:val=\"18\"/></w:rPr><w:t>Mar 20</w:t></w:r><w:r w:rsidR=\"00CF677A\"><w:rPr><w:szCs w:val=\"18\"/></w:rPr><w:t>XX</w:t></w:r><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"00185237\"><w:rPr><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> - De</w:t></w:r><w:r w:rsidR=\"00CF677A\"><w:rPr><w:szCs w:val=\"18\"/></w:rPr><w:t>c</w:t></w:r><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"00185237\"><w:rPr><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> 20</w:t></w:r><w:r w:rsidR=\"00CF677A\"><w:rPr><w:szCs w:val=\"18\"/></w:rPr><w:t>XX</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"3166\" w:type=\"pct\"/><w:gridSpan w:val=\"4\"/></w:tcPr><w:p w14:paraId=\"4170461F\" w14:textId=\"77777777\" w:rsidR=\"00CF677A\" w:rsidRPr=\"0087760D\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-766079730\"/><w:placeholder><w:docPart w:val=\"44ADC0FBFF0E494795A90A1688898EBF\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"0087760D\"><w:t>Office manager,</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"0087760D\"><w:t xml:space=\"preserve\"> </w:t></w:r><w:sdt><w:sdtPr><w:rPr><w:rStyle w:val=\"Italics\"/></w:rPr><w:id w:val=\"-1178882763\"/><w:placeholder><w:docPart w:val=\"1A6BC9F87E4242E5A99FAAEA78279AA2\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"0087760D\"><w:rPr><w:rStyle w:val=\"Italics\"/></w:rPr><w:t>Nod Publishing</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"0087760D\"><w:rPr><w:rStyle w:val=\"Italics\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r></w:p><w:p w14:paraId=\"0B3EE011\" w14:textId=\"77777777\" w:rsidR=\"00CF677A\" w:rsidRPr=\"00390248\" w:rsidRDefault=\"00CF677A\" w:rsidP=\"00CF677A\"/><w:p w14:paraId=\"36367004\" w14:textId=\"77777777\" w:rsidR=\"00CF677A\" w:rsidRDefault=\"00000000\" w:rsidP=\"00CF677A\"><w:sdt><w:sdtPr><w:id w:val=\"469259676\"/><w:placeholder><w:docPart w:val=\"1154E09B624F415ABF10A505E4A89226\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"0070176A\"><w:t>Summarize your key responsibilities and accomplishments. Here again, take any opportunity to use words you find in the job description. Be brief.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"5891C3D6\" w14:textId=\"7D8EF6B2\" w:rsidR=\"00F05326\" w:rsidRDefault=\"00F05326\" w:rsidP=\"00CF677A\"/></w:tc></w:tr><w:tr w:rsidR=\"00CF677A\" w:rsidRPr=\"00E8269A\" w14:paraId=\"3719C8B6\" w14:textId=\"77777777\" w:rsidTr=\"00F05326\"><w:trPr><w:trHeight w:val=\"2160\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"1834\" w:type=\"pct\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:tcMar><w:top w:w=\"144\" w:type=\"dxa\"/><w:left w:w=\"115\" w:type=\"dxa\"/><w:right w:w=\"115\" w:type=\"dxa\"/></w:tcMar></w:tcPr><w:p w14:paraId=\"57664F4F\" w14:textId=\"7771651C\" w:rsidR=\"00CF677A\" w:rsidRDefault=\"00000000\" w:rsidP=\"00CF677A\"><w:sdt><w:sdtPr><w:id w:val=\"-566802136\"/><w:placeholder><w:docPart w:val=\"589129624402483D9B2732B07CAA0C15\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"00185237\"><w:rPr><w:szCs w:val=\"18\"/></w:rPr><w:t>Aug 20</w:t></w:r><w:r w:rsidR=\"00CF677A\"><w:rPr><w:szCs w:val=\"18\"/></w:rPr><w:t>XX</w:t></w:r><w:r w:rsidR=\"00CF677A\" w:rsidRPr=\"00185237\"><w:rPr><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> - Mar 20</w:t></w:r><w:r w:rsidR=\"00CF677A\"><w:rPr><w:szCs w:val=\"18\"/></w:rPr><w:t>XX</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"3166\" w:type=\"pct\"/><w:gridSpan w:val=\"4\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"43899F81\" w14:textId=\"77777777\" w:rsidR=\"005D2E4F\" w:rsidRPr=\"0087760D\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1113972114\"/><w:placeholder><w:docPart w:val=\"3A7269A28217403EA1C6F00C3ABF7F33\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"005D2E4F\" w:rsidRPr=\"0087760D\"><w:t>Office manager,</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"005D2E4F\" w:rsidRPr=\"0087760D\"><w:t xml:space=\"preserve\"> </w:t></w:r><w:sdt><w:sdtPr><w:rPr><w:rStyle w:val=\"Italics\"/></w:rPr><w:id w:val=\"520908204\"/><w:placeholder><w:docPart w:val=\"FF22E153D7EB41C594FA498AB026CBFF\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"005D2E4F\" w:rsidRPr=\"0087760D\"><w:rPr><w:rStyle w:val=\"Italics\"/></w:rPr><w:t>Southridge Video</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"005D2E4F\" w:rsidRPr=\"0087760D\"><w:rPr><w:rStyle w:val=\"Italics\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r></w:p><w:p w14:paraId=\"11B8E44B\" w14:textId=\"77777777\" w:rsidR=\"005D2E4F\" w:rsidRPr=\"00390248\" w:rsidRDefault=\"005D2E4F\" w:rsidP=\"005D2E4F\"/><w:p w14:paraId=\"0AFD6BB6\" w14:textId=\"29703EE6\" w:rsidR=\"00CF677A\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:sdt><w:sdtPr><w:id w:val=\"-972059936\"/><w:placeholder><w:docPart w:val=\"30DA96BB31DF4C299610F43C969398FB\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"005D2E4F\" w:rsidRPr=\"0070176A\"><w:t>Summarize your key responsibilities and accomplishments. Where appropriate, use the language and words you find in the specific job description. Be concise, targeting 3-5</w:t></w:r><w:r w:rsidR=\"005D2E4F\"><w:t xml:space=\"preserve\"> </w:t></w:r><w:r w:rsidR=\"005D2E4F\" w:rsidRPr=\"0070176A\"><w:t>key areas.</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"005D2E4F\"><w:t xml:space=\"preserve\"> </w:t></w:r></w:p></w:tc></w:tr><w:tr w:rsidR=\"005D2E4F\" w:rsidRPr=\"00E8269A\" w14:paraId=\"689E1E58\" w14:textId=\"77777777\" w:rsidTr=\"005D2E4F\"><w:trPr><w:trHeight w:val=\"476\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"1834\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:tcMar><w:top w:w=\"144\" w:type=\"dxa\"/><w:left w:w=\"115\" w:type=\"dxa\"/><w:right w:w=\"115\" w:type=\"dxa\"/></w:tcMar></w:tcPr><w:p w14:paraId=\"7F903606\" w14:textId=\"77777777\" w:rsidR=\"005D2E4F\" w:rsidRDefault=\"005D2E4F\" w:rsidP=\"00CF677A\"/></w:tc><w:tc><w:tcPr><w:tcW w:w=\"3166\" w:type=\"pct\"/><w:gridSpan w:val=\"4\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"5A757F36\" w14:textId=\"77777777\" w:rsidR=\"005D2E4F\" w:rsidRDefault=\"005D2E4F\" w:rsidP=\"005D2E4F\"/></w:tc></w:tr><w:tr w:rsidR=\"005D2E4F\" w:rsidRPr=\"00E8269A\" w14:paraId=\"6273A66A\" w14:textId=\"77777777\" w:rsidTr=\"005D2E4F\"><w:trPr><w:trHeight w:val=\"116\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"1834\" w:type=\"pct\"/><w:tcMar><w:top w:w=\"144\" w:type=\"dxa\"/><w:left w:w=\"115\" w:type=\"dxa\"/><w:right w:w=\"115\" w:type=\"dxa\"/></w:tcMar></w:tcPr><w:p w14:paraId=\"494FDE78\" w14:textId=\"3FBF4F9C\" w:rsidR=\"00C16B77\" w:rsidRPr=\"00212436\" w:rsidRDefault=\"00000000\" w:rsidP=\"00C16B77\"><w:pPr><w:pStyle w:val=\"Subtitle\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1749105601\"/><w:placeholder><w:docPart w:val=\"35220B7850B345FB93092F7D77F9AA88\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C16B77\" w:rsidRPr=\"00212436\"><w:t>E</w:t></w:r><w:r w:rsidR=\"00C16B77\" w:rsidRPr=\"00C16B77\"><w:t>DUCATION</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"18167045\" w14:textId=\"02075031\" w:rsidR=\"00C16B77\" w:rsidRPr=\"0087760D\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1239468820\"/><w:placeholder><w:docPart w:val=\"08F23CB34E5946D297BC6AA1F6FEBC32\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C16B77\" w:rsidRPr=\"0087760D\"><w:t>Sep 20XX - May 20XX</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"2FDDD644\" w14:textId=\"30061E3A\" w:rsidR=\"00C16B77\" w:rsidRPr=\"00C16B77\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-250894766\"/><w:placeholder><w:docPart w:val=\"538226E16D754F81A9D6F905BF939787\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C16B77\" w:rsidRPr=\"00C16B77\"><w:t>A.S. H.R. Management,</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"6524C5F5\" w14:textId=\"1DE84EAB\" w:rsidR=\"005D2E4F\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:pPr><w:pStyle w:val=\"Heading3\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-438526617\"/><w:placeholder><w:docPart w:val=\"76DE279D3C684B7A8C0E211350C888CD\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C16B77\"><w:t>Bellows College</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"1583\" w:type=\"pct\"/></w:tcPr><w:p w14:paraId=\"3D71C52B\" w14:textId=\"77777777\" w:rsidR=\"00C16B77\" w:rsidRPr=\"0087760D\" w:rsidRDefault=\"00000000\" w:rsidP=\"00C16B77\"><w:pPr><w:pStyle w:val=\"Subtitle\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"119269848\"/><w:placeholder><w:docPart w:val=\"9FB9BF7E21E343B5AEAB33FD43C0346D\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C16B77\"><w:t>Skills</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"50A5E53A\" w14:textId=\"39250974\" w:rsidR=\"00C16B77\" w:rsidRPr=\"006E389E\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:sdt><w:sdtPr><w:id w:val=\"-739862450\"/><w:placeholder><w:docPart w:val=\"609F0F25424643FF8FEA665B5C9D8D66\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C16B77\" w:rsidRPr=\"006E389E\"><w:t>Data analysis</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"180DADA7\" w14:textId=\"67281F83\" w:rsidR=\"00C16B77\" w:rsidRPr=\"006E389E\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:sdt><w:sdtPr><w:id w:val=\"33158725\"/><w:placeholder><w:docPart w:val=\"E94F407F88634423913D43CA3FFA8948\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C16B77\" w:rsidRPr=\"006E389E\"><w:t>Project management</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"577BFA67\" w14:textId=\"26FBBDF3\" w:rsidR=\"00C16B77\" w:rsidRPr=\"006E389E\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:sdt><w:sdtPr><w:id w:val=\"-2138863096\"/><w:placeholder><w:docPart w:val=\"BEE9A97F54894BC6A41276D64FCE9731\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C16B77\" w:rsidRPr=\"006E389E\"><w:t>Communication</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"27652498\" w14:textId=\"7657F0D0\" w:rsidR=\"00C16B77\" w:rsidRPr=\"006E389E\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:sdt><w:sdtPr><w:id w:val=\"-766002345\"/><w:placeholder><w:docPart w:val=\"B09C8188A6E240B0B123207FB01E2576\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C16B77\" w:rsidRPr=\"006E389E\"><w:t>Organization</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"0D10D1DC\" w14:textId=\"330B67EE\" w:rsidR=\"005D2E4F\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:sdt><w:sdtPr><w:id w:val=\"-1040737927\"/><w:placeholder><w:docPart w:val=\"B9BFD2E043684B3FA945AD1BE258A717\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C16B77\" w:rsidRPr=\"006E389E\"><w:t>Problem solving</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"1583\" w:type=\"pct\"/><w:gridSpan w:val=\"3\"/></w:tcPr><w:p w14:paraId=\"1DC1AD94\" w14:textId=\"11808A68\" w:rsidR=\"00C16B77\" w:rsidRPr=\"00496677\" w:rsidRDefault=\"00000000\" w:rsidP=\"00C16B77\"><w:pPr><w:pStyle w:val=\"Subtitle\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1570565086\"/><w:placeholder><w:docPart w:val=\"38966C4C9145456A98E127DB75FE7A53\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C16B77\" w:rsidRPr=\"00496677\"><w:t>INTERESTS</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"4ECB25BD\" w14:textId=\"1754DC57\" w:rsidR=\"005D2E4F\" w:rsidRDefault=\"00000000\" w:rsidP=\"0087760D\"><w:sdt><w:sdtPr><w:id w:val=\"-264223532\"/><w:placeholder><w:docPart w:val=\"38586C3051264152AD21114A42BFD5FF\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C16B77\" w:rsidRPr=\"00496677\"><w:t>This section is optional but can showcase the unique, intriguing, even fun side of who you are.</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr></w:tbl>",
+        "para_ids": [
+          "para_2",
+          "para_3",
+          "para_4",
+          "para_5",
+          "para_6",
+          "para_7",
+          "para_8",
+          "para_9",
+          "para_10",
+          "para_11",
+          "para_12",
+          "para_22",
+          "para_23",
+          "para_24",
+          "para_25",
+          "para_26",
+          "para_27",
+          "para_28",
+          "para_29",
+          "para_30",
+          "para_31",
+          "para_32",
+          "para_33",
+          "para_34",
+          "para_35",
+          "para_36",
+          "para_37",
+          "para_38",
+          "para_39",
+          "para_40",
+          "para_41",
+          "para_42",
+          "para_43",
+          "para_44",
+          "para_45",
+          "para_46",
+          "para_47",
+          "para_48",
+          "para_49"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_50",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"6C694429\" w14:textId=\"333EF4F9\" w:rsidR=\"00340C75\" w:rsidRPr=\"00F5689F\" w:rsidRDefault=\"00340C75\" w:rsidP=\"005E408E\"/>"
+      }
+    ]
+  }
+}
