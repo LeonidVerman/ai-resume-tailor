@@ -78,7 +78,13 @@ def _patch_model():
 def _complete_onboarding(client) -> None:
     client.put(
         "/api/v1/candidate-profile",
-        json={"profile": {"candidate": {"name": "Test User"}}, "profile_version": "1"},
+        json={
+            "profile": {
+                "candidate": {"name": "Test User"},
+                "contacts": {"email": "testuser@example.com", "phone": "+1 604 000 0000"},
+            },
+            "profile_version": "1",
+        },
     )
     client.post("/api/v1/candidate-profile/complete-onboarding")
 
