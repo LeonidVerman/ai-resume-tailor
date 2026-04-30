@@ -112,7 +112,7 @@ _TWO_COLUMN_PDFS: frozenset[str] = frozenset({
 # PDFs with letter-spaced headings that PyMuPDF reads as spaced characters
 # (e.g. "E D U C A T I O N" instead of "Education") — known parsing limitation.
 _LETTER_SPACED_PDFS: frozenset[str] = frozenset({
-    "Resume-Sample-1-Software-Engineer.pdf",
+    "40-Resume-Sample-1-Software-Engineer.pdf",
 })
 
 # DOCX templates with non-standard two-column or interleaved layouts where
@@ -209,11 +209,35 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "into a pipe-separated string, changing paragraph text.  Real LLM pipeline "
         "unaffected."
     ),
-    "Valerii_Konchin_CV.docx": (
+    "34-Valerii_Konchin_CV.docx": (
         "Two-column sidebar layout: skills and experience content are interleaved "
         "in document order so the parser cannot correctly separate them into "
         "distinct section bodies.  Section structure (PROFILE, EDUCATION, etc.) "
         "is parsed correctly; only the body-para ordering cannot round-trip."
+    ),
+    "35-Gleb_Zernov_Resume.docx": (
+        "Header paragraph with mc:AlternateContent: name text appears in both "
+        "Choice and Fallback elements; the renderer writes both copies (Choice "
+        "via layout-block XML proto + Fallback via para rebuild), doubling the "
+        "name text.  Real LLM pipeline unaffected (header paras are not modified)."
+    ),
+    "36-Asia_Dalakova.docx": (
+        "Multi-role layout with interleaved tech-stack paragraphs: two adjacent "
+        "roles share a dense block of technology bullet lines; the layout-block "
+        "para-id mapping assigns bullets from role 2 into role 1 slots and vice "
+        "versa, causing 38 text-position mismatches.  Real LLM pipeline unaffected."
+    ),
+    "37-Oli Treadwell - Senior Software Engineer Resume - 2026-03-06.docx": (
+        "Dash-prefixed bullet format: each bullet starts with '- '; the identity "
+        "serializer strips the leading dash when re-emitting bullet text, and role "
+        "ordering shifts because the serializer combines role.header with header_extra "
+        "via '|'.  Real LLM pipeline (which rewrites bullets) unaffected."
+    ),
+    "39-backend-developer-1606703830.docx": (
+        "Numeric rating prefix artefact: skill/bullet paragraphs carry a rating "
+        "glyph run (e.g. '77') that is repeated twice in the rendered XML — once "
+        "from the layout-block XML proto and once from the para rebuild — doubling "
+        "the prefix string.  Real LLM pipeline unaffected."
     ),
     "7-Template2.docx": (
         "Placeholder-year role format ('January 20xx - Current'): date lines use "
@@ -253,12 +277,31 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
 # Distinct from _TWO_COLUMN_PDFS / _LETTER_SPACED_PDFS which have structural
 # layout reasons; these have content-level issues.
 _KNOWN_BAD_PDFS: dict[str, str] = {
-    "backend-developer-1606703830.pdf": (
+    "39-backend-developer-1606703830.pdf": (
         "Qwikresume watermarked template: the PDF footer ('Powered by Qwikresume "
         "/ www.qwikresume.com') and an 'ACHIEVEMENTS' block are embedded in the "
         "Skills section body.  The achievement sentences are dropped by the skills "
         "sanitizer (full-sentence filter), so the footer text shifts into their "
         "positions in the rendered DOCX."
+    ),
+    "34-Valerii_Konchin_CV.pdf": (
+        "Two-column sidebar PDF: LibreOffice PDF→DOCX conversion produces a "
+        "multi-section layout where roles from the first employer are inserted "
+        "between the second employer's bullets, causing massive paragraph reordering "
+        "(158→162 paras, 129 diffs).  Same structural issue as 34-Valerii_Konchin_CV.docx."
+    ),
+    "36-Asia_Dalakova.pdf": (
+        "Multi-role PDF with expanded bullet blocks: LibreOffice conversion expands "
+        "condensed bullet runs into individual paragraphs (143→205 paras), and the "
+        "layout-block mapping assigns bullets across roles incorrectly.  Same class "
+        "of issue as 36-Asia_Dalakova.docx."
+    ),
+    "38-senior-software-engineer-resume-example.pdf": (
+        "Separate-line role header format: job title and company/date appear on "
+        "separate paragraphs in the PDF IR; the identity serializer merges them "
+        "into a single pipe-delimited role header, shifting all subsequent "
+        "paragraphs by one and causing a para-count mismatch (59→58).  "
+        "Real LLM pipeline unaffected."
     ),
     "2-Leonid_Verman_Resume_2.pdf": (
         "LibreOffice PDF→DOCX renders a table-based layout where name and summary "
