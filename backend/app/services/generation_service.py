@@ -19,6 +19,7 @@ Rendering to DOCX/PDF and storage upload are handled by separate services
 from __future__ import annotations
 
 import contextlib
+import re as _re
 import logging
 from datetime import datetime, timezone
 
@@ -104,6 +105,10 @@ class GenerationService:
 
         meta = jd.metadata_jsonb or {}
 
+        # Validate contacts before generation (email + phone required).
+        if profile and profile.profile_jsonb:
+            _validate_contacts_for_generation(profile.profile_jsonb.get("contacts") or {})
+
         # ── Create run record ──────────────────────────────────────────────
         generation_mode = (request.generation_mode or "conservative") if hasattr(request, "generation_mode") else "conservative"
 
@@ -150,16 +155,27 @@ class GenerationService:
 
         try:
             # ── Persist tailored document ──────────────────────────────────
-            # Strip null bytes (\u0000) which PostgreSQL rejects in text/JSONB fields.
-            resume_text = result.resume.replace("\x00", "") if result.resume else None
-            cover_letter_text = result.cover_letter.replace("\x00", "") if result.cover_letter else None
-
-            template_original_filename = (resume.resume_jsonb or {}).get("original_filename", "")
+            # Resolve candidate name from profile (fallback: resume metadata).
             candidate_name = ""
             if profile and profile.profile_jsonb:
                 candidate_name = (profile.profile_jsonb.get("candidate") or {}).get("name", "")
             if not candidate_name:
                 candidate_name = (resume.resume_jsonb or {}).get("name", "")
+
+            # Assemble cover letter deterministically from LLM body + profile contacts.
+            if result.cover_letter and candidate_name:
+                contacts_raw = (profile.profile_jsonb or {}).get("contacts", {}) if profile and profile.profile_jsonb else {}
+                result.cover_letter = build_cover_letter(
+                    candidate_name=candidate_name,
+                    contacts=contacts_raw,
+                    cover_letter_body=result.cover_letter,
+                )
+
+            # Strip null bytes (\u0000) which PostgreSQL rejects in text/JSONB fields.
+            resume_text = result.resume.replace("\x00", "") if result.resume else None
+            cover_letter_text = result.cover_letter.replace("\x00", "") if result.cover_letter else None
+
+            template_original_filename = (resume.resume_jsonb or {}).get("original_filename", "")
             tailored_doc = self._doc_repo.create(
                 user_id=user_id,
                 generation_run_id=run.id,
@@ -509,3 +525,118 @@ def _extract_usage_from_messages(messages) -> tuple[int | None, int | None, floa
     except Exception:
         pass
     return token_input, token_output, None
+
+
+# ---------------------------------------------------------------------------
+# Cover letter assembly (Part 4 / Part 6 of cover letter spec)
+# ---------------------------------------------------------------------------
+
+_SINCERELY_RE = _re.compile(r"^sincerely[,.]?\s*$", _re.IGNORECASE | _re.MULTILINE)
+_DEAR_RE = _re.compile(r"^dear\b", _re.IGNORECASE)
+
+# Patterns that should never appear in the LLM-generated body.
+_BODY_FORBIDDEN_RE = _re.compile(
+    r"sincerely|leonid verman",
+    _re.IGNORECASE,
+)
+_CONTACT_IN_BODY_RE = _re.compile(
+    r"\d{3}[.\-\s]\d{3}[.\-\s]\d{4}|"   # phone pattern
+    r"[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}|"  # email pattern
+    r"linkedin\.com/in/",
+    _re.IGNORECASE,
+)
+
+
+def _extract_cover_letter_body(text: str) -> str:
+    """Extract Dear-through-body from LLM output, stripping any heading/signature."""
+    lines = text.strip().splitlines()
+    dear_idx = next(
+        (i for i, l in enumerate(lines) if _DEAR_RE.match(l.strip())), 0
+    )
+    sincerely_idx = next(
+        (i for i, l in enumerate(lines) if _SINCERELY_RE.match(l.strip())),
+        len(lines),
+    )
+    return "\n".join(lines[dear_idx:sincerely_idx]).strip()
+
+
+def _validate_contacts_for_generation(contacts: dict) -> None:
+    """Raise ValueError when required contact fields are missing."""
+    from fastapi import HTTPException
+    from fastapi import status as _status
+    missing = []
+    if not (contacts.get("email") or "").strip():
+        missing.append("contacts.email")
+    if not (contacts.get("phone") or "").strip():
+        missing.append("contacts.phone")
+    if missing:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"Candidate profile is missing required contact fields: {', '.join(missing)}. "
+                "Please update your profile before generating."
+            ),
+        )
+
+
+def _sanitize_cover_letter_body(body: str, candidate_name: str) -> str:
+    """Warn and strip forbidden content from the LLM cover letter body."""
+    issues = []
+    if _BODY_FORBIDDEN_RE.search(body):
+        issues.append("forbidden keyword (Sincerely / legacy name)")
+    if _CONTACT_IN_BODY_RE.search(body):
+        issues.append("contact info leak (phone/email/linkedin)")
+    if issues:
+        logger.warning("COVER_LETTER_SANITIZED issues=%s", issues)
+    return body
+
+
+def build_cover_letter(
+    candidate_name: str,
+    contacts: dict,
+    cover_letter_body: str,
+) -> str:
+    """Assemble the final cover letter from deterministic header + LLM body.
+
+    Header format:
+        <Name>
+        <phone> | <email> [| <linkedin>]   (only non-empty values)
+
+        <Date>
+
+    Body: extracted from LLM output (Dear line through last body paragraph).
+    Closing: deterministic Sincerely / <Name>.
+    """
+    from datetime import date as _date
+
+    body = _extract_cover_letter_body(cover_letter_body)
+    body = _sanitize_cover_letter_body(body, candidate_name)
+
+    # Contact line: include only non-empty fields
+    contact_parts = []
+    phone = (contacts.get("phone") or "").strip()
+    email = (contacts.get("email") or "").strip()
+    linkedin = (contacts.get("linkedin_url") or "").strip()
+    if phone:
+        contact_parts.append(phone)
+    if email:
+        contact_parts.append(email)
+    if linkedin:
+        contact_parts.append(linkedin)
+    contact_line = " | ".join(contact_parts)
+
+    d = _date.today()
+    current_date = f"{d.strftime('%B')} {d.day}, {d.year}"
+
+    parts = [candidate_name]
+    if contact_line:
+        parts.append(contact_line)
+    parts.append("")
+    parts.append(current_date)
+    parts.append("")
+    parts.append(body)
+    parts.append("")
+    parts.append("Sincerely,")
+    parts.append(candidate_name)
+
+    return "\n".join(parts)
