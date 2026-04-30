@@ -1,0 +1,275 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Experience",
+      "paragraphs": [
+        {
+          "para_id": "para_45",
+          "text": "\nExperience",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_83",
+          "text": "July 2018 –",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_84",
+          "text": "October 2019",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_85",
+          "text": "Full-time",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_87",
+          "text": "July 2017 –",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_88",
+          "text": "March 2018",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_89",
+          "text": "Full-time",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_93",
+          "text": "2014 – 2018",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_94",
+          "text": "2018 – 2019",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_97",
+          "text": "\nSoftware Engineer (Junior/Middle), FitechSource, St. Petersburg, Russia",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_98",
+          "text": "Highlights: Prior to internal transfer to CardinalChain I was working on the same project in the Car-dinalChain’s child company.Worked as a sole developer alongside the project manager. Responsible for maintaining 3 core currencies (+ forks), added support of 2 more currencies. Re-wrote parts of the code, reducing the number of supported versions from 6 to just 2.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_99",
+          "text": "Associate software engineer, ITIVITI, St. Petersburg",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_100",
+          "text": "Highlights: Was working on an internal testing tool (market simulator). Was contributing to the tool’s core logic, as well as connectivity layer, that was responsible for simulating protocols of various exchanges (e.g. Nasdaq, LSE, etc.), Simulator was used in the testing pipeline for integration and performance tests. Increased exchange coverage by adding 2 new protocols.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_83"
+          ],
+          "meta_para_ids": [
+            "para_84"
+          ],
+          "bullet_para_ids": [
+            "para_85"
+          ]
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_87"
+          ],
+          "meta_para_ids": [
+            "para_88"
+          ],
+          "bullet_para_ids": [
+            "para_89"
+          ]
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_93"
+          ],
+          "meta_para_ids": [
+            "para_94"
+          ],
+          "bullet_para_ids": [
+            "para_97",
+            "para_98",
+            "para_99",
+            "para_100"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Education",
+      "paragraphs": [
+        {
+          "para_id": "para_101",
+          "text": "Education",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_102",
+          "text": "Bachelor’s degree in applied mathematics and computer science, ITMO University, Saint Petersburg, Russia, Information Technologies and Programming Faculty, Computer Technology Department",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Skills (used in professional projects)",
+      "paragraphs": [
+        {
+          "para_id": "para_103",
+          "text": "Skills (used in professional projects)",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_104",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_105",
+          "text": "Primary Go, Rust, Java, Kotlin, Typescript, SQL, Bash Secondary Solidity, Python, AWS/Azure/GCP, AWS CDK",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_106",
+          "text": "Tools Spring, git, MySQL PG/SQL BigQuery, Kafka, Docker, Maven/Gradle, NodeJS, React, Claude, Gemini",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Other skills (used in personal projects/used a little in professional projects)",
+      "paragraphs": [
+        {
+          "para_id": "para_107",
+          "text": " Other skills (used in personal projects/used a little in professional projects)",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_108",
+          "text": "Extensive Hardhat",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_109",
+          "text": "Experienced C#, Koin, Ktor, Recoil, GatsbyJS, Grommet, Swift, SwiftUI, Mocha, SST, Expo, Nix Familiar Kubernetes, Terraform, Flutter, Ruby, Haskell, C++, PyTorch, Skala, NLP",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Projects",
+      "paragraphs": [
+        {
+          "para_id": "para_110",
+          "text": " Projects",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_111",
+          "text": "a link Scaffold Registry Indexer, Stellar smart contract indexer, 2026",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_112",
+          "text": "f Goldsky pipeline using SQL/AWS, Serverless backend (and a bit of Front End) for indexing smart contract events.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_113",
+          "text": "a link Scaffold Stellar, Stellar smart contract developer tool, 2025-2026",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_114",
+          "text": "f Support Soroban example contracts import into scaffold project + clear tech debt on the team request, added various smaller commands",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_115",
+          "text": "a link Cargo, Rust build tool, 2024",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_116",
+          "text": "f Added new flag --lockfile-path supported by all manifest commands, fixing several bugs in upstream applications.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_117",
+          "text": "f Working on stabilizing cargo-script features.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_118",
+          "text": "a link LastFm scrobbler, LastFm Scrobbler for VR game BeatSaber, 2021",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_119",
+          "text": "f Mod for BeatSaber with a UI for configuration and authentication (in-game), as well as logic for scrobbling (submitting played track data to Last.fm servers) beatmaps user plays in the BeatSaber",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_120",
+          "text": "a link Apache Incubator – NLPCraft, API to convert natural language into actions, 2020",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_121",
+          "text": "f Auto-enricher of the model using Bert masked word prediction and FastText synonyms filter and an example of using the NLPCraft server by adding a simple Minecraft mod, that allows to write console commands using natural (English) language.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_122",
+          "text": "a link Bachelor Thesis, Learning similarity of social network communities with embeddings application, 2019",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_123",
+          "text": "f Source code of my bachelor thesis algorithm implementation passed with an Excellent grade (A).",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_5_role_1",
+          "header_para_ids": [
+            "para_110"
+          ],
+          "meta_para_ids": [
+            "para_111",
+            "para_113",
+            "para_115",
+            "para_118"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    }
+  ]
+}

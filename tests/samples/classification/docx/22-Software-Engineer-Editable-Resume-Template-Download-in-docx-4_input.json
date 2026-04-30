@@ -1,0 +1,356 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "About Me",
+      "paragraphs": [
+        {
+          "para_id": "para_7",
+          "text": "About Me",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_8",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_9",
+          "text": "I have a background as Software Engineering experienced in maintaining and developing high performance data platform, integrating data from a variety of internal and external sources, in order to support data and analytics activities functions business.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_10",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_11",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Education",
+      "paragraphs": [
+        {
+          "para_id": "para_12",
+          "text": "Education",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_13",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_14",
+          "text": "(2005-2009)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_15",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_16",
+          "text": "INGOUDE UNIVERSITY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_17",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_18",
+          "text": "Bachelor of Software Engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_19",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_20",
+          "text": "GPA : 3.6",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_21",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Contact",
+      "paragraphs": [
+        {
+          "para_id": "para_22",
+          "text": "Contact",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_23",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_24",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_25",
+          "text": "+123-456-7890",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_27",
+          "text": "hello@techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_28",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_29",
+          "text": "www.techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_30",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_31",
+          "text": "123 Anywhere Street., Any",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_32",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_33",
+          "text": "City",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_34",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_35",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Skills",
+      "paragraphs": [
+        {
+          "para_id": "para_36",
+          "text": "Skills",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_37",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Prior experience with AWS is",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_39",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_40",
+          "text": "preferred.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_41",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_42",
+          "text": "Prior experience with Docker or other virtualization technologies. Prior experience with highly available database technologies. Excellent analytical skills and ability to ramp up quickly on new tools/technologies.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_43",
+          "text": "\n",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_44",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_45",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_46",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_47",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_48",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_49",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_50",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_51",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_52",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_53",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_54",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Experiences",
+      "paragraphs": [
+        {
+          "para_id": "para_55",
+          "text": "Experiences",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_71",
+          "text": "Ginyard International Co.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_69",
+          "text": "(2010-2013)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_75",
+          "text": "Develop features that improve the team’s ability to deliver reliability, velocity, and efficiency to the customer when managing databases, both on-premise and in the cloud.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_77",
+          "text": "Contribute to code reviews along with design and architecture reviews. Collaborate with Technical lead on team initiative(s) to deliver on quarterly objectives",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_73",
+          "text": "RESPONSIBLE FOR NETWORK AND SOFTWARE",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_80",
+          "text": "(2014-Now)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_82",
+          "text": "Wardiere Inc.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_84",
+          "text": "SOFTWARE ENGINEERING",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_86",
+          "text": "Develop features that improve the team’s ability to deliver reliability, velocity, and efficiency to the customer when managing databases, both on-premise and in the cloud.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_88",
+          "text": "Use Infrastructure As Code tools and techniques to help product teams with migration templates from on-prem database technologies to AWS. During work-hours DFR rotation week (once every 6 weeks), provide customer service and support to our engineering teams on Slack. There is no Pagerduty rotation as part of DFR week.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_71"
+          ],
+          "meta_para_ids": [
+            "para_69",
+            "para_75",
+            "para_77",
+            "para_73",
+            "para_80"
+          ],
+          "bullet_para_ids": [
+            "para_82",
+            "para_84",
+            "para_86",
+            "para_88"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,427 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_9",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "SKILLS",
+      "paragraphs": [
+        {
+          "para_id": "para_10",
+          "text": "SKILLS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_11",
+          "text": "Fauget  University",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_12",
+          "text": "Borcelle  High",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_13",
+          "text": "School",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_14",
+          "text": "Databases",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_15",
+          "text": "Computer Science",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_16",
+          "text": "2010-2014",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "CERTIFICATION",
+      "paragraphs": [
+        {
+          "para_id": "para_17",
+          "text": "CERTIFICATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_18",
+          "text": "Liceria & Co.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_19",
+          "text": "Web Design &",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_20",
+          "text": "Development",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_21",
+          "text": "2019",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_22",
+          "text": "123 Anywhere St., Any",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_23",
+          "text": "City 2008-2011",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_24",
+          "text": "Fauget  Company",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_25",
+          "text": "Web Design &",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Development",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "2021",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_28",
+          "text": "Networking basics",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_29",
+          "text": "Operating Systems",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_30",
+          "text": "Cross-platform software",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_31",
+          "text": "Encryption",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_32",
+          "text": "Unit testing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_33",
+          "text": "Integration testing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_34",
+          "text": "System testing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_35",
+          "text": "Critical Thinking",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Time management",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_3_role_1",
+          "header_para_ids": [
+            "para_17"
+          ],
+          "meta_para_ids": [
+            "para_21",
+            "para_23",
+            "para_27"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "WORK EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_37",
+          "text": "WORK EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_64",
+          "text": "Web Developer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_65",
+          "text": "Liceria & Co. / 2019 - Present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_66",
+          "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_67",
+          "text": "Praesent erat lacus, condimentum quis hendrerit at,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_68",
+          "text": "convallis ac quam. Nam faucibus quis dui vel mollis. Cras",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_69",
+          "text": "tincidunt ligula nec nisi vulputate ornare.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_70",
+          "text": "Web Designer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_71",
+          "text": "Borcelle Company / 2016-2018",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_72",
+          "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_73",
+          "text": "Praesent erat lacus, condimentum quis hendrerit at,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_74",
+          "text": "convallis ac quam. Nam faucibus quis dui vel mollis. Cras",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_75",
+          "text": "tincidunt ligula nec nisi vulputate ornare.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_76",
+          "text": "Web Development  Intern",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_77",
+          "text": "Fauget / 2014-2015",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_78",
+          "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_79",
+          "text": "Praesent erat lacus, condimentum quis hendrerit at,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_80",
+          "text": "convallis ac quam. Nam faucibus quis dui vel mollis. Cras",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_81",
+          "text": "tincidunt ligula nec nisi",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_82",
+          "text": "vulputate ornare.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_83",
+          "text": "COURSE",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_84",
+          "text": "Borcelle Tech",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_85",
+          "text": "Web Design & Development",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_86",
+          "text": "2019",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_87",
+          "text": "Fauget  Corp",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_88",
+          "text": "Web Design & Development",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_89",
+          "text": "2020",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_64"
+          ],
+          "meta_para_ids": [
+            "para_65",
+            "para_66",
+            "para_67",
+            "para_68",
+            "para_69"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_70"
+          ],
+          "meta_para_ids": [
+            "para_71",
+            "para_72",
+            "para_73",
+            "para_74",
+            "para_75"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_76"
+          ],
+          "meta_para_ids": [
+            "para_77",
+            "para_78",
+            "para_79",
+            "para_80",
+            "para_81",
+            "para_82",
+            "para_83",
+            "para_84"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_4",
+          "header_para_ids": [
+            "para_85"
+          ],
+          "meta_para_ids": [
+            "para_86",
+            "para_87"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_5",
+          "header_para_ids": [
+            "para_88"
+          ],
+          "meta_para_ids": [
+            "para_89"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "AWARDS",
+      "paragraphs": [
+        {
+          "para_id": "para_90",
+          "text": "AWARDS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_91",
+          "text": "Liceria & Co.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_92",
+          "text": "Best Web Designer and Developer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_93",
+          "text": "08/2021",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_5_role_1",
+          "header_para_ids": [
+            "para_90"
+          ],
+          "meta_para_ids": [
+            "para_93"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    }
+  ]
+}

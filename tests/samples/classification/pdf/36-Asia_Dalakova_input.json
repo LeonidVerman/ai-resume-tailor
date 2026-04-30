@@ -1,0 +1,925 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "SUMMARY",
+      "paragraphs": [
+        {
+          "para_id": "para_5",
+          "text": "SUMMARY",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_6",
+          "text": "Software engineer with 7 years of experience in development of complex software",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_7",
+          "text": "applications and a master's degree in Computer Science. Certified AWS developer.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_8",
+          "text": "As a Senior Engineer, I drive the full development lifecycle — including planning, design,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "implementation, testing, and deployment.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_10",
+          "text": "EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_115",
+          "text": "T-Systems Iberia – Reus, Catalonia, Spain",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_116",
+          "text": "Senior Software Engineer (September 2023 – Present)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_117",
+          "text": "●​  Develop high-loaded applications for the network monitoring systems, using Java",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_118",
+          "text": "applications",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_119",
+          "text": "●​  Design and implement microservice architecture",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_120",
+          "text": "●​  Increase throughput using concurrent applications",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_121",
+          "text": "●​  Using asynchronous programming tools: event-based flows, reactive programming, task",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_122",
+          "text": "queues, message queue (Kafka)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_123",
+          "text": "●​  Cloudification of legacy Java applications",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_124",
+          "text": "●​  Integrations with external systems",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_125",
+          "text": "●​  Implementation of UI",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_126",
+          "text": "●​  Creating and configuring databases",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_127",
+          "text": "●​  Deploy applications to cloud using GitOps approach",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_128",
+          "text": "●​  Containerization and orchestration of applications using Kubernetes and Helm",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_129",
+          "text": "●​  Writing API documentation",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_130",
+          "text": "Key technologies: Java 21, Spring Boot,Project Reactor, Node.js, PrimeVue.js, TypeScript,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_131",
+          "text": "Prometheus, GitLab, Kafka, Docker, Kubernetes, Helm, Rancher, Flux, SOPS, cloud",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_132",
+          "text": "systems.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_133",
+          "text": "GlobalLogic – Krakow, Poland",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_134",
+          "text": "Full Stack Software Engineer (January 2022 – September 2023)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_135",
+          "text": "Developed Java applications, based on event-driven microservices architecture (SAGA).",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_136",
+          "text": "OTA project",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_137",
+          "text": "●​ Application level: Java 11, Spring Boot",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_138",
+          "text": "●​ Persistence level: Postresql, Hibernate, JPA, Spring Data",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_139",
+          "text": "●​  Containers: Amazon Elastic Kubernetes Service (EKS), Kubernetes, Docker",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_140",
+          "text": "●​  Storage of large files: AWS S3",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_141",
+          "text": "●​  DevOps: GitLab, Jenkins",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_142",
+          "text": "●​  ELK Stack - log monitoring",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_143",
+          "text": "●​  Kafka - asynchronous communication between internal services (Amazon MSK)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_144",
+          "text": "●​  Redis Streams - asynchronous communication between internal services (Spring",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_145",
+          "text": "Data Redis)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_146",
+          "text": "●​  Integration with other service via GraphQL API and REST API",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_147",
+          "text": "●​  Mqtt - send messages (notifications) to vehicles (eclipse paho library)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_148",
+          "text": "●​  Mqtt - receive messages from vehicles (eclipse paho library)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_149",
+          "text": "●​  Security - Keycloak, SSO, OAuth2 (Spring Security)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_150",
+          "text": "Vehicle simulation project",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_151",
+          "text": "●​ Application level: Java 11, Spring Boot",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_152",
+          "text": "●​ Containers: Amazon Elastic Kubernetes Service (EKS), Kubernetes, Docker",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_153",
+          "text": "●​  Persistence level: Spring Data, AWS RDS",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_154",
+          "text": "●​  Storage of large files AWS S3 (AWS SDK library)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_155",
+          "text": "●​  ELK Stack - log monitoring",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_156",
+          "text": "●​  DevOps: GitLab, Jenkins",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_157",
+          "text": "●​  LWM2M client (implementation based on open source Leshan project)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_158",
+          "text": "●​  Integration with other service ( REST, FeignClient)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_159",
+          "text": "●​  Mqtt client - producer (eclipse paho library)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_160",
+          "text": "●​  Implementation of encoder library (message encoder according to given protocol",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_161",
+          "text": "specification)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_162",
+          "text": "●​  Kafka - asynchronous communication between internal services",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_163",
+          "text": "●​  Security - Keycloak, SSO, OAuth2 (Spring Security)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_164",
+          "text": "Contribution to the internal project - a self service portal which holds the information on",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_165",
+          "text": "technical growth and helps manage it. Tech stack: Java 11, Spring Boot, Mongo DB, React.js,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_166",
+          "text": "Jenkins.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_167",
+          "text": "Mentoring junior specialists.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_168",
+          "text": "Masterdata – Moscow, Russia",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_169",
+          "text": "Full Stack Software Engineer (March 2021 – December 2021)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_170",
+          "text": "●​ Developed retail management systems for e-commerce, using Java applications",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_171",
+          "text": "●​ Used SpringBoot and domain-driven approach to build services",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_172",
+          "text": "●​ Implemented REST APIs for communication between services",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_173",
+          "text": "●​ Implemented concurrent tasks to handle huge amount of events",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_174",
+          "text": "●​ Deploy applications on SAP Cloud",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_175",
+          "text": "●​ Implemented frontend tasks",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_176",
+          "text": "●​ Collaborations with different teams",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_177",
+          "text": "●​  Writing API documentation",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_178",
+          "text": "Infrastructure: SAP Cloud",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_179",
+          "text": "DevOps tools: GitLab, Jenkins, Docker",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_180",
+          "text": "Application level: Java 8-11, Spring Boot, Kotlin, concurrency, REST services, Spring Security",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_181",
+          "text": "Persistence layer: Spring data, PostgreSql",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_182",
+          "text": "Monitoring and metrics: Prometheus, Grafana, Spring Cloud Eureka",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_183",
+          "text": "Rostelecom – St. Petersburg, Russia",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_184",
+          "text": "Full Stack Software Engineer (August 2020 – March 2021)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_185",
+          "text": "●​ Developed and maintained full-stack Java applications for online medical systems in",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_186",
+          "text": "public healthcare,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_187",
+          "text": "●​ Implemented monolithic architecture services and JavaScript-based frontend",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_188",
+          "text": "●​ Configured MySQL database",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_189",
+          "text": "●​ Implemented RESTful APIs for communication with frontend",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_190",
+          "text": "●​ Implemented frontend tasks for UI",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_191",
+          "text": "●​ Implemented Junit tests",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_192",
+          "text": "Key technologies: Java 11, Spring Boot, Hibernate, MySQL, Jenkins, Node.js",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_193",
+          "text": "IGA Technologies – Moscow, Russia",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_194",
+          "text": "Java Developer (September 2019 – July 2020)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_195",
+          "text": "Developed backend applications for managing nuclear power plant components, ensuring",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_196",
+          "text": "accurate lifecycle management based on defined configurations:",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_197",
+          "text": "●​ Implementation monolithic architecture based on Java EE and SpringBoot services",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_198",
+          "text": "●​ Implementation of graph-type relationship entities in Java",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_199",
+          "text": "●​ Implementation of REST APIs",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_200",
+          "text": "●​ Integration with Oracle database",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_201",
+          "text": "●​ Integration with UI",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_202",
+          "text": "●​ Wrote Junit tests",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_203",
+          "text": "●​ Implemented Swagger documentation",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_204",
+          "text": "Technologies: Java 8, Java EE, JUnit, Moc Spring Framework, JS, Hibernate, Oracle, REST,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_205",
+          "text": "HTTP, SSL,  Linux",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_206",
+          "text": "Sberbank – Saint-Petersburg, Russia",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_207",
+          "text": "Junior Java Developer (March 2019 – September 2019)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_208",
+          "text": "●​ Developed and maintained backend services for banking applications",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_209",
+          "text": "●​ Implemented Java services in monolithic architecture application",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_210",
+          "text": "●​ Implementation of services for generation and processing Excel, PDF and archive",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_211",
+          "text": "files",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_212",
+          "text": "●​ Implementation of REST services",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_213",
+          "text": "●​ Integration with JavaScript UI",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_214",
+          "text": "●​ Implementation of SQL tasks",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_215",
+          "text": "●​ Configuration of Oracle database",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_216",
+          "text": "●​ Implementation of JUnit tests",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_217",
+          "text": "●​ Deployment applications to WebSphere",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_218",
+          "text": "Technologies: Java 8, Spring, Hibernate, REST API, Oracle SQL, Jenkins.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_115"
+          ],
+          "meta_para_ids": [
+            "para_116",
+            "para_117",
+            "para_118",
+            "para_119",
+            "para_120",
+            "para_121",
+            "para_122",
+            "para_123",
+            "para_124",
+            "para_125",
+            "para_126",
+            "para_127",
+            "para_128",
+            "para_129",
+            "para_130",
+            "para_131",
+            "para_132"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_133"
+          ],
+          "meta_para_ids": [
+            "para_134",
+            "para_135",
+            "para_136",
+            "para_137",
+            "para_138",
+            "para_139",
+            "para_140",
+            "para_141",
+            "para_142",
+            "para_143",
+            "para_144",
+            "para_145",
+            "para_146",
+            "para_147",
+            "para_148",
+            "para_149",
+            "para_150",
+            "para_151",
+            "para_152",
+            "para_153",
+            "para_154",
+            "para_155",
+            "para_156",
+            "para_157",
+            "para_158",
+            "para_159",
+            "para_160",
+            "para_161",
+            "para_162",
+            "para_163",
+            "para_164",
+            "para_165",
+            "para_166",
+            "para_167"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_168"
+          ],
+          "meta_para_ids": [
+            "para_169",
+            "para_170",
+            "para_171",
+            "para_172",
+            "para_173",
+            "para_174",
+            "para_175",
+            "para_176",
+            "para_177",
+            "para_178",
+            "para_179",
+            "para_180",
+            "para_181",
+            "para_182"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_4",
+          "header_para_ids": [
+            "para_183"
+          ],
+          "meta_para_ids": [
+            "para_184",
+            "para_185",
+            "para_186",
+            "para_187",
+            "para_188",
+            "para_189",
+            "para_190",
+            "para_191",
+            "para_192"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_5",
+          "header_para_ids": [
+            "para_193"
+          ],
+          "meta_para_ids": [
+            "para_194",
+            "para_195",
+            "para_196",
+            "para_197",
+            "para_198",
+            "para_199",
+            "para_200",
+            "para_201",
+            "para_202",
+            "para_203",
+            "para_204",
+            "para_205"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_6",
+          "header_para_ids": [
+            "para_206"
+          ],
+          "meta_para_ids": [
+            "para_207",
+            "para_208",
+            "para_209",
+            "para_210",
+            "para_211",
+            "para_212",
+            "para_213",
+            "para_214",
+            "para_215",
+            "para_216",
+            "para_217",
+            "para_218"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_219",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Peter the Great St. Petersburg Polytechnic University​",
+      "paragraphs": [
+        {
+          "para_id": "para_220",
+          "text": "Peter the Great St. Petersburg Polytechnic University​",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_221",
+          "text": "Master's Degree, Computer Science​",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_222",
+          "text": "September 2016 – January 2019",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_4_role_1",
+          "header_para_ids": [
+            "para_220"
+          ],
+          "meta_para_ids": [
+            "para_222"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "St. Petersburg State University of Civil Aviation​",
+      "paragraphs": [
+        {
+          "para_id": "para_223",
+          "text": "St. Petersburg State University of Civil Aviation​",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_224",
+          "text": "Bachelor’s Degree, Engineer of Air Navigation​",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_225",
+          "text": "September 2009 – July 2014",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_5_role_1",
+          "header_para_ids": [
+            "para_223"
+          ],
+          "meta_para_ids": [
+            "para_225"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "CERTIFICATIONS",
+      "paragraphs": [
+        {
+          "para_id": "para_226",
+          "text": "CERTIFICATIONS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_227",
+          "text": "●​ AWS Certified Developer – Associate",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_228",
+          "text": "●​ Oracle Database SQL Certified Expert",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_229",
+          "text": "CORE SKILLS",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_230",
+          "text": "●​ Java, Spring Boot, Spring Security, Spring Data, Spring Cloud, Hibernate,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_231",
+          "text": "Maven, JUnit, Mockito",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_232",
+          "text": "●​ Project Reactor (WebFlux)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_233",
+          "text": "●​ SQL databases: PostgresSQL, Oracle",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_234",
+          "text": "●​ NoSql databases: MongoDB, Redis",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_235",
+          "text": "●​ CI/CD: Jenkins, SonarQube, Flux, SOPS",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_236",
+          "text": "●​ Docker, Linux Oracle",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_237",
+          "text": "●​ Kubernetes, Helm",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_238",
+          "text": "●​ Kafka",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_239",
+          "text": "●​ AWS services (EKS, MSK, S3, RDS, EC2)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_240",
+          "text": "●​ ELK Stack",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_241",
+          "text": "●​ Prometheus, Grafana",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_242",
+          "text": "●​ Microservices, event-driven architecture, SAGA pattern",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_243",
+          "text": "●​ REST API, HTTPS, WebSocket",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_244",
+          "text": "●​ OAuth, TLS, LDAP",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "LANGUAGES",
+      "paragraphs": [
+        {
+          "para_id": "para_245",
+          "text": "LANGUAGES",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_246",
+          "text": "●​ English (professional)",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_247",
+          "text": "●​ Russian (native)",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

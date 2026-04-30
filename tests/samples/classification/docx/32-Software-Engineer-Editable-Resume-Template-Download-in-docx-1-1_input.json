@@ -1,0 +1,241 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Software Engineer Intern",
+      "paragraphs": [
+        {
+          "para_id": "para_20",
+          "text": "Software Engineer Intern",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_21",
+          "text": "Elkiosxz Solutions, Co.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_22",
+          "text": "2018 - 2019",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_23",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_24",
+          "text": "Tested new software applications with superiors",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_25",
+          "text": "Worked alongside team members to investigate software solutions Provided technical support when necessary",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_27",
+          "text": "Accomplishments",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_1_role_1",
+          "header_para_ids": [
+            "para_20"
+          ],
+          "meta_para_ids": [
+            "para_22"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "University of Edgeoak",
+      "paragraphs": [
+        {
+          "para_id": "para_28",
+          "text": "\nUniversity of Edgeoak",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_29",
+          "text": "BS in Software Engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_30",
+          "text": "2012 - 2016",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_31",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_32",
+          "text": "Graduated with Latin Honors, Cum Laude",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_33",
+          "text": "President of the Computer Club Staff Member of the Student Government",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_34",
+          "text": "Layout Designer of the Edgeoak Herald",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_2_role_1",
+          "header_para_ids": [
+            "para_28"
+          ],
+          "meta_para_ids": [
+            "para_30"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Winslough High School",
+      "paragraphs": [
+        {
+          "para_id": "para_35",
+          "text": "Winslough High School",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Class Salutatorian with GPA 3.9,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_37",
+          "text": "2008 - 2012",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_38",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_39",
+          "text": "AP Scholar Awardee",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Member of the National Honor Society",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Vice President of the Computer Club",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_42",
+          "text": "Member of the Winslough Warriors Basketball Team",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Skills and Abilities",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_44",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_45",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_46",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_47",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_48",
+          "text": "Outstanding Software Engineer of 2015 Awardee",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_49",
+          "text": "Achieved Recognition for Software Engineering Excellence",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_50",
+          "text": "Most Innovative Software Engineer Award Nominee",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_51",
+          "text": "\n",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_52",
+          "text": "Knowledge of Multiple Coding Languages",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_53",
+          "text": "Proficiency in Software Systems and Computer Operating",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_54",
+          "text": "Structures",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_55",
+          "text": "Problem Solving Skills Communication Skills\"",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_3_role_1",
+          "header_para_ids": [
+            "para_35"
+          ],
+          "meta_para_ids": [
+            "para_37",
+            "para_48"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    }
+  ]
+}

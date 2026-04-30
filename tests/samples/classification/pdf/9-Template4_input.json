@@ -1,0 +1,226 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "OBJECTIVE",
+      "paragraphs": [
+        {
+          "para_id": "para_1",
+          "text": "OBJECTIVE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_2",
+          "text": "To lead the development of a revolutionary artificial intelligence platform that will disrupt the financial industry and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_3",
+          "text": "enhance customer experience, by collaborating with cross-functional teams and delivering on time, within budget,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_4",
+          "text": "and with the highest quality standards.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_5",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_6",
+          "text": "MBA | Jasper University",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_7",
+          "text": "20XX – 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_8",
+          "text": "Participated in a consulting project for a startup that resulted in a recommendation to pivot their business model,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "which was implemented and led to increased revenue",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_10",
+          "text": "BS Computer Science | Bellows College",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_11",
+          "text": "20XX – 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_12",
+          "text": "Courses included Data Structures, Algorithms, Computer Architecture, Operating Systems, and Software",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_13",
+          "text": "Engineering",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_14",
+          "text": "EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_23",
+          "text": "Technical Program Manager | Relecloud",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_24",
+          "text": "20XX – 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_25",
+          "text": "Oversaw project scope, timelines, and budget, resulting in the successful launch of the new infrastructure and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "improved site reliability metrics",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "Project Manager | Proseware, Inc.",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_28",
+          "text": "20XX – 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_29",
+          "text": "Managed a team of software developers and quality assurance specialists in the development and launch of a new",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_30",
+          "text": "customer relationship management (CRM) software product",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_23"
+          ],
+          "meta_para_ids": [
+            "para_24",
+            "para_25",
+            "para_26"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_27"
+          ],
+          "meta_para_ids": [
+            "para_28",
+            "para_29",
+            "para_30"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "SKILLS",
+      "paragraphs": [
+        {
+          "para_id": "para_31",
+          "text": "SKILLS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_32",
+          "text": "Project management",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_33",
+          "text": "Communication",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_34",
+          "text": "Technical expertise",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_35",
+          "text": "Problem-solving",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Leadership",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_37",
+          "text": "Attention to detail",
+          "parser_semantic": "bullet"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "ACTIVITIES",
+      "paragraphs": [
+        {
+          "para_id": "para_38",
+          "text": "ACTIVITIES",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Participated in several hackathons, including a winning team at the 20XX Hack event, demonstrating the ability to",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_40",
+          "text": "work under pressure and come up with innovative solutions to technical challenges.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

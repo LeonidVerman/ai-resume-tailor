@@ -21,6 +21,7 @@ All endpoints require the authenticated user to have role='admin'.
 import io
 import json
 import re
+import unicodedata
 import zipfile
 from datetime import date, timedelta
 from pathlib import Path
@@ -85,6 +86,7 @@ def _eval_service(db) -> EvaluationService:
 
 def _slugify(text: str) -> str:
     """Replace whitespace with underscores and strip non-alphanumeric/non-underscore chars."""
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
     text = re.sub(r"\s+", "_", text.strip())
     return re.sub(r"[^\w]", "", text) or "Unknown"
 

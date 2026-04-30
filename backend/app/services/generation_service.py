@@ -148,17 +148,6 @@ class GenerationService:
             )
             raise
 
-        # ── Save run data JSON ─────────────────────────────────────────────
-        _save_run_data(
-            run_id=run.id,
-            user_id=user_id,
-            company=meta.get("company", ""),
-            job_title=meta.get("job_title", ""),
-            result=result,
-            debug_meta=debug_meta,
-            storage_service=self._storage_service,
-        )
-
         try:
             # ── Persist tailored document ──────────────────────────────────
             # Strip null bytes (\u0000) which PostgreSQL rejects in text/JSONB fields.
@@ -187,12 +176,24 @@ class GenerationService:
             )
 
             # ── Render and upload artifacts ────────────────────────────────
-            self._render_and_upload(
+            updated_ir_dict = self._render_and_upload(
                 user_id=user_id,
                 run_id=str(run.id),
                 tailored_doc=tailored_doc,
                 resume=resume,
                 result=result,
+            )
+
+            # ── Save run data JSON (after rendering so updated IR is included) ──
+            _save_run_data(
+                run_id=run.id,
+                user_id=user_id,
+                company=meta.get("company", ""),
+                job_title=meta.get("job_title", ""),
+                result=result,
+                debug_meta=debug_meta,
+                storage_service=self._storage_service,
+                updated_ir_dict=updated_ir_dict,
             )
 
             # ── Consume quota slot (only on full success) ──────────────────
@@ -246,14 +247,30 @@ class GenerationService:
 
     # ── Render & upload ────────────────────────────────────────────────────
 
-    def _render_and_upload(self, user_id, run_id, tailored_doc, resume, result) -> None:
-        """Render the 4 artifacts and upload them to storage."""
+    def _render_and_upload(self, user_id, run_id, tailored_doc, resume, result) -> "dict | None":
+        """Render the 4 artifacts and upload them to storage.
+
+        Returns the updated IR dict (serialized ResumeDocument after apply_tailored)
+        for inclusion in the debug JSON, or None if it could not be captured.
+        """
         from backend.app.services.rendering_service import RenderingService
 
         rendering_svc = RenderingService()
 
         template_bytes: bytes | None = None
         template_ir_dict: dict | None = None
+
+        # Load upload-time classification (the final, validated section).
+        # Falls back to None gracefully so rendering always proceeds.
+        classification_dict: dict | None = None
+        if resume.classification_jsonb:
+            classification_dict = resume.classification_jsonb.get("classification")
+            if classification_dict:
+                logger.info(
+                    "Resume id=%s: classification loaded for rendering (status=%s).",
+                    resume.id,
+                    resume.classification_jsonb.get("status", "unknown"),
+                )
 
         if resume.template_ir_jsonb:
             # PDF-sourced resume: use the stored ResumeDocument IR directly.
@@ -288,13 +305,15 @@ class GenerationService:
             )
 
         url_updates: dict = {}
+        updated_ir_dict: dict | None = None
 
         if result.resume:
             try:
-                resume_docx_bytes = rendering_svc.render_resume_docx(
+                resume_docx_bytes, updated_ir_dict = rendering_svc.render_resume_for_generation(
                     result.resume,
                     template_bytes=template_bytes,
                     template_ir_dict=template_ir_dict,
+                    classification_dict=classification_dict,
                 )
                 url_updates["resume_docx_url"] = self._storage_service.upload_resume_docx(
                     user_id, run_id, resume_docx_bytes
@@ -340,6 +359,8 @@ class GenerationService:
         if url_updates:
             self._doc_repo.update(tailored_doc, **url_updates)
             logger.info("Artifact URLs updated for doc=%s: %s", tailored_doc.id, list(url_updates))
+
+        return updated_ir_dict
 
     # ── Pipeline ───────────────────────────────────────────────────────────
 
@@ -457,6 +478,7 @@ def _save_run_data(
     result,
     debug_meta: dict,
     storage_service: StorageService,
+    updated_ir_dict: dict | None = None,
 ) -> None:
     """Persist the generation debug JSON to object storage (S3 / local)."""
     import json as _json
@@ -468,6 +490,7 @@ def _save_run_data(
             "llm_response": {"resume": result.resume, "cover_letter": result.cover_letter},
             "diff": debug_meta.get("diff"),
             "generation_run_id": str(run_id),
+            "updated_ir": updated_ir_dict,
         }
         json_bytes = _json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
         storage_service.upload_debug_json(user_id, str(run_id), json_bytes)

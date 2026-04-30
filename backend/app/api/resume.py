@@ -118,11 +118,19 @@ async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep, backg
     doc_dict = doc.model_dump(mode="json")
     doc_dict["original_filename"] = filename
 
+    conversion_warning = norm.warning_message
+    if not doc_dict.get("raw_text", "").strip() and not conversion_warning:
+        conversion_warning = (
+            "No text could be extracted from this file. "
+            "Profile generation will not be available for this resume. "
+            "Try saving it as a standard .docx file."
+        )
+
     resume = _repo(db).create(
         user_id=user.id,
         resume_jsonb=doc_dict,
         source_file_url=None,
-        input_conversion_warning=norm.warning_message,
+        input_conversion_warning=conversion_warning,
         template_ir_jsonb=norm.template_ir,
     )
 

@@ -30,6 +30,20 @@ from tailor.docx.template_fill import read_docx, save_doc_from_template
 from tailor.config import COVER_TEMPLATE, RESUME_TEMPLATE
 
 
+@pytest.fixture(autouse=True)
+def _legacy_renderer_defaults(monkeypatch):
+    """Reset both layout-bound flags to False for every test in this module.
+
+    These tests were written before USE_LAYOUT_BOUND_UPDATER and
+    USE_LAYOUT_BLOCK_RENDERER defaulted to True.  They exercise the classic
+    renderer and non-layout-bound updater paths intentionally (extra bullets
+    cloned via clone_as, etc.).  Resetting to False preserves that intent.
+    """
+    import tailor.config as _cfg
+    monkeypatch.setattr(_cfg, "USE_LAYOUT_BLOCK_RENDERER", False)
+    monkeypatch.setattr(_cfg, "USE_LAYOUT_BOUND_UPDATER", False)
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

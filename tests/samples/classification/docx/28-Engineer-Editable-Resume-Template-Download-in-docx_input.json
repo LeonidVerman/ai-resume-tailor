@@ -1,0 +1,77 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "WORK HISTORY",
+      "paragraphs": [
+        {
+          "para_id": "para_41",
+          "text": "WORK HISTORY",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_52",
+          "text": "2016-present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_54",
+          "text": "Mechanical Engineer at Warner & Spencer",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_56",
+          "text": "Worked with a team of 10+ to ideate, create, maintain, and update lightweight materials, working primarily with carbon fiber composite",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_59",
+          "text": "2014-2016",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_61",
+          "text": "Mechanical Engineering Apprentice at Thynk Unlimited",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_62",
+          "text": "Researched new materials-generation techniques, compiling and distributing an average of 3 reports/year.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_68",
+          "text": "+123-456-7890       hello@techguruplus.com      123 Anywhere St., Any City",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_52"
+          ],
+          "meta_para_ids": [],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_54"
+          ],
+          "meta_para_ids": [
+            "para_56",
+            "para_59"
+          ],
+          "bullet_para_ids": [
+            "para_61",
+            "para_62",
+            "para_68"
+          ]
+        }
+      ]
+    }
+  ]
+}

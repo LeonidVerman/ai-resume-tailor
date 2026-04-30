@@ -1,0 +1,259 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Objective",
+      "paragraphs": [
+        {
+          "para_id": "para_6",
+          "text": "Objective",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_7",
+          "text": "As an assistant manager, my primary objective is to support the functioning of business",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_8",
+          "text": "operations by managing staff, coordinating operations, and ensuring exceptional customer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "service. I aim to create a positive and productive work environment by communicating with",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_10",
+          "text": "team members, setting clear goals, and monitoring performance.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Education",
+      "paragraphs": [
+        {
+          "para_id": "para_11",
+          "text": "Education",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_12",
+          "text": "Mount Flores College",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_13",
+          "text": "New York City, NY",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_14",
+          "text": "BA in Business Administration",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_15",
+          "text": "GPA 3.87",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Key Skills",
+      "paragraphs": [
+        {
+          "para_id": "para_16",
+          "text": "Key Skills",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_17",
+          "text": "Marketing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_18",
+          "text": "Project management",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_19",
+          "text": "Budget planning",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_20",
+          "text": "Communication",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_21",
+          "text": "Problem-solving",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Experience",
+      "paragraphs": [
+        {
+          "para_id": "para_22",
+          "text": "Experience",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Assistant Manager",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_37",
+          "text": "Woodgrove Bank",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_35",
+          "text": "June 20XX - Present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Lead Salesperson",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Safewest Banking",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Jan 20XX – June 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_42",
+          "text": "Sales Associate",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Safewest Banking",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Aug 20XX – Jan 20XX",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_36"
+          ],
+          "meta_para_ids": [
+            "para_37",
+            "para_35"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_39"
+          ],
+          "meta_para_ids": [
+            "para_40",
+            "para_38"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_42"
+          ],
+          "meta_para_ids": [
+            "para_43",
+            "para_41"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Communication",
+      "paragraphs": [
+        {
+          "para_id": "para_44",
+          "text": "Communication",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Implemented new procedures and technologies that improved efficiency and streamlined",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "operations.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "Leadership",
+      "paragraphs": [
+        {
+          "para_id": "para_47",
+          "text": "Leadership",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_48",
+          "text": "Successfully led a team to exceed sales goals while maintaining excellent customer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_49",
+          "text": "satisfaction scores.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "References",
+      "paragraphs": [
+        {
+          "para_id": "para_50",
+          "text": "References",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_51",
+          "text": "Available upon request.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

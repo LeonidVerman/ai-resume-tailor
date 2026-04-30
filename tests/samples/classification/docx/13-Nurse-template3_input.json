@@ -1,0 +1,241 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Work experience",
+      "paragraphs": [
+        {
+          "para_id": "para_9",
+          "text": "Work experience",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_16",
+          "text": "Lamna Health / General Practitioner",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_17",
+          "text": "12/20XX – present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_18",
+          "text": "Implemented evidence-based medicine for accurate diagnosis, spearheaded a community health fair, providing free screenings to over 200 residents ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_19",
+          "text": "Tyler Stein MD / Family Physician",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_20",
+          "text": "8/20XX – 7/20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_21",
+          "text": "Managed a diverse patient caseload, \nled a smoking cessation program, resulting in a 30% increase in successful quit attempts \n",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_16"
+          ],
+          "meta_para_ids": [
+            "para_17"
+          ],
+          "bullet_para_ids": [
+            "para_18"
+          ]
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_19"
+          ],
+          "meta_para_ids": [
+            "para_20"
+          ],
+          "bullet_para_ids": [
+            "para_21"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Education",
+      "paragraphs": [
+        {
+          "para_id": "para_22",
+          "text": "Education",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_23",
+          "text": "Jasper University",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_24",
+          "text": "9/20XX–6/20XX",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_25",
+          "text": "Dean's List, Medical Research Award ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Bellows College",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "9/20XX–4/20XX",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_28",
+          "text": "Bachelor of Science in Biology, \nCum Laude, outstanding research \nthesis outcomes",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_29",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Contact",
+      "paragraphs": [
+        {
+          "para_id": "para_30",
+          "text": "Contact",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_31",
+          "text": "678-555-0103",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_32",
+          "text": "www.lamnahealthcare.com",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_33",
+          "text": "alex@lamnahealthcare.com",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_34",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Skills",
+      "paragraphs": [
+        {
+          "para_id": "para_35",
+          "text": "Skills",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Clinical diagnosis",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_37",
+          "text": "Patient-centered care",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Health promotion",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Chronic disease management",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Electronic health records",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_41",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Hobbies",
+      "paragraphs": [
+        {
+          "para_id": "para_42",
+          "text": "Hobbies",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Trail running",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_44",
+          "text": "Wildlife photography",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_45",
+          "text": "International traveling",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_46",
+          "text": "Sourdough bread baking",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_47",
+          "text": "Salsa dancing",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_48",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_49",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

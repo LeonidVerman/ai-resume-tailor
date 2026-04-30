@@ -1,0 +1,882 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.1]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n21) Must explicitly mention the company + role from TASK.\n22) Must connect: candidate background -> company needs -> role responsibilities, using only supported claims.\n23) Keep it 3-5 short paragraphs; be specific but not verbose.\n\n[CANDIDATE_LAYER_BENJAMIN_JOSEPH v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Software Engineer focused on backend development + cloud features + DevOps-oriented performance work.\n- Emphasize strengths: testing automation, debugging/issue resolution, API + SQL/database work, cross-functional delivery.\n- Keep scope grounded: contributor-level engineering impact with some enablement (training/documentation), not “principal architect” or “team lead” unless explicitly evidenced.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface concrete engineering mechanisms behind:\n  - Automated testing framework that reduced testing time by 50%.\n  - Cloud-based feature delivery that increased user engagement by 25%.\n  - DevOps/performance work that improved performance/efficiency by 20%.\n- If mechanisms are not provided in source, write mechanism-first bullets using only safe, generic-but-concrete phrasing (e.g., “built automated regression test suite and integrated into CI”) without naming tools/services not in evidence.\n- Explicitly connect each mechanism to system area (backend services, APIs, test pipeline, deployment pipeline) and outcome.\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prioritize bullets in this order:\n  1) Automated testing framework + CI-style workflow (if supported by resume evidence).\n  2) Backend/API + database work tied to reliability, correctness, or release readiness.\n  3) Cloud feature implementation tied to user engagement outcome.\n  4) DevOps performance/efficiency improvements with operational mechanism.\n  5) Documentation/training as enablement (secondary).\n- Ensure at least one bullet in the most recent role (when tailoring) includes an explicit mechanism (test automation, API change, deployment/process improvement).\n\nDISTRIBUTED SYSTEM DEPTH\n- Do not force “distributed systems” claims (queues, replicas, event-driven) unless present in MASTER_RESUME or explicit evidence.\n- When describing backend/cloud work, safely add depth via operational mechanics that do not imply unsupported architecture, e.g.:\n  - API request/response validation, error handling, pagination, rate/timeout handling (only if supported).\n  - Database query optimization and SQL correctness (only if supported).\n  - Release readiness: test coverage expansion, regression prevention, launch validation.\n- Avoid claiming high-scale, multi-region, microservices, or SRE/on-call ownership unless explicitly evidenced.\n\nTECHNICAL DIFFERENTIATION\n- Languages to surface when relevant: Java, Python, C++.\n- Core backend skills to surface: API development, database/SQL, testing/debugging, cloud-based application features, DevOps practices.\n- Prefer “mechanism → system area → context/outcome” bullets:\n  - Mechanism examples that are safe if evidenced: automated test suites, test harnesses, CI gating, profiling-driven optimization, build/deploy pipeline improvements, SQL query tuning.\n- Avoid naming specific cloud providers, CI tools, container platforms, or datastores unless present in MASTER_RESUME.\n\nDOMAIN / INDUSTRY FRAMING\n- Frame domains broadly and safely:\n  - “Enterprise software / technical support systems” → internal tools, customer issue resolution workflows, reliability-focused engineering.\n  - “Cloud-based applications” → delivering features on hosted platforms; avoid implying deep cloud infrastructure ownership.\n  - Banking employer context: treat as “regulated/quality-sensitive environment” only if MASTER_RESUME supports; otherwise keep neutral (“financial services organization”).\n\nSAFE DOMAIN TRANSLATION\n- Translate impacts into generally applicable backend value:\n  - “Reduced testing time by 50%” → faster release cycles, improved regression detection, improved launch confidence.\n  - “Improved customer satisfaction by resolving technical issues” → reduced incident recurrence, improved defect turnaround, improved supportability.\n  - “Increased engagement by 25% with cloud-based features” → feature delivery tied to product metrics (do not invent which metrics).\n  - “Performance/efficiency +20%” → profiling/tuning/process improvements; do not invent the bottleneck or technique.\n- Keep translations system-focused; avoid product-market claims not in evidence.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do not claim:\n  - Ownership of end-to-end platform architecture, microservices redesign, or large-scale distributed systems.\n  - Security/compliance frameworks, auth systems, or regulatory implementations (none evidenced).\n  - Specific cloud services (AWS/GCP/Azure), Kubernetes, Terraform, Kafka/RabbitMQ, Redis, etc., unless in MASTER_RESUME.\n  - People management scope (team size, hiring, performance management) unless evidenced.\n- Do not invent metrics beyond the provided 50% / 25% / 20% improvements; do not add scale numbers (QPS, users, TB, latency) without evidence.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- When tailoring to roles needing extensibility/integration, reinterpret safely as:\n  - API development → integration-ready endpoints, contract clarity, backward-compatible changes (only if supported).\n  - Automated testing framework → reusable test utilities, standardized test patterns across modules.\n  - Documentation/training → enablement for adoption of internal tools/processes.\n- Avoid claiming “platform” ownership; prefer “contributed to shared frameworks/tools” language unless ownership is explicit.\n\nLEADERSHIP FRAMING\n- Frame leadership as execution leadership and enablement:\n  - Cross-functional collaboration with QA/product/support.\n  - Training and technical documentation as scaling team effectiveness.\n  - Quality-focused practices: test automation, launch validation, debugging discipline.\n- Use observable actions (wrote docs, delivered training, coordinated launch testing) rather than abstract traits.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep technical contributions primary (≈70–85% of bullets).\n- Include leadership/supporting contributions as 1–2 bullets per role at most, unless the job explicitly prioritizes enablement.\n- Avoid “led” unless evidence supports leadership ownership; prefer “partnered with,” “coordinated with,” “drove adoption of” when accurate.\n\nAI WORK POSITIONING\n- No AI/ML claims. Do not introduce AI tooling, prompt engineering, model usage, or ML system work unless present in MASTER_RESUME or future provided evidence.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate architecture ownership: avoid “architected the platform,” “designed system-wide architecture,” “owned infrastructure.”\n- Do not exaggerate leadership scope: avoid “managed,” “headed,” “built a team,” “company-wide standards” unless evidenced.\n- Keep all claims aligned with provided impacts; do not add new metrics, tools, domains, or compliance/security assertions.\n- If a mechanism is unknown, write it as a conservative contribution (e.g., “implemented,” “enhanced,” “integrated,” “automated”) without naming specific technologies.\n\nEVIDENCE SOURCES\n- Use only:\n  - MASTER_RESUME (primary source for tools, dates, employers, project specifics).\n  - CANDIDATE_PROFILE experience_highlights (impacts, areas, skills applied, architecture_patterns, employer_relationship).\n  - constraints_and_preferences and claim_boundaries for wording limits.\n- Bullets must be traceable to these sources; if a detail is missing, omit it rather than guessing.\n\nFINAL REMINDER\n- Core differentiation to keep visible: backend + cloud feature delivery with measurable outcomes, anchored by test automation and performance-minded DevOps practices, communicated through concrete mechanisms without inflating architecture or leadership scope.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Software Development\",\n      \"Backend Systems\",\n      \"Cloud-based Applications\"\n    ],\n    \"secondary\": [\n      \"Technical Support Systems\",\n      \"Enterprise Software\"\n    ]\n  },\n  \"candidate\": {\n    \"name\": \"Benjamin Joseph\",\n    \"summary\": \"Experienced software engineer skilled in developing and maintaining software applications across various industries. Proficient in working with databases, APIs, and software development tools. Strong collaborator with cross-functional teams to deliver high-quality software solutions efficiently.\",\n    \"headline\": \"Software Engineer with Backend and DevOps Experience\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Quality-focused\",\n        \"Execution-oriented\"\n      ]\n    },\n    \"practices\": [\n      \"Cross-functional collaboration\",\n      \"Continuous learning\"\n    ],\n    \"risk_management\": []\n  },\n  \"role_fit_themes\": [\n    \"Backend development\",\n    \"Software development\",\n    \"Testing and debugging\",\n    \"Cloud-based applications\",\n    \"Cross-functional collaboration\",\n    \"Performance optimization\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate architecture ownership\",\n      \"Do not exaggerate leadership scope\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Keep claims aligned with actual experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [],\n    \"languages\": [\n      \"Java\",\n      \"Python\",\n      \"C++\"\n    ],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [\n      \"DevOps practices\"\n    ],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [\n      \"Database and SQL\",\n      \"API development\"\n    ],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Software Engineering\",\n      \"impact\": [\n        \"Reduced testing time by 50% through automated testing framework\",\n        \"Improved customer satisfaction by resolving technical issues\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Cross-functional collaboration\"\n      ],\n      \"skills_applied\": [\n        \"Testing and debugging\",\n        \"API development\",\n        \"Database management\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\"\n      ],\n      \"employer_relationship\": \"Tropang True Po\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    },\n    {\n      \"area\": \"Backend Development\",\n      \"impact\": [\n        \"Increased user engagement by 25% with new cloud-based features\",\n        \"Conducted testing and analysis for product launch\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Cross-functional collaboration\"\n      ],\n      \"skills_applied\": [\n        \"Backend systems\",\n        \"Cloud-based applications\",\n        \"Testing and debugging\"\n      ],\n      \"architecture_patterns\": [\n        \"Cloud-based platform development\"\n      ],\n      \"employer_relationship\": \"Truesdays\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    },\n    {\n      \"area\": \"DevOps Engineering\",\n      \"impact\": [\n        \"Improved product performance and efficiency by 20%\",\n        \"Provided training and created technical documentation\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Cross-functional collaboration\"\n      ],\n      \"skills_applied\": [\n        \"DevOps practices\",\n        \"Technical documentation\",\n        \"Training\"\n      ],\n      \"architecture_patterns\": [\n        \"Performance improvement work\"\n      ],\n      \"employer_relationship\": \"Kalayaan National Bank\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\",\n      \"Agile software environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\",\n      \"Problem solving\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\nBENJAMIN\nLic. No. 0123456\nJOSEPH\n0123 456\n7890\nhello@techguruplus.com\nSOFTWARE ENGINEER\n123 G. Silang St., Kalayaan City\n1234\nI have experience in developing and maintaining software applications for various industries in the Philippines. Skilled in working with databases, APIs, and software development tools. My experience also includes collaborating with cross-functional teams to deliver high-quality software solutions on time and within budget.\nEXPERIENCE\nSOFTWARE ENGINEER\nTropang True Po\nJanuary 2020 - Present\nCreated an automated testing framework that reduced testing time by 50% Collaborated with cross-functional teams to troubleshoot and resolve technical issues, resulting in improved customer satisfaction\nBACK-END DEVELOPER\nTruesdays\nMarch 2014 - December 2020\nDesigned and implemented new features on a cloud-based platform that increased user engagement by 25%\nConducted testing and analysis for a new product launch\nDEVOPS ENGINEER\nKalayaan National Bank\nJune 2012 - March 2014\nConducted research and development to improve product performance and efficiency by 20%\nCreated technical documentation and provided training for end-users\nSKILLS\nProficiency in Java, Python, C++          Testing and debugging techniques\nData Structures and Algorithms           Database and SQL\nDevelopment Methodology               Adaptability and continuous learning\nEDUCATION\nMASTERS IN COMPUTER SCIENCEBACHELOR OF COMPUTER SCIENCE\nLas Felipinas University, 2019 - 2021Las Felipinas University, 2008 - 2012\nAFFILIATIONS\nYELLOW TREE ORGANIZATIONLIFE TECH PRO 2011\nNon-profitHackathon\nSet up database systems                  Participated in a 24hr hackathon"
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nBenjamin Joseph\nDear Hiring Manager,\nI am excited to apply for the Senior Software Engineer role at Tigera. With over 15 years of experience in backend engineering and team leadership, including roles as VP and Director of Software Development, I have built fintech and blockchain systems that became top-5 platforms in the Japanese market, serving over 1M users, and led teams of up to 20 engineers to deliver reliable, scalable products.\nIn addition to my industry work, I currently contribute as an independent contractor supporting world-leading AI research labs in training and evaluating advanced AI models on senior-level software engineering tasks. This work keeps me deeply engaged with cutting-edge development practices, reinforces my ability to solve complex problems under ambiguity, and strengthens my proficiency with AI-assisted development tools. I also adopt AI-accelerated workflows (ChatGPT, Claude, Cursor AI) to improve productivity, code quality, and architectural clarity.\nI would welcome the chance to bring this expertise to your team and contribute to building reliable, scalable systems for your clients. I hold Canadian citizenship and am fully eligible to work in Canada.\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: April 28, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "BENJAMIN JOSEPH\nLic. No. 0123456\n0123 456 7890 | hello@techguruplus.com\n123 G. Silang St., Kalayaan City 1234\n\nPROFESSIONAL SUMMARY\nSoftware Engineer with backend and DevOps experience building and supporting business applications across multiple industries. Strong in backend/API development, database/SQL work, and testing/debugging in Agile, cross-functional environments. Known for improving release readiness through automated testing (50% reduction in testing time), delivering cloud-based backend features tied to user engagement (+25%), and improving performance/efficiency through DevOps-oriented engineering work (+20%).\n\nEXPERIENCE\nSOFTWARE ENGINEER | Tropang True Po | January 2020 - Present\n- Built an automated testing framework for application regression coverage and integrated it into the team’s development workflow to reduce testing time by 50%.\n- Collaborated with cross-functional partners to troubleshoot and resolve technical issues, improving customer satisfaction.\n\nBACK-END DEVELOPER | Truesdays | March 2014 - December 2020\n- Designed and implemented backend features for a cloud-based platform, increasing user engagement by 25%.\n- Conducted testing and analysis to support a new product launch and validate release readiness.\n\nDEVOPS ENGINEER | Kalayaan National Bank | June 2012 - March 2014\n- Conducted research and development to improve product performance and efficiency by 20%.\n- Created technical documentation and delivered end-user training to support adoption and ongoing use.\n\nEDUCATION\nMASTERS IN COMPUTER SCIENCE | Las Felipinas University | 2019 - 2021\nBACHELOR OF COMPUTER SCIENCE | Las Felipinas University | 2008 - 2012\n\nTECHNICAL SKILLS\nProgramming Languages: Java, Python, C++\nBackend: API development, Database and SQL\nQuality: Testing and debugging techniques\nEngineering Fundamentals: Data Structures and Algorithms\nWays of Working: Development Methodology, Adaptability and continuous learning\nOther: DevOps practices\n\nADDITIONAL\nAFFILIATIONS\nYELLOW TREE ORGANIZATION — Non-profit\n- Set up database systems\nLIFE TECH PRO 2011 — Hackathon\n- Participated in a 24hr hackathon\n\nCURRENT_DATE: April 28, 2026\n",
+    "cover_letter": "Benjamin Joseph\n123 G. Silang St., Kalayaan City 1234\n0123 456 7890 | hello@techguruplus.com\n\nApril 28, 2026\n\nDear Hiring Manager,\n\nI am applying for the Lead Software Engineer role at American Tire Distributors. My background is in backend engineering and delivery-focused support work—building and maintaining software, working closely with cross-functional partners, and improving quality and release readiness through testing and debugging.\n\nIn my current role as a Software Engineer at Tropang True Po, I built an automated testing framework that reduced testing time by 50% and partnered with cross-functional teams to troubleshoot and resolve technical issues to improve customer satisfaction. Earlier, as a Back-End Developer at Truesdays, I designed and implemented new features for a cloud-based platform that increased user engagement by 25%, and I supported a product launch through testing and analysis.\n\nI’m particularly interested in ATD’s focus on delivering maintainable solutions and supporting complex production needs. My experience aligns with the role’s emphasis on impact analysis, unit/integration testing, and ongoing support—especially where clear API/database behavior, strong debugging discipline, and practical documentation help teams deliver reliably.\n\nThank you for your consideration. I would welcome the opportunity to discuss how my backend, testing, and DevOps-oriented performance experience can contribute to American Tire Distributors as a Lead Software Engineer.\n\nSincerely,\nBenjamin Joseph\n"
+  },
+  "diff": {
+    "resume": [
+      {
+        "name": "Professional Summary",
+        "after": "Software Engineer with backend and DevOps experience building and supporting business applications across multiple industries. Strong in backend/API development, database/SQL work, and testing/debugging in Agile, cross-functional environments. Known for improving release readiness through automated testing (50% reduction in testing time), delivering cloud-based backend features tied to user engagement (+25%), and improving performance/efficiency through DevOps-oriented engineering work (+20%)."
+      },
+      {
+        "name": "Technical Skills",
+        "before": "Proficiency in Java, Python, C++          Testing and debugging techniques\nData Structures and Algorithms           Database and SQL\nDevelopment Methodology               Adaptability and continuous learning",
+        "after": "Programming Languages: Java, Python, C++\nBackend: API development, Database and SQL\nQuality: Testing and debugging techniques\nEngineering Fundamentals: Data Structures and Algorithms\nWays of Working: Development Methodology, Adaptability and continuous learning\nOther: DevOps practices\n\nADDITIONAL\nAFFILIATIONS\nYELLOW TREE ORGANIZATION — Non-profit\n- Set up database systems\nLIFE TECH PRO 2011 — Hackathon\n- Participated in a 24hr hackathon\n\nCURRENT_DATE: April 28, 2026"
+      }
+    ]
+  },
+  "generation_run_id": "240",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "BENJAMIN",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "Lic. No. 0123456",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_3"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_4"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_5"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_6"
+      },
+      {
+        "text": "JOSEPH",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_7"
+      },
+      {
+        "text": "0123 456",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_8"
+      },
+      {
+        "text": "7890",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_9"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_10"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_11"
+      },
+      {
+        "text": "hello@techguruplus.com",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_12"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_13"
+      },
+      {
+        "text": "SOFTWARE ENGINEER",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_14"
+      },
+      {
+        "text": "123 G. Silang St., Kalayaan City",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_15"
+      },
+      {
+        "text": "1234",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_16"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_17"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_18"
+      },
+      {
+        "text": "I have experience in developing and maintaining software applications for various industries in the Philippines. Skilled in working with databases, APIs, and software development tools. My experience also includes collaborating with cross-functional teams to deliver high-quality software solutions on time and within budget.",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_19"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_20"
+      }
+    ],
+    "sections": [
+      {
+        "title": "EXPERIENCE",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "EXPERIENCE",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_21"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_36"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_38"
+          },
+          {
+            "text": "Tropang True Po",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_40"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_42"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_44"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_46"
+          },
+          {
+            "text": "Truesdays",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_47"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_48"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_50"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_52"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_54"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_56"
+          },
+          {
+            "text": "Kalayaan National Bank",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_57"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_58"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_60"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_62"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_64"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_65"
+          }
+        ],
+        "roles": [
+          {
+            "header": {
+              "text": "SOFTWARE ENGINEER | Tropang True Po | January 2020 - Present",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_37"
+            },
+            "header_extra": [],
+            "meta_lines": [],
+            "bullets": [
+              {
+                "text": "Built an automated testing framework for application regression coverage and integrated it into the team’s development workflow to reduce testing time by 50%.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_43"
+              }
+            ],
+            "role_id": "SOFTWARE ENGINEER",
+            "role_id_stable": "role_1"
+          },
+          {
+            "header": {
+              "text": "BACK-END DEVELOPER | Truesdays | March 2014 - December 2020",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_45"
+            },
+            "header_extra": [],
+            "meta_lines": [],
+            "bullets": [
+              {
+                "text": "Designed and implemented backend features for a cloud-based platform, increasing user engagement by 25%.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_51"
+              },
+              {
+                "text": "Conducted testing and analysis to support a new product launch and validate release readiness.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_53"
+              }
+            ],
+            "role_id": "BACK-END DEVELOPER",
+            "role_id_stable": "role_2"
+          },
+          {
+            "header": {
+              "text": "DEVOPS ENGINEER | Kalayaan National Bank | June 2012 - March 2014",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_55"
+            },
+            "header_extra": [],
+            "meta_lines": [],
+            "bullets": [
+              {
+                "text": "Conducted research and development to improve product performance and efficiency by 20%.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_61"
+              },
+              {
+                "text": "Created technical documentation and delivered end-user training to support adoption and ongoing use.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_63"
+              }
+            ],
+            "role_id": "DEVOPS ENGINEER",
+            "role_id_stable": "role_3"
+          }
+        ],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "TECHNICAL SKILLS",
+        "semantic_type": "skills",
+        "heading": {
+          "text": "TECHNICAL SKILLS",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_66"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_67"
+          },
+          {
+            "text": "Programming Languages: Java, Python, C++",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_68"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_69"
+          },
+          {
+            "text": "Backend: API development, Database and SQL",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_70"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_71"
+          },
+          {
+            "text": "Quality: Testing and debugging techniques",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_72"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_73"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_74"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "EDUCATION",
+        "semantic_type": "education",
+        "heading": {
+          "text": "EDUCATION",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_75"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_76"
+          },
+          {
+            "text": "MASTERS IN COMPUTER SCIENCEBACHELOR OF COMPUTER SCIENCE",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_77"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_78"
+          },
+          {
+            "text": "Las Felipinas University, 2019 - 2021Las Felipinas University, 2008 - 2012",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_79"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_80"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_81"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_3"
+      },
+      {
+        "title": "AFFILIATIONS",
+        "semantic_type": "other",
+        "heading": {
+          "text": "AFFILIATIONS",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_82"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_83"
+          },
+          {
+            "text": "YELLOW TREE ORGANIZATIONLIFE TECH PRO 2011",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_84"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_85"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_86"
+          },
+          {
+            "text": "Non-profitHackathon",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_87"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_88"
+          },
+          {
+            "text": "Set up database systems                  Participated in a 24hr hackathon",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_89"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_4"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 596.0,
+      "page_height_pt": 842.25,
+      "margin_top_pt": 27.0,
+      "margin_bottom_pt": 29.4,
+      "margin_left_pt": 60.0,
+      "margin_right_pt": 59.5,
+      "default_font_name": "Calibri",
+      "default_font_size_pt": 11.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "table",
+        "table_id": "tbl_1",
+        "xml_proto_xml": "<w:tbl xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:tblPr><w:tblLayout w:type=\"fixed\"/><w:tblInd w:w=\"0\" w:type=\"dxa\"/><w:tblCellMar><w:top w:w=\"0\" w:type=\"dxa\"/><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"0\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tblCellMar></w:tblPr><w:tr><w:trPr><w:trHeight w:val=\"828\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"4940\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"72\"/><w:szCs w:val=\"72\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>BENJAMIN</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"4580\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/><w:gridSpan w:val=\"2\"/><w:vMerge w:val=\"restart\"/></w:tcPr><w:p><w:pPr><w:jc w:val=\"right\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Lic. No. 0123456</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"0\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"1\"/><w:szCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p></w:tc></w:tr><w:tr><w:trPr><w:trHeight w:val=\"58\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"4940\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"5\"/><w:szCs w:val=\"5\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"4580\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/><w:gridSpan w:val=\"2\"/><w:vMerge w:val=\"continue\"/></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"5\"/><w:szCs w:val=\"5\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"0\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"1\"/><w:szCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p></w:tc></w:tr><w:tr><w:trPr><w:trHeight w:val=\"773\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"4940\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/><w:vMerge w:val=\"restart\"/></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"72\"/><w:szCs w:val=\"72\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>JOSEPH</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"4100\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p><w:pPr><w:jc w:val=\"right\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>0123 456</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"500\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p><w:pPr><w:jc w:val=\"right\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>7890</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"0\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"1\"/><w:szCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p></w:tc></w:tr><w:tr><w:trPr><w:trHeight w:val=\"246\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"4940\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/><w:vMerge w:val=\"continue\"/></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"21\"/><w:szCs w:val=\"21\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"4580\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/><w:gridSpan w:val=\"2\"/></w:tcPr><w:p><w:pPr><w:jc w:val=\"right\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>hello@techguruplus.com</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"0\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"1\"/><w:szCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p></w:tc></w:tr><w:tr><w:trPr><w:trHeight w:val=\"304\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"4940\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>SOFTWARE ENGINEER</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"4100\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p><w:pPr><w:jc w:val=\"right\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>123 G. Silang St., Kalayaan City</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"500\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p><w:pPr><w:jc w:val=\"right\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>1234</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"0\" w:type=\"dxa\"/><w:vAlign w:val=\"bottom\"/></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"1\"/><w:szCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p></w:tc></w:tr></w:tbl>",
+        "para_ids": [
+          "para_1",
+          "para_2",
+          "para_3",
+          "para_4",
+          "para_5",
+          "para_6",
+          "para_7",
+          "para_8",
+          "para_9",
+          "para_10",
+          "para_11",
+          "para_12",
+          "para_13",
+          "para_14",
+          "para_15",
+          "para_16",
+          "para_17"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_18",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><w:pPr><w:spacing w:after=\"0\" w:line=\"399\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr><w:drawing><wp:anchor simplePos=\"0\" relativeHeight=\"251657728\" behindDoc=\"1\" locked=\"0\" layoutInCell=\"0\" allowOverlap=\"1\"><wp:simplePos x=\"0\" y=\"0\"/><wp:positionH relativeFrom=\"page\"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom=\"page\"><wp:posOffset>0</wp:posOffset></wp:positionV><wp:extent cx=\"7562850\" cy=\"10696575\"/><wp:wrapNone/><wp:docPr id=\"1\" name=\"Picture 1\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"0\" name=\"Picture 1\"/><pic:cNvPicPr><a:picLocks noChangeAspect=\"1\" noChangeArrowheads=\"1\"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId12\"><a:extLst><a:ext uri=\"{28A0092B-C50C-407E-A947-70E740481C1C}\"/></a:extLst></a:blip><a:srcRect/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr bwMode=\"auto\"><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"7562850\" cy=\"10696575\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:noFill/></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_19",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:jc w:val=\"both\"/><w:spacing w:after=\"0\" w:line=\"328\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"19\"/><w:szCs w:val=\"19\"/><w:color w:val=\"auto\"/></w:rPr><w:t>I have experience in developing and maintaining software applications for various industries in the Philippines. Skilled in working with databases, APIs, and software development tools. My experience also includes collaborating with cross-functional teams to deliver high-quality software solutions on time and within budget.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_20",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"382\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_21",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"280\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>EXPERIENCE</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_36",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"250\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_37",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>SOFTWARE ENGINEER</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_38",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"69\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_39",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Tropang True Po</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_40",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"46\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_41",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>January 2020 - Present</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_42",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"40\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_43",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"2080\" w:right=\"60\"/><w:spacing w:after=\"0\" w:line=\"302\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Created an automated testing framework that reduced testing time by 50% Collaborated with cross-functional teams to troubleshoot and resolve technical issues, resulting in improved customer satisfaction</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_44",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"280\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_45",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>BACK-END DEVELOPER</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_46",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"69\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_47",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Truesdays</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_48",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"46\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>March 2014 - December 2020</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_50",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"40\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_51",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"2080\"/><w:spacing w:after=\"0\" w:line=\"281\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Designed and implemented new features on a cloud-based platform that increased user engagement by 25%</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_52",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"1\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_53",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"2080\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Conducted testing and analysis for a new product launch</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_54",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"378\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_55",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>DEVOPS ENGINEER</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_56",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"69\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_57",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Kalayaan National Bank</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_58",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"46\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_59",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>June 2012 - March 2014</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_60",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"40\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_61",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"2080\"/><w:spacing w:after=\"0\" w:line=\"281\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Conducted research and development to improve product performance and efficiency by 20%</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_62",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"1\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_63",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"2080\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Created technical documentation and provided training for end-users</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_64",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_65",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"301\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_66",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"900\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>SKILLS</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_67",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"273\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_68",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><w:pPr><w:ind w:left=\"2080\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t xml:space=\"preserve\">Proficiency in Java, Python, C++        </w:t></w:r><w:r><w:rPr><w:sz w:val=\"1\"/><w:szCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\"><wp:extent cx=\"38100\" cy=\"38100\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/><wp:docPr id=\"2\" name=\"Picture 2\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"0\" name=\"Picture 2\"/><pic:cNvPicPr><a:picLocks noChangeAspect=\"1\" noChangeArrowheads=\"1\"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId13\"><a:extLst><a:ext uri=\"{28A0092B-C50C-407E-A947-70E740481C1C}\"/></a:extLst></a:blip><a:srcRect/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr bwMode=\"auto\"><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"38100\" cy=\"38100\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t xml:space=\"preserve\">  Testing and debugging techniques</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_69",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"46\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_70",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><w:pPr><w:ind w:left=\"2080\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t xml:space=\"preserve\">Data Structures and Algorithms         </w:t></w:r><w:r><w:rPr><w:sz w:val=\"1\"/><w:szCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\"><wp:extent cx=\"38100\" cy=\"38100\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/><wp:docPr id=\"3\" name=\"Picture 3\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"0\" name=\"Picture 3\"/><pic:cNvPicPr><a:picLocks noChangeAspect=\"1\" noChangeArrowheads=\"1\"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId14\"><a:extLst><a:ext uri=\"{28A0092B-C50C-407E-A947-70E740481C1C}\"/></a:extLst></a:blip><a:srcRect/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr bwMode=\"auto\"><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"38100\" cy=\"38100\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t xml:space=\"preserve\">  Database and SQL</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_71",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"40\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_72",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><w:pPr><w:ind w:left=\"2080\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t xml:space=\"preserve\">Development Methodology             </w:t></w:r><w:r><w:rPr><w:sz w:val=\"1\"/><w:szCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\"><wp:extent cx=\"38100\" cy=\"38100\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/><wp:docPr id=\"4\" name=\"Picture 4\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"0\" name=\"Picture 4\"/><pic:cNvPicPr><a:picLocks noChangeAspect=\"1\" noChangeArrowheads=\"1\"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId15\"><a:extLst><a:ext uri=\"{28A0092B-C50C-407E-A947-70E740481C1C}\"/></a:extLst></a:blip><a:srcRect/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr bwMode=\"auto\"><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"38100\" cy=\"38100\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t xml:space=\"preserve\">  Adaptability and continuous learning</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_73",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_74",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"301\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_75",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"340\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>EDUCATION</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_76",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"250\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_77",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:tabs><w:tab w:leader=\"none\" w:pos=\"5600\" w:val=\"left\"/></w:tabs><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>MASTERS IN COMPUTER SCIENCE</w:t></w:r><w:r><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:tab/></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"19\"/><w:szCs w:val=\"19\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>BACHELOR OF COMPUTER SCIENCE</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_78",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"69\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_79",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:tabs><w:tab w:leader=\"none\" w:pos=\"5600\" w:val=\"left\"/></w:tabs><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Las Felipinas University, 2019 - 2021</w:t></w:r><w:r><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:tab/></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Las Felipinas University, 2008 - 2012</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_80",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_81",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"308\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_82",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"160\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>AFFILIATIONS</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_83",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"145\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_84",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:tabs><w:tab w:leader=\"none\" w:pos=\"5600\" w:val=\"left\"/></w:tabs><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>YELLOW TREE ORGANIZATION</w:t></w:r><w:r><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:tab/></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:t>LIFE TECH PRO 2011</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_85",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:sectPr><w:pgSz w:w=\"11920\" w:h=\"16845\" w:orient=\"portrait\"/><w:cols w:equalWidth=\"0\" w:num=\"1\"><w:col w:w=\"9520\"/></w:cols><w:pgMar w:left=\"1200\" w:top=\"540\" w:right=\"1190\" w:bottom=\"588\" w:gutter=\"0\" w:footer=\"0\" w:header=\"0\"/></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_86",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"69\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_87",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1740\"/><w:spacing w:after=\"0\"/><w:tabs><w:tab w:leader=\"none\" w:pos=\"5600\" w:val=\"left\"/></w:tabs><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Non-profit</w:t></w:r><w:r><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:tab/></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/><w:color w:val=\"auto\"/></w:rPr><w:t>Hackathon</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_88",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"46\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_89",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><w:pPr><w:ind w:left=\"2080\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t xml:space=\"preserve\">Set up database systems                </w:t></w:r><w:r><w:rPr><w:sz w:val=\"1\"/><w:szCs w:val=\"1\"/><w:color w:val=\"auto\"/></w:rPr><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\"><wp:extent cx=\"38100\" cy=\"38100\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/><wp:docPr id=\"5\" name=\"Picture 5\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"0\" name=\"Picture 5\"/><pic:cNvPicPr><a:picLocks noChangeAspect=\"1\" noChangeArrowheads=\"1\"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId16\"><a:extLst><a:ext uri=\"{28A0092B-C50C-407E-A947-70E740481C1C}\"/></a:extLst></a:blip><a:srcRect/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr bwMode=\"auto\"><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"38100\" cy=\"38100\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:t xml:space=\"preserve\">  Participated in a 24hr hackathon</w:t></w:r></w:p>"
+      }
+    ]
+  }
+}

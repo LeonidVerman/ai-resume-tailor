@@ -1,0 +1,291 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_3",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_4",
+          "text": "Bellows College | Associates in Phlebotomy",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_5",
+          "text": "Aug 20XX — May 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_6",
+          "text": "Completed courses in Introduction to Phlebotomy, Venipuncture",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_7",
+          "text": "Techniques, Capillary Puncture Techniques, Laboratory Procedures and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_8",
+          "text": "Equipment, and Medical Law and Ethics as part of associate degree in",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "Phlebotomy program.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "PROFESSIONAL EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_10",
+          "text": "PROFESSIONAL EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_23",
+          "text": "Phlebotomist | Lamna Healthcare",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_24",
+          "text": "Jan 20XX — present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_25",
+          "text": "This is the place for a summary of your key responsibilities and most",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "stellar accomplishments",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "Phlebotomist | Wholeness Healthcare",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_28",
+          "text": "Feb 20XX — Jan 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_29",
+          "text": "This is the place for a summary of your key responsibilities and most",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_30",
+          "text": "stellar accomplishments",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_31",
+          "text": "Phlebotomist | Swan Sonia Healthcare",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_32",
+          "text": "Dec 20XX — Jul 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_33",
+          "text": "This is the place for a summary of your key responsibilities and most",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_34",
+          "text": "stellar accomplishments",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_23"
+          ],
+          "meta_para_ids": [
+            "para_24",
+            "para_25",
+            "para_26"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_27"
+          ],
+          "meta_para_ids": [
+            "para_28",
+            "para_29",
+            "para_30"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_31"
+          ],
+          "meta_para_ids": [
+            "para_32",
+            "para_33",
+            "para_34"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "CONTACT",
+      "paragraphs": [
+        {
+          "para_id": "para_35",
+          "text": "CONTACT",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_36",
+          "text": "INFO",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_37",
+          "text": "4321 Maple Ave",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Nashville, TN 13141",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_39",
+          "text": "316.555.0136",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_40",
+          "text": "sheetal@example.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_41",
+          "text": "SKILLS &",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_42",
+          "text": "ABILITIES",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Performing venipuncture and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_44",
+          "text": "capillary puncture procedures",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Processing blood samples",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "according to established",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_47",
+          "text": "laboratory protocols",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_48",
+          "text": "Familiar with medical",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_49",
+          "text": "terminology and patient",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_50",
+          "text": "privacy regulations",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "AWARDS",
+      "paragraphs": [
+        {
+          "para_id": "para_51",
+          "text": "AWARDS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_52",
+          "text": "Recognized by supervisors",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_53",
+          "text": "and colleagues for excellent",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_54",
+          "text": "patient care and attention to",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_55",
+          "text": "detail. Successfully",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_56",
+          "text": "completed certification in",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_57",
+          "text": "phlebotomy from a national",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_58",
+          "text": "health organization.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

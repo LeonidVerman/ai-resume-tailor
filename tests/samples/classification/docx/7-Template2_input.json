@@ -1,0 +1,218 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "OFFICE MANAGER",
+      "paragraphs": [
+        {
+          "para_id": "para_2",
+          "text": "OFFICE MANAGER",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_3",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_4",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_5",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_6",
+          "text": "chanchals@example.com(718) 555–0100LinkedIn profile",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_7",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_8",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_9",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_10",
+          "text": "EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_21",
+          "text": "January 20xx - Current ",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_22",
+          "text": "Office manager, The Phone Company ",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_23",
+          "text": "Summarize your key responsibilities and accomplishments. Where appropriate, use the language and words you find in the specific job description. Be concise, targeting 3-5 key areas.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_25",
+          "text": "March 20xx – December 20xx ",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Office manager, Nod Publishing ",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_27",
+          "text": "Summarize your key responsibilities and accomplishments. Here again, take any opportunity to use words you find in the job description. Be brief.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_29",
+          "text": "August 20xx – March 20xx ",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_30",
+          "text": "Office manager, Southridge Video ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_31",
+          "text": "Summarize your key responsibilities and accomplishments. Here again, take any opportunity to use words you find in the job description. Be concise, targeting 3-5 key areas.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_21"
+          ],
+          "meta_para_ids": [],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_22"
+          ],
+          "meta_para_ids": [
+            "para_23",
+            "para_25"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_26"
+          ],
+          "meta_para_ids": [
+            "para_27",
+            "para_29"
+          ],
+          "bullet_para_ids": [
+            "para_30",
+            "para_31"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "education",
+      "paragraphs": [
+        {
+          "para_id": "para_35",
+          "text": "education",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_36",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_37",
+          "text": "Sep 20xx - May 20xx",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Associate degree, H.R. Management, Bellows College",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_39",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_40",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_41",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "SKILLS",
+      "paragraphs": [
+        {
+          "para_id": "para_42",
+          "text": "SKILLS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_43",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_44",
+          "text": "Project managementData analysisCommunication",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "OrganizationProblem-solving Management",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

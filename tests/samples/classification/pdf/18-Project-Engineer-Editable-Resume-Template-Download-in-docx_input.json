@@ -1,0 +1,365 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "SKILLS",
+      "paragraphs": [
+        {
+          "para_id": "para_6",
+          "text": "SKILLS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_7",
+          "text": "Licensed Civil Engineer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_8",
+          "text": "Master's Degree in Project",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "Engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_10",
+          "text": "Accredited by the Standard",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_11",
+          "text": "Compliance Agency",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_12",
+          "text": "Well-versed in QA/QC",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_13",
+          "text": "policies",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "REFERENCES",
+      "paragraphs": [
+        {
+          "para_id": "para_14",
+          "text": "REFERENCES",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_15",
+          "text": "Philippe Stolvan",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_16",
+          "text": "Manager, Present Builders",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_17",
+          "text": "Email:",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_18",
+          "text": "hello@techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_19",
+          "text": "Kyleigh Riteman",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_20",
+          "text": "HR Lead, Top Tier Engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_21",
+          "text": "Phone: 123-456-7890",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "CONTACT",
+      "paragraphs": [
+        {
+          "para_id": "para_22",
+          "text": "CONTACT",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_23",
+          "text": "123-456-7890",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_24",
+          "text": "hello@reallygreatsite.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_25",
+          "text": "123 Anywhere St., Any",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "City, ST 12345",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "www.techguruplus.com",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "WORK EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_28",
+          "text": "WORK EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Project Coordinator",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Top Tier Engineering",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_40",
+          "text": "2035-present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Ensures compliance with safety and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_42",
+          "text": "performance standards",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Develops and maintains schedules for",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_44",
+          "text": "complex engineering projects",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Conducts risk analysis and mitigation for high-",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "profile projects",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_38"
+          ],
+          "meta_para_ids": [
+            "para_39",
+            "para_40",
+            "para_41",
+            "para_42",
+            "para_43",
+            "para_44",
+            "para_45",
+            "para_46"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Senior Engineer",
+      "paragraphs": [
+        {
+          "para_id": "para_47",
+          "text": "Senior Engineer",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_48",
+          "text": "Present Builders",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_49",
+          "text": "2032-2035",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_50",
+          "text": "Supervised 15 projects, leading to a 30%",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_51",
+          "text": "increase in project completion rate within a year",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_52",
+          "text": "Implemented process improvements that reduced",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_53",
+          "text": "project cycle time by 20%",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_5_role_1",
+          "header_para_ids": [
+            "para_47"
+          ],
+          "meta_para_ids": [
+            "para_49"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_54",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "West State University",
+      "paragraphs": [
+        {
+          "para_id": "para_55",
+          "text": "West State University",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_56",
+          "text": "Master's in Project Engineering | June 2034",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_57",
+          "text": "Capstone Project Excellence Award",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_58",
+          "text": "2 Peer-Reviewed Research Papers",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_59",
+          "text": "Published Commencement Speaker, 2034",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_7_role_1",
+          "header_para_ids": [
+            "para_55"
+          ],
+          "meta_para_ids": [
+            "para_59"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_8",
+      "raw_title": "North City College",
+      "paragraphs": [
+        {
+          "para_id": "para_60",
+          "text": "North City College",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_61",
+          "text": "Degree in Civil Engineering | June 2030",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_62",
+          "text": "Dean’s List - 2026-2028",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_63",
+          "text": "Project Excellence Award, 2029",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_64",
+          "text": "President, Student Government (2029-2030)",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_8_role_1",
+          "header_para_ids": [
+            "para_60"
+          ],
+          "meta_para_ids": [
+            "para_62",
+            "para_63",
+            "para_64"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    }
+  ]
+}

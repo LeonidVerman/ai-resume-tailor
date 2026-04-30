@@ -1,0 +1,242 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "EDUCATIONAL HISTORY",
+      "paragraphs": [
+        {
+          "para_id": "para_15",
+          "text": "EDUCATIONAL HISTORY",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Enjeti-Maynard Institute",
+      "paragraphs": [
+        {
+          "para_id": "para_16",
+          "text": "Enjeti-Maynard Institute",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_17",
+          "text": "POSTGRADUATE CERTIFICATE | JAN 2015 - DEC 2016",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_18",
+          "text": "Certificate in Engineering Design",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_19",
+          "text": "Took classes on mechanical design, with emphasis",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_20",
+          "text": "on innovative applications",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_21",
+          "text": "Accomplished an engineering design portfolio",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Kulkaslo Institute",
+      "paragraphs": [
+        {
+          "para_id": "para_22",
+          "text": "Kulkaslo Institute",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_23",
+          "text": "BACHELOR OF SCIENCE | SEPT 2009 - MAY 2014",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_24",
+          "text": "BS Mechanical Engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_25",
+          "text": "GPA: 3.95",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Highest Performing Student, Engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "Department Conducted more than 10 workshops",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_28",
+          "text": "for the KI Engineering Club",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "PROFESSIONAL OVERVIEW",
+      "paragraphs": [
+        {
+          "para_id": "para_29",
+          "text": "PROFESSIONAL OVERVIEW",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_30",
+          "text": "I am a mechanical engineer who's well-",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_31",
+          "text": "versed in both technical engineering and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_32",
+          "text": "product design. I keep up-to-date with",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_33",
+          "text": "the latest materials and techniques.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "CORE COMPETENCIES",
+      "paragraphs": [
+        {
+          "para_id": "para_34",
+          "text": "CORE COMPETENCIES",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_35",
+          "text": "Design and Validation",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Statistical Analysis",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_37",
+          "text": "Product Development",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Strong Team Collaboration",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Engineering Documentation",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Production Support",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "CONTACT INFORMATION",
+      "paragraphs": [
+        {
+          "para_id": "para_41",
+          "text": "CONTACT INFORMATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_42",
+          "text": "Email: hello@techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Phone: (123) 456 7890",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_44",
+          "text": "Website: www.techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Office Address: 123 Anywhere St., Any",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "City, State, Country 12345",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "AFFILIATIONS",
+      "paragraphs": [
+        {
+          "para_id": "para_47",
+          "text": "AFFILIATIONS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_48",
+          "text": "GRW International Institute of Mechanical Engineers (2016 - present)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_49",
+          "text": "National Association of Engineers & Computer Scientists (2016 - present)",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_7_role_1",
+          "header_para_ids": [
+            "para_47"
+          ],
+          "meta_para_ids": [
+            "para_48",
+            "para_49"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    }
+  ]
+}
