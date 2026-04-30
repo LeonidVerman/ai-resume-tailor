@@ -423,6 +423,12 @@ export const admin = {
   downloadBenchmarkZip: (id: number) =>
     downloadBlob(`/admin/benchmark-runs/${id}/download`, `benchmark-${id}.zip`),
 
+  grantCredits: (user_id: string, amount: number) =>
+    request<{ user_id: string; credits_adjusted: number }>("/admin/billing/grant-credits", {
+      method: "POST",
+      body: JSON.stringify({ user_id, amount }),
+    }),
+
   classifyFile: async (
     file: File
   ): Promise<{

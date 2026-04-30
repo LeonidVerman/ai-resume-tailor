@@ -254,7 +254,7 @@ def read_docx(file_path):
     return "\n".join([p.text for p in doc.paragraphs])
 
 
-def save_doc_from_template(template_path, output_path, new_text):
+def save_doc_from_template(template_path, output_path, new_text, classification=None):
     """Render a tailored DOCX from a master resume template and LLM output text.
 
     For resume documents the compiler pipeline is used:
@@ -265,6 +265,12 @@ def save_doc_from_template(template_path, output_path, new_text):
 
     For cover letters (no experience section detected) the original
     _apply_groups algorithm is used as a fallback.
+
+    Parameters
+    ----------
+    classification:
+        Optional ClassificationOutput from upload-time LLM classification.
+        Passed through to compile_resume / apply_tailored.  None → existing behavior.
     """
     new_text = _sanitize_xml_text(new_text)
 
@@ -279,9 +285,10 @@ def save_doc_from_template(template_path, output_path, new_text):
 
     if has_experience:
         from tailor.compiler.pipeline import compile_resume
-        compile_resume(template_path, new_text, output_path)
+        return compile_resume(template_path, new_text, output_path, classification=classification)
     else:
         # Cover letter path: use blank-line group filling
         doc = Document(template_path)
         _apply_groups(doc.paragraphs, new_text, doc)
         doc.save(output_path)
+        return None

@@ -1,0 +1,482 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "SOFTWARE ENGINEER",
+      "paragraphs": [
+        {
+          "para_id": "para_7",
+          "text": "SOFTWARE ENGINEER",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_8",
+          "text": "Kalayaan City 1234",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "LICENSE NO. 0123456",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_10",
+          "text": "linkedin.com/in/name",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_11",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_12",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_13",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_14",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_15",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Summary",
+      "paragraphs": [
+        {
+          "para_id": "para_16",
+          "text": "Summary",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_17",
+          "text": "I have experience in developing and maintaining software applications for various industries in the Philippines. Skilled in working with databases, APIs, and software development tools. My experience also includes collaborating with cross-functional teams to deliver high-quality software solutions on time and within budget.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_18",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_19",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_20",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Work Experience",
+      "paragraphs": [
+        {
+          "para_id": "para_21",
+          "text": "Work Experience",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_37",
+          "text": "SOFTWARE ENGINEER",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Tropang True Po",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_41",
+          "text": "January 2020 - Present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Created an automated testing framework that reduced testing time by 50%",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Collaborated with cross-functional teams to troubleshoot and resolve technical issues, resulting in improved customer satisfaction",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_48",
+          "text": "BACK-END DEVELOPER",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_50",
+          "text": "Truesdays",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_52",
+          "text": "March 2014 - December 2020",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_54",
+          "text": "Designed and implemented new features on a cloud-based platform that increased user engagement by 25%",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_56",
+          "text": "Conducted testing and analysis for a new product launch",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_59",
+          "text": "DEVOPS ENGINEER",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_61",
+          "text": "Kalayaan National Bank",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_63",
+          "text": "June 2012 - March 2014",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_65",
+          "text": "Conducted research and development to improve product performance and efficiency by 20%",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_67",
+          "text": "Created technical documentation and provided training for end-users",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_37"
+          ],
+          "meta_para_ids": [
+            "para_39",
+            "para_41"
+          ],
+          "bullet_para_ids": [
+            "para_43",
+            "para_45"
+          ]
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_48"
+          ],
+          "meta_para_ids": [
+            "para_50",
+            "para_52"
+          ],
+          "bullet_para_ids": [
+            "para_54",
+            "para_56"
+          ]
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_59"
+          ],
+          "meta_para_ids": [
+            "para_61",
+            "para_63"
+          ],
+          "bullet_para_ids": [
+            "para_65",
+            "para_67"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Educational History",
+      "paragraphs": [
+        {
+          "para_id": "para_70",
+          "text": "Educational History",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_71",
+          "text": "MASTERS IN COMPUTER SCIENCE",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_72",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_73",
+          "text": "Las Felipinas University",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_74",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_75",
+          "text": "2019 - 2021",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_76",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_77",
+          "text": "BACHELOR OF COMPUTER SCIENCE",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_78",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_79",
+          "text": "Las Felipinas University",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_80",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_81",
+          "text": "2008 - 2012",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_82",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_83",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Relevant Skills",
+      "paragraphs": [
+        {
+          "para_id": "para_84",
+          "text": "Relevant Skills",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_85",
+          "text": "Proficiency in Java, Python, C++",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_86",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_87",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_88",
+          "text": "Data Structures and Algorithms",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_89",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_90",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_91",
+          "text": "Development Methogology",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_92",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_93",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_94",
+          "text": "Testing and debugging techniques",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_95",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_96",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_97",
+          "text": "Database and SQL",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_98",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_99",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_100",
+          "text": "Adaptability and continuous learning",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_101",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_102",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_103",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "Affiliations & Awards",
+      "paragraphs": [
+        {
+          "para_id": "para_104",
+          "text": "Affiliations & Awards",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_105",
+          "text": "YELLOW TREE ORGANIZATION",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_106",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_107",
+          "text": "Non-profit",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_108",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_109",
+          "text": "Provided technical assistance for their database system",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_110",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_111",
+          "text": "LIFE TECH PRO 2011",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_112",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_113",
+          "text": "Hackathon",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_114",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_115",
+          "text": "Participated in a 24hr hackathon",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_6_role_1",
+          "header_para_ids": [
+            "para_104"
+          ],
+          "meta_para_ids": [
+            "para_111"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,12 @@
 # Release Notes
 
+## 0.8.3.BETA — 2026-04-29
+
+### New features
+- **Resume classification integrated into Internal Representation processing and rendering**
+
+---
+
 ## 0.8.2.BETA — 2026-04-24
 
 ### New features

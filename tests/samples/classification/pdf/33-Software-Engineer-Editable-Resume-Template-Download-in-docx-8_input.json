@@ -1,0 +1,318 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Professional Experience",
+      "paragraphs": [
+        {
+          "para_id": "para_5",
+          "text": "Professional Experience",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_17",
+          "text": "SOFTWARE ENGINEER",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_18",
+          "text": "2023",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_19",
+          "text": "BACHELOR  OF SCIENCE  IN COMPUTER",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_20",
+          "text": "Collaborated with a dynamic team to create",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_21",
+          "text": "cutting- edge software products.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_22",
+          "text": "Led the development of a customer-facing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_23",
+          "text": "web application, resulting in a 30% increase in",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_24",
+          "text": "user engagement.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_25",
+          "text": "SCIENCE",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Your University",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "May 2020",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_17"
+          ],
+          "meta_para_ids": [
+            "para_18",
+            "para_19",
+            "para_20",
+            "para_21",
+            "para_22",
+            "para_23",
+            "para_24",
+            "para_25",
+            "para_26",
+            "para_27"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Education",
+      "paragraphs": [
+        {
+          "para_id": "para_28",
+          "text": "Education",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "MASTER  OF SCIENCE  IN COMPUTER",
+      "paragraphs": [
+        {
+          "para_id": "para_29",
+          "text": "MASTER  OF SCIENCE  IN COMPUTER",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_30",
+          "text": "SCIENCE",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_31",
+          "text": "JUNIOR SOFTWARE ENGINEER",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_32",
+          "text": "Assisted senior engineers in developing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_33",
+          "text": "and testing software components.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_34",
+          "text": "202",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_35",
+          "text": "1",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Your University",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_37",
+          "text": "May 2022",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Collaborated on front-end development tasks,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_39",
+          "text": "including UI enhancements and responsive",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_40",
+          "text": "design.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_41",
+          "text": "PROGRAMMER",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_42",
+          "text": "2019",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Assisted in the development of unit tests and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_44",
+          "text": "documentation for various software components.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_3_role_1",
+          "header_para_ids": [
+            "para_29"
+          ],
+          "meta_para_ids": [
+            "para_37",
+            "para_42"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Certifications",
+      "paragraphs": [
+        {
+          "para_id": "para_45",
+          "text": "Certifications",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_46",
+          "text": "Certified Developer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_47",
+          "text": "Certified Practitioner",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_48",
+          "text": "UI/UX Developer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_49",
+          "text": "Proficiency",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_50",
+          "text": "Programming Languages",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_51",
+          "text": "Web Technologies",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_52",
+          "text": "Database Management",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_53",
+          "text": "Version Control",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_54",
+          "text": "Agile Development",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_55",
+          "text": "Problem Solving and Algorithm Design",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_56",
+          "text": "Strong Communication and Team Collaboration",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_57",
+          "text": "Language",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_58",
+          "text": "English",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_59",
+          "text": "Spanish",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_60",
+          "text": "German",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Contact Information",
+      "paragraphs": [
+        {
+          "para_id": "para_61",
+          "text": "Contact Information",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_62",
+          "text": "+123-456-7890",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_63",
+          "text": "www.techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_64",
+          "text": "hello@techguruplus.com",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

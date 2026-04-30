@@ -1,0 +1,373 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "About Me",
+      "paragraphs": [
+        {
+          "para_id": "para_3",
+          "text": "About Me",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_4",
+          "text": "I have a background as Software Engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_5",
+          "text": "experienced in maintaining and developing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_6",
+          "text": "high performance data platform, integrating",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_7",
+          "text": "data from a variety of internal and external",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_8",
+          "text": "sources, in order to support data and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "analytics activities functions business.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Education",
+      "paragraphs": [
+        {
+          "para_id": "para_10",
+          "text": "Education",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_11",
+          "text": "(2005-2009)",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "INGOUDE UNIVERSITY",
+      "paragraphs": [
+        {
+          "para_id": "para_12",
+          "text": "INGOUDE UNIVERSITY",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_13",
+          "text": "Bachelor of Software Engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_14",
+          "text": "GPA : 3.6",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Contact",
+      "paragraphs": [
+        {
+          "para_id": "para_15",
+          "text": "Contact",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_16",
+          "text": "+123-456-7890",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_17",
+          "text": "hello@techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_18",
+          "text": "www.techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_19",
+          "text": "123 Anywhere Street., Any",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_20",
+          "text": "City",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Skills",
+      "paragraphs": [
+        {
+          "para_id": "para_21",
+          "text": "Skills",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_22",
+          "text": "Prior experience with AWS is",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_23",
+          "text": "preferred.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_24",
+          "text": "Prior experience with Docker or",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_25",
+          "text": "other virtualization technologies.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Prior experience with highly",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "available database technologies.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_28",
+          "text": "Excellent analytical skills and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_29",
+          "text": "ability to ramp up quickly on new",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_30",
+          "text": "tools/technologies.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_31",
+          "text": "Experiences",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_32",
+          "text": "(2010-2013)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_33",
+          "text": "Ginyard International Co.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "RESPONSIBLE FOR NETWORK",
+      "paragraphs": [
+        {
+          "para_id": "para_34",
+          "text": "RESPONSIBLE FOR NETWORK",
+          "parser_semantic": "section_heading"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_7",
+      "raw_title": "AND SOFTWARE",
+      "paragraphs": [
+        {
+          "para_id": "para_35",
+          "text": "AND SOFTWARE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Develop features that improve the",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_37",
+          "text": "team’s ability to deliver reliability,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_38",
+          "text": "velocity, and efficiency to the customer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_39",
+          "text": "when managing databases, both on-",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_40",
+          "text": "premise and in the cloud.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Contribute to code reviews along with",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_42",
+          "text": "design and architecture reviews.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Collaborate with Technical lead on",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_44",
+          "text": "team initiative(s) to deliver on quarterly",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "objectives",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "(2014-Now)",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_47",
+          "text": "Wardiere Inc.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_7_role_1",
+          "header_para_ids": [
+            "para_35"
+          ],
+          "meta_para_ids": [
+            "para_46"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_8",
+      "raw_title": "SOFTWARE ENGINEERING",
+      "paragraphs": [
+        {
+          "para_id": "para_48",
+          "text": "SOFTWARE ENGINEERING",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_49",
+          "text": "Develop features that improve the",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_50",
+          "text": "team’s ability to deliver reliability,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_51",
+          "text": "velocity, and efficiency to the customer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_52",
+          "text": "when managing databases, both on-",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_53",
+          "text": "premise and in the cloud.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_54",
+          "text": "Use Infrastructure As Code tools and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_55",
+          "text": "techniques to help product teams with",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_56",
+          "text": "migration templates from on-prem",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_57",
+          "text": "database technologies to AWS. During",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_58",
+          "text": "work-hours DFR rotation week (once",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_59",
+          "text": "every 6 weeks), provide customer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_60",
+          "text": "service and support to our engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_61",
+          "text": "teams on Slack. There is no Pagerduty",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_62",
+          "text": "rotation as part of DFR week.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

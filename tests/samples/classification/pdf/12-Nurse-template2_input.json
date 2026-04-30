@@ -1,0 +1,259 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "CONTACT INFO",
+      "paragraphs": [
+        {
+          "para_id": "para_4",
+          "text": "CONTACT INFO",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_5",
+          "text": "111 1st Avenue",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_6",
+          "text": "Redmond, WA",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_7",
+          "text": "65432",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_8",
+          "text": "909.555.0100",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "kristi@example.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_10",
+          "text": "www.interestingsite.com",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_11",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_12",
+          "text": "Bellows College | Madison, WI",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_13",
+          "text": "Bachelors of Science in Nursing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_14",
+          "text": "Relevant coursework: Anatomy",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_15",
+          "text": "and physiology, pharmacology,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_16",
+          "text": "nursing ethics, and patient care",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_17",
+          "text": "management.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "COMMUNICATION",
+      "paragraphs": [
+        {
+          "para_id": "para_18",
+          "text": "COMMUNICATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_19",
+          "text": "I have received several awards for",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_20",
+          "text": "my outstanding communication",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_21",
+          "text": "skills, including recognition for",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_22",
+          "text": "providing exceptional patient",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_23",
+          "text": "education and counseling.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "LEADERSHIP",
+      "paragraphs": [
+        {
+          "para_id": "para_24",
+          "text": "LEADERSHIP",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_25",
+          "text": "I received the \"Outstanding Nursing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Student\" award during my time in",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "nursing school, and I have been",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_28",
+          "text": "recognized for my contributions to",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_29",
+          "text": "patient safety and satisfaction in my",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_30",
+          "text": "current role.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_31",
+          "text": "EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Registered Nurse | Pediatrics | Wholeness Healthcare",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_40",
+          "text": "December 20XX–November 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Registered Nurse | General Practice | Wholeness Healthcare",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_42",
+          "text": "September 20XX–August 20XX",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Registered Nurse | General Practice | Tyler Stein MD",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_44",
+          "text": "I have a proven track record of delivering high-quality care while maintaining patient safety and satisfaction.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_39"
+          ],
+          "meta_para_ids": [
+            "para_40"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_41"
+          ],
+          "meta_para_ids": [
+            "para_42"
+          ],
+          "bullet_para_ids": []
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_43"
+          ],
+          "meta_para_ids": [
+            "para_44"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "REFERENCES",
+      "paragraphs": [
+        {
+          "para_id": "para_45",
+          "text": "REFERENCES",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_46",
+          "text": "[Available upon request]",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

@@ -35,6 +35,7 @@ class RenderingService:
         resume_text: str,
         template_bytes: bytes | None = None,
         template_ir_dict: dict | None = None,
+        classification_dict: dict | None = None,
     ) -> bytes:
         """
         Fill the resume DOCX template with LLM-generated text.
@@ -50,13 +51,21 @@ class RenderingService:
             Serialized ResumeDocument IR dict for PDF-sourced resumes.
             When provided, the compiler pipeline uses the IR directly and
             renders via para_builder.
+        classification_dict:
+            Optional serialized ClassificationOutput dict (the "classification"
+            key from the stored classification envelope).  When provided, the
+            updater constrains section updates using rewrite_policy,
+            preserve_heading, and preserve_body_structure.  None → no change.
 
         Returns raw DOCX bytes.
         """
         from tailor.config import RESUME_TEMPLATE
 
+        classification = _load_classification(classification_dict)
+
         if template_ir_dict is not None:
-            return self._render_from_ir(resume_text, template_ir_dict)
+            docx_bytes, _ = self._render_from_ir(resume_text, template_ir_dict, classification)
+            return docx_bytes
 
         from tailor.docx.template_fill import save_doc_from_template
 
@@ -73,7 +82,7 @@ class RenderingService:
             else:
                 template_path = str(RESUME_TEMPLATE)
 
-            save_doc_from_template(template_path, tmp_path, resume_text)
+            save_doc_from_template(template_path, tmp_path, resume_text, classification=classification)
             with open(tmp_path, "rb") as f:
                 return f.read()
         finally:
@@ -81,8 +90,13 @@ class RenderingService:
             if tmp_template_path:
                 _safe_remove(tmp_template_path)
 
-    def _render_from_ir(self, resume_text: str, template_ir_dict: dict) -> bytes:
-        """Render a PDF-sourced resume by applying LLM text to the stored IR."""
+    def _render_from_ir(
+        self, resume_text: str, template_ir_dict: dict, classification=None
+    ) -> tuple[bytes, dict | None]:
+        """Render a PDF-sourced resume by applying LLM text to the stored IR.
+
+        Returns (docx_bytes, updated_ir_dict).
+        """
         from tailor.compiler.models import ResumeDocument
         from tailor.compiler.pipeline import compile_resume_from_ir
         from tailor.config import RESUME_TEMPLATE
@@ -92,16 +106,68 @@ class RenderingService:
         with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
             output_path = tmp.name
         try:
-            compile_resume_from_ir(
+            updated_doc = compile_resume_from_ir(
                 template_ir=template_ir,
                 llm_text=resume_text,
                 output_path=output_path,
                 style_template_path=str(RESUME_TEMPLATE),
+                classification=classification,
             )
             with open(output_path, "rb") as f:
-                return f.read()
+                docx_bytes = f.read()
+            return docx_bytes, updated_doc.to_dict()
         finally:
             _safe_remove(output_path)
+
+    def render_resume_for_generation(
+        self,
+        resume_text: str,
+        template_bytes: bytes | None = None,
+        template_ir_dict: dict | None = None,
+        classification_dict: dict | None = None,
+    ) -> tuple[bytes, dict | None]:
+        """Like render_resume_docx but also returns the updated IR dict.
+
+        Returns
+        -------
+        (docx_bytes, updated_ir_dict)
+            updated_ir_dict is the serialized ResumeDocument after apply_tailored,
+            suitable for inclusion in the generation debug JSON.  None when the
+            updated IR could not be captured (cover-letter path, parse error, etc.).
+        """
+        from tailor.config import RESUME_TEMPLATE
+
+        classification = _load_classification(classification_dict)
+
+        if template_ir_dict is not None:
+            return self._render_from_ir(resume_text, template_ir_dict, classification)
+
+        from tailor.docx.template_fill import save_doc_from_template
+
+        tmp_template_path = None
+        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
+            tmp_path = tmp.name
+
+        try:
+            if template_bytes is not None:
+                with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp_tpl:
+                    tmp_tpl.write(template_bytes)
+                    tmp_template_path = tmp_tpl.name
+                template_path = tmp_template_path
+            else:
+                template_path = str(RESUME_TEMPLATE)
+
+            updated_doc = save_doc_from_template(
+                template_path, tmp_path, resume_text, classification=classification
+            )
+            with open(tmp_path, "rb") as f:
+                docx_bytes = f.read()
+            updated_ir_dict = updated_doc.to_dict() if updated_doc is not None else None
+            return docx_bytes, updated_ir_dict
+        finally:
+            _safe_remove(tmp_path)
+            if tmp_template_path:
+                _safe_remove(tmp_template_path)
 
     def render_cover_letter_docx(self, cover_letter_text: str) -> bytes:
         """
@@ -177,3 +243,19 @@ def _safe_remove(path: str) -> None:
             os.remove(path)
     except OSError as exc:
         logger.warning("Could not remove temp file %s: %s", path, exc)
+
+
+def _load_classification(classification_dict: dict | None):
+    """Parse a classification dict into a ClassificationOutput, or return None.
+
+    Failures are caught and logged so a bad/missing classification never
+    blocks rendering.
+    """
+    if not classification_dict:
+        return None
+    try:
+        from tailor.compiler.classification_models import ClassificationOutput
+        return ClassificationOutput.from_dict(classification_dict)
+    except Exception as exc:
+        logger.warning("Failed to parse classification for rendering: %s", exc)
+        return None

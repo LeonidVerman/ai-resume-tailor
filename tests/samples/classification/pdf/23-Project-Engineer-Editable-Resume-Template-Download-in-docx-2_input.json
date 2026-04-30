@@ -1,0 +1,311 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "CONTACT INFO",
+      "paragraphs": [
+        {
+          "para_id": "para_17",
+          "text": "CONTACT INFO",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_18",
+          "text": "Landline: (123) 456 7890",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_19",
+          "text": "Email: hello@techguruplus.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_20",
+          "text": "Home Address: 2179 Clover",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_21",
+          "text": "Avenue, Coquitlam, British",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_22",
+          "text": "Columbia V3J 5S9",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_23",
+          "text": "Website: www.techguruplus.com",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "PERSONAL REFERENCES",
+      "paragraphs": [
+        {
+          "para_id": "para_24",
+          "text": "PERSONAL REFERENCES",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_25",
+          "text": "Lamis Perecio | CEO, Colensky",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_26",
+          "text": "Engineering Consultancy",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_27",
+          "text": "Email: hello@reallygreatsite.com",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_28",
+          "text": "Bertizzia Lopelski | COO, Lopelski",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_29",
+          "text": "Builders, Inc",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_30",
+          "text": "Phone: 123-456-7890",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_31",
+          "text": "EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Project Coordinator",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Colensky Engineering Consultancy",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_42",
+          "text": "2017-present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Ensures compliance to safety and",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_44",
+          "text": "performance standards Conducts",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "quality control checks Schedules,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "coordinates and monitors engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_47",
+          "text": "projects",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_40"
+          ],
+          "meta_para_ids": [
+            "para_41",
+            "para_42",
+            "para_43",
+            "para_44",
+            "para_45",
+            "para_46",
+            "para_47"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Senior Engineer",
+      "paragraphs": [
+        {
+          "para_id": "para_48",
+          "text": "Senior Engineer",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_49",
+          "text": "Lopelski Builders, Inc.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_50",
+          "text": "2013-2017",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_51",
+          "text": "Oversees engineering projects",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_52",
+          "text": "Evaluates, hires and trains junior",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_53",
+          "text": "engineers",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_54",
+          "text": "Prepares monthly performance reports",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_55",
+          "text": "Develops system upgrades",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_4_role_1",
+          "header_para_ids": [
+            "para_48"
+          ],
+          "meta_para_ids": [
+            "para_50"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_56",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_57",
+          "text": "University of Lovelstyne",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_58",
+          "text": "Master's in Project Engineering | June",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_59",
+          "text": "2018",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_60",
+          "text": "Completed a postgraduate degree in",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_61",
+          "text": "project engineering; GWA 3.75 Authored",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_62",
+          "text": "a dissertation on \"Engineering the",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_63",
+          "text": "Future: Methods in Project",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_64",
+          "text": "Management\"",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_6",
+      "raw_title": "Nat'l Community College",
+      "paragraphs": [
+        {
+          "para_id": "para_65",
+          "text": "Nat'l Community College",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_66",
+          "text": "Degree in Civil Engineering | June 2012",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_67",
+          "text": "Completed an undergraduate degree in",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_68",
+          "text": "civil engineering; GWA 3.56",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_69",
+          "text": "Graduated with distinction, with a",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_70",
+          "text": "special award for Best Thesis",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_71",
+          "text": "NCC Scholarship Holder",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

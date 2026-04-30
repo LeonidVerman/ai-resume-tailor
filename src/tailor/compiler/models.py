@@ -126,13 +126,19 @@ class ParaModel:
     para_id: str = ""
 
     def with_text(self, new_text: str) -> "ParaModel":
-        """Return a copy sharing this paragraph's style but with different text."""
-        return ParaModel(
+        """Return a copy sharing this paragraph's style but with different text.
+
+        para_id is preserved so the layout_blocks renderer can match the updated
+        paragraph back to its original XML prototype by stable ID.
+        """
+        p = ParaModel(
             text=new_text,
             style=self.style,
             semantic=self.semantic,
             paragraph_profile=self.paragraph_profile,
         )
+        p.para_id = self.para_id
+        return p
 
     def clone_as(self, new_text: str, semantic: str | None = None) -> "ParaModel":
         """Return a new ParaModel with a deep-copied style proto and new text.
@@ -339,6 +345,67 @@ class TableBlock:
 
 
 @dataclass
+class LayoutParagraphBlock:
+    """Serializable layout node for a single top-level body paragraph.
+
+    Stores the original ``w:p`` XML as a Unicode string so the renderer can
+    faithfully reconstruct paragraph formatting (fonts, styles, spacing, column
+    breaks, embedded sectPr) after deserialization — without requiring the
+    original DOCX template file.
+
+    para_id matches the stable ID assigned by assign_stable_ids().  A value of
+    ``""`` means the paragraph is structural/orphan (e.g. a column-break
+    paragraph that was split by the multicolumn fix); the renderer inserts it
+    verbatim without text substitution.
+    """
+
+    para_id: str
+    xml_proto_xml: str | None = None
+
+    def to_dict(self) -> dict:
+        d: dict = {"kind": "paragraph", "para_id": self.para_id}
+        if self.xml_proto_xml is not None:
+            d["xml_proto_xml"] = self.xml_proto_xml
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "LayoutParagraphBlock":
+        return cls(para_id=d["para_id"], xml_proto_xml=d.get("xml_proto_xml"))
+
+
+@dataclass
+class LayoutTableBlock:
+    """Serializable layout node for a top-level table.
+
+    Stores the original ``w:tbl`` XML as a Unicode string.  ``para_ids`` is an
+    ordered list of stable paragraph IDs corresponding to every ``w:p`` inside
+    the table (in document order).  The renderer deserializes the XML, iterates
+    the ``w:p`` elements, looks up each paragraph's updated text by ``para_id``,
+    and writes it into the cloned XML before inserting the table.
+    """
+
+    table_id: str
+    xml_proto_xml: str
+    para_ids: list[str]
+
+    def to_dict(self) -> dict:
+        return {
+            "kind": "table",
+            "table_id": self.table_id,
+            "xml_proto_xml": self.xml_proto_xml,
+            "para_ids": self.para_ids,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "LayoutTableBlock":
+        return cls(
+            table_id=d["table_id"],
+            xml_proto_xml=d["xml_proto_xml"],
+            para_ids=d.get("para_ids", []),
+        )
+
+
+@dataclass
 class ResumeDocument:
     """Full parsed resume.
 
@@ -361,6 +428,13 @@ class ResumeDocument:
     source_kind: str = "docx"
     body_items: list[Any] | None = None  # list[ParaModel | TableBlock]; None for PDF/deserialised
     label_column_fixed: bool = False     # True when label-column layout reordering was applied
+    table_column_layout_fixed: bool = False  # True when newspaper/table multi-column fix applied
+    # Serializable layout tree (Option B: XML prototypes).  Built by parse_docx
+    # when USE_SERIALIZED_LAYOUT_TREE is True; None for PDF sources or when the
+    # flag is off.  Carries the original w:p / w:tbl XML strings so the renderer
+    # can faithfully reconstruct DOCX layout after DB round-trip without relying
+    # on the runtime xml_proto / body_items fields (which are not serialised).
+    layout_blocks: list[Any] | None = None  # list[LayoutParagraphBlock | LayoutTableBlock]
 
     def to_dict(self) -> dict:
         """Serialize to a JSON-compatible dict.  xml_proto is not included."""
@@ -372,6 +446,10 @@ class ResumeDocument:
         }
         if self.label_column_fixed:
             d["label_column_fixed"] = True
+        if self.table_column_layout_fixed:
+            d["table_column_layout_fixed"] = True
+        if self.layout_blocks is not None:
+            d["layout_blocks"] = [b.to_dict() for b in self.layout_blocks]
         return d
 
     @classmethod
@@ -379,7 +457,8 @@ class ResumeDocument:
         """Reconstruct a ResumeDocument from a serialized dict.
 
         all_paras is rebuilt from header_paras + sections in document order.
-        xml_proto fields are always None; the renderer uses para_builder.
+        xml_proto fields are always None; when layout_blocks is present the
+        renderer uses it to restore XML-fidelity formatting instead of para_builder.
         """
         header_paras = [ParaModel.from_dict(p) for p in d.get("header_paras", [])]
         sections = [ResumeSection.from_dict(s) for s in d.get("sections", [])]
@@ -396,12 +475,24 @@ class ResumeDocument:
             else:
                 all_paras.extend(section.body_paras)
 
+        layout_blocks = None
+        lb_data = d.get("layout_blocks")
+        if lb_data is not None:
+            layout_blocks = [
+                LayoutTableBlock.from_dict(b) if b.get("kind") == "table"
+                else LayoutParagraphBlock.from_dict(b)
+                for b in lb_data
+            ]
+
         return cls(
             header_paras=header_paras,
             sections=sections,
             layout=layout,
             all_paras=all_paras,
             source_kind=d.get("source_kind", "pdf"),
+            label_column_fixed=bool(d.get("label_column_fixed", False)),
+            table_column_layout_fixed=bool(d.get("table_column_layout_fixed", False)),
+            layout_blocks=layout_blocks,
         )
 
 

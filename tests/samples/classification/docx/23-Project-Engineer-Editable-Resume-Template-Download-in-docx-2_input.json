@@ -1,0 +1,173 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_54",
+          "text": "EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_65",
+          "text": "Project Coordinator",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_67",
+          "text": "Colensky Engineering Consultancy 2017-present",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_69",
+          "text": "Ensures compliance to safety and performance standards Conducts quality control checks Schedules, coordinates and monitors engineering projects",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_71",
+          "text": "Senior Engineer",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_73",
+          "text": "Lopelski Builders, Inc.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_75",
+          "text": "2013-2017",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_77",
+          "text": "Oversees engineering projects",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_79",
+          "text": "Evaluates, hires and trains junior engineers",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_81",
+          "text": "Prepares monthly performance reports Develops system upgrades",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_65"
+          ],
+          "meta_para_ids": [
+            "para_67"
+          ],
+          "bullet_para_ids": [
+            "para_69"
+          ]
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_71"
+          ],
+          "meta_para_ids": [
+            "para_73",
+            "para_75"
+          ],
+          "bullet_para_ids": [
+            "para_77",
+            "para_79",
+            "para_81"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_83",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_84",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_85",
+          "text": "University of Lovelstyne",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_86",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_87",
+          "text": "Master's in Project Engineering | June 2018",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_88",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_89",
+          "text": "Completed a postgraduate degree in project engineering; GWA 3.75 Authored a dissertation on \"Engineering the Future: Methods in Project Management\"",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_90",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_91",
+          "text": "Nat'l Community College",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_92",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_93",
+          "text": "Degree in Civil Engineering | June 2012",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_94",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_95",
+          "text": "Completed an undergraduate degree in civil engineering; GWA 3.56",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_96",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_97",
+          "text": "Graduated with distinction, with a special award for Best Thesis NCC Scholarship Holder",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

@@ -1,0 +1,483 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.1]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n21) Must explicitly mention the company + role from TASK.\n22) Must connect: candidate background -> company needs -> role responsibilities, using only supported claims.\n23) Keep it 3-5 short paragraphs; be specific but not verbose.\n\n[CANDIDATE_LAYER_ALEXANDER_MARTENSSON v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: General Practitioner / Family Physician focused on patient-centered care, clinical diagnosis, and proactive chronic disease management.\n- Emphasize: evidence-based medicine in day-to-day diagnostic and treatment decisions.\n- Emphasize: community health orientation (health promotion initiatives, screenings, prevention programs).\n- Include: effective use of Electronic Health Records (EHR) to support continuity of care (only at a usage/workflow level unless deeper scope is provided).\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Treat “clinical workflow architecture” as the candidate’s architecture equivalent; surface explicitly in bullets:\n  - patient management systems usage and workflow design/standardization\n  - chronic disease management workflows (follow-ups, monitoring, prevention, adherence support)\n  - patient safety protocols and proactive risk management routines\n- Ensure at least one bullet in the most recent role explicitly names a workflow/system mechanism (e.g., EHR-supported follow-up workflows, screening workflow, cessation program workflow), if supported by evidence.\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prioritize bullets that show concrete clinical mechanisms and workflow design before general “provided care” statements:\n  1) Evidence-based diagnostic/treatment mechanisms (guideline-driven decisions, structured assessments) tied to outcomes.\n  2) Program/workflow leadership (smoking cessation program, chronic disease follow-up routines, screening events).\n  3) EHR-enabled continuity/coordination mechanisms (documentation, tracking, follow-up prompts) without over-claiming configuration/build.\n  4) Collaboration/leadership contributions (multidisciplinary coordination, patient education).\n- Prefer rewriting impacts to expose the mechanism (protocol/workflow/program) rather than only the result.\n\nDISTRIBUTED SYSTEM DEPTH\n- Map “distributed systems” language to healthcare reality; do NOT use software/distributed-systems jargon.\n- Show “distributed care coordination” depth via:\n  - multidisciplinary collaboration and handoffs\n  - continuity of care across visits and patient populations\n  - balancing clinical care with administrative duties while maintaining safety/quality\n- Emphasize operational safety equivalents:\n  - patient safety protocols\n  - proactive health management (risk identification, prevention, follow-up)\n\nTECHNICAL DIFFERENTIATION\n- Treat EHR as the primary technical system; frame as proficient clinical use:\n  - documentation quality, continuity of care support, tracking follow-ups (only if evidenced)\n- Avoid claiming:\n  - EHR implementation, customization, integrations, analytics pipelines, or reporting automation unless explicitly provided.\n- Keep technical phrasing grounded in clinical workflow support, not IT ownership.\n\nDOMAIN / INDUSTRY FRAMING\n- Primary domain: healthcare / clinical practice (general practice, family medicine).\n- Secondary: community health and chronic disease management.\n- Frame domain credibility through:\n  - diverse patient caseload management\n  - prevention and health promotion programs\n  - evidence-based medicine and patient safety focus\n\nSAFE DOMAIN TRANSLATION\n- Translate conservatively for varied healthcare roles:\n  - “community health fair” → preventive care outreach and population screening initiative\n  - “smoking cessation program” → behavior-change and preventive health intervention with measurable outcomes\n  - “chronic disease management workflows” → structured longitudinal care plans and follow-up routines\n  - “patient management systems” → clinic workflows for intake, documentation, follow-up, and care coordination\n- Keep translations within clinical practice/public health-adjacent scope; do not translate into hospitalist/specialist practice without evidence.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT present as specialist expertise beyond general practice (explicit boundary).\n- Do NOT claim:\n  - board-certified specialty beyond GP/family medicine\n  - surgical/procedural specialization\n  - hospital inpatient leadership unless evidenced\n  - ownership of EHR administration/IT, data science, or health informatics programs\n- Avoid introducing compliance/regulatory frameworks (HIPAA, GDPR, etc.) unless explicitly supported by source evidence.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- When tailoring to roles needing systems thinking, reinterpret safely as:\n  - “standardized care pathways” (evidence-based medicine) → repeatable clinical protocols adaptable across patient populations\n  - “chronic disease workflows” → modular follow-up routines (monitoring, education, escalation)\n  - “community initiatives” → scalable outreach playbooks (screening, education, referral)\n- Do not imply building new clinical platforms; frame as designing/leading clinical programs and workflows within existing systems.\n\nLEADERSHIP FRAMING\n- Frame leadership as clinical/program leadership (not people-management unless team size/scope is provided):\n  - spearheading community health fair (planning, coordination, delivery)\n  - leading smoking cessation program (program design, patient engagement, measurement)\n  - collaborative practice with multidisciplinary teams\n- Tie leadership to observable actions: protocols used, programs run, stakeholders coordinated, patient education delivered.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep clinical execution and patient outcomes primary.\n- Use leadership as amplification:\n  - show initiative ownership (programs, fairs) and collaboration\n  - avoid vague “led teams” language; no team-size claims.\n- Maintain a practitioner-first narrative: diagnosis, care planning, prevention, chronic disease management.\n\nAI WORK POSITIONING\n- No AI tooling claims. Do not introduce AI usage, model familiarity, or digital health AI initiatives unless provided in source evidence.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate expertise beyond general practice/family medicine.\n- Do not invent:\n  - patient volume numbers, panel sizes, clinic throughput, or additional outcome metrics beyond “200 residents screened” and “30% increase in successful quit attempts.”\n  - new programs, certifications, specialties, or technologies.\n- Keep employer/relationship wording exactly as provided (e.g., “Lamna Health”, “Tyler Stein MD”); do not infer titles, dates, or employment type not present.\n- Avoid claiming EHR implementation/configuration; only claim effective use to support care delivery.\n\nEVIDENCE SOURCES\n- Use only:\n  - CANDIDATE_PROFILE summary/headline/domains/role_fit_themes\n  - experience_highlights impacts, team_context, skills_applied, constraints_and_tradeoffs, architecture_patterns\n  - leadership practices and risk_management\n  - technical_skills: “Electronic health records”\n- Bullets must be traceable to these sources; do not add unlisted responsibilities, tools, certifications, or metrics.\n\nFINAL REMINDER\n- Core differentiation to keep consistent: evidence-based general practice clinician who improves community health through structured chronic disease workflows, prevention programs, and patient-centered care supported by EHR-enabled continuity.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Healthcare\",\n      \"Clinical Practice\"\n    ],\n    \"secondary\": [\n      \"Community Health\",\n      \"Chronic Disease Management\"\n    ]\n  },\n  \"candidate\": {\n    \"name\": \"Alexander Martensson\",\n    \"summary\": \"Alexander Martensson is an experienced general practitioner with a strong background in clinical diagnosis and patient-centered care. He has successfully implemented evidence-based medicine and led health promotion initiatives. Alexander is committed to improving community health through proactive management of chronic diseases and effective use of electronic health records.\",\n    \"headline\": \"General Practitioner and Family Physician\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Patient-focused\"\n      ]\n    },\n    \"practices\": [\n      \"Evidence-based medicine\",\n      \"Community health initiatives\"\n    ],\n    \"risk_management\": [\n      \"Proactive health management\",\n      \"Patient safety protocols\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Clinical diagnosis\",\n    \"Patient-centered care\",\n    \"Health promotion\",\n    \"Chronic disease management\",\n    \"Community health\",\n    \"Evidence-based medicine\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate clinical expertise beyond general practice\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Keep claims aligned with actual healthcare experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [],\n    \"languages\": [],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [\n      \"Electronic health records\"\n    ],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"General Practice\",\n      \"impact\": [\n        \"Implemented evidence-based medicine for accurate diagnosis\",\n        \"Spearheaded a community health fair providing free screenings to over 200 residents\"\n      ],\n      \"market\": \"Healthcare\",\n      \"team_context\": [\n        \"Collaborated with healthcare professionals\"\n      ],\n      \"skills_applied\": [\n        \"Clinical diagnosis\",\n        \"Patient-centered care\"\n      ],\n      \"architecture_patterns\": [\n        \"Patient management systems\"\n      ],\n      \"employer_relationship\": \"Lamna Health\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Balancing patient care with administrative duties\"\n      ]\n    },\n    {\n      \"area\": \"Family Medicine\",\n      \"impact\": [\n        \"Managed a diverse patient caseload\",\n        \"Led a smoking cessation program resulting in a 30% increase in successful quit attempts\"\n      ],\n      \"market\": \"Healthcare\",\n      \"team_context\": [\n        \"Worked with multidisciplinary teams\"\n      ],\n      \"skills_applied\": [\n        \"Health promotion\",\n        \"Chronic disease management\"\n      ],\n      \"architecture_patterns\": [\n        \"Chronic disease management workflows\"\n      ],\n      \"employer_relationship\": \"Tyler Stein MD\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Managing diverse patient needs\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative healthcare teams\",\n      \"Community health environments\"\n    ],\n    \"communication\": [\n      \"Patient communication\",\n      \"Health education\",\n      \"Interdisciplinary collaboration\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\nAlexander Martensson\nGeneral practitioner\nWork experience\nLamna Health / General Practitioner\n12/20XX – present\nImplemented evidence-based medicine for accurate diagnosis, spearheaded a community health fair, providing free screenings to over 200 residents \nTyler Stein MD / Family Physician\n8/20XX – 7/20XX\nManaged a diverse patient caseload, led a smoking cessation program, resulting in a 30% increase in successful quit attempts \nEducation\nJasper University\n9/20XX–6/20XX\nDean's List, Medical Research Award \nBellows College\n9/20XX–4/20XX\nBachelor of Science in Biology, Cum Laude, outstanding research thesis outcomes\nContact\n678-555-0103\nwww.lamnahealthcare.com\nalex@lamnahealthcare.com\nSkills\nClinical diagnosis\nPatient-centered care\nHealth promotion\nChronic disease management\nElectronic health records\nHobbies\nTrail running\nWildlife photography\nInternational traveling\nSourdough bread baking\nSalsa dancing"
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nAlexander Martensson\nDear Hiring Manager,\nI am excited to apply for the Senior Software Engineer role at Tigera. With over 15 years of experience in backend engineering and team leadership, including roles as VP and Director of Software Development, I have built fintech and blockchain systems that became top-5 platforms in the Japanese market, serving over 1M users, and led teams of up to 20 engineers to deliver reliable, scalable products.\nIn addition to my industry work, I currently contribute as an independent contractor supporting world-leading AI research labs in training and evaluating advanced AI models on senior-level software engineering tasks. This work keeps me deeply engaged with cutting-edge development practices, reinforces my ability to solve complex problems under ambiguity, and strengthens my proficiency with AI-assisted development tools. I also adopt AI-accelerated workflows (ChatGPT, Claude, Cursor AI) to improve productivity, code quality, and architectural clarity.\nI would welcome the chance to bring this expertise to your team and contribute to building reliable, scalable systems for your clients. I hold Canadian citizenship and am fully eligible to work in Canada.\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: April 28, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "Alexander Martensson\nGeneral Practitioner and Family Physician\nContact\n678-555-0103 | alex@lamnahealthcare.com | www.lamnahealthcare.com\n\nProfessional Summary\nGeneral practitioner and family physician with experience delivering patient-centered care grounded in evidence-based medicine. Strengths include clinical diagnosis, proactive chronic disease management, and community health promotion through structured screening and prevention initiatives. Proficient in using electronic health records to support continuity of care, documentation quality, and follow-up workflows while balancing clinical care with administrative demands.\n\nExperience\nLamna Health / General Practitioner\n12/20XX – present\n- Applied evidence-based medicine to guide diagnostic assessments and treatment decisions in day-to-day general practice.\n- Spearheaded a community health fair delivering free preventive screenings to over 200 residents, coordinating with other healthcare professionals.\n- Used electronic health records to support clinical workflow architecture for intake, documentation, and continuity of care, including tracking follow-ups within routine patient management workflows.\n\nTyler Stein MD / Family Physician\n8/20XX – 7/20XX\n- Managed a diverse patient caseload, adapting care plans to varied needs and constraints.\n- Led a smoking cessation program using structured follow-up and behavior-change support, resulting in a 30% increase in successful quit attempts.\n- Applied chronic disease management workflows to support longitudinal care planning and ongoing monitoring.\n\nEducation\nJasper University\n9/20XX–6/20XX\nDean's List, Medical Research Award\n\nBellows College\n9/20XX–4/20XX\nBachelor of Science in Biology, Cum Laude, outstanding research thesis outcomes\n\nTechnical Skills\nClinical Practice: Clinical diagnosis, Patient-centered care, Evidence-based medicine\nCare Programs & Workflows: Chronic disease management, Health promotion, Community health initiatives, Patient safety protocols\nClinical Systems: Electronic health records\n\nAdditional\nHobbies: Trail running, Wildlife photography, International traveling, Sourdough bread baking, Salsa dancing\n\nCurrent Date: April 28, 2026\n",
+    "cover_letter": "Alexander Martensson\nApril 28, 2026\n\nDear Hiring Manager,\n\nI am applying for the Lead Software Engineer role at American Tire Distributors. While my background is in healthcare as a general practitioner and family physician, my day-to-day work has required the same core strengths your role emphasizes: structured workflow design, rigorous documentation, careful impact assessment of changes, and dependable support in a high-stakes environment.\n\nIn my current role at Lamna Health, I apply evidence-based decision-making to clinical diagnosis and treatment planning, and I rely on electronic health records to maintain continuity of care through consistent documentation and follow-up workflows. I have also spearheaded a community health fair that provided free screenings to over 200 residents, coordinating with other healthcare professionals and balancing patient care with administrative constraints.\n\nPreviously, at Tyler Stein MD, I managed a diverse patient caseload and led a smoking cessation program using structured follow-up routines, achieving a 30% increase in successful quit attempts. This work reinforced my ability to standardize repeatable workflows, communicate clearly with different stakeholders, and maintain quality and safety while handling competing priorities.\n\nI would welcome the opportunity to bring this workflow-first, customer-focused approach to American Tire Distributors in the Lead Software Engineer position. Thank you for your time and consideration.\n\nSincerely,\nAlexander Martensson\n"
+  },
+  "diff": {
+    "resume": [
+      {
+        "name": "Professional Summary",
+        "after": "General practitioner and family physician with experience delivering patient-centered care grounded in evidence-based medicine. Strengths include clinical diagnosis, proactive chronic disease management, and community health promotion through structured screening and prevention initiatives. Proficient in using electronic health records to support continuity of care, documentation quality, and follow-up workflows while balancing clinical care with administrative demands."
+      },
+      {
+        "name": "Technical Skills",
+        "before": "Clinical diagnosis\nPatient-centered care\nHealth promotion\nChronic disease management\nElectronic health records\nHobbies\nTrail running\nWildlife photography\nInternational traveling\nSourdough bread baking\nSalsa dancing",
+        "after": "Clinical Practice: Clinical diagnosis, Patient-centered care, Evidence-based medicine\nCare Programs & Workflows: Chronic disease management, Health promotion, Community health initiatives, Patient safety protocols\nClinical Systems: Electronic health records\n\nAdditional\nHobbies: Trail running, Wildlife photography, International traveling, Sourdough bread baking, Salsa dancing\n\nCurrent Date: April 28, 2026"
+      }
+    ]
+  },
+  "generation_run_id": "225",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "Alexander \nMartensson",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "General practitioner",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_3"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_4"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_5"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_6"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Professional Summary",
+        "semantic_type": "summary",
+        "heading": {
+          "text": "PROFESSIONAL SUMMARY",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_7"
+        },
+        "body_paras": [
+          {
+            "text": "General practitioner and family physician with experience delivering patient-centered care grounded in evidence-based medicine.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_8"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_summary_inserted"
+      },
+      {
+        "title": "Experience",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "Experience",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_9"
+        },
+        "body_paras": [],
+        "roles": [
+          {
+            "header": {
+              "text": "Lamna Health / General Practitioner",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_16"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "12/20XX – present",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_17"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Applied evidence-based medicine to guide diagnostic assessments and treatment decisions in day-to-day general practice.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_18"
+              }
+            ],
+            "role_id": "Lamna Health / General Practitioner",
+            "role_id_stable": ""
+          },
+          {
+            "header": {
+              "text": "Tyler Stein MD / Family Physician",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_19"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "8/20XX – 7/20XX",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_20"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Managed a diverse patient caseload, adapting care plans to varied needs and constraints.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_21"
+              }
+            ],
+            "role_id": "Tyler Stein MD / Family Physician",
+            "role_id_stable": ""
+          }
+        ],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "Education",
+        "semantic_type": "education",
+        "heading": {
+          "text": "Education",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_22"
+        },
+        "body_paras": [
+          {
+            "text": "Jasper University",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_23"
+          },
+          {
+            "text": "9/20XX–6/20XX",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_24"
+          },
+          {
+            "text": "Dean's List, Medical Research Award ",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_25"
+          },
+          {
+            "text": "Bellows College",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_26"
+          },
+          {
+            "text": "9/20XX–4/20XX",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_27"
+          },
+          {
+            "text": "Bachelor of Science in Biology, \nCum Laude, outstanding research \nthesis outcomes",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_28"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_29"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "Contact",
+        "semantic_type": "other",
+        "heading": {
+          "text": "Contact",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_30"
+        },
+        "body_paras": [
+          {
+            "text": "678-555-0103",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_31"
+          },
+          {
+            "text": "www.lamnahealthcare.com",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_32"
+          },
+          {
+            "text": "alex@lamnahealthcare.com",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_33"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_34"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_3"
+      },
+      {
+        "title": "Technical Skills",
+        "semantic_type": "skills",
+        "heading": {
+          "text": "Technical Skills",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_35"
+        },
+        "body_paras": [
+          {
+            "text": "Clinical Practice: Clinical diagnosis, Patient-centered care, Evidence-based medicine",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_36"
+          },
+          {
+            "text": "Care Programs & Workflows: Chronic disease management, Health promotion, Community health initiatives, Patient safety protocols",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_37"
+          },
+          {
+            "text": "Clinical Systems: Electronic health records",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_38"
+          },
+          {
+            "text": "Hobbies: Trail running, Wildlife photography, International traveling, Sourdough bread baking, Salsa dancing",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_41"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_4"
+      },
+      {
+        "title": "Hobbies",
+        "semantic_type": "other",
+        "heading": {
+          "text": "Hobbies",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_42"
+        },
+        "body_paras": [
+          {
+            "text": "Trail running",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_43"
+          },
+          {
+            "text": "Wildlife photography",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_44"
+          },
+          {
+            "text": "International traveling",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_45"
+          },
+          {
+            "text": "Sourdough bread baking",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_46"
+          },
+          {
+            "text": "Salsa dancing",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_47"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_48"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_49"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_5"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 612.0,
+      "page_height_pt": 792.0,
+      "margin_top_pt": 54.0,
+      "margin_bottom_pt": 54.0,
+      "margin_left_pt": 54.0,
+      "margin_right_pt": 54.0,
+      "default_font_name": "Calibri",
+      "default_font_size_pt": 11.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "paragraph",
+        "para_id": "para_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"76D978CD\" w14:textId=\"7B80828D\" w:rsidR=\"0043278C\" w:rsidRPr=\"00731635\" w:rsidRDefault=\"0043278C\" w:rsidP=\"00731635\"><w:pPr><w:pStyle w:val=\"Name\"/><w:rPr><w:rStyle w:val=\"NameChar\"/><w:b/><w:bCs/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"00731635\"><w:rPr><w:rStyle w:val=\"NameChar\"/><w:b/><w:bCs/><w:color w:val=\"auto\"/></w:rPr><w:t xml:space=\"preserve\">Alexander </w:t></w:r><w:r w:rsidRPr=\"00731635\"><w:rPr><w:rStyle w:val=\"NameChar\"/><w:b/><w:bCs/><w:color w:val=\"auto\"/></w:rPr><w:br/><w:t>Martensson</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7518C8D8\" w14:textId=\"77777777\" w:rsidR=\"0043278C\" w:rsidRDefault=\"0043278C\" w:rsidP=\"00731635\"><w:pPr><w:pStyle w:val=\"Subtitle\"/></w:pPr><w:r w:rsidRPr=\"00731635\"><w:t>General practitioner</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_3",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"0226D5BE\" w14:textId=\"77777777\" w:rsidR=\"00731635\" w:rsidRDefault=\"00731635\" w:rsidP=\"006C0ADB\"/>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_4",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3765817E\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"006C0ADB\"/>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_5",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"58233ECD\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"006C0ADB\"/>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_6",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"700CB890\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"006C0ADB\"/>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_7",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3C690DB3\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"006C0ADB\"/>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_8",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"5DB70986\" w14:textId=\"77777777\" w:rsidR=\"00731635\" w:rsidRDefault=\"00731635\" w:rsidP=\"006C0ADB\"/>"
+      },
+      {
+        "kind": "table",
+        "table_id": "tbl_1",
+        "xml_proto_xml": "<w:tbl xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\"><w:tblPr><w:tblW w:w=\"10260\" w:type=\"dxa\"/><w:tblInd w:w=\"-180\" w:type=\"dxa\"/><w:tblLook w:val=\"04A0\" w:firstRow=\"1\" w:lastRow=\"0\" w:firstColumn=\"1\" w:lastColumn=\"0\" w:noHBand=\"0\" w:noVBand=\"1\"/></w:tblPr><w:tblGrid><w:gridCol w:w=\"5364\"/><w:gridCol w:w=\"864\"/><w:gridCol w:w=\"4032\"/></w:tblGrid><w:tr w:rsidR=\"001F0B2A\" w14:paraId=\"76FB5532\" w14:textId=\"77777777\" w:rsidTr=\"001F0B2A\"><w:tc><w:tcPr><w:tcW w:w=\"5364\" w:type=\"dxa\"/></w:tcPr><w:p w14:paraId=\"51CF0CAC\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00731635\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r w:rsidRPr=\"00731635\"><w:t>Work experience</w:t></w:r></w:p><w:p w14:paraId=\"0F25FE9D\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00731635\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading3\"/></w:pPr><w:r w:rsidRPr=\"00731635\"><w:t>Lamna Health / General Practitioner</w:t></w:r></w:p><w:p w14:paraId=\"3FA579D8\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00731635\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading3\"/></w:pPr><w:r w:rsidRPr=\"00731635\"><w:t>12/20</w:t></w:r><w:r><w:t>XX</w:t></w:r><w:r w:rsidRPr=\"00731635\"><w:t xml:space=\"preserve\"> – present</w:t></w:r></w:p><w:p w14:paraId=\"4A401EC5\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"006C0ADB\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"NormalIndent\"/></w:pPr><w:r w:rsidRPr=\"006C0ADB\"><w:t xml:space=\"preserve\">Implemented evidence-based medicine for accurate diagnosis, spearheaded a community health fair, providing free screenings to over 200 residents </w:t></w:r></w:p><w:p w14:paraId=\"18E95A77\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00731635\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading3\"/></w:pPr><w:r w:rsidRPr=\"00731635\"><w:t>Tyler Stein MD / Family Physician</w:t></w:r></w:p><w:p w14:paraId=\"4B40341D\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00731635\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading3\"/></w:pPr><w:r w:rsidRPr=\"00731635\"><w:t>8/20</w:t></w:r><w:r><w:t>XX</w:t></w:r><w:r w:rsidRPr=\"00731635\"><w:t xml:space=\"preserve\"> – 7/20</w:t></w:r><w:r><w:t>XX</w:t></w:r></w:p><w:p w14:paraId=\"791C0ECE\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00E66B14\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"NormalIndent\"/></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:t xml:space=\"preserve\">Managed a diverse patient caseload, </w:t></w:r><w:r><w:br/></w:r><w:r w:rsidRPr=\"00E66B14\"><w:t xml:space=\"preserve\">led a smoking cessation program, resulting in a 30% increase in successful quit attempts </w:t></w:r><w:r><w:br/></w:r></w:p><w:p w14:paraId=\"4470DF9C\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00E66B14\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:t>Education</w:t></w:r></w:p><w:p w14:paraId=\"393F375E\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00E66B14\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading3\"/><w:rPr><w:rStyle w:val=\"Strong\"/><w:b/><w:bCs w:val=\"0\"/><w:caps w:val=\"0\"/><w:sz w:val=\"24\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:rPr><w:rStyle w:val=\"Strong\"/><w:b/><w:bCs w:val=\"0\"/><w:caps w:val=\"0\"/><w:sz w:val=\"24\"/></w:rPr><w:t>Jasper University</w:t></w:r></w:p><w:p w14:paraId=\"493BE6DE\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00E66B14\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading3\"/></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:rPr><w:rStyle w:val=\"normaltextrun\"/></w:rPr><w:t>9/20</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"normaltextrun\"/></w:rPr><w:t>XX</w:t></w:r><w:r w:rsidRPr=\"00E66B14\"><w:rPr><w:rStyle w:val=\"normaltextrun\"/></w:rPr><w:t>–6/20</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"normaltextrun\"/></w:rPr><w:t>XX</w:t></w:r></w:p><w:p w14:paraId=\"1A14A4B3\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00E66B14\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"NormalIndent\"/></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:t>Dean's List, Medical Research Award </w:t></w:r></w:p><w:p w14:paraId=\"24FF1689\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00E66B14\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading3\"/><w:rPr><w:rStyle w:val=\"Strong\"/><w:b/><w:bCs w:val=\"0\"/><w:caps w:val=\"0\"/><w:sz w:val=\"24\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:rPr><w:rStyle w:val=\"Strong\"/><w:b/><w:bCs w:val=\"0\"/><w:caps w:val=\"0\"/><w:sz w:val=\"24\"/></w:rPr><w:t>Bellows College</w:t></w:r></w:p><w:p w14:paraId=\"69103F63\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading3\"/><w:rPr><w:rStyle w:val=\"eop\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:rPr><w:rStyle w:val=\"normaltextrun\"/></w:rPr><w:t>9/20</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"normaltextrun\"/></w:rPr><w:t>XX</w:t></w:r><w:r w:rsidRPr=\"00E66B14\"><w:rPr><w:rStyle w:val=\"normaltextrun\"/></w:rPr><w:t>–4/20</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"normaltextrun\"/></w:rPr><w:t>XX</w:t></w:r></w:p><w:p w14:paraId=\"3EEB48BC\" w14:textId=\"1163ED60\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"NormalIndent\"/></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:t xml:space=\"preserve\">Bachelor of Science in Biology, </w:t></w:r><w:r><w:br/></w:r><w:r w:rsidRPr=\"00E66B14\"><w:t xml:space=\"preserve\">Cum Laude, outstanding research </w:t></w:r><w:r><w:br/></w:r><w:r w:rsidRPr=\"00E66B14\"><w:t>thesis outcomes</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"864\" w:type=\"dxa\"/></w:tcPr><w:p w14:paraId=\"635230FB\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"006C0ADB\"/></w:tc><w:tc><w:tcPr><w:tcW w:w=\"4032\" w:type=\"dxa\"/></w:tcPr><w:p w14:paraId=\"0E9AA8FB\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r><w:t>Contact</w:t></w:r></w:p><w:p w14:paraId=\"5E516A57\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r><w:t>678-555-0103</w:t></w:r></w:p><w:p w14:paraId=\"74697E8B\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r><w:t>www.lamnahealthcare.com</w:t></w:r></w:p><w:p w14:paraId=\"0E288CC4\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r><w:t>alex@lamnahealthcare.com</w:t></w:r></w:p><w:p w14:paraId=\"44ACEED4\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr></w:p><w:p w14:paraId=\"39531AA0\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00D60B95\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r w:rsidRPr=\"00D60B95\"><w:t>Skills</w:t></w:r></w:p><w:p w14:paraId=\"44313D46\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00E66B14\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:t>Clinical diagnosis</w:t></w:r></w:p><w:p w14:paraId=\"30087568\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00E66B14\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:t>Patient-centered care</w:t></w:r></w:p><w:p w14:paraId=\"4F8CDB7D\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00E66B14\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:t>Health promotion</w:t></w:r></w:p><w:p w14:paraId=\"69CD39E7\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00E66B14\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:t>Chronic disease management</w:t></w:r></w:p><w:p w14:paraId=\"0133378D\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:t>Electronic health records</w:t></w:r></w:p><w:p w14:paraId=\"24E6CD87\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr></w:p><w:p w14:paraId=\"45677B73\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"00E66B14\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:t>Hobbies</w:t></w:r></w:p><w:p w14:paraId=\"2DF7D417\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r w:rsidRPr=\"00E66B14\"><w:t>Tr</w:t></w:r><w:r w:rsidRPr=\"001F0B2A\"><w:t>ail running</w:t></w:r></w:p><w:p w14:paraId=\"17904854\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r w:rsidRPr=\"001F0B2A\"><w:t>Wildlife photography</w:t></w:r></w:p><w:p w14:paraId=\"15338D6B\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r w:rsidRPr=\"001F0B2A\"><w:t>International traveling</w:t></w:r></w:p><w:p w14:paraId=\"75C4FF9C\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r w:rsidRPr=\"001F0B2A\"><w:t>Sourdough bread baking</w:t></w:r></w:p><w:p w14:paraId=\"218EF74A\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRPr=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"001F0B2A\"><w:pPr><w:pStyle w:val=\"List\"/></w:pPr><w:r w:rsidRPr=\"001F0B2A\"><w:t>Salsa dancing</w:t></w:r></w:p><w:p w14:paraId=\"632E0178\" w14:textId=\"77777777\" w:rsidR=\"001F0B2A\" w:rsidRDefault=\"001F0B2A\" w:rsidP=\"006C0ADB\"/></w:tc></w:tr></w:tbl>",
+        "para_ids": [
+          "para_9",
+          "para_16",
+          "para_17",
+          "para_18",
+          "para_19",
+          "para_20",
+          "para_21",
+          "para_22",
+          "para_23",
+          "para_24",
+          "para_25",
+          "para_26",
+          "para_27",
+          "para_28",
+          "para_29",
+          "para_30",
+          "para_31",
+          "para_32",
+          "para_33",
+          "para_34",
+          "para_35",
+          "para_36",
+          "para_37",
+          "para_38",
+          "para_39",
+          "para_40",
+          "para_41",
+          "para_42",
+          "para_43",
+          "para_44",
+          "para_45",
+          "para_46",
+          "para_47",
+          "para_48"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"5CAAFAFF\" w14:textId=\"77777777\" w:rsidR=\"00731635\" w:rsidRDefault=\"00731635\" w:rsidP=\"006C0ADB\"/>"
+      }
+    ]
+  }
+}

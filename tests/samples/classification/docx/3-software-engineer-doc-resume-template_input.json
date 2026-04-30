@@ -1,0 +1,172 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Experience",
+      "paragraphs": [
+        {
+          "para_id": "para_23",
+          "text": "Experience",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_24",
+          "text": "\nSoftware Engineer",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Embark",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "January 2022 - current / New York, NY",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_47",
+          "text": "Architected backend services supporting vehicle logistics workflows, enabling dispatch systems to process ~12k shipment events per day with reliable status synchronization.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_48",
+          "text": "Optimized route-planning queries in a microservices environment using Python and PostgreSQL, reducing average API response time by 38% during peak operations.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_49",
+          "text": "Implemented automated validation checks across shipment ingestion pipelines, improving operational data accuracy across 5 core internal systems used by dispatch teams.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_50",
+          "text": "Partnered with product and operations stakeholders to ship incremental platform releases on a bi-weekly cadence, accelerating delivery of new carrier integration features.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_31",
+          "text": "Software Engineer",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_52",
+          "text": "MarketSmart",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_53",
+          "text": "April 2019 - January 2022 / Washington, DC",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_54",
+          "text": "Developed new lead-scoring features for a marketing analytics platform, increasing predictive model precision by 21% for donor engagement campaigns.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_55",
+          "text": "Refactored legacy data processing modules into modular services,",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_56",
+          "text": "decreasing average batch processing time by 17 minutes per run. Integrated REST APIs connecting CRM systems and campaign analytics tools, supporting data exchange across 3 enterprise client platforms.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_57",
+          "text": "Collaborated with data science and product teams to deploy experimentation pipelines that supported dozens of A/B campaign tests annually.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Software Engineer Intern",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_59",
+          "text": "Marketing Science Company",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_60",
+          "text": "April 2018 - March 2019 / Pittsburgh, PA",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_61",
+          "text": "Built internal dashboards to visualize campaign performance metrics, enabling analysts to monitor 150+ active advertising experiments.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_62",
+          "text": "Automated recurring data preparation tasks in Python, reducing manual analyst workload by ~6 hours per week.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_63",
+          "text": "Investigated anomalies in digital campaign reporting pipelines, resolving discrepancies affecting three client reporting workflows.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_64",
+          "text": "Documented ETL processes and onboarding guides that shortened ramp-up time for incoming interns by one training session.",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_24"
+          ],
+          "meta_para_ids": [
+            "para_45",
+            "para_46"
+          ],
+          "bullet_para_ids": [
+            "para_47",
+            "para_48",
+            "para_49",
+            "para_50"
+          ]
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_31"
+          ],
+          "meta_para_ids": [
+            "para_52",
+            "para_53"
+          ],
+          "bullet_para_ids": [
+            "para_54",
+            "para_55",
+            "para_56",
+            "para_57"
+          ]
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_38"
+          ],
+          "meta_para_ids": [
+            "para_59",
+            "para_60"
+          ],
+          "bullet_para_ids": [
+            "para_61",
+            "para_62",
+            "para_63",
+            "para_64"
+          ]
+        }
+      ]
+    }
+  ]
+}

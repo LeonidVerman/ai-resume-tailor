@@ -1,0 +1,418 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "PROFESSIONAL SUMMARY",
+      "paragraphs": [
+        {
+          "para_id": "para_7",
+          "text": "PROFESSIONAL SUMMARY",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_8",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_9",
+          "text": "Innovative Backend Developer with 7 years of experience in crafting robust server-side applications and optimizing databases. Pro cient in leveraging modern technologies to enhance system performance and streamline development processes. Committed to driving ef ciency through collaboration and continuous improvement, ensuring high-quality outputs that align with business objectives.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_10",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "WORK EXPERIENCE",
+      "paragraphs": [
+        {
+          "para_id": "para_11",
+          "text": "WORK EXPERIENCE",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_33",
+          "text": "Backend Developer",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_34",
+          "text": "\n Jan / 2021-Ongoing",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Pineapple Enterprises Santa Monica, CA",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_37",
+          "text": "Designed and implemented a scalable database architecture for web applications.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Created ef cient stored procedures to optimize data retrieval processes.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Developed user registration and management systems using PHP and MySQL.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Conducted unit testing and debugging to ensure application reliability.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Utilized phpMyAdmin for database management and optimization.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_42",
+          "text": "Automated data cleaning processes to eliminate duplication and inconsistencies.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_43",
+          "text": "Collaborated with front-end teams to integrate APIs seamlessly.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_46",
+          "text": "Backend Developer",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_47",
+          "text": "\n Jan / 2018-Jan / 2021",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_49",
+          "text": "Silver Lake Enterprises Seattle, WA",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_50",
+          "text": "Managed the backend development for over 350 websites in the ACES college at UIUC.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_51",
+          "text": "Developed a Magento extension to track customer interactions on e-commerce platforms.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_52",
+          "text": "Integrated REST APIs for real-time data analysis and reporting.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_53",
+          "text": "Led the backend restructuring for purchase orders and vendor management.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_54",
+          "text": "Modi ed Oracle database procedures to enhance data processing ef ciency.",
+          "parser_semantic": "bullet"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_33"
+          ],
+          "meta_para_ids": [
+            "para_34"
+          ],
+          "bullet_para_ids": [
+            "para_36",
+            "para_37",
+            "para_38",
+            "para_39",
+            "para_40",
+            "para_41",
+            "para_42",
+            "para_43"
+          ]
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_46"
+          ],
+          "meta_para_ids": [
+            "para_47"
+          ],
+          "bullet_para_ids": [
+            "para_49",
+            "para_50",
+            "para_51",
+            "para_52",
+            "para_53",
+            "para_54"
+          ]
+        }
+      ]
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_57",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_58",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_59",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_60",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_61",
+          "text": "Bachelor of Science in Computer Science",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_62",
+          "text": "\n Jan / 2015-Jan / 2018",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_63",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_64",
+          "text": "University of I llinois Denver, CO",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_65",
+          "text": "Focused on software development, database management, and web technologies.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_66",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_67",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "SKILLS",
+      "paragraphs": [
+        {
+          "para_id": "para_68",
+          "text": "SKILLS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_69",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_70",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_71",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_72",
+          "text": "77Ruby On Rails",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_73",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_74",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_75",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "ACHIEVEMENTS",
+      "paragraphs": [
+        {
+          "para_id": "para_76",
+          "text": "ACHIEVEMENTS",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_77",
+          "text": "\nApi Development",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_78",
+          "text": "\nDatabase Management",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_79",
+          "text": "\nRestful Services",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_80",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_81",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_82",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_83",
+          "text": "7",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_84",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_85",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_86",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_87",
+          "text": "771010 Increased application performance by 30% through ef cient database optimization.  Implemented a CI/CD pipeline that reduced deployment time by 50%.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_88",
+          "text": "Developed a REST API that improved data retrieval speed, enhancing user experience.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_89",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_90",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_91",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_92",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_93",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_94",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_95",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_96",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_97",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_98",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_99",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_100",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_101",
+          "text": "Powered byQwikresumewww.qwikresume.com",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

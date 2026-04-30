@@ -1,0 +1,162 @@
+{
+  "document_id": "0",
+  "source_kind": "pdf",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "EDUCATION",
+      "paragraphs": [
+        {
+          "para_id": "para_29",
+          "text": "EDUCATION",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_30",
+          "text": "2008-2012",
+          "parser_semantic": "role_meta"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Master Degree of Project",
+      "paragraphs": [
+        {
+          "para_id": "para_31",
+          "text": "Master Degree of Project",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_32",
+          "text": "Engineering",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_33",
+          "text": "Followed my passion in Product",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_34",
+          "text": "Design and Manufacturing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_35",
+          "text": "coursework",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_36",
+          "text": "Pursued an independent study program in",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Machine Layout Design.",
+      "paragraphs": [
+        {
+          "para_id": "para_37",
+          "text": "Machine Layout Design.",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_38",
+          "text": "2012-2014",
+          "parser_semantic": "role_meta"
+        },
+        {
+          "para_id": "para_39",
+          "text": "Mechanical Engineer at",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_40",
+          "text": "Warner & Spencer",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Completed 2 years course in Really",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "sec_3_role_1",
+          "header_para_ids": [
+            "para_37"
+          ],
+          "meta_para_ids": [
+            "para_38"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Great University. Graduated with",
+      "paragraphs": [
+        {
+          "para_id": "para_42",
+          "text": "Great University. Graduated with",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_43",
+          "text": "distinction (GWA 3,8).",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_44",
+          "text": "Increased production efficiency by",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "15% by strategically minimizing",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_46",
+          "text": "bottlenecks",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "CONTACT",
+      "paragraphs": [
+        {
+          "para_id": "para_47",
+          "text": "CONTACT",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_48",
+          "text": "+123-456-7890",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_49",
+          "text": "hello@techguruplus.com 123",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_50",
+          "text": "Anywhere St., Any City",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}

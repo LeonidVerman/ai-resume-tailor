@@ -1,0 +1,256 @@
+{
+  "document_id": "0",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_1",
+      "raw_title": "Summary",
+      "paragraphs": [
+        {
+          "para_id": "para_7",
+          "text": "Summary",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_8",
+          "text": "Full-Stack Web Developer that is self-motivated, enthusiastic, and profit-oriented. Proven ability to troubleshoot and develop creative and innovative solutions in agile environments. Successfully manages change by resolving problems and expertly addressing client needs. Recognized capacity to maintain a clear focus on achieving bottom-line results while always ensuring customer satisfaction. Equipped to work collaboratively with like-minded team members, providing optimal results for user-focused applications.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_9",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_2",
+      "raw_title": "Technical Skills",
+      "paragraphs": [
+        {
+          "para_id": "para_10",
+          "text": "Technical Skills",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_11",
+          "text": "HTML5, CSS3, JavaScript, jQuery, Bootstrap, Express, React.js, React, Node.js, Database Theory, MongoDB, MySQL, Git, Mongoose, Wordpress",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_3",
+      "raw_title": "Projects",
+      "paragraphs": [
+        {
+          "para_id": "para_12",
+          "text": "Projects",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_13",
+          "text": "File Fish - An application that allows Aquarium personnel (water quality technicians) to track and maintain the water parameters of any size Exhibit or System. ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_14",
+          "text": "Core Responsibilities: Oversaw project development and timeline, Handlebars, CSS, front-end routing, front-end JavaScript logic, and presenting the application.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_15",
+          "text": "Tools/Languages Used: HTML, CSS3, JavaScript, Express, Sequelize / MySQL, Node.js runtime, Handlebars, Passport, and Heroku for deployment.",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_16",
+          "text": "Project:  https://file-fish.herokuapp.com/ | Github:  https://github.com/JohnSasser/fileFish",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_17",
+          "text": "Chipper - Designed to assist microchipped pet owners with updating personal and medical information and preventing inaccurate/outdated vital information for pet reunification.  ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_18",
+          "text": "Core Responsibilities: Project Manager.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_19",
+          "text": "Tools/Languages Used: HTML, CSS3, Materialize, JavaScript, jQuery, Google Maps API, and CSS Grid Layouts.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_20",
+          "text": "Project:  https://chippers-pets.herokuapp.com/ |  Github: https://github.com/JohnSasser/chipper",
+          "parser_semantic": "role_header"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "section_id": "sec_4",
+      "raw_title": "Professional Experience",
+      "paragraphs": [
+        {
+          "para_id": "para_21",
+          "text": "Professional Experience",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_37",
+          "text": "Junior Web Developer              July 2020 — Current Atlanta Regional Commission; Atlanta, GA ",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_38",
+          "text": "Full Stack Web Developer, end-to-end application development on DataNexus. Responsible for maintenance, debugging, and application efficiency gains through code rebuilds.  ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_39",
+          "text": "●  Debugged multiple react.js errors that increased application performance by 40 percent. ",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_41",
+          "text": "Account Manager                     March 2019 — September 2019 TSYS Health Merchant Processing; Aurora, CO ",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_42",
+          "text": "Managed a book of business and served as a key advisor on accounts. Forecasted account metrics. Liaise between client and internal teams. Ensured successful delivery at deadlines for all client solutions. ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_43",
+          "text": "●  Earned the highest representative conversion ratio for key account acquisitions. ",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_46",
+          "text": "Zillow Group; Centennial, CO       ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_45",
+          "text": "Sales Executive                                                                               November 2017 — August 2018",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_48",
+          "text": "Managed a book of business consisting of premier clientele. Served as an online marketing advisor. Educated clients regarding product offerings. Reviewed client books of business and return on investment analytics.",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_49",
+          "text": "●  Exceeded monthly sales objectives through consistent follow up and cultivating client relationships.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_50",
+          "text": "●  Achieved the highest-percentile, inbound conversion ratios, in the region.",
+          "parser_semantic": "bullet"
+        },
+        {
+          "para_id": "para_52",
+          "text": "Interim Director of Marketing                                                             December 2017 — June 2018",
+          "parser_semantic": "role_header"
+        },
+        {
+          "para_id": "para_54",
+          "text": "Asked by the president to hold Interim seat while a permanent applicant was found. Responsible for outside sales to relevant companies for sponsorship, advertisement space in literature, and social media venues.   ",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_53",
+          "text": "Colorado Whitewater; Denver, CO",
+          "parser_semantic": "paragraph"
+        }
+      ],
+      "roles": [
+        {
+          "role_id": "role_1",
+          "header_para_ids": [
+            "para_37"
+          ],
+          "meta_para_ids": [
+            "para_38"
+          ],
+          "bullet_para_ids": [
+            "para_39"
+          ]
+        },
+        {
+          "role_id": "role_2",
+          "header_para_ids": [
+            "para_41"
+          ],
+          "meta_para_ids": [
+            "para_42"
+          ],
+          "bullet_para_ids": [
+            "para_43"
+          ]
+        },
+        {
+          "role_id": "role_3",
+          "header_para_ids": [
+            "para_46"
+          ],
+          "meta_para_ids": [
+            "para_45",
+            "para_48"
+          ],
+          "bullet_para_ids": [
+            "para_49",
+            "para_50"
+          ]
+        },
+        {
+          "role_id": "role_4",
+          "header_para_ids": [
+            "para_52"
+          ],
+          "meta_para_ids": [
+            "para_54",
+            "para_53"
+          ],
+          "bullet_para_ids": []
+        }
+      ]
+    },
+    {
+      "section_id": "sec_5",
+      "raw_title": "Education",
+      "paragraphs": [
+        {
+          "para_id": "para_56",
+          "text": "Education",
+          "parser_semantic": "section_heading"
+        },
+        {
+          "para_id": "para_57",
+          "text": " Full Stack Web Developer Certificate - Georgia Institute of Technology; Atlanta, GA",
+          "parser_semantic": "paragraph"
+        },
+        {
+          "para_id": "para_58",
+          "text": "",
+          "parser_semantic": "empty"
+        },
+        {
+          "para_id": "para_59",
+          "text": "",
+          "parser_semantic": "empty"
+        }
+      ],
+      "roles": []
+    }
+  ]
+}
