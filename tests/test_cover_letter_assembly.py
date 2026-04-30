@@ -1,10 +1,10 @@
 """Tests for deterministic cover letter assembly (spec Part 7)."""
 
 import pytest
-from backend.app.services.generation_service import (
+from backend.app.services.cover_letter_builder import (
     build_cover_letter,
     _extract_cover_letter_body,
-    _validate_contacts_for_generation,
+    validate_contacts,
 )
 
 
@@ -141,23 +141,20 @@ class TestNoIdentityLeakage:
 
 class TestValidateContacts:
     def test_passes_with_email_and_phone(self):
-        _validate_contacts_for_generation({"email": "a@b.com", "phone": "+1 604 000 0000"})
+        validate_contacts({"email": "a@b.com", "phone": "+1 604 000 0000"})
 
     def test_fails_missing_email(self):
-        from fastapi import HTTPException
-        with pytest.raises(HTTPException) as exc_info:
-            _validate_contacts_for_generation({"email": "", "phone": "+1 604 000 0000"})
-        assert "contacts.email" in exc_info.value.detail
+        with pytest.raises(ValueError) as exc_info:
+            validate_contacts({"email": "", "phone": "+1 604 000 0000"})
+        assert "contacts.email" in str(exc_info.value)
 
     def test_fails_missing_phone(self):
-        from fastapi import HTTPException
-        with pytest.raises(HTTPException) as exc_info:
-            _validate_contacts_for_generation({"email": "a@b.com", "phone": ""})
-        assert "contacts.phone" in exc_info.value.detail
+        with pytest.raises(ValueError) as exc_info:
+            validate_contacts({"email": "a@b.com", "phone": ""})
+        assert "contacts.phone" in str(exc_info.value)
 
     def test_fails_both_missing(self):
-        from fastapi import HTTPException
-        with pytest.raises(HTTPException) as exc_info:
-            _validate_contacts_for_generation({})
-        assert "contacts.email" in exc_info.value.detail
-        assert "contacts.phone" in exc_info.value.detail
+        with pytest.raises(ValueError) as exc_info:
+            validate_contacts({})
+        assert "contacts.email" in str(exc_info.value)
+        assert "contacts.phone" in str(exc_info.value)
