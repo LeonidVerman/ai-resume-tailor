@@ -1,5 +1,21 @@
 # Release Notes
 
+## 0.8.4.BETA — 2026-04-30
+
+### Bug fixes
+- **#48 "Invalid token" after inactivity on Admin page**: token refresh on session expiry now
+  covers all binary download and upload endpoints (Admin downloads, document downloads,
+  classification upload), not just JSON API calls.
+- **#44 Improve layout of download documents table**: Resume and Cover Letter columns are now
+  consistently separated — left column Resume (PDF, DOCX, TXT), right column Cover Letter
+  (PDF, DOCX, TXT) — on both the Generate and History pages.
+- **#42 Aggressive cover letter does not include contacts section**: cover letter heading
+  (name, contact line, date) is now assembled deterministically from the candidate profile
+  for all generation modes. Candidate profile extended with email, phone, and LinkedIn URL
+  fields; email is prefilled from login; generation is blocked until email and phone are set.
+
+---
+
 ## 0.8.3.BETA — 2026-04-29
 
 ### New features
