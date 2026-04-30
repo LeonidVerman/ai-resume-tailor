@@ -203,9 +203,14 @@ def _try_scraperapi(clean_url: str, api_key: str) -> dict | None:
     """
     import httpx
 
+    _host_parts = urlparse(clean_url).netloc.split(".")
+    country_param = f"&country_code={_host_parts[0]}" if len(_host_parts[0]) == 2 else ""
     proxy_url = (
         f"https://api.scraperapi.com/"
-        f"?api_key={api_key}&url={quote(clean_url, safe='')}&render=true"
+        f"?api_key={api_key}&url={quote(clean_url, safe='')}"
+        f"&render=true&premium=true"
+        f"&wait_for_selector=%23jobDescriptionText"
+        f"{country_param}"
     )
     logger.info("ScraperAPI: fetching %s", clean_url)
     try:

@@ -80,6 +80,8 @@ class JobScraperService:
                 "Generator scraper succeeded: company=%r title=%r",
                 job_data.company, job_data.job_title,
             )
+            if not job_data.description.strip():
+                raise ValueError("Generator scraper returned empty description")
             return JobScrapedData(
                 url=url,
                 company=job_data.company if job_data.company != "Unknown" else None,
@@ -133,8 +135,12 @@ def _http_scrape(url: str) -> JobScrapedData:
     Extraction order:
       1. JSON-LD JobPosting structured data  (inline, no tailor dep)
       2. Next.js __NEXT_DATA__ page props    (HiringCafe and similar SSR SPAs)
-      3. Open Graph / meta tags + visible text (catch-all)
+      3. Open Graph / meta tags + full visible text (catch-all for SSR pages)
+      4. ScraperAPI JS render (when SCRAPER_API_KEY is set and step 3 yields
+         too little text — handles React/Vue SPAs like HiBob)
     """
+    import os
+
     import httpx
 
     response = httpx.get(url, headers=_HTTP_HEADERS, follow_redirects=True, timeout=30)
@@ -173,7 +179,7 @@ def _http_scrape(url: str) -> JobScrapedData:
     except Exception:
         pass
 
-    # 3. Open Graph meta + full visible text
+    # 3. Open Graph meta + full visible text (good for SSR pages without JSON-LD)
     try:
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(html, "html.parser")
@@ -183,6 +189,41 @@ def _http_scrape(url: str) -> JobScrapedData:
     except ImportError:
         og_title = og_site = None
         raw_text = re.sub(r"<[^>]+>", " ", html)
+
+    if len(raw_text.strip()) >= 300:
+        return JobScrapedData(
+            url=final_url,
+            company=og_site or None,
+            job_title=og_title or None,
+            raw_text=raw_text,
+            source="http_fallback",
+        )
+
+    # 4. ScraperAPI JS render — for React/Vue SPAs where plain HTTP gives only a shell.
+    #    Only attempted when SCRAPER_API_KEY is configured and step 3 yielded thin text.
+    scraper_api_key = os.environ.get("SCRAPER_API_KEY", "").strip()
+    if scraper_api_key:
+        try:
+            from urllib.parse import quote as _quote
+            proxy_url = (
+                f"https://api.scraperapi.com/"
+                f"?api_key={scraper_api_key}&url={_quote(url, safe='')}&render=true"
+            )
+            logger.info("HTTP fallback: trying ScraperAPI render for SPA: %s", url)
+            spa_resp = httpx.get(proxy_url, timeout=60, follow_redirects=True)
+            if spa_resp.status_code == 200:
+                spa_text = _extract_text_from_html(spa_resp.text)
+                if len(spa_text.strip()) >= 300:
+                    logger.info("ScraperAPI SPA render succeeded, text_len=%d", len(spa_text))
+                    return JobScrapedData(
+                        url=final_url,
+                        company=og_site or None,
+                        job_title=og_title or None,
+                        raw_text=spa_text,
+                        source="http_fallback",
+                    )
+        except Exception as exc:
+            logger.warning("ScraperAPI SPA render failed for %s: %s", url, exc)
 
     if not raw_text.strip():
         raise RuntimeError(f"No text content found at {url}")
