@@ -288,12 +288,7 @@ export const generations = {
 export const documents = {
   get: (id: number) => request<TailoredDocumentDetail>(`/documents/${id}`),
   download: async (id: number, part: "resume" | "cover_letter"): Promise<Blob> => {
-    const token = getStoredToken();
-    const userId = getStoredUserId();
-    const headers: Record<string, string> = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    else if (userId) headers["X-User-Id"] = userId;
-    const res = await fetch(`${BASE_URL}/documents/${id}/download?part=${part}`, { headers });
+    const res = await _authFetch(`${BASE_URL}/documents/${id}/download?part=${part}`);
     if (!res.ok) {
       let detail = `HTTP ${res.status}`;
       try { const body = await res.json(); detail = body.detail ?? detail; } catch { /* ignore */ }
@@ -307,14 +302,8 @@ export const documents = {
     part: "resume" | "cover_letter",
     format: "docx" | "pdf" | "txt",
   ): Promise<{ blob: Blob; filename: string }> => {
-    const token = getStoredToken();
-    const userId = getStoredUserId();
-    const headers: Record<string, string> = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    else if (userId) headers["X-User-Id"] = userId;
-    const res = await fetch(
+    const res = await _authFetch(
       `${BASE_URL}/documents/${id}/download?part=${part}&format=${format}`,
-      { headers },
     );
     if (!res.ok) {
       let detail = `HTTP ${res.status}`;
@@ -349,6 +338,40 @@ export const billing = {
     }),
 };
 
+// ── Authenticated fetch helper (used by binary download functions) ────────
+
+/**
+ * Raw fetch with Authorization header + the same 401-silent-refresh logic
+ * as request(). Used by binary download helpers that can't go through the
+ * JSON-only request() wrapper.
+ */
+async function _authFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  const userId = getStoredUserId();
+  let token = getStoredToken();
+
+  const doFetch = (t: string | null) => {
+    const headers: Record<string, string> = { ...(init.headers as Record<string, string>) };
+    if (t) headers["Authorization"] = `Bearer ${t}`;
+    else if (userId) headers["X-User-Id"] = userId;
+    return fetch(url, { ...init, headers });
+  };
+
+  let res = await doFetch(token);
+
+  if (res.status === 401 && !userId) {
+    const newToken = await _tryRefreshToken();
+    if (newToken) {
+      res = await doFetch(newToken);
+    } else {
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login?reason=session_expired";
+      }
+    }
+  }
+
+  return res;
+}
+
 // ── Admin ─────────────────────────────────────────────────────────────────
 
 /** Fetch a binary endpoint and return the blob + filename from Content-Disposition. */
@@ -356,12 +379,7 @@ async function downloadBlob(
   path: string,
   fallbackFilename: string
 ): Promise<{ blob: Blob; filename: string }> {
-  const token = getStoredToken();
-  const userId = getStoredUserId();
-  const headers: Record<string, string> = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  else if (userId) headers["X-User-Id"] = userId;
-  const res = await fetch(`${BASE_URL}${path}`, { headers });
+  const res = await _authFetch(`${BASE_URL}${path}`);
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
     try {
@@ -435,16 +453,10 @@ export const admin = {
     classificationBlob: Blob; classificationFilename: string;
     inputBlob: Blob; inputFilename: string;
   }> => {
-    const token = getStoredToken();
-    const userId = getStoredUserId();
-    const headers: Record<string, string> = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    else if (userId) headers["X-User-Id"] = userId;
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch(`${BASE_URL}/admin/classification/classify-file`, {
+    const res = await _authFetch(`${BASE_URL}/admin/classification/classify-file`, {
       method: "POST",
-      headers,
       body: formData,
     });
     if (!res.ok) {

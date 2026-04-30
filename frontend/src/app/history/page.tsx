@@ -34,12 +34,12 @@ const ARTIFACTS: Array<{
   format: "docx" | "pdf" | "txt";
   label: string;
 }> = [
-  { part: "resume",       format: "docx", label: "Resume DOCX" },
-  { part: "resume",       format: "pdf",  label: "Resume PDF"  },
-  { part: "resume",       format: "txt",  label: "Resume TXT"  },
-  { part: "cover_letter", format: "docx", label: "Cover Letter DOCX" },
-  { part: "cover_letter", format: "pdf",  label: "Cover Letter PDF"  },
-  { part: "cover_letter", format: "txt",  label: "Cover Letter TXT"  },
+  { part: "resume",       format: "pdf",  label: "Resume PDF"         },
+  { part: "cover_letter", format: "pdf",  label: "Cover Letter PDF"   },
+  { part: "resume",       format: "docx", label: "Resume DOCX"        },
+  { part: "cover_letter", format: "docx", label: "Cover Letter DOCX"  },
+  { part: "resume",       format: "txt",  label: "Resume TXT"         },
+  { part: "cover_letter", format: "txt",  label: "Cover Letter TXT"   },
 ];
 
 /** Displays the run ID; click copies it. */

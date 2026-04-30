@@ -227,7 +227,11 @@ class TestEnsureCandidatePromptHelper:
         doc = MagicMock()
         doc.id = 1
 
-        raw_profile_jsonb = {"candidate": {"name": "Alice"}, "domains": {"primary": ["fintech"]}}
+        raw_profile_jsonb = {
+            "candidate": {"name": "Alice"},
+            "contacts": {"email": "alice@example.com", "phone": "+1 604 000 0000"},
+            "domains": {"primary": ["fintech"]},
+        }
         # Profile with synced prompt
         profile = _make_profile(
             synched=True,

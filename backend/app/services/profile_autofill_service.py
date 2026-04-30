@@ -49,6 +49,7 @@ _PROFILE_SCHEMA: dict = {
         "required": [
             "candidate_profile_version",
             "candidate",
+            "contacts",
             "domains",
             "experience_highlights",
             "technical_skills",
@@ -69,6 +70,22 @@ _PROFILE_SCHEMA: dict = {
                     "headline": {"anyOf": [{"type": "string"}, {"type": "null"}]},
                     "summary": {"anyOf": [{"type": "string"}, {"type": "null"}]},
                 },
+            },
+            "contacts": {
+                "anyOf": [
+                    {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["email", "phone", "linkedin_url", "location"],
+                        "properties": {
+                            "email": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                            "phone": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                            "linkedin_url": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                            "location": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                        },
+                    },
+                    {"type": "null"},
+                ],
             },
             "domains": {
                 "anyOf": [

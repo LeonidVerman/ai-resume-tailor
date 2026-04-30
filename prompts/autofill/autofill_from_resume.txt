@@ -111,6 +111,15 @@ Do NOT infer:
 
 FIELD-BY-FIELD GUIDANCE
 
+0. contacts
+Extract ONLY data that is explicitly present in the resume text.
+Do NOT infer or hallucinate contact information.
+
+- email: extract if found; return null if not present
+- phone: extract if found; return null if not present
+- linkedin_url: extract if found; normalize to full URL (e.g. "https://linkedin.com/in/username"); return null if not present
+- location: extract city/province/country if present; return null if not present
+
 1. domains
 Populate with broad, normalized software domains when supported.
 

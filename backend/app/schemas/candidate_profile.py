@@ -18,6 +18,13 @@ from backend.app.schemas.common import APIModel
 
 # ── Sub-models ─────────────────────────────────────────────────────────────
 
+class CandidateContacts(APIModel):
+    email: str = ""
+    phone: str = ""
+    linkedin_url: str | None = None
+    location: str | None = None
+
+
 class CandidateIdentity(APIModel):
     name: str
     headline: str | None = None
@@ -97,6 +104,7 @@ class CandidateProfileDocument(APIModel):
     """
     candidate_profile_version: str = "2.0"
     candidate: CandidateIdentity
+    contacts: CandidateContacts = Field(default_factory=CandidateContacts)
     domains: DomainExperience = Field(default_factory=DomainExperience)
     experience_highlights: list[ExperienceHighlight] = Field(default_factory=list)
     technical_skills: TechnicalSkills = Field(default_factory=TechnicalSkills)

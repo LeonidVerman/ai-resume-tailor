@@ -104,6 +104,10 @@ class GenerationService:
 
         meta = jd.metadata_jsonb or {}
 
+        # Validate contacts before generation (email + phone required).
+        if profile and profile.profile_jsonb:
+            _validate_contacts_for_generation(profile.profile_jsonb.get("contacts") or {})
+
         # ── Create run record ──────────────────────────────────────────────
         generation_mode = (request.generation_mode or "conservative") if hasattr(request, "generation_mode") else "conservative"
 
@@ -150,16 +154,27 @@ class GenerationService:
 
         try:
             # ── Persist tailored document ──────────────────────────────────
-            # Strip null bytes (\u0000) which PostgreSQL rejects in text/JSONB fields.
-            resume_text = result.resume.replace("\x00", "") if result.resume else None
-            cover_letter_text = result.cover_letter.replace("\x00", "") if result.cover_letter else None
-
-            template_original_filename = (resume.resume_jsonb or {}).get("original_filename", "")
+            # Resolve candidate name from profile (fallback: resume metadata).
             candidate_name = ""
             if profile and profile.profile_jsonb:
                 candidate_name = (profile.profile_jsonb.get("candidate") or {}).get("name", "")
             if not candidate_name:
                 candidate_name = (resume.resume_jsonb or {}).get("name", "")
+
+            # Assemble cover letter deterministically from LLM body + profile contacts.
+            if result.cover_letter and candidate_name:
+                contacts_raw = (profile.profile_jsonb or {}).get("contacts", {}) if profile and profile.profile_jsonb else {}
+                result.cover_letter = build_cover_letter(
+                    candidate_name=candidate_name,
+                    contacts=contacts_raw,
+                    cover_letter_body=result.cover_letter,
+                )
+
+            # Strip null bytes (\u0000) which PostgreSQL rejects in text/JSONB fields.
+            resume_text = result.resume.replace("\x00", "") if result.resume else None
+            cover_letter_text = result.cover_letter.replace("\x00", "") if result.cover_letter else None
+
+            template_original_filename = (resume.resume_jsonb or {}).get("original_filename", "")
             tailored_doc = self._doc_repo.create(
                 user_id=user_id,
                 generation_run_id=run.id,
@@ -509,3 +524,20 @@ def _extract_usage_from_messages(messages) -> tuple[int | None, int | None, floa
     except Exception:
         pass
     return token_input, token_output, None
+
+
+# Cover letter assembly helpers — imported from the standalone builder
+# (no SQLAlchemy/FastAPI imports at module level, safe for CLI tests)
+from backend.app.services.cover_letter_builder import (
+    build_cover_letter,
+    validate_contacts as _validate_contacts,
+)
+
+
+def _validate_contacts_for_generation(contacts: dict) -> None:
+    """Convert validate_contacts ValueError to FastAPI 422."""
+    try:
+        _validate_contacts(contacts)
+    except ValueError as exc:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=422, detail=str(exc)) from exc

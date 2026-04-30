@@ -55,6 +55,7 @@ def create_candidate_profile(
     db: DbDep,
 ):
     """Create a new candidate profile version for the authenticated user."""
+    _prefill_email(request, user.email)
     return _service(db).create(user.id, request)
 
 
@@ -65,6 +66,7 @@ def update_candidate_profile(
     db: DbDep,
 ):
     """Update (or create) the candidate profile for the authenticated user."""
+    _prefill_email(request, user.email)
     return _service(db).update(user.id, request)
 
 
@@ -125,6 +127,12 @@ def select_source_resume(request: AutofillSelectSourceRequest, user: CurrentUser
 
 
 # ── Private helpers ────────────────────────────────────────────────────────────
+
+def _prefill_email(request: CandidateProfileUpsertRequest, login_email: str) -> None:
+    """Set contacts.email from login email when the user left it blank."""
+    if not request.profile.contacts.email and login_email:
+        request.profile.contacts.email = login_email
+
 
 def _resume_summary(resume) -> StructuredResumeSummary:
     jsonb = resume.resume_jsonb or {}

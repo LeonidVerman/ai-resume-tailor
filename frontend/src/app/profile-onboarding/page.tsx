@@ -48,6 +48,7 @@ import type {
 const EMPTY_DOC: CandidateProfileDocument = {
   candidate_profile_version: "2.0",
   candidate: { name: "", headline: "", summary: "" },
+  contacts: { email: "", phone: "", linkedin_url: null, location: null },
   domains: { primary: [], secondary: [] },
   experience_highlights: [],
   technical_skills: {
@@ -294,6 +295,7 @@ export default function ProfileOnboardingPage() {
     setDoc({
       candidate_profile_version: "2.0",
       candidate: draft.candidate ?? EMPTY_DOC.candidate,
+      contacts: { ...EMPTY_DOC.contacts, ...draft.contacts },
       domains: draft.domains ?? EMPTY_DOC.domains,
       experience_highlights: draft.experience_highlights ?? [],
       technical_skills: { ...EMPTY_DOC.technical_skills, ...draft.technical_skills },
