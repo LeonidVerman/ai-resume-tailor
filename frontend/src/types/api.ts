@@ -79,6 +79,13 @@ export interface AuthLoginResponse {
 
 // ── Candidate Profile ─────────────────────────────────────────────────────
 
+export interface CandidateContacts {
+  email: string;
+  phone: string;
+  linkedin_url?: string | null;
+  location?: string | null;
+}
+
 export interface CandidateIdentity {
   name: string;
   headline?: string;
@@ -148,6 +155,7 @@ export interface ConstraintsAndPreferences {
 export interface CandidateProfileDocument {
   candidate_profile_version: "1.0" | "1.1" | "2.0";
   candidate: CandidateIdentity;
+  contacts: CandidateContacts;
   domains: DomainExperience;
   experience_highlights: ExperienceHighlight[];
   technical_skills: TechnicalSkills;

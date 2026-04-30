@@ -25,6 +25,7 @@ import {
 import type {
   CandidateProfileDocument,
   CandidateProfileResponse,
+  CandidateContacts,
   ExperienceHighlight,
   TechnicalSkills,
   Leadership,
@@ -40,6 +41,7 @@ import type {
 const DEFAULT_PROFILE: CandidateProfileDocument = {
   candidate_profile_version: "2.0",
   candidate: { name: "", headline: "", summary: "" },
+  contacts: { email: "", phone: "", linkedin_url: null, location: null },
   domains: { primary: [], secondary: [] },
   experience_highlights: [],
   technical_skills: {
@@ -68,6 +70,7 @@ function hydrateProfile(stored?: Partial<CandidateProfileDocument>): CandidatePr
   return {
     candidate_profile_version: "2.0",
     candidate: { ...d.candidate, ...stored.candidate },
+    contacts: { ...d.contacts, ...stored.contacts },
     domains: { ...d.domains, ...stored.domains },
     experience_highlights: stored.experience_highlights ?? [],
     technical_skills: { ...d.technical_skills, ...stored.technical_skills },
@@ -182,6 +185,9 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
 
   function setCandidate(field: keyof CandidateIdentity, val: string) {
     setDoc(d => ({ ...d, candidate: { ...d.candidate, [field]: val } }));
+  }
+  function setContacts(field: keyof CandidateContacts, val: string) {
+    setDoc(d => ({ ...d, contacts: { ...d.contacts, [field]: val } }));
   }
   function setDomains(field: keyof DomainExperience, val: string[]) {
     setDoc(d => ({ ...d, domains: { ...d.domains, [field]: val } }));
@@ -318,6 +324,8 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
     if (!doc.candidate.name.trim()) return "Name is required.";
     if (!doc.candidate.headline?.trim()) return "Headline is required.";
     if (!doc.candidate.summary?.trim()) return "Summary is required.";
+    if (!doc.contacts.email.trim()) return "Email is required.";
+    if (!doc.contacts.phone.trim()) return "Phone is required.";
     if (!doc.domains.primary.length) return "At least one primary domain is required.";
     for (let i = 0; i < highlights.length; i++) {
       const h = highlights[i];
@@ -357,7 +365,7 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
     }
   }
 
-  const { candidate, domains, technical_skills: ts, leadership, ai_tooling_practice: ai,
+  const { candidate, contacts, domains, technical_skills: ts, leadership, ai_tooling_practice: ai,
     role_fit_themes, constraints_and_preferences: cx, claim_boundaries: cb } = doc;
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -408,6 +416,30 @@ export function ProfileForm({ initial, onSaved }: ProfileFormProps) {
             onChange={e => setCandidate("summary", e.target.value)}
             placeholder="Software engineer with experience building and maintaining backend and full-stack systems. Focused on scalability, reliability, and delivering production-quality features."
             className="min-h-[100px]"
+          />
+        </Field>
+        <Field label="Email" configKey="contacts.email" required>
+          <Input
+            type="email"
+            value={contacts.email}
+            onChange={e => setContacts("email", e.target.value)}
+            placeholder="jane@example.com"
+          />
+        </Field>
+        <Field label="Phone" configKey="contacts.phone" required>
+          <Input
+            type="tel"
+            value={contacts.phone}
+            onChange={e => setContacts("phone", e.target.value)}
+            placeholder="+1 604 123 4567"
+          />
+        </Field>
+        <Field label="LinkedIn URL" configKey="contacts.linkedin_url">
+          <Input
+            type="url"
+            value={contacts.linkedin_url ?? ""}
+            onChange={e => setContacts("linkedin_url", e.target.value)}
+            placeholder="https://linkedin.com/in/your-profile"
           />
         </Field>
       </SectionCard>
