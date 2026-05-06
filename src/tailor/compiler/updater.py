@@ -69,6 +69,12 @@ _LOCKED_SEMANTIC_TYPES: frozenset[str] = frozenset({
     "education", "certifications", "languages", "websites",
 })
 
+# Major resume content sections — a synthetic summary should appear before these,
+# and after any preceding profile/title/other sections.
+_MAJOR_SECTION_TYPES: frozenset[str] = frozenset(
+    {"experience", "education", "skills", "certifications"}
+)
+
 # C: Backward-compat alias — True because education is in _LOCKED_SEMANTIC_TYPES.
 FREEZE_EDUCATION: bool = True
 
@@ -677,6 +683,45 @@ def _make_extra_section(
 # ---------------------------------------------------------------------------
 # Column-break stripping helper
 # ---------------------------------------------------------------------------
+
+def _move_layout_block(
+    layout_blocks: list,
+    move_pid: str,
+    before_pid: str,
+) -> list:
+    """Return a copy of *layout_blocks* with the block whose para_id==*move_pid*
+    repositioned to immediately before the block whose para_id==*before_pid*.
+
+    Used to place a synthetic summary LayoutParagraphBlock at the correct
+    render position when its anchor para_id appears early in the original
+    template (e.g. an empty header slot before the profile/title section).
+
+    No-op when either para_id is absent or the block is already in position.
+    """
+    move_idx = next(
+        (i for i, b in enumerate(layout_blocks) if getattr(b, "para_id", None) == move_pid),
+        None,
+    )
+    target_idx = next(
+        (i for i, b in enumerate(layout_blocks) if getattr(b, "para_id", None) == before_pid),
+        None,
+    )
+    if move_idx is None or target_idx is None:
+        return layout_blocks
+    # Compute insertion point after removing the block at move_idx
+    insert_at = target_idx - (1 if move_idx < target_idx else 0)
+    if move_idx == insert_at:
+        return layout_blocks  # already in position
+    new_lb = list(layout_blocks)
+    block = new_lb.pop(move_idx)
+    new_lb.insert(insert_at, block)
+    _log.debug(
+        "SYNTHETIC_SUMMARY_LAYOUT_BLOCK_INSERTED: moved para_id=%r "
+        "from index %d to %d (before %r at original index %d)",
+        move_pid, move_idx, insert_at, before_pid, target_idx,
+    )
+    return new_lb
+
 
 def _strip_col_break_para(pm: ParaModel) -> ParaModel:
     """Return a clone of *pm* with w:br type='column' removed from xml_proto.
@@ -2377,15 +2422,19 @@ def _collect_content_para_ids(doc: "ResumeDocument") -> "frozenset[str]":
     Role headers and meta lines are excluded — structural anchors stay compact.
     """
     ids: set[str] = set()
+    _found_intro_prose = False  # only add the first qualifying 'other' section
     for sec in doc.sections:
         if sec.semantic_type not in _MEANINGFUL_SEMANTICS:
             # Detect intro-prose anchor in the header zone ('other' sections only).
-            # Stop once we reach experience or explicit content sections.
-            if sec.semantic_type == "other" and _is_intro_prose_section(sec):
+            # Use a flag (not break) so the loop continues past the intro-prose
+            # section and still processes meaningful sections (skills, experience).
+            # Using `break` here was a bug: it exited the loop before adding
+            # skills/experience body_paras, leaving them without budget protection.
+            if not _found_intro_prose and sec.semantic_type == "other" and _is_intro_prose_section(sec):
                 for bp in sec.body_paras:
                     if bp.para_id:
                         ids.add(bp.para_id)
-                break  # only the first qualifying 'other' section
+                _found_intro_prose = True
             continue
         for role in sec.roles:
             for b in role.bullets:
@@ -2881,9 +2930,6 @@ def apply_tailored(
                 # Insert after profile/title block, before first major content
                 # section (experience/education/skills).  Inserting at position 0
                 # would place the summary before the candidate name/title block.
-                _MAJOR_SECTION_TYPES = frozenset(
-                    {"experience", "education", "skills", "certifications"}
-                )
                 first_major = next(
                     (i for i, s in enumerate(ordered_sections)
                      if s.semantic_type in _MAJOR_SECTION_TYPES),
@@ -3149,23 +3195,35 @@ def apply_tailored(
         if any(v > 0 for v in _sv.values()):
             _log.debug("STRUCTURAL_VALIDATION_GATE: violations=%s", _sv)
 
+    # Compute layout_blocks for the result — reorder if a synthetic summary
+    # was inserted so its block renders at the correct semantic position.
+    _result_layout_blocks = original.layout_blocks
+    if original.layout_blocks is not None:
+        _summary_body_pid: str | None = next(
+            (s.body_paras[0].para_id
+             for s in new_sections
+             if s.section_id == "sec_summary_inserted" and s.body_paras and s.body_paras[0].para_id),
+            None,
+        )
+        _major_heading_pid: str | None = next(
+            (s.heading.para_id
+             for s in new_sections
+             if s.semantic_type in _MAJOR_SECTION_TYPES and s.heading.para_id),
+            None,
+        )
+        if _summary_body_pid and _major_heading_pid:
+            _result_layout_blocks = _move_layout_block(
+                original.layout_blocks, _summary_body_pid, _major_heading_pid
+            )
+
     _result = ResumeDocument(
         header_paras=effective_header_paras,
         sections=new_sections,
         layout=original.layout,
         all_paras=all_paras,
         source_kind=original.source_kind,
-        # Return body_items only when the in-place table update actually ran.
-        # When unhandled extras exist the in-place update was skipped, leaving
-        # body_items with stale original text — pass None so the renderer falls
-        # back to all_paras (correctly rebuilt by the extras path).
         body_items=original.body_items if (has_table_blocks and not has_unhandled_extras) else None,
-        # Carry layout_blocks forward unconditionally so the renderer can use
-        # serialized XML prototypes after a DB round-trip regardless of whether
-        # the document uses tables or flat paragraphs.  para_id values on
-        # with_text()-derived paragraphs (set in ParaModel.with_text) match the
-        # layout_blocks entries so the renderer can look them up by ID.
-        layout_blocks=original.layout_blocks,
+        layout_blocks=_result_layout_blocks,
     )
 
     # Apply per-slot text-length budgets in layout-bound mode.  Runs last so
