@@ -16,8 +16,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 # Failures that trigger hard-fail (unbound visible content, missing sections).
+# Note: EMPTY_PARA_ID is handled conditionally in grader.py (based on count
+# and content/layout degradation) rather than as an unconditional hard-fail.
 _HARD_FAIL_CODES: frozenset[str] = frozenset({
-    "EMPTY_PARA_ID",
     "EXPERIENCE_NO_ROLES",
 })
 
@@ -37,6 +38,7 @@ class IRValidationResult:
     hard_fail: bool
     failures: list[str] = field(default_factory=list)
     evidence: list[str] = field(default_factory=list)
+    empty_para_id_count: int = 0
 
 
 def _iter_all_paras(ir: dict):
@@ -66,6 +68,7 @@ def validate_ir(ir: dict) -> IRValidationResult:
     failures: list[str] = []
     evidence: list[str] = []
     seen_ids: set[str] = set()
+    empty_para_id_count: int = 0
 
     # ── Pass 1: para-level checks ─────────────────────────────────────────────
     for p in _iter_all_paras(ir):
@@ -73,6 +76,7 @@ def validate_ir(ir: dict) -> IRValidationResult:
         text = (p.get("text") or "").strip()
 
         if text and not pid:
+            empty_para_id_count += 1
             if "EMPTY_PARA_ID" not in failures:
                 failures.append("EMPTY_PARA_ID")
             evidence.append(f"Non-empty para has empty para_id: {text[:60]!r}")
@@ -160,6 +164,7 @@ def validate_ir(ir: dict) -> IRValidationResult:
         hard_fail=any(f in _HARD_FAIL_CODES for f in failures),
         failures=failures,
         evidence=evidence,
+        empty_para_id_count=empty_para_id_count,
     )
 
 

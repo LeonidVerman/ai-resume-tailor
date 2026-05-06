@@ -744,11 +744,117 @@ def _strip_col_break_para(pm: ParaModel) -> ParaModel:
     if not has_cb:
         return pm
     cloned = pm.clone_as(pm.text, pm.semantic)
+    cloned.para_id = pm.para_id
     for r_elem in list(cloned.style.xml_proto.findall(f"{{{_W}}}r")):
         for br in list(r_elem.findall(f"{{{_W}}}br")):
             if br.get(f"{{{_W}}}type") == "column":
                 r_elem.remove(br)
     return cloned
+
+
+# ---------------------------------------------------------------------------
+# Fragmented-experience injection — decorative templates (Fix 4)
+# ---------------------------------------------------------------------------
+
+_ROLE_TITLE_WORDS: frozenset[str] = frozenset({
+    "engineer", "developer", "manager", "designer", "analyst",
+    "director", "lead", "intern", "architect", "consultant",
+    "programmer", "scientist", "specialist", "coordinator",
+    "administrator", "technician", "officer", "supervisor",
+})
+
+
+def _is_role_like_heading(title: str) -> bool:
+    """Return True when *title* looks like a job title (not a company/school/skill).
+
+    Strips a leading date-range prefix (e.g. 'May 2018 - Dec 2019') before
+    checking so that merged date+title headings are handled correctly.
+    """
+    clean = re.sub(r'^\w+\s+\d{4}\s*[-–]\s*\w+\s+\d{4}', '', title).strip()
+    words = clean.lower().split()
+    if not (1 <= len(words) <= 7):
+        return False
+    # Must contain at least one recognised job-title word
+    return any(w in _ROLE_TITLE_WORDS for w in words)
+
+
+def _find_role_like_other_sections(
+    sections: "list[ResumeSection]",
+) -> "list[ResumeSection]":
+    """Return 'other' sections whose headings look like job titles."""
+    return [
+        s for s in sections
+        if s.semantic_type == "other" and _is_role_like_heading(s.title)
+    ]
+
+
+def _inject_fragmented_experience(
+    sections: "list[ResumeSection]",
+    original_sections: "list[ResumeSection]",
+    llm_exp: LlmSection,
+) -> "list[ResumeSection]":
+    """Inject LLM experience roles into role-like 'other' sections.
+
+    Called when no original experience section was matched but the template
+    contains sections whose headings look like job titles (decorative templates
+    that use the role title as the section heading rather than having an
+    umbrella 'Work Experience' heading).
+
+    Each LLM role is matched to a role-like 'other' section by position.
+    The section heading is updated with the LLM role header and the available
+    body paragraph slots are filled with bullets.
+    """
+    role_like = _find_role_like_other_sections(original_sections)
+    if not role_like or not llm_exp.roles:
+        return sections
+
+    _log.debug(
+        "FRAGMENTED_EXPERIENCE_DETECTED: %d role-like sections, %d LLM roles",
+        len(role_like), len(llm_exp.roles),
+    )
+
+    # Build a replacement map: section_id → updated section
+    replacement: dict[str, ResumeSection] = {}
+    for i, sec in enumerate(role_like):
+        if i >= len(llm_exp.roles):
+            break
+        llm_role = llm_exp.roles[i]
+        # Update heading with LLM role header text
+        new_heading = _strip_col_break_para(sec.heading.with_text(llm_role.header))
+        # Fill available body_para slots with bullets, pack overflow into last slot
+        body = list(sec.body_paras)
+        bullet_slots = [j for j, bp in enumerate(body) if bp.para_id and not bp.text.startswith('\n')]
+        # First slot can carry a newline/spacer — skip those, prefer content slots
+        if not bullet_slots:
+            bullet_slots = [j for j, bp in enumerate(body) if bp.para_id]
+        for slot_rank, slot_j in enumerate(bullet_slots):
+            if slot_rank < len(llm_role.bullets):
+                body[slot_j] = body[slot_j].with_text(llm_role.bullets[slot_rank])
+            elif slot_rank == len(bullet_slots) - 1 and slot_rank < len(llm_role.bullets):
+                # Pack remaining bullets into last slot
+                extras = llm_role.bullets[slot_rank:]
+                packed = "; ".join(e.strip() for e in extras)
+                body[slot_j] = body[slot_j].with_text(packed)
+
+        updated_sec = ResumeSection(
+            title=llm_role.header,
+            heading=new_heading,
+            semantic_type="other",
+            body_paras=body,
+            roles=[],
+            section_id=sec.section_id,
+        )
+        replacement[sec.section_id] = updated_sec
+        _log.debug(
+            "FRAGMENTED_EXPERIENCE_SYNTHESIZED: %r -> %r",
+            sec.title[:40], llm_role.header[:40],
+        )
+
+    # Rebuild sections with replacements applied
+    result = []
+    for sec in sections:
+        result.append(replacement.get(sec.section_id, sec))
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -2766,6 +2872,11 @@ def apply_tailored(
     # effective_header_paras so they are not double-counted in all_paras.
     _used_anchor_ids: set[str] = set()
 
+    # Summary anchors are pre-computed in the extras path when layout-bound.
+    # Initialised here so post-merge code (lorem injection) can reference it
+    # unconditionally regardless of which path (fast/extras) was taken.
+    _summary_anchors: "tuple[ParaModel, ParaModel] | None" = None
+
     if not match.extras:
         # ---- Fast path: no extras, keep original section order ----
         new_sections: list[ResumeSection] = []
@@ -2914,7 +3025,8 @@ def apply_tailored(
         # so that new sections added by the LLM appear in the expected position.
         if _layout_bound:
             anchored_summaries = [
-                s for s in llm_order_sections if s.semantic_type == "summary"
+                s for s in llm_order_sections
+                if s.semantic_type == "summary" and s.section_id == "sec_summary_inserted"
             ]
             ordered_sections: list[ResumeSection] = []
             for orig_section, llm_section in match.pairs:
@@ -2963,6 +3075,25 @@ def apply_tailored(
             else:
                 new_sections = verbatim_sections + llm_order_sections
 
+    # Fragmented-experience injection: LLM had experience roles but no original
+    # experience section existed to match them.  Inject into role-like 'other'
+    # sections (templates where each role appears as its own section).
+    # Only runs in the extras path (where heading_to_section was populated).
+    if _layout_bound and match.extras:
+        _unmatched_exp = next(
+            (s for s in llm_sections
+             if s.semantic_type == "experience"
+             and s.heading.lower() not in heading_to_section
+             and s.roles),
+            None,
+        )
+        if _unmatched_exp and not any(
+            s.semantic_type == "experience" for s in new_sections
+        ):
+            new_sections = _inject_fragmented_experience(
+                new_sections, original.sections, _unmatched_exp
+            )
+
     # Apply skills injection into header_paras when identified in the extras path.
     # injectable_skills_section / header_skill_target are None in the fast path.
     if injectable_skills_section is not None and header_skill_target is not None:
@@ -2983,6 +3114,29 @@ def apply_tailored(
             p for p in effective_header_paras
             if p.para_id not in _used_anchor_ids
         ]
+
+    # Lorem-placeholder summary injection: if LLM has summary, no summary was
+    # anchored, and a header_para contains lorem ipsum, replace it with the LLM
+    # summary text.  This handles decorative templates where the summary slot is
+    # filled with placeholder prose rather than left empty.
+    if _layout_bound and _summary_anchors is None:
+        _llm_summary = next(
+            (s for s in llm_sections if s.semantic_type == "summary"), None
+        )
+        if _llm_summary and not any(
+            s.semantic_type == "summary" for s in new_sections
+        ):
+            _LOREM_MARKER = "lorem ipsum"
+            for _hi, _hp in enumerate(effective_header_paras):
+                if _LOREM_MARKER in _hp.text.lower() and _hp.para_id:
+                    _summary_text = _clean_summary_text(_llm_summary.body_lines)
+                    if _summary_text:
+                        effective_header_paras[_hi] = _hp.with_text(_summary_text)
+                        _log.debug(
+                            "LOREM_PLACEHOLDER_REPLACED: para_id=%r with summary text",
+                            _hp.para_id,
+                        )
+                    break
 
     # Hard ban in layout-bound mode: remove any section that has non-empty content
     # but no section_id (i.e. it was created synthetic via _make_extra_section or

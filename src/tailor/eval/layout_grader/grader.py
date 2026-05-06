@@ -16,7 +16,8 @@ Classification:
   FAIL      < 60
 
 HARD FAIL triggers:
-  IR:       EMPTY_PARA_ID, EXPERIENCE_NO_ROLES
+  IR:       EXPERIENCE_NO_ROLES
+            EMPTY_PARA_ID (conditional: count > 2 OR ci_score < 80 OR region_score < 80)
   DOCX:     columns_lost (w:cols dropped)
   PDF:      page count > original + 2
             blank middle page
@@ -272,6 +273,22 @@ def grade_sample(
             evidence.append("Template PDF conversion failed -- PDF scores use defaults")
         if not generated_pdf_ok:
             evidence.append("Generated PDF conversion failed -- PDF scores use defaults")
+
+    # ── Conditional EMPTY_PARA_ID hard-fail ───────────────────────────────────
+    # Only hard-fail when the count is high or combined with content/layout
+    # degradation.  A single empty para_id on a mis-parsed header in an
+    # otherwise perfect layout (ci_score=100, region=100) is a warning only.
+    if "EMPTY_PARA_ID" in ir_result.failures:
+        _epi_count = ir_result.empty_para_id_count
+        _epi_degraded = (
+            ci_score < 80
+            or pdf_scores.get("region_score", 100) < 80
+            or hard_fail  # already failing for another reason
+        )
+        if _epi_count > 2 or _epi_degraded:
+            hard_fail = True
+            if "EMPTY_PARA_ID" not in hard_fail_reasons:
+                hard_fail_reasons.append("EMPTY_PARA_ID")
 
     # ── Composite ─────────────────────────────────────────────────────────────
     metrics: dict[str, float] = {

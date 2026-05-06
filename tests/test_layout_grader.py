@@ -119,6 +119,37 @@ class TestIRValidator:
         assert not result.passed
         assert "EMPTY_PARA_ID" in result.failures
 
+    def test_empty_para_id_not_hard_fail_by_itself(self):
+        """Fix 3: EMPTY_PARA_ID is no longer unconditionally a hard-fail at the
+        validator level; grader.py applies conditional logic."""
+        from tailor.eval.layout_grader.ir_validator import validate_ir
+        ir = _make_valid_ir()
+        ir["sections"][0]["body_paras"].append(
+            {"text": "Mis-parsed role header", "semantic": "paragraph", "para_id": ""}
+        )
+        result = validate_ir(ir)
+        assert "EMPTY_PARA_ID" in result.failures
+        # Validator itself must NOT hard-fail for a single empty para_id
+        assert not result.hard_fail
+
+    def test_empty_para_id_count_tracked(self):
+        """Fix 3: empty_para_id_count is populated accurately."""
+        from tailor.eval.layout_grader.ir_validator import validate_ir
+        ir = _make_valid_ir()
+        for i in range(3):
+            ir["sections"][0]["body_paras"].append(
+                {"text": f"Unbound text {i}", "semantic": "paragraph", "para_id": ""}
+            )
+        result = validate_ir(ir)
+        assert result.empty_para_id_count == 3
+
+    def test_empty_para_id_count_zero_when_no_violations(self):
+        """Fix 3: empty_para_id_count is 0 for a clean IR."""
+        from tailor.eval.layout_grader.ir_validator import validate_ir
+        ir = _make_valid_ir()
+        result = validate_ir(ir)
+        assert result.empty_para_id_count == 0
+
     def test_empty_text_para_with_empty_id_is_ok(self):
         from tailor.eval.layout_grader.ir_validator import validate_ir
         ir = _make_valid_ir()
@@ -693,6 +724,99 @@ class TestGraderComposite:
         )
         # Density score should be < 100
         assert grade.metrics["density_score"] < 100.0
+
+
+class TestConditionalEmptyParaIdHardFail:
+    """Fix 3: EMPTY_PARA_ID is a conditional hard-fail (not unconditional).
+
+    Single empty para_id + perfect content injection + perfect region → WARNING.
+    Multiple empty para_ids (>2) → HARD FAIL.
+    """
+
+    def _ir_with_empty_para_ids(self, count: int) -> dict:
+        """Build IR with `count` non-empty paras that have no para_id."""
+        ir = _make_valid_ir()
+        for i in range(count):
+            ir["sections"][0]["body_paras"].append(
+                {"text": f"Mis-parsed header {i}", "semantic": "paragraph", "para_id": ""}
+            )
+        return ir
+
+    def test_single_empty_para_id_is_warning_not_hard_fail(self, tmp_path):
+        """Fix 3: 1 empty para_id with no other degradation → not a hard-fail."""
+        ir = self._ir_with_empty_para_ids(1)
+        ir_path = tmp_path / "ir.json"
+        ir_path.write_text(json.dumps(ir), encoding="utf-8")
+        _create_docx(tmp_path / "template.docx", 25)
+        _create_docx(tmp_path / "generated.docx", 25)
+
+        from tailor.eval.layout_grader.grader import grade_sample
+        grade = grade_sample(
+            sample_id="test_single_epi",
+            template_docx_path=str(tmp_path / "template.docx"),
+            generated_docx_path=str(tmp_path / "generated.docx"),
+            template_pdf_path=str(tmp_path / "template.pdf"),
+            generated_pdf_path=str(tmp_path / "generated.pdf"),
+            ir_path=str(ir_path),
+            pdf_method="local",
+        )
+        # Single empty para_id + no ci_score degradation → must NOT be hard_fail
+        assert not grade.hard_fail, (
+            f"Single EMPTY_PARA_ID should not hard-fail; got status={grade.status!r}, "
+            f"reasons={grade.hard_fail_reasons}"
+        )
+        assert grade.status != "hard_fail"
+
+    def test_many_empty_para_ids_is_hard_fail(self, tmp_path):
+        """Fix 3: 3+ empty para_ids → HARD FAIL (count > 2 threshold)."""
+        ir = self._ir_with_empty_para_ids(3)
+        ir_path = tmp_path / "ir.json"
+        ir_path.write_text(json.dumps(ir), encoding="utf-8")
+        _create_docx(tmp_path / "template.docx", 25)
+        _create_docx(tmp_path / "generated.docx", 25)
+
+        from tailor.eval.layout_grader.grader import grade_sample
+        grade = grade_sample(
+            sample_id="test_many_epi",
+            template_docx_path=str(tmp_path / "template.docx"),
+            generated_docx_path=str(tmp_path / "generated.docx"),
+            template_pdf_path=str(tmp_path / "template.pdf"),
+            generated_pdf_path=str(tmp_path / "generated.pdf"),
+            ir_path=str(ir_path),
+            pdf_method="local",
+        )
+        assert grade.hard_fail
+        assert "EMPTY_PARA_ID" in grade.hard_fail_reasons
+        assert grade.composite_score <= 30.0
+
+    def test_experience_no_roles_still_hard_fails(self, tmp_path):
+        """Fix 3: EXPERIENCE_NO_ROLES is still always a hard-fail (unchanged)."""
+        ir = _make_valid_ir(with_experience=False)
+        ir["sections"].append({
+            "title": "Experience",
+            "semantic_type": "experience",
+            "heading": {"text": "Experience", "semantic": "section_heading", "para_id": "pz1"},
+            "body_paras": [],
+            "roles": [],
+            "section_id": "sz1",
+        })
+        ir_path = tmp_path / "ir.json"
+        ir_path.write_text(json.dumps(ir), encoding="utf-8")
+        _create_docx(tmp_path / "template.docx", 25)
+        _create_docx(tmp_path / "generated.docx", 25)
+
+        from tailor.eval.layout_grader.grader import grade_sample
+        grade = grade_sample(
+            sample_id="test_no_roles",
+            template_docx_path=str(tmp_path / "template.docx"),
+            generated_docx_path=str(tmp_path / "generated.docx"),
+            template_pdf_path=str(tmp_path / "template.pdf"),
+            generated_pdf_path=str(tmp_path / "generated.pdf"),
+            ir_path=str(ir_path),
+            pdf_method="local",
+        )
+        assert grade.hard_fail
+        assert "EXPERIENCE_NO_ROLES" in grade.hard_fail_reasons
 
 
 # ---------------------------------------------------------------------------

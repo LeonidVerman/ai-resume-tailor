@@ -457,6 +457,69 @@ class TestAnchoredSummaryInsertion:
         # The existing summary should be updated with new text
         assert "New summary text" in " ".join(p.text for p in summary_secs[0].body_paras)
 
+    def test_matched_original_summary_not_duplicated_by_anchor_path(self, monkeypatch):
+        """Fix 2: matched original summary must not appear TWICE in new_sections.
+
+        When the template has an existing summary section that is matched by the
+        LLM output, the anchored_summaries list must only include sections whose
+        section_id == 'sec_summary_inserted'.  The matched original (different
+        section_id) must not be re-inserted, preventing double-summary output.
+        """
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+
+        from tailor.compiler.models import (
+            LayoutParagraphBlock, LayoutProfile, ResumeDocument, assign_stable_ids,
+        )
+        from tailor.compiler.updater import apply_tailored
+
+        layout = LayoutProfile(
+            page_width_pt=612, page_height_pt=792,
+            margin_top_pt=72, margin_bottom_pt=72,
+            margin_left_pt=72, margin_right_pt=72,
+            default_font_name="Calibri", default_font_size_pt=11,
+        )
+        # Template with: name + 2 empty header slots + existing summary + experience.
+        name_para = _make_para("John Doe", "para_name", "section_heading")
+        empty_1 = _make_para("", "hp_f1")
+        empty_2 = _make_para("", "hp_f2")
+
+        summary_sec = _make_section("Professional Summary", "summary", "sec_original_summ")
+        body_pm = _make_para("Old profile text.", "para_old_body")
+        summary_sec.body_paras = [body_pm]
+
+        exp_sec = _make_section("Work Experience", "experience", "sec_exp_f")
+        exp_sec.roles = [_make_role_entry("Engineer | Corp", 2)]
+
+        doc = ResumeDocument(
+            header_paras=[name_para, empty_1, empty_2],
+            sections=[summary_sec, exp_sec],
+            layout=layout,
+            all_paras=[],
+        )
+        assign_stable_ids(doc)
+        all_lb = [name_para, empty_1, empty_2, summary_sec.heading, body_pm, exp_sec.heading]
+        for r in exp_sec.roles:
+            all_lb.extend([r.header] + r.meta_lines + r.bullets)
+        doc.layout_blocks = [LayoutParagraphBlock(para_id=p.para_id) for p in all_lb if p.para_id]
+
+        # LLM outputs both a summary and an experience section.
+        updated = apply_tailored(doc, _llm_with_summary("New tailored summary text."))
+
+        # Must have exactly ONE summary section — the matched original, updated.
+        summary_secs = [s for s in updated.sections if s.semantic_type == "summary"]
+        assert len(summary_secs) == 1, (
+            f"Expected exactly 1 summary section, got {len(summary_secs)}: "
+            f"{[s.section_id for s in summary_secs]}"
+        )
+        # The original section_id must be preserved (not 'sec_summary_inserted').
+        assert summary_secs[0].section_id != "sec_summary_inserted", (
+            "Matched original summary must NOT be replaced with a synthetic anchored one"
+        )
+        # Text must be updated to the LLM output.
+        combined = " ".join(p.text for p in summary_secs[0].body_paras)
+        assert "New tailored summary text" in combined
+
 
 # ---------------------------------------------------------------------------
 # Sample 31 integration tests
