@@ -247,9 +247,22 @@ def grade_sample(
             gen_pages_count = pdf_result.generated_pages
             orig_columns = pdf_result.orig_columns
             gen_columns_count = pdf_result.gen_columns
-            if pdf_result.hard_fail:
+            # COLUMN_LAYOUT_LOST from the PDF scorer is a false positive when
+            # the original DOCX has no native Word columns (w:cols).  The PDF
+            # x-clustering may reflect content indentation patterns rather than
+            # a true 2-column sectPr layout.  Only honour the PDF signal when
+            # the DOCX comparator confirms native columns were present.
+            _docx_has_orig_cols = (
+                docx_result is not None
+                and docx_result.has_word_columns_original
+            )
+            _pdf_hard_reasons = [
+                r for r in pdf_result.hard_fail_reasons
+                if r != "COLUMN_LAYOUT_LOST" or _docx_has_orig_cols
+            ]
+            if _pdf_hard_reasons:
                 hard_fail = True
-                hard_fail_reasons.extend(pdf_result.hard_fail_reasons)
+                hard_fail_reasons.extend(_pdf_hard_reasons)
             if "PAGE_COUNT_OVERFLOW" in pdf_result.hard_fail_reasons:
                 if "C_OVERFLOW_FIT" not in failure_classes:
                     failure_classes.append("C_OVERFLOW_FIT")

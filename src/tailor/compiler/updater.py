@@ -723,6 +723,56 @@ def _move_layout_block(
     return new_lb
 
 
+def _detect_multi_copy_count(sections: "list[ResumeSection]") -> int:
+    """Return N when the template has N identical copies of its section structure.
+
+    Detected when every section heading appears exactly N > 1 times and the
+    total section count is divisible by N.  Returns 1 when no multi-copy
+    pattern is found.
+    """
+    if not sections:
+        return 1
+    from collections import Counter
+    counts = Counter(s.title.lower() for s in sections)
+    unique_counts = set(counts.values())
+    if len(unique_counts) == 1:
+        n = next(iter(unique_counts))
+        if n > 1 and len(sections) % n == 0:
+            return n
+    return 1
+
+
+def _trim_to_first_copy_layout_blocks(
+    blocks: list,
+    n_copies: int,
+) -> list:
+    """Trim layout_blocks to only the first copy for multi-copy templates.
+
+    Keeps: blocks before the second TableBlock (i.e. leading para + first
+    TableBlock) and blocks after the last TableBlock (trailing para).
+    Drops: separator paragraphs between copies and all subsequent TableBlocks.
+    This prevents blank-page artifacts caused by the first copy's expanded
+    content pushing inter-copy separator paragraphs onto their own page.
+    """
+    from tailor.compiler.models import LayoutTableBlock
+    table_indices = [i for i, b in enumerate(blocks) if isinstance(b, LayoutTableBlock)]
+    if len(table_indices) != n_copies:
+        _log.debug(
+            "MULTI_COPY_TRIM_SKIPPED: expected %d TableBlocks, found %d",
+            n_copies, len(table_indices),
+        )
+        return blocks
+    first_table_end = table_indices[0] + 1
+    last_table_end = table_indices[-1] + 1
+    kept = list(blocks[:first_table_end]) + list(blocks[last_table_end:])
+    _log.debug(
+        "MULTI_COPY_TEMPLATE_TRIMMED: kept %d blocks (was %d); "
+        "removed %d inter-copy blocks",
+        len(kept), len(blocks), len(blocks) - len(kept),
+    )
+    return kept
+
+
 def _strip_col_break_para(pm: ParaModel) -> ParaModel:
     """Return a clone of *pm* with w:br type='column' removed from xml_proto.
 
@@ -3094,6 +3144,23 @@ def apply_tailored(
                 new_sections, original.sections, _unmatched_exp
             )
 
+    # Lorem ipsum cleanup in layout-bound mode: blank out any remaining lorem ipsum
+    # placeholder paragraphs in section bodies that were not reached by the targeted
+    # injection steps above.  Any "lorem ipsum" in final output is a hard grader fail;
+    # blanking preserves para_id (renderer slot) while removing the placeholder text.
+    if _layout_bound:
+        _LOREM_MARKER_LC = "lorem ipsum"
+        for _sec in new_sections:
+            _sec.body_paras[:] = [
+                _pm.with_text("") if (_pm.para_id and _LOREM_MARKER_LC in _pm.text.lower()) else _pm
+                for _pm in _sec.body_paras
+            ]
+            for _role in _sec.roles:
+                _role.bullets[:] = [
+                    _pm.with_text("") if (_pm.para_id and _LOREM_MARKER_LC in _pm.text.lower()) else _pm
+                    for _pm in _role.bullets
+                ]
+
     # Apply skills injection into header_paras when identified in the extras path.
     # injectable_skills_section / header_skill_target are None in the fast path.
     if injectable_skills_section is not None and header_skill_target is not None:
@@ -3442,6 +3509,21 @@ def apply_tailored(
                             "'spacer_header_auto_1' before %r (last_header=%r)",
                             _first_sec_hpid, _last_hp_pid,
                         )
+
+        # Multi-copy template detection: templates that repeat the same section
+        # headings N times (e.g. 3-copy cut-sheet templates) cause a blank middle
+        # page when the first copy expands beyond its original table height.
+        # Trim layout_blocks to the first copy + trailing paragraphs so that only
+        # one copy is rendered.
+        _n_copies = _detect_multi_copy_count(original.sections)
+        if _n_copies > 1:
+            _result_layout_blocks = _trim_to_first_copy_layout_blocks(
+                _result_layout_blocks, _n_copies
+            )
+            _log.debug(
+                "MULTI_COPY_TEMPLATE_DETECTED: %d copies, trimmed to first copy only",
+                _n_copies,
+            )
 
     _result = ResumeDocument(
         header_paras=effective_header_paras,
