@@ -138,12 +138,16 @@ class TestFindSummaryAnchors:
         assert b_anchor.para_id
         assert h_anchor.para_id != b_anchor.para_id
 
-    def test_returns_none_when_only_one_empty(self):
-        """Returns None when fewer than 2 trailing empty slots exist."""
+    def test_returns_single_anchor_when_only_one_empty(self):
+        """Returns (None, body_anchor) when only 1 trailing empty slot exists."""
         from tailor.compiler.updater import _find_summary_anchors
 
         doc = _build_doc_with_header_empties(1)
-        assert _find_summary_anchors(doc) is None
+        result = _find_summary_anchors(doc)
+        assert result is not None
+        heading_anchor, body_anchor = result
+        assert heading_anchor is None  # no heading slot
+        assert body_anchor.para_id != ""  # body slot found
 
     def test_returns_none_when_no_header_paras(self):
         """Returns None when header_paras is empty."""
@@ -355,18 +359,21 @@ class TestAnchoredSummaryInsertion:
         types = [s.semantic_type for s in updated.sections]
         assert "summary" not in types, "Summary must be dropped when no safe anchors"
 
-    def test_summary_skipped_when_only_one_anchor(self, monkeypatch):
-        """Summary dropped when only 1 empty header slot exists (need 2)."""
+    def test_summary_inserted_with_single_anchor(self, monkeypatch):
+        """Summary IS inserted when only 1 empty header slot exists (body-only mode)."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
         from tailor.compiler.updater import apply_tailored
 
         doc = _build_doc_with_header_empties(1)
-        updated = apply_tailored(doc, _llm_with_summary("Text."))
+        updated = apply_tailored(doc, _llm_with_summary("Full summary text here."))
 
         types = [s.semantic_type for s in updated.sections]
-        assert "summary" not in types
+        assert "summary" in types  # inserted using the single empty slot
+        summary = next(s for s in updated.sections if s.semantic_type == "summary")
+        # Body contains full text — no truncation
+        assert "Full summary text here." in summary.body_paras[0].text
 
     def test_name_contact_not_overwritten(self, monkeypatch):
         """Name and contact paragraphs are not overwritten by summary insertion."""

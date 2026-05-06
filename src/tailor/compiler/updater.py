@@ -2152,11 +2152,21 @@ def _find_summary_anchors(
             break
 
     trailing = header_paras[cluster_start:]
-    if len(trailing) < 2:
+    if not trailing:
         return None
 
-    # Use the last two in the trailing cluster (closest to the first section).
-    return trailing[-2], trailing[-1]
+    # Two or more empty slots: use last two (heading_anchor, body_anchor).
+    if len(trailing) >= 2:
+        return trailing[-2], trailing[-1]
+
+    # Single empty slot: use as body_anchor only; heading_anchor=None means
+    # the inserted section has no heading para (renders as prose block only).
+    _log.debug(
+        "SUMMARY_SINGLE_ANCHOR: one empty header slot found — "
+        "summary inserted without heading anchor (body_pid=%r)",
+        trailing[0].para_id,
+    )
+    return None, trailing[0]
 
 
 def _clean_summary_text(body_lines: "list[str]") -> str:
@@ -2198,17 +2208,27 @@ def _build_anchored_summary_section(
     section_id is set to "sec_summary_inserted" so finalize_layout_bound_ir
     does not treat the section as synthetic (section_id != '').
     """
-    heading_text = "PROFESSIONAL SUMMARY"
     body_text = _clean_summary_text(llm_section.body_lines)
 
-    new_heading = heading_anchor.with_text(heading_text)
-    new_heading_pm = ParaModel(
-        text=new_heading.text,
-        style=new_heading.style,
-        semantic="section_heading",
-        paragraph_profile=new_heading.paragraph_profile,
-    )
-    new_heading_pm.para_id = heading_anchor.para_id
+    if heading_anchor is not None:
+        new_heading = heading_anchor.with_text("PROFESSIONAL SUMMARY")
+        new_heading_pm = ParaModel(
+            text=new_heading.text,
+            style=new_heading.style,
+            semantic="section_heading",
+            paragraph_profile=new_heading.paragraph_profile,
+        )
+        new_heading_pm.para_id = heading_anchor.para_id
+    else:
+        # Single-anchor mode: no heading slot available.  Use an empty unanchored
+        # para so finalize_layout_bound_ir treats it as a spacer (not dropped).
+        new_heading_pm = ParaModel(
+            text="",
+            style=body_anchor.style,
+            semantic="section_heading",
+            paragraph_profile=body_anchor.paragraph_profile,
+        )
+        new_heading_pm.para_id = ""
 
     new_body = body_anchor.with_text(body_text)
     new_body_pm = ParaModel(
@@ -2318,16 +2338,51 @@ SUMMARY_BODY_BUDGET: int = 200
 _MEANINGFUL_SEMANTICS: frozenset[str] = frozenset({"experience", "summary", "skills"})
 
 
-def _collect_content_para_ids(doc: "ResumeDocument") -> "frozenset[str]":
-    """Return para_ids of content paragraphs in experience/summary/skills sections.
+def _is_intro_prose_section(sec: "ResumeSection") -> bool:
+    """Return True when an 'other'-type section looks like an intro-prose block.
 
-    These carry generated LLM text (bullets, body lines) and must not be
-    truncated by budget enforcement or density repair.  Role headers and meta
-    lines are excluded — they are structural anchors that should stay compact.
+    Mirrors the heuristic in layout._has_intro_prose_content.  Used to detect
+    which 'other' section received implicit summary injection so its body_para
+    para_ids can be excluded from budget truncation.
+    """
+    if sec.semantic_type in _LOCKED_SEMANTIC_TYPES or sec.semantic_type == "experience":
+        return False
+    non_empty = [p for p in sec.body_paras if p.text.strip()]
+    if not non_empty:
+        return False
+    if any(p.semantic in ("role_meta", "bullet") for p in non_empty):
+        return False
+    total = " ".join(p.text.strip() for p in non_empty)
+    if len(total) < 30:
+        return False
+    if all("://" in p.text or " " not in p.text for p in non_empty):
+        return False
+    return (total.count(",") / max(1, len(total))) < 0.15
+
+
+def _collect_content_para_ids(doc: "ResumeDocument") -> "frozenset[str]":
+    """Return para_ids of content paragraphs that must not be budget-truncated.
+
+    Includes:
+    - Bullets of experience roles.
+    - Body_paras of summary/skills/experience sections.
+    - Body_paras of the first 'other' section that qualifies as an intro-prose
+      anchor (receives implicit summary injection via layout._anchor_implicit_summary).
+    - The body_anchor para_id from single-slot summary insertion (para from
+      header_paras used as the sole anchor when only one empty slot exists).
+
+    Role headers and meta lines are excluded — structural anchors stay compact.
     """
     ids: set[str] = set()
     for sec in doc.sections:
         if sec.semantic_type not in _MEANINGFUL_SEMANTICS:
+            # Detect intro-prose anchor in the header zone ('other' sections only).
+            # Stop once we reach experience or explicit content sections.
+            if sec.semantic_type == "other" and _is_intro_prose_section(sec):
+                for bp in sec.body_paras:
+                    if bp.para_id:
+                        ids.add(bp.para_id)
+                break  # only the first qualifying 'other' section
             continue
         for role in sec.roles:
             for b in role.bullets:
@@ -2336,6 +2391,16 @@ def _collect_content_para_ids(doc: "ResumeDocument") -> "frozenset[str]":
         for bp in sec.body_paras:
             if bp.para_id:
                 ids.add(bp.para_id)
+
+    # Single-slot summary anchor: body_anchor is an empty header_para.
+    # Its para_id would normally get SUMMARY_BODY_BUDGET (200 chars) which
+    # is too short for a full LLM summary.  Exclude it from budget enforcement.
+    anchors = _find_summary_anchors(doc)
+    if anchors is not None:
+        _, body_anchor = anchors
+        if body_anchor.para_id:
+            ids.add(body_anchor.para_id)
+
     return frozenset(ids)
 
 
@@ -2380,6 +2445,9 @@ def _compute_anchor_budgets(
     for pm in original.header_paras:
         if not pm.para_id:
             continue
+        if pm.para_id in _no_truncate:
+            # Single-slot summary body anchor — no budget, full LLM text preserved.
+            continue
         if pm.para_id in _orig_empty_header:
             # Conservative default; will be overridden for summary anchors below.
             budgets[pm.para_id] = SUMMARY_BODY_BUDGET
@@ -2421,7 +2489,10 @@ def _compute_anchor_budgets(
             if sec.heading.para_id in _orig_empty_header:
                 budgets[sec.heading.para_id] = SUMMARY_HEADING_BUDGET
             for bp in sec.body_paras:
-                if bp.para_id in _orig_empty_header:
+                if bp.para_id in _orig_empty_header and bp.para_id not in _no_truncate:
+                    # Two-slot anchor: constrained heading + body budget.
+                    # Single-slot anchor: body_anchor.para_id is in _no_truncate
+                    # (added by _collect_content_para_ids) — no budget, full text.
                     budgets[bp.para_id] = SUMMARY_BODY_BUDGET
 
     return budgets
@@ -2706,9 +2777,10 @@ def apply_tailored(
         if _layout_bound:
             _summary_anchors = _find_summary_anchors(original)
             if _summary_anchors:
+                _ha, _ba = _summary_anchors
                 _log.debug(
                     "SUMMARY_ANCHORS_FOUND: heading_pid=%r body_pid=%r",
-                    _summary_anchors[0].para_id, _summary_anchors[1].para_id,
+                    _ha.para_id if _ha else None, _ba.para_id,
                 )
             else:
                 _log.debug("SUMMARY_ANCHORS_NOT_FOUND: no safe empty header slots")
@@ -2750,17 +2822,20 @@ def apply_tailored(
                 # In layout-bound mode, try anchored summary insertion first.
                 # Non-summary extras are dropped to prevent unbound sections.
                 if llm_s.semantic_type == "summary" and _summary_anchors is not None:
+                    _heading_anchor, _body_anchor = _summary_anchors
                     anchored = _build_anchored_summary_section(
-                        llm_s, _summary_anchors[0], _summary_anchors[1]
+                        llm_s, _heading_anchor, _body_anchor
                     )
                     llm_order_sections.append(anchored)
-                    _used_anchor_ids.add(_summary_anchors[0].para_id)
-                    _used_anchor_ids.add(_summary_anchors[1].para_id)
+                    if _heading_anchor is not None and _heading_anchor.para_id:
+                        _used_anchor_ids.add(_heading_anchor.para_id)
+                    if _body_anchor.para_id:
+                        _used_anchor_ids.add(_body_anchor.para_id)
                     _summary_anchors = None  # consume anchors; only one summary
                     _log.debug(
                         "SUMMARY_INSERTED_ANCHORED: %r heading_pid=%r body_pid=%r",
                         llm_s.heading,
-                        anchored.heading.para_id,
+                        anchored.heading.para_id or None,
                         anchored.body_paras[0].para_id if anchored.body_paras else None,
                     )
                 elif llm_s.semantic_type == "summary":

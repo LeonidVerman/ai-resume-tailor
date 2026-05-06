@@ -60,9 +60,10 @@ class TestAnchorBudgets:
         assert "para_47" not in budgets, "experience bullet must not have a budget"
         assert "para_49" not in budgets, "skills body para must not have a budget"
         assert "para_51" not in budgets, "skills body para must not have a budget"
-        # Empty header paras still get conservative default (for inserted-summary anchors)
-        assert budgets.get("para_7", 0) >= 100
-        assert budgets.get("para_8", 0) >= 100
+        # para_7 (heading anchor) gets SUMMARY_HEADING_BUDGET — still in budgets
+        assert budgets.get("para_7", 0) >= 1  # heading anchor has a budget
+        # para_8 (body anchor) is in _no_truncate — NOT in budgets (full text preserved)
+        assert "para_8" not in budgets, "summary body anchor must not have a budget"
 
     def test_apply_anchor_budgets_truncates_overlong(self, monkeypatch):
         """apply_anchor_budgets truncates a para that exceeds budget."""
@@ -218,7 +219,9 @@ class TestSample31ArtifactPipeline:
         assert summary is not None, "Summary section missing"
         assert summary.heading.para_id == "para_7"
         assert summary.body_paras and summary.body_paras[0].para_id == "para_8"
-        assert len(summary.body_paras[0].text) <= 200  # budget enforced
+        # Full summary text preserved — no budget truncation for summary body anchor
+        assert len(summary.body_paras[0].text) > 0
+        assert "..." not in summary.body_paras[0].text, "Summary must not be truncated"
 
     def test_ir_section_order_preserved(self, monkeypatch):
         """Sections appear in original document order (summary inserted first)."""

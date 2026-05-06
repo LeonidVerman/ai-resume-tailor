@@ -648,18 +648,35 @@ def _anchor_implicit_summary(
         # exactly.  _match_sections will pair them in pass 1 (exact heading match),
         # and _update_body_section will replace the prose body with the summary.
         orig_title = original.sections[section_idx].title
-        result[sum_idx] = LlmSection(
-            heading=orig_title,
-            semantic_type=llm_sum.semantic_type,
-            body_lines=llm_sum.body_lines,
-            roles=llm_sum.roles,
+        # Collision guard: if a non-summary LLM section already uses the target
+        # heading, renaming would cause a duplicate — the second occurrence would
+        # be silently dropped by the extras loop instead of reaching summary
+        # insertion.  Fall back to 'hero' (use header_paras zone) in that case.
+        title_lower = orig_title.lower()
+        has_collision = any(
+            s.heading.lower() == title_lower and s.semantic_type != "summary"
+            for s in llm_sections
         )
-        log.debug(
-            "anchor_implicit_summary: renamed LLM summary heading to %r "
-            "(intro_prose replacement)",
-            orig_title,
-        )
-    elif anchor_type == "hero":
+        if has_collision:
+            log.debug(
+                "anchor_implicit_summary: intro_prose heading %r conflicts with "
+                "existing LLM section — falling back to hero anchor",
+                orig_title,
+            )
+            anchor_type = "hero"  # handled in elif branch below
+        else:
+            result[sum_idx] = LlmSection(
+                heading=orig_title,
+                semantic_type=llm_sum.semantic_type,
+                body_lines=llm_sum.body_lines,
+                roles=llm_sum.roles,
+            )
+            log.debug(
+                "anchor_implicit_summary: renamed LLM summary heading to %r "
+                "(intro_prose replacement)",
+                orig_title,
+            )
+    if anchor_type == "hero":
         # Move summary to position 0 so it appears first after any verbatim sections.
         result.pop(sum_idx)
         result.insert(0, llm_sum)
