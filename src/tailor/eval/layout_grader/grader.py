@@ -1,13 +1,14 @@
 """Composite layout grader — orchestrates three evaluation dimensions.
 
 Dimensions and weights:
-  ir_score                15%   IR structural correctness
-  content_injection_score 20%   LLM output actually applied
-  page_count_score        10%   page growth
-  blank_page_score        10%   blank-page detection
-  region_score            20%   section order + region + column consistency
-  container_score         10%   content-area expansion (overflow)
-  density_score           15%   bullet/paragraph density from IR
+  ir_score                12%   IR structural correctness
+  content_injection_score 15%   LLM output actually applied
+  page_count_score         7%   page growth
+  blank_page_score         8%   blank-page detection
+  region_score            15%   section order + region + column consistency
+  container_score          8%   content-area expansion (overflow)
+  density_score           10%   bullet/paragraph density from IR
+  sparse_page_score       25%   sparse continuation page (forced-break spill)
 
 Classification:
   HARD FAIL: composite capped at 30, status = 'hard_fail'
@@ -23,6 +24,11 @@ HARD FAIL triggers:
             blank middle page
             column layout lost (PDF-detected)
   Content:  lorem ipsum detected, extreme template similarity
+
+WARNING triggers (via sparse_page_score = 0):
+  C_SPARSE_CONTINUATION_PAGE  non-first page fills < 60% of page height after
+                              a well-packed previous page (>= 75% full) and
+                              contains substantial content (>= 18 lines)
 """
 from __future__ import annotations
 
@@ -32,13 +38,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 _WEIGHTS: dict[str, float] = {
-    "ir_score": 0.15,
-    "content_injection_score": 0.20,
-    "page_count_score": 0.10,
-    "blank_page_score": 0.10,
-    "region_score": 0.20,
-    "container_score": 0.10,
-    "density_score": 0.15,
+    "ir_score": 0.12,
+    "content_injection_score": 0.15,
+    "page_count_score": 0.07,
+    "blank_page_score": 0.08,
+    "region_score": 0.15,
+    "container_score": 0.08,
+    "density_score": 0.10,
+    "sparse_page_score": 0.25,  # detects forced-break sparse continuation pages
 }
 
 # Defaults used when PDF conversion or content injection check is unavailable
@@ -48,6 +55,7 @@ _PDF_DEFAULTS: dict[str, float] = {
     "region_score": 80.0,
     "container_score": 80.0,
     "density_score": 80.0,
+    "sparse_page_score": 80.0,  # conservative default when PDF not available
 }
 _CONTENT_INJECTION_DEFAULT = 80.0
 
@@ -242,6 +250,7 @@ def grade_sample(
                 "region_score": pdf_result.region_score,
                 "container_score": pdf_result.container_score,
                 "density_score": pdf_result.density_score,
+                "sparse_page_score": pdf_result.sparse_page_score,
             }
             orig_pages = pdf_result.original_pages
             gen_pages_count = pdf_result.generated_pages
@@ -278,6 +287,9 @@ def grade_sample(
             if pdf_result.container_score < 70:
                 if "G_CONTAINER_OVERFLOW" not in failure_classes:
                     failure_classes.append("G_CONTAINER_OVERFLOW")
+            if pdf_result.sparse_page_score < 100:
+                if "C_SPARSE_CONTINUATION_PAGE" not in failure_classes:
+                    failure_classes.append("C_SPARSE_CONTINUATION_PAGE")
             evidence.extend(pdf_result.evidence[:6])
         except Exception as exc:
             evidence.append(f"PDF scoring error: {exc}")

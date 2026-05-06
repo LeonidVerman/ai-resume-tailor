@@ -10,6 +10,8 @@ Sub-scores (each 0-100):
   region_score       section presence + vertical region + column consistency
   container_score    content area expansion per page (overflow heuristic)
   density_score      IR-derived bullet/paragraph density
+  sparse_page_score  non-first page that is substantially underfilled after a
+                     well-packed previous page (forced-break spill artifact)
 
 HARD FAIL triggers:
   PAGE_COUNT_OVERFLOW   generated_pages > original_pages + 2
@@ -23,6 +25,16 @@ from dataclasses import dataclass, field
 
 _BLANK_LINE_THRESHOLD = 4
 _BLANK_CHAR_THRESHOLD = 150
+
+# Sparse continuation page detection thresholds.
+# A non-first page triggers C_SPARSE_CONTINUATION_PAGE when ALL of:
+#   fill_fraction   < _SPARSE_FILL_THRESHOLD        (large empty area at bottom)
+#   prev_page_fill  ≥ _SPARSE_PREV_PAGE_MIN_FILL    (previous page was densely used)
+#   line_count      ≥ _SPARSE_MIN_LINES             (substantial content on page,
+#                                                     not a trivial tail overflow)
+_SPARSE_FILL_THRESHOLD = 0.60         # content fills < 60% of page height
+_SPARSE_PREV_PAGE_MIN_FILL = 0.75     # previous page must be ≥ 75% full
+_SPARSE_MIN_LINES = 18                # page must have ≥ 18 content lines
 
 _SECTION_ALIASES: dict[str, list[str]] = {
     "experience": [
@@ -333,6 +345,122 @@ def _compute_density_score_from_ir(ir: dict) -> tuple[float, list[str]]:
 
 
 # ---------------------------------------------------------------------------
+# F. Sparse continuation page detection
+# ---------------------------------------------------------------------------
+
+def _find_sparse_continuation_pages(
+    gen_extracted,
+) -> "list[tuple[int, float, float, int, int, str]]":
+    """Return non-first pages that are sparsely filled after a well-packed predecessor.
+
+    Each entry: (page_number, fill_fraction, bottom_empty_fraction,
+                 line_count, block_count, nearest_section_name).
+
+    Detection criteria (all must hold):
+    - page_number > 1  (not the first page)
+    - line_count ≥ _SPARSE_MIN_LINES  (page has real content, not a trivial tail)
+    - not already caught as blank  (standard blank-page thresholds apply first)
+    - fill_fraction < _SPARSE_FILL_THRESHOLD  (large empty area at bottom)
+    - previous page fill ≥ _SPARSE_PREV_PAGE_MIN_FILL  (content was pushed here
+      by a forced break; short resumes with naturally sparse last pages are OK)
+    """
+    results = []
+    pages = gen_extracted.pages
+
+    for i, page in enumerate(pages):
+        if page.page_number == 1:
+            continue
+
+        n_lines = len(page.lines)
+        if n_lines < _SPARSE_MIN_LINES:
+            continue  # trivial tail overflow — not a forced-break artifact
+
+        # Skip pages already classified as blank
+        total_text = " ".join(ln.text for ln in page.lines).strip()
+        if n_lines < _BLANK_LINE_THRESHOLD and len(total_text) < _BLANK_CHAR_THRESHOLD:
+            continue
+
+        if not page.content_bbox:
+            continue
+
+        page_h = page.height
+        if page_h <= 0:
+            continue
+
+        content_top = page.content_bbox[1]
+        content_bottom = page.content_bbox[3]
+        fill_frac = (content_bottom - content_top) / page_h
+        if fill_frac >= _SPARSE_FILL_THRESHOLD:
+            continue  # page is adequately filled
+
+        bottom_empty = (page_h - content_bottom) / page_h
+
+        # Require the previous page to be well-filled so that we only flag
+        # pages where content was genuinely pushed by a forced break.
+        if i == 0:
+            continue
+        prev_page = pages[i - 1]
+        if not prev_page.content_bbox or prev_page.height <= 0:
+            continue
+        prev_h = prev_page.height
+        prev_fill = (prev_page.content_bbox[3] - prev_page.content_bbox[1]) / prev_h
+        if prev_fill < _SPARSE_PREV_PAGE_MIN_FILL:
+            continue  # previous page wasn't full — short document; sparse is OK
+
+        # Identify the nearest section heading on this sparse page for the report.
+        nearest_section = "unknown"
+        for blk in page.blocks:
+            if blk.block_type in ("heading", "header"):
+                for ln in blk.lines:
+                    text = ln.text.strip()
+                    if text:
+                        nearest_section = _canonical_section(text) or text[:40]
+                        break
+                if nearest_section != "unknown":
+                    break
+
+        results.append((
+            page.page_number,
+            fill_frac,
+            bottom_empty,
+            n_lines,
+            len(page.blocks),
+            nearest_section,
+        ))
+
+    return results
+
+
+def _compute_sparse_page_score(
+    gen_extracted,
+) -> "tuple[float, list[str]]":
+    """Compute a 0–100 sparse-continuation-page score for the generated document.
+
+    Returns (score, evidence_list).  Score = 100 when no qualifying sparse page
+    is found; 0 when at least one is found (binary — the defect is either
+    present or absent).
+    """
+    sparse_pages = _find_sparse_continuation_pages(gen_extracted)
+    evidence: list[str] = []
+
+    if not sparse_pages:
+        return 100.0, evidence
+
+    for page_num, fill_frac, bottom_empty, n_lines, n_blocks, nearest_sec in sparse_pages:
+        fill_pct = fill_frac * 100
+        empty_pct = bottom_empty * 100
+        ev = (
+            f"Sparse continuation page: page {page_num} has {fill_pct:.0f}% fill "
+            f"({empty_pct:.0f}% empty at bottom), {n_lines} lines, {n_blocks} blocks"
+        )
+        if nearest_sec and nearest_sec != "unknown":
+            ev += f"; nearest section '{nearest_sec}'"
+        evidence.append(ev)
+
+    return 0.0, evidence
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -343,12 +471,13 @@ class PDFVisualResult:
     region_score: float
     container_score: float
     density_score: float
+    sparse_page_score: float = 100.0  # 0 when sparse continuation page detected
 
-    original_pages: int
-    generated_pages: int
-    orig_columns: int
-    gen_columns: int
-    blank_pages: list[int]
+    original_pages: int = 0
+    generated_pages: int = 0
+    orig_columns: int = 1
+    gen_columns: int = 1
+    blank_pages: list[int] = field(default_factory=list)
 
     hard_fail: bool = False
     hard_fail_reasons: list[str] = field(default_factory=list)
@@ -400,12 +529,16 @@ def score_pdf_visual(
     else:
         d_score = 80.0
 
+    sparse_s, sparse_ev = _compute_sparse_page_score(gen)
+    evidence.extend(sparse_ev)
+
     return PDFVisualResult(
         page_count_score=pc_score,
         blank_page_score=bp_score,
         region_score=region_s,
         container_score=container_s,
         density_score=d_score,
+        sparse_page_score=sparse_s,
         original_pages=orig_pages,
         generated_pages=gen_pages,
         orig_columns=orig.features.column_count_estimate,
