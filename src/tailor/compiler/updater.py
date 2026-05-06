@@ -221,15 +221,19 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     if layout_bound and orig.bullets:
         n_orig = len(orig.bullets)
         n_llm = len(llm.bullets)
-        # Map existing slots 1:1; strictly drop overflow (no merging).
-        # Merging multiple LLM bullets into one paragraph overloads a template
-        # slot designed for a single sentence and breaks visual density.
         for i in range(min(n_orig, n_llm)):
             new_bullets.append(orig.bullets[i].with_text(llm.bullets[i]))
         if n_llm > n_orig:
+            # Pack extra LLM bullets into the last slot (newline-separated) so
+            # no generated content is lost.  Budget enforcement is skipped for
+            # bullet para_ids so the expanded text is preserved in full.
+            extras = llm.bullets[n_orig:]
+            packed = new_bullets[-1].text + "\n" + "\n".join(e.strip() for e in extras)
+            new_bullets[-1] = orig.bullets[-1].with_text(packed)
             _log.debug(
-                "BULLET_OVERFLOW_DROPPED_FOR_LAYOUT: %d extra bullets for role %r",
-                n_llm - n_orig, orig.role_id[:40],
+                "CONTENT_OVERFLOW_DETECTED: %d extra bullets for role %r — "
+                "CONTENT_REFLOW_APPLIED: packed into last slot",
+                len(extras), orig.role_id[:40],
             )
     else:
         for i, bullet_text in enumerate(llm.bullets):
@@ -490,16 +494,20 @@ def _update_body_section(
     # Fall back to heading only when the section has no content paragraphs at all.
     arch = content_paras[0] if content_paras else orig.heading
 
-    # In layout-bound mode: drop surplus LLM lines rather than packing multiple
-    # lines into one paragraph (which destroys visual layout density).
-    # Only as many lines are used as there are anchored content slots.
+    # In layout-bound mode with more LLM lines than content slots: pack the extra
+    # lines into the last slot (newline-separated) so no generated content is lost.
+    # Budget enforcement is skipped for summary/skills body para_ids, so the
+    # expanded text survives apply_anchor_budgets unchanged.
     if layout_bound and content_paras and len(llm_lines) > len(content_paras):
-        n_drop = len(llm_lines) - len(content_paras)
+        n_extra = len(llm_lines) - len(content_paras)
+        extras = llm_lines[len(content_paras):]
+        packed_last = llm_lines[len(content_paras) - 1] + "\n" + "\n".join(e.strip() for e in extras)
+        packed_llm = llm_lines[: len(content_paras) - 1] + [packed_last]
         _log.debug(
-            "BODY_OVERFLOW_DROPPED_FOR_LAYOUT: dropped %d/%d lines from %r",
-            n_drop, len(llm_lines), orig.title[:40],
+            "CONTENT_OVERFLOW_DETECTED: %d extra lines from %r — "
+            "CONTENT_REFLOW_APPLIED: packed into last body slot",
+            n_extra, orig.title[:40],
         )
-        packed_llm = llm_lines[: len(content_paras)]
     else:
         packed_llm = llm_lines
 
@@ -865,15 +873,17 @@ def _update_role_bullets_only(
         for i in range(min(n_orig, n_llm)):
             new_bullets.append(orig.bullets[i].with_text(llm_bullets[i]))
         if n_llm > n_orig:
+            # Pack all extra bullets into the last slot so no LLM content is lost.
+            # Budget enforcement is skipped for experience bullet para_ids, so the
+            # expanded text survives apply_anchor_budgets unchanged.
             extras = llm_bullets[n_orig:]
-            last_orig_len = len(orig.bullets[-1].text)
-            potential = new_bullets[-1].text + " " + " ".join(e.strip() for e in extras)
-            max_merged = max(200, last_orig_len * 1.25)
-            if "\n" not in potential and len(potential) <= max_merged:
-                new_bullets[-1] = orig.bullets[-1].with_text(potential)
-                _log.debug("BULLET_OVERFLOW_MERGED_CONSERVATIVELY: %d extras (bullets-only)", len(extras))
-            else:
-                _log.debug("BULLET_OVERFLOW_DROPPED_FOR_LAYOUT: %d extras (bullets-only)", len(extras))
+            packed = new_bullets[-1].text + "\n" + "\n".join(e.strip() for e in extras)
+            new_bullets[-1] = orig.bullets[-1].with_text(packed)
+            _log.debug(
+                "CONTENT_OVERFLOW_DETECTED: %d extra bullets (bullets-only) — "
+                "CONTENT_REFLOW_APPLIED: packed into last slot",
+                len(extras),
+            )
     else:
         for i, text in enumerate(llm_bullets):
             if i < len(orig.bullets):
@@ -2303,6 +2313,31 @@ SUMMARY_HEADING_BUDGET: int = 40
 #: Conservative estimate: ~28 chars/line at 18 pt in a half-page column × 7 lines.
 SUMMARY_BODY_BUDGET: int = 200
 
+# Semantic types whose content paragraphs must never be truncated by budget
+# enforcement.  Budget slots are skipped so _truncate_to_budget is never applied.
+_MEANINGFUL_SEMANTICS: frozenset[str] = frozenset({"experience", "summary", "skills"})
+
+
+def _collect_content_para_ids(doc: "ResumeDocument") -> "frozenset[str]":
+    """Return para_ids of content paragraphs in experience/summary/skills sections.
+
+    These carry generated LLM text (bullets, body lines) and must not be
+    truncated by budget enforcement or density repair.  Role headers and meta
+    lines are excluded — they are structural anchors that should stay compact.
+    """
+    ids: set[str] = set()
+    for sec in doc.sections:
+        if sec.semantic_type not in _MEANINGFUL_SEMANTICS:
+            continue
+        for role in sec.roles:
+            for b in role.bullets:
+                if b.para_id:
+                    ids.add(b.para_id)
+        for bp in sec.body_paras:
+            if bp.para_id:
+                ids.add(bp.para_id)
+    return frozenset(ids)
+
 
 def _compute_anchor_budgets(
     original: "ResumeDocument",
@@ -2327,6 +2362,11 @@ def _compute_anchor_budgets(
     heading budget can be applied.
     """
     budgets: dict[str, int] = {}
+
+    # Para_ids of meaningful content paragraphs (experience bullets, summary/skills
+    # body lines).  These must never be truncated — budget slots are intentionally
+    # left unset so _truncate_to_budget is never applied.
+    _no_truncate: frozenset[str] = _collect_content_para_ids(original)
 
     # Para_ids that were originally empty header paragraphs — these are the
     # candidates for summary heading/body anchors.
@@ -2358,12 +2398,13 @@ def _compute_anchor_budgets(
                     ol = len(m.text.strip())
                     budgets[m.para_id] = max(60, int(ol * 1.5))
             for b in role.bullets:
-                if b.para_id:
+                if b.para_id and b.para_id not in _no_truncate:
                     ol = len(b.text.strip())
                     budgets[b.para_id] = max(160, int(ol * 1.25))
+                # else: meaningful bullet — no budget, text preserved fully
         for bp in sec.body_paras:
-            if not bp.para_id or bp.para_id in budgets:
-                continue  # already set (e.g. same para_id shared by role + body)
+            if not bp.para_id or bp.para_id in budgets or bp.para_id in _no_truncate:
+                continue  # already set, or meaningful content that must not be cut
             ol = len(bp.text.strip())
             if sec.semantic_type == "skills":
                 budgets[bp.para_id] = max(80, int(ol * 1.25))

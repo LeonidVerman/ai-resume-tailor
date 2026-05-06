@@ -168,8 +168,8 @@ class TestSummaryInPlaceUpdate:
 # ---------------------------------------------------------------------------
 
 class TestSkillsInPlaceUpdate:
-    def test_extra_skill_lines_dropped_not_packed(self, monkeypatch):
-        """LLM producing 5 skill lines with 2 original slots → first 2 used, overflow dropped."""
+    def test_extra_skill_lines_packed_into_last_slot(self, monkeypatch):
+        """LLM producing 5 skill lines with 2 original slots → all lines preserved via packing."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -206,17 +206,19 @@ class TestSkillsInPlaceUpdate:
 
         skills = updated.sections[0]
         content = [p for p in skills.body_paras if p.text.strip()]
-        # Exactly 2 content paras (no overflow)
+        # 2 content paras (one per original slot)
         assert len(content) == 2, f"expected 2 content paras, got {len(content)}"
-        # All content paras must have valid para_ids
+        # All content paras must have valid para_ids (no unbound clones)
         for p in content:
             assert p.para_id != "", f"para_id empty on updated skill para: {p.text!r}"
-        # No newline packing
-        for p in content:
-            assert "\n" not in p.text, f"no newline packing: {p.text!r}"
-        # First 2 LLM lines in slots
+        # First LLM line in slot 1
         assert "Python" in content[0].text
-        assert "Go" in content[1].text
+        # Slot 2 contains second line + all packed extras — no content dropped
+        combined = content[1].text
+        assert "Go" in combined
+        assert "Kafka" in combined
+        assert "Kubernetes" in combined
+        assert "Docker" in combined
 
     def test_skills_no_unbound_paras_created(self, monkeypatch):
         """No clone_as unbound paragraphs when packing skills in layout-bound mode."""
@@ -252,12 +254,12 @@ class TestSkillsInPlaceUpdate:
 
 
 # ---------------------------------------------------------------------------
-# C. Experience in-place update — extra bullets dropped
+# C. Experience in-place update — extra bullets packed, not dropped
 # ---------------------------------------------------------------------------
 
 class TestExperienceInPlaceUpdate:
-    def test_extra_bullet_dropped_or_conservatively_merged(self, monkeypatch):
-        """Extra LLM bullet is dropped (or conservatively merged if short) in layout-bound mode."""
+    def test_extra_bullet_packed_into_last_slot(self, monkeypatch):
+        """Extra LLM bullet is packed into the last slot (not dropped) in layout-bound mode."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -302,19 +304,19 @@ class TestExperienceInPlaceUpdate:
         updated = apply_tailored(orig, [llm_exp])
 
         updated_role = updated.sections[0].roles[0]
-        # 2 bullets (original count)
+        # 2 bullets (one per original slot)
         assert len(updated_role.bullets) == 2, (
             f"expected 2 bullets, got {len(updated_role.bullets)}"
         )
-        # All bullets have non-empty para_id (no clone_as)
+        # All bullets have non-empty para_id (no unbound clones)
         for b in updated_role.bullets:
             assert b.para_id != "", f"bullet has empty para_id: {b.text!r}"
-        # First 2 LLM bullets mapped 1:1
+        # First bullet: 1:1 replacement
         assert "Updated distributed backend services" in updated_role.bullets[0].text
-        assert "Led team of 10" in updated_role.bullets[1].text
-        # No newline multi-bullet packing in any slot
-        for b in updated_role.bullets:
-            assert "\n" not in b.text, f"no newline packing: {b.text!r}"
+        # Second bullet: contains 2nd LLM bullet + packed extra — nothing dropped
+        combined = updated_role.bullets[1].text
+        assert "Led team of 10" in combined
+        assert "Extra long bullet" in combined
 
     def test_role_id_stable_preserved(self, monkeypatch):
         """role_id_stable is preserved from original when layout_bound=True."""
@@ -681,3 +683,152 @@ class TestExtrasSkippedInLayoutBoundMode:
         # Must not crash; should produce a valid document
         assert updated is not None
         assert len(updated.sections) > 0
+
+
+# ---------------------------------------------------------------------------
+# H. No content truncation — full LLM text preserved in layout-bound mode
+# ---------------------------------------------------------------------------
+
+class TestNoContentTruncation:
+    """Verify that meaningful LLM content is never silently truncated."""
+
+    def _make_layout_doc(self, body_texts, semantic):
+        from tailor.compiler.models import (
+            LayoutParagraphBlock, LayoutProfile, ResumeDocument, assign_stable_ids,
+        )
+        import tailor.config as cfg
+        layout = LayoutProfile(
+            page_width_pt=612, page_height_pt=792,
+            margin_top_pt=72, margin_bottom_pt=72,
+            margin_left_pt=72, margin_right_pt=72,
+            default_font_name="Calibri", default_font_size_pt=11,
+        )
+        sec = _make_minimal_section("Section", semantic, body_texts, "sec_1")
+        orig = ResumeDocument(header_paras=[], sections=[sec], layout=layout, all_paras=[])
+        assign_stable_ids(orig)
+        orig.layout_blocks = [
+            LayoutParagraphBlock(para_id=pm.para_id) for pm in orig.all_paras if pm.para_id
+        ]
+        return orig
+
+    def test_long_summary_not_truncated(self, monkeypatch):
+        """A summary body paragraph longer than the original budget is preserved in full."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+        from tailor.compiler.updater import apply_tailored
+
+        long_text = (
+            "Senior engineer with 15 years of experience across distributed systems, "
+            "cloud infrastructure, and platform engineering. Led multiple cross-functional "
+            "initiatives delivering measurable impact. Recognized for technical excellence "
+            "and strategic execution across high-stakes projects.".strip()
+        )
+        orig = self._make_layout_doc(["Short original."], "summary")
+        llm_secs = [_make_llm_section("Section", [long_text])]
+        updated = apply_tailored(orig, llm_secs)
+
+        body = [p for p in updated.sections[0].body_paras if p.text.strip()]
+        combined = " ".join(p.text for p in body)
+        # Full text must be present — no "..." truncation
+        assert "..." not in combined, f"Truncation introduced: {combined[:200]!r}"
+        assert long_text[:50] in combined, f"Text missing from summary: {combined[:200]!r}"
+
+    def test_skills_overflow_packed_not_dropped(self, monkeypatch):
+        """Extra skill lines beyond slot count are packed into last slot, not dropped."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+        from tailor.compiler.updater import apply_tailored
+
+        orig = self._make_layout_doc(["Slot A"], "skills")
+        llm_secs = [_make_llm_section("Section", ["Python", "Go", "Rust", "C++"], "skills")]
+        updated = apply_tailored(orig, llm_secs)
+
+        body = [p for p in updated.sections[0].body_paras if p.text.strip()]
+        combined = " ".join(p.text for p in body)
+        assert "Python" in combined
+        assert "Go" in combined
+        assert "Rust" in combined
+        assert "C++" in combined
+
+    def test_experience_bullets_not_budget_truncated(self, monkeypatch):
+        """Experience bullets exceeding original text length are NOT truncated with "..."."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+        from tailor.compiler.models import (
+            LayoutParagraphBlock, LayoutProfile, ResumeDocument, ResumeSection, assign_stable_ids,
+        )
+        from tailor.compiler.updater import apply_tailored
+
+        layout = LayoutProfile(
+            page_width_pt=612, page_height_pt=792,
+            margin_top_pt=72, margin_bottom_pt=72,
+            margin_left_pt=72, margin_right_pt=72,
+            default_font_name="Calibri", default_font_size_pt=11,
+        )
+        # Short original bullet (will be far exceeded by LLM replacement)
+        role = _make_minimal_role("Engineer | Acme", ["Short.", "Also short."])
+        exp_sec = ResumeSection(
+            title="Experience",
+            heading=_make_minimal_section("Experience", "experience", []).heading,
+            semantic_type="experience", roles=[role],
+        )
+        exp_sec.section_id = "sec_exp"
+        orig = ResumeDocument(header_paras=[], sections=[exp_sec], layout=layout, all_paras=[])
+        assign_stable_ids(orig)
+        orig.layout_blocks = [LayoutParagraphBlock(para_id=pm.para_id) for pm in orig.all_paras if pm.para_id]
+
+        long_bullet = (
+            "Architected and delivered a distributed microservices platform handling 50k RPS, "
+            "reducing P99 latency by 40% through systematic profiling and optimization of "
+            "hot paths in the data pipeline, working closely with infrastructure and SRE teams."
+        )
+        llm_exp = _make_llm_experience([_make_llm_role("Engineer | Acme", [long_bullet, "Led team."])])
+        updated = apply_tailored(orig, [llm_exp])
+
+        bullet_text = updated.sections[0].roles[0].bullets[0].text
+        assert "..." not in bullet_text, f"Truncation in bullet: {bullet_text!r}"
+        assert "Architected" in bullet_text
+        assert "40%" in bullet_text
+
+    def test_experience_extra_bullets_packed(self, monkeypatch):
+        """Three LLM bullets with only 2 slots → third bullet packed into last slot."""
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+        from tailor.compiler.models import (
+            LayoutParagraphBlock, LayoutProfile, ResumeDocument, ResumeSection, assign_stable_ids,
+        )
+        from tailor.compiler.updater import apply_tailored, validate_layout_binding
+
+        layout = LayoutProfile(
+            page_width_pt=612, page_height_pt=792,
+            margin_top_pt=72, margin_bottom_pt=72,
+            margin_left_pt=72, margin_right_pt=72,
+            default_font_name="Calibri", default_font_size_pt=11,
+        )
+        role = _make_minimal_role("Dev | Corp", ["Bullet 1.", "Bullet 2."])
+        exp_sec = ResumeSection(
+            title="Experience",
+            heading=_make_minimal_section("Experience", "experience", []).heading,
+            semantic_type="experience", roles=[role],
+        )
+        exp_sec.section_id = "sec_exp"
+        orig = ResumeDocument(header_paras=[], sections=[exp_sec], layout=layout, all_paras=[])
+        assign_stable_ids(orig)
+        orig.layout_blocks = [LayoutParagraphBlock(para_id=pm.para_id) for pm in orig.all_paras if pm.para_id]
+
+        llm_exp = _make_llm_experience([_make_llm_role("Dev | Corp", ["A.", "B.", "C extra."])])
+        updated = apply_tailored(orig, [llm_exp])
+
+        role_out = updated.sections[0].roles[0]
+        # Still 2 bullet slots
+        assert len(role_out.bullets) == 2
+        # All para_ids intact (no unbound)
+        assert all(b.para_id for b in role_out.bullets)
+        # All 3 LLM bullet texts are present somewhere
+        all_text = " ".join(b.text for b in role_out.bullets)
+        assert "A." in all_text
+        assert "B." in all_text
+        assert "C extra." in all_text
+        # No unbound paras
+        metrics = validate_layout_binding(updated)
+        assert metrics["unbound_non_empty_paras"] == 0

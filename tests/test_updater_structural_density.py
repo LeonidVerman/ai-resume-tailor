@@ -269,8 +269,8 @@ class TestHardBanSyntheticSections:
 # ---------------------------------------------------------------------------
 
 class TestSkillsOverflowDrop:
-    def test_skills_8_lines_2_slots_drops_overflow(self, monkeypatch):
-        """8 LLM skill lines with 2 original slots → 2 slots updated, 6 dropped."""
+    def test_skills_8_lines_2_slots_packs_overflow(self, monkeypatch):
+        """8 LLM skill lines with 2 original slots → all 8 lines packed across 2 slots."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -296,12 +296,12 @@ class TestSkillsOverflowDrop:
         skills = next(s for s in updated.sections if s.semantic_type == "skills")
         content = [p for p in skills.body_paras if p.text.strip()]
         assert len(content) == 2, f"expected 2 content paras, got {len(content)}"
-        # No newline packing
-        for p in content:
-            assert "\n" not in p.text, f"no newline packing: {p.text!r}"
-        # First 2 LLM lines in slots
+        # First slot: first LLM line
         assert "Python" in content[0].text
-        assert "AWS" in content[1].text
+        # Last slot: second LLM line + all extras packed — nothing dropped
+        combined = content[0].text + " " + content[1].text
+        for expected in ["AWS", "PostgreSQL", "Kafka", "TensorFlow", "React", "GraphQL", "Linux"]:
+            assert expected in combined, f"{expected!r} missing from packed content"
 
     def test_skills_overflow_no_unbound_paras(self, monkeypatch):
         """Skills overflow drop leaves zero unbound non-empty paras."""
@@ -326,9 +326,9 @@ class TestSkillsOverflowDrop:
 # 5. No newlines in bullets or body paras after layout-bound update
 # ---------------------------------------------------------------------------
 
-class TestNoNewlineInUpdatedContent:
-    def test_no_newline_in_bullets(self, monkeypatch):
-        """No bullet para contains \\n after layout-bound update."""
+class TestNoContentDropped:
+    def test_all_bullets_present_in_output(self, monkeypatch):
+        """All LLM bullets are present in the output — extras packed into last slot."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -342,22 +342,21 @@ class TestNoNewlineInUpdatedContent:
             pytest.skip("no experience")
 
         role = exp.roles[0]
+        n_extra = 5
+        all_llm_bullets = [f"LLM bullet {i}" for i in range(len(role.bullets) + n_extra)]
         llm_exp = LlmSection(
             heading=exp.title, semantic_type="experience",
-            roles=[LlmRole(
-                header=role.header.text,
-                bullets=[f"LLM bullet {i}" for i in range(len(role.bullets) + 5)],
-            )],
+            roles=[LlmRole(header=role.header.text, bullets=all_llm_bullets)],
         )
         updated = apply_tailored(doc, [llm_exp])
 
         exp_updated = next(s for s in updated.sections if s.semantic_type == "experience")
-        for r in exp_updated.roles:
-            for b in r.bullets:
-                assert "\n" not in b.text, f"bullet contains newline: {b.text!r}"
+        all_text = " ".join(b.text for r in exp_updated.roles for b in r.bullets)
+        for bullet in all_llm_bullets:
+            assert bullet in all_text, f"LLM bullet {bullet!r} missing from output"
 
-    def test_no_newline_in_body_paras(self, monkeypatch):
-        """No body para contains \\n after layout-bound update."""
+    def test_all_body_lines_present_in_output(self, monkeypatch):
+        """All LLM body lines are present in the output — extras packed into last slot."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -365,15 +364,18 @@ class TestNoNewlineInUpdatedContent:
         from tailor.compiler.text_parser import LlmSection
 
         doc = _make_doc([("Skills", "skills", ["Python", "Go"])])
+        all_llm_lines = ["X", "Y", "Z", "W", "V", "U"]
         llm_secs = [LlmSection(
             heading="Skills", semantic_type="skills",
-            body_lines=["X", "Y", "Z", "W", "V", "U"],
+            body_lines=all_llm_lines,
         )]
         updated = apply_tailored(doc, llm_secs)
 
-        for sec in updated.sections:
-            for p in sec.body_paras:
-                assert "\n" not in p.text, f"body para contains newline: {p.text!r}"
+        all_text = " ".join(
+            p.text for sec in updated.sections for p in sec.body_paras if p.text.strip()
+        )
+        for line in all_llm_lines:
+            assert line in all_text, f"LLM line {line!r} missing from output"
 
 
 # ---------------------------------------------------------------------------

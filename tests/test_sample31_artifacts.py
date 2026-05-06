@@ -43,7 +43,7 @@ class TestAnchorBudgets:
         assert SUMMARY_HEADING_BUDGET < SUMMARY_BODY_BUDGET
 
     def test_compute_budgets_for_sample31(self):
-        """_compute_anchor_budgets yields sensible budgets for sample 31."""
+        """_compute_anchor_budgets skips meaningful content para_ids (no truncation)."""
         from tailor.compiler.docx_parser import parse_docx
         from tailor.compiler.updater import (
             SUMMARY_BODY_BUDGET, SUMMARY_HEADING_BUDGET, _compute_anchor_budgets,
@@ -53,14 +53,14 @@ class TestAnchorBudgets:
         # Pass doc as both original and updated (no inserted summary yet)
         budgets = _compute_anchor_budgets(doc, doc)
 
-        # Experience bullets: max(160, 210*1.25) = 262
-        assert budgets.get("para_39", 0) >= 160
-        assert budgets.get("para_43", 0) >= 160
-        assert budgets.get("para_47", 0) >= 160
-        # Skills: max(80, small_orig*1.25) → at least 80
-        assert budgets.get("para_49", 0) >= 80
-        assert budgets.get("para_51", 0) >= 80
-        # Empty header paras get conservative default
+        # Experience bullets and skills body_paras: NOT in budgets — no truncation allowed.
+        # A budget of 0 (absent key) means _truncate_to_budget is never called for these.
+        assert "para_39" not in budgets, "experience bullet must not have a budget"
+        assert "para_43" not in budgets, "experience bullet must not have a budget"
+        assert "para_47" not in budgets, "experience bullet must not have a budget"
+        assert "para_49" not in budgets, "skills body para must not have a budget"
+        assert "para_51" not in budgets, "skills body para must not have a budget"
+        # Empty header paras still get conservative default (for inserted-summary anchors)
         assert budgets.get("para_7", 0) >= 100
         assert budgets.get("para_8", 0) >= 100
 

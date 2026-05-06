@@ -576,8 +576,8 @@ class TestNormalizeLlmSections:
 # ---------------------------------------------------------------------------
 
 class TestBulletOverflow:
-    def test_single_orig_bullet_four_llm_drops_overflow(self, monkeypatch):
-        """1 original bullet + 4 LLM bullets → 1 updated bullet, extras dropped."""
+    def test_single_orig_bullet_four_llm_bullets_all_packed(self, monkeypatch):
+        """1 original bullet + 4 LLM bullets → all 4 bullets packed into the 1 slot."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -588,18 +588,20 @@ class TestBulletOverflow:
         updated = apply_tailored(doc, llm_secs)
 
         role = updated.sections[0].roles[0]
-        assert len(role.bullets) == 1, f"expected 1 bullet, got {len(role.bullets)}"
+        assert len(role.bullets) == 1, f"expected 1 bullet slot, got {len(role.bullets)}"
         assert role.bullets[0].para_id != "", "bullet must keep original para_id"
-        # No multi-bullet newline packing in a single slot
-        assert "\n" not in role.bullets[0].text, "no newline-packing in single bullet slot"
-        # First LLM bullet is used
+        # First LLM bullet is always present
         assert "Updated work 1.1" in role.bullets[0].text
-
+        # All 4 LLM bullets packed — no content dropped
+        for i in range(1, 5):
+            assert f"Updated work 1.{i}" in role.bullets[0].text, (
+                f"LLM bullet 1.{i} missing from packed slot"
+            )
         metrics = validate_layout_binding(updated)
         assert metrics["unbound_non_empty_paras"] == 0
 
-    def test_two_orig_bullets_five_llm_drops_overflow(self, monkeypatch):
-        """2 original bullets + 5 LLM bullets → 2 updated bullets, 3 extras dropped."""
+    def test_two_orig_bullets_five_llm_bullets_packed(self, monkeypatch):
+        """2 original bullets + 5 LLM bullets → slots 1-2 filled, extras packed into slot 2."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -610,20 +612,20 @@ class TestBulletOverflow:
         updated = apply_tailored(doc, llm_secs)
 
         role = updated.sections[0].roles[0]
-        assert len(role.bullets) == 2, f"expected 2 bullets, got {len(role.bullets)}"
+        assert len(role.bullets) == 2, f"expected 2 bullet slots, got {len(role.bullets)}"
         for b in role.bullets:
             assert b.para_id != ""
-        # No newline packing in either bullet
-        for b in role.bullets:
-            assert "\n" not in b.text, f"no newline-packing in bullet: {b.text!r}"
         assert "Updated work 1.1" in role.bullets[0].text
-        assert "Updated work 1.2" in role.bullets[1].text
+        # Slot 2 contains bullets 2-5 packed — all present
+        combined = role.bullets[0].text + " " + role.bullets[1].text
+        for i in range(1, 6):
+            assert f"Updated work 1.{i}" in combined, f"LLM bullet 1.{i} missing"
 
         metrics = validate_layout_binding(updated)
         assert metrics["unbound_non_empty_paras"] == 0
 
-    def test_conservative_merge_allowed_for_short_extras(self, monkeypatch):
-        """Overflow bullets are strictly dropped (not merged) in layout-bound mode."""
+    def test_extra_bullet_packed_into_last_slot(self, monkeypatch):
+        """Extra LLM bullets are packed into the last slot instead of being dropped."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -641,15 +643,14 @@ class TestBulletOverflow:
         orig_role.role_id_stable = "role_1"
         orig_role.header.para_id = "para_h1"
 
-        # LLM: 2 bullets (overflow).  Strict layout-bound policy: keep only
-        # the first bullet per slot; do NOT merge extra into the last slot.
         llm_role = LlmRole(header="Dev | Corp", bullets=["Short.", "extra"])
-
         updated_role = _update_role(orig_role, llm_role, layout_bound=True)
-        # Overflow dropped — slot stays with first LLM bullet only
+
+        # Still 1 slot
         assert len(updated_role.bullets) == 1
-        assert updated_role.bullets[0].text == "Short."
-        assert "extra" not in updated_role.bullets[0].text
+        # Extra is packed — nothing dropped
+        assert "Short." in updated_role.bullets[0].text
+        assert "extra" in updated_role.bullets[0].text
 
     def test_fewer_llm_bullets_than_orig(self, monkeypatch):
         """Fewer LLM bullets than original → only matched bullets, no extras."""
