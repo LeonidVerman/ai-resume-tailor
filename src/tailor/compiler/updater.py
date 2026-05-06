@@ -3212,8 +3212,39 @@ def apply_tailored(
             None,
         )
         if _summary_body_pid and _major_heading_pid:
+            # Preserve spacing rhythm: find the start of the spacer cluster
+            # immediately before the major heading and insert the summary BEFORE
+            # that cluster.  This keeps any original spacer/empty paras between
+            # the summary and the heading (e.g. the blank line before WORK EXPERIENCE)
+            # rather than burying them before the summary.
+            _orig_text_map: dict[str, str] = {
+                p.para_id: p.text
+                for p in original.all_paras if p.para_id
+            }
+            _insert_before_pid = _major_heading_pid  # default: insert immediately before heading
+            _major_lb_idx = next(
+                (i for i, b in enumerate(original.layout_blocks)
+                 if getattr(b, "para_id", None) == _major_heading_pid),
+                None,
+            )
+            if _major_lb_idx is not None and _major_lb_idx > 0:
+                # Walk backwards through the cluster of empty/spacer paras before heading
+                j = _major_lb_idx - 1
+                while j >= 0:
+                    bid = getattr(original.layout_blocks[j], "para_id", None)
+                    if bid and not _orig_text_map.get(bid, "x").strip():
+                        _insert_before_pid = bid
+                        _log.debug(
+                            "HEADER_SPACING_PRESERVED: spacer %r found before %r — "
+                            "summary inserted before spacer cluster",
+                            bid, _major_heading_pid,
+                        )
+                        j -= 1
+                    else:
+                        break
+
             _result_layout_blocks = _move_layout_block(
-                original.layout_blocks, _summary_body_pid, _major_heading_pid
+                original.layout_blocks, _summary_body_pid, _insert_before_pid
             )
 
     _result = ResumeDocument(
