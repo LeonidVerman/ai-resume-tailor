@@ -207,16 +207,24 @@ class TestComputeSparsePageScore:
         assert "Sparse continuation page" in evidence[0]
         assert "page 2" in evidence[0]
 
-    def test_evidence_contains_effective_area_and_bottom_empty(self):
-        """Evidence message includes effective area% and bottom-empty%."""
+    def test_evidence_contains_area_and_visual_empty(self):
+        """Evidence message reports text coverage% and visual emptiness%.
+
+        The two percentages must be complementary (sum ≈ 100%) so the reader
+        is not confused by apparently contradictory numbers.
+        """
         p1 = _fake_page(1, 842, 50, 757)
         p2 = _fake_page(2, 842, 50, 400, n_lines=20)
         _, _, evidence = self._call(p1, p2)
         msg = evidence[0]
-        assert "effective content area" in msg
-        assert "empty at bottom" in msg
+        assert "text covers" in msg, f"Expected 'text covers' in evidence; got: {msg}"
+        assert "visually empty" in msg, f"Expected 'visually empty' in evidence; got: {msg}"
         assert "lines" in msg
         assert "blocks" in msg
+        # bottom_empty should NOT appear — it would contradict area_ratio
+        assert "empty at bottom" not in msg, (
+            "bottom_empty should not appear in evidence (contradicts area_ratio)"
+        )
 
     def test_multiple_sparse_pages_only_triggered_once(self):
         """Only pages after a well-filled previous page are flagged."""
@@ -351,7 +359,9 @@ class TestSample1SparsePageRegression:
         )
 
     def test_sample1_has_sparse_continuation_evidence(self):
-        """Sample 1's grade evidence must mention sparse continuation page."""
+        """Sample 1's grade evidence must mention sparse continuation page with
+        consistent metrics: text coverage% + visual emptiness% must sum to ~100%."""
+        import re
         from tailor.eval.layout_grader.grader import grade_sample
 
         grade = grade_sample(
@@ -365,13 +375,31 @@ class TestSample1SparsePageRegression:
             ir_path=str(_IR_S1),
             gen_json_path=str(_GEN_JSON_S1),
         )
-        evidence_text = " ".join(grade.evidence).lower()
-        assert "sparse" in evidence_text, (
+        evidence_text = " ".join(grade.evidence)
+        evidence_lower = evidence_text.lower()
+        assert "sparse" in evidence_lower, (
             f"Expected 'sparse' in evidence; got: {grade.evidence}"
         )
-        assert "page 2" in evidence_text, (
+        assert "page 2" in evidence_lower, (
             f"Expected 'page 2' mentioned in evidence; got: {grade.evidence}"
         )
+        # Check for the new consistent wording
+        assert "text covers" in evidence_lower, (
+            f"Expected 'text covers' in evidence; got: {grade.evidence}"
+        )
+        assert "visually empty" in evidence_lower, (
+            f"Expected 'visually empty' in evidence; got: {grade.evidence}"
+        )
+        # Verify the two numbers are complementary (sum ≈ 100%)
+        coverage_m = re.search(r"text covers (\d+)%", evidence_lower)
+        visual_m = re.search(r"~(\d+)% visually empty", evidence_lower)
+        if coverage_m and visual_m:
+            coverage = int(coverage_m.group(1))
+            visual = int(visual_m.group(1))
+            assert abs((coverage + visual) - 100) <= 2, (
+                f"Coverage ({coverage}%) + visual empty ({visual}%) should sum to ~100%, "
+                f"got {coverage + visual}%"
+            )
 
     def test_sample1_failure_class_set(self):
         """Sample 1 must have C_SPARSE_CONTINUATION_PAGE failure class."""
@@ -437,8 +465,13 @@ class TestSample1SparsePageRegression:
             f"Expected 'sparse' in hard_fail_reasons; got {grade.hard_fail_reasons}"
         )
 
-    def test_sample1_evidence_reports_effective_area(self):
-        """Evidence must report effective content area (not just bottom whitespace)."""
+    def test_sample1_evidence_is_internally_consistent(self):
+        """Evidence must show consistent metrics: coverage + visual_empty ≈ 100%.
+
+        The evidence must NOT say '33% empty at bottom' alongside '23% coverage'
+        because those are incommensurable (77 ≠ 33) and appear contradictory.
+        """
+        import re
         from tailor.eval.layout_grader.grader import grade_sample
 
         grade = grade_sample(
@@ -452,11 +485,28 @@ class TestSample1SparsePageRegression:
             ir_path=str(_IR_S1),
             gen_json_path=str(_GEN_JSON_S1),
         )
-        evidence_text = " ".join(grade.evidence)
-        assert "effective content area" in evidence_text, (
-            f"Expected 'effective content area' in evidence; got: {grade.evidence}"
+        evidence_text = " ".join(grade.evidence).lower()
+
+        # New phrasing uses consistent complementary metrics
+        assert "text covers" in evidence_text, (
+            f"Expected 'text covers X%' in evidence; got: {grade.evidence}"
         )
-        # Area percentage should reflect the actual 22-23% fill, not 60%
-        assert "HARD FAIL" in evidence_text, (
+        assert "visually empty" in evidence_text, (
+            f"Expected '~Y% visually empty' in evidence; got: {grade.evidence}"
+        )
+        assert "HARD FAIL" in " ".join(grade.evidence), (
             f"Expected 'HARD FAIL' mentioned in evidence; got: {grade.evidence}"
         )
+        # The previously contradictory metric must be gone
+        assert "empty at bottom" not in evidence_text, (
+            f"'empty at bottom' should not appear (incommensurable with area_ratio); "
+            f"got: {grade.evidence}"
+        )
+        # Verify complementarity
+        coverage_m = re.search(r"text covers (\d+)%", evidence_text)
+        visual_m = re.search(r"~(\d+)% visually empty", evidence_text)
+        if coverage_m and visual_m:
+            total = int(coverage_m.group(1)) + int(visual_m.group(1))
+            assert abs(total - 100) <= 2, (
+                f"coverage + visual_empty should be ~100%, got {total}"
+            )

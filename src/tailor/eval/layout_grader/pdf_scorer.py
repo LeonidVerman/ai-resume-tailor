@@ -512,6 +512,13 @@ def _compute_sparse_page_score(
     The area_ratio threshold is stricter than the vertical fill threshold:
     a page can span 60% of the page height (fill_fraction) but cover only
     22% of the page area when the text blocks are small and widely spaced.
+
+    Evidence wording uses ``1 − area_ratio`` as "visual emptiness" so that the
+    two numbers in the evidence string are complementary (sum ≈ 100%) and
+    unambiguous to the reader.  The raw ``bottom_empty`` fraction (trailing gap
+    below the last block / page height) is NOT included in evidence because it
+    measures a geometrically different quantity and would appear contradictory
+    alongside area_ratio (e.g. "23% covered, but only 33% empty at bottom").
     """
     sparse_pages = _find_sparse_continuation_pages(gen_extracted)
     evidence: list[str] = []
@@ -522,7 +529,13 @@ def _compute_sparse_page_score(
 
     for page_num, fill_frac, bottom_empty, area_ratio, n_lines, n_blocks, nearest_sec in sparse_pages:
         area_pct = area_ratio * 100
-        empty_pct = bottom_empty * 100
+        # visual_empty = complement of area_ratio: fraction of page NOT covered by
+        # text blocks (margins + inter-block gaps + trailing whitespace combined).
+        # This is internally consistent with area_pct: area_pct + visual_empty ≈ 100%.
+        # NOTE: bottom_empty (trailing gap below last block / page height) is a
+        # geometrically different metric and is NOT reported here to avoid the
+        # contradictory appearance of "23% occupied vs. only 33% empty".
+        visual_empty_pct = (1.0 - area_ratio) * 100
         is_hard = area_ratio < _SPARSE_HARD_FAIL_AREA_RATIO
 
         if is_hard:
@@ -533,8 +546,8 @@ def _compute_sparse_page_score(
 
         ev = (
             f"Sparse continuation page{' (HARD FAIL)' if is_hard else ''}: "
-            f"page {page_num} — effective content area {area_pct:.0f}% of page "
-            f"({empty_pct:.0f}% empty at bottom), {n_lines} lines, {n_blocks} blocks"
+            f"page {page_num} — text covers {area_pct:.0f}% of page "
+            f"(~{visual_empty_pct:.0f}% visually empty), {n_lines} lines, {n_blocks} blocks"
         )
         if nearest_sec and nearest_sec != "unknown":
             ev += f"; nearest section '{nearest_sec}'"
