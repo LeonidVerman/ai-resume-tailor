@@ -3247,6 +3247,48 @@ def apply_tailored(
                 original.layout_blocks, _summary_body_pid, _insert_before_pid
             )
 
+            # Repair header→profile spacing: moving the summary anchor block may
+            # have been the only spacer between the last header_para and the first
+            # section heading.  If so, its removal collapses that boundary.
+            # Detect the collapse and insert a synthetic spacer (cloned from the
+            # original spacer's XML proto) to restore the visual separation.
+            _last_hp_pid = effective_header_paras[-1].para_id if effective_header_paras else None
+            _first_sec_hpid = new_sections[0].heading.para_id if new_sections else None
+            if _last_hp_pid and _first_sec_hpid and _result_layout_blocks:
+                _upd_lb_pids = [getattr(b, "para_id", None) for b in _result_layout_blocks]
+                _ulh = _upd_lb_pids.index(_last_hp_pid) if _last_hp_pid in _upd_lb_pids else -1
+                _ufsh = _upd_lb_pids.index(_first_sec_hpid) if _first_sec_hpid in _upd_lb_pids else -1
+                if _ulh >= 0 and _ufsh == _ulh + 1:
+                    # Direct adjacency — check if original had spacers here
+                    _orig_lb_pids = [getattr(b, "para_id", None) for b in original.layout_blocks]
+                    _olh = _orig_lb_pids.index(_last_hp_pid) if _last_hp_pid in _orig_lb_pids else -1
+                    _ofsh = _orig_lb_pids.index(_first_sec_hpid) if _first_sec_hpid in _orig_lb_pids else -1
+                    if _olh >= 0 and _ofsh > _olh + 1:
+                        # Original had blocks between them — spacing collapsed; synthesize spacer.
+                        # Clone xml_proto from the first empty block in that original gap.
+                        _orig_spacer_block = next(
+                            (original.layout_blocks[k]
+                             for k in range(_olh + 1, _ofsh)
+                             if not _orig_text_map.get(
+                                 getattr(original.layout_blocks[k], "para_id", None), "x"
+                             ).strip()),
+                            None,
+                        )
+                        from tailor.compiler.models import LayoutParagraphBlock as _LPB
+                        _syn_spacer = _LPB(
+                            para_id="spacer_header_auto_1",
+                            xml_proto_xml=_orig_spacer_block.xml_proto_xml
+                            if _orig_spacer_block else None,
+                        )
+                        _new_lb = list(_result_layout_blocks)
+                        _new_lb.insert(_ufsh, _syn_spacer)
+                        _result_layout_blocks = _new_lb
+                        _log.debug(
+                            "HEADER_TO_PROFILE_SPACING_SYNTHESIZED: inserted spacer "
+                            "'spacer_header_auto_1' before %r (last_header=%r)",
+                            _first_sec_hpid, _last_hp_pid,
+                        )
+
     _result = ResumeDocument(
         header_paras=effective_header_paras,
         sections=new_sections,
