@@ -329,20 +329,25 @@ class TestSparsePageScoreIntegration:
 
 
 # ---------------------------------------------------------------------------
-# Regression test: sample 1 must not be PASS ≥ 99
+# Regression test: sample 1 rendering fix — no sparse continuation page
 # ---------------------------------------------------------------------------
 
 @pytest.mark.skipif(
     not _ARTIFACTS_PRESENT,
     reason="sample 1 PDF artifacts not present",
 )
-class TestSample1SparsePageRegression:
-    def test_sample1_grade_is_no_longer_pass_99(self):
-        """Sample 1 must not receive PASS with composite ≥ 99 — sparse page detected."""
-        import json
-        from tailor.eval.layout_grader.grader import grade_sample
+class TestSample1RendererFix:
+    """After the w:keepNext rendering fix, sample 1 must PASS the grader.
 
-        grade = grade_sample(
+    The renderer now adds w:keepNext to experience role-header paragraphs so
+    that orphaned role headers (stranded at the bottom of a page while their
+    bullets appear on a sparse continuation page) are moved to the next page
+    with their content, filling it more densely.
+    """
+
+    def _grade(self):
+        from tailor.eval.layout_grader.grader import grade_sample
+        return grade_sample(
             sample_id="1-Leonid_Verman_Resume_Template",
             template_docx_path=str(_TEMPLATE_DOCX_S1),
             generated_docx_path=str(
@@ -353,160 +358,62 @@ class TestSample1SparsePageRegression:
             ir_path=str(_IR_S1),
             gen_json_path=str(_GEN_JSON_S1),
         )
-        assert grade.status != "pass" or grade.composite_score < 75, (
-            f"Sample 1 should no longer be PASS ≥ 75; got status={grade.status} "
-            f"composite={grade.composite_score:.1f}"
+
+    def test_sample1_passes_after_renderer_fix(self):
+        """After the keepNext rendering fix, sample 1 must be PASS (not HARD FAIL)."""
+        grade = self._grade()
+        assert grade.status == "pass", (
+            f"Expected status='pass' after renderer fix; "
+            f"got status={grade.status!r}, hard_fail={grade.hard_fail}, "
+            f"failure_classes={grade.failure_classes}"
         )
 
-    def test_sample1_has_sparse_continuation_evidence(self):
-        """Sample 1's grade evidence must mention sparse continuation page with
-        consistent metrics: text coverage% + visual emptiness% must sum to ~100%."""
-        import re
-        from tailor.eval.layout_grader.grader import grade_sample
-
-        grade = grade_sample(
-            sample_id="1-Leonid_Verman_Resume_Template",
-            template_docx_path=str(_TEMPLATE_DOCX_S1),
-            generated_docx_path=str(
-                _ROOT / "tmp/artefacts/rendering/docx/1-Leonid_Verman_Resume_Template.docx"
-            ),
-            template_pdf_path=str(_TEMPLATE_PDF_S1),
-            generated_pdf_path=str(_RENDERED_PDF_S1),
-            ir_path=str(_IR_S1),
-            gen_json_path=str(_GEN_JSON_S1),
-        )
-        evidence_text = " ".join(grade.evidence)
-        evidence_lower = evidence_text.lower()
-        assert "sparse" in evidence_lower, (
-            f"Expected 'sparse' in evidence; got: {grade.evidence}"
-        )
-        assert "page 2" in evidence_lower, (
-            f"Expected 'page 2' mentioned in evidence; got: {grade.evidence}"
-        )
-        # Check for the new consistent wording
-        assert "text covers" in evidence_lower, (
-            f"Expected 'text covers' in evidence; got: {grade.evidence}"
-        )
-        assert "visually empty" in evidence_lower, (
-            f"Expected 'visually empty' in evidence; got: {grade.evidence}"
-        )
-        # Verify the two numbers are complementary (sum ≈ 100%)
-        coverage_m = re.search(r"text covers (\d+)%", evidence_lower)
-        visual_m = re.search(r"~(\d+)% visually empty", evidence_lower)
-        if coverage_m and visual_m:
-            coverage = int(coverage_m.group(1))
-            visual = int(visual_m.group(1))
-            assert abs((coverage + visual) - 100) <= 2, (
-                f"Coverage ({coverage}%) + visual empty ({visual}%) should sum to ~100%, "
-                f"got {coverage + visual}%"
-            )
-
-    def test_sample1_failure_class_set(self):
-        """Sample 1 must have C_SPARSE_CONTINUATION_PAGE failure class."""
-        from tailor.eval.layout_grader.grader import grade_sample
-
-        grade = grade_sample(
-            sample_id="1-Leonid_Verman_Resume_Template",
-            template_docx_path=str(_TEMPLATE_DOCX_S1),
-            generated_docx_path=str(
-                _ROOT / "tmp/artefacts/rendering/docx/1-Leonid_Verman_Resume_Template.docx"
-            ),
-            template_pdf_path=str(_TEMPLATE_PDF_S1),
-            generated_pdf_path=str(_RENDERED_PDF_S1),
-            ir_path=str(_IR_S1),
-            gen_json_path=str(_GEN_JSON_S1),
-        )
-        assert "C_SPARSE_CONTINUATION_PAGE" in grade.failure_classes, (
-            f"Expected C_SPARSE_CONTINUATION_PAGE in failure_classes; "
-            f"got: {grade.failure_classes}"
+    def test_sample1_no_sparse_page_failure(self):
+        """Sample 1 must not have C_SPARSE_CONTINUATION_PAGE after the rendering fix."""
+        grade = self._grade()
+        assert "C_SPARSE_CONTINUATION_PAGE" not in grade.failure_classes, (
+            f"C_SPARSE_CONTINUATION_PAGE should be gone after renderer fix; "
+            f"failure_classes={grade.failure_classes}"
         )
 
-    def test_sample1_sparse_page_score_is_zero(self):
-        """Sample 1's sparse_page_score metric must be 0 (defect detected)."""
-        from tailor.eval.layout_grader.grader import grade_sample
-
-        grade = grade_sample(
-            sample_id="1-Leonid_Verman_Resume_Template",
-            template_docx_path=str(_TEMPLATE_DOCX_S1),
-            generated_docx_path=str(
-                _ROOT / "tmp/artefacts/rendering/docx/1-Leonid_Verman_Resume_Template.docx"
-            ),
-            template_pdf_path=str(_TEMPLATE_PDF_S1),
-            generated_pdf_path=str(_RENDERED_PDF_S1),
-            ir_path=str(_IR_S1),
-            gen_json_path=str(_GEN_JSON_S1),
-        )
-        assert grade.metrics.get("sparse_page_score", 100) == 0.0, (
-            f"Expected sparse_page_score=0; got {grade.metrics.get('sparse_page_score')}"
+    def test_sample1_page_count_unchanged(self):
+        """Rendering fix must not change the page count (still 2 pages)."""
+        grade = self._grade()
+        assert grade.facts.get("generated_pages") == 2, (
+            f"Expected 2 pages after keepNext fix; "
+            f"got {grade.facts.get('generated_pages')}"
         )
 
-    def test_sample1_is_hard_fail(self):
-        """Sample 1 must be hard_fail=True due to area_ratio < 25%."""
-        from tailor.eval.layout_grader.grader import grade_sample
-
-        grade = grade_sample(
-            sample_id="1-Leonid_Verman_Resume_Template",
-            template_docx_path=str(_TEMPLATE_DOCX_S1),
-            generated_docx_path=str(
-                _ROOT / "tmp/artefacts/rendering/docx/1-Leonid_Verman_Resume_Template.docx"
-            ),
-            template_pdf_path=str(_TEMPLATE_PDF_S1),
-            generated_pdf_path=str(_RENDERED_PDF_S1),
-            ir_path=str(_IR_S1),
-            gen_json_path=str(_GEN_JSON_S1),
-        )
-        assert grade.hard_fail is True, (
-            f"Expected hard_fail=True; got hard_fail={grade.hard_fail}, "
-            f"status={grade.status}, reasons={grade.hard_fail_reasons}"
-        )
-        assert any(
-            "sparse" in r.lower() for r in grade.hard_fail_reasons
-        ), (
-            f"Expected 'sparse' in hard_fail_reasons; got {grade.hard_fail_reasons}"
+    def test_sample1_sparse_score_is_100(self):
+        """sparse_page_score must be 100 (no sparse page detected) after the fix."""
+        grade = self._grade()
+        assert grade.metrics.get("sparse_page_score", 0) == 100.0, (
+            f"Expected sparse_page_score=100 after fix; "
+            f"got {grade.metrics.get('sparse_page_score')}"
         )
 
-    def test_sample1_evidence_is_internally_consistent(self):
-        """Evidence must show consistent metrics: coverage + visual_empty ≈ 100%.
-
-        The evidence must NOT say '33% empty at bottom' alongside '23% coverage'
-        because those are incommensurable (77 ≠ 33) and appear contradictory.
-        """
-        import re
-        from tailor.eval.layout_grader.grader import grade_sample
-
-        grade = grade_sample(
-            sample_id="1-Leonid_Verman_Resume_Template",
-            template_docx_path=str(_TEMPLATE_DOCX_S1),
-            generated_docx_path=str(
-                _ROOT / "tmp/artefacts/rendering/docx/1-Leonid_Verman_Resume_Template.docx"
-            ),
-            template_pdf_path=str(_TEMPLATE_PDF_S1),
-            generated_pdf_path=str(_RENDERED_PDF_S1),
-            ir_path=str(_IR_S1),
-            gen_json_path=str(_GEN_JSON_S1),
+    def test_sample1_keepnext_in_rendered_docx(self):
+        """Rendered DOCX must contain w:keepNext on experience role-header paragraphs."""
+        from docx import Document
+        from lxml import etree
+        _WN = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        rendered = str(
+            _ROOT / "tmp/artefacts/rendering/docx/1-Leonid_Verman_Resume_Template.docx"
         )
-        evidence_text = " ".join(grade.evidence).lower()
-
-        # New phrasing uses consistent complementary metrics
-        assert "text covers" in evidence_text, (
-            f"Expected 'text covers X%' in evidence; got: {grade.evidence}"
+        doc = Document(rendered)
+        body = doc.element.body
+        keep_next_paras = [
+            p for p in body.findall(f".//{{{_WN}}}p")
+            if p.find(f".//{{{_WN}}}keepNext") is not None
+        ]
+        assert len(keep_next_paras) > 0, (
+            "No w:keepNext found in rendered DOCX — orphan-header prevention not applied"
         )
-        assert "visually empty" in evidence_text, (
-            f"Expected '~Y% visually empty' in evidence; got: {grade.evidence}"
+        # The FitechSource role (the orphaned one) must specifically have keepNext
+        fitechsource_with_keepnext = [
+            p for p in keep_next_paras
+            if "FitechSource" in "".join(r.text or "" for r in p.findall(f".//{{{_WN}}}t"))
+        ]
+        assert fitechsource_with_keepnext, (
+            "FitechSource role header must have w:keepNext to prevent orphan at page bottom"
         )
-        assert "HARD FAIL" in " ".join(grade.evidence), (
-            f"Expected 'HARD FAIL' mentioned in evidence; got: {grade.evidence}"
-        )
-        # The previously contradictory metric must be gone
-        assert "empty at bottom" not in evidence_text, (
-            f"'empty at bottom' should not appear (incommensurable with area_ratio); "
-            f"got: {grade.evidence}"
-        )
-        # Verify complementarity
-        coverage_m = re.search(r"text covers (\d+)%", evidence_text)
-        visual_m = re.search(r"~(\d+)% visually empty", evidence_text)
-        if coverage_m and visual_m:
-            total = int(coverage_m.group(1)) + int(visual_m.group(1))
-            assert abs(total - 100) <= 2, (
-                f"coverage + visual_empty should be ~100%, got {total}"
-            )

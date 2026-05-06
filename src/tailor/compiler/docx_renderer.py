@@ -69,6 +69,26 @@ def _strip_column_break(p_elem) -> None:
                 r_elem.remove(br)
 
 
+def _ensure_keep_next(p_elem) -> None:
+    """Add w:keepNext to the paragraph pPr if not already present.
+
+    w:keepNext tells Word/LibreOffice: keep this paragraph on the same page as
+    the following paragraph.  Applied to role-header paragraphs, this prevents
+    the common resume defect where a role title is stranded at the bottom of a
+    page while all of its bullets appear on a sparse continuation page.
+
+    No-op when keepNext already exists (idempotent).  Only adds keepNext; never
+    removes it, so the caller does not need to check original template state.
+    """
+    from lxml import etree as _etree
+    pPr = p_elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        pPr = _etree.Element(f"{{{_W}}}pPr")
+        p_elem.insert(0, pPr)
+    if pPr.find(f"{{{_W}}}keepNext") is None:
+        _etree.SubElement(pPr, f"{{{_W}}}keepNext")
+
+
 def _strip_last_rendered_page_breaks(p_elem) -> None:
     """Remove w:lastRenderedPageBreak elements from a cloned paragraph.
 
@@ -831,6 +851,26 @@ def _render_from_layout_blocks(
             unbound_count,
         )
 
+    # Build the set of para_ids that are REAL job role headers inside experience
+    # sections.  Only these get w:keepNext — not contact-info lines or other
+    # pipe-separated header-area paragraphs that also carry semantic="role_header".
+    #
+    # Additional guard: only role headers that contain a pipe separator (|) are
+    # eligible.  This filters out date-only entries like "2014-2016" (date-first
+    # templates) which are also classified as role_header but are not company/role
+    # headers in the traditional sense — applying keepNext to them can cascade into
+    # unexpected extra pages.
+    _exp_role_header_pids: set[str] = set()
+    for _sec in doc.sections:
+        if _sec.semantic_type == "experience":
+            for _role in _sec.roles:
+                if _role.header.para_id and "|" in _role.header.text:
+                    _exp_role_header_pids.add(_role.header.para_id)
+    _log.debug(
+        "KEEP_NEXT_CANDIDATE_PIDS: %d experience role headers identified (pipe-separated only)",
+        len(_exp_role_header_pids),
+    )
+
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
             tbl_elem = etree.fromstring(block.xml_proto_xml)
@@ -871,6 +911,13 @@ def _render_from_layout_blocks(
                         block.para_id,
                     )
                     continue
+                # Orphan-header prevention: real job role headers (inside experience
+                # sections) get w:keepNext so they cannot be stranded at the bottom
+                # of a page while their bullets appear on a sparse continuation page.
+                # Only experience role headers are targeted — not contact-info lines
+                # or other pipe-separated paragraphs with semantic="role_header".
+                if block.para_id and block.para_id in _exp_role_header_pids:
+                    _ensure_keep_next(elem)
             else:
                 elem = etree.fromstring(block.xml_proto_xml)
                 _strip_last_rendered_page_breaks(elem)
@@ -879,6 +926,11 @@ def _render_from_layout_blocks(
                 if pm is not None:
                     _set_para_text(elem, pm.text)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
+                    # Orphan-header prevention: real job role headers (inside experience
+                    # sections) get w:keepNext so they cannot be stranded at the bottom
+                    # of a page while their bullets appear on a sparse continuation page.
+                    if block.para_id and block.para_id in _exp_role_header_pids:
+                        _ensure_keep_next(elem)
                 else:
                     if block.para_id:
                         _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)
