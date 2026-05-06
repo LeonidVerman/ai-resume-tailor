@@ -260,6 +260,11 @@ def _update_experience_section(
     if not llm.roles and llm.body_lines and orig.roles:
         reparsed = _reparse_body_lines_as_roles(llm.body_lines)
         if reparsed:
+            if len(reparsed) != len(orig.roles):
+                _log.debug(
+                    "EXPERIENCE_ROLE_COUNT_MISMATCH: section=%r orig_roles=%d reparsed_roles=%d",
+                    orig.title, len(orig.roles), len(reparsed),
+                )
             updated_roles: list[RoleEntry] = []
             for o_role, r_role in zip(orig.roles, reparsed):
                 updated_roles.append(
@@ -292,6 +297,21 @@ def _update_experience_section(
                 roles=updated_roles,
                 section_id=orig.section_id,
             )
+        # Reparse found no role structure — preserve original roles verbatim to
+        # prevent the zip(orig.roles, llm.roles=[]) fallthrough wiping all roles.
+        _log.debug(
+            "EXPERIENCE_LLM_ROLE_PARSE_FAILED: section=%r body_lines=%d "
+            "reason=no_role_boundaries; preserving %d orig roles verbatim",
+            orig.title, len(llm.body_lines), len(orig.roles),
+        )
+        return ResumeSection(
+            title=llm.heading,
+            heading=_strip_col_break_para(orig.heading.with_text(llm.heading)),
+            semantic_type=orig.semantic_type,
+            body_paras=orig.body_paras,
+            roles=list(orig.roles),
+            section_id=orig.section_id,
+        )
 
     # Normal path: pipe-separated LLM roles matched by position.
     # In layout-bound mode:
@@ -675,33 +695,86 @@ def _strip_col_break_para(pm: ParaModel) -> ParaModel:
 
 
 # ---------------------------------------------------------------------------
-# Experience body_lines re-parser (dash-format role headers)
+# Experience body_lines re-parser — robust multi-format role reconstruction
 # ---------------------------------------------------------------------------
 
-# LLMs sometimes format roles as "Title — Company" or "Title / Leader — Company"
-# (em/en dash) instead of the canonical "Title | Company" pipe.  parse_llm_output
-# treats these as body_lines because _is_role_header requires "|".  This re-parser
-# recovers the role structure so bullets can be matched to template roles.
-_ROLE_BODY_SEP_RE = re.compile(r'\s\u2014\s|\s\u2013\s|\s\u2012\s')  # em/en/figure dash
+# Strategy 1: LLMs sometimes format roles as "Title — Company" (em/en/figure dash).
+_ROLE_BODY_SEP_RE = re.compile(r'\s—\s|\s–\s|\s‒\s')
+
+# Strategy 2: standalone date-line boundaries.
+#   A "date line" is a line whose entire content is a date range, e.g.
+#   "Jan 20XX - Current", "March 2020 – December 2022", "2019–2021", "Present".
+#   Safe against normal bullet text ("cross-functional", "day-to-day") because
+#   those phrases never contain month names or 4-digit/XX years.
+_MONTH_PAT = (
+    r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?"
+    r"|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)"
+)
+_YEAR_SLOT_PAT = r"(?:19\d{2}|20\d{2}|19[Xx]{2}|20[Xx]{2})"  # real or XX placeholder
+_DATE_WORD_PAT = r"(?:Present|Current|Now|Ongoing)"
+_SINGLE_DATE_PAT = rf"(?:{_MONTH_PAT}\.?\s+{_YEAR_SLOT_PAT}|{_YEAR_SLOT_PAT})"
+_DATE_SEP_LOOSE_PAT = r"(?:\s*[-–—‒]\s*|\s+to\s+|\s+through\s+)"
+_DATE_RANGE_PAT = (
+    rf"(?:{_SINGLE_DATE_PAT}"
+    rf"(?:{_DATE_SEP_LOOSE_PAT}(?:{_SINGLE_DATE_PAT}|{_DATE_WORD_PAT}))?"
+    rf"|{_DATE_WORD_PAT})"
+)
+_STANDALONE_DATE_LINE_RE = re.compile(
+    rf"^\s*{_DATE_RANGE_PAT}\s*$", re.IGNORECASE
+)
+# Bullet marker at start of a line (defensive; text_parser may already strip).
+_BULLET_MARKER_RE = re.compile(
+    r"^\s*[-•‣◦⁃▸⦿●*–—‒]\s+"
+)
 
 
 def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
-    """Re-parse experience body_lines into LlmRole objects using dash separators.
+    """Re-parse experience body_lines into LlmRole objects.
 
-    Only returns a non-empty list when at least one role-boundary line is found.
-    Each role boundary is a line containing an em-dash / en-dash separator.
+    Tries two strategies in order:
+
+    1. Em/en/figure-dash boundaries — lines containing " — ", " – ", or " ‒ "
+       (existing behaviour; handles "Title — Company" format).
+
+    2. Standalone date-line boundaries — lines whose entire content is a date
+       range (e.g. "Jan 20XX - Current", "March 2020 – December 2022", "2019–2021").
+       The line immediately after the date line becomes the role header; subsequent
+       non-date lines up to the next boundary become bullets.
+
+    Returns [] when no role structure is detectable so callers can fall back safely.
     """
     if not body_lines:
         return []
 
-    # Locate role-boundary lines
-    boundaries: list[int] = [
-        i for i, line in enumerate(body_lines)
-        if _ROLE_BODY_SEP_RE.search(line)
+    # Strategy 1 — em/en-dash boundary lines (original logic, unchanged).
+    dash_bounds = [
+        i for i, ln in enumerate(body_lines)
+        if _ROLE_BODY_SEP_RE.search(ln)
     ]
-    if not boundaries:
+    if dash_bounds:
+        return _roles_from_dash_boundaries(body_lines, dash_bounds)
+
+    # Strategy 2 — standalone date-line boundaries.
+    date_bounds = [
+        i for i, ln in enumerate(body_lines)
+        if _STANDALONE_DATE_LINE_RE.match(ln.strip())
+    ]
+    if not date_bounds:
         return []
 
+    roles = _roles_from_date_boundaries(body_lines, date_bounds)
+    _log.debug(
+        "EXPERIENCE_LLM_ROLES_REPARSED: body_lines=%d date_boundaries=%d "
+        "reparsed_roles=%d pattern=date_first",
+        len(body_lines), len(date_bounds), len(roles),
+    )
+    return roles
+
+
+def _roles_from_dash_boundaries(
+    body_lines: list[str], boundaries: list[int]
+) -> list[LlmRole]:
+    """Em/en-dash boundary parser (factored out of original _reparse function)."""
     roles: list[LlmRole] = []
     for idx, boundary_i in enumerate(boundaries):
         end_i = boundaries[idx + 1] if idx + 1 < len(boundaries) else len(body_lines)
@@ -720,6 +793,36 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
                 meta.append(s)
             else:
                 bullets.append(s)
+        roles.append(LlmRole(header=header, meta_lines=meta, bullets=bullets))
+    return roles
+
+
+def _roles_from_date_boundaries(
+    body_lines: list[str], boundaries: list[int]
+) -> list[LlmRole]:
+    """Date-line boundary parser: each standalone date line starts a new role."""
+    roles: list[LlmRole] = []
+    for idx, boundary_i in enumerate(boundaries):
+        end_i = boundaries[idx + 1] if idx + 1 < len(boundaries) else len(body_lines)
+        date_text = body_lines[boundary_i].strip()
+
+        header = date_text  # fallback when no title line follows
+        meta: list[str] = [date_text]
+        bullets: list[str] = []
+        saw_header = False
+
+        for line in body_lines[boundary_i + 1: end_i]:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            # Strip bullet markers defensively (text_parser may already do this).
+            clean = _BULLET_MARKER_RE.sub("", stripped).strip()
+            if not saw_header:
+                header = clean if clean else stripped
+                saw_header = True
+            else:
+                bullets.append(clean if clean else stripped)
+
         roles.append(LlmRole(header=header, meta_lines=meta, bullets=bullets))
     return roles
 
@@ -1218,7 +1321,10 @@ def _update_experience_date_first(
             len(llm_roles) - len(rebuilt_roles), len(rebuilt_roles),
         )
 
-    # Mutate bullet text in-place (the ParaModel objects are shared with body_paras)
+    # Mutate bullet text in-place (the ParaModel objects are shared with body_paras).
+    # When the template has no bullet-semantic paragraphs for a role (e.g. only a
+    # single placeholder paragraph classified as header_extra), fall back to updating
+    # header_extra paragraphs so LLM content is still injected.
     for ir_idx, ir_role in enumerate(rebuilt_roles):
         llm_idx = match_map[ir_idx]
         if llm_idx is None:
@@ -1228,7 +1334,8 @@ def _update_experience_date_first(
             )
             continue
         llm_bullets = llm_roles[llm_idx].bullets
-        for i, bullet_para in enumerate(ir_role.bullets):
+        targets = ir_role.bullets if ir_role.bullets else ir_role.header_extra
+        for i, bullet_para in enumerate(targets):
             if i < len(llm_bullets):
                 _log.debug(
                     "date-first: para %r updated  %r → %r",
@@ -1269,12 +1376,23 @@ def _update_experience_classified(
     - IR role count is authoritative: extra LLM roles are ignored; extra IR
       roles beyond the LLM output are kept verbatim.
     """
-    # Resolve LLM roles: try pipe format first, then dash format.
+    # Resolve LLM roles: try pipe format first, then dash/date format.
     llm_roles = llm.roles
     if not llm_roles and llm.body_lines and orig.roles:
         reparsed = _reparse_body_lines_as_roles(llm.body_lines)
         if reparsed:
             llm_roles = reparsed
+            if len(reparsed) != len(orig.roles):
+                _log.debug(
+                    "EXPERIENCE_ROLE_COUNT_MISMATCH: section=%r orig_roles=%d reparsed_roles=%d",
+                    orig.title, len(orig.roles), len(reparsed),
+                )
+        else:
+            _log.debug(
+                "EXPERIENCE_LLM_ROLE_PARSE_FAILED: section=%r body_lines=%d "
+                "reason=no_boundaries; keeping %d orig roles verbatim",
+                orig.title, len(llm.body_lines), len(orig.roles),
+            )
 
     if len(llm_roles) > len(orig.roles):
         _log.debug(
