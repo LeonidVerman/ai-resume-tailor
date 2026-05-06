@@ -336,13 +336,19 @@ class TestSparsePageScoreIntegration:
     not _ARTIFACTS_PRESENT,
     reason="sample 1 PDF artifacts not present",
 )
-class TestSample1RendererFix:
-    """After the w:keepNext rendering fix, sample 1 must PASS the grader.
+class TestSample1RendererAndGrader:
+    """Sample 1 regression tests covering both the renderer (keepNext) and grader.
 
-    The renderer now adds w:keepNext to experience role-header paragraphs so
-    that orphaned role headers (stranded at the bottom of a page while their
-    bullets appear on a sparse continuation page) are moved to the next page
-    with their content, filling it more densely.
+    The renderer adds w:keepNext to experience role-header paragraphs, preventing
+    orphaned role headers from being stranded at page bottoms.  This structural
+    improvement moves the FitechSource header+date to page 2 (a genuine layout
+    improvement), but the page 2 effective content area (27% of page) remains
+    below the sparse threshold — the grader must still flag C_SPARSE_CONTINUATION_PAGE
+    as HARD FAIL.
+
+    A keepNext-only change is not enough to declare the layout visually acceptable;
+    a page that is 70%+ visually empty must remain flagged regardless of whether
+    an orphan header was fixed.
     """
 
     def _grade(self):
@@ -359,43 +365,50 @@ class TestSample1RendererFix:
             gen_json_path=str(_GEN_JSON_S1),
         )
 
-    def test_sample1_passes_after_renderer_fix(self):
-        """After the keepNext rendering fix, sample 1 must be PASS (not HARD FAIL)."""
+    def test_sample1_still_hard_fail_after_keepnext(self):
+        """keepNext improvement alone must NOT clear the sparse continuation failure.
+
+        Page 2 still has only ~27% effective content area (73% visually empty)
+        — the grader must maintain HARD FAIL even after the orphan-header fix.
+        """
         grade = self._grade()
-        assert grade.status == "pass", (
-            f"Expected status='pass' after renderer fix; "
-            f"got status={grade.status!r}, hard_fail={grade.hard_fail}, "
-            f"failure_classes={grade.failure_classes}"
+        assert grade.hard_fail is True, (
+            f"Sample 1 must still be HARD FAIL after keepNext-only improvement; "
+            f"effective content area (~27%) remains below sparse threshold. "
+            f"Got status={grade.status!r}, hard_fail={grade.hard_fail}"
         )
 
-    def test_sample1_no_sparse_page_failure(self):
-        """Sample 1 must not have C_SPARSE_CONTINUATION_PAGE after the rendering fix."""
+    def test_sample1_sparse_page_still_flagged(self):
+        """C_SPARSE_CONTINUATION_PAGE must still be present after keepNext fix."""
         grade = self._grade()
-        assert "C_SPARSE_CONTINUATION_PAGE" not in grade.failure_classes, (
-            f"C_SPARSE_CONTINUATION_PAGE should be gone after renderer fix; "
-            f"failure_classes={grade.failure_classes}"
+        assert "C_SPARSE_CONTINUATION_PAGE" in grade.failure_classes, (
+            f"C_SPARSE_CONTINUATION_PAGE must be flagged even after keepNext fix; "
+            f"27% area ratio is still sparse. Got: {grade.failure_classes}"
+        )
+
+    def test_sample1_sparse_score_is_zero(self):
+        """sparse_page_score must be 0 (sparse page detected) despite keepNext fix."""
+        grade = self._grade()
+        assert grade.metrics.get("sparse_page_score", 100) == 0.0, (
+            f"sparse_page_score must remain 0 after keepNext fix; "
+            f"got {grade.metrics.get('sparse_page_score')}"
         )
 
     def test_sample1_page_count_unchanged(self):
-        """Rendering fix must not change the page count (still 2 pages)."""
+        """keepNext fix must not change the page count (still 2 pages)."""
         grade = self._grade()
         assert grade.facts.get("generated_pages") == 2, (
             f"Expected 2 pages after keepNext fix; "
             f"got {grade.facts.get('generated_pages')}"
         )
 
-    def test_sample1_sparse_score_is_100(self):
-        """sparse_page_score must be 100 (no sparse page detected) after the fix."""
-        grade = self._grade()
-        assert grade.metrics.get("sparse_page_score", 0) == 100.0, (
-            f"Expected sparse_page_score=100 after fix; "
-            f"got {grade.metrics.get('sparse_page_score')}"
-        )
-
     def test_sample1_keepnext_in_rendered_docx(self):
-        """Rendered DOCX must contain w:keepNext on experience role-header paragraphs."""
+        """Rendered DOCX must contain w:keepNext on experience role-header paragraphs.
+
+        keepNext is a structural improvement (prevents orphan role headers) even
+        though it is not sufficient to clear the sparse-page grader failure.
+        """
         from docx import Document
-        from lxml import etree
         _WN = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
         rendered = str(
             _ROOT / "tmp/artefacts/rendering/docx/1-Leonid_Verman_Resume_Template.docx"
@@ -409,11 +422,24 @@ class TestSample1RendererFix:
         assert len(keep_next_paras) > 0, (
             "No w:keepNext found in rendered DOCX — orphan-header prevention not applied"
         )
-        # The FitechSource role (the orphaned one) must specifically have keepNext
         fitechsource_with_keepnext = [
             p for p in keep_next_paras
             if "FitechSource" in "".join(r.text or "" for r in p.findall(f".//{{{_WN}}}t"))
         ]
         assert fitechsource_with_keepnext, (
             "FitechSource role header must have w:keepNext to prevent orphan at page bottom"
+        )
+
+    def test_evidence_describes_effective_area_below_threshold(self):
+        """Evidence must show area ratio and confirm it is below the hard-fail threshold."""
+        grade = self._grade()
+        ev = " ".join(grade.evidence).lower()
+        assert "sparse" in ev, f"Expected 'sparse' in evidence; got: {grade.evidence}"
+        # After keepNext the fill is ~64% but area is still ~27% — evidence must
+        # reflect the area ratio, not merely the vertical fill
+        assert "text covers" in ev, (
+            f"Evidence must show effective area coverage; got: {grade.evidence}"
+        )
+        assert "visually empty" in ev, (
+            f"Evidence must show visual emptiness; got: {grade.evidence}"
         )

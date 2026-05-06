@@ -32,16 +32,27 @@ _BLANK_CHAR_THRESHOLD = 150
 #   prev_page_fill  ≥ _SPARSE_PREV_PAGE_MIN_FILL    (previous page was densely used)
 #   line_count      ≥ _SPARSE_MIN_LINES             (substantial content on page,
 #                                                     not a trivial tail overflow)
-_SPARSE_FILL_THRESHOLD = 0.60         # content fills < 60% of page height
+#
+# Threshold calibration note:
+# The fill threshold must be ≥ 65% (not 60%) to correctly catch pages where
+# keepNext or other layout improvements move a role header from page N to the
+# sparse page N+1, slightly improving fill while leaving the page visually empty.
+# Example: sample 1 page 2 improved from 59.7% → 64.3% fill after keepNext, but
+# the effective content area remained 27% — still clearly sparse.  A 60% threshold
+# would incorrectly pass the gate; 65% catches it.
+_SPARSE_FILL_THRESHOLD = 0.65         # content fills < 65% of page height
 _SPARSE_PREV_PAGE_MIN_FILL = 0.75     # previous page must be ≥ 75% full
 _SPARSE_MIN_LINES = 18                # page must have ≥ 18 content lines
 
 # Hard fail escalation within detected sparse pages.
 # Uses effective_area_ratio (sum of block bounding-box areas / page area) which
 # captures actual text density independent of how spread-out the blocks are.
-# A fill_fraction (vertical span) of 60% can hide a page that is visually 75-80%
-# empty when the blocks are small or spaced far apart.
-_SPARSE_HARD_FAIL_AREA_RATIO = 0.25   # block areas < 25% of page area → hard fail
+# A fill_fraction (vertical span) of 65% can hide a page that is visually 70-80%
+# empty when the blocks are small or widely spaced.
+# Threshold is 0.30 (not 0.25) because a page where text covers only 27-29% of
+# the total page area is still predominantly empty (73-80% whitespace) regardless
+# of whether it just cleared the 25% mark via minor layout changes like keepNext.
+_SPARSE_HARD_FAIL_AREA_RATIO = 0.30   # block areas < 30% of page area → hard fail
 
 # Minimum chars for a block to be considered 'meaningful' in area calculations.
 _SPARSE_MIN_BLOCK_CHARS = 3
