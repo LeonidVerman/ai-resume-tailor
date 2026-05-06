@@ -36,6 +36,16 @@ _SPARSE_FILL_THRESHOLD = 0.60         # content fills < 60% of page height
 _SPARSE_PREV_PAGE_MIN_FILL = 0.75     # previous page must be ≥ 75% full
 _SPARSE_MIN_LINES = 18                # page must have ≥ 18 content lines
 
+# Hard fail escalation within detected sparse pages.
+# Uses effective_area_ratio (sum of block bounding-box areas / page area) which
+# captures actual text density independent of how spread-out the blocks are.
+# A fill_fraction (vertical span) of 60% can hide a page that is visually 75-80%
+# empty when the blocks are small or spaced far apart.
+_SPARSE_HARD_FAIL_AREA_RATIO = 0.25   # block areas < 25% of page area → hard fail
+
+# Minimum chars for a block to be considered 'meaningful' in area calculations.
+_SPARSE_MIN_BLOCK_CHARS = 3
+
 _SECTION_ALIASES: dict[str, list[str]] = {
     "experience": [
         "experience", "work experience", "professional experience",
@@ -348,13 +358,67 @@ def _compute_density_score_from_ir(ir: dict) -> tuple[float, list[str]]:
 # F. Sparse continuation page detection
 # ---------------------------------------------------------------------------
 
+def _compute_effective_area_metrics(page) -> "tuple[float, float, float, int, int]":
+    """Compute effective visual-utilisation metrics for a single page.
+
+    Returns (area_ratio, vert_fill, bottom_empty, meaningful_block_count,
+             meaningful_line_count).
+
+    area_ratio
+        Sum of meaningful block bounding-box areas divided by total page area.
+        Unlike fill_fraction (first-to-last block span), this captures how much
+        of the page is actually covered by text — blocks that are small or
+        widely spaced can span 60% of the vertical height while covering only
+        20% of the page area.
+
+    vert_fill
+        (last_block_bottom − first_block_top) / page_height.  Matches the
+        intuitive "content reaches this far down the page" measure.
+
+    bottom_empty
+        (page_height − last_block_bottom) / page_height.  Fraction of the page
+        below the last content block — the blank region the user sees at the
+        bottom.
+
+    meaningful_block_count / meaningful_line_count
+        Count of blocks / lines with at least _SPARSE_MIN_BLOCK_CHARS chars.
+    """
+    page_area = page.height * page.width
+    if page_area <= 0:
+        return 0.0, 0.0, 1.0, 0, 0
+
+    meaningful = [
+        b for b in page.blocks
+        if sum(len(ln.text) for ln in b.lines) >= _SPARSE_MIN_BLOCK_CHARS
+    ]
+    if not meaningful:
+        return 0.0, 0.0, 1.0, 0, 0
+
+    total_area = sum(
+        (b.bbox[3] - b.bbox[1]) * (b.bbox[2] - b.bbox[0])
+        for b in meaningful
+    )
+    top_y = min(b.bbox[1] for b in meaningful)
+    bot_y = max(b.bbox[3] for b in meaningful)
+
+    area_ratio = total_area / page_area
+    vert_fill = (bot_y - top_y) / page.height if page.height > 0 else 0.0
+    bottom_empty = (page.height - bot_y) / page.height if page.height > 0 else 1.0
+    m_lines = sum(len(b.lines) for b in meaningful)
+
+    return area_ratio, vert_fill, bottom_empty, len(meaningful), m_lines
+
+
 def _find_sparse_continuation_pages(
     gen_extracted,
-) -> "list[tuple[int, float, float, int, int, str]]":
+) -> "list[tuple[int, float, float, float, int, int, str]]":
     """Return non-first pages that are sparsely filled after a well-packed predecessor.
 
     Each entry: (page_number, fill_fraction, bottom_empty_fraction,
-                 line_count, block_count, nearest_section_name).
+                 area_ratio, line_count, block_count, nearest_section_name).
+
+    fill_fraction   — vertical span of content / page height (coarse screen)
+    area_ratio      — sum of block areas / page area (accurate sparseness signal)
 
     Detection criteria (all must hold):
     - page_number > 1  (not the first page)
@@ -391,9 +455,7 @@ def _find_sparse_continuation_pages(
         content_bottom = page.content_bbox[3]
         fill_frac = (content_bottom - content_top) / page_h
         if fill_frac >= _SPARSE_FILL_THRESHOLD:
-            continue  # page is adequately filled
-
-        bottom_empty = (page_h - content_bottom) / page_h
+            continue  # page is adequately filled (coarse gate)
 
         # Require the previous page to be well-filled so that we only flag
         # pages where content was genuinely pushed by a forced break.
@@ -406,6 +468,9 @@ def _find_sparse_continuation_pages(
         prev_fill = (prev_page.content_bbox[3] - prev_page.content_bbox[1]) / prev_h
         if prev_fill < _SPARSE_PREV_PAGE_MIN_FILL:
             continue  # previous page wasn't full — short document; sparse is OK
+
+        # Compute accurate effective-area metrics for reporting and hard-fail.
+        area_ratio, _, bottom_empty, m_blocks, m_lines = _compute_effective_area_metrics(page)
 
         # Identify the nearest section heading on this sparse page for the report.
         nearest_section = "unknown"
@@ -423,6 +488,7 @@ def _find_sparse_continuation_pages(
             page.page_number,
             fill_frac,
             bottom_empty,
+            area_ratio,
             n_lines,
             len(page.blocks),
             nearest_section,
@@ -433,31 +499,50 @@ def _find_sparse_continuation_pages(
 
 def _compute_sparse_page_score(
     gen_extracted,
-) -> "tuple[float, list[str]]":
+) -> "tuple[float, bool, list[str]]":
     """Compute a 0–100 sparse-continuation-page score for the generated document.
 
-    Returns (score, evidence_list).  Score = 100 when no qualifying sparse page
-    is found; 0 when at least one is found (binary — the defect is either
-    present or absent).
+    Returns (score, hard_fail, evidence_list).
+
+    score     = 100 when no qualifying sparse page is found; 0 otherwise.
+    hard_fail = True when at least one sparse page has effective_area_ratio
+                below _SPARSE_HARD_FAIL_AREA_RATIO (< 25% of page area is
+                covered by content blocks) — the page is visually mostly empty.
+
+    The area_ratio threshold is stricter than the vertical fill threshold:
+    a page can span 60% of the page height (fill_fraction) but cover only
+    22% of the page area when the text blocks are small and widely spaced.
     """
     sparse_pages = _find_sparse_continuation_pages(gen_extracted)
     evidence: list[str] = []
+    hard_fail = False
 
     if not sparse_pages:
-        return 100.0, evidence
+        return 100.0, False, evidence
 
-    for page_num, fill_frac, bottom_empty, n_lines, n_blocks, nearest_sec in sparse_pages:
-        fill_pct = fill_frac * 100
+    for page_num, fill_frac, bottom_empty, area_ratio, n_lines, n_blocks, nearest_sec in sparse_pages:
+        area_pct = area_ratio * 100
         empty_pct = bottom_empty * 100
+        is_hard = area_ratio < _SPARSE_HARD_FAIL_AREA_RATIO
+
+        if is_hard:
+            hard_fail = True
+            sev = " -- HARD FAIL: page is mostly empty after content reflow"
+        else:
+            sev = ""
+
         ev = (
-            f"Sparse continuation page: page {page_num} has {fill_pct:.0f}% fill "
+            f"Sparse continuation page{' (HARD FAIL)' if is_hard else ''}: "
+            f"page {page_num} — effective content area {area_pct:.0f}% of page "
             f"({empty_pct:.0f}% empty at bottom), {n_lines} lines, {n_blocks} blocks"
         )
         if nearest_sec and nearest_sec != "unknown":
             ev += f"; nearest section '{nearest_sec}'"
+        if sev:
+            ev += sev
         evidence.append(ev)
 
-    return 0.0, evidence
+    return 0.0, hard_fail, evidence
 
 
 # ---------------------------------------------------------------------------
@@ -529,7 +614,10 @@ def score_pdf_visual(
     else:
         d_score = 80.0
 
-    sparse_s, sparse_ev = _compute_sparse_page_score(gen)
+    sparse_s, sparse_fail, sparse_ev = _compute_sparse_page_score(gen)
+    if sparse_fail:
+        hard_fail = True
+        hard_fail_reasons.append("SPARSE_CONTINUATION_PAGE")
     evidence.extend(sparse_ev)
 
     return PDFVisualResult(

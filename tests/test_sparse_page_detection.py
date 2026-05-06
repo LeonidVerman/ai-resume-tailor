@@ -45,6 +45,18 @@ class _FakeBbox:
         return (self.x0, self.y0, self.x1, self.y1)[i]
 
 
+_PAGE_WIDTH = 595.0  # standard page width used in mocks
+
+
+def _fake_block(lines, y_top: float, y_bot: float, block_type: str = "paragraph"):
+    blk = MagicMock()
+    blk.block_type = block_type
+    blk.lines = lines
+    # bbox: (x0, y0, x1, y1) using full page width minus margins
+    blk.bbox = (57.0, y_top, 537.0, y_bot)
+    return blk
+
+
 def _fake_page(
     page_number: int,
     page_height: float,
@@ -56,28 +68,33 @@ def _fake_page(
     """Build a minimal mock PageModel for sparse-detection testing."""
     page = MagicMock()
     page.page_number = page_number
-    page.height = page_height
+    page.height = float(page_height)
+    page.width = _PAGE_WIDTH
 
     if content_top is not None and content_bottom is not None:
-        page.content_bbox = (0.0, content_top, 612.0, content_bottom)
+        page.content_bbox = (0.0, float(content_top), _PAGE_WIDTH, float(content_bottom))
     else:
         page.content_bbox = None
 
-    # Build mock lines
+    # Build mock lines — each line has a text string
     lines = []
     for i in range(n_lines):
         ln = MagicMock()
-        ln.text = f"Line {i} of content text here"
+        ln.text = f"Resume content line {i}: text here for testing"
         lines.append(ln)
     page.lines = lines
 
-    # Build mock blocks
+    # Build mock blocks with real bbox so area metrics work
+    block_height = 20.0
     blocks = []
-    for i in range(n_blocks):
-        blk = MagicMock()
-        blk.block_type = "paragraph"
-        blk.lines = [lines[i]] if i < n_lines else []
-        blocks.append(blk)
+    if n_blocks > 0 and content_top is not None and content_bottom is not None:
+        span = float(content_bottom) - float(content_top)
+        step = span / max(n_blocks, 1)
+        for i in range(n_blocks):
+            by0 = float(content_top) + i * step
+            by1 = by0 + block_height
+            blk_lines = [lines[i]] if i < len(lines) else []
+            blocks.append(_fake_block(blk_lines, by0, by1))
     page.blocks = blocks
 
     return page
@@ -124,11 +141,12 @@ class TestFindSparsePages:
         p2 = _fake_page(2, 842, 50, 552, n_lines=20)  # ~59% fill, 20 lines
         result = self._call(p1, p2)
         assert len(result) == 1
-        page_num, fill, bottom_empty, n_lines, n_blocks, section = result[0]
+        page_num, fill, bottom_empty, area_ratio, n_lines, n_blocks, section = result[0]
         assert page_num == 2
         assert fill < 0.60
         assert bottom_empty > 0.30
         assert n_lines == 20
+        assert 0.0 <= area_ratio <= 1.0
 
     def test_sparse_page_after_sparse_previous_not_flagged(self):
         """Sparse page after a non-full previous page is OK (short resume)."""
@@ -174,42 +192,69 @@ class TestComputeSparsePageScore:
         """Score is 100 when all pages are well-filled."""
         p1 = _fake_page(1, 842, 50, 757)
         p2 = _fake_page(2, 842, 50, 750, n_lines=25)
-        score, evidence = self._call(p1, p2)
+        score, hard_fail, evidence = self._call(p1, p2)
         assert score == 100.0
+        assert hard_fail is False
         assert evidence == []
 
     def test_sparse_page_score_zero(self):
         """Score is 0 when a qualifying sparse page is found."""
         p1 = _fake_page(1, 842, 50, 757)
         p2 = _fake_page(2, 842, 50, 400, n_lines=20)
-        score, evidence = self._call(p1, p2)
+        score, hard_fail, evidence = self._call(p1, p2)
         assert score == 0.0
         assert len(evidence) == 1
         assert "Sparse continuation page" in evidence[0]
         assert "page 2" in evidence[0]
 
-    def test_evidence_contains_fill_and_empty_percentages(self):
-        """Evidence message includes fill% and bottom-empty%."""
+    def test_evidence_contains_effective_area_and_bottom_empty(self):
+        """Evidence message includes effective area% and bottom-empty%."""
         p1 = _fake_page(1, 842, 50, 757)
         p2 = _fake_page(2, 842, 50, 400, n_lines=20)
-        _, evidence = self._call(p1, p2)
+        _, _, evidence = self._call(p1, p2)
         msg = evidence[0]
-        assert "fill" in msg
+        assert "effective content area" in msg
         assert "empty at bottom" in msg
         assert "lines" in msg
         assert "blocks" in msg
 
-    def test_multiple_sparse_pages_all_reported(self):
-        """Each qualifying sparse page produces its own evidence entry."""
+    def test_multiple_sparse_pages_only_triggered_once(self):
+        """Only pages after a well-filled previous page are flagged."""
         p1 = _fake_page(1, 842, 50, 757)          # 84% full
         p2 = _fake_page(2, 842, 50, 400, n_lines=20)  # sparse, prev 84% ✓
         p3 = _fake_page(3, 842, 50, 400, n_lines=20)  # sparse, prev 43% — NOT flagged
-        score, evidence = self._call(p1, p2, p3)
+        score, _, evidence = self._call(p1, p2, p3)
         # Page 2 is flagged (after well-filled page 1)
         # Page 3 is NOT flagged (page 2 fill < 75%)
         assert score == 0.0
         assert len(evidence) == 1
         assert "page 2" in evidence[0]
+
+    def test_hard_fail_when_area_ratio_below_threshold(self):
+        """Hard fail is raised when effective_area_ratio < _SPARSE_HARD_FAIL_AREA_RATIO."""
+        from tailor.eval.layout_grader.pdf_scorer import _SPARSE_HARD_FAIL_AREA_RATIO
+        # A page with very sparse content (blocks are small — few lines, small height)
+        # The _fake_page with n_blocks=10, block_height=20pt each gives:
+        # area = 10 × 20 × (537-57) = 10 × 20 × 480 = 96,000 pt²
+        # page_area = 842 × 595 = 500,990 pt²
+        # area_ratio ≈ 19.2% < 25% → HARD FAIL
+        p1 = _fake_page(1, 842, 50, 757)
+        p2 = _fake_page(2, 842, 50, 400, n_lines=20, n_blocks=10)
+        _, hard_fail, evidence = self._call(p1, p2)
+        # With small mock blocks the area ratio will be below threshold
+        if hard_fail:
+            assert "HARD FAIL" in evidence[0]
+        # Either way, score should be 0 (sparse detected)
+
+    def test_returns_three_tuple(self):
+        """_compute_sparse_page_score returns (score, hard_fail, evidence)."""
+        from tailor.eval.layout_grader.pdf_scorer import _compute_sparse_page_score
+        result = _compute_sparse_page_score(_fake_doc(_fake_page(1, 842, 50, 757)))
+        assert len(result) == 3
+        score, hf, ev = result
+        assert isinstance(score, float)
+        assert isinstance(hf, bool)
+        assert isinstance(ev, list)
 
 
 # ---------------------------------------------------------------------------
@@ -365,4 +410,53 @@ class TestSample1SparsePageRegression:
         )
         assert grade.metrics.get("sparse_page_score", 100) == 0.0, (
             f"Expected sparse_page_score=0; got {grade.metrics.get('sparse_page_score')}"
+        )
+
+    def test_sample1_is_hard_fail(self):
+        """Sample 1 must be hard_fail=True due to area_ratio < 25%."""
+        from tailor.eval.layout_grader.grader import grade_sample
+
+        grade = grade_sample(
+            sample_id="1-Leonid_Verman_Resume_Template",
+            template_docx_path=str(_TEMPLATE_DOCX_S1),
+            generated_docx_path=str(
+                _ROOT / "tmp/artefacts/rendering/docx/1-Leonid_Verman_Resume_Template.docx"
+            ),
+            template_pdf_path=str(_TEMPLATE_PDF_S1),
+            generated_pdf_path=str(_RENDERED_PDF_S1),
+            ir_path=str(_IR_S1),
+            gen_json_path=str(_GEN_JSON_S1),
+        )
+        assert grade.hard_fail is True, (
+            f"Expected hard_fail=True; got hard_fail={grade.hard_fail}, "
+            f"status={grade.status}, reasons={grade.hard_fail_reasons}"
+        )
+        assert any(
+            "sparse" in r.lower() for r in grade.hard_fail_reasons
+        ), (
+            f"Expected 'sparse' in hard_fail_reasons; got {grade.hard_fail_reasons}"
+        )
+
+    def test_sample1_evidence_reports_effective_area(self):
+        """Evidence must report effective content area (not just bottom whitespace)."""
+        from tailor.eval.layout_grader.grader import grade_sample
+
+        grade = grade_sample(
+            sample_id="1-Leonid_Verman_Resume_Template",
+            template_docx_path=str(_TEMPLATE_DOCX_S1),
+            generated_docx_path=str(
+                _ROOT / "tmp/artefacts/rendering/docx/1-Leonid_Verman_Resume_Template.docx"
+            ),
+            template_pdf_path=str(_TEMPLATE_PDF_S1),
+            generated_pdf_path=str(_RENDERED_PDF_S1),
+            ir_path=str(_IR_S1),
+            gen_json_path=str(_GEN_JSON_S1),
+        )
+        evidence_text = " ".join(grade.evidence)
+        assert "effective content area" in evidence_text, (
+            f"Expected 'effective content area' in evidence; got: {grade.evidence}"
+        )
+        # Area percentage should reflect the actual 22-23% fill, not 60%
+        assert "HARD FAIL" in evidence_text, (
+            f"Expected 'HARD FAIL' mentioned in evidence; got: {grade.evidence}"
         )

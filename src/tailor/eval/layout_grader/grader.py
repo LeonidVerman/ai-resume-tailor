@@ -25,10 +25,15 @@ HARD FAIL triggers:
             column layout lost (PDF-detected)
   Content:  lorem ipsum detected, extreme template similarity
 
+HARD FAIL triggers (continued):
+  SPARSE_CONTINUATION_PAGE    sparse page with effective_area_ratio < 25% —
+                              content blocks cover < 25% of total page area
+
 WARNING triggers (via sparse_page_score = 0):
   C_SPARSE_CONTINUATION_PAGE  non-first page fills < 60% of page height after
                               a well-packed previous page (>= 75% full) and
                               contains substantial content (>= 18 lines)
+                              escalates to HARD FAIL when area_ratio < 25%
 """
 from __future__ import annotations
 
@@ -288,6 +293,9 @@ def grade_sample(
                 if "G_CONTAINER_OVERFLOW" not in failure_classes:
                     failure_classes.append("G_CONTAINER_OVERFLOW")
             if pdf_result.sparse_page_score < 100:
+                if "C_SPARSE_CONTINUATION_PAGE" not in failure_classes:
+                    failure_classes.append("C_SPARSE_CONTINUATION_PAGE")
+            if "SPARSE_CONTINUATION_PAGE" in pdf_result.hard_fail_reasons:
                 if "C_SPARSE_CONTINUATION_PAGE" not in failure_classes:
                     failure_classes.append("C_SPARSE_CONTINUATION_PAGE")
             evidence.extend(pdf_result.evidence[:6])
