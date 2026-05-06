@@ -224,11 +224,11 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
         for i in range(min(n_orig, n_llm)):
             new_bullets.append(orig.bullets[i].with_text(llm.bullets[i]))
         if n_llm > n_orig:
-            # Pack extra LLM bullets into the last slot (newline-separated) so
-            # no generated content is lost.  Budget enforcement is skipped for
-            # bullet para_ids so the expanded text is preserved in full.
+            # Pack extra LLM bullets into the last slot so no generated content
+            # is lost.  Use "; " separator — the renderer strips \n from text
+            # (_set_para_text line 118) so newline packing would concatenate.
             extras = llm.bullets[n_orig:]
-            packed = new_bullets[-1].text + "\n" + "\n".join(e.strip() for e in extras)
+            packed = new_bullets[-1].text + "; " + "; ".join(e.strip() for e in extras)
             new_bullets[-1] = orig.bullets[-1].with_text(packed)
             _log.debug(
                 "CONTENT_OVERFLOW_DETECTED: %d extra bullets for role %r — "
@@ -501,12 +501,16 @@ def _update_body_section(
     if layout_bound and content_paras and len(llm_lines) > len(content_paras):
         n_extra = len(llm_lines) - len(content_paras)
         extras = llm_lines[len(content_paras):]
-        packed_last = llm_lines[len(content_paras) - 1] + "\n" + "\n".join(e.strip() for e in extras)
+        # Use "; " separator instead of "\n" — the DOCX renderer strips newlines
+        # from paragraph text (_set_para_text replaces \n with ""), so \n packing
+        # would silently concatenate category lines (e.g. "OracleDevOps").
+        sep = "; "
+        packed_last = llm_lines[len(content_paras) - 1] + sep + (sep.join(e.strip() for e in extras))
         packed_llm = llm_lines[: len(content_paras) - 1] + [packed_last]
         _log.debug(
             "CONTENT_OVERFLOW_DETECTED: %d extra lines from %r — "
-            "CONTENT_REFLOW_APPLIED: packed into last body slot",
-            n_extra, orig.title[:40],
+            "SKILLS_PACKED_WITH_SEPARATOR: packed into last body slot (sep=%r, n=%d)",
+            n_extra, orig.title[:40], sep, n_extra,
         )
     else:
         packed_llm = llm_lines
@@ -874,10 +878,9 @@ def _update_role_bullets_only(
             new_bullets.append(orig.bullets[i].with_text(llm_bullets[i]))
         if n_llm > n_orig:
             # Pack all extra bullets into the last slot so no LLM content is lost.
-            # Budget enforcement is skipped for experience bullet para_ids, so the
-            # expanded text survives apply_anchor_budgets unchanged.
+            # Use "; " separator — renderer strips \n from text (_set_para_text).
             extras = llm_bullets[n_orig:]
-            packed = new_bullets[-1].text + "\n" + "\n".join(e.strip() for e in extras)
+            packed = new_bullets[-1].text + "; " + "; ".join(e.strip() for e in extras)
             new_bullets[-1] = orig.bullets[-1].with_text(packed)
             _log.debug(
                 "CONTENT_OVERFLOW_DETECTED: %d extra bullets (bullets-only) — "
@@ -2873,7 +2876,32 @@ def apply_tailored(
                     ordered_sections.append(
                         heading_to_section.get(key, orig_section)
                     )
-            new_sections = anchored_summaries + ordered_sections
+
+            if anchored_summaries:
+                # Insert after profile/title block, before first major content
+                # section (experience/education/skills).  Inserting at position 0
+                # would place the summary before the candidate name/title block.
+                _MAJOR_SECTION_TYPES = frozenset(
+                    {"experience", "education", "skills", "certifications"}
+                )
+                first_major = next(
+                    (i for i, s in enumerate(ordered_sections)
+                     if s.semantic_type in _MAJOR_SECTION_TYPES),
+                    len(ordered_sections),
+                )
+                new_sections = (
+                    ordered_sections[:first_major]
+                    + anchored_summaries
+                    + ordered_sections[first_major:]
+                )
+                _log.debug(
+                    "SUMMARY_INSERTED_AFTER_PROFILE_BLOCK: inserted before %r "
+                    "(after %d profile section(s))",
+                    ordered_sections[first_major].title if first_major < len(ordered_sections) else "end",
+                    first_major,
+                )
+            else:
+                new_sections = ordered_sections
         else:
             # Non-layout-bound: follow LLM output order with summary at top.
             template_has_summary = any(
