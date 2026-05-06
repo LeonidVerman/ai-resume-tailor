@@ -746,29 +746,45 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
     if not body_lines:
         return []
 
-    # Strategy 1 — em/en-dash boundary lines (original logic, unchanged).
     dash_bounds = [
         i for i, ln in enumerate(body_lines)
         if _ROLE_BODY_SEP_RE.search(ln)
     ]
-    if dash_bounds:
-        return _roles_from_dash_boundaries(body_lines, dash_bounds)
-
-    # Strategy 2 — standalone date-line boundaries.
     date_bounds = [
         i for i, ln in enumerate(body_lines)
         if _STANDALONE_DATE_LINE_RE.match(ln.strip())
     ]
-    if not date_bounds:
-        return []
 
-    roles = _roles_from_date_boundaries(body_lines, date_bounds)
-    _log.debug(
-        "EXPERIENCE_LLM_ROLES_REPARSED: body_lines=%d date_boundaries=%d "
-        "reparsed_roles=%d pattern=date_first",
-        len(body_lines), len(date_bounds), len(roles),
-    )
-    return roles
+    # Strategy 1 — em/en-dash boundary lines ("Title — Company" format).
+    # Strategy 2 — standalone date-line boundaries ("Jan 20XX - Current" format).
+    #
+    # Prefer Strategy 2 when date boundaries start earlier than dash boundaries.
+    # This handles the common case where LLM mixes formats in one section: the
+    # first role uses "Jan 20XX - Current" (ASCII hyphen → date-only line) while
+    # later roles use "March 20xx – December 20xx" (en-dash → also a date line,
+    # but detected by Strategy 1 as an em/en-dash boundary).  Without this check,
+    # Strategy 1 would start at the SECOND role and silently drop the first.
+    use_date = date_bounds and (not dash_bounds or date_bounds[0] < dash_bounds[0])
+
+    if use_date:
+        roles = _roles_from_date_boundaries(body_lines, date_bounds)
+        _log.debug(
+            "EXPERIENCE_LLM_ROLES_REPARSED: body_lines=%d date_boundaries=%d "
+            "reparsed_roles=%d pattern=date_first",
+            len(body_lines), len(date_bounds), len(roles),
+        )
+        return roles
+
+    if dash_bounds:
+        roles = _roles_from_dash_boundaries(body_lines, dash_bounds)
+        _log.debug(
+            "EXPERIENCE_LLM_ROLES_REPARSED: body_lines=%d dash_boundaries=%d "
+            "reparsed_roles=%d pattern=em_en_dash",
+            len(body_lines), len(dash_bounds), len(roles),
+        )
+        return roles
+
+    return []
 
 
 def _roles_from_dash_boundaries(
@@ -1315,11 +1331,18 @@ def _update_experience_date_first(
 
     match_map = _match_llm_to_ir_roles(llm_roles, rebuilt_roles)
 
-    if len(llm_roles) > len(rebuilt_roles):
+    if len(llm_roles) != len(rebuilt_roles):
         _log.debug(
-            "date-first: %d extra LLM roles ignored (IR has %d roles)",
-            len(llm_roles) - len(rebuilt_roles), len(rebuilt_roles),
+            "EXPERIENCE_ROLE_COUNT_MISMATCH: section=%r ir_roles=%d llm_roles=%d",
+            orig.title, len(rebuilt_roles), len(llm_roles),
         )
+
+    _PLACEHOLDER_MARKERS = (
+        "summarize your key",
+        "key responsibilities",
+        "add your experience",
+        "describe your experience",
+    )
 
     # Mutate bullet text in-place (the ParaModel objects are shared with body_paras).
     # When the template has no bullet-semantic paragraphs for a role (e.g. only a
@@ -1328,12 +1351,32 @@ def _update_experience_date_first(
     for ir_idx, ir_role in enumerate(rebuilt_roles):
         llm_idx = match_map[ir_idx]
         if llm_idx is None:
+            # Check if original content looks like a placeholder (should have been replaced).
+            targets = ir_role.bullets if ir_role.bullets else ir_role.header_extra
+            for t in targets:
+                if any(m in t.text.lower() for m in _PLACEHOLDER_MARKERS):
+                    _log.debug(
+                        "EXPERIENCE_PLACEHOLDER_BODY_SURVIVED: section=%r role=%r "
+                        "para=%r — no LLM match, placeholder kept verbatim",
+                        orig.title, ir_role.role_id, t.para_id,
+                    )
             _log.debug(
                 "date-first: IR role %r → no match, keeping original bullets",
                 ir_role.role_id,
             )
             continue
         llm_bullets = llm_roles[llm_idx].bullets
+        # Warn when first LLM bullet looks like a role title rather than body content.
+        if llm_bullets:
+            first = llm_bullets[0]
+            if _ROLE_BODY_SEP_RE.search(first) or (
+                "," in first and len(first) < 60 and not first.strip().startswith(("-", "•", "*"))
+            ):
+                _log.debug(
+                    "EXPERIENCE_ROLE_BODY_LOOKS_LIKE_NEXT_HEADER: "
+                    "section=%r role=%r first_bullet=%r — may be a misaligned role title",
+                    orig.title, ir_role.role_id, first[:60],
+                )
         targets = ir_role.bullets if ir_role.bullets else ir_role.header_extra
         for i, bullet_para in enumerate(targets):
             if i < len(llm_bullets):

@@ -365,6 +365,80 @@ class TestSample6Regression:
 
 
 # ---------------------------------------------------------------------------
+# 16: Sample 7 regression — mixed ASCII-hyphen + en-dash date boundaries
+# ---------------------------------------------------------------------------
+
+class TestSample7Regression:
+    """Sample 7 has a mix: first role uses ASCII hyphen ('January 20xx - Current')
+    while subsequent roles use en-dash ('March 20xx – December 20xx').
+    Previously Strategy 1 (em/en-dash) fired first, starting at the SECOND role
+    and silently dropping the first.  The fix prefers Strategy 2 when it finds
+    an earlier boundary than Strategy 1.
+    """
+    _BODY_LINES = [
+        "January 20xx - Current",            # date boundary — ASCII hyphen (Strategy 2)
+        "Office manager, The Phone Company",
+        "Streamlined office operations by standardizing administrative workflows.",
+        "Supported rollout and adoption of HR policies.",
+        "Managed ongoing administrative processes.",
+        "Applied operational reporting to identify issues.",
+        "March 20xx – December 20xx",   # date boundary — en-dash (also Strategy 1)
+        "Office manager, Nod Publishing",
+        "Optimized office procedures with a cost-conscious approach.",
+        "Facilitated communication between departments.",
+        "Coordinated projects to meet deadlines.",
+        "August 20xx – March 20xx",     # date boundary — en-dash (also Strategy 1)
+        "Office manager, Southridge Video",
+        "Enhanced office productivity by improving day-to-day office management.",
+        "Supported efficient resource allocation.",
+        "Supported HR initiatives that fostered a positive work environment.",
+    ]
+
+    def test_reparse_returns_three_roles(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert len(roles) == 3, (
+            f"Expected 3 roles, got {len(roles)}: "
+            f"{[r.header for r in roles]}"
+        )
+
+    def test_first_role_not_dropped(self):
+        """The first role (January / The Phone Company) must not be silently lost."""
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert len(roles) >= 1
+        assert "The Phone Company" in roles[0].header
+
+    def test_role_headers(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert "The Phone Company" in roles[0].header
+        assert "Nod Publishing" in roles[1].header
+        assert "Southridge Video" in roles[2].header
+
+    def test_role_meta_contains_dates(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert "January" in roles[0].meta_lines[0]
+        assert "March" in roles[1].meta_lines[0]
+        assert "August" in roles[2].meta_lines[0]
+
+    def test_next_role_title_not_in_previous_bullets(self):
+        """'Office manager, Nod Publishing' must NOT appear as a bullet of role 0."""
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        role0_bullets = roles[0].bullets
+        assert not any("Nod Publishing" in b for b in role0_bullets), (
+            f"Role 0 bullets contain next-role title: {role0_bullets}"
+        )
+        role1_bullets = roles[1].bullets
+        assert not any("Southridge Video" in b for b in role1_bullets), (
+            f"Role 1 bullets contain next-role title: {role1_bullets}"
+        )
+
+    def test_bullets_populated(self):
+        roles = _reparse_body_lines_as_roles(self._BODY_LINES)
+        assert len(roles[0].bullets) == 4
+        assert len(roles[1].bullets) == 3
+        assert len(roles[2].bullets) == 3
+
+
+# ---------------------------------------------------------------------------
 # 15: Updater safety fallback — orig.roles preserved when reparse fails
 # ---------------------------------------------------------------------------
 
