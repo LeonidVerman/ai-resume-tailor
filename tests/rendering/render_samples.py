@@ -295,6 +295,45 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
 
     if verbose:
         print(f"  PDF   -> {out_pdf.relative_to(_REPO)}")
+
+    # ── Stage 6: sparse-final-page vertical justification (two-pass) ──────
+    # The grader uses method='local' (xhtml2pdf) which produces a different page
+    # layout than LibreOffice.  We pre-build the grader PDF using the same method
+    # so sparse detection is consistent with what the grader will grade.
+    # If a sparse page is found, trailing section spaceBefore is increased and the
+    # grader PDF is rebuilt.  Non-fatal; render still succeeds even if this fails.
+    _GRADER_PDF_DIR = _REPO / "tmp" / "artefacts" / "rendering" / "pdf"
+    _grader_pdf = _GRADER_PDF_DIR / f"{stem}.pdf"
+    try:
+        from tailor.docx.pdf import docx_to_pdf
+        from tailor.compiler.docx_renderer import apply_trailing_section_justification
+
+        _GRADER_PDF_DIR.mkdir(parents=True, exist_ok=True)
+
+        def _build_grader_pdf(src_docx: Path, dest: Path) -> None:
+            """Convert src_docx → dest using method='local' (same as grader)."""
+            import tempfile
+            with tempfile.TemporaryDirectory() as _td:
+                _tmp = Path(_td) / src_docx.name
+                shutil.copy2(str(src_docx), str(_tmp))
+                docx_to_pdf(str(_tmp), method="local")
+                _p = _tmp.with_suffix(".pdf")
+                if _p.exists():
+                    shutil.move(str(_p), str(dest))
+
+        _build_grader_pdf(out_docx, _grader_pdf)
+
+        if _grader_pdf.exists():
+            if apply_trailing_section_justification(str(out_docx), str(_grader_pdf)):
+                if verbose:
+                    print(f"  [sparse-fix] vertical justification applied — rebuilding grader PDF")
+                _grader_pdf.unlink(missing_ok=True)
+                _build_grader_pdf(out_docx, _grader_pdf)
+    except Exception as _e:
+        if verbose:
+            print(f"  [sparse-fix] WARNING: {type(_e).__name__}: {_e}")
+
+    if verbose:
         print(f"{tag} OK")
 
     return True

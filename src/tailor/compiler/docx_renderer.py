@@ -89,6 +89,112 @@ def _ensure_keep_next(p_elem) -> None:
         _etree.SubElement(pPr, f"{{{_W}}}keepNext")
 
 
+def apply_trailing_section_justification(
+    docx_path: str,
+    pdf_path: str,
+) -> bool:
+    """Two-pass sparse-final-page fix: detect sparse page, add section spacing.
+
+    After an initial render+PDF-convert, if the last continuation page is sparse
+    (content fills < 65% of page height after a well-packed previous page), this
+    function opens the rendered DOCX and adds ``w:spacing w:before`` to the
+    trailing section-heading paragraphs.  The extra spacing distributes the
+    bottom whitespace evenly between sections, making the page look designed
+    rather than incomplete.
+
+    Target: 80% fill on the sparse page.  Extra spacing is distributed across
+    the last N section-heading paragraphs (max N=4, capped at 36 pts each to
+    preserve aesthetics).  The caller must re-convert DOCX → PDF after this
+    returns True.
+
+    Returns True when spacing was added (re-render required); False when the
+    page is not sparse or the fix could not be applied.
+    """
+    try:
+        from tailor.eval.extractor import extract
+        from tailor.eval.layout_grader.pdf_scorer import (
+            _find_sparse_continuation_pages,
+        )
+
+        gen = extract(pdf_path)
+        sparse = _find_sparse_continuation_pages(gen)
+        if not sparse:
+            return False
+
+        page_num, fill_frac, bottom_empty, area_ratio, n_lines, n_blocks, _ = sparse[0]
+
+        # Require some real content on the sparse page (not nearly empty)
+        if area_ratio < 0.08:
+            _log.debug("SPARSE_FIX_SKIP: area_ratio %.2f too low for justification", area_ratio)
+            return False
+
+        # Calculate extra spacing needed to reach 80% fill
+        page = gen.pages[page_num - 1]
+        page_h = page.height or 842.0
+        cb = page.content_bbox
+        if not cb:
+            return False
+        content_span = cb[3] - cb[1]
+        target_span = page_h * 0.80
+        extra_pts = target_span - content_span
+        if extra_pts <= 5:
+            return False
+
+        # Open DOCX and find trailing section-heading paragraphs
+        from docx import Document
+        from lxml import etree as _etree
+
+        doc = Document(docx_path)
+        _SECTION_KWS = frozenset({
+            "education", "skills", "technical", "certification", "award",
+            "project", "publication", "volunteer", "language", "interest",
+        })
+        heading_elems = []
+        for para in doc.paragraphs:
+            txt = para.text.strip()
+            if not txt or len(txt) > 60:
+                continue
+            txt_lo = txt.lower()
+            # Section heading: short, keyword-matching, no leading bullet char
+            if any(kw in txt_lo for kw in _SECTION_KWS) and txt[0] not in "•-*·▪":
+                heading_elems.append(para._p)
+
+        if len(heading_elems) < 2:
+            _log.debug("SPARSE_FIX_SKIP: too few section headings found (%d)", len(heading_elems))
+            return False
+
+        # Take the last min(4, N) headings — most likely to be on the sparse page
+        n_use = min(len(heading_elems), 4)
+        targets = heading_elems[-n_use:]
+
+        # Cap per-heading increment at 36 pts (720 twips) to preserve aesthetics
+        extra_twips_each = int(extra_pts / n_use * 20)   # 1 pt = 20 twips
+        extra_twips_each = max(60, min(extra_twips_each, 720))  # 3–36 pts
+
+        for p_elem in targets:
+            pPr = p_elem.find(f"{{{_W}}}pPr")
+            if pPr is None:
+                pPr = _etree.SubElement(p_elem, f"{{{_W}}}pPr")
+                p_elem.insert(0, pPr)
+            spacing = pPr.find(f"{{{_W}}}spacing")
+            if spacing is None:
+                spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
+            existing = int(spacing.get(f"{{{_W}}}before", "0"))
+            spacing.set(f"{{{_W}}}before", str(existing + extra_twips_each))
+
+        doc.save(docx_path)
+        _log.info(
+            "SPARSE_PAGE_JUSTIFICATION: page %d fill=%.1f%% → target 80%%; "
+            "added %d twips (%d pts) to %d trailing section headers",
+            page_num, fill_frac * 100, extra_twips_each, extra_twips_each // 20, n_use,
+        )
+        return True
+
+    except Exception:
+        _log.warning("Sparse page justification failed", exc_info=True)
+        return False
+
+
 def _strip_last_rendered_page_breaks(p_elem) -> None:
     """Remove w:lastRenderedPageBreak elements from a cloned paragraph.
 

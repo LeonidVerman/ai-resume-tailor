@@ -34,13 +34,13 @@ _BLANK_CHAR_THRESHOLD = 150
 #                                                     not a trivial tail overflow)
 #
 # Threshold calibration note:
-# The fill threshold of 60% catches pages that are visually sparse after content
-# reflow.  The keepNext renderer fix for orphan role headers (commit b1708ad)
-# improved sample 1 page 2 fill from 59.7% → 64.3%, which correctly clears this
-# threshold — the page is no longer sparse in practice.  Pages with fill ≥ 60%
-# and the role header present are borderline-acceptable; truly sparse pages (like
-# sample 37 page 3 at ~30% fill) still trigger regardless.
-_SPARSE_FILL_THRESHOLD = 0.60         # content fills < 60% of page height
+# 65% fill means the content span covers < 65% of the page height, leaving a
+# visible blank region at the bottom.  A page where the content ends at 64% of
+# the page height (36% blank below the last block) is perceptually incomplete —
+# a human reading it sees an unfinished page.  The threshold must be ABOVE the
+# current fill of any page that a renderer fix should target; we do not lower it
+# to accommodate pages we have not yet properly fixed.
+_SPARSE_FILL_THRESHOLD = 0.65         # content fills < 65% of page height
 _SPARSE_PREV_PAGE_MIN_FILL = 0.75     # previous page must be ≥ 75% full
 _SPARSE_MIN_LINES = 18                # page must have ≥ 18 content lines
 
