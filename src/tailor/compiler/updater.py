@@ -1124,8 +1124,13 @@ def _find_header_skills_block(
 
     This block is assumed to be the skills section in templates where skills
     live in the left-column header area (no dedicated section heading).
-    Returns None when header_paras is empty or the last block is the very
-    first block (name/title area — we avoid clobbering the header).
+
+    PROTECTION RULES — identity/title/subtitle is immutable:
+    - The first contiguous non-empty block is always the name/title area.
+    - Any block that is too close to the name block (fewer than 2 empty lines
+      between them) is treated as a subtitle/role line — also protected.
+    - Only a block clearly separated from the name area (≥ 2 index gap after
+      the name block ends) may be used as a skills target.
     """
     if not header_paras:
         return None
@@ -1141,6 +1146,28 @@ def _find_header_skills_block(
     start = end
     while start > 0 and header_paras[start - 1].text.strip():
         start -= 1
+
+    # Find the first non-empty para (start of name/title block)
+    first_ne = next(
+        (i for i, pm in enumerate(header_paras) if pm.text.strip()), None
+    )
+    if first_ne is None:
+        return None
+
+    # Find the end of the name/title block (last index of first contiguous cluster)
+    first_ne_end = first_ne
+    while (first_ne_end + 1 < len(header_paras)
+           and header_paras[first_ne_end + 1].text.strip()):
+        first_ne_end += 1
+
+    # Require at least 2 empty-para positions of separation between the end of
+    # the name/title block and the start of the candidate skills block.  This
+    # prevents the subtitle or role-type line immediately below the name (e.g.
+    # "registered nurse", "Phlebotomist") from being selected as a skills
+    # target — those are protected identity/subtitle lines.
+    # Gap of 2 means: first_ne_end < start - 2, i.e. start >= first_ne_end + 3.
+    if start < first_ne_end + 3:
+        return None
 
     # Don't treat the very first block (name/title, index 0) as skills
     if start == 0:
@@ -1220,6 +1247,20 @@ def _inject_skills_into_header(
         n = len(orig_skill_paras)
         packed = "\n".join(llm_lines[n - 1:])
         llm_lines = list(llm_lines[: n - 1]) + [packed]
+
+    # In layout-bound mode: cap each skill line to prevent excessive column
+    # expansion when the original header skill slots are narrow placeholders
+    # (e.g. 'Python', 6 chars).  The cap is max(orig_len * 3, 60) so that
+    # the injected text stays within a reasonable proportion of the original
+    # slot width and does not cause multi-line wrapping that crowds adjacent
+    # header regions.
+    if layout_bound:
+        for j, line in enumerate(llm_lines):
+            orig_len = len(orig_skill_paras[min(j, len(orig_skill_paras) - 1)].text.strip())
+            max_chars = max(orig_len * 3, 60)
+            if len(line) > max_chars:
+                cut = line.rfind(" ", 0, max_chars)
+                llm_lines[j] = line[:cut] if cut > 0 else line[:max_chars]
 
     arch = _clear_left_indent(orig_skill_paras[0])
     new_skill_paras: list[ParaModel] = []
@@ -2382,9 +2423,13 @@ def _find_summary_anchors(
     if not trailing:
         return None
 
-    # Two or more empty slots: use last two (heading_anchor, body_anchor).
+    # Two or more empty slots: use the FIRST two (heading_anchor, body_anchor).
+    # Using the first two slots (immediately after name/title) places the summary
+    # right below the candidate's name, minimising vertical whitespace between
+    # the name and the summary.  The remaining empty slots act as natural spacers
+    # before the table/body that follows — giving a visually tight header block.
     if len(trailing) >= 2:
-        return trailing[-2], trailing[-1]
+        return trailing[0], trailing[1]
 
     # Single empty slot: use as body_anchor only; heading_anchor=None means
     # the inserted section has no heading para (renders as prose block only).
