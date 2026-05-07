@@ -46,7 +46,35 @@ _log = logging.getLogger(__name__)
 # Paragraph text replacement (in cloned XML)
 # ---------------------------------------------------------------------------
 
+def _strip_non_column_section_break(p_elem) -> None:
+    """Remove w:sectPr from paragraph pPr ONLY when it does not define a multi-column layout.
+
+    Section properties embedded in a paragraph's pPr mark the end of a document
+    section.  When those sectPr entries merely switch page size (single-column,
+    w:cols absent or w:num="1"), they act as pure page-break markers and should
+    be stripped from the rendered output — otherwise the section boundary creates
+    an unwanted hard page break even when the content could flow naturally.
+
+    Multi-column sectPr (w:cols w:num ≥ 2) are intentionally preserved so that
+    templates with newspaper-style column layouts (e.g. sample 31 with 2- or
+    3-column sections) retain their visual structure.
+    """
+    pPr = p_elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        return
+    sectPr = pPr.find(f"{{{_W}}}sectPr")
+    if sectPr is None:
+        return
+    cols = sectPr.find(f"{{{_W}}}cols")
+    if cols is not None:
+        num = cols.get(f"{{{_W}}}num")
+        if num is not None and int(num) >= 2:
+            return  # multi-column layout — keep sectPr intact
+    pPr.remove(sectPr)
+
+
 def _strip_section_break(p_elem) -> None:
+    """Remove ALL w:sectPr from paragraph pPr unconditionally (used in non-layout path)."""
     pPr = p_elem.find(f"{{{_W}}}pPr")
     if pPr is not None:
         sectPr = pPr.find(f"{{{_W}}}sectPr")
@@ -957,53 +985,6 @@ def _render_from_layout_blocks(
             unbound_count,
         )
 
-    # Build the set of para_ids that are REAL job role headers inside experience
-    # sections.  Only these get w:keepNext — not contact-info lines or other
-    # pipe-separated header-area paragraphs that also carry semantic="role_header".
-    #
-    # Additional guard: only role headers that contain a pipe separator (|) are
-    # eligible.  This filters out date-only entries like "2014-2016" (date-first
-    # templates) which are also classified as role_header but are not company/role
-    # headers in the traditional sense — applying keepNext to them can cascade into
-    # unexpected extra pages.
-    _exp_role_header_pids: set[str] = set()
-    for _sec in doc.sections:
-        if _sec.semantic_type == "experience":
-            for _role in _sec.roles:
-                if _role.header.para_id and "|" in _role.header.text:
-                    _exp_role_header_pids.add(_role.header.para_id)
-    _log.debug(
-        "KEEP_NEXT_CANDIDATE_PIDS: %d experience role headers identified (pipe-separated only)",
-        len(_exp_role_header_pids),
-    )
-
-    # Also chain keepNext to the paragraph IMMEDIATELY AFTER each role header
-    # when that paragraph is a non-bullet companion (e.g. dates on a second line).
-    # Without this chain, a 2-line role header (title / dates) stays together on
-    # page N while its bullets start on page N+1 — the same orphan-header problem
-    # in a different form.  The chain title→dates→first-bullet keeps all three on
-    # the same page.
-    _exp_role_companion_pids: set[str] = set()
-    _blocks_seq = list(doc.layout_blocks)  # type: ignore[union-attr]
-    for _bi, _blk in enumerate(_blocks_seq):
-        if (
-            isinstance(_blk, LayoutParagraphBlock)
-            and _blk.para_id in _exp_role_header_pids
-            and _bi + 1 < len(_blocks_seq)
-        ):
-            _next_blk = _blocks_seq[_bi + 1]
-            if isinstance(_next_blk, LayoutParagraphBlock) and _next_blk.para_id:
-                _next_pm = para_lookup.get(_next_blk.para_id)
-                if _next_pm and _next_blk.para_id not in _exp_role_header_pids:
-                    _nxt = _next_pm.text.strip()
-                    if _nxt and not _nxt[0] in "••-*·▪":
-                        _exp_role_companion_pids.add(_next_blk.para_id)
-    _log.debug(
-        "KEEP_NEXT_COMPANION_PIDS: %d date/company companion paragraphs chained",
-        len(_exp_role_companion_pids),
-    )
-    _keep_next_pids = _exp_role_header_pids | _exp_role_companion_pids
-
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
             tbl_elem = etree.fromstring(block.xml_proto_xml)
@@ -1044,26 +1025,18 @@ def _render_from_layout_blocks(
                         block.para_id,
                     )
                     continue
-                # Orphan-header prevention: real job role headers (inside experience
-                # sections) get w:keepNext so they cannot be stranded at the bottom
-                # of a page while their bullets appear on a sparse continuation page.
-                # Only experience role headers are targeted — not contact-info lines
-                # or other pipe-separated paragraphs with semantic="role_header".
-                if block.para_id and block.para_id in _keep_next_pids:
-                    _ensure_keep_next(elem)
+                pass  # (keepNext injection removed — was causing extra pages)
             else:
                 elem = etree.fromstring(block.xml_proto_xml)
                 _strip_last_rendered_page_breaks(elem)
-                # Column breaks and embedded sectPr are intentionally preserved.
+                # Strip single-column sectPr (page-size-only section breaks) to prevent
+                # stale section boundaries from creating forced page breaks.  Multi-column
+                # sectPr (w:cols w:num≥2) are preserved for newspaper-style column layouts.
+                _strip_non_column_section_break(elem)
                 pm = para_lookup.get(block.para_id) if block.para_id else None
                 if pm is not None:
                     _set_para_text(elem, pm.text)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
-                    # Orphan-header prevention: real job role headers (inside experience
-                    # sections) get w:keepNext so they cannot be stranded at the bottom
-                    # of a page while their bullets appear on a sparse continuation page.
-                    if block.para_id and block.para_id in _keep_next_pids:
-                        _ensure_keep_next(elem)
                 else:
                     if block.para_id:
                         _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)

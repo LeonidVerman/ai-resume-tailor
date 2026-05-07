@@ -403,53 +403,39 @@ class TestSample1RendererAndGrader:
             f"got {grade.facts.get('generated_pages')}"
         )
 
-    def test_sample1_keepnext_in_rendered_docx(self):
-        """Rendered DOCX must contain w:keepNext on experience role-header paragraphs."""
-        from docx import Document
-        _WN = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-        rendered = str(
-            _ROOT / "tmp/artefacts/rendering/docx/1-Leonid_Verman_Resume_Template.docx"
-        )
-        doc = Document(rendered)
-        body = doc.element.body
-        keep_next_paras = [
-            p for p in body.findall(f".//{{{_WN}}}p")
-            if p.find(f".//{{{_WN}}}keepNext") is not None
-        ]
-        assert len(keep_next_paras) > 0, (
-            "No w:keepNext found in rendered DOCX — orphan-header prevention not applied"
-        )
-        fitechsource_with_keepnext = [
-            p for p in keep_next_paras
-            if "FitechSource" in "".join(r.text or "" for r in p.findall(f".//{{{_WN}}}t"))
-        ]
-        assert fitechsource_with_keepnext, (
-            "FitechSource role header must have w:keepNext to prevent orphan at page bottom"
-        )
+    def test_sample1_section_break_stripped_from_mentored_bullet(self):
+        """The sectPr embedded in the Mentored bullet paragraph must be removed.
 
-    def test_sample1_companion_keepnext_in_rendered_docx(self):
-        """Date companion paragraphs following role headers must also have w:keepNext."""
+        The original template has a page-size-switching section break (US Letter → A4)
+        inside the Mentored bullet's pPr.  When the LLM-generated content is slightly
+        longer than the template, Mentored overflows to a new page and the section break
+        creates a spurious page 3 (FitechSource isolated on page 3).  Stripping this
+        sectPr allows LibreOffice to flow content naturally: Mentored + FitechSource
+        both land on page 2 in the LibreOffice rendering.
+        """
         from docx import Document
+        from lxml import etree
         _WN = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
         rendered = str(
             _ROOT / "tmp/artefacts/rendering/docx/1-Leonid_Verman_Resume_Template.docx"
         )
         doc = Document(rendered)
-        _W_NS = f"{{{_WN}}}"
-        paras = doc.element.body.findall(f".//{_W_NS}p")
-        # Find the dates companion paragraph immediately after FitechSource header
-        for i, p in enumerate(paras):
-            text = "".join(r.text or "" for r in p.findall(f".//{_W_NS}t"))
-            if "FitechSource" in text and i + 1 < len(paras):
-                next_p = paras[i + 1]
-                next_pPr = next_p.find(f"{_W_NS}pPr")
-                has_kn = (
-                    next_pPr is not None
-                    and next_pPr.find(f"{_W_NS}keepNext") is not None
-                )
-                assert has_kn, (
-                    "The paragraph after FitechSource header (date companion) "
-                    "must have w:keepNext to chain header→dates→bullet"
-                )
-                return
-        pytest.skip("FitechSource header not found in rendered DOCX")
+        # No paragraph should have an embedded sectPr with only a page-size switch
+        # (single-column sectPr — w:cols with num absent or num=1).
+        pPr_sectPr_single_col = []
+        for para in doc.paragraphs:
+            pPr = para._p.pPr
+            if pPr is None:
+                continue
+            sectPr = pPr.find(f"{{{_WN}}}sectPr")
+            if sectPr is None:
+                continue
+            cols = sectPr.find(f"{{{_WN}}}cols")
+            num = cols.get(f"{{{_WN}}}num") if cols is not None else None
+            is_multi_col = (num is not None and int(num) >= 2)
+            if not is_multi_col:
+                pPr_sectPr_single_col.append(para.text[:60])
+        assert pPr_sectPr_single_col == [], (
+            f"Single-column sectPr still present in pPr — section break not stripped: "
+            f"{pPr_sectPr_single_col}"
+        )
