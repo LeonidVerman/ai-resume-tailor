@@ -151,7 +151,7 @@ def _compute_page_count_score(
 # B. Blank page
 # ---------------------------------------------------------------------------
 
-def _compute_blank_page_score(
+def _compute_blank_page_score(  # noqa: C901  (complex but cohesive)
     gen_extracted,
     orig_pages: int = 0,
     orig_extracted=None,
@@ -184,8 +184,22 @@ def _compute_blank_page_score(
     trailing_blank = [p for p in blank if p >= last_page]
 
     if middle_blank:
-        evidence.append(f"Blank middle page(s) {middle_blank} -- HARD FAIL")
-        return 0.0, True, evidence, blank
+        # Template-comparison gate: if the original template also has blank
+        # pages at the same positions (e.g. a table-based template that
+        # xhtml2pdf always renders with a blank page 1 because it pushes
+        # the table to a new page), the blank is structural — not a new
+        # rendering defect.  Only hard-fail when the template page was
+        # NOT blank at the same position.
+        _template_blank_set: set[int] = set()
+        if orig_extracted is not None:
+            _template_blank_set = set(_find_blank_pages(orig_extracted))
+        genuine_middle = [p for p in middle_blank if p not in _template_blank_set]
+        if genuine_middle:
+            evidence.append(f"Blank middle page(s) {genuine_middle} -- HARD FAIL")
+            return 0.0, True, evidence, blank
+        if middle_blank:
+            evidence.append(f"Blank middle page(s) {middle_blank} (also blank in template — structural)")
+            return 60.0, False, evidence, blank
 
     if not trailing_blank:
         return 100.0, False, evidence, blank
@@ -422,7 +436,17 @@ def _compute_density_score_from_ir(ir: dict) -> "tuple[float, bool, list[str]]":
         empty_ratio = empty_roles / total_roles
         # HARD FAIL when every experience role has no bullets (≥2 roles) — all
         # experience content was lost during rendering.
-        if empty_ratio == 1.0 and total_roles >= 2:
+        # Exception: some templates store experience content in body_paras rather
+        # than role.bullets (e.g. date-first or condensed layout templates).
+        # When the experience sections have substantial body_para content, the
+        # roles are structural markers, not content containers — not a hard fail.
+        _exp_body_chars = sum(
+            len(bp.get("text", "").strip())
+            for s in exp_sections
+            for bp in s.get("body_paras", [])
+            if len(bp.get("text", "").strip()) > 20
+        )
+        if empty_ratio == 1.0 and total_roles >= 2 and _exp_body_chars < 100:
             hard_fail = True
             evidence.append(
                 f"Density: {empty_roles}/{total_roles} roles have no bullets -- HARD FAIL: "
@@ -603,6 +627,7 @@ def _find_sparse_continuation_pages(
 
 def _compute_sparse_page_score(
     gen_extracted,
+    orig_extracted=None,
 ) -> "tuple[float, bool, list[str]]":
     """Compute a 0–100 sparse-continuation-page score for the generated document.
 
@@ -631,6 +656,21 @@ def _compute_sparse_page_score(
     if not sparse_pages:
         return 100.0, False, evidence
 
+    # Build a lookup from page_number → area_ratio for the original template's
+    # continuation pages.  When a generated sparse page has a structurally sparse
+    # counterpart in the template (area_ratio < hard-fail threshold), the sparseness
+    # is inherited from the template design — not a rendering defect.
+    # NOTE: we cannot rely on _find_sparse_continuation_pages for the template
+    # because it requires ≥ _SPARSE_MIN_LINES lines to fire; templates with very
+    # few continuation lines (e.g. 11 vs threshold 18) would slip through.  Checking
+    # area_ratio directly gives a single consistent metric across both.
+    _template_page_area: dict[int, float] = {}
+    if orig_extracted is not None:
+        for _op in orig_extracted.pages:
+            if _op.page_number > 1:
+                _op_area, *_ = _compute_effective_area_metrics(_op)
+                _template_page_area[_op.page_number] = _op_area
+
     for page_num, fill_frac, bottom_empty, area_ratio, n_lines, n_blocks, nearest_sec in sparse_pages:
         area_pct = area_ratio * 100
         # visual_empty = complement of area_ratio: fraction of page NOT covered by
@@ -640,6 +680,17 @@ def _compute_sparse_page_score(
         # geometrically different metric and is NOT reported here to avoid the
         # contradictory appearance of "23% occupied vs. only 33% empty".
         visual_empty_pct = (1.0 - area_ratio) * 100
+        # Template-comparison gate: if the template's same page has similarly
+        # low area coverage (< hard-fail threshold), the sparse continuation is
+        # structural (the template design inherently produces a sparse page there)
+        # — not a rendering defect introduced by the generated content.
+        _tmpl_area = _template_page_area.get(page_num)
+        if _tmpl_area is not None and _tmpl_area < _SPARSE_HARD_FAIL_AREA_RATIO:
+            evidence.append(
+                f"Sparse continuation page {page_num}: {area_pct:.0f}% coverage "
+                f"(template also sparse at {_tmpl_area * 100:.0f}% — structural)"
+            )
+            continue
         is_hard = area_ratio < _SPARSE_HARD_FAIL_AREA_RATIO
 
         if is_hard:
@@ -678,6 +729,7 @@ _SPARSE_FIRST_PAGE_P2_MIN_AREA   = 0.10   # page 2 must have ≥ 10% area (real 
 
 def _detect_sparse_first_page(
     gen_extracted,
+    orig_extracted=None,
 ) -> "tuple[float, bool, list[str]]":
     """Detect when page 1 is critically sparse while subsequent pages carry content.
 
@@ -686,6 +738,12 @@ def _detect_sparse_first_page(
     score = 0 when triggered, 100 otherwise.
     hard_fail = True when page 1 has < 8% area coverage and ≥ 1 subsequent page
     exists with ≥ 10% area (demonstrating that content was pushed past page 1).
+
+    Template-comparison gate: if the ORIGINAL TEMPLATE also has a sparse first
+    page (area_ratio < threshold), the sparseness is inherent to the template
+    layout structure (e.g. a table-based template where xhtml2pdf always places
+    the table on page 2), not a new defect introduced by the renderer.  In that
+    case the check is suppressed to avoid flagging unavoidable template behaviour.
 
     This catches rendering artefacts such as:
     - A table cell expanding enormously on page 1, leaving it mostly empty while
@@ -700,6 +758,15 @@ def _detect_sparse_first_page(
 
     if ar1 >= _SPARSE_FIRST_PAGE_AREA_THRESHOLD:
         return 100.0, False, []
+
+    # Template comparison: if the original also has a sparse first page,
+    # the condition is structural (inherent to the template + PDF converter)
+    # and not a renderer-introduced defect.
+    if orig_extracted is not None and orig_extracted.pages:
+        orig_page1 = orig_extracted.pages[0]
+        orig_ar1, _, _, _, _ = _compute_effective_area_metrics(orig_page1)
+        if orig_ar1 < _SPARSE_FIRST_PAGE_AREA_THRESHOLD:
+            return 100.0, False, []
 
     # Confirm that subsequent pages carry real content (not all blank)
     max_p2_area = max(
@@ -879,6 +946,23 @@ def _detect_overflow_column_loss(
     for page in gen_extracted.pages[1:]:
         pg_cols = _estimate_page_column_count(page)
         if pg_cols < 2:
+            # Template comparison: if the template's page at the same position
+            # also has 1 column, the column loss is structural (the template
+            # itself never had a multi-column continuation page) — not a defect.
+            if orig_extracted is not None:
+                orig_pages = orig_extracted.pages
+                same_orig_page = next(
+                    (op for op in orig_pages if op.page_number == page.page_number),
+                    None,
+                )
+                if same_orig_page is not None:
+                    orig_pg_cols = _estimate_page_column_count(same_orig_page)
+                    if orig_pg_cols < 2:
+                        evidence.append(
+                            f"Column topology on page {page.page_number}: "
+                            f"1-column (also 1-column in template — structural)"
+                        )
+                        continue  # template already had 1-col here, not a defect
             hard_fail = True
             evidence.append(
                 f"Column topology break on page {page.page_number} (HARD FAIL): "
@@ -969,14 +1053,14 @@ def score_pdf_visual(
     else:
         d_score = 80.0
 
-    sparse_s, sparse_fail, sparse_ev = _compute_sparse_page_score(gen)
+    sparse_s, sparse_fail, sparse_ev = _compute_sparse_page_score(gen, orig_extracted=orig)
     if sparse_fail:
         hard_fail = True
         hard_fail_reasons.append("SPARSE_CONTINUATION_PAGE")
     evidence.extend(sparse_ev)
 
     # G. Sparse first page (content pushed to continuation pages)
-    sfp_score, sfp_fail, sfp_ev = _detect_sparse_first_page(gen)
+    sfp_score, sfp_fail, sfp_ev = _detect_sparse_first_page(gen, orig_extracted=orig)
     if sfp_fail:
         hard_fail = True
         hard_fail_reasons.append("SPARSE_FIRST_PAGE")

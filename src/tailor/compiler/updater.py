@@ -1251,10 +1251,22 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
     - Low comma density (< 0.10) — distinguishes prose from comma-separated skills.
     - Not in a locked or experience section (only skills / 'other' searched).
     """
-    for section in original.sections:
+    _sections = original.sections
+    _CONTACT_AREA_TYPES: frozenset[str] = frozenset({"websites", "contact", "social"})
+    for _si, section in enumerate(_sections):
         if section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             continue
         if section.semantic_type == "experience":
+            continue
+        # Skip sections that are adjacent to websites/contact/social sections.
+        # Those are sidebar/contact areas — injecting the Professional Summary
+        # there would put it inside the Contact block rather than the body.
+        _neighbors = [
+            _sections[j].semantic_type
+            for j in (_si - 1, _si + 1)
+            if 0 <= j < len(_sections)
+        ]
+        if any(nt in _CONTACT_AREA_TYPES for nt in _neighbors):
             continue
         for p in section.body_paras:
             text = p.text.strip()
@@ -2359,6 +2371,24 @@ def _find_summary_anchors(
     if not trailing:
         return None
 
+    # Safety guard for table-heavy templates: all candidate anchors are empty
+    # (currently contributing zero visible height).  Injecting a summary heading
+    # + body paragraph into them creates visible paragraphs where there were none,
+    # pushing the table that follows to a new page and leaving page 1 sparse.
+    # When the document's primary content lives in TableBlocks, skip anchored
+    # summary insertion so the table stays on page 1.
+    _has_table_content = (
+        doc.body_items is not None
+        and any(isinstance(item, TableBlock) for item in doc.body_items)
+    )
+    if _has_table_content and all(not pm.text.strip() for pm in trailing):
+        _log.debug(
+            "SUMMARY_ANCHORS_SKIPPED_TABLE_LAYOUT: %d empty slots found but "
+            "inserting into them would push table to page 2 (table-heavy template)",
+            len(trailing),
+        )
+        return None
+
     # Two or more empty slots: use last two (heading_anchor, body_anchor).
     if len(trailing) >= 2:
         return trailing[-2], trailing[-1]
@@ -3300,6 +3330,74 @@ def apply_tailored(
         and any(isinstance(i, TableBlock) for i in original.body_items)
     )
 
+    # For table-heavy templates, the layout-blocks renderer reads bullet/body_para
+    # text from doc.sections (via _build_para_lookup), NOT from body_items.
+    # _update_role packs extra LLM bullets into the last slot (for layout_bound),
+    # creating oversized text that expands the table cell and pushes content to
+    # page 2 (sparse first page).  Cap bullet and body_para text to original
+    # template lengths so the table cell height stays within the template's bounds.
+    if has_table_blocks and new_sections:
+        _orig_bullet_len: dict[str, int] = {}
+        _orig_bp_len: dict[str, int] = {}
+        for _orig_s in original.sections:
+            if _orig_s.semantic_type in _LOCKED_SEMANTIC_TYPES:
+                continue
+            for _orig_r in _orig_s.roles:
+                for _ob in _orig_r.bullets:
+                    if _ob.para_id:
+                        _orig_bullet_len[_ob.para_id] = len(_ob.text.strip())
+            for _obp in _orig_s.body_paras:
+                if _obp.para_id and _obp.text.strip():
+                    _orig_bp_len[_obp.para_id] = len(_obp.text.strip())
+
+        for _ns in new_sections:
+            if _ns.semantic_type in _LOCKED_SEMANTIC_TYPES:
+                continue
+            # Cap experience bullets.
+            for _nr in _ns.roles:
+                _capped_bullets: list[ParaModel] = []
+                _bullet_changed = False
+                for _nb in _nr.bullets:
+                    _olen = _orig_bullet_len.get(_nb.para_id, 0)
+                    _bmax = max(_olen, 60) if _olen > 0 else 0
+                    if _bmax > 0 and len(_nb.text) > _bmax:
+                        _bcut = _nb.text.rfind(" ", 0, _bmax)
+                        _capped_bullets.append(_nb.with_text(
+                            _nb.text[:_bcut] if _bcut > 0 else _nb.text[:_bmax]
+                        ))
+                        _bullet_changed = True
+                    else:
+                        _capped_bullets.append(_nb)
+                if _bullet_changed:
+                    _nr.bullets = _capped_bullets
+            # Cap non-experience, non-summary body_paras.
+            # Use the ORIGINAL template para length as the cap (no floor):
+            # Table cells have a fixed physical width; capping at the original
+            # length ensures each para fits in the same number of visual lines
+            # as the template, preventing cell-height growth and page overflow.
+            # Summary sections are excluded: they typically occupy full-width
+            # cells where expansion doesn't cause overflow; and the user expects
+            # the full LLM summary to appear verbatim.
+            # Both sides use stripped length to avoid trailing-whitespace false
+            # positives where a verbatim section's trailing-space para would
+            # incorrectly trigger the cap (e.g. "[Available upon request] ").
+            if _ns.semantic_type not in ("experience", "summary") and _orig_bp_len:
+                _capped_bps: list[ParaModel] = []
+                _bp_changed = False
+                for _nbp in _ns.body_paras:
+                    _olen = _orig_bp_len.get(_nbp.para_id, 0)
+                    if _olen > 0 and len(_nbp.text.strip()) > _olen:
+                        _bpcut = _nbp.text.rfind(" ", 0, _olen)
+                        _capped_bps.append(_nbp.with_text(
+                            _nbp.text[:_bpcut] if _bpcut > 0 else _nbp.text[:_olen]
+                        ))
+                        _bp_changed = True
+                    else:
+                        _capped_bps.append(_nbp)
+                if _bp_changed:
+                    _ns.body_paras = _capped_bps
+        _log.debug("TABLE_CELL_CAP: applied to new_sections for table-heavy template")
+
     # Injectable extras: LLM summary sections that have no matching template section
     # but can be placed into an existing intro-prose paragraph in-place.
     # This handles templates where the intro sits inside an unnamed body paragraph
@@ -3330,7 +3428,16 @@ def apply_tailored(
         # so _render_table_block picks up the new text from tb.para_models.
         # When extras are injectable summaries with a target, we also update the
         # intro-prose paragraph so the template's existing prose gets replaced.
-        for orig_section, llm_section in match.pairs:
+        _sections_for_neighbor_check = original.sections
+        _CONTACT_NEIGHBOR_TYPES: frozenset[str] = frozenset({"websites", "contact", "social"})
+
+        # Character limit for experience bullets in table templates.
+        # Table cells have fixed dimensions; excessively long bullets expand
+        # the cell and push the table to a new page.  Using the original bullet
+        # length (capped to a minimum of 160 chars) keeps cell height manageable.
+        _TABLE_BULLET_MAX_CHARS = 160
+
+        for _si, (orig_section, llm_section) in enumerate(match.pairs):
             if llm_section is None:
                 continue
             if orig_section.semantic_type in _LOCKED_SEMANTIC_TYPES:
@@ -3349,6 +3456,18 @@ def apply_tailored(
             if cls_sec is None or not cls_sec.preserve_heading:
                 orig_section.heading.text = llm_section.heading
 
+            # Determine whether this section is adjacent to a contact/websites section.
+            # Used below to filter professional-summary-length lines that leaked
+            # into the contact/sidebar cell (e.g. when the LLM bundles contact +
+            # summary into one unnamed section matched to the sidebar section).
+            _adj_contact = any(
+                _sections_for_neighbor_check[j].semantic_type in _CONTACT_NEIGHBOR_TYPES
+                for j in (_si - 1, _si + 1)
+                if 0 <= j < len(_sections_for_neighbor_check)
+            )
+            # Threshold: lines longer than this are summary-sentences, not contact info.
+            _CONTACT_LINE_MAX = 80
+
             if orig_section.semantic_type == "experience":
                 llm_roles = llm_section.roles or []
                 if cls_sec is not None:
@@ -3356,6 +3475,11 @@ def apply_tailored(
                     for i, o_role in enumerate(orig_section.roles):
                         if i < len(llm_roles):
                             for o_b, n_b in zip(o_role.bullets, llm_roles[i].bullets):
+                                if has_table_blocks:
+                                    max_blen = max(len(o_b.text.strip()), 60)
+                                    if len(n_b) > max_blen:
+                                        cutoff = n_b.rfind(" ", 0, max_blen)
+                                        n_b = n_b[:cutoff] if cutoff > 0 else n_b[:max_blen]
                                 o_b.text = n_b
                         # else: keep verbatim
                 else:
@@ -3365,26 +3489,86 @@ def apply_tailored(
                         for o_m, n_m in zip(o_role.meta_lines, n_role.meta_lines):
                             o_m.text = n_m
                         for o_b, n_b in zip(o_role.bullets, n_role.bullets):
+                            # For table templates: cap bullet at the original
+                            # bullet length (minimum 60 chars) to prevent the
+                            # experience cell from expanding and causing overflow.
+                            if has_table_blocks:
+                                max_blen = max(len(o_b.text.strip()), 60)
+                                if len(n_b) > max_blen:
+                                    cutoff = n_b.rfind(" ", 0, max_blen)
+                                    n_b = n_b[:cutoff] if cutoff > 0 else n_b[:max_blen]
                             o_b.text = n_b
             else:
                 non_empty_orig = [p for p in orig_section.body_paras if p.text.strip()]
                 llm_lines = [l for l in llm_section.body_lines if l.strip()]
                 if orig_section.semantic_type == "skills":
                     llm_lines = _sanitize_skills_lines(llm_lines)
+                # For sections adjacent to contact/websites: filter out long lines
+                # (professional summary sentences that leaked from the LLM's header
+                # block into the contact/sidebar section via section matching).
+                if _adj_contact:
+                    llm_lines = [l for l in llm_lines if len(l) <= _CONTACT_LINE_MAX]
                 # Both classified (preserve_body_structure) and unclassified paths
                 # update only as many paras as exist (zip stops at shorter list).
                 for o_p, new_text in zip(non_empty_orig, llm_lines):
+                    # For non-contact sections in table templates, cap body_para
+                    # length to the ORIGINAL para length (allowing a small minimum
+                    # of 40 chars).  Table cells have fixed dimensions; allowing
+                    # para growth beyond the original template causes cells to
+                    # expand and push the table to a new page (sparse first page).
+                    if has_table_blocks and not _adj_contact:
+                        max_len = max(len(o_p.text.strip()), 40)
+                        if len(new_text) > max_len:
+                            cut = new_text.rfind(" ", 0, max_len)
+                            new_text = new_text[:cut] if cut > 0 else new_text[:max_len]
                     o_p.text = new_text
+                # For contact-adjacent sections: clear any leftover template paras
+                # that the LLM did not update (template had more paras than the LLM
+                # provided short lines).  Only clear paras whose ORIGINAL text is
+                # long (> _CONTACT_LINE_MAX chars) — those are summary/prose content
+                # that accidentally lives in the contact/sidebar of the template.
+                # Short paras (contact info labels etc.) are preserved verbatim.
+                if _adj_contact and len(llm_lines) < len(non_empty_orig):
+                    for o_p in non_empty_orig[len(llm_lines):]:
+                        if len(o_p.text.strip()) > _CONTACT_LINE_MAX:
+                            o_p.text = ""
 
         # Inject summary text into the intro-prose paragraph.
         # intro_para is guaranteed non-None here (checked in has_unhandled_extras above).
         if intro_para is not None:
-            for extra_llm in injectable_extras:
-                summary_text = " ".join(l for l in extra_llm.body_lines if l.strip())
-                intro_para.text = summary_text
+            # Guard 1: in layout-bound mode, if the anchored summary insertion
+            # already created a sec_summary_inserted section, skip the
+            # intro-prose injection.  Without this guard the summary appears
+            # twice — once as an anchored structural section and once as an
+            # in-place text overwrite of the intro-prose paragraph — causing
+            # the table cell (sec_4 / similar) to expand with duplicate text.
+            _summary_already_anchored = _layout_bound and any(
+                getattr(s, "section_id", "") == "sec_summary_inserted"
+                for s in new_sections
+            )
+            # Guard 2: in layout-bound table-heavy templates where anchored
+            # summary insertion was intentionally skipped (table-overflow
+            # prevention), also block the intro-prose injection.  Without this
+            # guard, the injection falls back to skills/tasks paragraphs (which
+            # pass the intro-prose criteria) and injects the summary there,
+            # expanding the table cell and still producing a sparse first page.
+            _table_heavy_no_anchor = (
+                _layout_bound
+                and has_table_blocks
+                and not _summary_already_anchored
+            )
+            if not _summary_already_anchored and not _table_heavy_no_anchor:
+                for extra_llm in injectable_extras:
+                    summary_text = " ".join(l for l in extra_llm.body_lines if l.strip())
+                    intro_para.text = summary_text
+                    _log.debug(
+                        "apply_tailored: injected summary into intro-prose para "
+                        "(first 60 chars: %r)", summary_text[:60]
+                    )
+            else:
                 _log.debug(
-                    "apply_tailored: injected summary into intro-prose para "
-                    "(first 60 chars: %r)", summary_text[:60]
+                    "apply_tailored: skipped intro-prose injection — summary "
+                    "already placed via anchored sec_summary_inserted"
                 )
 
     # Final structural integrity check — scan all_paras for lingering unbound content.

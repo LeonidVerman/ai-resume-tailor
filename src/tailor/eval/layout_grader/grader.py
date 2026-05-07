@@ -452,7 +452,11 @@ def grade_sample(
             if "BLANK_PAGE_CONTENT_LOSS" in pdf_result.hard_fail_reasons:
                 if "B_BLANK_PAGE_CONTENT_LOSS" not in failure_classes:
                     failure_classes.append("B_BLANK_PAGE_CONTENT_LOSS")
-            if "COLUMN_LAYOUT_LOST" in pdf_result.hard_fail_reasons:
+            # Only add F_TOPOLOGY_COLLAPSE from PDF column detection when the
+            # DOCX comparator confirmed native Word columns (w:cols) were present.
+            # Without native columns, the PDF x-clustering may reflect table
+            # column patterns or indentation — not a true column layout loss.
+            if "COLUMN_LAYOUT_LOST" in pdf_result.hard_fail_reasons and _docx_has_orig_cols:
                 if "F_TOPOLOGY_COLLAPSE" not in failure_classes:
                     failure_classes.append("F_TOPOLOGY_COLLAPSE")
             if pdf_result.region_score < 60:
