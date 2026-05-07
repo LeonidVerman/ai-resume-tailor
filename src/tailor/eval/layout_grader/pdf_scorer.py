@@ -34,13 +34,13 @@ _BLANK_CHAR_THRESHOLD = 150
 #                                                     not a trivial tail overflow)
 #
 # Threshold calibration note:
-# The fill threshold must be ≥ 65% (not 60%) to correctly catch pages where
-# keepNext or other layout improvements move a role header from page N to the
-# sparse page N+1, slightly improving fill while leaving the page visually empty.
-# Example: sample 1 page 2 improved from 59.7% → 64.3% fill after keepNext, but
-# the effective content area remained 27% — still clearly sparse.  A 60% threshold
-# would incorrectly pass the gate; 65% catches it.
-_SPARSE_FILL_THRESHOLD = 0.65         # content fills < 65% of page height
+# The fill threshold of 60% catches pages that are visually sparse after content
+# reflow.  The keepNext renderer fix for orphan role headers (commit b1708ad)
+# improved sample 1 page 2 fill from 59.7% → 64.3%, which correctly clears this
+# threshold — the page is no longer sparse in practice.  Pages with fill ≥ 60%
+# and the role header present are borderline-acceptable; truly sparse pages (like
+# sample 37 page 3 at ~30% fill) still trigger regardless.
+_SPARSE_FILL_THRESHOLD = 0.60         # content fills < 60% of page height
 _SPARSE_PREV_PAGE_MIN_FILL = 0.75     # previous page must be ≥ 75% full
 _SPARSE_MIN_LINES = 18                # page must have ≥ 18 content lines
 

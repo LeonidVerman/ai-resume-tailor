@@ -871,6 +871,33 @@ def _render_from_layout_blocks(
         len(_exp_role_header_pids),
     )
 
+    # Also chain keepNext to the paragraph IMMEDIATELY AFTER each role header
+    # when that paragraph is a non-bullet companion (e.g. dates on a second line).
+    # Without this chain, a 2-line role header (title / dates) stays together on
+    # page N while its bullets start on page N+1 — the same orphan-header problem
+    # in a different form.  The chain title→dates→first-bullet keeps all three on
+    # the same page.
+    _exp_role_companion_pids: set[str] = set()
+    _blocks_seq = list(doc.layout_blocks)  # type: ignore[union-attr]
+    for _bi, _blk in enumerate(_blocks_seq):
+        if (
+            isinstance(_blk, LayoutParagraphBlock)
+            and _blk.para_id in _exp_role_header_pids
+            and _bi + 1 < len(_blocks_seq)
+        ):
+            _next_blk = _blocks_seq[_bi + 1]
+            if isinstance(_next_blk, LayoutParagraphBlock) and _next_blk.para_id:
+                _next_pm = para_lookup.get(_next_blk.para_id)
+                if _next_pm and _next_blk.para_id not in _exp_role_header_pids:
+                    _nxt = _next_pm.text.strip()
+                    if _nxt and not _nxt[0] in "••-*·▪":
+                        _exp_role_companion_pids.add(_next_blk.para_id)
+    _log.debug(
+        "KEEP_NEXT_COMPANION_PIDS: %d date/company companion paragraphs chained",
+        len(_exp_role_companion_pids),
+    )
+    _keep_next_pids = _exp_role_header_pids | _exp_role_companion_pids
+
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
             tbl_elem = etree.fromstring(block.xml_proto_xml)
@@ -916,7 +943,7 @@ def _render_from_layout_blocks(
                 # of a page while their bullets appear on a sparse continuation page.
                 # Only experience role headers are targeted — not contact-info lines
                 # or other pipe-separated paragraphs with semantic="role_header".
-                if block.para_id and block.para_id in _exp_role_header_pids:
+                if block.para_id and block.para_id in _keep_next_pids:
                     _ensure_keep_next(elem)
             else:
                 elem = etree.fromstring(block.xml_proto_xml)
@@ -929,7 +956,7 @@ def _render_from_layout_blocks(
                     # Orphan-header prevention: real job role headers (inside experience
                     # sections) get w:keepNext so they cannot be stranded at the bottom
                     # of a page while their bullets appear on a sparse continuation page.
-                    if block.para_id and block.para_id in _exp_role_header_pids:
+                    if block.para_id and block.para_id in _keep_next_pids:
                         _ensure_keep_next(elem)
                 else:
                     if block.para_id:
