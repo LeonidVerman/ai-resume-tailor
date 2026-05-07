@@ -665,6 +665,60 @@ def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> 
         body.append(clone)
 
 
+def _zero_para_spacing(p_elem) -> None:
+    """Strip vertical spacing from an empty spacer paragraph.
+
+    Applied to empty paragraphs that follow the summary body anchor and precede
+    the main table content (samples 13/14).  Zeroing space_before + space_after
+    compresses the whitespace gap between the header summary and the table,
+    allowing the table to start on page 1 rather than being pushed to page 2.
+    """
+    from lxml import etree as _etree
+    pPr = p_elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        pPr = _etree.SubElement(p_elem, f"{{{_W}}}pPr")
+        p_elem.insert(0, pPr)
+    spacing = pPr.find(f"{{{_W}}}spacing")
+    if spacing is None:
+        spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
+    spacing.set(f"{{{_W}}}before", "0")
+    spacing.set(f"{{{_W}}}after", "0")
+    spacing.set(f"{{{_W}}}line", "240")
+    spacing.set(f"{{{_W}}}lineRule", "auto")
+
+
+def _make_inline_summary_para(reference_p_elem, text: str):
+    """Create a <w:p> for inline summary injection.
+
+    Clones the reference paragraph's XML structure (to inherit cell/section
+    context), then strips heading-style and keepNext properties so the injected
+    paragraph uses default body formatting, and sets the summary text.
+    """
+    from copy import deepcopy as _dc
+    from lxml import etree as _etree
+    new_p = _dc(reference_p_elem)
+    pPr = new_p.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        pPr = _etree.SubElement(new_p, f"{{{_W}}}pPr")
+        new_p.insert(0, pPr)
+    # Remove heading paragraph style so it inherits default body font
+    pStyle = pPr.find(f"{{{_W}}}pStyle")
+    if pStyle is not None:
+        pPr.remove(pStyle)
+    # Remove keepNext (avoids gluing summary to the next para)
+    for kn in pPr.findall(f"{{{_W}}}keepNext"):
+        pPr.remove(kn)
+    # Add a small spacing_after so the summary breathes slightly
+    spacing = pPr.find(f"{{{_W}}}spacing")
+    if spacing is None:
+        spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
+    spacing.set(f"{{{_W}}}after", "80")   # ~4pt
+    spacing.set(f"{{{_W}}}line", "240")
+    spacing.set(f"{{{_W}}}lineRule", "auto")
+    _set_para_text(new_p, text)
+    return new_p
+
+
 # ---------------------------------------------------------------------------
 # Numbering patch helpers
 # ---------------------------------------------------------------------------
@@ -985,12 +1039,33 @@ def _render_from_layout_blocks(
             unbound_count,
         )
 
+    # Inline summary injection: the updater sets _inline_summary_pid / _text when no
+    # trailing empty header slots exist (e.g. sample 11 table-based template).
+    _inline_pid: str | None = getattr(doc, "_inline_summary_pid", None)
+    _inline_text: str | None = getattr(doc, "_inline_summary_text", None)
+
+    # Post-summary spacer compression: find the summary body anchor para_id so
+    # the renderer can zero-out spacing on subsequent empty paras (samples 13/14).
+    # This prevents a chain of empty spacer paras from pushing the table to page 2.
+    _summary_body_pid: str | None = next(
+        (s.body_paras[-1].para_id
+         for s in doc.sections
+         if getattr(s, "section_id", "") == "sec_summary_inserted"
+         and s.body_paras and s.body_paras[-1].para_id),
+        None,
+    )
+    _compress_remaining: int = 0  # count of subsequent empty paras still to compress
+
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
             tbl_elem = etree.fromstring(block.xml_proto_xml)
             all_p = tbl_elem.findall(f".//{{{_W}}}p")
             patched = 0
+            # Build a map from para_id to XML element for inline injection
+            pid_to_pelem: dict[str, Any] = {}
             for para_id, p_elem in zip(block.para_ids, all_p):
+                if para_id:
+                    pid_to_pelem[para_id] = p_elem
                 pm = para_lookup.get(para_id)
                 if pm is not None:
                     _set_para_text(p_elem, pm.text)
@@ -1002,6 +1077,20 @@ def _render_from_layout_blocks(
                 "TABLE_BLOCK_XML_PATCHED: table_id=%r  patched=%d/%d",
                 block.table_id, patched, len(block.para_ids),
             )
+            # Inline summary injection: insert new paragraph after the target
+            # para in the table XML (for templates where the title is the last
+            # header_para and there are no trailing empty slots, e.g. sample 11).
+            if _inline_pid and _inline_text and _inline_pid in pid_to_pelem:
+                _ref_p = pid_to_pelem[_inline_pid]
+                _new_p = _make_inline_summary_para(_ref_p, _inline_text)
+                _ref_p.addnext(_new_p)
+                _inline_pid = None  # consume once
+                _log.debug(
+                    "INLINE_SUMMARY_INJECTED: new para inserted after para_id=%r",
+                    getattr(doc, "_inline_summary_pid", "?"),
+                )
+            # Once we hit a table block, stop compressing spacers (table started).
+            _compress_remaining = 0
             elem: Any = tbl_elem
 
         else:
@@ -1041,6 +1130,25 @@ def _render_from_layout_blocks(
                     if block.para_id:
                         _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)
                     # Structural/orphan paragraph — insert verbatim (original text kept)
+
+            # Post-summary spacer compression: once the summary body anchor para
+            # has been rendered, compress the spacing of subsequent empty paras.
+            # This prevents a cluster of empty spacers from pushing the resume table
+            # to page 2 (samples 13/14).  Compression stops at the first non-empty
+            # para or when the counter exhausts.
+            if block.para_id == _summary_body_pid:
+                _compress_remaining = 8  # compress up to 8 following empty paras
+            elif _compress_remaining > 0:
+                _para_text = (pm.text.strip() if pm else "").strip()
+                if not _para_text:
+                    _zero_para_spacing(elem)
+                    _compress_remaining -= 1
+                    _log.debug(
+                        "SUMMARY_SPACER_COMPRESSED: para_id=%r spacing zeroed",
+                        block.para_id,
+                    )
+                else:
+                    _compress_remaining = 0  # non-empty para: stop compressing
 
         if sectPr is not None:
             sectPr.addprevious(elem)

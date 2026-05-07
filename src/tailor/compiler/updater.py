@@ -3044,6 +3044,12 @@ def apply_tailored(
     # unconditionally regardless of which path (fast/extras) was taken.
     _summary_anchors: "tuple[ParaModel, ParaModel] | None" = None
 
+    # Inline summary injection target: used when no trailing empty header slots
+    # exist (e.g. table-based templates whose last header_para is a title line
+    # like "registered nurse").  The renderer inserts a new paragraph directly
+    # after this para_id in the table XML.
+    _inline_summary: "tuple[str, str] | None" = None  # (target_pid, summary_text)
+
     if not match.extras:
         # ---- Fast path: no extras, keep original section order ----
         new_sections: list[ResumeSection] = []
@@ -3169,6 +3175,24 @@ def apply_tailored(
                         anchored.body_paras[0].para_id if anchored.body_paras else None,
                     )
                 elif llm_s.semantic_type == "summary":
+                    # No trailing empty header slots.  For table-based templates
+                    # (layout_blocks present) record a target para_id so the renderer
+                    # can inject the summary directly into the table XML — after the
+                    # last non-empty header para (e.g. "registered nurse" title).
+                    if original.layout_blocks is not None and _inline_summary is None:
+                        _last_ne_pid = next(
+                            (pm.para_id for pm in reversed(original.header_paras)
+                             if pm.text.strip() and pm.para_id),
+                            None,
+                        )
+                        if _last_ne_pid:
+                            _stext = _clean_summary_text(llm_s.body_lines)
+                            if _stext:
+                                _inline_summary = (_last_ne_pid, _stext)
+                                _log.debug(
+                                    "SUMMARY_INLINE_INJECTION_REGISTERED: after para_id=%r",
+                                    _last_ne_pid,
+                                )
                     _log.debug(
                         "SUMMARY_INSERTION_SKIPPED_NO_ANCHORS: %r", llm_s.heading
                     )
@@ -3444,18 +3468,35 @@ def apply_tailored(
             # Overflow to a second page is acceptable; truncated bullets lose meaning.
             # (Previous cap: max(orig_len, 60).  Removed per content-preservation policy.)
             #
-            # Cap non-experience, non-summary, non-skills body_paras.
-            # Skills sections (semantic_type "skills", or sections whose title contains
-            # "skill" — e.g. "Skills & Abilities") are excluded: their content must be
-            # placed verbatim rather than clipped to the narrow original placeholder
-            # length (e.g. "Clinical" at 8 chars would destroy categorical skill lines).
-            # Summary sections are excluded: full-width cells where the user expects the
-            # complete LLM summary.  Experience sections are handled via roles/bullets.
-            # Both sides use stripped length to avoid trailing-whitespace false positives.
+            # Skills sections in table cells: apply a moderate cap of max(orig_len*2, 60).
+            # This allows 2× the original content (meaningful improvement over the original
+            # severe cap at orig_len) while preventing the narrow left sidebar cell from
+            # growing so large that it causes column layout collapse or table ejection to
+            # page 2.  Full skills in unconstrained (non-table) templates are never capped.
             _is_skills_section = (
                 _ns.semantic_type == "skills"
                 or "skill" in _ns.title.lower()
             )
+            if _is_skills_section and _orig_bp_len:
+                _capped_bps = []
+                _bp_changed = False
+                for _nbp in _ns.body_paras:
+                    _olen = _orig_bp_len.get(_nbp.para_id, 0)
+                    _skills_cap = max(_olen * 2, 60) if _olen > 0 else 0
+                    if _skills_cap > 0 and len(_nbp.text.strip()) > _skills_cap:
+                        _bpcut = _nbp.text.rfind(" ", 0, _skills_cap)
+                        _capped_bps.append(_nbp.with_text(
+                            _nbp.text[:_bpcut] if _bpcut > 0 else _nbp.text[:_skills_cap]
+                        ))
+                        _bp_changed = True
+                    else:
+                        _capped_bps.append(_nbp)
+                if _bp_changed:
+                    _ns.body_paras = _capped_bps
+
+            # Cap non-experience, non-summary, non-skills body_paras.
+            # Summary sections excluded: full-width cells; user expects full LLM summary.
+            # Experience and skills handled above.
             if (_ns.semantic_type not in ("experience", "summary")
                     and not _is_skills_section
                     and _orig_bp_len):
@@ -3791,5 +3832,11 @@ def apply_tailored(
     # bullet overflow drop) have already been applied before truncation.
     if _layout_bound:
         _result = apply_anchor_budgets(original, _result)
+
+    # Pass inline-summary injection target to the renderer (duck-typed attribute).
+    # The renderer reads _inline_summary_pid / _inline_summary_text to insert a
+    # new paragraph in the table XML after the identity title para (sample 11 case).
+    if _inline_summary:
+        _result._inline_summary_pid, _result._inline_summary_text = _inline_summary  # type: ignore[attr-defined]
 
     return _result
