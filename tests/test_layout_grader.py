@@ -466,22 +466,25 @@ class TestPDFScorerSubFunctions:
     def test_density_score_healthy(self):
         from tailor.eval.layout_grader.pdf_scorer import _compute_density_score_from_ir
         ir = _make_valid_ir(n_roles=3, n_bullets=5)
-        score, evidence = _compute_density_score_from_ir(ir)
+        score, hard_fail, evidence = _compute_density_score_from_ir(ir)
         assert score == 100.0
+        assert not hard_fail
         assert not evidence
 
     def test_density_score_empty_roles_penalized(self):
         from tailor.eval.layout_grader.pdf_scorer import _compute_density_score_from_ir
         ir = _make_valid_ir(n_roles=4, n_bullets=0)
-        score, evidence = _compute_density_score_from_ir(ir)
+        score, hard_fail, evidence = _compute_density_score_from_ir(ir)
         assert score < 70.0
+        assert hard_fail  # all 4 roles empty → hard fail
         assert any("bullet" in e for e in evidence)
 
     def test_density_score_overflow_penalized(self):
         from tailor.eval.layout_grader.pdf_scorer import _compute_density_score_from_ir
         ir = _make_valid_ir(n_roles=2, n_bullets=15)  # > 12 threshold
-        score, evidence = _compute_density_score_from_ir(ir)
+        score, hard_fail, evidence = _compute_density_score_from_ir(ir)
         assert score < 100.0
+        assert not hard_fail  # overflow is not a hard fail
         assert any("overflow" in e for e in evidence)
 
     def test_region_layout_preserved(self):

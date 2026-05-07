@@ -82,6 +82,15 @@ def _canonical_section(heading: str) -> str:
     return re.sub(r"[^a-z0-9]", "", h)
 
 
+# Character threshold below which a page is considered "effectively empty" for the
+# purpose of content-loss hard-fail escalation.  The existing _BLANK_CHAR_THRESHOLD
+# (150 chars) catches pages that are visually blank but may still contain some
+# extractable text (e.g. xhtml2pdf encoding artefacts or non-breaking spaces).
+# For hard-fail escalation we require near-zero content so that PDF-extraction
+# artefacts on otherwise correct renders do not become false hard-fails.
+_BLANK_EFFECTIVELY_EMPTY_CHARS = 50
+
+
 def _find_blank_pages(extracted) -> list[int]:
     blank = []
     for page in extracted.pages:
@@ -89,6 +98,11 @@ def _find_blank_pages(extracted) -> list[int]:
         if len(page.lines) < _BLANK_LINE_THRESHOLD and len(total_text) < _BLANK_CHAR_THRESHOLD:
             blank.append(page.page_number)
     return blank
+
+
+def _page_total_chars(page) -> int:
+    """Raw character count across all lines on a page (no threshold applied)."""
+    return sum(len(ln.text) for ln in page.lines)
 
 
 def _heading_region_map(extracted, page_height: float) -> dict[str, str]:
@@ -139,20 +153,82 @@ def _compute_page_count_score(
 
 def _compute_blank_page_score(
     gen_extracted,
+    orig_pages: int = 0,
+    orig_extracted=None,
 ) -> tuple[float, bool, list[str], list[int]]:
+    """Score blank-page presence.
+
+    Hard-fail conditions (BLANK_MIDDLE_PAGE / BLANK_PAGE_CONTENT_LOSS):
+    - Any blank page that is NOT the trailing page → forced hard fail (always).
+    - Trailing blank when generated_pages == original_pages AND:
+      - the template page at the same position is NOT blank in the same converter
+        (distinguishes genuine content loss from systematic xhtml2pdf limitations
+        on complex templates where BOTH template and generated produce blank PDFs),
+      - AND the generated page is effectively empty (< 50 total chars).
+
+    The template-comparison gate is critical: many complex DOCX templates render
+    with xhtml2pdf as blank pages regardless of content (font/encoding issues).
+    For those templates, the GENERATED document is also blank — not because the
+    renderer failed, but because xhtml2pdf can't extract text from either.  Only
+    when the template PDF has extractable content but the generated PDF does not
+    is there genuine content loss.
+    """
     blank = _find_blank_pages(gen_extracted)
+    gen_pages = len(gen_extracted.pages)
     evidence: list[str] = []
     if not blank:
         return 100.0, False, evidence, blank
 
     last_page = gen_extracted.pages[-1].page_number if gen_extracted.pages else 0
     middle_blank = [p for p in blank if p < last_page]
+    trailing_blank = [p for p in blank if p >= last_page]
 
     if middle_blank:
         evidence.append(f"Blank middle page(s) {middle_blank} -- HARD FAIL")
         return 0.0, True, evidence, blank
 
-    evidence.append(f"Blank trailing page(s) {blank}")
+    if not trailing_blank:
+        return 100.0, False, evidence, blank
+
+    # Determine which trailing blank pages represent genuine content loss vs
+    # systematic PDF-extraction limitations.
+    #
+    # Genuine content loss: the template PDF has extractable content on that page
+    # (template is NOT blank there) but the generated PDF is blank AND near-zero
+    # chars (< 50 chars — not just sparse, but truly empty).
+    #
+    # Extraction artifact: both template and generated are blank for the same
+    # page — xhtml2pdf cannot extract from this template type regardless.
+    template_blank_pages: set[int] = set()
+    if orig_extracted is not None:
+        template_blank_pages = set(_find_blank_pages(orig_extracted))
+
+    content_loss_pages = []
+    for pg_num in trailing_blank:
+        # Skip if template page at the same position is also blank
+        if pg_num in template_blank_pages:
+            continue
+        # Skip if page count differs from template (tail overflow — expected)
+        page_count_preserved = (orig_pages > 0 and gen_pages == orig_pages) or gen_pages == 1
+        if not page_count_preserved:
+            continue
+        # Require near-zero content (not just < 150-char extraction artifact)
+        gen_page = next(
+            (p for p in gen_extracted.pages if p.page_number == pg_num), None
+        )
+        if gen_page is None:
+            continue
+        if _page_total_chars(gen_page) < _BLANK_EFFECTIVELY_EMPTY_CHARS:
+            content_loss_pages.append(pg_num)
+
+    if content_loss_pages:
+        evidence.append(
+            f"Blank trailing page(s) {content_loss_pages} -- HARD FAIL: "
+            f"page count matches template ({orig_pages}→{gen_pages}) but page is empty"
+        )
+        return 0.0, True, evidence, blank
+
+    evidence.append(f"Blank trailing page(s) {trailing_blank}")
     return 60.0, False, evidence, blank
 
 
@@ -309,12 +385,19 @@ def _score_container(
 # E. Density from IR
 # ---------------------------------------------------------------------------
 
-def _compute_density_score_from_ir(ir: dict) -> tuple[float, list[str]]:
-    """Estimate content density from the generated IR."""
+def _compute_density_score_from_ir(ir: dict) -> "tuple[float, bool, list[str]]":
+    """Estimate content density from the generated IR.
+
+    Returns (score, hard_fail, evidence_list).
+
+    hard_fail is True when ALL experience roles have no bullets and there are
+    at least 2 roles — this indicates the experience section content was entirely
+    lost during rendering (every role is an empty shell).
+    """
     evidence: list[str] = []
     sections = ir.get("sections", [])
     if not sections:
-        return 80.0, evidence
+        return 80.0, False, evidence
 
     exp_sections = [s for s in sections if s.get("semantic_type") == "experience"]
 
@@ -333,10 +416,20 @@ def _compute_density_score_from_ir(ir: dict) -> tuple[float, list[str]]:
     )
 
     score = 100.0
+    hard_fail = False
 
     if total_roles > 0:
         empty_ratio = empty_roles / total_roles
-        if empty_ratio > 0.50:
+        # HARD FAIL when every experience role has no bullets (≥2 roles) — all
+        # experience content was lost during rendering.
+        if empty_ratio == 1.0 and total_roles >= 2:
+            hard_fail = True
+            evidence.append(
+                f"Density: {empty_roles}/{total_roles} roles have no bullets -- HARD FAIL: "
+                f"all experience roles are empty (complete content loss)"
+            )
+            score -= 35.0
+        elif empty_ratio > 0.50:
             score -= 35.0
             evidence.append(f"Density: {empty_roles}/{total_roles} roles have no bullets")
         elif empty_ratio > 0.25:
@@ -362,7 +455,7 @@ def _compute_density_score_from_ir(ir: dict) -> tuple[float, list[str]]:
         score -= 20.0
         evidence.append(f"Low content density: {avg:.1f} paras/section average")
 
-    return max(0.0, score), evidence
+    return max(0.0, score), hard_fail, evidence
 
 
 # ---------------------------------------------------------------------------
@@ -570,6 +663,146 @@ def _compute_sparse_page_score(
 
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# G. Sparse first page (content pushed entirely to page 2+)
+# ---------------------------------------------------------------------------
+
+# Area-ratio threshold below which page 1 is considered "critically sparse."
+# When page 1 is this empty while page 2 has real content, the rendering engine
+# placed virtually nothing on page 1 — almost always a table-overflow or section-
+# break artefact that produces an essentially blank first page followed by a dense
+# continuation.
+_SPARSE_FIRST_PAGE_AREA_THRESHOLD = 0.08   # page 1 text blocks cover < 8% of area
+_SPARSE_FIRST_PAGE_P2_MIN_AREA   = 0.10   # page 2 must have ≥ 10% area (real content)
+
+
+def _detect_sparse_first_page(
+    gen_extracted,
+) -> "tuple[float, bool, list[str]]":
+    """Detect when page 1 is critically sparse while subsequent pages carry content.
+
+    Returns (score, hard_fail, evidence_list).
+
+    score = 0 when triggered, 100 otherwise.
+    hard_fail = True when page 1 has < 8% area coverage and ≥ 1 subsequent page
+    exists with ≥ 10% area (demonstrating that content was pushed past page 1).
+
+    This catches rendering artefacts such as:
+    - A table cell expanding enormously on page 1, leaving it mostly empty while
+      the remaining resume content flows to page 2.
+    - A section/page-break injected too early, creating an almost-blank first page.
+    """
+    if len(gen_extracted.pages) < 2:
+        return 100.0, False, []
+
+    page1 = gen_extracted.pages[0]
+    ar1, _, _, _, ml1 = _compute_effective_area_metrics(page1)
+
+    if ar1 >= _SPARSE_FIRST_PAGE_AREA_THRESHOLD:
+        return 100.0, False, []
+
+    # Confirm that subsequent pages carry real content (not all blank)
+    max_p2_area = max(
+        (_compute_effective_area_metrics(p)[0] for p in gen_extracted.pages[1:]),
+        default=0.0,
+    )
+    if max_p2_area < _SPARSE_FIRST_PAGE_P2_MIN_AREA:
+        return 100.0, False, []
+
+    visual_empty_pct = (1.0 - ar1) * 100
+    ev = (
+        f"Page 1 critically sparse (HARD FAIL): text covers {ar1*100:.0f}% of page "
+        f"(~{visual_empty_pct:.0f}% visually empty), {ml1} lines — "
+        f"content displaced to continuation page(s)"
+    )
+    return 0.0, True, [ev]
+
+
+# ---------------------------------------------------------------------------
+# H. Cross-page column-continuity break
+# ---------------------------------------------------------------------------
+
+# Minimum x-shift (as fraction of page width) that indicates a column jump.
+_COL_JUMP_X_SHIFT_THRESHOLD = 0.25
+
+
+def _detect_column_jump(
+    gen_extracted,
+) -> "tuple[list[str], bool]":
+    """Detect when content continues on page 2 in a different column lane than page 1.
+
+    Returns (evidence_list, hard_fail).
+
+    Examines blocks in the lower half of page 1 (the likely end of column content)
+    and blocks in the upper half of page 2 (the continuation).  If the median
+    x-centre of page-1 tail blocks differs from the median x-centre of page-2 head
+    blocks by ≥ 25% of the page width, a column-continuity break is flagged.
+
+    Only fires when both page 1 and page 2 have at least 3 qualifying blocks.
+    """
+    if len(gen_extracted.pages) < 2:
+        return [], False
+
+    page1, page2 = gen_extracted.pages[0], gen_extracted.pages[1]
+    page_w = page1.width or 595.0
+    page_h1 = page1.height or 842.0
+    page_h2 = page2.height or 842.0
+
+    def _x_centers(page, y_min_frac, y_max_frac) -> list[float]:
+        h = page.height or 842.0
+        return [
+            (b.bbox[0] + b.bbox[2]) / 2.0
+            for b in page.blocks
+            if (y_min_frac * h <= b.bbox[1] <= y_max_frac * h
+                and sum(len(ln.text) for ln in b.lines) >= _SPARSE_MIN_BLOCK_CHARS)
+        ]
+
+    # Page 1 lower half; page 2 upper half
+    p1_centers = _x_centers(page1, 0.5, 1.0)
+    p2_centers = _x_centers(page2, 0.0, 0.5)
+
+    if len(p1_centers) < 3 or len(p2_centers) < 3:
+        return [], False
+
+    p1_centers.sort()
+    p2_centers.sort()
+
+    def _median(lst):
+        n = len(lst)
+        return lst[n // 2] if n % 2 else (lst[n // 2 - 1] + lst[n // 2]) / 2
+
+    med1 = _median(p1_centers)
+    med2 = _median(p2_centers)
+    shift_frac = abs(med2 - med1) / page_w
+
+    if shift_frac < _COL_JUMP_X_SHIFT_THRESHOLD:
+        return [], False
+
+    # Require a DEFINITIVE side change: content must move from one side of the
+    # page to the other (left↔right).  Use inner margins of 40/60% to avoid
+    # flagging content that merely drifts within the same general column area.
+    def _definitive_side(x: float) -> str:
+        if x < page_w * 0.40:
+            return "left"
+        if x > page_w * 0.60:
+            return "right"
+        return "center"   # ambiguous — not a clear column
+
+    side1 = _definitive_side(med1)
+    side2 = _definitive_side(med2)
+
+    if side1 == "center" or side2 == "center" or side1 == side2:
+        return [], False   # no definitive column change
+
+    ev = (
+        f"Column-continuity break (HARD FAIL): page 1 body content centred at "
+        f"x={med1:.0f} ({side1} column), page 2 continuation at x={med2:.0f} "
+        f"({side2} column) — x-shift={shift_frac:.0%} of page width"
+    )
+    return [ev], True
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -617,10 +850,16 @@ def score_pdf_visual(
         hard_fail_reasons.append("PAGE_COUNT_OVERFLOW")
     evidence.extend(pc_ev)
 
-    bp_score, bp_fail, bp_ev, blank_pages = _compute_blank_page_score(gen)
+    bp_score, bp_fail, bp_ev, blank_pages = _compute_blank_page_score(
+        gen, orig_pages=orig_pages, orig_extracted=orig
+    )
     if bp_fail:
         hard_fail = True
-        hard_fail_reasons.append("BLANK_MIDDLE_PAGE")
+        hard_fail_reasons.append(
+            "BLANK_PAGE_CONTENT_LOSS"
+            if any("HARD FAIL" in e and "page count" in e for e in bp_ev)
+            else "BLANK_MIDDLE_PAGE"
+        )
     evidence.extend(bp_ev)
 
     region_s, region_fail, region_ev = _score_region_layout(orig, gen)
@@ -633,7 +872,10 @@ def score_pdf_visual(
     evidence.extend(container_ev)
 
     if ir_dict:
-        d_score, d_ev = _compute_density_score_from_ir(ir_dict)
+        d_score, d_fail, d_ev = _compute_density_score_from_ir(ir_dict)
+        if d_fail:
+            hard_fail = True
+            hard_fail_reasons.append("ALL_EXPERIENCE_ROLES_EMPTY")
         evidence.extend(d_ev)
     else:
         d_score = 80.0
@@ -643,6 +885,20 @@ def score_pdf_visual(
         hard_fail = True
         hard_fail_reasons.append("SPARSE_CONTINUATION_PAGE")
     evidence.extend(sparse_ev)
+
+    # G. Sparse first page (content pushed to continuation pages)
+    sfp_score, sfp_fail, sfp_ev = _detect_sparse_first_page(gen)
+    if sfp_fail:
+        hard_fail = True
+        hard_fail_reasons.append("SPARSE_FIRST_PAGE")
+    evidence.extend(sfp_ev)
+
+    # H. Cross-page column-continuity break
+    col_jump_ev, col_jump_fail = _detect_column_jump(gen)
+    if col_jump_fail:
+        hard_fail = True
+        hard_fail_reasons.append("COLUMN_CONTINUITY_BREAK")
+    evidence.extend(col_jump_ev)
 
     return PDFVisualResult(
         page_count_score=pc_score,

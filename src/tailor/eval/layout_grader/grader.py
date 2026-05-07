@@ -26,14 +26,22 @@ HARD FAIL triggers:
   Content:  lorem ipsum detected, extreme template similarity
 
 HARD FAIL triggers (continued):
-  SPARSE_CONTINUATION_PAGE    sparse page with effective_area_ratio < 25% —
-                              content blocks cover < 25% of total page area
+  SPARSE_CONTINUATION_PAGE    non-first sparse page with area_ratio < 30%.
+  BLANK_PAGE_CONTENT_LOSS     trailing blank page when page count matches template
+                              (generated_pages == original_pages) or when the only
+                              rendered page is blank — signals content loss, not
+                              tail overflow.
+  SPARSE_FIRST_PAGE           page 1 area_ratio < 8% while page 2+ has real
+                              content — rendering artefact displaced content.
+  COLUMN_CONTINUITY_BREAK     median x-centre of content on page 1 (lower half)
+                              differs from page 2 (upper half) by > 25% of page
+                              width — section continues in wrong column lane.
 
 WARNING triggers (via sparse_page_score = 0):
-  C_SPARSE_CONTINUATION_PAGE  non-first page fills < 60% of page height after
+  C_SPARSE_CONTINUATION_PAGE  non-first page fills < 65% of page height after
                               a well-packed previous page (>= 75% full) and
-                              contains substantial content (>= 18 lines)
-                              escalates to HARD FAIL when area_ratio < 25%
+                              contains substantial content (>= 18 lines).
+                              Escalates to HARD FAIL when area_ratio < 30%.
 """
 from __future__ import annotations
 
@@ -283,6 +291,9 @@ def grade_sample(
             if "BLANK_MIDDLE_PAGE" in pdf_result.hard_fail_reasons:
                 if "B_BLANK_PAGE" not in failure_classes:
                     failure_classes.append("B_BLANK_PAGE")
+            if "BLANK_PAGE_CONTENT_LOSS" in pdf_result.hard_fail_reasons:
+                if "B_BLANK_PAGE_CONTENT_LOSS" not in failure_classes:
+                    failure_classes.append("B_BLANK_PAGE_CONTENT_LOSS")
             if "COLUMN_LAYOUT_LOST" in pdf_result.hard_fail_reasons:
                 if "F_TOPOLOGY_COLLAPSE" not in failure_classes:
                     failure_classes.append("F_TOPOLOGY_COLLAPSE")
@@ -298,7 +309,16 @@ def grade_sample(
             if "SPARSE_CONTINUATION_PAGE" in pdf_result.hard_fail_reasons:
                 if "C_SPARSE_CONTINUATION_PAGE" not in failure_classes:
                     failure_classes.append("C_SPARSE_CONTINUATION_PAGE")
-            evidence.extend(pdf_result.evidence[:6])
+            if "ALL_EXPERIENCE_ROLES_EMPTY" in pdf_result.hard_fail_reasons:
+                if "A_DENSITY_HARD_FAIL" not in failure_classes:
+                    failure_classes.append("A_DENSITY_HARD_FAIL")
+            if "SPARSE_FIRST_PAGE" in pdf_result.hard_fail_reasons:
+                if "C_SPARSE_FIRST_PAGE" not in failure_classes:
+                    failure_classes.append("C_SPARSE_FIRST_PAGE")
+            if "COLUMN_CONTINUITY_BREAK" in pdf_result.hard_fail_reasons:
+                if "H_COLUMN_CONTINUITY_BREAK" not in failure_classes:
+                    failure_classes.append("H_COLUMN_CONTINUITY_BREAK")
+            evidence.extend(pdf_result.evidence[:8])
         except Exception as exc:
             evidence.append(f"PDF scoring error: {exc}")
     else:
@@ -306,6 +326,33 @@ def grade_sample(
             evidence.append("Template PDF conversion failed -- PDF scores use defaults")
         if not generated_pdf_ok:
             evidence.append("Generated PDF conversion failed -- PDF scores use defaults")
+
+    # ── Duplicate template+LLM content detection ──────────────────────────────
+    # When both sim_llm (LLM text present in doc) and sim_template (original
+    # template text present in doc) are simultaneously high, the document likely
+    # contains the original placeholder text alongside the new LLM content —
+    # neither fully replaced the other.  This detects cases where the LLM summary
+    # was injected into a wrong container (Contact/sidebar) while the original
+    # summary or template filler was left in place.
+    # Threshold: sim_llm > 0.85 (LLM content is present) AND sim_template > 0.75
+    # (original template is also still present).  Both simultaneously being this
+    # high signals coexistence rather than replacement.
+    if (
+        ci_sim_llm is not None
+        and ci_sim_template is not None
+        and ci_sim_llm > 0.85
+        and ci_sim_llm < 0.97      # sim_llm=1.0 means PERFECT injection (not duplicate)
+        and ci_sim_template > 0.75
+    ):
+        hard_fail = True
+        hard_fail_reasons.append("DUPLICATE_TEMPLATE_AND_LLM_CONTENT")
+        if "E_DUPLICATE_CONTENT" not in failure_classes:
+            failure_classes.append("E_DUPLICATE_CONTENT")
+        evidence.append(
+            f"Duplicate content (HARD FAIL): sim_llm={ci_sim_llm:.2f}, "
+            f"sim_template={ci_sim_template:.2f} — LLM and original template text "
+            f"coexist; LLM content likely injected into wrong container"
+        )
 
     # ── Conditional EMPTY_PARA_ID hard-fail ───────────────────────────────────
     # Only hard-fail when the count is high or combined with content/layout
