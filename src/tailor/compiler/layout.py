@@ -543,12 +543,15 @@ def _has_intro_prose_content(section: "ResumeSection") -> bool:
     """Return True when a section's body looks like a prose intro (not a skills list).
 
     A section qualifies as an intro-prose candidate when:
-    - It has at least 30 characters of non-empty body text.
+    - It has at least one body paragraph ≥ 60 characters (a sentence-length line).
+      This rules out contact sections whose total text may be ≥ 30 chars but
+      distributed across many short lines (phone, email, address).
     - No body paragraph is a date/location line (role_meta) or a bullet.
       This excludes experience entries whose bullets happen to pass all other
       heuristics (long sentences, low comma density).
     - Content is not exclusively URLs / short tokens (no spaces).
     - Comma density is low (< 0.15 commas per character) — rules out skills lists.
+    - None of the body paragraphs look like contact data (email, phone numbers).
     """
     non_empty = [p for p in section.body_paras if p.text.strip()]
     if not non_empty:
@@ -559,8 +562,20 @@ def _has_intro_prose_content(section: "ResumeSection") -> bool:
         return False
     non_empty_texts = [p.text.strip() for p in non_empty]
     total_text = " ".join(non_empty_texts)
-    if len(total_text) < 30:
+    # Require at least one sentence-length paragraph (≥ 60 chars).
+    # Contact sections have many short lines (phone, email, address) that
+    # individually don't constitute prose, even if their combined length is ≥ 30.
+    if not any(len(t) >= 60 for t in non_empty_texts):
         return False
+    # Exclude sections that look like contact data: any line containing @ (email)
+    # or a line whose non-space characters are mostly digits/dashes/parens (phone).
+    import re as _re
+    _PHONE_RE = _re.compile(r'^[\d\s\-\+\(\)\.]{7,}$')
+    for t in non_empty_texts:
+        if '@' in t:
+            return False
+        if _PHONE_RE.match(t):
+            return False
     # Exclude sections whose every non-empty line is a URL or has no whitespace
     # (e.g. a Websites section containing only "linkedin.com/in/…" links).
     if all("://" in p or " " not in p for p in non_empty_texts):

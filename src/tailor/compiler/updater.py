@@ -537,6 +537,9 @@ def _update_body_section(
     # - empty paras → preserved (spacing)
     # - decorative paras → preserved verbatim (font integrity)
     # - content paras → replaced with updated LLM text (in order)
+    # - trailing content paras (LLM had fewer lines) → dropped in non-layout-bound
+    #   mode; KEPT in layout-bound mode so para_ids remain in new_sections for the
+    #   layout-blocks renderer to find (intro-prose summary injection depends on this).
     new_body: list[ParaModel] = []
     content_cursor = 0
     for p in orig.body_paras:
@@ -547,7 +550,9 @@ def _update_body_section(
         elif content_cursor < len(updated):
             new_body.append(updated[content_cursor])
             content_cursor += 1
-        # else: LLM produced fewer lines — drop trailing content paras
+        elif layout_bound:
+            new_body.append(p)  # keep original so para_id stays bound in layout tree
+        # else (non-layout-bound): LLM produced fewer lines — drop trailing para
 
     # Append extra LLM lines beyond the original content para count (non-layout-bound only).
     if not layout_bound:
@@ -1177,8 +1182,10 @@ def _clear_left_indent(pm: ParaModel) -> ParaModel:
         xml_proto=new_proto,
     )
     from tailor.compiler.models import ParaModel as _PM
-    return _PM(text=pm.text, style=new_style, semantic=pm.semantic,
-               paragraph_profile=pm.paragraph_profile)
+    result = _PM(text=pm.text, style=new_style, semantic=pm.semantic,
+                 paragraph_profile=pm.paragraph_profile)
+    result.para_id = pm.para_id  # preserve so the layout-blocks renderer can find it
+    return result
 
 
 def _inject_skills_into_header(
@@ -1252,13 +1259,17 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
     - Not in a locked or experience section (only skills / 'other' searched).
     """
     _sections = original.sections
-    _CONTACT_AREA_TYPES: frozenset[str] = frozenset({"websites", "contact", "social"})
+    # "contact" and "social" sections indicate a contact/sidebar area.
+    # "websites" is NOT included: a portfolio-links section does not make its
+    # neighbor a contact area — the neighbor may be a main-column skills or
+    # profile section containing the original intro-prose summary.
+    _CONTACT_AREA_TYPES: frozenset[str] = frozenset({"contact", "social"})
     for _si, section in enumerate(_sections):
         if section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             continue
         if section.semantic_type == "experience":
             continue
-        # Skip sections that are adjacent to websites/contact/social sections.
+        # Skip sections that are adjacent to contact/social sections.
         # Those are sidebar/contact areas — injecting the Professional Summary
         # there would put it inside the Contact block rather than the body.
         _neighbors = [
@@ -2371,24 +2382,6 @@ def _find_summary_anchors(
     if not trailing:
         return None
 
-    # Safety guard for table-heavy templates: all candidate anchors are empty
-    # (currently contributing zero visible height).  Injecting a summary heading
-    # + body paragraph into them creates visible paragraphs where there were none,
-    # pushing the table that follows to a new page and leaving page 1 sparse.
-    # When the document's primary content lives in TableBlocks, skip anchored
-    # summary insertion so the table stays on page 1.
-    _has_table_content = (
-        doc.body_items is not None
-        and any(isinstance(item, TableBlock) for item in doc.body_items)
-    )
-    if _has_table_content and all(not pm.text.strip() for pm in trailing):
-        _log.debug(
-            "SUMMARY_ANCHORS_SKIPPED_TABLE_LAYOUT: %d empty slots found but "
-            "inserting into them would push table to page 2 (table-heavy template)",
-            len(trailing),
-        )
-        return None
-
     # Two or more empty slots: use last two (heading_anchor, body_anchor).
     if len(trailing) >= 2:
         return trailing[-2], trailing[-1]
@@ -3429,7 +3422,11 @@ def apply_tailored(
         # When extras are injectable summaries with a target, we also update the
         # intro-prose paragraph so the template's existing prose gets replaced.
         _sections_for_neighbor_check = original.sections
-        _CONTACT_NEIGHBOR_TYPES: frozenset[str] = frozenset({"websites", "contact", "social"})
+        # "websites" is intentionally excluded: a portfolio-links section is not
+        # a contact area and does not make its neighbor a sidebar contact cell.
+        # Its neighbor may be a main-column section (e.g. skills+summary in the
+        # same broad column) that should not have its content filtered or cleared.
+        _CONTACT_NEIGHBOR_TYPES: frozenset[str] = frozenset({"contact", "social"})
 
         # Character limit for experience bullets in table templates.
         # Table cells have fixed dimensions; excessively long bullets expand
@@ -3536,39 +3533,25 @@ def apply_tailored(
         # Inject summary text into the intro-prose paragraph.
         # intro_para is guaranteed non-None here (checked in has_unhandled_extras above).
         if intro_para is not None:
-            # Guard 1: in layout-bound mode, if the anchored summary insertion
-            # already created a sec_summary_inserted section, skip the
-            # intro-prose injection.  Without this guard the summary appears
-            # twice — once as an anchored structural section and once as an
-            # in-place text overwrite of the intro-prose paragraph — causing
-            # the table cell (sec_4 / similar) to expand with duplicate text.
+            # Guard: if the anchored summary insertion already created a
+            # sec_summary_inserted section, skip the intro-prose injection to
+            # avoid placing the summary twice (anchored structural + in-place).
             _summary_already_anchored = _layout_bound and any(
                 getattr(s, "section_id", "") == "sec_summary_inserted"
                 for s in new_sections
             )
-            # Guard 2: in layout-bound table-heavy templates where anchored
-            # summary insertion was intentionally skipped (table-overflow
-            # prevention), also block the intro-prose injection.  Without this
-            # guard, the injection falls back to skills/tasks paragraphs (which
-            # pass the intro-prose criteria) and injects the summary there,
-            # expanding the table cell and still producing a sparse first page.
-            _table_heavy_no_anchor = (
-                _layout_bound
-                and has_table_blocks
-                and not _summary_already_anchored
-            )
-            if not _summary_already_anchored and not _table_heavy_no_anchor:
+            if not _summary_already_anchored:
                 for extra_llm in injectable_extras:
                     summary_text = " ".join(l for l in extra_llm.body_lines if l.strip())
                     intro_para.text = summary_text
                     _log.debug(
-                        "apply_tailored: injected summary into intro-prose para "
-                        "(first 60 chars: %r)", summary_text[:60]
+                        "SUMMARY_INSERTED_INTRO_PROSE: injected into para %r "
+                        "(first 60 chars: %r)", intro_para.para_id, summary_text[:60]
                     )
             else:
                 _log.debug(
-                    "apply_tailored: skipped intro-prose injection — summary "
-                    "already placed via anchored sec_summary_inserted"
+                    "SUMMARY_SKIPPED_ALREADY_ANCHORED: summary already placed "
+                    "via sec_summary_inserted — skipping intro-prose injection"
                 )
 
     # Final structural integrity check — scan all_paras for lingering unbound content.
