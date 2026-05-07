@@ -531,7 +531,12 @@ class TestAnchoredSummaryInsertion:
 )
 class TestSample31AnchoredSummary:
     def test_summary_inserted_with_para7_para8(self, monkeypatch):
-        """Sample 31 anchored summary uses para_7 (heading) and para_8 (body)."""
+        """Sample 31 anchored summary uses the first two trailing empty header slots.
+
+        _find_summary_anchors returns trailing[0], trailing[1] (closest to name/title),
+        which for sample 31 are para_6 (heading) and para_7 (body).  para_8 is kept
+        as a spacer between the summary and the first section.
+        """
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -558,8 +563,8 @@ class TestSample31AnchoredSummary:
 
         summary = next((s for s in updated.sections if s.semantic_type == "summary"), None)
         assert summary is not None, "Summary must be inserted for sample 31"
-        assert summary.heading.para_id == "para_7"
-        assert summary.body_paras and summary.body_paras[0].para_id == "para_8"
+        assert summary.heading.para_id == "para_6"
+        assert summary.body_paras and summary.body_paras[0].para_id == "para_7"
         assert summary.section_id == "sec_summary_inserted"
 
     def test_summary_before_education(self, monkeypatch):
@@ -623,7 +628,7 @@ class TestSample31AnchoredSummary:
         assert not unbound, f"{len(unbound)} unbound paras: {[p.text[:40] for p in unbound[:3]]}"
 
     def test_para7_para8_not_in_header_paras(self, monkeypatch):
-        """para_7 and para_8 are removed from header_paras after insertion."""
+        """para_6 and para_7 (anchor slots) are removed from header_paras after insertion."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -644,8 +649,8 @@ class TestSample31AnchoredSummary:
         updated = apply_tailored(doc, llm)
 
         header_ids = {p.para_id for p in updated.header_paras}
+        assert "para_6" not in header_ids, "para_6 must be removed from header_paras"
         assert "para_7" not in header_ids, "para_7 must be removed from header_paras"
-        assert "para_8" not in header_ids, "para_8 must be removed from header_paras"
 
 
 # ---------------------------------------------------------------------------

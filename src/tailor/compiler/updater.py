@@ -134,6 +134,24 @@ def _match_sections(
                 used_llm.add(li)
                 break
 
+    # Pass 3: skill-title similarity — match LLM "skills" sections to template
+    # sections whose title contains "skill" (e.g. "Skills & Abilities").  Handles
+    # templates where the skills section is classified as "other" rather than "skills"
+    # because its heading ("Skills & Abilities") was not in the parser's exact list.
+    for li, ls in enumerate(llm):
+        if li in used_llm:
+            continue
+        if ls.semantic_type != "skills":
+            continue
+        for oi, os_ in enumerate(orig):
+            if oi in used_orig:
+                continue
+            if "skill" in os_.title.lower():
+                pairs.append((oi, li))
+                used_orig.add(oi)
+                used_llm.add(li)
+                break
+
     unmatched_llm = [li for li in range(len(llm)) if li not in used_llm]
 
     if unmatched_llm:
@@ -438,6 +456,16 @@ _SKILLS_FILTER_RE = re.compile(
     re.IGNORECASE,
 )
 _ADDITIONAL_RE = re.compile(r"^additional\b", re.IGNORECASE)
+# Non-skill labeled categories that LLMs sometimes append to Technical Skills sections.
+_NON_SKILL_LABEL_RE = re.compile(
+    r"^(?:hobbies?|awards?|activities|interests?|volunteering?|publications?)\s*[:：]\s*",
+    re.IGNORECASE,
+)
+# Bare social-media or website names that are not skill tokens (e.g. "LinkedIn" alone).
+_SOCIAL_BARE_RE = re.compile(
+    r"^(?:linkedin|github|twitter|instagram|portfolio|website|url)\.?$",
+    re.IGNORECASE,
+)
 
 
 def _sanitize_skills_lines(lines: list[str]) -> list[str]:
@@ -445,9 +473,10 @@ def _sanitize_skills_lines(lines: list[str]) -> list[str]:
 
     Removes:
     - Lines containing internal markers: CURRENT_DATE, "Generated on", etc.
-    - Lines starting with "Additional" (LLM sometimes emits "Additional: …").
-    - Full sentences: lines with 8+ whitespace-separated tokens ending in "."
-      (indicates the LLM accidentally wrote prose instead of skill tokens).
+    - Lines starting with "Additional".
+    - Lines with known non-skill label prefixes (Hobbies:, Awards:, Interests:, …).
+    - Bare social-media / website names (LinkedIn, GitHub, …) with no skill context.
+    - Full sentences: 6+ whitespace-separated tokens ending in sentence punctuation.
     """
     clean: list[str] = []
     for line in lines:
@@ -461,11 +490,13 @@ def _sanitize_skills_lines(lines: list[str]) -> list[str]:
         if _ADDITIONAL_RE.match(stripped):
             _log.debug("skills sanitize: dropping 'Additional' line %r", stripped[:80])
             continue
+        if _NON_SKILL_LABEL_RE.match(stripped):
+            _log.debug("skills sanitize: dropping non-skill label line %r", stripped[:80])
+            continue
+        if _SOCIAL_BARE_RE.match(stripped):
+            _log.debug("skills sanitize: dropping bare social name %r", stripped[:80])
+            continue
         # Full-sentence detection: 6+ words AND ends with a sentence-final punct.
-        # Threshold lowered from 8 to 6 to catch citizenship/personal-statement lines
-        # like "Canadian citizen; eligible to work in Canada." that LLMs sometimes
-        # append after the skills section.  Legitimate skill lines ending in a period
-        # are rare; most skill entries use commas or no terminal punctuation.
         tokens = stripped.split()
         if len(tokens) >= 6 and stripped[-1] in ".!?":
             _log.debug("skills sanitize: dropping full-sentence line %r", stripped[:80])
@@ -1243,9 +1274,12 @@ def _inject_skills_into_header(
     )
 
     # In layout-bound mode: pack surplus lines into last slot.
+    # Use "; " as separator: _set_para_text strips "\n" from paragraph text,
+    # so "\n".join would silently concatenate lines without any separator
+    # (e.g. "DocumentationLinkedIn").  "; " produces coherent single-line output.
     if layout_bound and len(llm_lines) > len(orig_skill_paras):
         n = len(orig_skill_paras)
-        packed = "\n".join(llm_lines[n - 1:])
+        packed = "; ".join(llm_lines[n - 1:])
         llm_lines = list(llm_lines[: n - 1]) + [packed]
 
     # In layout-bound mode: cap each skill line to prevent excessive column
@@ -1282,6 +1316,17 @@ def _inject_skills_into_header(
 # Minimum character length for a paragraph to qualify as intro prose.
 _INTRO_PROSE_MIN_LEN = 60
 
+# Section titles that must never be used as intro-prose summary anchors.
+# These are named semantic sections (Communication, Leadership, References, etc.)
+# whose original content must be preserved intact rather than overwritten with a
+# Professional Summary.  Injecting a summary here corrupts meaningful template
+# structure (e.g. Communication skills, Leadership awards, References list).
+_PROTECTED_INTRO_PROSE_TITLES: frozenset[str] = frozenset({
+    "communication", "leadership", "references", "awards",
+    "hobbies", "activities", "achievements", "volunteer", "publications",
+    "interests", "memberships", "affiliations",
+})
+
 
 def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
     """Find the template paragraph that looks like an intro/summary prose block.
@@ -1298,6 +1343,7 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
     - Contains at least one space (not a single-token label).
     - Low comma density (< 0.10) — distinguishes prose from comma-separated skills.
     - Not in a locked or experience section (only skills / 'other' searched).
+    - Section title not in _PROTECTED_INTRO_PROSE_TITLES (Communication, Leadership, etc.).
     """
     _sections = original.sections
     # "contact" and "social" sections indicate a contact/sidebar area.
@@ -1309,6 +1355,9 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
         if section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             continue
         if section.semantic_type == "experience":
+            continue
+        # Skip named semantic sections that should never receive summary injection.
+        if section.title.strip().lower() in _PROTECTED_INTRO_PROSE_TITLES:
             continue
         # Skip sections that are adjacent to contact/social sections.
         # Those are sidebar/contact areas — injecting the Professional Summary
@@ -3391,35 +3440,25 @@ def apply_tailored(
         for _ns in new_sections:
             if _ns.semantic_type in _LOCKED_SEMANTIC_TYPES:
                 continue
-            # Cap experience bullets.
-            for _nr in _ns.roles:
-                _capped_bullets: list[ParaModel] = []
-                _bullet_changed = False
-                for _nb in _nr.bullets:
-                    _olen = _orig_bullet_len.get(_nb.para_id, 0)
-                    _bmax = max(_olen, 60) if _olen > 0 else 0
-                    if _bmax > 0 and len(_nb.text) > _bmax:
-                        _bcut = _nb.text.rfind(" ", 0, _bmax)
-                        _capped_bullets.append(_nb.with_text(
-                            _nb.text[:_bcut] if _bcut > 0 else _nb.text[:_bmax]
-                        ))
-                        _bullet_changed = True
-                    else:
-                        _capped_bullets.append(_nb)
-                if _bullet_changed:
-                    _nr.bullets = _capped_bullets
-            # Cap non-experience, non-summary body_paras.
-            # Use the ORIGINAL template para length as the cap (no floor):
-            # Table cells have a fixed physical width; capping at the original
-            # length ensures each para fits in the same number of visual lines
-            # as the template, preventing cell-height growth and page overflow.
-            # Summary sections are excluded: they typically occupy full-width
-            # cells where expansion doesn't cause overflow; and the user expects
-            # the full LLM summary to appear verbatim.
-            # Both sides use stripped length to avoid trailing-whitespace false
-            # positives where a verbatim section's trailing-space para would
-            # incorrectly trigger the cap (e.g. "[Available upon request] ").
-            if _ns.semantic_type not in ("experience", "summary") and _orig_bp_len:
+            # Experience bullets: no cap — prefer full LLM content over clipping.
+            # Overflow to a second page is acceptable; truncated bullets lose meaning.
+            # (Previous cap: max(orig_len, 60).  Removed per content-preservation policy.)
+            #
+            # Cap non-experience, non-summary, non-skills body_paras.
+            # Skills sections (semantic_type "skills", or sections whose title contains
+            # "skill" — e.g. "Skills & Abilities") are excluded: their content must be
+            # placed verbatim rather than clipped to the narrow original placeholder
+            # length (e.g. "Clinical" at 8 chars would destroy categorical skill lines).
+            # Summary sections are excluded: full-width cells where the user expects the
+            # complete LLM summary.  Experience sections are handled via roles/bullets.
+            # Both sides use stripped length to avoid trailing-whitespace false positives.
+            _is_skills_section = (
+                _ns.semantic_type == "skills"
+                or "skill" in _ns.title.lower()
+            )
+            if (_ns.semantic_type not in ("experience", "summary")
+                    and not _is_skills_section
+                    and _orig_bp_len):
                 _capped_bps: list[ParaModel] = []
                 _bp_changed = False
                 for _nbp in _ns.body_paras:

@@ -598,6 +598,15 @@ def _find_summary_anchor(
     """
     sidebar_idxs = {c.section_idx for c in containers if c.region == "sidebar"}
 
+    # Named semantic sections that must never serve as implicit summary anchors.
+    # Injecting the Professional Summary into "Communication" or "Leadership"
+    # overwrites meaningful original content with unrelated summary prose.
+    _PROTECTED_INTRO_TITLES: frozenset[str] = frozenset({
+        "communication", "leadership", "references", "awards",
+        "hobbies", "activities", "achievements", "volunteer", "publications",
+        "interests", "memberships", "affiliations",
+    })
+
     # Rule 1: first 'other'-type top section that contains prose (not skills-like).
     # Stop searching once we reach a real content section (summary/experience/etc.)
     # so we only look at the header/intro zone.
@@ -606,6 +615,8 @@ def _find_summary_anchor(
             continue
         if section.semantic_type != "other":
             break  # passed the header zone into main content
+        if section.title.strip().lower() in _PROTECTED_INTRO_TITLES:
+            continue  # named semantic section — must not be overwritten by summary
         if _has_intro_prose_content(section):
             return ("intro_prose", idx)
 
