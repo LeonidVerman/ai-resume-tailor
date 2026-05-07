@@ -803,6 +803,95 @@ def _detect_column_jump(
 
 
 # ---------------------------------------------------------------------------
+# I. Per-page column-count drop on overflow pages
+# ---------------------------------------------------------------------------
+
+# Fraction of page width used as the inner margin of the "definitive left/right
+# column" zones when estimating per-page column count.  Blocks whose x-centre
+# is < page_w * _COL_ZONE_LEFT are definitively in the left column; those with
+# x-centre > page_w * _COL_ZONE_RIGHT are definitively in the right column.
+_COL_ZONE_LEFT  = 0.35   # x-centre < 35% → left column
+_COL_ZONE_RIGHT = 0.65   # x-centre > 65% → right column
+_COL_MIN_BLOCKS = 2      # need ≥2 blocks in each zone to confirm 2-col layout
+
+
+def _estimate_page_column_count(page) -> int:
+    """Estimate the number of distinct content columns on a single PDF page.
+
+    Returns 2 when there are ≥ _COL_MIN_BLOCKS meaningful text blocks clearly
+    in both the left zone (x-centre < 35% of page width) AND the right zone
+    (x-centre > 65% of page width).  Returns 1 otherwise.
+
+    This is intentionally conservative: only flag 2 columns when both sides
+    have definitive representation, to avoid calling a centered or full-width
+    layout "2-column."
+    """
+    page_w = page.width or 595.0
+    left_threshold  = page_w * _COL_ZONE_LEFT
+    right_threshold = page_w * _COL_ZONE_RIGHT
+
+    left_count = 0
+    right_count = 0
+    for b in page.blocks:
+        if sum(len(ln.text) for ln in b.lines) < _SPARSE_MIN_BLOCK_CHARS:
+            continue
+        x_centre = (b.bbox[0] + b.bbox[2]) / 2.0
+        if x_centre < left_threshold:
+            left_count += 1
+        elif x_centre > right_threshold:
+            right_count += 1
+
+    return 2 if (left_count >= _COL_MIN_BLOCKS and right_count >= _COL_MIN_BLOCKS) else 1
+
+
+def _detect_overflow_column_loss(
+    gen_extracted,
+    orig_extracted,
+) -> "tuple[list[str], bool]":
+    """Detect when page 2+ overflow pages lose the multi-column layout of page 1.
+
+    Returns (evidence_list, hard_fail).
+
+    Fires when:
+    - The original template has ≥ 2 columns (PDF-level estimate), AND
+    - Generated page 1 also shows ≥ 2 column zones (confirming multi-column
+      content was placed correctly), AND
+    - Any subsequent page drops to a single-column layout.
+
+    This captures the common template defect where a 2-column first page
+    (sidebar + main content) overflows into a second page that has no sidebar
+    — the continuation page uses a single-column layout, breaking the reading
+    topology that the template established on page 1.
+    """
+    if len(gen_extracted.pages) < 2:
+        return [], False
+
+    orig_cols_est = orig_extracted.features.column_count_estimate if orig_extracted else 1
+    if orig_cols_est < 2:
+        return [], False   # single-column template — no column topology to break
+
+    gen_page1_cols = _estimate_page_column_count(gen_extracted.pages[0])
+    if gen_page1_cols < 2:
+        return [], False   # page 1 itself is single-column → no loss
+
+    evidence: list[str] = []
+    hard_fail = False
+    for page in gen_extracted.pages[1:]:
+        pg_cols = _estimate_page_column_count(page)
+        if pg_cols < 2:
+            hard_fail = True
+            evidence.append(
+                f"Column topology break on page {page.page_number} (HARD FAIL): "
+                f"template and page 1 use {gen_page1_cols}-column layout but "
+                f"page {page.page_number} has {pg_cols}-column layout — "
+                f"Experience/content section changed column lane on overflow page"
+            )
+            break   # report first occurrence only
+
+    return evidence, hard_fail
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -893,12 +982,19 @@ def score_pdf_visual(
         hard_fail_reasons.append("SPARSE_FIRST_PAGE")
     evidence.extend(sfp_ev)
 
-    # H. Cross-page column-continuity break
+    # H. Cross-page column-continuity break (block x-centre shift)
     col_jump_ev, col_jump_fail = _detect_column_jump(gen)
     if col_jump_fail:
         hard_fail = True
         hard_fail_reasons.append("COLUMN_CONTINUITY_BREAK")
     evidence.extend(col_jump_ev)
+
+    # I. Overflow page column loss (page 1 multi-col → page 2+ single-col)
+    ocl_ev, ocl_fail = _detect_overflow_column_loss(gen, orig)
+    if ocl_fail:
+        hard_fail = True
+        hard_fail_reasons.append("OVERFLOW_COLUMN_LOSS")
+    evidence.extend(ocl_ev)
 
     return PDFVisualResult(
         page_count_score=pc_score,

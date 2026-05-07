@@ -25,6 +25,12 @@ HARD FAIL triggers:
             column layout lost (PDF-detected)
   Content:  lorem ipsum detected, extreme template similarity
 
+HARD FAIL triggers (semantic / IR fallback — work without PDF extraction):
+  SUMMARY_IN_WRONG_SECTION    LLM Professional Summary text found in a non-summary
+                              IR section (e.g., Contact/sidebar table cell).
+  OVERFLOW_COLUMN_LOSS        Overflow page drops from ≥2 column layout (page 1)
+                              to 1-column layout — reading topology breaks.
+
 HARD FAIL triggers (continued):
   SPARSE_CONTINUATION_PAGE    non-first sparse page with area_ratio < 30%.
   BLANK_PAGE_CONTENT_LOSS     trailing blank page when page count matches template
@@ -97,6 +103,144 @@ class SampleGrade:
             "failure_classes": self.failure_classes,
             "evidence": self.evidence,
         }
+
+
+# ---------------------------------------------------------------------------
+# IR-based semantic fallback detectors
+# ---------------------------------------------------------------------------
+
+def _check_misplaced_llm_summary(
+    ir: dict, llm_text: str
+) -> "tuple[bool, list[str]]":
+    """Detect LLM Professional Summary injected into a non-summary IR section.
+
+    Returns (hard_fail, evidence_list).
+
+    Works entirely on the IR (parsed from the rendered DOCX) and the raw LLM
+    output text — no PDF extraction needed.  This is the correct fallback for
+    table-based templates where xhtml2pdf cannot extract text and sim_template
+    is near-zero, making PDF-level text-comparison detectors blind.
+
+    Algorithm
+    ---------
+    1. Extract the LLM Professional Summary (text after the "Professional
+       Summary" / "Summary" / "Profile" heading, or the first long line ≥80
+       chars in the LLM output).
+    2. For every IR section whose semantic_type is NOT 'summary', check whether
+       any body_para text starts with the same 40+ characters as the LLM summary.
+    3. Additionally flag if any non-summary section has ≥5 body_paras whose
+       average length exceeds 80 chars — a contact/other section with that many
+       long sentences is almost always a misplaced summary.
+    """
+    import re
+
+    if not llm_text or not ir:
+        return False, []
+
+    # ── Step 1: extract LLM summary text ─────────────────────────────────────
+    summary_text = ""
+    # Look for an explicit section heading
+    ps_match = re.search(
+        r"(?:professional\s+summary|summary|profile|about\s+me)\s*\n+(.+)",
+        llm_text,
+        re.IGNORECASE,
+    )
+    if ps_match:
+        # Get the first substantive sentence (up to 200 chars)
+        candidate = ps_match.group(1).strip()
+        summary_text = candidate[:200]
+
+    if not summary_text:
+        # Fall back: first line of the body that is long enough to be a summary
+        for line in llm_text.split("\n"):
+            line = line.strip()
+            # Skip header lines (short, likely name/contact)
+            if len(line) >= 80 and not re.match(r"^[A-Z][a-z]+ [A-Z][a-z]+$", line):
+                summary_text = line[:200]
+                break
+
+    if not summary_text or len(summary_text) < 50:
+        return False, []
+
+    # Key: first 50 chars lowercase used for substring matching
+    summary_key = summary_text[:50].lower().strip()
+
+    # ── Step 2: check IR sections ────────────────────────────────────────────
+    _EXPECTED_SUMMARY_TYPES = {"summary", "profile"}
+    _BODY_CONTENT_TYPES = {"experience", "education", "skills", "certifications",
+                           "projects", "awards", "publications", "languages"}
+
+    for sec in ir.get("sections", []):
+        sec_type = sec.get("semantic_type", "") or ""
+        if sec_type in _EXPECTED_SUMMARY_TYPES:
+            continue  # correct location — not contamination
+        if sec_type in _BODY_CONTENT_TYPES:
+            continue  # structural body section — professional summary wouldn't normally land here
+
+        body_paras = sec.get("body_paras", [])
+        if not body_paras:
+            continue
+
+        # Collect text of body paragraphs
+        para_texts = []
+        for bp in body_paras:
+            txt = (bp.get("text", "") if isinstance(bp, dict) else str(bp)).strip()
+            if txt:
+                para_texts.append(txt)
+
+        # Signal A: LLM summary key found in a body_para AND the section has
+        # two additional guards to avoid false positives.
+        #
+        # Guard 1 — body_para count ≥ 8:
+        #   A legitimate 'other' section that happens to be the template's
+        #   unlabelled Professional Summary typically has 1–5 body_paras (just
+        #   the summary sentences).  A contaminated contact/sidebar table cell
+        #   absorbs the full LLM header block (name + contact lines + summary),
+        #   producing many more paragraphs (14 in sample 2).
+        #
+        # Guard 2 — contact/websites neighbor:
+        #   When the summary ends up in a sidebar, the immediately adjacent
+        #   section is almost always a 'websites', 'contact', or 'social'
+        #   section (e.g. sec_2 type=websites in sample 2).  Templates where
+        #   the summary is legitimately in an 'other' section have neighbours
+        #   that are 'skills', 'experience', or 'education' — not contact types.
+        if len(body_paras) < 8:
+            continue
+
+        # Check for contact/websites-type neighbour in the sections list
+        _CONTACT_NEIGHBOUR_TYPES = {"contact", "websites", "social", "header"}
+        sections_list = ir.get("sections", [])
+        sec_idx = next(
+            (i for i, s in enumerate(sections_list)
+             if s.get("section_id") == sec.get("section_id")),
+            -1,
+        )
+        adjacent = []
+        if sec_idx > 0:
+            adjacent.append(sections_list[sec_idx - 1])
+        if sec_idx + 1 < len(sections_list):
+            adjacent.append(sections_list[sec_idx + 1])
+        has_contact_neighbour = any(
+            s.get("semantic_type", "") in _CONTACT_NEIGHBOUR_TYPES
+            for s in adjacent
+        )
+        if not has_contact_neighbour:
+            continue  # no contact section nearby — likely a correctly placed summary
+
+        for pt in para_texts[:5]:
+            if len(pt) < 50:
+                continue
+            if summary_key[:40] in pt[:100].lower():
+                neighbour_types = [s.get("semantic_type","?") for s in adjacent]
+                return True, [
+                    f"LLM Professional Summary injected into section "
+                    f"'{sec.get('section_id')}' (semantic_type={sec_type!r}, "
+                    f"{len(body_paras)} body_paras, neighbours={neighbour_types}) "
+                    f"instead of a summary section (HARD FAIL). "
+                    f"Summary text found in Contact/sidebar area: '{pt[:140]}'"
+                ]
+
+    return False, []
 
 
 # ---------------------------------------------------------------------------
@@ -239,6 +383,20 @@ def grade_sample(
                 elif ci_result.evidence and ci_score < 75:
                     failure_classes.append("E_INJECTION_PARTIAL")
                 evidence.extend(ci_result.evidence[:3])
+
+                # ── IR-based summary contamination check ─────────────────────
+                # Detect when the LLM Professional Summary was injected into a
+                # non-summary section (e.g., Contact/sidebar).  This check works
+                # on the IR (DOCX-derived) rather than the PDF so it catches
+                # table-based templates where xhtml2pdf renders no extractable text.
+                sc_hard_fail, sc_ev = _check_misplaced_llm_summary(ir, llm_text)
+                if sc_hard_fail:
+                    hard_fail = True
+                    hard_fail_reasons.append("SUMMARY_IN_WRONG_SECTION")
+                    if "C_SECTION_CONTENT_MISPLACED" not in failure_classes:
+                        failure_classes.append("C_SECTION_CONTENT_MISPLACED")
+                evidence.extend(sc_ev)
+
         except Exception as exc:
             evidence.append(f"Content injection check failed: {exc}")
 
@@ -318,6 +476,9 @@ def grade_sample(
             if "COLUMN_CONTINUITY_BREAK" in pdf_result.hard_fail_reasons:
                 if "H_COLUMN_CONTINUITY_BREAK" not in failure_classes:
                     failure_classes.append("H_COLUMN_CONTINUITY_BREAK")
+            if "OVERFLOW_COLUMN_LOSS" in pdf_result.hard_fail_reasons:
+                if "H_OVERFLOW_COLUMN_LOSS" not in failure_classes:
+                    failure_classes.append("H_OVERFLOW_COLUMN_LOSS")
             evidence.extend(pdf_result.evidence[:8])
         except Exception as exc:
             evidence.append(f"PDF scoring error: {exc}")
