@@ -635,23 +635,17 @@ def grade_sample(
             if "COLUMN_LAYOUT_LOST" in pdf_result.hard_fail_reasons and _docx_has_orig_cols:
                 if "F_TOPOLOGY_COLLAPSE" not in failure_classes:
                     failure_classes.append("F_TOPOLOGY_COLLAPSE")
-            # F_POSITIONED_TEMPLATE_COLLAPSE: table-based multi-column template
-            # collapsed to single column in LibreOffice rendering.  Complements
-            # F_TOPOLOGY_COLLAPSE for templates that use table layout (no native
-            # Word sectPr columns) but whose visual 2-column structure collapses
-            # when content is modified.
-            # Only trusted when LibreOffice was the PDF converter — xhtml2pdf
-            # renders tables as HTML tables so both template and generated always
-            # appear multi-column regardless of actual visual layout.
+            # F_POSITIONED_TEMPLATE_COLLAPSE: multi-column template (table-based or
+            # positioned text-box based) collapsed to single column in LibreOffice.
+            # Complements F_TOPOLOGY_COLLAPSE for templates that achieve their
+            # 2-column layout without native Word sectPr columns — either via table
+            # cells or absolutely positioned text boxes.
+            # Only trusted when LibreOffice was the PDF converter (xhtml2pdf cannot
+            # reliably detect column counts for non-sectPr layouts).
             _used_lo = pdf_method in ("subprocess", "docker")
-            _table_has_orig_cols = (
-                docx_result is not None
-                and docx_result.table_count_original > 0
-            )
             if ("COLUMN_LAYOUT_LOST" in pdf_result.hard_fail_reasons
                     and not _docx_has_orig_cols   # no native Word columns
                     and _used_lo                   # LibreOffice PDF → trusted
-                    and _table_has_orig_cols        # template uses table-based layout
                     and orig_columns >= 2
                     and gen_columns_count < 2):
                 hard_fail = True
@@ -708,6 +702,21 @@ def grade_sample(
             if "TEXT_FRAGMENTATION" in pdf_result.hard_fail_reasons:
                 if "F_TEXT_FRAGMENTATION" not in failure_classes:
                     failure_classes.append("F_TEXT_FRAGMENTATION")
+            # N. Experience section displaced (pushed down or region-shifted)
+            # Both signals indicate the pre-experience zone expanded beyond template design.
+            if getattr(pdf_result, "experience_region_shifted", False):
+                if "D_EXPERIENCE_DISPLACED" not in failure_classes:
+                    failure_classes.append("D_EXPERIENCE_DISPLACED")
+            if getattr(pdf_result, "experience_pushed_down", False):
+                if "D_EXPERIENCE_DISPLACED" not in failure_classes:
+                    failure_classes.append("D_EXPERIENCE_DISPLACED")
+            # O. Header-region block overlap (positioned template collapse on page 1)
+            if "HEADER_BLOCK_OVERLAP" in pdf_result.hard_fail_reasons:
+                hard_fail = True
+                if "POSITIONED_TEMPLATE_COLLAPSE" not in hard_fail_reasons:
+                    hard_fail_reasons.append("POSITIONED_TEMPLATE_COLLAPSE")
+                if "F_POSITIONED_TEMPLATE_COLLAPSE" not in failure_classes:
+                    failure_classes.append("F_POSITIONED_TEMPLATE_COLLAPSE")
             # Density degraded (>50% roles no bullets, not a hard fail)
             if pdf_result.density_score <= 65 and "A_DENSITY_HARD_FAIL" not in failure_classes:
                 if "D_DENSITY_DEGRADED" not in failure_classes:
@@ -776,7 +785,7 @@ def grade_sample(
     # Failure classes that signal content loss not visible in PDF-level metrics
     # cap the composite at 74 (WARNING ceiling) even when all visual dimensions
     # score highly.  Mirrors the HARD FAIL cap at 30.
-    _SOFT_CAP_CLASSES = {"C_SUMMARY_MISSING", "D_DENSITY_DEGRADED"}
+    _SOFT_CAP_CLASSES = {"C_SUMMARY_MISSING", "D_DENSITY_DEGRADED", "D_EXPERIENCE_DISPLACED"}
     if not hard_fail and any(fc in _SOFT_CAP_CLASSES for fc in failure_classes):
         composite = min(composite, 74.0)
 

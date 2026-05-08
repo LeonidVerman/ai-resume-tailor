@@ -1002,6 +1002,57 @@ _NAME_RE = _re.compile(
     r"^[A-Z][a-z]+([\s\-][A-Z][a-z]+)+$|^[A-Z]{8,}$"
 )
 
+# Body-section headings (excludes CONTACT/PROFILE/ABOUT which can appear near the name)
+_BODY_SECTION_RE = _re.compile(
+    r"^(EDUCATION|SKILLS|WORK\s+(?:EXPERIENCE|HISTORY)|(?:PROFESSIONAL\s+)?EXPERIENCE|"
+    r"REFERENCES|CERTIF|EMPLOYMENT|PROJECTS|COMPETENCIES|EXPERTISE|"
+    r"TECHNICAL\s+SKILLS|CORE\s+COMPETENCIES)\b",
+    _re.IGNORECASE,
+)
+
+# Fraction of page-1 height shift that indicates the experience section was pushed
+# down significantly (summary/pre-experience zone expanded beyond template design).
+_EXP_P1_SHIFT_THRESHOLD = 0.08  # > 8% of page height
+
+# Heading pattern for experience section on page 1
+_EXP_HDG_RE = _re.compile(
+    r"^(WORK\s+)?EXPERIENCE\b|^EMPLOYMENT\b|^WORK\s+HISTORY\b",
+    _re.IGNORECASE,
+)
+
+# Institution/company suffixes that exclude a line from being a candidate name
+_COMPANY_SUFFIXES = frozenset({
+    "inc", "corp", "llc", "ltd", "co", "university", "college",
+    "institute", "foundation", "group", "company", "technologies",
+})
+
+_SECTION_WORD_SET_GLOBAL = frozenset({
+    "TECHNICAL", "SKILLS", "EXPERIENCE", "EDUCATION", "PROJECTS",
+    "CERTIFICATION", "CERTIFICATIONS", "REFERENCES", "AFFILIATIONS",
+    "CONTACT", "SUMMARY", "PROFESSIONAL", "WORK", "HISTORY",
+    "PROGRAMMING", "LANGUAGES", "INFORMATION", "ADDITIONAL",
+    "OBJECTIVE", "PROFILE", "ABOUT", "EMPLOYMENT", "CAREER",
+    "AWARDS", "HONORS", "ACTIVITIES", "VOLUNTEER", "LEADERSHIP",
+    "CORE", "COMPETENCIES", "EXPERTISE", "INTERESTS", "PUBLICATIONS",
+})
+
+_CANDIDATE_NAME_RE = _re.compile(
+    r"^[A-Z][a-z]{1,}([ \-][A-Z][a-z]{1,}){1,3}$"   # Title Case: "John Smith"
+    r"|^[A-Z]{2,15}(\s[A-Z]{2,15})+$"                  # ALL CAPS spaced: "HARPER RUSSO"
+)
+
+
+def _id_is_name_like(text: str) -> bool:
+    """True when the text looks like a candidate name (title-case or all-caps, 2-4 words)."""
+    if not _CANDIDATE_NAME_RE.match(text):
+        return False
+    words = text.replace("-", " ").split()
+    if frozenset(w.upper() for w in words).issubset(_SECTION_WORD_SET_GLOBAL):
+        return False
+    if words[-1].rstrip(".").lower() in _COMPANY_SUFFIXES:
+        return False
+    return True
+
 
 def _detect_layer_order_broken(
     gen_extracted,
@@ -1088,6 +1139,44 @@ def _detect_layer_order_broken(
         identity_on_gen_p2 = _has_identity(p2_lines, max_lines=5)
 
     if not identity_on_gen_p2:
+        # Sub-case B: identity not found before sections on page 1 AND not on page 2.
+        # Check if identity appears AFTER body-section headings within page 1 — this
+        # catches templates where the sidebar (sections) is extracted before the
+        # right-column identity block, producing a reading-order inversion.
+        _sec_idx = next(
+            (i for i, ln in enumerate(lines_p1[:40]) if _BODY_SECTION_RE.match(ln)),
+            len(lines_p1),
+        )
+        _id_idx = next(
+            (i for i, ln in enumerate(lines_p1[:40]) if _id_is_name_like(ln)),
+            len(lines_p1),
+        )
+        if _sec_idx < _id_idx < len(lines_p1):
+            # Body sections appear before identity.  Template comparison gate:
+            # if the original ALSO has sections before identity, this is structural.
+            _orig_also_inverted = True  # default: suppress if no template
+            if orig_extracted and orig_extracted.pages:
+                _orig_lines = [ln.text.strip() for ln in orig_extracted.pages[0].lines
+                               if ln.text.strip()]
+                _orig_sec = next(
+                    (i for i, ln in enumerate(_orig_lines[:40]) if _BODY_SECTION_RE.match(ln)),
+                    len(_orig_lines),
+                )
+                _orig_id = next(
+                    (i for i, ln in enumerate(_orig_lines[:40]) if _id_is_name_like(ln)),
+                    len(_orig_lines),
+                )
+                # If original had identity BEFORE sections, the generated inverted it
+                _orig_also_inverted = (_orig_id >= _orig_sec)
+
+            if not _orig_also_inverted:
+                return [
+                    f"Visual reading order inverted (HARD FAIL): body section "
+                    f"'{lines_p1[_sec_idx][:40]}' at line {_sec_idx} precedes "
+                    f"identity '{lines_p1[_id_idx][:40]}' at line {_id_idx} on "
+                    f"page 1 — sidebar/lower sections rendered before identity block"
+                ], True
+
         return [], False  # no identity found anywhere — can't determine order break
 
     # Template-comparison gate: if the original template ALSO had no identity on
@@ -1119,49 +1208,84 @@ def _detect_layer_order_broken(
 # K. Duplicate top-area content (summary rendered twice)
 # ---------------------------------------------------------------------------
 
-def _detect_duplicate_top_content(gen_extracted) -> "tuple[list[str], bool]":
+def _detect_duplicate_top_content(gen_extracted, orig_extracted=None) -> "tuple[list[str], bool]":
     """Detect when the same summary/profile text appears twice on page 1.
 
     A duplicate occurs when the Professional Summary is injected into the
     correct position AND also into a nearby container (textbox, column,
     sidebar), producing two visually similar blocks at the top of the page.
 
+    Detection criteria (all must hold to flag as duplicate):
+    - Both lines are ≥ 55 chars (prose threshold — not role titles or short headings)
+    - Both lines share the same first 38 chars case-insensitively (unique prose prefix)
+    - The two instances are within 20% of page height in y-position (same area,
+      not a summary vs. an experience bullet that uses similar language)
+    - Neither line is an ALL-CAPS header (section heading / role title pattern)
+
     Returns (evidence_list, hard_fail).
-    hard_fail=True when the duplicate involves ≥ 40-char blocks (high confidence).
+    hard_fail=True when a qualifying duplicate is found (all thresholds met).
     """
     if not gen_extracted.pages:
         return [], False
 
     page1 = gen_extracted.pages[0]
-    # Collect long lines (> 25 chars) from the first 20 lines of page 1
-    long_lines = [
-        ln.text.strip() for ln in page1.lines[:20]
-        if len(ln.text.strip()) > 25
-    ]
+    page_h = page1.height or 842.0
 
-    if len(long_lines) < 2:
+    _ALL_CAPS_RE = _re.compile(r"^[A-Z\s\-:\.\/\(\)\|]{5,}$")
+
+    # Collect long prose lines from the top 60% of page 1 with y-positions
+    # derived from block bounding boxes.
+    candidate_lines: "list[tuple[str, float]]" = []
+    for block in page1.blocks:
+        if not block.lines or block.bbox[1] > page_h * 0.60:
+            continue
+        block_h = max(1.0, block.bbox[3] - block.bbox[1])
+        line_h = block_h / len(block.lines)
+        for k, ln in enumerate(block.lines):
+            txt = ln.text.strip()
+            if len(txt) < 55:
+                continue
+            if _ALL_CAPS_RE.match(txt):
+                continue
+            # Require prose: ≥ 4 space-separated words (filters URLs, paths, IDs)
+            if len(txt.split()) < 4:
+                continue
+            candidate_lines.append((txt, block.bbox[1] + k * line_h))
+
+    if len(candidate_lines) < 2:
         return [], False
 
-    # Look for pairs where the first 22 chars match (case-insensitive)
-    duplicates: list[tuple[str, str]] = []
-    for i in range(len(long_lines)):
-        for j in range(i + 1, len(long_lines)):
-            a = long_lines[i].lower()[:22]
-            b = long_lines[j].lower()[:22]
-            if a == b and a.strip():
-                duplicates.append((long_lines[i], long_lines[j]))
+    # Find pairs where first 37 chars match AND y-positions are within 20% of page height.
+    # The y-proximity gate distinguishes rendering-level duplicates (two containers
+    # in the same area of the page) from content-level similarity (same sentence
+    # appearing in both the summary and an experience bullet far below).
+    # 37-char prefix: long enough to avoid role-title false positives (e.g. "Senior
+    # Software Engineer | Company" diverges from "Senior Software Engineer focused"
+    # at position 26), short enough to catch real duplicates where template placeholder
+    # and LLM output share the same job-title opener but diverge at a quantifier
+    # ("with over five years" vs "with 5+ years").
+    duplicates: "list[tuple[str, str]]" = []
+    for i in range(len(candidate_lines)):
+        txt_i, y_i = candidate_lines[i]
+        for j in range(i + 1, len(candidate_lines)):
+            txt_j, y_j = candidate_lines[j]
+            prefix_i = txt_i.lower()[:37]
+            if prefix_i != txt_j.lower()[:37] or not prefix_i.strip():
+                continue
+            if abs(y_j - y_i) / page_h > 0.20:
+                continue  # same opening words but far apart — content overlap, not rendering defect
+            duplicates.append((txt_i, txt_j))
 
     if not duplicates:
         return [], False
 
     a_text, b_text = duplicates[0]
-    hard = len(a_text) >= 40
 
     return [
-        f"Duplicate top-area text {'(HARD FAIL) ' if hard else ''}: "
+        f"Duplicate top-area text (HARD FAIL): "
         f"'{a_text[:60]}' appears again as '{b_text[:60]}' — "
         f"summary/profile text may be injected twice"
-    ], hard
+    ], True
 
 
 # ---------------------------------------------------------------------------
@@ -1293,6 +1417,159 @@ def _detect_text_fragmentation(
 
 
 # ---------------------------------------------------------------------------
+# N. Experience section pushed down on page 1 (pre-experience content expanded)
+# ---------------------------------------------------------------------------
+
+def _detect_experience_section_pushed_down(
+    gen_extracted,
+    orig_extracted=None,
+) -> "tuple[bool, list[str]]":
+    """Detect when the experience section heading on page 1 was pushed down vs template.
+
+    When the LLM provides significantly more pre-experience content (summary,
+    profile, skills intro) than the template was designed for, the experience
+    heading is displaced downward.  A shift > 8% of page height (~67 pts on A4)
+    corresponds to roughly 5–6 additional content lines — a perceptible layout
+    regression.
+
+    Only fires when BOTH template and generated have the experience heading on
+    page 1 (heading not found on page 1 in either → not comparable).
+
+    Returns (pushed_down, evidence_list).
+    """
+    def _exp_y_on_page1(extracted):
+        if not extracted.pages:
+            return None
+        for block in extracted.pages[0].blocks:
+            if block.block_type not in ("heading", "header"):
+                continue
+            for ln in block.lines:
+                if _EXP_HDG_RE.match(ln.text.strip()):
+                    return (block.bbox[1] + block.bbox[3]) / 2.0
+        return None
+
+    gen_y = _exp_y_on_page1(gen_extracted)
+    orig_y = _exp_y_on_page1(orig_extracted) if orig_extracted else None
+
+    if gen_y is None or orig_y is None:
+        return False, []
+
+    page_h = gen_extracted.pages[0].height or 842.0
+    shift = (gen_y - orig_y) / page_h
+
+    if shift <= _EXP_P1_SHIFT_THRESHOLD:
+        return False, []
+
+    return True, [
+        f"Experience section pushed down: y={orig_y:.0f}→{gen_y:.0f} "
+        f"(+{shift:.0%} of page height vs template) — "
+        f"pre-experience content expanded beyond template design"
+    ]
+
+
+# ---------------------------------------------------------------------------
+# O. Header-region block overlap (positioned template collapse on page 1)
+# ---------------------------------------------------------------------------
+
+_HEADER_BLOCK_FRAC = 0.40  # examine top 40% of page 1
+
+
+def _detect_header_block_overlap(
+    gen_extracted,
+    orig_extracted=None,
+) -> "tuple[list[str], bool]":
+    """Detect overlapping text blocks in the page-1 header region.
+
+    In a correctly rendered resume, text blocks in the header area do not
+    overlap each other in both x and y simultaneously.  When a positioned or
+    table-based template collapses (text boxes share the same bounding-box area),
+    multiple blocks occupy the same region, producing perceptible visual overlap.
+
+    Two blocks overlap when their x-ranges AND y-ranges both intersect (with a
+    3-point tolerance to ignore trivial adjacency from PDF rounding).
+
+    Template-comparison gate: if the original template already has overlapping
+    blocks in this region (e.g. icon-font decorative elements), the check is
+    suppressed to avoid flagging structural template features.
+
+    Returns (evidence_list, hard_fail).
+    hard_fail when generated has ≥ 3 more overlapping pairs than the template.
+    """
+    if not gen_extracted.pages:
+        return [], False
+
+    page1 = gen_extracted.pages[0]
+    page_h = page1.height or 842.0
+    header_bottom = page_h * _HEADER_BLOCK_FRAC
+
+    def _header_blocks(page):
+        h = page.height or 842.0
+        hb = h * _HEADER_BLOCK_FRAC
+        return [
+            b for b in page.blocks
+            if b.bbox[1] < hb
+            and sum(len(ln.text) for ln in b.lines) >= _SPARSE_MIN_BLOCK_CHARS
+        ]
+
+    def _count_xy_overlaps(blocks):
+        count = 0
+        for i in range(len(blocks)):
+            for j in range(i + 1, len(blocks)):
+                a, b = blocks[i], blocks[j]
+                y_ov = (a.bbox[1] < b.bbox[3] - 3) and (b.bbox[1] < a.bbox[3] - 3)
+                if not y_ov:
+                    continue
+                x_ov = (a.bbox[0] < b.bbox[2] - 3) and (b.bbox[0] < a.bbox[2] - 3)
+                if x_ov:
+                    count += 1
+        return count
+
+    gen_blocks = _header_blocks(page1)
+    if len(gen_blocks) < 3:
+        return [], False
+
+    gen_overlaps = _count_xy_overlaps(gen_blocks)
+    if gen_overlaps == 0:
+        return [], False
+
+    orig_overlaps = 0
+    if orig_extracted and orig_extracted.pages:
+        orig_overlaps = _count_xy_overlaps(_header_blocks(orig_extracted.pages[0]))
+
+    if gen_overlaps <= orig_overlaps + 1:
+        return [], False  # no meaningful increase over template
+
+    hard_fail = gen_overlaps >= orig_overlaps + 3
+
+    # Gather a brief example pair for evidence
+    examples: list[str] = []
+    for i in range(len(gen_blocks)):
+        if len(examples) >= 2:
+            break
+        for j in range(i + 1, len(gen_blocks)):
+            a, b = gen_blocks[i], gen_blocks[j]
+            y_ov = (a.bbox[1] < b.bbox[3] - 3) and (b.bbox[1] < a.bbox[3] - 3)
+            x_ov = (a.bbox[0] < b.bbox[2] - 3) and (b.bbox[0] < a.bbox[2] - 3)
+            if y_ov and x_ov:
+                a_txt = " ".join(ln.text for ln in a.lines)[:25]
+                b_txt = " ".join(ln.text for ln in b.lines)[:25]
+                examples.append(f"['{a_txt}' ∩ '{b_txt}']")
+                break
+
+    sev = "(HARD FAIL) " if hard_fail else ""
+    ev = (
+        f"Header block overlap {sev}({gen_overlaps} overlapping pair(s) in top "
+        f"{int(_HEADER_BLOCK_FRAC * 100)}% of page 1"
+        + (f", template has {orig_overlaps}" if orig_extracted else "")
+        + ")"
+    )
+    if examples:
+        ev += ": " + "; ".join(examples)
+
+    return [ev], hard_fail
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -1315,9 +1592,11 @@ class PDFVisualResult:
     hard_fail_reasons: list[str] = field(default_factory=list)
     evidence: list[str] = field(default_factory=list)
 
-    # New visual-defect flags (set by detectors J/K/L)
+    # Visual-defect flags (set by detectors J/K/N/O)
     layer_order_broken: bool = False
     duplicate_top_content: bool = False
+    experience_region_shifted: bool = False   # experience section changed vertical region
+    experience_pushed_down: bool = False       # experience heading on p1 pushed down > 8%
 
 
 def score_pdf_visual(
@@ -1361,6 +1640,11 @@ def score_pdf_visual(
         hard_fail = True
         hard_fail_reasons.append("COLUMN_LAYOUT_LOST")
     evidence.extend(region_ev)
+    # Detect experience-section region shift from evidence (even adjacent shifts)
+    _exp_region_shifted = any(
+        "'experience'" in ev and "region:" in ev and "->" in ev
+        for ev in region_ev
+    )
 
     container_s, container_ev = _score_container(orig, gen)
     evidence.extend(container_ev)
@@ -1410,7 +1694,7 @@ def score_pdf_visual(
     _layer_order_broken = lo_fail or bool(lo_ev)
 
     # K. Duplicate top-area content (summary rendered twice on page 1)
-    dup_ev, dup_fail = _detect_duplicate_top_content(gen)
+    dup_ev, dup_fail = _detect_duplicate_top_content(gen, orig_extracted=orig)
     if dup_fail:
         hard_fail = True
         hard_fail_reasons.append("DUPLICATE_TOP_CONTENT")
@@ -1434,6 +1718,19 @@ def score_pdf_visual(
         hard_fail_reasons.append("TEXT_FRAGMENTATION")
     evidence.extend(frag_ev)
 
+    # N. Experience section pushed down on page 1 (pre-experience content expanded)
+    _exp_pushed_down, exp_push_ev = _detect_experience_section_pushed_down(
+        gen, orig_extracted=orig
+    )
+    evidence.extend(exp_push_ev)
+
+    # O. Header-region block overlap (positioned template collapse on page 1)
+    hbo_ev, hbo_fail = _detect_header_block_overlap(gen, orig_extracted=orig)
+    if hbo_fail:
+        hard_fail = True
+        hard_fail_reasons.append("HEADER_BLOCK_OVERLAP")
+    evidence.extend(hbo_ev)
+
     return PDFVisualResult(
         page_count_score=pc_score,
         blank_page_score=bp_score,
@@ -1451,4 +1748,6 @@ def score_pdf_visual(
         evidence=evidence,
         layer_order_broken=_layer_order_broken,
         duplicate_top_content=_duplicate_top_content,
+        experience_region_shifted=_exp_region_shifted,
+        experience_pushed_down=_exp_pushed_down,
     )
