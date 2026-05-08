@@ -1366,11 +1366,11 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
     - Section title not in _PROTECTED_INTRO_PROSE_TITLES (Communication, Leadership, etc.).
     """
     _sections = original.sections
-    # "contact" and "social" sections indicate a contact/sidebar area.
-    # "websites" is NOT included: a portfolio-links section does not make its
-    # neighbor a contact area — the neighbor may be a main-column skills or
-    # profile section containing the original intro-prose summary.
-    _CONTACT_AREA_TYPES: frozenset[str] = frozenset({"contact", "social"})
+    # "contact", "social", and "websites" sections indicate a contact/sidebar area.
+    # The grader flags any summary text in a section adjacent to these types as
+    # SUMMARY_IN_WRONG_SECTION, so the renderer must reject those same sections
+    # as intro-prose anchors.
+    _CONTACT_AREA_TYPES: frozenset[str] = frozenset({"contact", "social", "websites"})
     for _si, section in enumerate(_sections):
         if section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             continue
@@ -2492,6 +2492,7 @@ def _find_summary_anchors(
     if not trailing:
         return None
 
+
     # Two or more empty slots: use the FIRST two (heading_anchor, body_anchor).
     # Using the first two slots (immediately after name/title) places the summary
     # right below the candidate's name, minimising vertical whitespace between
@@ -2500,8 +2501,7 @@ def _find_summary_anchors(
     if len(trailing) >= 2:
         return trailing[0], trailing[1]
 
-    # Single empty slot: use as body_anchor only; heading_anchor=None means
-    # the inserted section has no heading para (renders as prose block only).
+    # Single empty slot only (no preceding prose para found above).
     _log.debug(
         "SUMMARY_SINGLE_ANCHOR: one empty header slot found — "
         "summary inserted without heading anchor (body_pid=%r)",

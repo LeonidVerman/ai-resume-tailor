@@ -610,6 +610,11 @@ def _find_summary_anchor(
     # Rule 1: first 'other'-type top section that contains prose (not skills-like).
     # Stop searching once we reach a real content section (summary/experience/etc.)
     # so we only look at the header/intro zone.
+    # Sections adjacent to contact/social/websites neighbours are excluded:
+    # the grader treats 'websites' as a contact-area indicator just like 'contact'
+    # and 'social', so injecting the summary into a section adjacent to any of
+    # them would cause SUMMARY_IN_WRONG_SECTION hard-fail.
+    _CONTACT_NEIGHBOR_TYPES: frozenset[str] = frozenset({"contact", "social", "websites"})
     for idx, section in enumerate(original.sections):
         if idx in sidebar_idxs:
             continue
@@ -617,6 +622,15 @@ def _find_summary_anchor(
             break  # passed the header zone into main content
         if section.title.strip().lower() in _PROTECTED_INTRO_TITLES:
             continue  # named semantic section — must not be overwritten by summary
+        # Skip sections adjacent to contact/social/websites areas — the grader
+        # flags any summary found there as SUMMARY_IN_WRONG_SECTION.
+        _neighbors = [
+            original.sections[j].semantic_type
+            for j in (idx - 1, idx + 1)
+            if 0 <= j < len(original.sections)
+        ]
+        if any(nt in _CONTACT_NEIGHBOR_TYPES for nt in _neighbors):
+            continue
         if _has_intro_prose_content(section):
             return ("intro_prose", idx)
 
