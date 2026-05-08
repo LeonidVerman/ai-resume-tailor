@@ -43,6 +43,20 @@ HARD FAIL triggers (continued):
                               differs from page 2 (upper half) by > 25% of page
                               width — section continues in wrong column lane.
 
+HARD FAIL triggers (continued):
+  TEXT_FRAGMENTATION            Page 1 has >25% of lines as 1-2 char fragments —
+                                text is broken at character level (word-wrapping at
+                                individual chars) by a positioned template collapse.
+                                Template-comparison gate suppresses structural
+                                fragmentation (icon fonts, decorative chars).
+  POSITIONED_TEMPLATE_COLLAPSE  LibreOffice PDFs show orig ≥2 columns collapsing
+                                to 1 column in the generated output for a table-based
+                                template (no native Word sectPr columns).  Only
+                                triggered when LibreOffice was used for PDF conversion
+                                (method=subprocess|docker); xhtml2pdf cannot detect
+                                this because it renders tables without honouring CSS
+                                absolute/relative positioning.
+
 WARNING triggers (via sparse_page_score = 0):
   C_SPARSE_CONTINUATION_PAGE  non-first page fills < 65% of page height after
                               a well-packed previous page (>= 75% full) and
@@ -387,11 +401,22 @@ def _check_misplaced_llm_summary(
 
 def _detect_pdf_method() -> str:
     import os
+    import platform
     env = os.environ.get("GRADE_PDF_METHOD", "").strip().lower()
     if env in ("subprocess", "docker", "local"):
         return env
     if shutil.which("soffice") or shutil.which("libreoffice"):
         return "subprocess"
+    # Windows: LibreOffice may be installed at the standard path but not in PATH.
+    # _docx_to_pdf_subprocess uses _find_libreoffice_exe which checks these paths,
+    # so "subprocess" works even without a PATH entry.
+    if platform.system() == "Windows":
+        for _lo_base in (
+            r"C:\Program Files\LibreOffice\program",
+            r"C:\Program Files (x86)\LibreOffice\program",
+        ):
+            if os.path.exists(os.path.join(_lo_base, "soffice.exe")):
+                return "subprocess"
     return "local"
 
 
@@ -610,6 +635,30 @@ def grade_sample(
             if "COLUMN_LAYOUT_LOST" in pdf_result.hard_fail_reasons and _docx_has_orig_cols:
                 if "F_TOPOLOGY_COLLAPSE" not in failure_classes:
                     failure_classes.append("F_TOPOLOGY_COLLAPSE")
+            # F_POSITIONED_TEMPLATE_COLLAPSE: table-based multi-column template
+            # collapsed to single column in LibreOffice rendering.  Complements
+            # F_TOPOLOGY_COLLAPSE for templates that use table layout (no native
+            # Word sectPr columns) but whose visual 2-column structure collapses
+            # when content is modified.
+            # Only trusted when LibreOffice was the PDF converter — xhtml2pdf
+            # renders tables as HTML tables so both template and generated always
+            # appear multi-column regardless of actual visual layout.
+            _used_lo = pdf_method in ("subprocess", "docker")
+            _table_has_orig_cols = (
+                docx_result is not None
+                and docx_result.table_count_original > 0
+            )
+            if ("COLUMN_LAYOUT_LOST" in pdf_result.hard_fail_reasons
+                    and not _docx_has_orig_cols   # no native Word columns
+                    and _used_lo                   # LibreOffice PDF → trusted
+                    and _table_has_orig_cols        # template uses table-based layout
+                    and orig_columns >= 2
+                    and gen_columns_count < 2):
+                hard_fail = True
+                if "POSITIONED_TEMPLATE_COLLAPSE" not in hard_fail_reasons:
+                    hard_fail_reasons.append("POSITIONED_TEMPLATE_COLLAPSE")
+                if "F_POSITIONED_TEMPLATE_COLLAPSE" not in failure_classes:
+                    failure_classes.append("F_POSITIONED_TEMPLATE_COLLAPSE")
             if pdf_result.region_score < 60:
                 if "D_SECTION_MISPLACED" not in failure_classes:
                     failure_classes.append("D_SECTION_MISPLACED")
@@ -655,6 +704,10 @@ def grade_sample(
             elif pdf_result.sparse_page_score < 100:
                 # Already covered by C_SPARSE_CONTINUATION_PAGE — no additional class
                 pass
+            # M. Text fragmentation (character-level word breaks)
+            if "TEXT_FRAGMENTATION" in pdf_result.hard_fail_reasons:
+                if "F_TEXT_FRAGMENTATION" not in failure_classes:
+                    failure_classes.append("F_TEXT_FRAGMENTATION")
             # Density degraded (>50% roles no bullets, not a hard fail)
             if pdf_result.density_score <= 65 and "A_DENSITY_HARD_FAIL" not in failure_classes:
                 if "D_DENSITY_DEGRADED" not in failure_classes:
@@ -747,6 +800,7 @@ def grade_sample(
         "gen_columns": gen_columns_count,
         "sim_llm": ci_sim_llm,
         "sim_template": ci_sim_template,
+        "pdf_method": pdf_method,
     }
 
     return SampleGrade(

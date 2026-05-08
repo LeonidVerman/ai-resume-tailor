@@ -1046,12 +1046,28 @@ def _detect_layer_order_broken(
             r"^[A-Z][a-z]+([\s\-][A-Z][a-z]+)+$"
             r"|^[A-Z]{2,}(\s[A-Z]{2,})+$"
         )
+        # All-caps words that indicate a resume section, not a person's name.
+        # "TECHNICAL SKILLS", "WORK HISTORY", "PROGRAMMING LANGUAGES" etc. would
+        # match the all-caps name pattern but are clearly section headings.
+        _SECTION_WORD_SET = frozenset({
+            "TECHNICAL", "SKILLS", "EXPERIENCE", "EDUCATION", "PROJECTS",
+            "CERTIFICATION", "CERTIFICATIONS", "REFERENCES", "AFFILIATIONS",
+            "CONTACT", "SUMMARY", "PROFESSIONAL", "WORK", "HISTORY",
+            "PROGRAMMING", "LANGUAGES", "INFORMATION", "ADDITIONAL",
+            "OBJECTIVE", "PROFILE", "ABOUT", "EMPLOYMENT", "CAREER",
+            "AWARDS", "HONORS", "ACTIVITIES", "VOLUNTEER", "LEADERSHIP",
+            "CORE", "COMPETENCIES", "EXPERTISE", "INTERESTS", "PUBLICATIONS",
+        })
         for ln in lines[:max_lines]:
             # A section heading marks the end of the identity zone — stop here
             if _SECTION_HEADING_RE.match(ln):
                 break
             # Proper name (must NOT be a known section keyword)
             if _proper_name.match(ln) and not _SECTION_HEADING_RE.match(ln):
+                # Guard: if all words are section keywords, this is not a name
+                words = frozenset(ln.upper().replace("-", " ").split())
+                if words.issubset(_SECTION_WORD_SET):
+                    continue
                 return ln
             # Concatenated all-caps name (no spaces): "DEVOPSENGINEER"
             stripped = ln.replace(" ", "")
@@ -1210,6 +1226,73 @@ def _detect_thin_overflow_page(
 
 
 # ---------------------------------------------------------------------------
+# M. Text fragmentation (character-level line breaks — positioned collapse)
+# ---------------------------------------------------------------------------
+
+# Fraction of page-1 content lines that must be micro-lines (1-2 chars) to
+# trigger the fragmentation detector.
+_FRAG_MICRO_RATIO = 0.25
+# Minimum absolute count of micro-lines — avoids false positives on short pages
+# where a few single-char lines (e.g. list bullets, initials) are normal.
+_FRAG_MICRO_MIN = 10
+
+
+def _detect_text_fragmentation(
+    gen_extracted,
+    orig_extracted=None,
+) -> "tuple[list[str], bool]":
+    """Detect when page 1 text is broken into character-level fragments.
+
+    In a correctly rendered resume PDF, lines contain whole words and phrases.
+    When a positioned template collapses (text boxes too narrow, content areas
+    overlap, or column widths are not preserved), LibreOffice extracts text as
+    individual characters or syllables ('e', 'ng', 'R', etc.).
+
+    The detector computes the fraction of non-empty page-1 lines that are
+    1-2 characters long ('micro-lines').  A high ratio signals character-level
+    word splitting, not ordinary abbreviations.
+
+    Template-comparison gate: if the original template also has a high micro-line
+    ratio on page 1 (structural — e.g. a sidebar icon template), the check is
+    suppressed.
+
+    Returns (evidence_list, hard_fail).
+    hard_fail = True when triggered (fragmented document is unreadable).
+    """
+    if not gen_extracted.pages:
+        return [], False
+
+    page1 = gen_extracted.pages[0]
+    content_lines = [ln.text.strip() for ln in page1.lines if ln.text.strip()]
+    if len(content_lines) < 10:
+        return [], False
+
+    micro = [l for l in content_lines if 1 <= len(l) <= 2]
+    ratio = len(micro) / len(content_lines)
+
+    if ratio < _FRAG_MICRO_RATIO or len(micro) < _FRAG_MICRO_MIN:
+        return [], False
+
+    # Template comparison: if the original template also has fragmented page 1,
+    # the fragmentation is structural (e.g. icon fonts, decorative characters)
+    # and not introduced by the renderer.
+    if orig_extracted and orig_extracted.pages:
+        orig_lines = [ln.text.strip() for ln in orig_extracted.pages[0].lines
+                      if ln.text.strip()]
+        if orig_lines:
+            orig_micro = [l for l in orig_lines if 1 <= len(l) <= 2]
+            orig_ratio = len(orig_micro) / len(orig_lines)
+            if orig_ratio >= _FRAG_MICRO_RATIO:
+                return [], False   # structural — template is also fragmented
+
+    return [
+        f"Text fragmentation (HARD FAIL): page 1 has {len(micro)} micro-lines "
+        f"({ratio:.0%} of {len(content_lines)} content lines are 1-2 chars) — "
+        f"text is broken at character level; positioned template likely collapsed"
+    ], True
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -1343,6 +1426,13 @@ def score_pdf_visual(
     if thin_fail:
         hard_fail = True
         hard_fail_reasons.append("THIN_OVERFLOW_PAGE")
+
+    # M. Text fragmentation (character-level line breaks — positioned template collapse)
+    frag_ev, frag_fail = _detect_text_fragmentation(gen, orig_extracted=orig)
+    if frag_fail:
+        hard_fail = True
+        hard_fail_reasons.append("TEXT_FRAGMENTATION")
+    evidence.extend(frag_ev)
 
     return PDFVisualResult(
         page_count_score=pc_score,
