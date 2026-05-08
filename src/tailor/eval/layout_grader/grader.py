@@ -109,6 +109,155 @@ class SampleGrade:
 # IR-based semantic fallback detectors
 # ---------------------------------------------------------------------------
 
+def _check_ir_summary_missing(
+    ir: dict, llm_text: str
+) -> "tuple[bool, list[str]]":
+    """Detect when the LLM output contained a Professional Summary but the IR lacks one.
+
+    Returns (triggered, evidence_list).
+    triggered=True is a WARNING signal (C_SUMMARY_MISSING_WHEN_SAFE_ANCHOR_EXISTS).
+
+    Algorithm
+    ---------
+    1. Extract the LLM summary text (same as _check_misplaced_llm_summary step 1).
+    2. Check if the rendered IR has ANY section with substantial prose content
+       that could be the summary (length > 60 chars, low comma density).
+    3. If the LLM had a summary (> 60 chars) but the IR has no summary-like prose
+       → flag the gap.
+
+    False-positive guard: templates that legitimately have no summary region (e.g.
+    dense skill-matrix or chronological templates) are excluded when the IR has
+    experience/skills sections with substantive body content (the template simply
+    doesn't have a summary area).
+    """
+    import re
+
+    if not llm_text or not ir:
+        return False, []
+
+    # Step 1: find LLM summary
+    summary_text = ""
+    ps_match = re.search(
+        r"(?:professional\s+summary|summary|profile|about\s+me)\s*\n+(.+)",
+        llm_text,
+        re.IGNORECASE,
+    )
+    if ps_match:
+        candidate = ps_match.group(1).strip()
+        summary_text = candidate[:200]
+    if not summary_text:
+        for line in llm_text.split("\n"):
+            line = line.strip()
+            if len(line) >= 60 and not re.match(r"^[A-Z][a-z]+ [A-Z][a-z]+$", line):
+                summary_text = line[:200]
+                break
+    if not summary_text or len(summary_text) < 60:
+        return False, []
+
+    # Step 2: check IR for summary-like prose
+    sections = ir.get("sections", [])
+    header_paras = ir.get("header_paras", [])
+
+    # Check for explicit summary section
+    has_explicit_summary = any(
+        s.get("semantic_type") in ("summary",)
+        and any(len(bp.get("text", "").strip()) > 60 for bp in s.get("body_paras", []))
+        for s in sections
+    )
+    if has_explicit_summary:
+        return False, []
+
+    # Check for implicit summary in 'other' sections (first 3 sections only, not experience/skills)
+    _BODY_CONTENT_TYPES2 = {"experience", "skills", "education", "certifications",
+                            "languages", "websites"}
+    for sec in sections[:3]:
+        sec_type = sec.get("semantic_type", "") or ""
+        if sec_type in ("summary",):
+            continue
+        if sec_type in _BODY_CONTENT_TYPES2:
+            continue  # experience bullets are not a summary
+        body_paras = sec.get("body_paras", [])
+        long_prose = [
+            bp.get("text", "").strip()
+            for bp in body_paras
+            if len(bp.get("text", "").strip()) > 60
+        ]
+        if long_prose:
+            # Check comma density (prose vs skills list)
+            total = " ".join(long_prose)
+            if total.count(",") / max(1, len(total)) < 0.12:
+                return False, []  # prose-like content exists — summary is present
+
+    # Check header paras for summary-like content
+    for pm in header_paras:
+        text = pm.get("text", "").strip()
+        if len(text) > 60:
+            return False, []
+
+    # Summary is missing from IR
+    return True, [
+        f"Summary missing: LLM output contained a Professional Summary "
+        f"('{summary_text[:80]}...') but the rendered IR has no summary-like "
+        f"prose content — summary may have been dropped or not anchored"
+    ]
+
+
+def _check_ir_duplicate_summary(
+    ir: dict, llm_text: str
+) -> "tuple[bool, list[str]]":
+    """Detect when the same summary text appears in more than one IR section.
+
+    Returns (triggered, evidence_list).
+    triggered=True is a WARNING (E_DUPLICATE_SUMMARY).
+
+    This IR-based check is useful for table-based templates where xhtml2pdf
+    produces a blank/near-blank PDF, making PDF-level duplicate detection blind.
+    """
+    import re
+
+    if not llm_text or not ir:
+        return False, []
+
+    # Extract LLM summary key
+    summary_text = ""
+    ps_match = re.search(
+        r"(?:professional\s+summary|summary|profile|about\s+me)\s*\n+(.+)",
+        llm_text,
+        re.IGNORECASE,
+    )
+    if ps_match:
+        summary_text = ps_match.group(1).strip()[:200]
+    if not summary_text:
+        for line in llm_text.split("\n"):
+            line = line.strip()
+            if len(line) >= 60 and not re.match(r"^[A-Z][a-z]+ [A-Z][a-z]+$", line):
+                summary_text = line[:200]
+                break
+    if not summary_text or len(summary_text) < 50:
+        return False, []
+
+    summary_key = summary_text[:40].lower().strip()
+
+    # Find which sections contain the summary key
+    matched_sections: list[str] = []
+    for sec in ir.get("sections", []):
+        for bp in sec.get("body_paras", []):
+            text = bp.get("text", "").strip().lower()
+            if len(text) >= 40 and summary_key[:30] in text[:80]:
+                matched_sections.append(
+                    f"{sec.get('semantic_type','?')}:'{sec.get('title','?')[:30]}'"
+                )
+                break
+
+    if len(matched_sections) >= 2:
+        return True, [
+            f"Duplicate summary: summary text found in {len(matched_sections)} IR sections "
+            f"({', '.join(matched_sections)}) — summary may be injected twice"
+        ]
+
+    return False, []
+
+
 def _check_misplaced_llm_summary(
     ir: dict, llm_text: str
 ) -> "tuple[bool, list[str]]":
@@ -189,22 +338,11 @@ def _check_misplaced_llm_summary(
                 para_texts.append(txt)
 
         # Signal A: LLM summary key found in a body_para AND the section has
-        # two additional guards to avoid false positives.
-        #
-        # Guard 1 — body_para count ≥ 8:
-        #   A legitimate 'other' section that happens to be the template's
-        #   unlabelled Professional Summary typically has 1–5 body_paras (just
-        #   the summary sentences).  A contaminated contact/sidebar table cell
-        #   absorbs the full LLM header block (name + contact lines + summary),
-        #   producing many more paragraphs (14 in sample 2).
-        #
-        # Guard 2 — contact/websites neighbor:
-        #   When the summary ends up in a sidebar, the immediately adjacent
-        #   section is almost always a 'websites', 'contact', or 'social'
-        #   section (e.g. sec_2 type=websites in sample 2).  Templates where
-        #   the summary is legitimately in an 'other' section have neighbours
-        #   that are 'skills', 'experience', or 'education' — not contact types.
-        if len(body_paras) < 8:
+        # a contact/websites-type neighbor (Guard 2 below).  Guard 1 ensures
+        # the section has at least minimal content (≥3 body_paras) so that
+        # trivially empty sections don't trigger the check.  The contact-
+        # neighbor guard is the primary false-positive protection.
+        if len(body_paras) < 3:
             continue
 
         # Check for contact/websites-type neighbour in the sections list
@@ -385,10 +523,6 @@ def grade_sample(
                 evidence.extend(ci_result.evidence[:3])
 
                 # ── IR-based summary contamination check ─────────────────────
-                # Detect when the LLM Professional Summary was injected into a
-                # non-summary section (e.g., Contact/sidebar).  This check works
-                # on the IR (DOCX-derived) rather than the PDF so it catches
-                # table-based templates where xhtml2pdf renders no extractable text.
                 sc_hard_fail, sc_ev = _check_misplaced_llm_summary(ir, llm_text)
                 if sc_hard_fail:
                     hard_fail = True
@@ -396,6 +530,23 @@ def grade_sample(
                     if "C_SECTION_CONTENT_MISPLACED" not in failure_classes:
                         failure_classes.append("C_SECTION_CONTENT_MISPLACED")
                 evidence.extend(sc_ev)
+
+                # ── IR-based summary missing check ────────────────────────────
+                # Detect when LLM had a Professional Summary but the rendered IR
+                # has no summary-like prose — the summary was dropped/not anchored.
+                sm_triggered, sm_ev = _check_ir_summary_missing(ir, llm_text)
+                if sm_triggered:
+                    if "C_SUMMARY_MISSING" not in failure_classes:
+                        failure_classes.append("C_SUMMARY_MISSING")
+                evidence.extend(sm_ev)
+
+                # ── IR-based duplicate summary check ─────────────────────────
+                # Detect when the summary appears in more than one IR section.
+                ds_triggered, ds_ev = _check_ir_duplicate_summary(ir, llm_text)
+                if ds_triggered:
+                    if "E_DUPLICATE_SUMMARY" not in failure_classes:
+                        failure_classes.append("E_DUPLICATE_SUMMARY")
+                evidence.extend(ds_ev)
 
         except Exception as exc:
             evidence.append(f"Content injection check failed: {exc}")
@@ -483,6 +634,31 @@ def grade_sample(
             if "OVERFLOW_COLUMN_LOSS" in pdf_result.hard_fail_reasons:
                 if "H_OVERFLOW_COLUMN_LOSS" not in failure_classes:
                     failure_classes.append("H_OVERFLOW_COLUMN_LOSS")
+            # J. Layer order broken (identity block on page 2, contact on page 1)
+            if "LAYER_ORDER_BROKEN" in pdf_result.hard_fail_reasons:
+                if "F_LAYER_ORDER_BROKEN" not in failure_classes:
+                    failure_classes.append("F_LAYER_ORDER_BROKEN")
+            elif getattr(pdf_result, "layer_order_broken", False):
+                if "D_LAYER_ORDER_DEGRADED" not in failure_classes:
+                    failure_classes.append("D_LAYER_ORDER_DEGRADED")
+            # K. Duplicate top-area content
+            if "DUPLICATE_TOP_CONTENT" in pdf_result.hard_fail_reasons:
+                if "E_DUPLICATE_SUMMARY" not in failure_classes:
+                    failure_classes.append("E_DUPLICATE_SUMMARY")
+            elif getattr(pdf_result, "duplicate_top_content", False):
+                if "E_DUPLICATE_SUMMARY" not in failure_classes:
+                    failure_classes.append("E_DUPLICATE_SUMMARY")
+            # L. Thin overflow page (sparse_page_score already combined above)
+            if "THIN_OVERFLOW_PAGE" in pdf_result.hard_fail_reasons:
+                if "C_THIN_OVERFLOW_PAGE" not in failure_classes:
+                    failure_classes.append("C_THIN_OVERFLOW_PAGE")
+            elif pdf_result.sparse_page_score < 100:
+                # Already covered by C_SPARSE_CONTINUATION_PAGE — no additional class
+                pass
+            # Density degraded (>50% roles no bullets, not a hard fail)
+            if pdf_result.density_score <= 65 and "A_DENSITY_HARD_FAIL" not in failure_classes:
+                if "D_DENSITY_DEGRADED" not in failure_classes:
+                    failure_classes.append("D_DENSITY_DEGRADED")
             evidence.extend(pdf_result.evidence[:8])
         except Exception as exc:
             evidence.append(f"PDF scoring error: {exc}")
@@ -542,6 +718,14 @@ def grade_sample(
         **{k: round(v, 1) for k, v in pdf_scores.items()},
     }
     composite = sum(metrics[k] * w for k, w in _WEIGHTS.items())
+
+    # ── Soft failure caps ─────────────────────────────────────────────────────
+    # Failure classes that signal content loss not visible in PDF-level metrics
+    # cap the composite at 74 (WARNING ceiling) even when all visual dimensions
+    # score highly.  Mirrors the HARD FAIL cap at 30.
+    _SOFT_CAP_CLASSES = {"C_SUMMARY_MISSING", "D_DENSITY_DEGRADED"}
+    if not hard_fail and any(fc in _SOFT_CAP_CLASSES for fc in failure_classes):
+        composite = min(composite, 74.0)
 
     if hard_fail:
         composite = min(composite, 30.0)

@@ -138,8 +138,12 @@ def _compute_page_count_score(
 ) -> tuple[float, bool, list[str]]:
     delta = gen_pages - orig_pages
     evidence: list[str] = []
-    if delta <= 1:
+    if delta <= 0:
         return 100.0, False, evidence
+    if delta == 1:
+        # Soft penalty: +1 page is undesirable but not critical
+        evidence.append(f"Page count +1 ({orig_pages}->{gen_pages})")
+        return 80.0, False, evidence
     if delta == 2:
         evidence.append(f"Page count +2 ({orig_pages}->{gen_pages})")
         return 70.0, False, evidence
@@ -976,6 +980,236 @@ def _detect_overflow_column_loss(
 
 
 # ---------------------------------------------------------------------------
+# J. Layer order broken (identity/name on page 2 instead of top of page 1)
+# ---------------------------------------------------------------------------
+
+import re as _re
+
+_CONTACT_LINE_RE = _re.compile(
+    r"@|^\+?\d[\d\s\-\(\)\.]{5,}$|"
+    r"\b(st\.?|ave\.?|rd\.?|dr\.?|blvd|street|avenue)\b|"
+    r"^(www\.|http|linkedin\.)",
+    _re.IGNORECASE,
+)
+_SECTION_HEADING_RE = _re.compile(
+    r"^(EDUCATION|SKILLS|EXPERIENCE|CERTIFICATION|REFERENCES|WORK HISTORY|"
+    r"PROFESSIONAL EXPERIENCE|CONTACT|AFFILIATIONS|PROJECTS)\b",
+    _re.IGNORECASE,
+)
+# A proper name: 2+ Title-case words, no digits or special chars
+# OR: concatenated ALL-CAPS string like "DEVOPSENGINEER" (no space, len>=8)
+_NAME_RE = _re.compile(
+    r"^[A-Z][a-z]+([\s\-][A-Z][a-z]+)+$|^[A-Z]{8,}$"
+)
+
+
+def _detect_layer_order_broken(
+    gen_extracted,
+    orig_extracted=None,
+) -> "tuple[list[str], bool]":
+    """Detect when the identity block (name) was displaced from page 1 to page 2.
+
+    In a correctly rendered resume, the candidate's name must appear on page 1.
+    When the renderer shifts the name/identity to page 2 while keeping contact or
+    section data on page 1, the visual reading order is inverted.
+
+    The check compares WHERE the identity block appears in the generated output vs
+    the original template:
+    - Generated has no identity on page 1 AND has identity on page 2 → broken
+    - If the original template ALSO had no identity on page 1 (structural), suppress
+
+    Returns (evidence_list, hard_fail).
+    """
+    if not gen_extracted.pages:
+        return [], False
+
+    page1 = gen_extracted.pages[0]
+    lines_p1 = [ln.text.strip() for ln in page1.lines if ln.text.strip()]
+    if len(lines_p1) < 2:
+        return [], False
+
+    def _has_identity(lines: list[str], max_lines: int = 10) -> str:
+        """Return the first identity-like line found before any section heading.
+
+        The candidate identity block must appear BEFORE the first section heading
+        (EDUCATION, EXPERIENCE, SKILLS, etc.) — any name-like text after a section
+        heading belongs to that section's content (e.g. an institution or employer),
+        not to the candidate's identity block.
+
+        A line qualifies as an identity when it:
+        - Is a proper name (Title Case, 2+ words), OR
+        - Is a concatenated all-caps name with no spaces and ≥ 8 chars
+          (e.g. 'DEVOPSENGINEER') that is NOT a known section keyword.
+        """
+        # Mixed-case: "John Smith" | All-caps with spaces: "HARPER RUSSO"
+        _proper_name = _re.compile(
+            r"^[A-Z][a-z]+([\s\-][A-Z][a-z]+)+$"
+            r"|^[A-Z]{2,}(\s[A-Z]{2,})+$"
+        )
+        for ln in lines[:max_lines]:
+            # A section heading marks the end of the identity zone — stop here
+            if _SECTION_HEADING_RE.match(ln):
+                break
+            # Proper name (must NOT be a known section keyword)
+            if _proper_name.match(ln) and not _SECTION_HEADING_RE.match(ln):
+                return ln
+            # Concatenated all-caps name (no spaces): "DEVOPSENGINEER"
+            stripped = ln.replace(" ", "")
+            if (len(stripped) >= 8 and stripped.isupper() and stripped.isalpha()
+                    and " " not in ln):
+                return ln
+        return ""
+
+    identity_on_gen_p1 = _has_identity(lines_p1)
+    if identity_on_gen_p1:
+        return [], False  # identity IS on page 1 — correct
+
+    # No identity on generated page 1.  Check page 2 for displaced identity.
+    identity_on_gen_p2 = ""
+    if len(gen_extracted.pages) > 1:
+        p2_lines = [ln.text.strip() for ln in gen_extracted.pages[1].lines
+                    if ln.text.strip()]
+        identity_on_gen_p2 = _has_identity(p2_lines, max_lines=5)
+
+    if not identity_on_gen_p2:
+        return [], False  # no identity found anywhere — can't determine order break
+
+    # Template-comparison gate: if the original template ALSO had no identity on
+    # page 1 (the template's first page is contact-first or section-first), the
+    # layer order is structural to the template, not a new rendering defect.
+    if orig_extracted and orig_extracted.pages:
+        orig_p1_lines = [ln.text.strip() for ln in orig_extracted.pages[0].lines
+                         if ln.text.strip()]
+        orig_identity_p1 = _has_identity(orig_p1_lines)
+        if not orig_identity_p1:
+            # Template also had no identity on page 1 — structural
+            return [], False
+
+    # Count contact/section signals on generated page 1 (confirm it's misplaced)
+    contact_count = sum(
+        1 for ln in lines_p1[:6]
+        if _CONTACT_LINE_RE.search(ln) or _SECTION_HEADING_RE.match(ln)
+    )
+
+    return [
+        f"Layer order broken (HARD FAIL): identity block '{identity_on_gen_p2}' "
+        f"appears on page 2 instead of page 1 (page 1 starts with "
+        f"'{lines_p1[0][:50]}', {contact_count} contact/section line(s)) — "
+        f"header/body rendering order inverted"
+    ], True
+
+
+# ---------------------------------------------------------------------------
+# K. Duplicate top-area content (summary rendered twice)
+# ---------------------------------------------------------------------------
+
+def _detect_duplicate_top_content(gen_extracted) -> "tuple[list[str], bool]":
+    """Detect when the same summary/profile text appears twice on page 1.
+
+    A duplicate occurs when the Professional Summary is injected into the
+    correct position AND also into a nearby container (textbox, column,
+    sidebar), producing two visually similar blocks at the top of the page.
+
+    Returns (evidence_list, hard_fail).
+    hard_fail=True when the duplicate involves ≥ 40-char blocks (high confidence).
+    """
+    if not gen_extracted.pages:
+        return [], False
+
+    page1 = gen_extracted.pages[0]
+    # Collect long lines (> 25 chars) from the first 20 lines of page 1
+    long_lines = [
+        ln.text.strip() for ln in page1.lines[:20]
+        if len(ln.text.strip()) > 25
+    ]
+
+    if len(long_lines) < 2:
+        return [], False
+
+    # Look for pairs where the first 22 chars match (case-insensitive)
+    duplicates: list[tuple[str, str]] = []
+    for i in range(len(long_lines)):
+        for j in range(i + 1, len(long_lines)):
+            a = long_lines[i].lower()[:22]
+            b = long_lines[j].lower()[:22]
+            if a == b and a.strip():
+                duplicates.append((long_lines[i], long_lines[j]))
+
+    if not duplicates:
+        return [], False
+
+    a_text, b_text = duplicates[0]
+    hard = len(a_text) >= 40
+
+    return [
+        f"Duplicate top-area text {'(HARD FAIL) ' if hard else ''}: "
+        f"'{a_text[:60]}' appears again as '{b_text[:60]}' — "
+        f"summary/profile text may be injected twice"
+    ], hard
+
+
+# ---------------------------------------------------------------------------
+# L. Thin overflow page (non-first page with very few content lines)
+# ---------------------------------------------------------------------------
+
+_THIN_PAGE_MAX_LINES = 8    # pages with fewer than this many content lines
+_THIN_PAGE_MAX_AREA  = 0.18  # … AND area coverage below 18% of the page
+
+
+def _detect_thin_overflow_page(
+    gen_extracted,
+    orig_extracted=None,
+) -> "tuple[float, bool, list[str]]":
+    """Detect non-first pages that contain very few lines (thin overflow).
+
+    A non-first page with < 8 meaningful content lines and < 18% area coverage
+    indicates that a small amount of content overflowed from the previous page,
+    creating an otherwise empty page.  This is a layout defect distinct from the
+    existing sparse_page_score check (which requires ≥ 18 lines).
+
+    Template-comparison gate: suppressed when the original template also has a
+    thin page at the same position.
+
+    Returns (score_contribution, hard_fail, evidence_list).
+    score_contribution is 0 when triggered (to be applied to sparse_page_score).
+    """
+    if len(gen_extracted.pages) < 2:
+        return 100.0, False, []
+
+    orig_pages_by_num: dict[int, object] = {}
+    if orig_extracted:
+        for p in orig_extracted.pages:
+            orig_pages_by_num[p.page_number] = p
+
+    evidence: list[str] = []
+    triggered = False
+
+    for page in gen_extracted.pages[1:]:
+        ar, _, _, _, ml = _compute_effective_area_metrics(page)
+        if ml >= _THIN_PAGE_MAX_LINES or ar >= _THIN_PAGE_MAX_AREA:
+            continue   # page has enough content — not a thin overflow
+
+        # Template comparison: if the original also had a thin page here, skip.
+        orig_page = orig_pages_by_num.get(page.page_number)
+        if orig_page is not None:
+            orig_ar, _, _, _, orig_ml = _compute_effective_area_metrics(orig_page)
+            if orig_ml < _THIN_PAGE_MAX_LINES and orig_ar < _THIN_PAGE_MAX_AREA:
+                continue  # structural — template is also thin at this position
+
+        triggered = True
+        evidence.append(
+            f"Thin overflow page {page.page_number}: "
+            f"{ml} content line(s), {ar * 100:.0f}% area coverage — "
+            f"small amount of content spilled onto an otherwise empty page"
+        )
+
+    if triggered:
+        return 0.0, False, evidence
+
+    return 100.0, False, evidence
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -997,6 +1231,10 @@ class PDFVisualResult:
     hard_fail: bool = False
     hard_fail_reasons: list[str] = field(default_factory=list)
     evidence: list[str] = field(default_factory=list)
+
+    # New visual-defect flags (set by detectors J/K/L)
+    layer_order_broken: bool = False
+    duplicate_top_content: bool = False
 
 
 def score_pdf_visual(
@@ -1080,6 +1318,32 @@ def score_pdf_visual(
         hard_fail_reasons.append("OVERFLOW_COLUMN_LOSS")
     evidence.extend(ocl_ev)
 
+    # J. Layer order broken (identity block on page 2, contact on page 1 top)
+    lo_ev, lo_fail = _detect_layer_order_broken(gen, orig_extracted=orig)
+    if lo_fail:
+        hard_fail = True
+        hard_fail_reasons.append("LAYER_ORDER_BROKEN")
+    evidence.extend(lo_ev)
+    _layer_order_broken = lo_fail or bool(lo_ev)
+
+    # K. Duplicate top-area content (summary rendered twice on page 1)
+    dup_ev, dup_fail = _detect_duplicate_top_content(gen)
+    if dup_fail:
+        hard_fail = True
+        hard_fail_reasons.append("DUPLICATE_TOP_CONTENT")
+    evidence.extend(dup_ev)
+    _duplicate_top_content = bool(dup_ev)
+
+    # L. Thin overflow page (non-first page with very few lines — sparse spill)
+    thin_s, thin_fail, thin_ev = _detect_thin_overflow_page(gen, orig_extracted=orig)
+    # Combine with existing sparse_page_score (take minimum)
+    sparse_s = min(sparse_s, thin_s)
+    if thin_ev:
+        evidence.extend(thin_ev)
+    if thin_fail:
+        hard_fail = True
+        hard_fail_reasons.append("THIN_OVERFLOW_PAGE")
+
     return PDFVisualResult(
         page_count_score=pc_score,
         blank_page_score=bp_score,
@@ -1095,4 +1359,6 @@ def score_pdf_visual(
         hard_fail=hard_fail,
         hard_fail_reasons=hard_fail_reasons,
         evidence=evidence,
+        layer_order_broken=_layer_order_broken,
+        duplicate_top_content=_duplicate_top_content,
     )
