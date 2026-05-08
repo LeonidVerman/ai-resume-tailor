@@ -213,7 +213,27 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     # Header: update text, keep style proto; strip any column break (the role
     # header may inherit a column break from the section heading para in
     # consolidated templates — the section heading handles column placement).
-    new_header = _strip_col_break_para(orig.header.with_text(llm.header))
+    #
+    # Layout-bound title-only format preservation: some templates store the role
+    # title, company name, and date in SEPARATE paragraphs (e.g. sample 3 has
+    # title in one para, company in the next body_para, date in a meta_line).
+    # When the original header contains no pipe separator but the LLM provides
+    # a pipe-delimited "Title | Company | Date" string, writing the full string
+    # into the title para causes extra line-wrapping (16 ch → 66+ ch) that
+    # accumulates across 3 roles and pushes the experience section off the right
+    # column onto page 2, where it incorrectly appears in the left/sidebar column.
+    # Extracting only the first pipe segment restores the 1-line title format
+    # so the company and date (already in their own body_para/meta slots) are
+    # not duplicated and the section footprint matches the original template.
+    if layout_bound and "|" not in orig.header.text.strip() and "|" in llm.header:
+        _header_text = llm.header.split("|")[0].strip()
+        _log.debug(
+            "ROLE_HEADER_FORMAT_PRESERVED: title-only original; extracted %r from %r",
+            _header_text, llm.header[:60],
+        )
+    else:
+        _header_text = llm.header
+    new_header = _strip_col_break_para(orig.header.with_text(_header_text))
 
     # If the template had a multi-line role header (e.g. "..., St." / "Petersburg"),
     # the LLM input included the continuation line as a separate paragraph, so the
