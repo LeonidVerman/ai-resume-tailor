@@ -47,17 +47,24 @@ _log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 def _strip_non_column_section_break(p_elem) -> None:
-    """Remove w:sectPr from paragraph pPr ONLY when it does not define a multi-column layout.
+    """Remove w:sectPr from paragraph pPr ONLY when it acts as a pure page-break marker.
 
     Section properties embedded in a paragraph's pPr mark the end of a document
-    section.  When those sectPr entries merely switch page size (single-column,
-    w:cols absent or w:num="1"), they act as pure page-break markers and should
-    be stripped from the rendered output — otherwise the section boundary creates
-    an unwanted hard page break even when the content could flow naturally.
+    section.  Two categories must be preserved intact:
 
-    Multi-column sectPr (w:cols w:num ≥ 2) are intentionally preserved so that
-    templates with newspaper-style column layouts (e.g. sample 31 with 2- or
-    3-column sections) retain their visual structure.
+    1. Multi-column sectPr (w:cols w:num ≥ 2) — newspaper-column layouts
+       (e.g. sample 31) that define 2- or 3-column body sections.
+
+    2. Continuous section breaks (w:type w:val="continuous") regardless of column
+       count — these create same-page layout transitions such as a 1-column header
+       region followed by a 2-column body (e.g. sample 3: 33 pt white name in a
+       full-width banner above the 2-col sidebar+experience layout).  Stripping a
+       continuous 1-col sectPr would collapse that boundary, placing the large
+       banner text inside the narrow sidebar column and breaking the topology.
+
+    All other sectPr (nextPage / evenPage / oddPage with single-column) are stale
+    page-break markers from the template's last render and are stripped so that
+    updated content flows naturally without forced breaks.
     """
     pPr = p_elem.find(f"{{{_W}}}pPr")
     if pPr is None:
@@ -69,7 +76,13 @@ def _strip_non_column_section_break(p_elem) -> None:
     if cols is not None:
         num = cols.get(f"{{{_W}}}num")
         if num is not None and int(num) >= 2:
-            return  # multi-column layout — keep sectPr intact
+            return  # multi-column layout — preserve intact
+    # Continuous section breaks define same-page layout topology (1-col header →
+    # 2-col body etc.).  Never strip them — doing so collapses the section boundary
+    # and places header-area content inside the narrow sidebar column.
+    type_elem = sectPr.find(f"{{{_W}}}type")
+    if type_elem is not None and type_elem.get(f"{{{_W}}}val", "") == "continuous":
+        return  # continuous break — preserve (no page break, defines layout geometry)
     pPr.remove(sectPr)
 
 
