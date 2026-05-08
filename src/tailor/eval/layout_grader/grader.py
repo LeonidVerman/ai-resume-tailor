@@ -702,14 +702,45 @@ def grade_sample(
             if "TEXT_FRAGMENTATION" in pdf_result.hard_fail_reasons:
                 if "F_TEXT_FRAGMENTATION" not in failure_classes:
                     failure_classes.append("F_TEXT_FRAGMENTATION")
-            # N. Experience section displaced (pushed down or region-shifted)
-            # Both signals indicate the pre-experience zone expanded beyond template design.
-            if getattr(pdf_result, "experience_region_shifted", False):
+            # N. Experience section displaced (informational + conditional escalation)
+            #
+            # D_EXPERIENCE_DISPLACED is always set as an informational failure class
+            # when either signal fires — it appears in reports but does NOT alone trigger
+            # a soft cap.
+            #
+            # D_EXPERIENCE_DISPLACED_SEVERE escalates to the soft cap (WARNING ceiling 74)
+            # only under two specific conditions indicating genuine layout degradation:
+            #
+            #   Case A — pushed into lower half of page 1:
+            #     experience_pushed_down AND experience_in_lower_half (exp y > 55% of page).
+            #     Ordinary summary expansion moves experience from the upper quarter to the
+            #     upper half (benign); displacement past the midpoint is perceptible.
+            #
+            #   Case B — page-2 experience shifted to a lower region:
+            #     experience_region_shifted (downward only) AND NOT experience_on_page1.
+            #     When experience lives on page 2 and its position within that page moved
+            #     to a lower vertical region, the content pushed past the page's natural
+            #     reading start — a genuine layout regression.
+            _exp_any = (
+                getattr(pdf_result, "experience_region_shifted", False)
+                or getattr(pdf_result, "experience_pushed_down", False)
+            )
+            if _exp_any:
                 if "D_EXPERIENCE_DISPLACED" not in failure_classes:
                     failure_classes.append("D_EXPERIENCE_DISPLACED")
-            if getattr(pdf_result, "experience_pushed_down", False):
-                if "D_EXPERIENCE_DISPLACED" not in failure_classes:
-                    failure_classes.append("D_EXPERIENCE_DISPLACED")
+
+            _exp_escalate = (
+                # Case A: pushed into lower half of page 1
+                (getattr(pdf_result, "experience_pushed_down", False)
+                 and getattr(pdf_result, "experience_in_lower_half", False))
+                or
+                # Case B: experience not on page 1 and region shifted downward
+                (getattr(pdf_result, "experience_region_shifted", False)
+                 and not getattr(pdf_result, "experience_on_page1", True))
+            )
+            if _exp_escalate:
+                if "D_EXPERIENCE_DISPLACED_SEVERE" not in failure_classes:
+                    failure_classes.append("D_EXPERIENCE_DISPLACED_SEVERE")
             # O. Header-region block overlap (positioned template collapse on page 1)
             if "HEADER_BLOCK_OVERLAP" in pdf_result.hard_fail_reasons:
                 hard_fail = True
@@ -785,7 +816,7 @@ def grade_sample(
     # Failure classes that signal content loss not visible in PDF-level metrics
     # cap the composite at 74 (WARNING ceiling) even when all visual dimensions
     # score highly.  Mirrors the HARD FAIL cap at 30.
-    _SOFT_CAP_CLASSES = {"C_SUMMARY_MISSING", "D_DENSITY_DEGRADED", "D_EXPERIENCE_DISPLACED"}
+    _SOFT_CAP_CLASSES = {"C_SUMMARY_MISSING", "D_DENSITY_DEGRADED", "D_EXPERIENCE_DISPLACED_SEVERE"}
     if not hard_fail and any(fc in _SOFT_CAP_CLASSES for fc in failure_classes):
         composite = min(composite, 74.0)
 

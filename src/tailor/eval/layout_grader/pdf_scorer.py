@@ -1423,19 +1423,22 @@ def _detect_text_fragmentation(
 def _detect_experience_section_pushed_down(
     gen_extracted,
     orig_extracted=None,
-) -> "tuple[bool, list[str]]":
+) -> "tuple[bool, bool, bool, list[str]]":
     """Detect when the experience section heading on page 1 was pushed down vs template.
 
-    When the LLM provides significantly more pre-experience content (summary,
-    profile, skills intro) than the template was designed for, the experience
-    heading is displaced downward.  A shift > 8% of page height (~67 pts on A4)
-    corresponds to roughly 5–6 additional content lines — a perceptible layout
-    regression.
+    Returns (pushed_down, exp_on_page1, exp_in_lower_half, evidence_list).
 
-    Only fires when BOTH template and generated have the experience heading on
-    page 1 (heading not found on page 1 in either → not comparable).
+    pushed_down      True when the experience heading moved down > _EXP_P1_SHIFT_THRESHOLD
+                     compared to the same heading in the template.
+    exp_on_page1     True when the experience heading is found on page 1 in the generated
+                     document (False when it appears only on page 2+).
+    exp_in_lower_half True when pushed_down AND the heading is in the lower 45% of page 1
+                     (y > 55% of page height) — the escalation condition for the soft cap.
+                     Summary expansion that merely moves experience from the upper quarter
+                     to the upper half is informational; displacement into the lower half
+                     is a perceptible layout regression.
 
-    Returns (pushed_down, evidence_list).
+    Only fires when BOTH template and generated have the experience heading on page 1.
     """
     def _exp_y_on_page1(extracted):
         if not extracted.pages:
@@ -1451,20 +1454,28 @@ def _detect_experience_section_pushed_down(
     gen_y = _exp_y_on_page1(gen_extracted)
     orig_y = _exp_y_on_page1(orig_extracted) if orig_extracted else None
 
+    exp_on_page1 = gen_y is not None
+
     if gen_y is None or orig_y is None:
-        return False, []
+        return False, exp_on_page1, False, []
 
     page_h = gen_extracted.pages[0].height or 842.0
     shift = (gen_y - orig_y) / page_h
 
     if shift <= _EXP_P1_SHIFT_THRESHOLD:
-        return False, []
+        return False, True, False, []
 
-    return True, [
-        f"Experience section pushed down: y={orig_y:.0f}→{gen_y:.0f} "
-        f"(+{shift:.0%} of page height vs template) — "
-        f"pre-experience content expanded beyond template design"
-    ]
+    exp_pos_pct = gen_y / page_h
+    in_lower_half = exp_pos_pct > 0.55
+
+    escalating = in_lower_half
+    esc_note = "escalating: exp in lower half" if escalating else "informational: exp in upper half"
+
+    ev = (
+        f"Experience section pushed down: y={orig_y:.0f}->y={gen_y:.0f} "
+        f"(+{shift:.0%}, exp@{exp_pos_pct:.0%} of page) — {esc_note}"
+    )
+    return True, True, in_lower_half, [ev]
 
 
 # ---------------------------------------------------------------------------
@@ -1595,8 +1606,11 @@ class PDFVisualResult:
     # Visual-defect flags (set by detectors J/K/N/O)
     layer_order_broken: bool = False
     duplicate_top_content: bool = False
-    experience_region_shifted: bool = False   # experience section changed vertical region
+    # N. Experience displacement signals
+    experience_region_shifted: bool = False   # experience section shifted DOWNWARD in region
     experience_pushed_down: bool = False       # experience heading on p1 pushed down > 8%
+    experience_on_page1: bool = False          # experience heading found on page 1 in generated
+    experience_in_lower_half: bool = False     # pushed-down experience is in lower 45% of p1
 
 
 def score_pdf_visual(
@@ -1640,9 +1654,12 @@ def score_pdf_visual(
         hard_fail = True
         hard_fail_reasons.append("COLUMN_LAYOUT_LOST")
     evidence.extend(region_ev)
-    # Detect experience-section region shift from evidence (even adjacent shifts)
+    # Only flag DOWNWARD region shifts (top->middle/bottom, middle->bottom).
+    # Upward shifts (bottom->top, middle->top) indicate improvement — not a defect.
+    _DOWNWARD_EXP_SHIFTS = ("top->middle", "top->bottom", "middle->bottom")
     _exp_region_shifted = any(
-        "'experience'" in ev and "region:" in ev and "->" in ev
+        "'experience'" in ev and "region:" in ev
+        and any(ds in ev for ds in _DOWNWARD_EXP_SHIFTS)
         for ev in region_ev
     )
 
@@ -1719,8 +1736,8 @@ def score_pdf_visual(
     evidence.extend(frag_ev)
 
     # N. Experience section pushed down on page 1 (pre-experience content expanded)
-    _exp_pushed_down, exp_push_ev = _detect_experience_section_pushed_down(
-        gen, orig_extracted=orig
+    _exp_pushed_down, _exp_on_page1, _exp_in_lower_half, exp_push_ev = (
+        _detect_experience_section_pushed_down(gen, orig_extracted=orig)
     )
     evidence.extend(exp_push_ev)
 
@@ -1750,4 +1767,6 @@ def score_pdf_visual(
         duplicate_top_content=_duplicate_top_content,
         experience_region_shifted=_exp_region_shifted,
         experience_pushed_down=_exp_pushed_down,
+        experience_on_page1=_exp_on_page1,
+        experience_in_lower_half=_exp_in_lower_half,
     )
