@@ -282,11 +282,12 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
         _docx_to_pdf_subprocess(str(out_docx))
         lo_pdf = out_docx.with_suffix(".pdf")
         if lo_pdf.exists() and lo_pdf != out_pdf:
-            shutil.move(str(lo_pdf), str(out_pdf))
+            # Always overwrite the destination PDF so the grader uses the
+            # freshly rendered version, not a stale PDF from a previous run.
+            shutil.copy2(str(lo_pdf), str(out_pdf))
+            lo_pdf.unlink(missing_ok=True)
         elif lo_pdf == out_pdf:
             pass
-        elif out_pdf.exists():
-            pass  # already in place
         else:
             raise FileNotFoundError(f"PDF not found at {out_pdf}")
     except Exception as e:
