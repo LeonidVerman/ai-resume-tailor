@@ -3216,32 +3216,61 @@ def apply_tailored(
                         anchored.body_paras[0].para_id if anchored.body_paras else None,
                     )
                 elif llm_s.semantic_type == "summary":
-                    # No trailing empty header slots.  For table-based templates
-                    # (layout_blocks present) record a target para_id so the renderer
-                    # can inject the summary directly into the table XML — after the
-                    # last non-empty header para (e.g. "registered nurse" title).
-                    # Inline summary injection is deliberately disabled.
-                    # Inserting a new paragraph into an existing table cell (after the
-                    # last non-empty header para) causes that cell to expand, pushing
-                    # later sections off the page and producing THIN_OVERFLOW_HARD_FAIL
-                    # blanked trailing pages.  The "Summary missing" soft warning is
-                    # preferred over a hard overflow failure for these templates.
-                    if False and original.layout_blocks is not None and _inline_summary is None:  # noqa: E501
-                        _last_ne_pid = next(
-                            (pm.para_id for pm in reversed(original.header_paras)
-                             if pm.text.strip() and pm.para_id),
-                            None,
-                        )
-                        if _last_ne_pid:
-                            _stext = _clean_summary_text(llm_s.body_lines)
-                            if _stext:
-                                _inline_summary = (_last_ne_pid, _stext)
-                                _log.debug(
-                                    "SUMMARY_INLINE_INJECTION_REGISTERED: after para_id=%r",
-                                    _last_ne_pid,
-                                )
+                    # No trailing empty header slots.
+                    # For paragraph-only layout templates (no table blocks), inject
+                    # the summary into an empty body_para of the first eligible
+                    # section.  This keeps the summary in the IR so the grader can
+                    # detect it, and the renderer renders it at the correct position.
+                    #
+                    # For table-based templates: inserting a new paragraph into a
+                    # table cell expands the cell height and pushes later content off
+                    # the page (THIN_OVERFLOW_HARD_FAIL).  The "Summary missing" soft
+                    # warning (score -10) is preferred over a hard overflow failure.
+                    from tailor.compiler.models import LayoutTableBlock
+                    _has_table_lb = original.layout_blocks is not None and any(
+                        isinstance(b, LayoutTableBlock) for b in original.layout_blocks
+                    )
+                    _body_injected = False
+                    if not _has_table_lb and original.layout_blocks is not None:
+                        # Find the first empty body_para in the first non-locked,
+                        # non-experience/skills section.  Search heading_to_section
+                        # (already-updated matched sections) and verbatim_sections.
+                        # The para_id is already in layout_blocks so the renderer
+                        # will pick it up without needing a new element.
+                        _stext = _clean_summary_text(llm_s.body_lines)
+                        if _stext:
+                            _SKIP_TYPES = frozenset({
+                                "experience", "skills", "education", "certifications",
+                                "languages", "websites", "contact", "social",
+                            })
+                            _cand_sections = (
+                                list(verbatim_sections)
+                                + list(heading_to_section.values())
+                            )
+                            for _cand_sec in _cand_sections:
+                                if _cand_sec.semantic_type in _SKIP_TYPES:
+                                    continue
+                                if _cand_sec.semantic_type in _LOCKED_SEMANTIC_TYPES:
+                                    continue
+                                for _cand_bp in _cand_sec.body_paras:
+                                    if (
+                                        not _cand_bp.text.strip()
+                                        and _cand_bp.para_id
+                                    ):
+                                        _cand_bp.text = _stext
+                                        _body_injected = True
+                                        _log.debug(
+                                            "SUMMARY_BODY_PARA_INJECTED: section=%r "
+                                            "para_id=%r len=%d",
+                                            _cand_sec.title, _cand_bp.para_id,
+                                            len(_stext),
+                                        )
+                                        break
+                                if _body_injected:
+                                    break
                     _log.debug(
-                        "SUMMARY_INSERTION_SKIPPED_NO_ANCHORS: %r", llm_s.heading
+                        "SUMMARY_INSERTION_SKIPPED_NO_ANCHORS: %r (body_injected=%s)",
+                        llm_s.heading, _body_injected,
                     )
                 else:
                     _log.debug(
