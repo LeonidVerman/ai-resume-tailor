@@ -24,6 +24,25 @@ _BULLET_PREFIXES: tuple[str, ...] = ("- ", "\u2022 ", "\u25cf ", "\u2013 ")
 
 _CURRENT_DATE_RE = re.compile(r"^\s*Current\s+Date\s*:", re.IGNORECASE)
 
+# Section heading words that must never be treated as role-title merge candidates.
+# The merger is only intended for job titles ("Web Developer", "Senior Engineer")
+# that happen to appear on the line before "Company | Year".  Well-known section
+# headings look the same syntactically but must not be merged.
+_SECTION_HEADING_WORDS: frozenset[str] = frozenset({
+    "experience", "work", "employment", "career",
+    "education", "academic", "qualifications",
+    "skills", "competencies", "expertise", "technologies",
+    "summary", "objective", "profile", "overview", "about",
+    "projects", "certifications", "certificates", "licenses",
+    "awards", "achievements", "honors", "accomplishments",
+    "publications", "research", "patents",
+    "volunteer", "volunteering", "community",
+    "additional", "other", "extras", "miscellaneous",
+    "interests", "hobbies", "activities",
+    "languages", "references", "affiliations", "memberships",
+    "training", "courses", "coursework",
+})
+
 
 def preprocess_resume_text(text: str) -> str:
     """Normalize LLM resume text before parsing.
@@ -62,11 +81,13 @@ def preprocess_resume_text(text: str) -> str:
         line = lines[i]
         stripped = line.strip()
 
+        first_word = stripped.split()[0].lower() if stripped else ""
         is_title_candidate = (
             bool(stripped)
             and "|" not in stripped
             and not any(stripped.startswith(p) for p in _BULLET_PREFIXES)
             and stripped != stripped.upper()        # not an ALL-CAPS section heading
+            and first_word not in _SECTION_HEADING_WORDS  # not a known section heading
             and len(stripped) <= 60
             and stripped[-1:] not in ".!?,:;"       # not end-of-sentence/list
         )
@@ -122,6 +143,8 @@ _SUMMARY_NAMES: frozenset[str] = frozenset({
     "professional summary", "summary", "objective", "career objective",
     "profile", "professional profile", "about me", "career summary",
     "executive summary",
+    # Non-canonical labels used in resume templates as summary containers:
+    "professional overview", "general info", "general information",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "skill", "core competencies", "competencies",
@@ -367,9 +390,17 @@ def parse_llm_output(text: str) -> list[LlmSection]:
             continue  # blank lines are ignored
 
         if current.semantic_type == "experience" and _is_role_header(line):
-            _finish_role()
-            cur_role = LlmRole(header=stripped)
-            state = "role"
+            if cur_role is not None and not cur_role.bullets and not cur_role.meta_lines:
+                # Two consecutive pipe-format role headers with no content between them.
+                # The LLM sometimes writes "Company | Date" on one line and
+                # "Title | Department" on the next.  Treat the second header as
+                # meta info for the current role rather than starting a phantom role.
+                cur_role.meta_lines.append(stripped)
+                state = "meta"
+            else:
+                _finish_role()
+                cur_role = LlmRole(header=stripped)
+                state = "role"
             continue
 
         if state == "body" or cur_role is None:

@@ -7,11 +7,11 @@
     "messages": [
       {
         "role": "developer",
-        "content": "[GENERAL_LAYER v1.1]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n21) Must explicitly mention the company + role from TASK.\n22) Must connect: candidate background -> company needs -> role responsibilities, using only supported claims.\n23) Keep it 3-5 short paragraphs; be specific but not verbose.\n\n[CANDIDATE_LAYER_FIRSTNAME_I_LASTNAME v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Senior Software Developer / Senior Backend Engineer with strength in backend systems, cloud transitions, and enterprise software delivery.\n- Emphasize: production-oriented engineering that improves productivity, reduces defects, and lowers operating costs.\n- Keep domain framing broad and accurate: backend + cloud-based applications + enterprise software (not niche vertical specialization).\n- Use headline-aligned themes: backend development, distributed systems exposure, cloud-based platform work, performance/efficiency optimization, technical support systems.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface explicitly (when supported by source evidence) that the candidate has delivered:\n  - Backend application development and cloud-based platform development.\n  - Testing/validation workflows and performance improvement work.\n  - Network efficiency optimization (treat as application/network efficiency improvements; do not imply deep networking protocol engineering).\n- Convert “cloud transition” into concrete mechanisms only if present in source (e.g., containerization, CI/CD automation, deployment standardization). If mechanisms are not provided, keep phrasing conservative (“supported cloud transition initiatives” vs “architected cloud migration”).\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prefer bullets that show concrete mechanisms over generic outcomes.\n- Priority order for this candidate’s content:\n  1) Backend/cloud platform build or transition work with explicit mechanisms (Docker/Jenkins/Ansible, service decomposition, deployment automation) ONLY if evidenced.\n  2) Defect reduction / bug elimination tied to mechanisms (test automation, validation gates, regression suites) ONLY if evidenced.\n  3) Performance/network efficiency improvements tied to mechanisms (profiling, query optimization, connection pooling, caching) ONLY if evidenced.\n  4) Leadership/collaboration/process contributions (secondary to technical depth).\n\nDISTRIBUTED SYSTEM DEPTH\n- Only claim “distributed systems” depth to the extent supported; do not invent microservices, queues, replicas, event-driven architecture, or caching layers.\n- When distributed/system-scale language is used, anchor it to safe, evidenced concepts:\n  - cloud-based platform development\n  - backend systems supporting multiple teams/clients\n  - reliability/defect reduction via testing/validation workflows\n- Avoid naming specific distributed mechanisms (idempotency, retry-safe workflows, async messaging) unless present in MASTER_RESUME or provided evidence.\n\nTECHNICAL DIFFERENTIATION\n- Emphasize backend frameworks and enterprise stacks from the profile:\n  - Backend: Node.js, .NET Core, Spring, Django\n  - Datastores: MySQL, SQL Server, Oracle\n  - DevOps/automation: Docker, Jenkins, Ansible\n  - Frontend (supporting): React, Angular (only when role requires full-stack; otherwise keep secondary)\n- Treat the long language list as breadth; do not imply senior-level depth in every language. Prefer listing a focused subset aligned to the job description if supported by MASTER_RESUME.\n- Prefer mechanism-first bullets (how the work was done) over tool-name dumping.\n\nDOMAIN / INDUSTRY FRAMING\n- Frame experience as enterprise software + custom software solutions + technical support systems.\n- Emphasize outcomes in enterprise terms: productivity, defect reduction, workflow efficiency, operating cost reduction, contract delivery.\n- Do not imply regulated industries, fintech, healthcare, or compliance frameworks unless explicitly evidenced elsewhere.\n\nSAFE DOMAIN TRANSLATION\n- Translate “technical support workflows” safely as: engineering systems that improve supportability, triage efficiency, and defect turnaround (only if supported by evidence).\n- Translate “secured significant contracts” safely as: contributed to delivery/technical execution that supported winning/retaining contracts; do not claim sales ownership unless evidenced.\n- Translate “award-winning applications / patents” as recognition artifacts; do not claim patent subject matter or novelty beyond what is provided.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim or imply:\n  - ownership of end-to-end enterprise architecture unless explicitly evidenced (“do not overstate architecture ownership”).\n  - deep specialization in networking protocols, SRE/infra ownership, security architecture, or compliance.\n  - specific distributed systems patterns (event-driven, Kafka/RabbitMQ, read replicas, multi-layer caching, stateless auth) unless evidenced.\n  - people-management scope (team size, budget, hiring authority) beyond what is explicitly stated.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- When tailoring to roles needing extensibility/integration, reinterpret safely as:\n  - “backend application development” → modular backend components/services and maintainable interfaces (avoid claiming “platform architecture” ownership).\n  - “testing and validation workflows” → quality gates, regression prevention, release readiness practices.\n  - “cloud-based platform development” → cloud-hosted application delivery and deployment automation support (only as evidenced).\n- Avoid claiming API platform ownership or integration platform leadership unless supported by MASTER_RESUME.\n\nLEADERSHIP FRAMING\n- Frame leadership as collaborative, execution-focused, quality-driven technical leadership:\n  - cross-functional collaboration\n  - project ownership and delivery\n  - mentoring/raising quality bar (only if evidenced)\n  - driving defect reduction and cost-conscious engineering decisions\n- Use observable leadership mechanisms (reviews, standards, validation workflows, delivery coordination) rather than vague “led initiatives.”\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep the narrative IC-forward unless the job explicitly targets engineering management.\n- Leadership bullets should support technical impact (quality, delivery, cost, productivity), not replace it.\n- Avoid “managed a global team” expansion; keep it as stated and do not add scope details.\n\nAI WORK POSITIONING\n- No AI tooling practice is provided; do not introduce AI/ML claims.\n- If a job requires AI exposure, limit to: “no explicit AI tooling listed” unless MASTER_RESUME provides evidence.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not invent:\n  - metrics (percent productivity gains, cost savings amounts, latency/throughput numbers) beyond “estimated percentages” already stated; prefer removing numbers unless exact values exist in MASTER_RESUME.\n  - architecture ownership (chief architect, designed entire platform) or migration ownership (led full cloud migration) without evidence.\n  - security/auth implementations, observability stacks, async messaging, or specific distributed patterns not present.\n- Keep awards/patents factual and non-exaggerated; do not infer prestige level or patent count unless specified.\n\nEVIDENCE SOURCES\n- Only build bullets from:\n  - MASTER_RESUME (primary source for specifics, dates, scope, mechanisms, metrics)\n  - CANDIDATE_PROFILE.summary/headline/domains\n  - CANDIDATE_PROFILE.experience_highlights (impact, skills_applied, architecture_patterns, constraints_and_tradeoffs, team_context, employer_relationship)\n  - CANDIDATE_PROFILE.technical_skills (only as corroborating tech inventory; do not assume usage without MASTER_RESUME confirmation)\n- If a mechanism is not explicitly supported, write conservatively and avoid naming the mechanism.\n\nFINAL REMINDER\n- Core differentiation to keep consistent: senior backend engineer who improves enterprise/cloud systems through quality-driven execution (defect reduction, workflow efficiency, cost-conscious delivery) without overstating architecture ownership or leadership scope.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+        "content": "[GENERAL_LAYER v1.2]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n\n21) Generate ONLY the cover letter body.\n    - Do NOT include candidate name, contact information, date, or signature.\n    - Do NOT include a sender header.\n    - Start with \"Dear Hiring Manager,\".\n    - End the content before any closing (e.g., do NOT include \"Sincerely,\" or name).\n\n22) Must explicitly mention the company and role from TASK.\n\n23) Must clearly connect:\n    candidate background → company needs → role responsibilities,\n    using only supported claims (no hallucinations).\n\n24) Keep it 3–5 short paragraphs.\n    - Be specific and concrete.\n    - Avoid verbosity and generic statements.\n\n25) Maintain a professional, concise tone appropriate for the selected generation mode\n    (Conservative / Normal / Aggressive), but do not change structure based on mode.\n\n26) Do NOT include:\n    - work authorization / citizenship statements\n    - availability statements unless explicitly present in input\n    - repeated resume bullet points verbatim\n\nOutput must be plain text only (no JSON inside the body).\n\n[CANDIDATE_LAYER_FIRSTNAME_I_LASTNAME v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Senior Software Developer / Backend Engineer with cloud transition + production quality focus.\n- Emphasize: backend application development, enterprise software delivery, performance/quality optimization, cross-functional execution.\n- Prefer framing as: mechanism-driven backend improvements (reliability, defect reduction, workflow efficiency, cost efficiency) over broad “architected platforms” claims.\n- Keep domain framing general: software solutions + enterprise applications (avoid niche vertical specialization unless explicitly provided).\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface explicitly (only when supported by provided evidence):\n  - Cloud transition / cloud-based platform development contributions (migration enablement, deployment modernization, environment parity).\n  - Backend application development mechanisms (service decomposition, API/service boundary work) ONLY if present in MASTER_RESUME; otherwise keep as “backend application development”.\n  - Testing/validation workflow mechanisms (automated test gates, validation pipelines, regression prevention) tied to bug reduction.\n  - Performance improvement work (profiling-driven optimization, query/index tuning) ONLY if supported by evidence.\n- Avoid generic “built scalable cloud platform” phrasing unless a concrete mechanism is available from evidence.\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- When selecting bullets, prioritize in this order:\n  1) Concrete mechanisms tied to quality/bug reduction (testing/validation workflows, release gates, regression controls).\n  2) Concrete mechanisms tied to performance improvement (profiling, query optimization, caching) ONLY if evidenced.\n  3) Cloud transition contributions with specific actions (containerization, CI/CD, environment automation) ONLY if evidenced.\n  4) Leadership/process improvements (productivity, cross-team coordination) with observable mechanisms.\n- Ensure at least one recent-role bullet includes an explicit mechanism (e.g., validation workflow, CI gate, deployment automation) if evidence exists in MASTER_RESUME.\n\nDISTRIBUTED SYSTEM DEPTH\n- Do not force distributed-systems claims; the profile indicates “Distributed Systems” as a domain, but provides no explicit mechanisms (queues, replicas, idempotency, etc.).\n- If MASTER_RESUME contains distributed-system evidence, surface concretely:\n  - Stateless services, horizontal scaling, async messaging, idempotent processing, retry-safe workflows, traffic isolation, observability.\n- If not evidenced, keep language to “backend systems” and “production reliability” without implying large-scale distributed architecture ownership.\n\nTECHNICAL DIFFERENTIATION\n- Prefer aligning stack mentions to the job description and evidence:\n  - Backend frameworks: Node.js, .NET Core, Spring, Django.\n  - Datastores: MySQL, SQL Server, Oracle.\n  - DevOps tooling: Docker, Jenkins, Ansible.\n  - Frontend (only if role-relevant): React, Angular.\n- Treat the long language list as “exposure/working knowledge” unless MASTER_RESUME shows sustained use; avoid listing everything prominently for targeted roles.\n- Convert “performance optimization” into mechanisms when possible (profiling, query/index tuning, reducing hot paths, batching) but only if supported.\n\nDOMAIN / INDUSTRY FRAMING\n- Frame experience as:\n  - Enterprise software + custom software solutions + cloud-based applications.\n  - Contract-driven delivery and client-impact outcomes (but avoid inventing client names, industries, or regulated contexts).\n- Use “software solutions” language rather than claiming fintech/healthcare/etc. specialization.\n\nSAFE DOMAIN TRANSLATION\n- Translate conservatively:\n  - “Secured significant contracts” → contributed to winning/retaining delivery engagements via technical execution (do not claim sales ownership unless evidenced).\n  - “Generated substantial client profits” → delivered software improvements that supported client business outcomes (avoid specific revenue numbers unless provided).\n  - “Cloud transition” → migrated/modernized deployments and environments (only specify AWS/Azure/GCP if evidenced).\n  - “Reduced bugs significantly” → reduced defects via testing/validation workflows, code quality practices, and release controls (mechanism-first).\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim or imply expertise in:\n  - Specific regulated/compliance frameworks (SOC2, HIPAA, PCI) unless explicitly evidenced.\n  - Security/auth ownership (OAuth, SSO, IAM) unless evidenced.\n  - Data engineering/ETL platform ownership unless evidenced.\n  - Large-scale distributed systems mechanisms (queues, replicas, consensus, idempotency) unless evidenced.\n  - Patents/awards details (titles, counts, issuing bodies) unless explicitly provided in MASTER_RESUME.\n- Avoid “principal architect” / “owned architecture end-to-end” language; keep scope accurate.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- If the job calls for extensibility/integration, reinterpret safely using evidence-backed patterns:\n  - “Custom software solutions” → modular solution design and reusable components (only if evidenced).\n  - “Backend application development” → service/module boundary definition and maintainability improvements (only if evidenced).\n  - “Cloud-based platform development” → deployment/environment standardization enabling faster iteration (only if evidenced).\n- Do not claim “integration platform” ownership unless explicit integrations/APIs are described in MASTER_RESUME.\n\nLEADERSHIP FRAMING\n- Frame leadership as hands-on technical leadership:\n  - Led engineers through delivery, quality improvements, and process optimization.\n  - Cross-functional collaboration with product/QA/ops stakeholders.\n  - Mentoring, code review standards, and execution focus (only if evidenced).\n- Prefer leadership mechanisms:\n  - Introduced review/test gates, standardized workflows, improved build/release processes, clarified ownership boundaries.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep technical execution dominant (≈70–85% of bullets).\n- Leadership should support the technical narrative (quality, delivery, productivity), not replace it.\n- Avoid inflated scope:\n  - Do not state team size, budget, or org-wide ownership unless provided.\n  - Use “led a team” / “coordinated across teams” without implying director-level management.\n\nAI WORK POSITIONING\n- No AI tooling practice is provided.\n- Do not mention AI/ML, LLMs, prompt engineering, model evaluation, or AI platform work unless explicitly present in MASTER_RESUME or later inputs.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate architecture ownership; use “contributed to,” “implemented,” “led delivery of,” or “drove” only when evidence supports.\n- Do not exaggerate leadership scope; avoid “built/ran org,” “company-wide transformation,” “owned strategy” unless evidenced.\n- Do not invent:\n  - Metrics (percent improvements, defect counts, cost savings) beyond what is explicitly provided.\n  - Scale (QPS, DAUs, TBs, latency) unless provided.\n  - Cloud provider, microservices, Kubernetes, event-driven architecture, observability stack unless provided.\n- Replace vague outcomes with mechanism-first bullets; if mechanism is unknown, keep outcome modest and factual.\n\nEVIDENCE SOURCES\n- Construct bullets ONLY from:\n  - MASTER_RESUME (primary source for concrete mechanisms, dates, employers, projects).\n  - CANDIDATE_PROFILE.experience_highlights (impacts, team context, constraints).\n  - CANDIDATE_PROFILE.experience_highlights.architecture_patterns (backend development, cloud-based platform development, testing/validation workflows, performance improvement work).\n  - CANDIDATE_PROFILE.experience_highlights.constraints_and_tradeoffs (cost reduction, efficiency).\n  - CANDIDATE_PROFILE.technical_skills (only as corroborating tech list; do not assume usage depth without MASTER_RESUME support).\n- If a mechanism is not explicitly supported, do not introduce it; instead, write a conservative bullet anchored to verified activities.\n\nFINAL REMINDER\n- Core differentiation to preserve: senior backend engineer who improves quality, performance, and delivery efficiency—especially during cloud transitions—while leading collaboratively without inflating architecture or leadership scope.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
       },
       {
         "role": "user",
-        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Backend systems\",\n      \"Cloud-based applications\",\n      \"Enterprise software\"\n    ],\n    \"secondary\": [\n      \"Web applications\",\n      \"Distributed systems\",\n      \"Technical support systems\"\n    ]\n  },\n  \"candidate\": {\n    \"name\": \"FIRSTNAME I. LASTNAME\",\n    \"summary\": \"Experienced Senior Software Developer with a strong background in backend development, distributed systems, and object-oriented design. Proven track record in leading cloud transitions, increasing productivity, and reducing costs. Recognized with multiple awards and patents for excellence in software engineering.\",\n    \"headline\": \"Senior Software Developer with Expertise in Backend Development and Cloud Transition\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Execution-focused\",\n        \"Quality-driven\"\n      ]\n    },\n    \"practices\": [\n      \"Cross-functional collaboration\",\n      \"Continuous learning\",\n      \"Ownership of projects\"\n    ],\n    \"risk_management\": [\n      \"Focus on reducing system bugs\",\n      \"Emphasis on cost reduction\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Backend development\",\n    \"Software development\",\n    \"Cloud-based applications\",\n    \"Technical support\",\n    \"Cross-functional collaboration\",\n    \"Performance optimization\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate architecture ownership\",\n      \"Do not exaggerate leadership scope\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Keep claims aligned with actual experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [\n      \"React\",\n      \"Angular\"\n    ],\n    \"languages\": [\n      \"JavaScript\",\n      \"Swift\",\n      \"Python\",\n      \"Java\",\n      \"C++\",\n      \"Ruby\",\n      \"Rust\",\n      \"Elixir\",\n      \"Scala\",\n      \"R\",\n      \"PHP\",\n      \"C#\",\n      \"jQuery\",\n      \"HTML\",\n      \"CSS\",\n      \"SQL\",\n      \"Bash/Shell\",\n      \"C\",\n      \"Typescript\",\n      \"Assembly\",\n      \"Go\",\n      \"Objective-C\",\n      \"VB.NET\",\n      \"Matlab\",\n      \"VBA\",\n      \"Kotlin\",\n      \"Groovy\",\n      \"Perl\"\n    ],\n    \"datastores\": [\n      \"MySQL\",\n      \"SQL Server\",\n      \"Oracle\"\n    ],\n    \"api_patterns\": [],\n    \"infra_devops\": [\n      \"Docker\",\n      \"Jenkins\",\n      \"Ansible\"\n    ],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [\n      \"Node.js\",\n      \".NETcore\",\n      \"Spring\",\n      \"Django\"\n    ],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Software Development\",\n      \"impact\": [\n        \"Secured significant software development contracts\",\n        \"Increased team productivity by estimated percentages\",\n        \"Optimized network efficiency and reduced system bugs\"\n      ],\n      \"market\": \"Software Solutions\",\n      \"team_context\": [\n        \"Led a team of talented engineers\",\n        \"Collaborated with cross-functional teams\"\n      ],\n      \"skills_applied\": [\n        \"Backend development\",\n        \"Cloud transition\",\n        \"Network optimization\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\",\n        \"Cloud-based platform development\"\n      ],\n      \"employer_relationship\": \"Senior Software Developer at Company Name, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Focused on cost reduction and productivity enhancement\"\n      ]\n    },\n    {\n      \"area\": \"Custom Software Solutions\",\n      \"impact\": [\n        \"Developed award-winning applications\",\n        \"Improved workflow efficiency and reduced operating costs\"\n      ],\n      \"market\": \"Custom Software Design and Development\",\n      \"team_context\": [\n        \"Grew data-center team for major contracts\"\n      ],\n      \"skills_applied\": [\n        \"Software development\",\n        \"Workflow optimization\",\n        \"Cost management\"\n      ],\n      \"architecture_patterns\": [\n        \"Testing and validation workflows\",\n        \"Performance improvement work\"\n      ],\n      \"employer_relationship\": \"Software Development Leader at Prior Company, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Emphasized efficiency and cost savings\"\n      ]\n    },\n    {\n      \"area\": \"Enterprise Application Software Solutions\",\n      \"impact\": [\n        \"Increased productivity by eliminating bugs\",\n        \"Contributed to significant client profits\"\n      ],\n      \"market\": \"Enterprise Software\",\n      \"team_context\": [\n        \"Managed a global team for large contracts\"\n      ],\n      \"skills_applied\": [\n        \"Bug elimination\",\n        \"Team management\",\n        \"Profit generation\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\",\n        \"Technical support workflows\"\n      ],\n      \"employer_relationship\": \"Senior Software Development Specialist at Prior Company, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Focused on productivity and profitability\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\",\n      \"Agile software environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\",\n      \"Problem solving\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Software Engineering\",\n      \"Backend Systems\",\n      \"Distributed Systems\"\n    ],\n    \"secondary\": [\n      \"Cloud-based Applications\",\n      \"Enterprise Software\"\n    ]\n  },\n  \"contacts\": {\n    \"email\": \"firstname.lastname.2021@gmail.com\",\n    \"phone\": \"(212) 555-1212\",\n    \"location\": \"New York, NY\",\n    \"linkedin_url\": \"https://www.theladders.com/expert/my-profile\"\n  },\n  \"candidate\": {\n    \"name\": \"FIRSTNAME I. LASTNAME\",\n    \"summary\": \"Experienced Senior Software Developer with a strong background in software engineering and backend development. Proven track record in leading cloud transitions, optimizing software design, and increasing team productivity. Recognized with multiple awards and patents for excellence in software solutions.\",\n    \"headline\": \"Senior Software Developer\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Execution-focused\",\n        \"Quality-driven\"\n      ]\n    },\n    \"practices\": [\n      \"Cross-functional collaboration\",\n      \"Continuous learning\"\n    ],\n    \"risk_management\": [\n      \"Focus on quality and efficiency\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Backend development\",\n    \"Software development\",\n    \"Cloud-based applications\",\n    \"Technical support\",\n    \"Production reliability\",\n    \"API development\",\n    \"Cross-functional collaboration\",\n    \"Performance optimization\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate architecture ownership\",\n      \"Do not exaggerate leadership scope\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Keep claims aligned with actual experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [\n      \"React\",\n      \"Angular\"\n    ],\n    \"languages\": [\n      \"JavaScript\",\n      \"Swift\",\n      \"Python\",\n      \"Java\",\n      \"C++\",\n      \"Ruby\",\n      \"Rust\",\n      \"Elixir\",\n      \"Scala\",\n      \"R\",\n      \"PHP\",\n      \"C#\",\n      \"jQuery\",\n      \"HTML\",\n      \"CSS\",\n      \"SQL\",\n      \"Bash/Shell\",\n      \"C\",\n      \"Typescript\",\n      \"Assembly\",\n      \"Go\",\n      \"Objective-C\",\n      \"VB.NET\",\n      \"Matlab\",\n      \"VBA\",\n      \"Kotlin\",\n      \"Groovy\",\n      \"Perl\"\n    ],\n    \"datastores\": [\n      \"MySQL\",\n      \"SQL Server\",\n      \"Oracle\"\n    ],\n    \"api_patterns\": [],\n    \"infra_devops\": [\n      \"Docker\",\n      \"Jenkins\",\n      \"Ansible\"\n    ],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [\n      \"Node.js\",\n      \".NETcore\",\n      \"Spring\",\n      \"Django\"\n    ],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Software Development\",\n      \"impact\": [\n        \"Secured significant software development contracts\",\n        \"Increased team productivity by optimizing processes\",\n        \"Reduced system bugs significantly\",\n        \"Generated substantial client profits through innovative software solutions\"\n      ],\n      \"market\": \"Software Solutions\",\n      \"team_context\": [\n        \"Led a team of talented engineers\",\n        \"Collaborated with cross-functional teams\"\n      ],\n      \"skills_applied\": [\n        \"Software engineering\",\n        \"Backend development\",\n        \"Cloud transition\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\",\n        \"Cloud-based platform development\"\n      ],\n      \"employer_relationship\": \"Company Name, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Focused on cost reduction and efficiency\"\n      ]\n    },\n    {\n      \"area\": \"Custom Software Solutions\",\n      \"impact\": [\n        \"Developed award-winning applications\",\n        \"Improved workflow efficiency significantly\",\n        \"Saved costs through optimized program designs\"\n      ],\n      \"market\": \"Custom Software Design\",\n      \"team_context\": [\n        \"Led a data-center team for major contracts\"\n      ],\n      \"skills_applied\": [\n        \"Software development\",\n        \"Custom solutions design\"\n      ],\n      \"architecture_patterns\": [\n        \"Testing and validation workflows\"\n      ],\n      \"employer_relationship\": \"Prior Company, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Focused on cost efficiency and process optimization\"\n      ]\n    },\n    {\n      \"area\": \"Enterprise Application Software\",\n      \"impact\": [\n        \"Increased productivity by eliminating bugs\",\n        \"Contributed to significant client profits\"\n      ],\n      \"market\": \"Enterprise Solutions\",\n      \"team_context\": [\n        \"Grew a global team for large contracts\"\n      ],\n      \"skills_applied\": [\n        \"Enterprise application development\",\n        \"Software optimization\"\n      ],\n      \"architecture_patterns\": [\n        \"Performance improvement work\"\n      ],\n      \"employer_relationship\": \"Prior Company, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Focused on productivity and cost efficiency\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\",\n      \"Agile software environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\",\n      \"Problem solving\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
       },
       {
         "role": "user",
@@ -23,11 +23,11 @@
       },
       {
         "role": "user",
-        "content": "MASTER_COVER_LETTER:\nFIRSTNAME I. LASTNAME\nDear Hiring Manager,\nI am excited to apply for the Senior Software Engineer role at Tigera. With over 15 years of experience in backend engineering and team leadership, including roles as VP and Director of Software Development, I have built fintech and blockchain systems that became top-5 platforms in the Japanese market, serving over 1M users, and led teams of up to 20 engineers to deliver reliable, scalable products.\nIn addition to my industry work, I currently contribute as an independent contractor supporting world-leading AI research labs in training and evaluating advanced AI models on senior-level software engineering tasks. This work keeps me deeply engaged with cutting-edge development practices, reinforces my ability to solve complex problems under ambiguity, and strengthens my proficiency with AI-assisted development tools. I also adopt AI-accelerated workflows (ChatGPT, Claude, Cursor AI) to improve productivity, code quality, and architectural clarity.\nI would welcome the chance to bring this expertise to your team and contribute to building reliable, scalable systems for your clients. I hold Canadian citizenship and am fully eligible to work in Canada.\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+        "content": "MASTER_COVER_LETTER:\nFIRSTNAME I. LASTNAME\nDear Hiring Manager,\n\nI am excited to apply for the [Role] role at [Company].\n\n[2-3 short paragraphs connecting candidate background to role/company needs.]\n\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
       },
       {
         "role": "user",
-        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: April 28, 2026\nReturn JSON only.\n"
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: May 6, 2026\nReturn JSON only.\n"
       }
     ],
     "response_format": {
@@ -35,22 +35,22 @@
     }
   },
   "llm_response": {
-    "resume": "FIRSTNAME I. LASTNAME\nfirstname.lastname.2021@gmail.com\nAddress - City - State - Zip Code\n(212) 555-1212 • www.theladders.com/expert/my-profile\n\nSENIOR SOFTWARE DEVELOPER\nSenior Software Architect • Principal Developer • Senior Application Developer • Full Stack Developer\nSoftware Engineering • Backend Development • Distributed Systems • Object Oriented Design\nCloud Transition Support • Testing/Validation Workflows • Performance & Network Efficiency Optimization • Technical Support Systems\nInfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents • Public Speaker\n\nPROFESSIONAL SUMMARY\nSenior Software Developer with 15+ years of experience delivering backend and enterprise software, including cloud-transition initiatives, testing/validation workflows, and performance/network efficiency improvements. Known for quality-driven execution across the SDLC—impact analysis, design, development, unit/integration testing support, and production issue resolution—while collaborating with cross-functional partners. Recognized with InfoWorld and CTO awards and awarded 3 patents (design).\n\nEXPERIENCE\nCompany Name, Inc., New York, NY | Jan 2015 - present\nSenior Software Developer | Software Solutions Provider\n- Contributed to the securing of a $xxM software development contract through software development delivery.\n- Performed impact analysis and implemented complex development/enhancement work across backend systems.\n- Achieved an estimated xx% rise in team productivity through development process and execution improvements.\n- Decreased system bugs by xx% by generating development models and strengthening implementation quality.\n- Exceeded network optimization target of xx% efficiency increase by improving application/network efficiency.\n- Prioritized and resolved production issues while providing ongoing technical support for delivered solutions.\n- Awarded 2 contracts due to design results excellence in delivered software designs.\n- Generated client profits of $xxM by introducing beta software in production contexts.\n- Optimized software design and development for profit growth of xx%.\n- Added x# talented engineers to team.\n\nPrior Company, Inc., New York, NY | Jan 2011 - Jan 2015\nSoftware Development Leader | Custom Software Solutions Design and Development\n- Produced a 2019 award winning app for the visually impaired.\n- Delivered a xx% rise in efficiency for SharePoint-based workflow solutions.\n- Saved an est. $XM for a client by connecting mainframe financial systems.\n- Optimized a program to produce a xx% rise in efficiency by creating a map/model to clarify process and data flow.\n- Reduced bugs in Java and web application component designs by xx% through improved design and validation practices.\n- Changed the development process of web pages for a $xxM contract.\n- Achieved xx% lower operating costs through insourcing.\n- Grew Data-Center team for a major contract worth $xxM.\n\nPrior Company, Inc., New York, NY | 2004 - 2011\nEnterprise Application Software Solutions\nSenior Software Development Specialist | Jan 2010 - Jan 2011\n- Increased productivity by xx% by eliminating bugs in legacy applications.\n- Produced feasibility studies that helped win a $xxM development effort.\n- Contributed to yearly client profits of $xM by designing and delivering enterprise application components.\n- Grew a global team as part of a $xxM contract, where implementation work was delivered across locations.\n\nSoftware Development Specialist | Jan 2004 - Jan 2010\n- Hired to a new position due to qualifications and strong results in previous company.\n- Contributed to cart abandonment rate reduction of xx%.\n- Increased platform usage by xx% in x months by designing and delivering application improvements.\n- Developed n-tier code-generation architecture showing xx% rise in productivity/efficiency.\n- Awarded $xxx bonus for delivering high priority projects on time.\n\nPrior Company, Inc., New York, NY | Jan 2001 - Jan 2004\nProgrammer/Analyst\n- Performed analysis, coding, and testing across a variety of projects.\n- Eliminated issues in the WebSphere test environment, saving $xxx.\n- Optimized mid-level projects for an efficiency rise of x% through analysis and implementation.\n\nEDUCATION\nGrad School University Name, New York, NY | 2004\nMaster’s in Precisely Specific Degree\nWinner of award, distinction or honor\nWinner of award, distinction or honor\n\nUndergraduate College or University Name, New York, NY | 2000\nBS/BA in Precisely Specific Degree\nWinner of award, distinction or honor\n\nTECHNICAL SKILLS\nBackend & Frameworks: Node.js, .NETcore, Spring, Django\nLanguages: JavaScript, Typescript, Python, Java, C#, SQL, Bash/Shell, C++, Ruby, Go, PHP, Swift, Kotlin, Groovy, Perl, Scala, Rust, Elixir, R, Objective-C, VB.NET, VBA, Matlab, Assembly, C, jQuery, HTML, CSS\nDatastores: MySQL, SQL Server, Oracle\nDevOps / Automation: Docker, Jenkins, Ansible\nPlatforms / Tools: Windows, Linux, Visual Studio\nWeb / Frontend (supporting): React, Angular, Cordova\nOther: Agile Scrum\n\nADDITIONAL\nInfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents (Design) • Public Speaker\n",
-    "cover_letter": "FIRSTNAME I. LASTNAME\n\nDear Hiring Manager,\n\nI am applying for the Lead Software Engineer role at American Tire Distributors. I bring 15+ years of experience delivering backend and enterprise software, with a focus on quality-driven execution across the SDLC—impact analysis, design, development, unit/integration testing support, and ongoing production support.\n\nIn my current role as Senior Software Developer at Company Name, Inc., I have worked on complex development and enhancement efforts, contributed to securing large software development contracts, and improved delivery outcomes through productivity, defect reduction, and application/network efficiency optimization initiatives. I also regularly support production needs by prioritizing and resolving issues and collaborating with partners to keep systems reliable.\n\nPreviously, as a Software Development Leader, I delivered workflow and efficiency improvements (including SharePoint-based solutions), reduced defects in Java and web application components through stronger design/validation practices, and supported integrations such as connecting mainframe financial systems. This background aligns well with ATD’s need for an engineer who can translate enhancement requests into clear change plans, implement maintainable solutions, and support testing and release readiness.\n\nI would welcome the opportunity to discuss how my backend delivery experience, testing/validation mindset, and cross-functional collaboration style can help ATD build and support high-quality software solutions for its customers and internal users.\n\nSincerely,\nFIRSTNAME I. LASTNAME\n"
+    "resume": "FIRSTNAME I. LASTNAME\nfirstname.lastname.2021@gmail.com\nNew York, NY\n(212) 555-1212 • https://www.theladders.com/expert/my-profile\n\nSENIOR SOFTWARE DEVELOPER\n\nProfessional Summary\nSenior Software Developer focused on backend application development and enterprise software delivery, with experience leading cloud transitions and improving production quality through stronger development models and testing/validation workflows. Hands-on contributor across the SDLC—requirements/impact analysis, design, implementation, unit/integration testing, and production support—working closely with cross-functional teams in Agile environments. Recognized for software solutions excellence (InfoWorld Award 2018; CTO’s “Excellence” Award 2017) and awarded 3 patents (design).\n\nExperience\nCompany Name, Inc., New York, NY | Jan 2015 - present\nSenior Software Developer | Software Solutions Provider\n- Carried out impact analysis and implementation for complex software development and enhancement requests in an Agile delivery model.\n- Decreased system bugs by generating development models and strengthening validation practices to prevent regressions.\n- Provided ongoing technical support by prioritizing and resolving production issues and coordinating with cross-functional partners as needed.\n- Exceeded network optimization targets by executing backend and system-level improvements focused on efficiency.\n- Contributed to cloud transition efforts by modernizing application delivery toward cloud-based environments.\n- Improved team productivity by optimizing development processes and execution workflows.\n- Added talented engineers to the team through hands-on recruiting support aligned to delivery needs.\n- Contributed to securing major software development engagements through strong technical execution and design outcomes.\n- Awarded contracts due to design results excellence in delivered solutions.\n- Introduced beta software and optimized software design and development to support client business outcomes, including profitability goals.\n\nPrior Company, Inc., New York, NY | Jan 2011 - Jan 2015\nSoftware Development Leader | Custom Software Solutions Design and Development\n- Delivered custom software solutions, including complex workflows and interfaces, with unit testing and support for functional/integration testing.\n- Reduced bugs in Java and web application component designs through improved testing and validation workflows.\n- Delivered efficiency improvements for a SharePoint-based workflow by implementing process and application changes.\n- Saved client costs by connecting mainframe financial systems to downstream applications as part of a modernization effort.\n- Optimized program designs to improve efficiency by creating maps/models to clarify process and data flow.\n- Changed the development process of web pages for a major contract by standardizing execution and delivery practices.\n- Grew a data-center team for a major contract by supporting staffing and delivery execution.\n- Achieved lower operating costs through insourcing and process optimization.\n- Produced an award-winning app for the visually impaired.\n\nPrior Company, Inc., New York, NY | 2004 - 2011\nEnterprise Application Software Solutions\nSenior Software Development Specialist | Jan 2010 - Jan 2011\n- Increased productivity by eliminating bugs in legacy enterprise applications through targeted fixes and quality improvements.\n- Produced feasibility studies to support large development efforts.\n- Contributed to yearly client profits by designing and delivering enterprise application improvements.\n- Grew a global team as part of a large contract implementation effort.\n\nSoftware Development Specialist | Jan 2004 - Jan 2010\n- Contributed to cart abandonment rate reduction through application changes and iterative improvements.\n- Increased platform usage within a defined timeframe by designing and delivering application enhancements.\n- Developed n-tier code-generation architecture to improve development efficiency.\n- Delivered high-priority projects on time and received a performance bonus.\n\nPrior Company, Inc., New York, NY | Jan 2001 - Jan 2004\nProgrammer/Analyst\n- Performed analysis, coding, and testing across a variety of projects.\n- Eliminated issues in the WebSphere test environment, reducing rework and improving test reliability.\n- Optimized mid-level projects for efficiency through analysis and implementation improvements.\n\nEducation\nGrad School University Name, New York, NY | 2004\nMaster’s in Precisely Specific Degree\n- Winner of award, distinction or honor\n- Winner of award, distinction or honor\n\nUndergraduate College or University Name, New York, NY | 2000\nBS/BA in Precisely Specific Degree\n- Winner of award, distinction or honor\n\nTechnical Skills\nBackend & Frameworks: Node.js, .NETcore, Spring, Django\nLanguages: JavaScript, Typescript, Python, Java, C#, SQL, Bash/Shell, C++, Ruby, Go, PHP, Swift, Kotlin, Groovy, Perl, Scala, R, Rust, Elixir, Objective-C, VB.NET, VBA, Matlab, Assembly, C, HTML, CSS, jQuery\nDatastores: MySQL, SQL Server, Oracle\nDevOps / Automation: Docker, Jenkins, Ansible\nFrontend: React, Angular\nOther: Agile Scrum, Windows, Linux, Embedded Systems, Visual Studio, UX System, Cordova\n\nAdditional\nInfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents (Design) • Public Speaker\n",
+    "cover_letter": "FIRSTNAME I. LASTNAME\n(212) 555-1212 | firstname.lastname.2021@gmail.com | https://www.theladders.com/expert/my-profile\n\nMay 6, 2026\n\nDear Hiring Manager,\n\nI am excited to apply for the Lead Software Engineer role at American Tire Distributors. I bring extensive experience delivering backend and enterprise software solutions end-to-end across the SDLC—performing impact analysis, implementing enhancements, executing unit/integration testing, and providing ongoing production support in Agile environments.\n\nIn my current Senior Software Developer role, I have handled complex development and enhancement work while focusing on production quality and operational reliability. This includes reducing system bugs by creating stronger development models and validation practices, improving team productivity through process optimization, and contributing to cloud transition efforts to modernize application delivery.\n\nPreviously, as a Software Development Leader, I delivered custom software solutions that included workflows and interfaces, supported functional/integration testing, and reduced defects in Java and web application components through improved testing and validation workflows. I have also worked on efficiency and cost-focused initiatives, including connecting mainframe financial systems to downstream applications and optimizing program designs through clearer process and data-flow mapping.\n\nAmerican Tire Distributors’ emphasis on maintainable solutions, technical forums/code reviews, and resolving high-complexity production issues aligns closely with how I operate day-to-day: pragmatic engineering, clear communication with stakeholders, and disciplined execution to keep systems reliable. I would welcome the opportunity to bring this approach to ATD’s teams and help deliver software that supports your customers and end users at scale.\n\nSincerely,\nFIRSTNAME I. LASTNAME"
   },
   "diff": {
     "resume": [
       {
         "name": "Professional Summary",
-        "after": "Senior Software Developer with 15+ years of experience delivering backend and enterprise software, including cloud-transition initiatives, testing/validation workflows, and performance/network efficiency improvements. Known for quality-driven execution across the SDLC—impact analysis, design, development, unit/integration testing support, and production issue resolution—while collaborating with cross-functional partners. Recognized with InfoWorld and CTO awards and awarded 3 patents (design)."
+        "after": "Senior Software Developer focused on backend application development and enterprise software delivery, with experience leading cloud transitions and improving production quality through stronger development models and testing/validation workflows. Hands-on contributor across the SDLC—requirements/impact analysis, design, implementation, unit/integration testing, and production support—working closely with cross-functional teams in Agile environments. Recognized for software solutions excellence (InfoWorld Award 2018; CTO’s “Excellence” Award 2017) and awarded 3 patents (design)."
       },
       {
         "name": "Technical Skills",
-        "after": "Backend & Frameworks: Node.js, .NETcore, Spring, Django\nLanguages: JavaScript, Typescript, Python, Java, C#, SQL, Bash/Shell, C++, Ruby, Go, PHP, Swift, Kotlin, Groovy, Perl, Scala, Rust, Elixir, R, Objective-C, VB.NET, VBA, Matlab, Assembly, C, jQuery, HTML, CSS\nDatastores: MySQL, SQL Server, Oracle\nDevOps / Automation: Docker, Jenkins, Ansible\nPlatforms / Tools: Windows, Linux, Visual Studio\nWeb / Frontend (supporting): React, Angular, Cordova\nOther: Agile Scrum\n\nADDITIONAL\nInfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents (Design) • Public Speaker"
+        "after": "Backend & Frameworks: Node.js, .NETcore, Spring, Django\nLanguages: JavaScript, Typescript, Python, Java, C#, SQL, Bash/Shell, C++, Ruby, Go, PHP, Swift, Kotlin, Groovy, Perl, Scala, R, Rust, Elixir, Objective-C, VB.NET, VBA, Matlab, Assembly, C, HTML, CSS, jQuery\nDatastores: MySQL, SQL Server, Oracle\nDevOps / Automation: Docker, Jenkins, Ansible\nFrontend: React, Angular\nOther: Agile Scrum, Windows, Linux, Embedded Systems, Visual Studio, UX System, Cordova\n\nAdditional\nInfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents (Design) • Public Speaker"
       }
     ]
   },
-  "generation_run_id": "217",
+  "generation_run_id": "281",
   "updated_ir": {
     "source_kind": "docx",
     "header_paras": [
@@ -121,7 +121,7 @@
             "para_id": "para_10"
           },
           {
-            "text": "Cloud Transition Support • Testing/Validation Workflows • Performance & Network Efficiency Optimization • Technical Suppo...",
+            "text": "Led Cloud Transition • Increased Productivity • Reduced Costs • Effective Recruiter ",
             "semantic": "paragraph",
             "paragraph_profile": null,
             "para_id": "para_11"
@@ -177,49 +177,49 @@
             "para_id": "para_58"
           },
           {
-            "text": "Contributed to the securing of a $xxM software development contract through software development delivery.",
+            "text": "Contributed to the securing of a $xxM software development…",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_59"
           },
           {
-            "text": "Performed impact analysis and implemented complex development/enhancement work across backend systems.",
+            "text": "Achieved an estimated xx% rise in team productivity through...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_60"
           },
           {
-            "text": "Achieved an estimated xx% rise in team productivity through development process and execution improvements.",
+            "text": "Exceeded network optimization target of xx% efficiency increase by...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_61"
           },
           {
-            "text": "Decreased system bugs by xx% by generating development models and strengthening implementation quality.",
+            "text": "Added x# talented engineers to team, due to...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_62"
           },
           {
-            "text": "Exceeded network optimization target of xx% efficiency increase by improving application/network efficiency.",
+            "text": "Decreased system bugs by xx% by generating dev models and...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_63"
           },
           {
-            "text": "Prioritized and resolved production issues while providing ongoing technical support for delivered solutions.",
+            "text": "Awarded 2 contracts due to design results excellence in...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_64"
           },
           {
-            "text": "Awarded 2 contracts due to design results excellence in delivered software designs.",
+            "text": "Generated client profits of $xxM by introducing beta software in...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_65"
           },
           {
-            "text": "Generated client profits of $xxM by introducing beta software in production contexts.",
+            "text": "Optimized software design and development for profit growth of xx%...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_66"
@@ -249,49 +249,49 @@
             "para_id": "para_70"
           },
           {
-            "text": "Produced a 2019 award winning app for the visually impaired.",
+            "text": "Produced a 2019 award winning app for the visually impaired...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_71"
           },
           {
-            "text": "Delivered a xx% rise in efficiency for SharePoint-based workflow solutions.",
+            "text": "Delivered a xx% rise in efficiency for SharePoint-based workflow...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_72"
           },
           {
-            "text": "Saved an est. $XM for a client by connecting mainframe financial systems.",
+            "text": "Saved an est. $XM for client by connecting mainframe financial...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_73"
           },
           {
-            "text": "Optimized a program to produce a xx% rise in efficiency by creating a map/model to clarify process and data flow.",
+            "text": "Optimized program to produce xx% rise in efficiency by creating map...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_74"
           },
           {
-            "text": "Reduced bugs in Java and web application component designs by xx% through improved design and validation practices.",
+            "text": "Reduced bugs in Java and Web app component designs by xx% through...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_75"
           },
           {
-            "text": "Changed the development process of web pages for a $xxM contract.",
+            "text": "Grew Data-Center team for major contract worth $xxM after...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_76"
           },
           {
-            "text": "Achieved xx% lower operating costs through insourcing.",
+            "text": "Changed the development process of web pages for $xxM contract by...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_77"
           },
           {
-            "text": "Grew Data-Center team for a major contract worth $xxM.",
+            "text": "Achieved xx% lower operating costs through insourcing and...",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_78"
@@ -435,7 +435,294 @@
             "para_id": "para_101"
           }
         ],
-        "roles": [],
+        "roles": [
+          {
+            "header": {
+              "text": "Company Name, Inc., New York, NYJan 2015 - present",
+              "semantic": "role_meta",
+              "paragraph_profile": null,
+              "para_id": "para_56"
+            },
+            "header_extra": [
+              {
+                "text": "Senior Software Developer",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_57"
+              },
+              {
+                "text": "Software Solutions Provider",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_58"
+              }
+            ],
+            "meta_lines": [],
+            "bullets": [
+              {
+                "text": "Contributed to the securing of a $xxM software development…",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_59"
+              },
+              {
+                "text": "Achieved an estimated xx% rise in team productivity through...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_60"
+              },
+              {
+                "text": "Exceeded network optimization target of xx% efficiency increase by...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_61"
+              },
+              {
+                "text": "Added x# talented engineers to team, due to...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_62"
+              },
+              {
+                "text": "Decreased system bugs by xx% by generating dev models and...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_63"
+              },
+              {
+                "text": "Awarded 2 contracts due to design results excellence in...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_64"
+              },
+              {
+                "text": "Generated client profits of $xxM by introducing beta software in...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_65"
+              },
+              {
+                "text": "Optimized software design and development for profit growth of xx%...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_66"
+              }
+            ],
+            "role_id": "Company Name, Inc., New York, NYJan 2015 - present",
+            "role_id_stable": "role_1"
+          },
+          {
+            "header": {
+              "text": "Prior Company, Inc., New York, NYJan 2011 - Jan 2015",
+              "semantic": "role_meta",
+              "paragraph_profile": null,
+              "para_id": "para_68"
+            },
+            "header_extra": [
+              {
+                "text": "Software Development Leader",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_69"
+              },
+              {
+                "text": "Custom Software Solutions Design and Development",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_70"
+              }
+            ],
+            "meta_lines": [],
+            "bullets": [
+              {
+                "text": "Produced a 2019 award winning app for the visually impaired...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_71"
+              },
+              {
+                "text": "Delivered a xx% rise in efficiency for SharePoint-based workflow...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_72"
+              },
+              {
+                "text": "Saved an est. $XM for client by connecting mainframe financial...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_73"
+              },
+              {
+                "text": "Optimized program to produce xx% rise in efficiency by creating map...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_74"
+              },
+              {
+                "text": "Reduced bugs in Java and Web app component designs by xx% through...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_75"
+              },
+              {
+                "text": "Grew Data-Center team for major contract worth $xxM after...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_76"
+              },
+              {
+                "text": "Changed the development process of web pages for $xxM contract by...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_77"
+              },
+              {
+                "text": "Achieved xx% lower operating costs through insourcing and...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_78"
+              }
+            ],
+            "role_id": "Prior Company, Inc., New York, NYJan 2011 - Jan 2015",
+            "role_id_stable": "role_2"
+          },
+          {
+            "header": {
+              "text": "Prior Company, Inc., New York, NY 2004 - 2011",
+              "semantic": "role_meta",
+              "paragraph_profile": null,
+              "para_id": "para_81"
+            },
+            "header_extra": [
+              {
+                "text": "Enterprise Application Software Solutions",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_82"
+              }
+            ],
+            "meta_lines": [
+              {
+                "text": "Senior Software Development SpecialistJan 2010 - Jan 2011",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_83"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Increased productivity by xx% by eliminating bugs in legacy...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_84"
+              },
+              {
+                "text": "Grew a global team as part of a $xxM contract, where implementation...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_85"
+              },
+              {
+                "text": "Produced feasibility studies that helped win a $xxM development...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_86"
+              },
+              {
+                "text": "Contributed to yearly client profits of $xM by designing/...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_87"
+              }
+            ],
+            "role_id": "Prior Company, Inc., New York, NY 2004 - 2011",
+            "role_id_stable": "role_3"
+          },
+          {
+            "header": {
+              "text": "Software Development Specialist Jan 2004 - Jan 2010",
+              "semantic": "role_meta",
+              "paragraph_profile": null,
+              "para_id": "para_89"
+            },
+            "header_extra": [
+              {
+                "text": "Hired to new position due to qualifications and strong results in previous company",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_90"
+              }
+            ],
+            "meta_lines": [],
+            "bullets": [
+              {
+                "text": "Contributed to cart abandonment rate reduction of xx% from...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_91"
+              },
+              {
+                "text": "Increased platform usage by xx% in x months by designing and...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_92"
+              },
+              {
+                "text": "Developed n-tier code-generation architecture showing xx% rise in…",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_93"
+              },
+              {
+                "text": "Awarded $xxx bonus for delivering high priority projects on time...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_94"
+              }
+            ],
+            "role_id": "Software Development Specialist Jan 2004 - Jan 2010",
+            "role_id_stable": "role_4"
+          },
+          {
+            "header": {
+              "text": "Prior Company, Inc., New York, NY Jan 2001 - Jan 2004",
+              "semantic": "role_meta",
+              "paragraph_profile": null,
+              "para_id": "para_96"
+            },
+            "header_extra": [
+              {
+                "text": "Programmer/Analyst",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_97"
+              },
+              {
+                "text": "Performed Analysis, Coding and Testing Across a Variety of Projects",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_98"
+              }
+            ],
+            "meta_lines": [],
+            "bullets": [
+              {
+                "text": "Eliminated issues in the WebSphere test environment, saving $xxx, by...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_99"
+              },
+              {
+                "text": "Optimized mid-level projects for efficiency rise of x% through analysis of...",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_100"
+              }
+            ],
+            "role_id": "Prior Company, Inc., New York, NY Jan 2001 - Jan 2004",
+            "role_id_stable": "role_5"
+          }
+        ],
         "section_id": "sec_2"
       },
       {
@@ -513,10 +800,10 @@
         "section_id": "sec_3"
       },
       {
-        "title": "TECHNICAL SKILLS",
+        "title": "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS",
         "semantic_type": "skills",
         "heading": {
-          "text": "TECHNICAL SKILLS",
+          "text": "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS",
           "semantic": "section_heading",
           "paragraph_profile": null,
           "para_id": "para_113"
@@ -529,13 +816,13 @@
             "para_id": "para_114"
           },
           {
-            "text": "Backend & Frameworks: Node.js, .NETcore, Spring, Django",
+            "text": "InfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents (Design) •",
             "semantic": "paragraph",
             "paragraph_profile": null,
             "para_id": "para_115"
           },
           {
-            "text": "Datastores: MySQL, SQL Server, Oracle",
+            "text": "JavaScript, Swift • Python • Java • C++ • Ruby • Rust • Elixir • Scala • R • PHP • C# • jQuery • HTML • CSS • SQL • Bash/Shell • C • Typescript • Assembly • Go • Objective-C • VB.NET • Matlab • VBA • Kotlin • Groovy • Perl • Agile Scrum • Node.js • React • .NETcore • Spring • Django • Cordova • Angular • Windows • Linux • Embedded Systems • MySQL • SQL Server • Oracle • TensorFlow • Spark • Helm • Ansible • Docker • Jenkins • Visual Studio • UX System",
             "semantic": "paragraph",
             "paragraph_profile": null,
             "para_id": "para_116"

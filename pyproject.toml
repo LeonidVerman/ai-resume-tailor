@@ -33,6 +33,7 @@ testpaths = ["tests"]
 markers = [
     "scraping: live network scraping tests (deselect with -m 'not scraping')",
     "network: any test requiring outbound network access",
+    "integration: tests requiring pre-built rendering artefacts in tmp/artefacts/",
 ]
 
 [project.scripts]

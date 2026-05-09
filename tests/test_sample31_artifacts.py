@@ -43,7 +43,7 @@ class TestAnchorBudgets:
         assert SUMMARY_HEADING_BUDGET < SUMMARY_BODY_BUDGET
 
     def test_compute_budgets_for_sample31(self):
-        """_compute_anchor_budgets yields sensible budgets for sample 31."""
+        """_compute_anchor_budgets skips meaningful content para_ids (no truncation)."""
         from tailor.compiler.docx_parser import parse_docx
         from tailor.compiler.updater import (
             SUMMARY_BODY_BUDGET, SUMMARY_HEADING_BUDGET, _compute_anchor_budgets,
@@ -53,16 +53,17 @@ class TestAnchorBudgets:
         # Pass doc as both original and updated (no inserted summary yet)
         budgets = _compute_anchor_budgets(doc, doc)
 
-        # Experience bullets: max(160, 210*1.25) = 262
-        assert budgets.get("para_39", 0) >= 160
-        assert budgets.get("para_43", 0) >= 160
-        assert budgets.get("para_47", 0) >= 160
-        # Skills: max(80, small_orig*1.25) → at least 80
-        assert budgets.get("para_49", 0) >= 80
-        assert budgets.get("para_51", 0) >= 80
-        # Empty header paras get conservative default
-        assert budgets.get("para_7", 0) >= 100
-        assert budgets.get("para_8", 0) >= 100
+        # Experience bullets and skills body_paras: NOT in budgets — no truncation allowed.
+        # A budget of 0 (absent key) means _truncate_to_budget is never called for these.
+        assert "para_39" not in budgets, "experience bullet must not have a budget"
+        assert "para_43" not in budgets, "experience bullet must not have a budget"
+        assert "para_47" not in budgets, "experience bullet must not have a budget"
+        assert "para_49" not in budgets, "skills body para must not have a budget"
+        assert "para_51" not in budgets, "skills body para must not have a budget"
+        # para_6 (heading anchor) gets SUMMARY_HEADING_BUDGET — still in budgets
+        assert budgets.get("para_6", 0) >= 1  # heading anchor has a budget
+        # para_7 (body anchor) is in _no_truncate — NOT in budgets (full text preserved)
+        assert "para_7" not in budgets, "summary body anchor must not have a budget"
 
     def test_apply_anchor_budgets_truncates_overlong(self, monkeypatch):
         """apply_anchor_budgets truncates a para that exceeds budget."""
@@ -199,7 +200,7 @@ class TestSample31ArtifactPipeline:
         assert violations["role_count"] == 3
 
     def test_ir_has_anchored_summary(self, monkeypatch):
-        """Updated IR has summary section anchored to para_7/para_8."""
+        """Updated IR has summary section anchored to para_6/para_7."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
         monkeypatch.setattr(cfg, "USE_LAYOUT_BLOCK_RENDERER", True)
@@ -216,9 +217,11 @@ class TestSample31ArtifactPipeline:
 
         summary = next((s for s in updated.sections if s.semantic_type == "summary"), None)
         assert summary is not None, "Summary section missing"
-        assert summary.heading.para_id == "para_7"
-        assert summary.body_paras and summary.body_paras[0].para_id == "para_8"
-        assert len(summary.body_paras[0].text) <= 200  # budget enforced
+        assert summary.heading.para_id == "para_6"
+        assert summary.body_paras and summary.body_paras[0].para_id == "para_7"
+        # Full summary text preserved — no budget truncation for summary body anchor
+        assert len(summary.body_paras[0].text) > 0
+        assert "..." not in summary.body_paras[0].text, "Summary must not be truncated"
 
     def test_ir_section_order_preserved(self, monkeypatch):
         """Sections appear in original document order (summary inserted first)."""

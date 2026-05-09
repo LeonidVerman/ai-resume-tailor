@@ -46,7 +46,100 @@ _log = logging.getLogger(__name__)
 # Paragraph text replacement (in cloned XML)
 # ---------------------------------------------------------------------------
 
+def _ensure_continuous(sectPr) -> None:
+    """Set w:type w:val='continuous' on *sectPr*, creating the element if absent.
+
+    Called when a header-section boundary sectPr (nextPage by default) must be
+    preserved to define the 1-column header / 2-column body topology, but must not
+    create an unwanted hard page break.  Converting to continuous keeps the section
+    boundary intact while allowing the header and body to flow on the same page.
+    """
+    from lxml import etree as _etree
+    _type = sectPr.find(f"{{{_W}}}type")
+    if _type is None:
+        _type = _etree.SubElement(sectPr, f"{{{_W}}}type")
+    _type.set(f"{{{_W}}}val", "continuous")
+
+
+def _strip_non_column_section_break(
+    p_elem,
+    main_pgSz_w: "str | None" = None,
+    main_pgSz_h: "str | None" = None,
+    main_is_multicolumn: bool = False,
+) -> None:
+    """Remove w:sectPr from paragraph pPr ONLY when it acts as a pure page-break marker.
+
+    Section properties embedded in a paragraph's pPr mark the end of a document
+    section.  Four categories must be preserved intact:
+
+    1. Multi-column sectPr (w:cols w:num ≥ 2) — newspaper-column layouts
+       (e.g. sample 31) that define 2- or 3-column body sections.
+
+    2. Continuous section breaks (w:type w:val="continuous") regardless of column
+       count — these create same-page layout transitions such as a 1-column header
+       region followed by a 2-column body (e.g. sample 3: 33 pt white name in a
+       full-width banner above the 2-col sidebar+experience layout).  Stripping a
+       continuous 1-col sectPr would collapse that boundary, placing the large
+       banner text inside the narrow sidebar column and breaking the topology.
+
+    3. When the main document body is 2+ column (main_is_multicolumn=True): ALL
+       embedded single-column sectPrs define the header-section boundary before the
+       multi-column body.  Stripping them would place the header content (name, photo,
+       title) inside the narrow 2-column body, causing vertical text fragmentation.
+       This applies to samples 19, 20, 23 where the main sectPr uses 2 columns.
+
+    4. sectPr whose pgSz matches the main document page size — these are legitimate
+       section-structure boundaries (e.g. a 1-column header section before a 2-column
+       body in templates like samples 17, 28 where the main sectPr is 1-column but
+       subsequent embedded sectPrs define 2-column body regions).  Stale sectPrs
+       (e.g. a US-Letter sectPr inside an A4 template) have DIFFERENT page dimensions
+       and are still stripped.
+
+    All other sectPr (nextPage / evenPage / oddPage with single-column AND different
+    page size, in a 1-column document body) are stale page-break markers from the
+    template's last render and are stripped so content flows without forced breaks.
+    """
+    pPr = p_elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        return
+    sectPr = pPr.find(f"{{{_W}}}sectPr")
+    if sectPr is None:
+        return
+    cols = sectPr.find(f"{{{_W}}}cols")
+    if cols is not None:
+        num = cols.get(f"{{{_W}}}num")
+        if num is not None and int(num) >= 2:
+            return  # multi-column layout — preserve intact
+    # Continuous section breaks define same-page layout topology (1-col header →
+    # 2-col body etc.).  Never strip them — doing so collapses the section boundary
+    # and places header-area content inside the narrow sidebar column.
+    type_elem = sectPr.find(f"{{{_W}}}type")
+    if type_elem is not None and type_elem.get(f"{{{_W}}}val", "") == "continuous":
+        return  # continuous break — preserve (no page break, defines layout geometry)
+    # When the main body is multi-column, embedded 1-col sectPrs are header boundaries.
+    # Stripping them collapses the header (name/photo) into the 2-col body → fragmented.
+    # Convert to continuous so the boundary is preserved without creating a page break.
+    if main_is_multicolumn:
+        _ensure_continuous(sectPr)
+        return  # preserve as continuous: header-to-2-col-body section boundary
+    # Same-pgSz sectPrs are legitimate header-to-body section boundaries.
+    # Stale sectPrs (template page-size switches, e.g. US-Letter inside A4) have
+    # different dimensions and fall through to the strip below.
+    # Convert to continuous to avoid creating an unwanted page break while still
+    # preserving the section layout boundary.
+    if main_pgSz_w is not None and main_pgSz_h is not None:
+        this_pgSz = sectPr.find(f"{{{_W}}}pgSz")
+        if this_pgSz is not None:
+            this_w = this_pgSz.get(f"{{{_W}}}w")
+            this_h = this_pgSz.get(f"{{{_W}}}h")
+            if this_w == main_pgSz_w and this_h == main_pgSz_h:
+                _ensure_continuous(sectPr)
+                return  # same page dimensions → structural boundary, preserve as continuous
+    pPr.remove(sectPr)
+
+
 def _strip_section_break(p_elem) -> None:
+    """Remove ALL w:sectPr from paragraph pPr unconditionally (used in non-layout path)."""
     pPr = p_elem.find(f"{{{_W}}}pPr")
     if pPr is not None:
         sectPr = pPr.find(f"{{{_W}}}sectPr")
@@ -67,6 +160,132 @@ def _strip_column_break(p_elem) -> None:
         for br in list(r_elem.findall(f"{{{_W}}}br")):
             if br.get(f"{{{_W}}}type") == "column":
                 r_elem.remove(br)
+
+
+def _ensure_keep_next(p_elem) -> None:
+    """Add w:keepNext to the paragraph pPr if not already present.
+
+    w:keepNext tells Word/LibreOffice: keep this paragraph on the same page as
+    the following paragraph.  Applied to role-header paragraphs, this prevents
+    the common resume defect where a role title is stranded at the bottom of a
+    page while all of its bullets appear on a sparse continuation page.
+
+    No-op when keepNext already exists (idempotent).  Only adds keepNext; never
+    removes it, so the caller does not need to check original template state.
+    """
+    from lxml import etree as _etree
+    pPr = p_elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        pPr = _etree.Element(f"{{{_W}}}pPr")
+        p_elem.insert(0, pPr)
+    if pPr.find(f"{{{_W}}}keepNext") is None:
+        _etree.SubElement(pPr, f"{{{_W}}}keepNext")
+
+
+def apply_trailing_section_justification(
+    docx_path: str,
+    pdf_path: str,
+) -> bool:
+    """Two-pass sparse-final-page fix: detect sparse page, add section spacing.
+
+    After an initial render+PDF-convert, if the last continuation page is sparse
+    (content fills < 65% of page height after a well-packed previous page), this
+    function opens the rendered DOCX and adds ``w:spacing w:before`` to the
+    trailing section-heading paragraphs.  The extra spacing distributes the
+    bottom whitespace evenly between sections, making the page look designed
+    rather than incomplete.
+
+    Target: 80% fill on the sparse page.  Extra spacing is distributed across
+    the last N section-heading paragraphs (max N=4, capped at 36 pts each to
+    preserve aesthetics).  The caller must re-convert DOCX → PDF after this
+    returns True.
+
+    Returns True when spacing was added (re-render required); False when the
+    page is not sparse or the fix could not be applied.
+    """
+    try:
+        from tailor.eval.extractor import extract
+        from tailor.eval.layout_grader.pdf_scorer import (
+            _find_sparse_continuation_pages,
+        )
+
+        gen = extract(pdf_path)
+        sparse = _find_sparse_continuation_pages(gen)
+        if not sparse:
+            return False
+
+        page_num, fill_frac, bottom_empty, area_ratio, n_lines, n_blocks, _ = sparse[0]
+
+        # Require some real content on the sparse page (not nearly empty)
+        if area_ratio < 0.08:
+            _log.debug("SPARSE_FIX_SKIP: area_ratio %.2f too low for justification", area_ratio)
+            return False
+
+        # Calculate extra spacing needed to reach 80% fill
+        page = gen.pages[page_num - 1]
+        page_h = page.height or 842.0
+        cb = page.content_bbox
+        if not cb:
+            return False
+        content_span = cb[3] - cb[1]
+        target_span = page_h * 0.80
+        extra_pts = target_span - content_span
+        if extra_pts <= 5:
+            return False
+
+        # Open DOCX and find trailing section-heading paragraphs
+        from docx import Document
+        from lxml import etree as _etree
+
+        doc = Document(docx_path)
+        _SECTION_KWS = frozenset({
+            "education", "skills", "technical", "certification", "award",
+            "project", "publication", "volunteer", "language", "interest",
+        })
+        heading_elems = []
+        for para in doc.paragraphs:
+            txt = para.text.strip()
+            if not txt or len(txt) > 60:
+                continue
+            txt_lo = txt.lower()
+            # Section heading: short, keyword-matching, no leading bullet char
+            if any(kw in txt_lo for kw in _SECTION_KWS) and txt[0] not in "•-*·▪":
+                heading_elems.append(para._p)
+
+        if len(heading_elems) < 2:
+            _log.debug("SPARSE_FIX_SKIP: too few section headings found (%d)", len(heading_elems))
+            return False
+
+        # Take the last min(4, N) headings — most likely to be on the sparse page
+        n_use = min(len(heading_elems), 4)
+        targets = heading_elems[-n_use:]
+
+        # Cap per-heading increment at 36 pts (720 twips) to preserve aesthetics
+        extra_twips_each = int(extra_pts / n_use * 20)   # 1 pt = 20 twips
+        extra_twips_each = max(60, min(extra_twips_each, 720))  # 3–36 pts
+
+        for p_elem in targets:
+            pPr = p_elem.find(f"{{{_W}}}pPr")
+            if pPr is None:
+                pPr = _etree.SubElement(p_elem, f"{{{_W}}}pPr")
+                p_elem.insert(0, pPr)
+            spacing = pPr.find(f"{{{_W}}}spacing")
+            if spacing is None:
+                spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
+            existing = int(spacing.get(f"{{{_W}}}before", "0"))
+            spacing.set(f"{{{_W}}}before", str(existing + extra_twips_each))
+
+        doc.save(docx_path)
+        _log.info(
+            "SPARSE_PAGE_JUSTIFICATION: page %d fill=%.1f%% → target 80%%; "
+            "added %d twips (%d pts) to %d trailing section headers",
+            page_num, fill_frac * 100, extra_twips_each, extra_twips_each // 20, n_use,
+        )
+        return True
+
+    except Exception:
+        _log.warning("Sparse page justification failed", exc_info=True)
+        return False
 
 
 def _strip_last_rendered_page_breaks(p_elem) -> None:
@@ -182,7 +401,15 @@ def _set_para_text(p_elem, text: str) -> None:
     # Strip the VML-contributed text from the front of *text*.  The VML content
     # is already correct and will not be rewritten, so only the remainder needs
     # to be distributed across the plain runs.
-    if vml_text_str and text.startswith(vml_text_str):
+    # Exception: when the target text is empty (""), also clear VML text so
+    # that paragraphs blanked by the updater (e.g. duplicated summary placeholders)
+    # do not retain their original VML text-box content in the output.
+    if not text and vml_indices:
+        for i in vml_indices:
+            r = all_runs[i]
+            for t in r.findall(f".//{{{_W}}}t"):
+                t.text = ""
+    elif vml_text_str and text.startswith(vml_text_str):
         text = text[len(vml_text_str):]
 
     # Clear text from all runs (direct w:t children only; VML content is untouched).
@@ -511,6 +738,60 @@ def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> 
         body.append(clone)
 
 
+def _zero_para_spacing(p_elem) -> None:
+    """Strip vertical spacing from an empty spacer paragraph.
+
+    Applied to empty paragraphs that follow the summary body anchor and precede
+    the main table content (samples 13/14).  Zeroing space_before + space_after
+    compresses the whitespace gap between the header summary and the table,
+    allowing the table to start on page 1 rather than being pushed to page 2.
+    """
+    from lxml import etree as _etree
+    pPr = p_elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        pPr = _etree.SubElement(p_elem, f"{{{_W}}}pPr")
+        p_elem.insert(0, pPr)
+    spacing = pPr.find(f"{{{_W}}}spacing")
+    if spacing is None:
+        spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
+    spacing.set(f"{{{_W}}}before", "0")
+    spacing.set(f"{{{_W}}}after", "0")
+    spacing.set(f"{{{_W}}}line", "240")
+    spacing.set(f"{{{_W}}}lineRule", "auto")
+
+
+def _make_inline_summary_para(reference_p_elem, text: str):
+    """Create a <w:p> for inline summary injection.
+
+    Clones the reference paragraph's XML structure (to inherit cell/section
+    context), then strips heading-style and keepNext properties so the injected
+    paragraph uses default body formatting, and sets the summary text.
+    """
+    from copy import deepcopy as _dc
+    from lxml import etree as _etree
+    new_p = _dc(reference_p_elem)
+    pPr = new_p.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        pPr = _etree.SubElement(new_p, f"{{{_W}}}pPr")
+        new_p.insert(0, pPr)
+    # Remove heading paragraph style so it inherits default body font
+    pStyle = pPr.find(f"{{{_W}}}pStyle")
+    if pStyle is not None:
+        pPr.remove(pStyle)
+    # Remove keepNext (avoids gluing summary to the next para)
+    for kn in pPr.findall(f"{{{_W}}}keepNext"):
+        pPr.remove(kn)
+    # Add a small spacing_after so the summary breathes slightly
+    spacing = pPr.find(f"{{{_W}}}spacing")
+    if spacing is None:
+        spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
+    spacing.set(f"{{{_W}}}after", "80")   # ~4pt
+    spacing.set(f"{{{_W}}}line", "240")
+    spacing.set(f"{{{_W}}}lineRule", "auto")
+    _set_para_text(new_p, text)
+    return new_p
+
+
 # ---------------------------------------------------------------------------
 # Numbering patch helpers
 # ---------------------------------------------------------------------------
@@ -806,6 +1087,23 @@ def _render_from_layout_blocks(
 
     para_lookup = _build_para_lookup(doc)
 
+    # Extract main document page dimensions and column count to identify legitimate
+    # section boundaries.  sectPrs that match these dimensions (or when the body is
+    # multi-column) are header-section boundaries rather than stale page-size markers.
+    _main_pgSz_w: "str | None" = None
+    _main_pgSz_h: "str | None" = None
+    _main_is_multicolumn: bool = False
+    if sectPr is not None:
+        _mpgSz = sectPr.find(f"{{{_W}}}pgSz")
+        if _mpgSz is not None:
+            _main_pgSz_w = _mpgSz.get(f"{{{_W}}}w")
+            _main_pgSz_h = _mpgSz.get(f"{{{_W}}}h")
+        _mcols = sectPr.find(f"{{{_W}}}cols")
+        if _mcols is not None:
+            _mnum = _mcols.get(f"{{{_W}}}num")
+            if _mnum is not None and int(_mnum) >= 2:
+                _main_is_multicolumn = True
+
     # Collect para_ids referenced by layout_blocks to detect unbound content.
     lb_para_ids: set[str] = set()
     for block in doc.layout_blocks:  # type: ignore[union-attr]
@@ -831,12 +1129,33 @@ def _render_from_layout_blocks(
             unbound_count,
         )
 
+    # Inline summary injection: the updater sets _inline_summary_pid / _text when no
+    # trailing empty header slots exist (e.g. sample 11 table-based template).
+    _inline_pid: str | None = getattr(doc, "_inline_summary_pid", None)
+    _inline_text: str | None = getattr(doc, "_inline_summary_text", None)
+
+    # Post-summary spacer compression: find the summary body anchor para_id so
+    # the renderer can zero-out spacing on subsequent empty paras (samples 13/14).
+    # This prevents a chain of empty spacer paras from pushing the table to page 2.
+    _summary_body_pid: str | None = next(
+        (s.body_paras[-1].para_id
+         for s in doc.sections
+         if getattr(s, "section_id", "") == "sec_summary_inserted"
+         and s.body_paras and s.body_paras[-1].para_id),
+        None,
+    )
+    _compress_remaining: int = 0  # count of subsequent empty paras still to compress
+
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
             tbl_elem = etree.fromstring(block.xml_proto_xml)
             all_p = tbl_elem.findall(f".//{{{_W}}}p")
             patched = 0
+            # Build a map from para_id to XML element for inline injection
+            pid_to_pelem: dict[str, Any] = {}
             for para_id, p_elem in zip(block.para_ids, all_p):
+                if para_id:
+                    pid_to_pelem[para_id] = p_elem
                 pm = para_lookup.get(para_id)
                 if pm is not None:
                     _set_para_text(p_elem, pm.text)
@@ -848,6 +1167,20 @@ def _render_from_layout_blocks(
                 "TABLE_BLOCK_XML_PATCHED: table_id=%r  patched=%d/%d",
                 block.table_id, patched, len(block.para_ids),
             )
+            # Inline summary injection: insert new paragraph after the target
+            # para in the table XML (for templates where the title is the last
+            # header_para and there are no trailing empty slots, e.g. sample 11).
+            if _inline_pid and _inline_text and _inline_pid in pid_to_pelem:
+                _ref_p = pid_to_pelem[_inline_pid]
+                _new_p = _make_inline_summary_para(_ref_p, _inline_text)
+                _ref_p.addnext(_new_p)
+                _inline_pid = None  # consume once
+                _log.debug(
+                    "INLINE_SUMMARY_INJECTED: new para inserted after para_id=%r",
+                    getattr(doc, "_inline_summary_pid", "?"),
+                )
+            # Once we hit a table block, stop compressing spacers (table started).
+            _compress_remaining = 0
             elem: Any = tbl_elem
 
         else:
@@ -871,10 +1204,16 @@ def _render_from_layout_blocks(
                         block.para_id,
                     )
                     continue
+                pass  # (keepNext injection removed — was causing extra pages)
             else:
                 elem = etree.fromstring(block.xml_proto_xml)
                 _strip_last_rendered_page_breaks(elem)
-                # Column breaks and embedded sectPr are intentionally preserved.
+                # Strip single-column sectPr (page-size-only section breaks) to prevent
+                # stale section boundaries from creating forced page breaks.  Multi-column
+                # sectPr (w:cols w:num≥2) are preserved for newspaper-style column layouts.
+                _strip_non_column_section_break(
+                    elem, _main_pgSz_w, _main_pgSz_h, _main_is_multicolumn
+                )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
                 if pm is not None:
                     _set_para_text(elem, pm.text)
@@ -883,6 +1222,25 @@ def _render_from_layout_blocks(
                     if block.para_id:
                         _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)
                     # Structural/orphan paragraph — insert verbatim (original text kept)
+
+            # Post-summary spacer compression: once the summary body anchor para
+            # has been rendered, compress the spacing of subsequent empty paras.
+            # This prevents a cluster of empty spacers from pushing the resume table
+            # to page 2 (samples 13/14).  Compression stops at the first non-empty
+            # para or when the counter exhausts.
+            if block.para_id == _summary_body_pid:
+                _compress_remaining = 8  # compress up to 8 following empty paras
+            elif _compress_remaining > 0:
+                _para_text = (pm.text.strip() if pm else "").strip()
+                if not _para_text:
+                    _zero_para_spacing(elem)
+                    _compress_remaining -= 1
+                    _log.debug(
+                        "SUMMARY_SPACER_COMPRESSED: para_id=%r spacing zeroed",
+                        block.para_id,
+                    )
+                else:
+                    _compress_remaining = 0  # non-empty para: stop compressing
 
         if sectPr is not None:
             sectPr.addprevious(elem)

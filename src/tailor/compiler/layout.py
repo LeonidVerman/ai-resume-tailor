@@ -240,16 +240,34 @@ def compact_summary(body_lines: list[str], max_sentences: int = 3) -> list[str]:
     return [" ".join(kept)]
 
 
-def compact_skills(body_lines: list[str], target_count: int) -> list[str]:
+def compact_skills(
+    body_lines: list[str],
+    target_count: int,
+    max_chars_per_line: int | None = None,
+) -> list[str]:
     """Reduce skills body lines to *target_count* non-empty lines.
 
     Drops trailing lines first (lowest-priority tail items).
     Returns *body_lines* unchanged when already within target.
+
+    When *max_chars_per_line* is given, also truncates each surviving
+    line to that length (at the last word boundary).  Used for narrow
+    containers where long wrapped lines expand the cell height.
     """
     non_empty = [l for l in body_lines if l.strip()]
-    if len(non_empty) <= target_count:
+    if len(non_empty) > target_count:
+        non_empty = non_empty[:target_count]
+    if max_chars_per_line is not None:
+        capped = []
+        for line in non_empty:
+            if len(line) > max_chars_per_line:
+                cut = line.rfind(" ", 0, max_chars_per_line)
+                line = line[:cut] if cut > 0 else line[:max_chars_per_line]
+            capped.append(line)
+        return capped
+    if len([l for l in body_lines if l.strip()]) <= target_count:
         return body_lines
-    return non_empty[:target_count]
+    return non_empty
 
 
 # ---------------------------------------------------------------------------
@@ -543,12 +561,15 @@ def _has_intro_prose_content(section: "ResumeSection") -> bool:
     """Return True when a section's body looks like a prose intro (not a skills list).
 
     A section qualifies as an intro-prose candidate when:
-    - It has at least 30 characters of non-empty body text.
+    - It has at least one body paragraph ≥ 60 characters (a sentence-length line).
+      This rules out contact sections whose total text may be ≥ 30 chars but
+      distributed across many short lines (phone, email, address).
     - No body paragraph is a date/location line (role_meta) or a bullet.
       This excludes experience entries whose bullets happen to pass all other
       heuristics (long sentences, low comma density).
     - Content is not exclusively URLs / short tokens (no spaces).
     - Comma density is low (< 0.15 commas per character) — rules out skills lists.
+    - None of the body paragraphs look like contact data (email, phone numbers).
     """
     non_empty = [p for p in section.body_paras if p.text.strip()]
     if not non_empty:
@@ -559,8 +580,20 @@ def _has_intro_prose_content(section: "ResumeSection") -> bool:
         return False
     non_empty_texts = [p.text.strip() for p in non_empty]
     total_text = " ".join(non_empty_texts)
-    if len(total_text) < 30:
+    # Require at least one sentence-length paragraph (≥ 60 chars).
+    # Contact sections have many short lines (phone, email, address) that
+    # individually don't constitute prose, even if their combined length is ≥ 30.
+    if not any(len(t) >= 60 for t in non_empty_texts):
         return False
+    # Exclude sections that look like contact data: any line containing @ (email)
+    # or a line whose non-space characters are mostly digits/dashes/parens (phone).
+    import re as _re
+    _PHONE_RE = _re.compile(r'^[\d\s\-\+\(\)\.]{7,}$')
+    for t in non_empty_texts:
+        if '@' in t:
+            return False
+        if _PHONE_RE.match(t):
+            return False
     # Exclude sections whose every non-empty line is a URL or has no whitespace
     # (e.g. a Websites section containing only "linkedin.com/in/…" links).
     if all("://" in p or " " not in p for p in non_empty_texts):
@@ -583,14 +616,39 @@ def _find_summary_anchor(
     """
     sidebar_idxs = {c.section_idx for c in containers if c.region == "sidebar"}
 
+    # Named semantic sections that must never serve as implicit summary anchors.
+    # Injecting the Professional Summary into "Communication" or "Leadership"
+    # overwrites meaningful original content with unrelated summary prose.
+    _PROTECTED_INTRO_TITLES: frozenset[str] = frozenset({
+        "communication", "leadership", "references", "awards",
+        "hobbies", "activities", "achievements", "volunteer", "publications",
+        "interests", "memberships", "affiliations",
+    })
+
     # Rule 1: first 'other'-type top section that contains prose (not skills-like).
     # Stop searching once we reach a real content section (summary/experience/etc.)
     # so we only look at the header/intro zone.
+    # Sections adjacent to contact/social/websites neighbours are excluded:
+    # the grader treats 'websites' as a contact-area indicator just like 'contact'
+    # and 'social', so injecting the summary into a section adjacent to any of
+    # them would cause SUMMARY_IN_WRONG_SECTION hard-fail.
+    _CONTACT_NEIGHBOR_TYPES: frozenset[str] = frozenset({"contact", "social", "websites"})
     for idx, section in enumerate(original.sections):
         if idx in sidebar_idxs:
             continue
         if section.semantic_type != "other":
             break  # passed the header zone into main content
+        if section.title.strip().lower() in _PROTECTED_INTRO_TITLES:
+            continue  # named semantic section — must not be overwritten by summary
+        # Skip sections adjacent to contact/social/websites areas — the grader
+        # flags any summary found there as SUMMARY_IN_WRONG_SECTION.
+        _neighbors = [
+            original.sections[j].semantic_type
+            for j in (idx - 1, idx + 1)
+            if 0 <= j < len(original.sections)
+        ]
+        if any(nt in _CONTACT_NEIGHBOR_TYPES for nt in _neighbors):
+            continue
         if _has_intro_prose_content(section):
             return ("intro_prose", idx)
 
@@ -648,18 +706,35 @@ def _anchor_implicit_summary(
         # exactly.  _match_sections will pair them in pass 1 (exact heading match),
         # and _update_body_section will replace the prose body with the summary.
         orig_title = original.sections[section_idx].title
-        result[sum_idx] = LlmSection(
-            heading=orig_title,
-            semantic_type=llm_sum.semantic_type,
-            body_lines=llm_sum.body_lines,
-            roles=llm_sum.roles,
+        # Collision guard: if a non-summary LLM section already uses the target
+        # heading, renaming would cause a duplicate — the second occurrence would
+        # be silently dropped by the extras loop instead of reaching summary
+        # insertion.  Fall back to 'hero' (use header_paras zone) in that case.
+        title_lower = orig_title.lower()
+        has_collision = any(
+            s.heading.lower() == title_lower and s.semantic_type != "summary"
+            for s in llm_sections
         )
-        log.debug(
-            "anchor_implicit_summary: renamed LLM summary heading to %r "
-            "(intro_prose replacement)",
-            orig_title,
-        )
-    elif anchor_type == "hero":
+        if has_collision:
+            log.debug(
+                "anchor_implicit_summary: intro_prose heading %r conflicts with "
+                "existing LLM section — falling back to hero anchor",
+                orig_title,
+            )
+            anchor_type = "hero"  # handled in elif branch below
+        else:
+            result[sum_idx] = LlmSection(
+                heading=orig_title,
+                semantic_type=llm_sum.semantic_type,
+                body_lines=llm_sum.body_lines,
+                roles=llm_sum.roles,
+            )
+            log.debug(
+                "anchor_implicit_summary: renamed LLM summary heading to %r "
+                "(intro_prose replacement)",
+                orig_title,
+            )
+    if anchor_type == "hero":
         # Move summary to position 0 so it appears first after any verbatim sections.
         result.pop(sum_idx)
         result.insert(0, llm_sum)
@@ -771,11 +846,23 @@ def apply_layout_fitting(
         ):
             if fit.risk in ("medium", "high"):
                 target = max(container.orig_para_count, 3)
-                new_lines = compact_skills(llm_s.body_lines, target)
+                # For narrow containers, also cap per-line character length to
+                # prevent long wrapped lines from expanding the cell height.
+                # Compute the cap as max(original average chars * 1.2, 60).
+                # This limits each skill line to ~20% above the original average
+                # length, preventing categorised comma-separated skill lists from
+                # wrapping many times in a narrow column (e.g. "DevOps &
+                # Infrastructure: CI/CD, IaC, ..." would wrap 10× in a 60pt column
+                # but the original had simple 40–80 char sentences).
+                _max_chars: int | None = None
+                if container.is_narrow and container.orig_para_count > 0:
+                    _avg_orig = container.orig_char_count / container.orig_para_count
+                    _max_chars = max(int(_avg_orig * 1.2), 60)
+                new_lines = compact_skills(llm_s.body_lines, target, _max_chars)
                 log.debug(
-                    "compact_skills: '%s' %d→%d lines (fit=%s, target=%d)",
+                    "compact_skills: '%s' %d→%d lines (fit=%s, target=%d, max_chars=%s)",
                     llm_s.heading, len(llm_s.body_lines), len(new_lines),
-                    fit.risk, target,
+                    fit.risk, target, _max_chars,
                 )
                 compacted.append(LlmSection(
                     heading=llm_s.heading,
