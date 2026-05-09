@@ -2560,6 +2560,11 @@ def _build_anchored_summary_section(
         _raw = _clean_summary_text(llm_section.body_lines)
         _lines = compact_summary([_raw], max_sentences=1)
         body_text = " ".join(_lines).strip() if _lines else _raw
+        # Further cap at 300 chars: a single long sentence can still exceed
+        # the slot height when the summary cell is narrow (e.g. table sidebar).
+        if len(body_text) > 300:
+            cut = body_text.rfind(" ", 0, 300)
+            body_text = body_text[:cut] if cut > 0 else body_text[:300]
         _log.debug(
             "ANCHORED_SUMMARY_SINGLE_SLOT_COMPACTED: len %d → %d chars",
             len(_raw), len(body_text),
