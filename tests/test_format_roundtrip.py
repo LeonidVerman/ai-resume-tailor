@@ -233,6 +233,14 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "ordering shifts because the serializer combines role.header with header_extra "
         "via '|'.  Real LLM pipeline (which rewrites bullets) unaffected."
     ),
+    "38-senior-software-engineer-resume-example.docx": (
+        "Improved section detection (Fix 1b terminal fallback) now correctly "
+        "identifies 'PROFESSIONAL EXPERIENCE' as a section heading, which "
+        "restructures the semantic model and shifts para_id assignments for "
+        "all subsequent paragraphs.  The identity roundtrip cannot preserve "
+        "the original paragraph ordering under the new (correct) parse.  "
+        "Real LLM pipeline unaffected (experience section now correctly parsed)."
+    ),
     "39-backend-developer-1606703830.docx": (
         "Numeric rating prefix artefact: skill/bullet paragraphs carry a rating "
         "glyph run (e.g. '77') that is repeated twice in the rendered XML — once "
@@ -414,6 +422,20 @@ _KNOWN_BAD_PDFS: dict[str, str] = {
         "This is correct for real LLM output but changes the identity roundtrip: "
         "one paragraph is lost (meta absorbed into header) and the role header text "
         "gains the company/date suffix.  Real-pipeline output is unaffected."
+    ),
+    "15-Nurse-Template5.pdf": (
+        "Improved section detection (Fix 1b terminal fallback) now correctly "
+        "classifies 'AWARDS' as a section heading in the rendered PDF-DOCX, "
+        "which restructures the semantic model and shifts role matching in the "
+        "DOCX-of-DOCX stability pass.  The real LLM pipeline is unaffected "
+        "(AWARDS is now correctly identified as a section boundary)."
+    ),
+    "35-Gleb_Zernov_Resume.pdf": (
+        "Improved section detection (Fix 1b terminal fallback) now correctly "
+        "classifies 'Experience' and 'Education' as section headings in the "
+        "rendered PDF-DOCX.  The restructured semantic model shifts paragraph "
+        "order and page count (2→3) in the DOCX-of-DOCX stability pass.  "
+        "The real LLM pipeline is unaffected (section boundaries are now correct)."
     ),
 }
 

@@ -46,11 +46,31 @@ _log = logging.getLogger(__name__)
 # Paragraph text replacement (in cloned XML)
 # ---------------------------------------------------------------------------
 
-def _strip_non_column_section_break(p_elem) -> None:
+def _ensure_continuous(sectPr) -> None:
+    """Set w:type w:val='continuous' on *sectPr*, creating the element if absent.
+
+    Called when a header-section boundary sectPr (nextPage by default) must be
+    preserved to define the 1-column header / 2-column body topology, but must not
+    create an unwanted hard page break.  Converting to continuous keeps the section
+    boundary intact while allowing the header and body to flow on the same page.
+    """
+    from lxml import etree as _etree
+    _type = sectPr.find(f"{{{_W}}}type")
+    if _type is None:
+        _type = _etree.SubElement(sectPr, f"{{{_W}}}type")
+    _type.set(f"{{{_W}}}val", "continuous")
+
+
+def _strip_non_column_section_break(
+    p_elem,
+    main_pgSz_w: "str | None" = None,
+    main_pgSz_h: "str | None" = None,
+    main_is_multicolumn: bool = False,
+) -> None:
     """Remove w:sectPr from paragraph pPr ONLY when it acts as a pure page-break marker.
 
     Section properties embedded in a paragraph's pPr mark the end of a document
-    section.  Two categories must be preserved intact:
+    section.  Four categories must be preserved intact:
 
     1. Multi-column sectPr (w:cols w:num ≥ 2) — newspaper-column layouts
        (e.g. sample 31) that define 2- or 3-column body sections.
@@ -62,9 +82,22 @@ def _strip_non_column_section_break(p_elem) -> None:
        continuous 1-col sectPr would collapse that boundary, placing the large
        banner text inside the narrow sidebar column and breaking the topology.
 
-    All other sectPr (nextPage / evenPage / oddPage with single-column) are stale
-    page-break markers from the template's last render and are stripped so that
-    updated content flows naturally without forced breaks.
+    3. When the main document body is 2+ column (main_is_multicolumn=True): ALL
+       embedded single-column sectPrs define the header-section boundary before the
+       multi-column body.  Stripping them would place the header content (name, photo,
+       title) inside the narrow 2-column body, causing vertical text fragmentation.
+       This applies to samples 19, 20, 23 where the main sectPr uses 2 columns.
+
+    4. sectPr whose pgSz matches the main document page size — these are legitimate
+       section-structure boundaries (e.g. a 1-column header section before a 2-column
+       body in templates like samples 17, 28 where the main sectPr is 1-column but
+       subsequent embedded sectPrs define 2-column body regions).  Stale sectPrs
+       (e.g. a US-Letter sectPr inside an A4 template) have DIFFERENT page dimensions
+       and are still stripped.
+
+    All other sectPr (nextPage / evenPage / oddPage with single-column AND different
+    page size, in a 1-column document body) are stale page-break markers from the
+    template's last render and are stripped so content flows without forced breaks.
     """
     pPr = p_elem.find(f"{{{_W}}}pPr")
     if pPr is None:
@@ -83,6 +116,25 @@ def _strip_non_column_section_break(p_elem) -> None:
     type_elem = sectPr.find(f"{{{_W}}}type")
     if type_elem is not None and type_elem.get(f"{{{_W}}}val", "") == "continuous":
         return  # continuous break — preserve (no page break, defines layout geometry)
+    # When the main body is multi-column, embedded 1-col sectPrs are header boundaries.
+    # Stripping them collapses the header (name/photo) into the 2-col body → fragmented.
+    # Convert to continuous so the boundary is preserved without creating a page break.
+    if main_is_multicolumn:
+        _ensure_continuous(sectPr)
+        return  # preserve as continuous: header-to-2-col-body section boundary
+    # Same-pgSz sectPrs are legitimate header-to-body section boundaries.
+    # Stale sectPrs (template page-size switches, e.g. US-Letter inside A4) have
+    # different dimensions and fall through to the strip below.
+    # Convert to continuous to avoid creating an unwanted page break while still
+    # preserving the section layout boundary.
+    if main_pgSz_w is not None and main_pgSz_h is not None:
+        this_pgSz = sectPr.find(f"{{{_W}}}pgSz")
+        if this_pgSz is not None:
+            this_w = this_pgSz.get(f"{{{_W}}}w")
+            this_h = this_pgSz.get(f"{{{_W}}}h")
+            if this_w == main_pgSz_w and this_h == main_pgSz_h:
+                _ensure_continuous(sectPr)
+                return  # same page dimensions → structural boundary, preserve as continuous
     pPr.remove(sectPr)
 
 
@@ -1035,6 +1087,23 @@ def _render_from_layout_blocks(
 
     para_lookup = _build_para_lookup(doc)
 
+    # Extract main document page dimensions and column count to identify legitimate
+    # section boundaries.  sectPrs that match these dimensions (or when the body is
+    # multi-column) are header-section boundaries rather than stale page-size markers.
+    _main_pgSz_w: "str | None" = None
+    _main_pgSz_h: "str | None" = None
+    _main_is_multicolumn: bool = False
+    if sectPr is not None:
+        _mpgSz = sectPr.find(f"{{{_W}}}pgSz")
+        if _mpgSz is not None:
+            _main_pgSz_w = _mpgSz.get(f"{{{_W}}}w")
+            _main_pgSz_h = _mpgSz.get(f"{{{_W}}}h")
+        _mcols = sectPr.find(f"{{{_W}}}cols")
+        if _mcols is not None:
+            _mnum = _mcols.get(f"{{{_W}}}num")
+            if _mnum is not None and int(_mnum) >= 2:
+                _main_is_multicolumn = True
+
     # Collect para_ids referenced by layout_blocks to detect unbound content.
     lb_para_ids: set[str] = set()
     for block in doc.layout_blocks:  # type: ignore[union-attr]
@@ -1142,7 +1211,9 @@ def _render_from_layout_blocks(
                 # Strip single-column sectPr (page-size-only section breaks) to prevent
                 # stale section boundaries from creating forced page breaks.  Multi-column
                 # sectPr (w:cols w:num≥2) are preserved for newspaper-style column layouts.
-                _strip_non_column_section_break(elem)
+                _strip_non_column_section_break(
+                    elem, _main_pgSz_w, _main_pgSz_h, _main_is_multicolumn
+                )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
                 if pm is not None:
                     _set_para_text(elem, pm.text)

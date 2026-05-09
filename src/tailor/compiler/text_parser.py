@@ -143,6 +143,8 @@ _SUMMARY_NAMES: frozenset[str] = frozenset({
     "professional summary", "summary", "objective", "career objective",
     "profile", "professional profile", "about me", "career summary",
     "executive summary",
+    # Non-canonical labels used in resume templates as summary containers:
+    "professional overview", "general info", "general information",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "skill", "core competencies", "competencies",

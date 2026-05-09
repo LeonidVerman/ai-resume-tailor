@@ -3200,21 +3200,38 @@ def apply_tailored(
                 # Non-summary extras are dropped to prevent unbound sections.
                 if llm_s.semantic_type == "summary" and _summary_anchors is not None:
                     _heading_anchor, _body_anchor = _summary_anchors
-                    anchored = _build_anchored_summary_section(
-                        llm_s, _heading_anchor, _body_anchor
-                    )
-                    llm_order_sections.append(anchored)
-                    if _heading_anchor is not None and _heading_anchor.para_id:
-                        _used_anchor_ids.add(_heading_anchor.para_id)
-                    if _body_anchor.para_id:
-                        _used_anchor_ids.add(_body_anchor.para_id)
-                    _summary_anchors = None  # consume anchors; only one summary
-                    _log.debug(
-                        "SUMMARY_INSERTED_ANCHORED: %r heading_pid=%r body_pid=%r",
-                        llm_s.heading,
-                        anchored.heading.para_id or None,
-                        anchored.body_paras[0].para_id if anchored.body_paras else None,
-                    )
+                    # When only a single-slot anchor (heading=None) exists, check if
+                    # the template has an intro-prose paragraph that is a better target.
+                    # Single-slot anchors are often empty spacing paras sandwiched between
+                    # name components (e.g. para_4 between "GEORGE" and "SOFTWARE ENGINEER")
+                    # and produce visual fragmentation.  An intro-prose paragraph (the
+                    # original summary placeholder text) is always the correct visual slot.
+                    _stext_anc = _clean_summary_text(llm_s.body_lines)
+                    _intro_pa = _find_intro_prose_para(original) if _heading_anchor is None else None
+                    if _intro_pa is not None and _stext_anc:
+                        # Intro-prose available: replace it instead of using the anchor.
+                        _intro_pa.text = _stext_anc
+                        _summary_anchors = None
+                        _log.debug(
+                            "SUMMARY_INTRO_PROSE_REPLACED_OVER_ANCHOR: para_id=%r len=%d",
+                            _intro_pa.para_id, len(_stext_anc),
+                        )
+                    else:
+                        anchored = _build_anchored_summary_section(
+                            llm_s, _heading_anchor, _body_anchor
+                        )
+                        llm_order_sections.append(anchored)
+                        if _heading_anchor is not None and _heading_anchor.para_id:
+                            _used_anchor_ids.add(_heading_anchor.para_id)
+                        if _body_anchor.para_id:
+                            _used_anchor_ids.add(_body_anchor.para_id)
+                        _summary_anchors = None  # consume anchors; only one summary
+                        _log.debug(
+                            "SUMMARY_INSERTED_ANCHORED: %r heading_pid=%r body_pid=%r",
+                            llm_s.heading,
+                            anchored.heading.para_id or None,
+                            anchored.body_paras[0].para_id if anchored.body_paras else None,
+                        )
                 elif llm_s.semantic_type == "summary":
                     # No trailing empty header slots.
                     # For paragraph-only layout templates (no table blocks), inject
@@ -3231,43 +3248,67 @@ def apply_tailored(
                         isinstance(b, LayoutTableBlock) for b in original.layout_blocks
                     )
                     _body_injected = False
-                    if not _has_table_lb and original.layout_blocks is not None:
-                        # Find the first empty body_para in the first non-locked,
-                        # non-experience/skills section.  Search heading_to_section
-                        # (already-updated matched sections) and verbatim_sections.
-                        # The para_id is already in layout_blocks so the renderer
-                        # will pick it up without needing a new element.
+                    if original.layout_blocks is not None:
                         _stext = _clean_summary_text(llm_s.body_lines)
                         if _stext:
-                            _SKIP_TYPES = frozenset({
-                                "experience", "skills", "education", "certifications",
-                                "languages", "websites", "contact", "social",
-                            })
-                            _cand_sections = (
-                                list(verbatim_sections)
-                                + list(heading_to_section.values())
-                            )
-                            for _cand_sec in _cand_sections:
-                                if _cand_sec.semantic_type in _SKIP_TYPES:
-                                    continue
-                                if _cand_sec.semantic_type in _LOCKED_SEMANTIC_TYPES:
-                                    continue
-                                for _cand_bp in _cand_sec.body_paras:
-                                    if (
-                                        not _cand_bp.text.strip()
-                                        and _cand_bp.para_id
-                                    ):
-                                        _cand_bp.text = _stext
-                                        _body_injected = True
-                                        _log.debug(
-                                            "SUMMARY_BODY_PARA_INJECTED: section=%r "
-                                            "para_id=%r len=%d",
-                                            _cand_sec.title, _cand_bp.para_id,
-                                            len(_stext),
-                                        )
+                            # First priority (all templates): replace the intro-prose
+                            # paragraph if present.  Replacing existing text is safe
+                            # for both paragraph-only and table templates — it does not
+                            # insert a new paragraph, so table cell heights are unchanged.
+                            # Intro-prose paragraphs are non-empty summary placeholders
+                            # in 'other' sections (e.g. "I have experience in developing
+                            # and maintaining software..." inside a SOFTWARE ENGINEER
+                            # section).  Replacing them keeps the summary in the correct
+                            # visual position and avoids injecting into an empty slot that
+                            # may be in the wrong column (e.g. samples 7, 19).
+                            _intro_para = _find_intro_prose_para(original)
+                            if _intro_para is not None:
+                                _intro_para.text = _stext
+                                _body_injected = True
+                                _log.debug(
+                                    "SUMMARY_INTRO_PROSE_REPLACED: para_id=%r len=%d",
+                                    _intro_para.para_id, len(_stext),
+                                )
+                            # Second priority (paragraph-only templates only): inject
+                            # into the first empty body_para of an eligible section.
+                            # Guarded by _has_table_lb because inserting text into an
+                            # empty table-cell paragraph expands the cell height and
+                            # pushes later content off the page (THIN_OVERFLOW_HARD_FAIL).
+                            if not _body_injected and not _has_table_lb:
+                                # Find the first empty body_para in the first non-locked,
+                                # non-experience/skills section.  Search heading_to_section
+                                # (already-updated matched sections) and verbatim_sections.
+                                # The para_id is already in layout_blocks so the renderer
+                                # will pick it up without needing a new element.
+                                _SKIP_TYPES = frozenset({
+                                    "experience", "skills", "education", "certifications",
+                                    "languages", "websites", "contact", "social",
+                                })
+                                _cand_sections = (
+                                    list(verbatim_sections)
+                                    + list(heading_to_section.values())
+                                )
+                                for _cand_sec in _cand_sections:
+                                    if _cand_sec.semantic_type in _SKIP_TYPES:
+                                        continue
+                                    if _cand_sec.semantic_type in _LOCKED_SEMANTIC_TYPES:
+                                        continue
+                                    for _cand_bp in _cand_sec.body_paras:
+                                        if (
+                                            not _cand_bp.text.strip()
+                                            and _cand_bp.para_id
+                                        ):
+                                            _cand_bp.text = _stext
+                                            _body_injected = True
+                                            _log.debug(
+                                                "SUMMARY_BODY_PARA_INJECTED: section=%r "
+                                                "para_id=%r len=%d",
+                                                _cand_sec.title, _cand_bp.para_id,
+                                                len(_stext),
+                                            )
+                                            break
+                                    if _body_injected:
                                         break
-                                if _body_injected:
-                                    break
                     _log.debug(
                         "SUMMARY_INSERTION_SKIPPED_NO_ANCHORS: %r (body_injected=%s)",
                         llm_s.heading, _body_injected,
