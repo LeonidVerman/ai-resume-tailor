@@ -239,6 +239,14 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "from the layout-block XML proto and once from the para rebuild — doubling "
         "the prefix string.  Real LLM pipeline unaffected."
     ),
+    "15-Nurse-Template5.docx": (
+        "Pipe-format experience with header_extra: the template stores role headers "
+        "('Jan 20XX — present | Phlebotomist') and company names ('Lamna Healthcare') "
+        "as adjacent paragraphs.  The parser groups them as role.header + header_extra. "
+        "The identity serializer combines them into a single pipe-separated string, but "
+        "the role matching algorithm may misalign roles 2 and 3 (similar company names). "
+        "Real LLM pipeline unaffected (role content is updated via date-first path)."
+    ),
     "7-Template2.docx": (
         "Placeholder-year role format ('January 20xx - Current'): date lines use "
         "'20xx' instead of real years; the placeholder pre-pass promotes them to "

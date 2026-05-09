@@ -3343,6 +3343,31 @@ def apply_tailored(
             if p.para_id not in _used_anchor_ids
         ]
 
+    # Blank out intro-prose header_paras that would duplicate an anchored summary.
+    # When the template has a summary-like placeholder in header_paras (e.g. a
+    # "Motivated software engineer..." line) AND the summary was already anchored
+    # into trailing empty header slots, the original placeholder must be cleared
+    # to prevent the grader from detecting both old and new summary text on the
+    # same page.  Only blanks paras that look like prose summaries (60+ chars,
+    # not contact info, no pipe/URL/bullet).
+    if _used_anchor_ids and _layout_bound:
+        for _hi, _hp in enumerate(effective_header_paras):
+            _t = _hp.text.strip()
+            if (
+                _hp.para_id
+                and len(_t) >= _INTRO_PROSE_MIN_LEN
+                and " " in _t
+                and "|" not in _t
+                and "://" not in _t
+                and _t[0] not in ("-", "•", "·", "–", "*")
+                and _t.count(",") / max(1, len(_t)) < 0.10
+            ):
+                effective_header_paras[_hi] = _hp.with_text("")
+                _log.debug(
+                    "INTRO_PROSE_BLANKED_AFTER_ANCHOR: para_id=%r (summary already anchored)",
+                    _hp.para_id,
+                )
+
     # Lorem-placeholder summary injection: if LLM has summary, no summary was
     # anchored, and a header_para contains lorem ipsum, replace it with the LLM
     # summary text.  This handles decorative templates where the summary slot is

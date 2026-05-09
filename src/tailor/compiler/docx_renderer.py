@@ -349,7 +349,15 @@ def _set_para_text(p_elem, text: str) -> None:
     # Strip the VML-contributed text from the front of *text*.  The VML content
     # is already correct and will not be rewritten, so only the remainder needs
     # to be distributed across the plain runs.
-    if vml_text_str and text.startswith(vml_text_str):
+    # Exception: when the target text is empty (""), also clear VML text so
+    # that paragraphs blanked by the updater (e.g. duplicated summary placeholders)
+    # do not retain their original VML text-box content in the output.
+    if not text and vml_indices:
+        for i in vml_indices:
+            r = all_runs[i]
+            for t in r.findall(f".//{{{_W}}}t"):
+                t.text = ""
+    elif vml_text_str and text.startswith(vml_text_str):
         text = text[len(vml_text_str):]
 
     # Clear text from all runs (direct w:t children only; VML content is untouched).
