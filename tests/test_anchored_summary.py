@@ -138,12 +138,16 @@ class TestFindSummaryAnchors:
         assert b_anchor.para_id
         assert h_anchor.para_id != b_anchor.para_id
 
-    def test_returns_none_when_only_one_empty(self):
-        """Returns None when fewer than 2 trailing empty slots exist."""
+    def test_returns_single_anchor_when_only_one_empty(self):
+        """Returns (None, body_anchor) when only 1 trailing empty slot exists."""
         from tailor.compiler.updater import _find_summary_anchors
 
         doc = _build_doc_with_header_empties(1)
-        assert _find_summary_anchors(doc) is None
+        result = _find_summary_anchors(doc)
+        assert result is not None
+        heading_anchor, body_anchor = result
+        assert heading_anchor is None  # no heading slot
+        assert body_anchor.para_id != ""  # body slot found
 
     def test_returns_none_when_no_header_paras(self):
         """Returns None when header_paras is empty."""
@@ -355,18 +359,21 @@ class TestAnchoredSummaryInsertion:
         types = [s.semantic_type for s in updated.sections]
         assert "summary" not in types, "Summary must be dropped when no safe anchors"
 
-    def test_summary_skipped_when_only_one_anchor(self, monkeypatch):
-        """Summary dropped when only 1 empty header slot exists (need 2)."""
+    def test_summary_inserted_with_single_anchor(self, monkeypatch):
+        """Summary IS inserted when only 1 empty header slot exists (body-only mode)."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
         from tailor.compiler.updater import apply_tailored
 
         doc = _build_doc_with_header_empties(1)
-        updated = apply_tailored(doc, _llm_with_summary("Text."))
+        updated = apply_tailored(doc, _llm_with_summary("Full summary text here."))
 
         types = [s.semantic_type for s in updated.sections]
-        assert "summary" not in types
+        assert "summary" in types  # inserted using the single empty slot
+        summary = next(s for s in updated.sections if s.semantic_type == "summary")
+        # Body contains full text — no truncation
+        assert "Full summary text here." in summary.body_paras[0].text
 
     def test_name_contact_not_overwritten(self, monkeypatch):
         """Name and contact paragraphs are not overwritten by summary insertion."""
@@ -450,6 +457,69 @@ class TestAnchoredSummaryInsertion:
         # The existing summary should be updated with new text
         assert "New summary text" in " ".join(p.text for p in summary_secs[0].body_paras)
 
+    def test_matched_original_summary_not_duplicated_by_anchor_path(self, monkeypatch):
+        """Fix 2: matched original summary must not appear TWICE in new_sections.
+
+        When the template has an existing summary section that is matched by the
+        LLM output, the anchored_summaries list must only include sections whose
+        section_id == 'sec_summary_inserted'.  The matched original (different
+        section_id) must not be re-inserted, preventing double-summary output.
+        """
+        import tailor.config as cfg
+        monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
+
+        from tailor.compiler.models import (
+            LayoutParagraphBlock, LayoutProfile, ResumeDocument, assign_stable_ids,
+        )
+        from tailor.compiler.updater import apply_tailored
+
+        layout = LayoutProfile(
+            page_width_pt=612, page_height_pt=792,
+            margin_top_pt=72, margin_bottom_pt=72,
+            margin_left_pt=72, margin_right_pt=72,
+            default_font_name="Calibri", default_font_size_pt=11,
+        )
+        # Template with: name + 2 empty header slots + existing summary + experience.
+        name_para = _make_para("John Doe", "para_name", "section_heading")
+        empty_1 = _make_para("", "hp_f1")
+        empty_2 = _make_para("", "hp_f2")
+
+        summary_sec = _make_section("Professional Summary", "summary", "sec_original_summ")
+        body_pm = _make_para("Old profile text.", "para_old_body")
+        summary_sec.body_paras = [body_pm]
+
+        exp_sec = _make_section("Work Experience", "experience", "sec_exp_f")
+        exp_sec.roles = [_make_role_entry("Engineer | Corp", 2)]
+
+        doc = ResumeDocument(
+            header_paras=[name_para, empty_1, empty_2],
+            sections=[summary_sec, exp_sec],
+            layout=layout,
+            all_paras=[],
+        )
+        assign_stable_ids(doc)
+        all_lb = [name_para, empty_1, empty_2, summary_sec.heading, body_pm, exp_sec.heading]
+        for r in exp_sec.roles:
+            all_lb.extend([r.header] + r.meta_lines + r.bullets)
+        doc.layout_blocks = [LayoutParagraphBlock(para_id=p.para_id) for p in all_lb if p.para_id]
+
+        # LLM outputs both a summary and an experience section.
+        updated = apply_tailored(doc, _llm_with_summary("New tailored summary text."))
+
+        # Must have exactly ONE summary section — the matched original, updated.
+        summary_secs = [s for s in updated.sections if s.semantic_type == "summary"]
+        assert len(summary_secs) == 1, (
+            f"Expected exactly 1 summary section, got {len(summary_secs)}: "
+            f"{[s.section_id for s in summary_secs]}"
+        )
+        # The original section_id must be preserved (not 'sec_summary_inserted').
+        assert summary_secs[0].section_id != "sec_summary_inserted", (
+            "Matched original summary must NOT be replaced with a synthetic anchored one"
+        )
+        # Text must be updated to the LLM output.
+        combined = " ".join(p.text for p in summary_secs[0].body_paras)
+        assert "New tailored summary text" in combined
+
 
 # ---------------------------------------------------------------------------
 # Sample 31 integration tests
@@ -461,7 +531,12 @@ class TestAnchoredSummaryInsertion:
 )
 class TestSample31AnchoredSummary:
     def test_summary_inserted_with_para7_para8(self, monkeypatch):
-        """Sample 31 anchored summary uses para_7 (heading) and para_8 (body)."""
+        """Sample 31 anchored summary uses the first two trailing empty header slots.
+
+        _find_summary_anchors returns trailing[0], trailing[1] (closest to name/title),
+        which for sample 31 are para_6 (heading) and para_7 (body).  para_8 is kept
+        as a spacer between the summary and the first section.
+        """
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -488,8 +563,8 @@ class TestSample31AnchoredSummary:
 
         summary = next((s for s in updated.sections if s.semantic_type == "summary"), None)
         assert summary is not None, "Summary must be inserted for sample 31"
-        assert summary.heading.para_id == "para_7"
-        assert summary.body_paras and summary.body_paras[0].para_id == "para_8"
+        assert summary.heading.para_id == "para_6"
+        assert summary.body_paras and summary.body_paras[0].para_id == "para_7"
         assert summary.section_id == "sec_summary_inserted"
 
     def test_summary_before_education(self, monkeypatch):
@@ -553,7 +628,7 @@ class TestSample31AnchoredSummary:
         assert not unbound, f"{len(unbound)} unbound paras: {[p.text[:40] for p in unbound[:3]]}"
 
     def test_para7_para8_not_in_header_paras(self, monkeypatch):
-        """para_7 and para_8 are removed from header_paras after insertion."""
+        """para_6 and para_7 (anchor slots) are removed from header_paras after insertion."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -574,8 +649,8 @@ class TestSample31AnchoredSummary:
         updated = apply_tailored(doc, llm)
 
         header_ids = {p.para_id for p in updated.header_paras}
+        assert "para_6" not in header_ids, "para_6 must be removed from header_paras"
         assert "para_7" not in header_ids, "para_7 must be removed from header_paras"
-        assert "para_8" not in header_ids, "para_8 must be removed from header_paras"
 
 
 # ---------------------------------------------------------------------------

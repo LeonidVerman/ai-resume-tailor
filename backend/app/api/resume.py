@@ -146,6 +146,11 @@ async def upload_resume(file: UploadFile, user: CurrentUserDep, db: DbDep, backg
         user.id, resume.id, key,
     )
 
+    # Commit before scheduling the background task so its separate session
+    # can see the new row (background tasks run before the dependency generator
+    # cleanup commits the upload transaction).
+    db.commit()
+
     # Kick off LLM classification in the background.  The upload response is
     # returned immediately; classification persists to classification_jsonb once
     # the LLM call completes.  Failures are caught inside the background task.

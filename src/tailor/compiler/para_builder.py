@@ -187,7 +187,13 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
             _is_two_col_para = pp.column_id in ("left", "right")
             _line_factor = 1.1 if _is_two_col_para else 1.0
             spc.set(f"{{{_W}}}line", str(int(pp.font_size_pt * _line_factor * 20)))
-            spc.set(f"{{{_W}}}lineRule", "exact")
+            # Content paragraphs use "atLeast" so the line height can expand when
+            # LLM text wraps to additional lines — preserving full generated content.
+            # Structural paras (section_heading, role_header, role_meta) use
+            # "exact" to keep layout anchors stable.
+            _is_content = pm.semantic in ("bullet", "paragraph", "summary_paragraph",
+                                          "skills_paragraph", "other_paragraph")
+            spc.set(f"{{{_W}}}lineRule", "atLeast" if _is_content else "exact")
 
         # Indentation (twips = pt × 20).  Bullets already have w:ind set above.
         if pp.indent_left_pt and pm.semantic != "bullet":

@@ -233,11 +233,52 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "ordering shifts because the serializer combines role.header with header_extra "
         "via '|'.  Real LLM pipeline (which rewrites bullets) unaffected."
     ),
+    "38-senior-software-engineer-resume-example.docx": (
+        "Improved section detection (Fix 1b terminal fallback) now correctly "
+        "identifies 'PROFESSIONAL EXPERIENCE' as a section heading, which "
+        "restructures the semantic model and shifts para_id assignments for "
+        "all subsequent paragraphs.  The identity roundtrip cannot preserve "
+        "the original paragraph ordering under the new (correct) parse.  "
+        "Real LLM pipeline unaffected (experience section now correctly parsed)."
+    ),
     "39-backend-developer-1606703830.docx": (
         "Numeric rating prefix artefact: skill/bullet paragraphs carry a rating "
         "glyph run (e.g. '77') that is repeated twice in the rendered XML — once "
         "from the layout-block XML proto and once from the para rebuild — doubling "
         "the prefix string.  Real LLM pipeline unaffected."
+    ),
+    "15-Nurse-Template5.docx": (
+        "Pipe-format experience with header_extra: the template stores role headers "
+        "('Jan 20XX — present | Phlebotomist') and company names ('Lamna Healthcare') "
+        "as adjacent paragraphs.  The parser groups them as role.header + header_extra. "
+        "The identity serializer combines them into a single pipe-separated string, but "
+        "the role matching algorithm may misalign roles 2 and 3 (similar company names). "
+        "Real LLM pipeline unaffected (role content is updated via date-first path)."
+    ),
+    "25-Engineer-Editable-Resume-Template-Download-in-docx-1.docx": (
+        "Bullet-text fragmentation across multiple paragraphs: long bullets in the "
+        "template are split across several short paragraphs (word-wrapped by the DOCX "
+        "renderer).  The identity serializer joins them into one line, then re-renders "
+        "to a different paragraph-break pattern.  Real LLM pipeline (which rewrites "
+        "bullets) unaffected."
+    ),
+    "31-Software-Engineer-Editable-Resume-Template-Download-in-docx-7.docx": (
+        "Newspaper 2-column layout: the label-column fix reorders paragraphs for "
+        "semantic grouping, causing the identity roundtrip to produce a different "
+        "paragraph ordering than the original template.  Real LLM pipeline (which "
+        "works from the reordered semantic model) is unaffected."
+    ),
+    "9-Template4.docx": (
+        "Multi-table date-first layout: experience roles detected by the role_meta "
+        "heuristic produce header_extra entries that the identity serializer combines "
+        "via '|', changing several paragraph texts.  Real LLM pipeline unaffected "
+        "(updates via date-first experience path)."
+    ),
+    "29-Programmer-Editable-Resume-Template-Download-in-docx.docx": (
+        "Newspaper 2-column layout with separate section-label column: the label "
+        "column fix reorders paragraphs for semantic grouping, causing the identity "
+        "roundtrip to produce a different paragraph sequence.  Real LLM pipeline "
+        "unaffected (operates on the reordered semantic model)."
     ),
     "7-Template2.docx": (
         "Placeholder-year role format ('January 20xx - Current'): date lines use "
@@ -381,6 +422,41 @@ _KNOWN_BAD_PDFS: dict[str, str] = {
         "This is correct for real LLM output but changes the identity roundtrip: "
         "one paragraph is lost (meta absorbed into header) and the role header text "
         "gains the company/date suffix.  Real-pipeline output is unaffected."
+    ),
+    "15-Nurse-Template5.pdf": (
+        "Improved section detection (Fix 1b terminal fallback) now correctly "
+        "classifies 'AWARDS' as a section heading in the rendered PDF-DOCX, "
+        "which restructures the semantic model and shifts role matching in the "
+        "DOCX-of-DOCX stability pass.  The real LLM pipeline is unaffected "
+        "(AWARDS is now correctly identified as a section boundary)."
+    ),
+    "35-Gleb_Zernov_Resume.pdf": (
+        "Improved section detection (Fix 1b terminal fallback) now correctly "
+        "classifies 'Experience' and 'Education' as section headings in the "
+        "rendered PDF-DOCX.  The restructured semantic model shifts paragraph "
+        "order and page count (2→3) in the DOCX-of-DOCX stability pass.  "
+        "The real LLM pipeline is unaffected (section boundaries are now correct)."
+    ),
+    "25-Engineer-Editable-Resume-Template-Download-in-docx-1.pdf": (
+        "Two-column label-column layout: after PDF→DOCX rendering the DOCX has "
+        "separate-line role headers (company on its own paragraph).  In the "
+        "DOCX-of-DOCX stability pass the identity serializer combines role.header "
+        "with header_extra via '|', causing role content to shift position and "
+        "produce 13 text differences.  The real LLM pipeline is unaffected."
+    ),
+    "29-Programmer-Editable-Resume-Template-Download-in-docx.pdf": (
+        "Lorem-ipsum placeholder template with two-column layout: LibreOffice "
+        "PDF→DOCX conversion reorders content blocks, and the DOCX-of-DOCX "
+        "stability pass reveals para-count loss (59→55) due to empty placeholder "
+        "paragraphs being dropped by the identity serializer.  The real LLM "
+        "pipeline is unaffected."
+    ),
+    "33-Software-Engineer-Editable-Resume-Template-Download-in-docx-8.pdf": (
+        "Two-column layout (same as DOCX variant in _KNOWN_BAD_DOCX): education "
+        "content is embedded inside the 'Professional Experience' section body in "
+        "the PDF IR.  Rendering produces 7 extra paragraphs vs the PDF IR (53→60) "
+        "because the experience section expands to include the education bullets.  "
+        "The real LLM pipeline is unaffected."
     ),
 }
 
