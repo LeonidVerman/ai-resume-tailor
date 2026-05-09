@@ -1,5 +1,17 @@
 # Release Notes
 
+## 0.8.5.BETA — 2026-05-09
+
+### Bug fixes
+- **#32 Post processing screwed formatting**: fixed visual fragmentation and missing
+  summary content in rendered resume templates. Name and header text no longer renders
+  vertically letter-by-letter in narrow columns. Templates that use non-canonical section
+  labels (General Info, Professional Overview) now correctly map to the Professional
+  Summary region. Summary text is injected into the correct column slot instead of
+  landing between name components.
+
+---
+
 ## 0.8.4.BETA — 2026-04-30
 
 ### Bug fixes
