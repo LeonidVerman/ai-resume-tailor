@@ -1581,6 +1581,199 @@ def _detect_header_block_overlap(
 
 
 # ---------------------------------------------------------------------------
+# P. Thin overflow page hard-fail escalation
+# ---------------------------------------------------------------------------
+
+# Thresholds for "critically empty" overflow page → HARD FAIL.
+# A page with ≤ 2 lines AND ≤ 0.5% area is functionally blank — barely any
+# content reached it.  Stricter than _THIN_PAGE_MAX_LINES/AREA to avoid
+# escalating lightly-thin pages that are borderline cases.
+_THIN_OVERFLOW_HARD_LINES = 2
+_THIN_OVERFLOW_HARD_AREA  = 0.005
+
+
+def _detect_thin_overflow_hard_fail(
+    gen_extracted,
+    orig_extracted=None,
+) -> "tuple[bool, list[str]]":
+    """Escalate THIN_OVERFLOW_PAGE to HARD FAIL when the overflow page is near-empty.
+
+    A generated page with ≤ 3 lines and ≤ 2% area coverage is functionally blank:
+    almost no content spilled onto it.  This is a more severe defect than a lightly
+    sparse page and warrants a hard fail regardless of the template comparison.
+
+    Returns (hard_fail, evidence_list).
+    """
+    if len(gen_extracted.pages) < 2:
+        return False, []
+
+    orig_pages_by_num: dict[int, object] = {}
+    if orig_extracted:
+        for p in orig_extracted.pages:
+            orig_pages_by_num[p.page_number] = p
+
+    for page in gen_extracted.pages[1:]:
+        ar, _, _, _, ml = _compute_effective_area_metrics(page)
+        if ml > _THIN_OVERFLOW_HARD_LINES or ar > _THIN_OVERFLOW_HARD_AREA:
+            continue  # not critically empty
+
+        # Template comparison: if the original also has a near-empty page here, skip.
+        orig_page = orig_pages_by_num.get(page.page_number)
+        if orig_page is not None:
+            orig_ar, _, _, _, orig_ml = _compute_effective_area_metrics(orig_page)
+            if orig_ml <= _THIN_OVERFLOW_HARD_LINES and orig_ar <= _THIN_OVERFLOW_HARD_AREA:
+                continue  # structural — template already had this
+
+        return True, [
+            f"Near-empty overflow page {page.page_number} (HARD FAIL): "
+            f"{ml} line(s), {ar*100:.1f}% area — content forced onto a nearly blank page"
+        ]
+
+    return False, []
+
+
+# ---------------------------------------------------------------------------
+# Q. Word-level text fragmentation (spaced-out letters within words)
+# ---------------------------------------------------------------------------
+
+_WORD_FRAG_RE = _re.compile(
+    r"\b[A-Z]\s{2,}[A-Z]\s{2,}[A-Z]",  # e.g. "S  O  F  T" — spaced capitals
+)
+_WORD_FRAG_MIN_MATCHES = 3  # need several such runs to avoid false positives on
+                             # decorative caps or legitimate abbreviations
+
+
+def _detect_word_fragmentation(gen_extracted) -> "tuple[bool, list[str]]":
+    """Detect word-level text fragmentation: letters within a word rendered with
+    large inter-character spacing, appearing as spaced-out capital runs.
+
+    Example: "SOFTWARE ENGINEER" rendered as "S  O  F  T  W  A  R  E   E  N  G  I  N  E  E  R".
+
+    This is distinct from character-level fragmentation (1-2-char lines) and is
+    caused by narrow text boxes where LibreOffice forces character-by-character
+    spacing to fill the available width.  It appears as lines containing two or more
+    capital letters separated by 2+ spaces.
+
+    Returns (hard_fail, evidence_list).
+    """
+    if not gen_extracted.pages:
+        return False, []
+
+    page1 = gen_extracted.pages[0]
+    matches = 0
+    examples: list[str] = []
+
+    for ln in page1.lines:
+        if _WORD_FRAG_RE.search(ln.text):
+            matches += 1
+            if len(examples) < 2:
+                examples.append(ln.text.strip()[:60])
+
+    if matches < _WORD_FRAG_MIN_MATCHES:
+        return False, []
+
+    return True, [
+        f"Word-level text fragmentation (HARD FAIL): {matches} line(s) with "
+        f"spaced-out capital letters on page 1 — text boxes too narrow, characters "
+        f"spread to fill width; examples: {examples}"
+    ]
+
+
+# ---------------------------------------------------------------------------
+# R. Duplicate semantic content block outside top area
+# ---------------------------------------------------------------------------
+
+_DUP_BLOCK_MIN_LEN = 60    # minimum prose line length to consider
+_DUP_BLOCK_PREFIX  = 28    # match on first 28 chars (catches slight-wording variants)
+_DUP_BLOCK_Y_MAX   = 0.70  # search within top 70% of page
+_DUP_BLOCK_Y_PROX  = 0.22  # two blocks within 22% of page height = same region
+
+# Action verbs that start experience bullets — exclude from duplicate detection
+# since bullets legitimately repeat similar openings across roles.
+_ACTION_VERB_STARTS: frozenset[str] = frozenset({
+    "built", "introduced", "created", "developed", "led", "managed",
+    "designed", "implemented", "delivered", "achieved", "increased",
+    "reduced", "improved", "launched", "established", "collaborated",
+    "conducted", "worked", "helped", "supported", "analyzed", "drove",
+    "owned", "partnered", "spearheaded", "scaled", "automated", "migrated",
+    "refactored", "deployed", "maintained", "integrated", "contributed",
+    "ensured", "provided", "coordinated", "facilitated", "executed",
+})
+
+
+def _detect_duplicate_body_block(gen_extracted) -> "tuple[list[str], bool]":
+    """Detect when the same prose block appears twice on page 1 (extended area).
+
+    Complements _detect_duplicate_top_content (which covers the top 60%) by
+    also scanning the full page for semantic-level prose duplicates.  Uses a
+    shorter 28-char prefix to catch near-identical openings where wording varies
+    slightly (template placeholder vs LLM-generated content).
+
+    Only prose lines ≥ 55 chars that are NOT all-caps headings are considered.
+    Two matching lines must be within 35% of page height (same visual zone) to
+    avoid false positives from role descriptions that share a common opening.
+
+    Returns (evidence_list, hard_fail).
+    hard_fail=True when both matching lines are ≥ 70 chars (high-confidence prose).
+    """
+    if not gen_extracted.pages:
+        return [], False
+
+    page1 = gen_extracted.pages[0]
+    page_h = page1.height or 842.0
+    _ALL_CAPS_RE = _re.compile(r"^[A-Z\s\-:\.\/\(\)\|]{5,}$")
+
+    # Collect prose lines from top 90% of page 1 with y-positions
+    candidate_lines: "list[tuple[str, float]]" = []
+    for block in page1.blocks:
+        if not block.lines or block.bbox[1] > page_h * _DUP_BLOCK_Y_MAX:
+            continue
+        block_h = max(1.0, block.bbox[3] - block.bbox[1])
+        line_h = block_h / len(block.lines)
+        for k, ln in enumerate(block.lines):
+            txt = ln.text.strip()
+            if len(txt) < _DUP_BLOCK_MIN_LEN:
+                continue
+            if _ALL_CAPS_RE.match(txt):
+                continue
+            if len(txt.split()) < 4:
+                continue  # URL or path, not prose
+            candidate_lines.append((txt, block.bbox[1] + k * line_h))
+
+    if len(candidate_lines) < 2:
+        return [], False
+
+    for i in range(len(candidate_lines)):
+        txt_i, y_i = candidate_lines[i]
+        # Skip experience bullets that start with action verbs
+        first_word_i = txt_i.split()[0].lower().rstrip(".,;:")
+        if first_word_i in _ACTION_VERB_STARTS:
+            continue
+        for j in range(i + 1, len(candidate_lines)):
+            txt_j, y_j = candidate_lines[j]
+            first_word_j = txt_j.split()[0].lower().rstrip(".,;:")
+            if first_word_j in _ACTION_VERB_STARTS:
+                continue
+            prefix_i = txt_i.lower()[:_DUP_BLOCK_PREFIX]
+            if prefix_i != txt_j.lower()[:_DUP_BLOCK_PREFIX] or not prefix_i.strip():
+                continue
+            if abs(y_j - y_i) / page_h > _DUP_BLOCK_Y_PROX:
+                continue  # far apart — not in the same region
+            # Require both to differ from each other meaningfully (not exact match
+            # already caught by K), but share an opening → placeholder + LLM variant
+            if txt_i.lower() == txt_j.lower():
+                continue  # exact duplicate handled by K
+            hard = len(txt_i) >= 70 and len(txt_j) >= 70
+            return [
+                f"Duplicate semantic block {'(HARD FAIL) ' if hard else ''}on page 1: "
+                f"'{txt_i[:55]}' matches '{txt_j[:55]}' (first {_DUP_BLOCK_PREFIX} chars) — "
+                f"template placeholder and LLM content may both be present"
+            ], hard
+
+    return [], False
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -1603,14 +1796,21 @@ class PDFVisualResult:
     hard_fail_reasons: list[str] = field(default_factory=list)
     evidence: list[str] = field(default_factory=list)
 
-    # Visual-defect flags (set by detectors J/K/N/O)
+    # Visual-defect flags (set by detectors J/K/N/O/P/Q/R)
     layer_order_broken: bool = False
     duplicate_top_content: bool = False
     # N. Experience displacement signals
-    experience_region_shifted: bool = False   # experience section shifted DOWNWARD in region
+    experience_region_shifted: bool = False        # experience section shifted DOWNWARD in region
+    experience_region_shifted_major: bool = False  # 2-region downward jump (top->bottom)
     experience_pushed_down: bool = False       # experience heading on p1 pushed down > 8%
     experience_on_page1: bool = False          # experience heading found on page 1 in generated
     experience_in_lower_half: bool = False     # pushed-down experience is in lower 45% of p1
+    # P. Thin overflow page (escalated hard-fail when nearly empty)
+    thin_overflow_hard_fail: bool = False
+    # Q. Word-level text fragmentation (spaced-out letters within words)
+    word_fragmentation: bool = False
+    # R. Duplicate semantic block in non-top region
+    duplicate_body_block: bool = False
 
 
 def score_pdf_visual(
@@ -1656,10 +1856,17 @@ def score_pdf_visual(
     evidence.extend(region_ev)
     # Only flag DOWNWARD region shifts (top->middle/bottom, middle->bottom).
     # Upward shifts (bottom->top, middle->top) indicate improvement — not a defect.
+    # Major shifts (top->bottom, 2 regions) are tracked separately for escalation.
     _DOWNWARD_EXP_SHIFTS = ("top->middle", "top->bottom", "middle->bottom")
+    _MAJOR_DOWNWARD_EXP_SHIFTS = ("top->bottom",)
     _exp_region_shifted = any(
         "'experience'" in ev and "region:" in ev
         and any(ds in ev for ds in _DOWNWARD_EXP_SHIFTS)
+        for ev in region_ev
+    )
+    _exp_region_shifted_major = any(
+        "'experience'" in ev and "region:" in ev
+        and any(ds in ev for ds in _MAJOR_DOWNWARD_EXP_SHIFTS)
         for ev in region_ev
     )
 
@@ -1748,6 +1955,28 @@ def score_pdf_visual(
         hard_fail_reasons.append("HEADER_BLOCK_OVERLAP")
     evidence.extend(hbo_ev)
 
+    # P. Near-empty overflow page hard-fail escalation
+    tohf_fail, tohf_ev = _detect_thin_overflow_hard_fail(gen, orig_extracted=orig)
+    if tohf_fail:
+        hard_fail = True
+        hard_fail_reasons.append("THIN_OVERFLOW_HARD_FAIL")
+    evidence.extend(tohf_ev)
+
+    # Q. Word-level text fragmentation (spaced-out letters within words)
+    wfrag_fail, wfrag_ev = _detect_word_fragmentation(gen)
+    if wfrag_fail:
+        hard_fail = True
+        hard_fail_reasons.append("WORD_FRAGMENTATION")
+    evidence.extend(wfrag_ev)
+
+    # R. Duplicate semantic block — extended area (28-char prefix, full page)
+    dup_body_ev, dup_body_fail = _detect_duplicate_body_block(gen)
+    if dup_body_fail:
+        hard_fail = True
+        hard_fail_reasons.append("DUPLICATE_BODY_BLOCK")
+    evidence.extend(dup_body_ev)
+    _duplicate_body_block = bool(dup_body_ev)
+
     return PDFVisualResult(
         page_count_score=pc_score,
         blank_page_score=bp_score,
@@ -1766,7 +1995,11 @@ def score_pdf_visual(
         layer_order_broken=_layer_order_broken,
         duplicate_top_content=_duplicate_top_content,
         experience_region_shifted=_exp_region_shifted,
+        experience_region_shifted_major=_exp_region_shifted_major,
         experience_pushed_down=_exp_pushed_down,
         experience_on_page1=_exp_on_page1,
         experience_in_lower_half=_exp_in_lower_half,
+        thin_overflow_hard_fail=tohf_fail,
+        word_fragmentation=wfrag_fail,
+        duplicate_body_block=_duplicate_body_block,
     )

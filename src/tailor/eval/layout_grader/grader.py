@@ -737,6 +737,11 @@ def grade_sample(
                 # Case B: experience not on page 1 and region shifted downward
                 (getattr(pdf_result, "experience_region_shifted", False)
                  and not getattr(pdf_result, "experience_on_page1", True))
+                or
+                # Case C: MAJOR downward shift (2 regions, top->bottom) on page 1.
+                # A 2-region jump indicates catastrophic section displacement that
+                # dominates visual reading quality regardless of page position.
+                getattr(pdf_result, "experience_region_shifted_major", False)
             )
             if _exp_escalate:
                 if "D_EXPERIENCE_DISPLACED_SEVERE" not in failure_classes:
@@ -748,6 +753,33 @@ def grade_sample(
                     hard_fail_reasons.append("POSITIONED_TEMPLATE_COLLAPSE")
                 if "F_POSITIONED_TEMPLATE_COLLAPSE" not in failure_classes:
                     failure_classes.append("F_POSITIONED_TEMPLATE_COLLAPSE")
+            # P. Near-empty overflow page (critically sparse)
+            if "THIN_OVERFLOW_HARD_FAIL" in pdf_result.hard_fail_reasons:
+                hard_fail = True
+                if "THIN_OVERFLOW_HARD_FAIL" not in hard_fail_reasons:
+                    hard_fail_reasons.append("THIN_OVERFLOW_HARD_FAIL")
+                if "B_THIN_OVERFLOW_CRITICAL" not in failure_classes:
+                    failure_classes.append("B_THIN_OVERFLOW_CRITICAL")
+            # Q. Word-level fragmentation (spaced-out letter runs)
+            if "WORD_FRAGMENTATION" in pdf_result.hard_fail_reasons:
+                hard_fail = True
+                if "WORD_FRAGMENTATION" not in hard_fail_reasons:
+                    hard_fail_reasons.append("WORD_FRAGMENTATION")
+                if "F_WORD_FRAGMENTATION" not in failure_classes:
+                    failure_classes.append("F_WORD_FRAGMENTATION")
+            elif getattr(pdf_result, "word_fragmentation", False):
+                if "F_WORD_FRAGMENTATION" not in failure_classes:
+                    failure_classes.append("F_WORD_FRAGMENTATION")
+            # R. Duplicate semantic block (extended area detection)
+            if "DUPLICATE_BODY_BLOCK" in pdf_result.hard_fail_reasons:
+                hard_fail = True
+                if "DUPLICATE_BODY_BLOCK" not in hard_fail_reasons:
+                    hard_fail_reasons.append("DUPLICATE_BODY_BLOCK")
+                if "E_DUPLICATE_SEMANTIC_BLOCK" not in failure_classes:
+                    failure_classes.append("E_DUPLICATE_SEMANTIC_BLOCK")
+            elif getattr(pdf_result, "duplicate_body_block", False):
+                if "E_DUPLICATE_SEMANTIC_BLOCK" not in failure_classes:
+                    failure_classes.append("E_DUPLICATE_SEMANTIC_BLOCK")
             # Density degraded (>50% roles no bullets, not a hard fail)
             if pdf_result.density_score <= 65 and "A_DENSITY_HARD_FAIL" not in failure_classes:
                 if "D_DENSITY_DEGRADED" not in failure_classes:
@@ -816,7 +848,12 @@ def grade_sample(
     # Failure classes that signal content loss not visible in PDF-level metrics
     # cap the composite at 74 (WARNING ceiling) even when all visual dimensions
     # score highly.  Mirrors the HARD FAIL cap at 30.
-    _SOFT_CAP_CLASSES = {"C_SUMMARY_MISSING", "D_DENSITY_DEGRADED", "D_EXPERIENCE_DISPLACED_SEVERE"}
+    _SOFT_CAP_CLASSES = {
+        "C_SUMMARY_MISSING",
+        "D_DENSITY_DEGRADED",
+        "D_EXPERIENCE_DISPLACED_SEVERE",
+        "E_DUPLICATE_SEMANTIC_BLOCK",  # duplicate summary/skills in same region
+    }
     if not hard_fail and any(fc in _SOFT_CAP_CLASSES for fc in failure_classes):
         composite = min(composite, 74.0)
 
