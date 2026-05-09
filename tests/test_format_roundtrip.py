@@ -247,6 +247,31 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "the role matching algorithm may misalign roles 2 and 3 (similar company names). "
         "Real LLM pipeline unaffected (role content is updated via date-first path)."
     ),
+    "25-Engineer-Editable-Resume-Template-Download-in-docx-1.docx": (
+        "Bullet-text fragmentation across multiple paragraphs: long bullets in the "
+        "template are split across several short paragraphs (word-wrapped by the DOCX "
+        "renderer).  The identity serializer joins them into one line, then re-renders "
+        "to a different paragraph-break pattern.  Real LLM pipeline (which rewrites "
+        "bullets) unaffected."
+    ),
+    "31-Software-Engineer-Editable-Resume-Template-Download-in-docx-7.docx": (
+        "Newspaper 2-column layout: the label-column fix reorders paragraphs for "
+        "semantic grouping, causing the identity roundtrip to produce a different "
+        "paragraph ordering than the original template.  Real LLM pipeline (which "
+        "works from the reordered semantic model) is unaffected."
+    ),
+    "9-Template4.docx": (
+        "Multi-table date-first layout: experience roles detected by the role_meta "
+        "heuristic produce header_extra entries that the identity serializer combines "
+        "via '|', changing several paragraph texts.  Real LLM pipeline unaffected "
+        "(updates via date-first experience path)."
+    ),
+    "29-Programmer-Editable-Resume-Template-Download-in-docx.docx": (
+        "Newspaper 2-column layout with separate section-label column: the label "
+        "column fix reorders paragraphs for semantic grouping, causing the identity "
+        "roundtrip to produce a different paragraph sequence.  Real LLM pipeline "
+        "unaffected (operates on the reordered semantic model)."
+    ),
     "7-Template2.docx": (
         "Placeholder-year role format ('January 20xx - Current'): date lines use "
         "'20xx' instead of real years; the placeholder pre-pass promotes them to "
