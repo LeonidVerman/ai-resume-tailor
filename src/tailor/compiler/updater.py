@@ -2548,8 +2548,24 @@ def _build_anchored_summary_section(
 
     section_id is set to "sec_summary_inserted" so finalize_layout_bound_ir
     does not treat the section as synthetic (section_id != '').
+
+    When *heading_anchor* is None (single-slot mode), the body text is
+    compacted to 1 sentence to avoid expanding a narrow template header slot
+    (typically an empty trailing paragraph in a compact table template).
     """
-    body_text = _clean_summary_text(llm_section.body_lines)
+    from tailor.compiler.layout import compact_summary
+    if heading_anchor is None:
+        # Single-anchor: only the body slot exists; compact aggressively to
+        # prevent a narrow slot from overflowing and pushing page content down.
+        _raw = _clean_summary_text(llm_section.body_lines)
+        _lines = compact_summary([_raw], max_sentences=1)
+        body_text = " ".join(_lines).strip() if _lines else _raw
+        _log.debug(
+            "ANCHORED_SUMMARY_SINGLE_SLOT_COMPACTED: len %d → %d chars",
+            len(_raw), len(body_text),
+        )
+    else:
+        body_text = _clean_summary_text(llm_section.body_lines)
 
     if heading_anchor is not None:
         new_heading = heading_anchor.with_text("PROFESSIONAL SUMMARY")
@@ -3199,7 +3215,13 @@ def apply_tailored(
                     # (layout_blocks present) record a target para_id so the renderer
                     # can inject the summary directly into the table XML — after the
                     # last non-empty header para (e.g. "registered nurse" title).
-                    if original.layout_blocks is not None and _inline_summary is None:
+                    # Inline summary injection is deliberately disabled.
+                    # Inserting a new paragraph into an existing table cell (after the
+                    # last non-empty header para) causes that cell to expand, pushing
+                    # later sections off the page and producing THIN_OVERFLOW_HARD_FAIL
+                    # blanked trailing pages.  The "Summary missing" soft warning is
+                    # preferred over a hard overflow failure for these templates.
+                    if False and original.layout_blocks is not None and _inline_summary is None:  # noqa: E501
                         _last_ne_pid = next(
                             (pm.para_id for pm in reversed(original.header_paras)
                              if pm.text.strip() and pm.para_id),

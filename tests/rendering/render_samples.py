@@ -281,13 +281,18 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
 
         _docx_to_pdf_subprocess(str(out_docx))
         lo_pdf = out_docx.with_suffix(".pdf")
-        if lo_pdf.exists() and lo_pdf != out_pdf:
-            # Always overwrite the destination PDF so the grader uses the
-            # freshly rendered version, not a stale PDF from a previous run.
-            shutil.copy2(str(lo_pdf), str(out_pdf))
-            lo_pdf.unlink(missing_ok=True)
-        elif lo_pdf == out_pdf:
-            pass
+        if lo_pdf.exists():
+            # The grader reads PDFs from _OUT_REND_PDF.  Always copy the freshly
+            # rendered PDF there so the grader uses the latest version.
+            grader_pdf = _OUT_REND_PDF / lo_pdf.name
+            _OUT_REND_PDF.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(str(lo_pdf), str(grader_pdf))
+            # Keep the docx-dir copy in place (used by test_sparse_page_detection)
+        elif out_pdf.exists():
+            # lo_pdf wasn't created by LibreOffice; copy existing pdf from
+            # grader dir back to out_pdf location if needed.
+            if verbose:
+                print(f"{tag} WARN: PDF not refreshed — LibreOffice did not produce {lo_pdf.name}")
         else:
             raise FileNotFoundError(f"PDF not found at {out_pdf}")
     except Exception as e:
