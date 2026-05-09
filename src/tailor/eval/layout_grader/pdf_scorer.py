@@ -1774,6 +1774,232 @@ def _detect_duplicate_body_block(gen_extracted) -> "tuple[list[str], bool]":
 
 
 # ---------------------------------------------------------------------------
+# S. Positioned identity block displaced from bottom of page 1 to page 2
+# ---------------------------------------------------------------------------
+
+# Fraction of page-1 height above which a block is considered "bottom-anchored."
+# Using 0.85 (bottom 15%) rather than 0.75 to exclude reference contacts that
+# appear in a REFERENCES section (typically y_rel ≈ 0.75-0.84).  The candidate
+# name in a positioned sidebar template sits at the very bottom of the sidebar,
+# below the reference entries — typically y_rel > 0.88.
+_IDENT_BOTTOM_Y_MIN = 0.85   # name must be in bottom 15% of ORIG page 1
+_IDENT_TOP_Y_MAX    = 0.18   # displaced name must appear in top 18% of GEN page 2
+_IDENT_PREFIX_LEN   = 5      # compact (space-stripped) prefix length to match on
+
+# Words that mark an institution/school/academy — these appear in education section
+# entries (e.g. "Winslough High School") which match the name pattern but are NOT
+# the candidate's identity.  Excluded from positioned-identity displacement checks.
+_IDENT_INSTITUTION_WORDS: frozenset[str] = frozenset({
+    "high", "school", "academy", "district", "center", "centre",
+    "charter", "preparatory", "prep", "campus", "polytechnic",
+})
+
+
+def _detect_positioned_identity_displaced(
+    gen_extracted,
+    orig_extracted=None,
+) -> "tuple[list[str], bool]":
+    """Detect when the identity block was anchored at the bottom of ORIG page 1
+    (positioned sidebar design) but appears at the top of GEN page 2.
+
+    Some 2-column templates place the candidate's name in a text box at the
+    bottom of the left sidebar on page 1.  When the renderer fails to honour
+    that anchor, the name is pushed to the top of the overflow page — leaving
+    page 1 visually nameless.
+
+    Requirements (all must hold):
+    1. ORIG page 1 has a name-like block in its bottom 25% (y_rel > 0.75).
+    2. GEN page 1 has NO block containing that name's compact prefix.
+    3. GEN page 2 starts with a block matching the prefix within its top 18%.
+
+    Returns (evidence_list, hard_fail).  hard_fail=True when displaced.
+    """
+    if orig_extracted is None or not orig_extracted.pages:
+        return [], False
+    if not gen_extracted.pages or len(gen_extracted.pages) < 2:
+        return [], False
+
+    orig_p1 = orig_extracted.pages[0]
+    orig_h = orig_p1.height or 842.0
+
+    # Step 1 — find a name-like block in the bottom 15% of ORIG page 1.
+    # Excludes institution names (e.g. "Winslough High School" in the education
+    # section) that match the name pattern but are not candidate identities.
+    bottom_name = ""
+    for b in orig_p1.blocks:
+        y_center = (b.bbox[1] + b.bbox[3]) / 2.0
+        if y_center / orig_h <= _IDENT_BOTTOM_Y_MIN:
+            continue
+        for ln in b.lines:
+            txt = ln.text.strip()
+            if not _id_is_name_like(txt):
+                continue
+            # Skip institution/school names (education section entries).
+            if any(w.lower() in _IDENT_INSTITUTION_WORDS for w in txt.split()):
+                continue
+            bottom_name = txt
+            break
+        if bottom_name:
+            break
+
+    if not bottom_name or len(bottom_name) < _IDENT_PREFIX_LEN:
+        return [], False
+
+    # Compact prefix: strip all whitespace so "HARPER RUSSO" → "HARPE" (5 chars).
+    # This handles names split across lines/blocks in the generated PDF.
+    name_prefix = _re.sub(r"\s+", "", bottom_name)[:_IDENT_PREFIX_LEN].upper()
+
+    # Step 2 — confirm the name is absent from GEN page 1.
+    gen_p1 = gen_extracted.pages[0]
+    for b in gen_p1.blocks:
+        block_compact = _re.sub(r"\s+", "", " ".join(ln.text for ln in b.lines)).upper()
+        if name_prefix in block_compact:
+            return [], False  # name IS on GEN page 1 — no displacement
+
+    # Step 3 — check if the name prefix appears at the top of GEN page 2.
+    gen_p2 = gen_extracted.pages[1]
+    gen_p2_h = gen_p2.height or 842.0
+    for b in gen_p2.blocks:
+        y_center = (b.bbox[1] + b.bbox[3]) / 2.0
+        if y_center / gen_p2_h > _IDENT_TOP_Y_MAX:
+            break
+        block_compact = _re.sub(r"\s+", "", " ".join(ln.text for ln in b.lines)).upper()
+        if name_prefix in block_compact:
+            return [
+                f"Positioned identity displaced (HARD FAIL): "
+                f"'{bottom_name}' at bottom of template page 1 (y>{int(_IDENT_BOTTOM_Y_MIN*100)}%) "
+                f"appears at top of generated page 2 — sidebar anchor not honoured"
+            ], True
+
+    return [], False
+
+
+# ---------------------------------------------------------------------------
+# T. Right-column injection on page 1 (fitz-based, uses raw PDF block positions)
+# ---------------------------------------------------------------------------
+
+# The structured extractor normalises block x-coordinates when building its IR,
+# so absolutely-positioned blocks (contact info in a text box, sidebar elements)
+# may appear at x0 ≈ 0.09 regardless of their visual x-position in the rendered
+# PDF.  This detector bypasses the extractor and reads raw fitz block bboxes to
+# detect when a right-side text lane appears in GEN but not in ORIG.
+
+_RCOL_X0_THRESHOLD = 0.45   # block left edge > 45% of page width = right half
+_RCOL_MIN_CHARS    = 15     # minimum chars for a block to be "substantial"
+_RCOL_MAX_Y        = 0.70   # only examine top 70% of page 1
+
+
+import re as _re_contact
+_CONTACT_SIGNAL_RE = _re_contact.compile(
+    r"\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b"   # phone: 123-456-7890 / 123.456.7890
+    r"|@[a-zA-Z0-9.]+\.[a-zA-Z]{2,5}\b",  # email: user@domain.com
+    _re_contact.IGNORECASE,
+)
+_RCOL_ORIG_TOP_FRAC = 0.15   # top 15% of ORIG page 1 for contact-absence gate
+_RCOL_ORIG_P2_FRAC  = 0.25   # top 25% of ORIG page 2 for contact-presence gate
+
+
+def _detect_right_column_injection_fitz(
+    gen_pdf_path: str,
+    orig_pdf_path: str,
+) -> "tuple[list[str], bool]":
+    """Detect when contact info from ORIG page 2 migrates to GEN page 1 right column.
+
+    Positioned/sidebar templates sometimes place the candidate's primary contact
+    block in a text box anchored to page 2.  When the renderer fails to honour
+    the anchor the contact block lands in the right-side lane of GEN page 1,
+    creating a false right column.
+
+    Three conditions must ALL hold:
+    1. GEN page 1 has a block at x0 > 45% of page width containing a phone/email
+       pattern — the contact block appeared in the wrong lane.
+    2. ORIG page 1 top 15% has NO block with phone/email — the template did NOT
+       have contact info in the header (rules out templates with a standard top-
+       right contact header, which would fire condition 1 correctly).
+    3. ORIG page 2 early (top 25%) has a contact-signal block — the contact WAS
+       on page 2 in the template, confirming cross-page migration.
+
+    Returns (evidence_list, False).  Soft signal — not a hard fail.
+    The caller assigns failure class F_RIGHT_COLUMN_INJECTION (soft-cap 74).
+    """
+    try:
+        import fitz as _fitz
+        gen_doc = _fitz.open(gen_pdf_path)
+        orig_doc = _fitz.open(orig_pdf_path)
+    except Exception:
+        return [], False
+
+    try:
+        if gen_doc.page_count < 1 or orig_doc.page_count < 2:
+            return [], False  # need 2 orig pages to confirm cross-page migration
+
+        gen_p1 = gen_doc[0]
+        orig_p1 = orig_doc[0]
+        gen_w = gen_p1.rect.width or 595.0
+        orig_w = orig_p1.rect.width or 595.0
+        gen_h = gen_p1.rect.height or 842.0
+        orig_h = orig_p1.rect.height or 842.0
+
+        def _btext(b: dict) -> str:
+            return "".join(sp["text"] for ln in b["lines"] for sp in ln["spans"])
+
+        # Condition 1: GEN page 1 right column has a contact-info block.
+        gen_right_contact: list[str] = []
+        for b in gen_p1.get_text("dict")["blocks"]:
+            if b.get("type") != 0:
+                continue
+            if b["bbox"][0] / gen_w <= _RCOL_X0_THRESHOLD:
+                continue
+            if b["bbox"][1] / gen_h > _RCOL_MAX_Y:
+                continue
+            txt = _btext(b).replace("\n", " ").strip()
+            if len(txt) < _RCOL_MIN_CHARS:
+                continue
+            if _CONTACT_SIGNAL_RE.search(txt):
+                gen_right_contact.append(txt[:60])
+
+        if not gen_right_contact:
+            return [], False
+
+        # Condition 2: ORIG page 1 top 15% has NO phone/email block.
+        for b in orig_p1.get_text("dict")["blocks"]:
+            if b.get("type") != 0:
+                continue
+            if b["bbox"][1] / orig_h >= _RCOL_ORIG_TOP_FRAC:
+                continue
+            txt = _btext(b).strip()
+            if len(txt) < _RCOL_MIN_CHARS:
+                continue
+            if _CONTACT_SIGNAL_RE.search(txt):
+                return [], False  # ORIG already had contact at top → structural
+
+        # Condition 3: ORIG page 2 early has a contact-signal block.
+        orig_p2 = orig_doc[1]
+        orig_p2_h = orig_p2.rect.height or 842.0
+        for b in orig_p2.get_text("dict")["blocks"]:
+            if b.get("type") != 0:
+                continue
+            if b["bbox"][1] / orig_p2_h > _RCOL_ORIG_P2_FRAC:
+                break
+            txt = _btext(b).strip()
+            if len(txt) < _RCOL_MIN_CHARS:
+                continue
+            if _CONTACT_SIGNAL_RE.search(txt):
+                return [
+                    f"Contact info migrated to page-1 right column: "
+                    f"'{gen_right_contact[0][:45]}' in GEN page 1 "
+                    f"at x>{int(_RCOL_X0_THRESHOLD*100)}% but was on ORIG page 2 — "
+                    f"sidebar anchor not honoured, contact rendered into wrong lane"
+                ], False
+
+        return [], False
+
+    finally:
+        gen_doc.close()
+        orig_doc.close()
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -1811,6 +2037,8 @@ class PDFVisualResult:
     word_fragmentation: bool = False
     # R. Duplicate semantic block in non-top region
     duplicate_body_block: bool = False
+    # T. Right-column injection on page 1 (new right lane absent from ORIG)
+    right_column_injection: bool = False
 
 
 def score_pdf_visual(
@@ -1977,6 +2205,20 @@ def score_pdf_visual(
     evidence.extend(dup_body_ev)
     _duplicate_body_block = bool(dup_body_ev)
 
+    # S. Positioned identity block displaced from bottom of ORIG page 1 to GEN page 2
+    pid_ev, pid_fail = _detect_positioned_identity_displaced(gen, orig_extracted=orig)
+    if pid_fail:
+        hard_fail = True
+        hard_fail_reasons.append("POSITIONED_IDENTITY_DISPLACED")
+    evidence.extend(pid_ev)
+
+    # T. Right-column injection on page 1 (fitz-based: bypasses extractor coord normalisation)
+    rci_ev, _rci_unused = _detect_right_column_injection_fitz(
+        generated_pdf_path, original_pdf_path
+    )
+    _right_column_injection = bool(rci_ev)
+    evidence.extend(rci_ev)
+
     return PDFVisualResult(
         page_count_score=pc_score,
         blank_page_score=bp_score,
@@ -2002,4 +2244,5 @@ def score_pdf_visual(
         thin_overflow_hard_fail=tohf_fail,
         word_fragmentation=wfrag_fail,
         duplicate_body_block=_duplicate_body_block,
+        right_column_injection=_right_column_injection,
     )

@@ -780,6 +780,17 @@ def grade_sample(
             elif getattr(pdf_result, "duplicate_body_block", False):
                 if "E_DUPLICATE_SEMANTIC_BLOCK" not in failure_classes:
                     failure_classes.append("E_DUPLICATE_SEMANTIC_BLOCK")
+            # S. Positioned identity block displaced (name at bottom of ORIG p1 → top of GEN p2)
+            if "POSITIONED_IDENTITY_DISPLACED" in pdf_result.hard_fail_reasons:
+                hard_fail = True
+                if "POSITIONED_IDENTITY_DISPLACED" not in hard_fail_reasons:
+                    hard_fail_reasons.append("POSITIONED_IDENTITY_DISPLACED")
+                if "F_POSITIONED_IDENTITY_DISPLACED" not in failure_classes:
+                    failure_classes.append("F_POSITIONED_IDENTITY_DISPLACED")
+            # T. Right-column injection (new right lane on page 1 absent from template)
+            if getattr(pdf_result, "right_column_injection", False):
+                if "F_RIGHT_COLUMN_INJECTION" not in failure_classes:
+                    failure_classes.append("F_RIGHT_COLUMN_INJECTION")
             # Density degraded (>50% roles no bullets, not a hard fail)
             if pdf_result.density_score <= 65 and "A_DENSITY_HARD_FAIL" not in failure_classes:
                 if "D_DENSITY_DEGRADED" not in failure_classes:
@@ -853,6 +864,7 @@ def grade_sample(
         "D_DENSITY_DEGRADED",
         "D_EXPERIENCE_DISPLACED_SEVERE",
         "E_DUPLICATE_SEMANTIC_BLOCK",  # duplicate summary/skills in same region
+        "F_RIGHT_COLUMN_INJECTION",    # contact/sidebar rendered into new right lane on page 1
     }
     if not hard_fail and any(fc in _SOFT_CAP_CLASSES for fc in failure_classes):
         composite = min(composite, 74.0)
