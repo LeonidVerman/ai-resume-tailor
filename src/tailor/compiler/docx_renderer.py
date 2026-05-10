@@ -1836,25 +1836,36 @@ def _render_from_layout_blocks(
 # Background color inheritance from blip image
 # ---------------------------------------------------------------------------
 
-def _maybe_set_document_background(doc_element, docx_path: str, body) -> None:
-    """Set w:background on the document using the dominant color from a behindDoc blip.
+def _maybe_insert_bg_rect(docx_path: str, body, sectPr) -> None:
+    """Insert a solid-fill background rectangle for the overflow continuation page.
 
-    When a template uses a full-page raster image as its page background
-    (behindDoc anchor with large extent and a blip), overflow pages lack the
-    background because the drawing is anchored to a body paragraph on page 1.
-    The image cannot be cloned (it contains composite foreground content — photo,
-    icons, divider).
+    Problem: LibreOffice does not render w:background on every page — only on
+    page 1.  Templates that use a full-page behindDoc blip as background (e.g.
+    sample 16) lose the background on page 2.  The blip cannot be cloned because
+    it is a composite image containing the candidate photo, contact icons, and
+    other foreground content.
 
-    Safe alternative: extract the DOMINANT BACKGROUND COLOR from the image
-    (sampling edge pixels away from photo/icon regions) and set it as the
-    document-level w:background.  This applies to ALL pages automatically with
-    no foreground content copied.
+    Solution: extract the DOMINANT BACKGROUND COLOR from the blip image (sampling
+    five edge pixels away from photo/icon regions), then create a brand-new
+    solid-fill DrawingML rectangle shape with NO image, NO text, NO stroke and
+    insert it as the LAST body paragraph (just before sectPr).
 
-    Silently skips when:
-    - No qualifying behindDoc blip found in body
-    - PIL (Pillow) is not installed
-    - Dominant color is pure white (no meaningful background)
-    - Any I/O or image-decoding error
+    The rectangle uses:
+      - behindDoc="1"   — behind all content, z-order lowest
+      - layoutInCell="0" — page-relative positioning inside table cells
+      - posH/posV relativeFrom="page" offset=0 — covers the full page from (0,0)
+      - Solid fill = sampled hex color (e.g. #F8F8F6)
+      - No stroke (a:noFill on border)
+      - No text body (empty wps:bodyPr)
+
+    When content overflows to page 2, this paragraph is the last element before
+    sectPr and lands on page 2.  The page-relative rectangle covers page 2 with
+    the same background color as page 1.  If content does NOT overflow (all on
+    page 1), this paragraph also appears on page 1 with the same #F8F8F6 color
+    as the blip image — visually indistinguishable from the existing background.
+
+    Silently skips when: no qualifying behindDoc blip found, PIL not installed,
+    dominant color is pure white, or any I/O/decoding error.
     """
     _WP_NS = _WP
     _DML_NS = _DML
@@ -1870,11 +1881,11 @@ def _maybe_set_document_background(doc_element, docx_path: str, body) -> None:
         if ext is None:
             continue
         try:
-            cx = int(ext.get("cx", "0"))
-            cy = int(ext.get("cy", "0"))
+            cx_src = int(ext.get("cx", "0"))
+            cy_src = int(ext.get("cy", "0"))
         except ValueError:
             continue
-        if cx < 7_000_000 or cy < 10_000_000:
+        if cx_src < 7_000_000 or cy_src < 10_000_000:
             continue
         blip = anchor.find(f".//{{{_DML_NS}}}blip")
         if blip is None:
@@ -1889,11 +1900,11 @@ def _maybe_set_document_background(doc_element, docx_path: str, body) -> None:
         import zipfile as _zf
         from PIL import Image as _PILImage
         import io as _io
+        from lxml import etree as _et
 
+        # --- Extract dominant background color from the blip image ---
         with _zf.ZipFile(docx_path, "r") as zf:
-            rels_data = zf.read("word/_rels/document.xml.rels")
-            from lxml import etree as _et
-            rels_xml = _et.fromstring(rels_data)
+            rels_xml = _et.fromstring(zf.read("word/_rels/document.xml.rels"))
             img_path: "str | None" = None
             for rel in rels_xml.findall(f".//{{{_RELS_NS}}}Relationship"):
                 if rel.get("Id") == rel_id:
@@ -1908,42 +1919,137 @@ def _maybe_set_document_background(doc_element, docx_path: str, body) -> None:
 
         img = _PILImage.open(_io.BytesIO(img_bytes)).convert("RGB")
         iw, ih = img.size
-
-        # Sample edge pixels well away from any centered photo/icon content.
-        # Background images typically have uniform fill at page margins.
+        # Five edge-pixel samples far from photo/icon content
         sample_pts = [
-            (max(iw // 20, 1), ih // 2),       # left edge, mid-height
-            (max(iw // 20, 1), ih * 3 // 4),   # left edge, lower
-            (iw * 19 // 20, ih // 2),            # right edge, mid-height
-            (iw * 19 // 20, ih * 3 // 4),        # right edge, lower
-            (iw // 2, ih * 9 // 10),              # bottom center
+            (max(iw // 20, 1), ih // 2),
+            (max(iw // 20, 1), ih * 3 // 4),
+            (iw * 19 // 20, ih // 2),
+            (iw * 19 // 20, ih * 3 // 4),
+            (iw // 2, ih * 9 // 10),
         ]
         pixels = [img.getpixel(pt) for pt in sample_pts]
         r = sorted(p[0] for p in pixels)[len(pixels) // 2]
         g = sorted(p[1] for p in pixels)[len(pixels) // 2]
         b = sorted(p[2] for p in pixels)[len(pixels) // 2]
         hex_color = f"{r:02X}{g:02X}{b:02X}"
-
         if hex_color.upper() == "FFFFFF":
             return
 
-        # Set w:background on the document root (child of w:document, before w:body)
-        existing = doc_element.find(f"{{{_W}}}background")
-        if existing is None:
-            from lxml import etree as _et2
-            bg_elem = _et2.Element(f"{{{_W}}}background")
-            doc_element.insert(0, bg_elem)
+        # --- Determine rectangle size from page dimensions ---
+        _pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
+        if _pgSz is not None:
+            try:
+                cx_emu = int(_pgSz.get(f"{{{_W}}}w", "11920")) * _EMU_PER_TWIP
+                cy_emu = int(_pgSz.get(f"{{{_W}}}h", "16840")) * _EMU_PER_TWIP
+            except ValueError:
+                cx_emu, cy_emu = 7568800, 10693400
         else:
-            bg_elem = existing
-        bg_elem.set(f"{{{_W}}}color", hex_color)
+            cx_emu, cy_emu = 7568800, 10693400  # A4 portrait fallback
+
+        # --- Build the solid-fill rectangle as a DrawingML anchor ---
+        _A = _DML_NS
+        _WPS_NS = _WPS
+
+        bg_p = _et.Element(f"{{{_W}}}p")
+        pPr = _et.SubElement(bg_p, f"{{{_W}}}pPr")
+        spacing = _et.SubElement(pPr, f"{{{_W}}}spacing")
+        spacing.set(f"{{{_W}}}after", "0")
+        spacing.set(f"{{{_W}}}line", "20")
+        spacing.set(f"{{{_W}}}lineRule", "exact")
+
+        run = _et.SubElement(bg_p, f"{{{_W}}}r")
+        drawing = _et.SubElement(run, f"{{{_W}}}drawing")
+
+        anc = _et.SubElement(drawing, f"{{{_WP_NS}}}anchor")
+        anc.set("distT", "0")
+        anc.set("distB", "0")
+        anc.set("distL", "0")
+        anc.set("distR", "0")
+        anc.set("simplePos", "0")
+        anc.set("relativeHeight", "2251658")
+        anc.set("behindDoc", "1")
+        anc.set("locked", "0")
+        anc.set("layoutInCell", "0")
+        anc.set("allowOverlap", "1")
+
+        sp = _et.SubElement(anc, f"{{{_WP_NS}}}simplePos")
+        sp.set("x", "0")
+        sp.set("y", "0")
+
+        pH = _et.SubElement(anc, f"{{{_WP_NS}}}positionH")
+        pH.set("relativeFrom", "page")
+        _et.SubElement(pH, f"{{{_WP_NS}}}posOffset").text = "0"
+
+        pV = _et.SubElement(anc, f"{{{_WP_NS}}}positionV")
+        pV.set("relativeFrom", "page")
+        _et.SubElement(pV, f"{{{_WP_NS}}}posOffset").text = "0"
+
+        ext_el = _et.SubElement(anc, f"{{{_WP_NS}}}extent")
+        ext_el.set("cx", str(cx_emu))
+        ext_el.set("cy", str(cy_emu))
+
+        eff = _et.SubElement(anc, f"{{{_WP_NS}}}effectExtent")
+        eff.set("l", "0")
+        eff.set("t", "0")
+        eff.set("r", "0")
+        eff.set("b", "0")
+
+        _et.SubElement(anc, f"{{{_WP_NS}}}wrapNone")
+
+        dpr = _et.SubElement(anc, f"{{{_WP_NS}}}docPr")
+        dpr.set("id", "99999")
+        dpr.set("name", "OverflowBgRect")
+
+        _et.SubElement(anc, f"{{{_WP_NS}}}cNvGraphicFramePr")
+
+        graphic = _et.SubElement(anc, f"{{{_A}}}graphic")
+        graphicData = _et.SubElement(graphic, f"{{{_A}}}graphicData")
+        graphicData.set(
+            "uri", "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+        )
+
+        wsp = _et.SubElement(graphicData, f"{{{_WPS_NS}}}wsp")
+
+        cNvSpPr = _et.SubElement(wsp, f"{{{_WPS_NS}}}cNvSpPr")
+        spLocks = _et.SubElement(cNvSpPr, f"{{{_A}}}spLocks")
+        spLocks.set("noChangeArrowheads", "1")
+
+        spPr = _et.SubElement(wsp, f"{{{_WPS_NS}}}spPr")
+
+        xfrm = _et.SubElement(spPr, f"{{{_A}}}xfrm")
+        off = _et.SubElement(xfrm, f"{{{_A}}}off")
+        off.set("x", "0")
+        off.set("y", "0")
+        sz = _et.SubElement(xfrm, f"{{{_A}}}ext")
+        sz.set("cx", str(cx_emu))
+        sz.set("cy", str(cy_emu))
+
+        prstGeom = _et.SubElement(spPr, f"{{{_A}}}prstGeom")
+        prstGeom.set("prst", "rect")
+        _et.SubElement(prstGeom, f"{{{_A}}}avLst")
+
+        solidFill = _et.SubElement(spPr, f"{{{_A}}}solidFill")
+        srgbClr = _et.SubElement(solidFill, f"{{{_A}}}srgbClr")
+        srgbClr.set("val", hex_color)
+
+        ln = _et.SubElement(spPr, f"{{{_A}}}ln")
+        _et.SubElement(ln, f"{{{_A}}}noFill")
+
+        _et.SubElement(wsp, f"{{{_WPS_NS}}}bodyPr")
+
+        # Insert as the last body element before sectPr
+        if sectPr is not None:
+            sectPr.addprevious(bg_p)
+        else:
+            body.append(bg_p)
 
         _log.debug(
-            "DOC_BACKGROUND_FROM_BLIP: #%s sampled from rId=%s (%s)",
-            hex_color, rel_id, img_path,
+            "OVERFLOW_BG_RECT: inserted solid-fill rect #%s cx=%d cy=%d (rId=%s)",
+            hex_color, cx_emu, cy_emu, rel_id,
         )
 
     except Exception as exc:
-        _log.debug("DOC_BACKGROUND_SKIP: %s", exc)
+        _log.debug("OVERFLOW_BG_RECT_SKIP: %s", exc)
 
 
 # ---------------------------------------------------------------------------
@@ -2002,11 +2108,12 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         _use_lb = USE_LAYOUT_BLOCK_RENDERER or not _has_runtime_xml
         if _use_lb:
             _render_from_layout_blocks(doc, body, sectPr)
-            # Inherit page background color from blip background image (if any).
-            # Uses PIL to extract dominant edge-pixel color; sets w:background on
-            # the document element so ALL pages share the same background without
-            # cloning any foreground content (photo, icons, drawings).
-            _maybe_set_document_background(d.element, output_path, body)
+            # Inherit page background color for overflow pages.  Extracts the
+            # dominant edge-pixel color from any behindDoc blip background and
+            # inserts a solid-fill rectangle (no image, no text, no foreground
+            # content) at the body end.  That paragraph lands on page 2 when
+            # content overflows, covering it with the same background fill.
+            _maybe_insert_bg_rect(output_path, body, sectPr)
             d.save(output_path)
             return
         _log.debug(
