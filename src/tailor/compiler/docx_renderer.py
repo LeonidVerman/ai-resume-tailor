@@ -1018,13 +1018,7 @@ def _render_docx_native_two_col(
 
 
 def _is_solid_bg_anchor(anchor) -> bool:
-    """True iff *anchor* is a full-page solid-colour background shape.
-
-    Accepts behindDoc anchors that are large (≥ 7 million EMU wide AND
-    ≥ 10 million EMU tall) and carry neither image-blip fill nor embedded
-    text — i.e. only solid-colour or gradient rectangles used as page
-    background bands, not photos, icons, or content labels.
-    """
+    """True iff *anchor* is a full-page solid-colour background shape (no blip)."""
     if anchor is None or anchor.get("behindDoc") != "1":
         return False
     extent = anchor.find(f"{{{_WP}}}extent")
@@ -1044,27 +1038,65 @@ def _is_solid_bg_anchor(anchor) -> bool:
     return True
 
 
-def _find_and_move_bg_to_start(body, sectPr) -> None:
+def _is_bg_anchor_any(anchor) -> bool:
+    """True iff *anchor* is a full-page background shape — solid colour OR raster image.
+
+    Wider than _is_solid_bg_anchor: also accepts blip-based backgrounds so that
+    templates like sample 16 (background image inside a right-column layout block)
+    can have their background cloned onto overflow pages.  Still rejects text boxes.
+    """
+    if anchor is None or anchor.get("behindDoc") != "1":
+        return False
+    extent = anchor.find(f"{{{_WP}}}extent")
+    if extent is None:
+        return False
+    try:
+        cx = int(extent.get("cx", "0"))
+        cy = int(extent.get("cy", "0"))
+    except ValueError:
+        return False
+    if cx < 7_000_000 or cy < 10_000_000:
+        return False
+    if anchor.find(f".//{{{_WPS}}}txbx") is not None:
+        return False
+    return True
+
+
+def _find_and_move_bg_to_start(body, sectPr, allow_blip: bool = False) -> None:
     """Guarantee the page-background drawing anchors page 1.
 
-    1. Scans the rendered body for the first paragraph containing a qualifying
-       behindDoc drawing (solid colour, large extent, no image, no text).
-    2. Moves it to the very start of the body so it is anchored to page 1,
-       regardless of where the template layout block placed it.  This fixes
-       sample 32 where the background drawing ended up on page 2 after overflow.
-    3. Appends a repositioned clone (page-relative 0, 0) just before sectPr
-       so that any overflow continuation page also inherits the background.
+    allow_blip=False (default, regular rendering path):
+      Scans DIRECT body children only for solid-colour backgrounds (no blip).
+      Used for single-column and native-two-col templates to avoid adding
+      spurious clone paragraphs that would change roundtrip structure.
+
+    allow_blip=True (two-col table conversion path):
+      Scans ALL paragraphs including table cells and also accepts raster-image
+      (blip) backgrounds.  Used after the 2-cell table is built so that blip
+      backgrounds inside right-column content (sample 16) are cloned onto the
+      overflow page.
+
+    Body-level paragraphs: moved to body start (fixes sample 32 reversed-background
+      pattern) then cloned before sectPr.
+    Table-cell paragraphs: NOT moved (would break table); clone only.
 
     Safe no-op when no qualifying drawing is found.
     """
     from copy import deepcopy
     from lxml import etree
 
+    _anchor_test = _is_bg_anchor_any if allow_blip else _is_solid_bg_anchor
+    _para_iter = (
+        body.findall(f".//{{{_W}}}p")   # recurse into cells when allow_blip
+        if allow_blip
+        else body.findall(f"{{{_W}}}p")  # direct children only otherwise
+    )
+
     bg_para = None
-    for p in body.findall(f"{{{_W}}}p"):
+    for p in _para_iter:
         for drawing in p.findall(f".//{{{_W}}}drawing"):
             anchor = drawing.find(f".//{{{_WP}}}anchor")
-            if _is_solid_bg_anchor(anchor):
+            if _anchor_test(anchor):
                 bg_para = p
                 break
         if bg_para is not None:
@@ -1073,13 +1105,18 @@ def _find_and_move_bg_to_start(body, sectPr) -> None:
     if bg_para is None:
         return
 
-    # Move bg_para to body start if it is not already the first paragraph.
-    body_paras = [c for c in body if c.tag == f"{{{_W}}}p"]
-    if body_paras and bg_para is not body_paras[0]:
-        body.remove(bg_para)
-        body_paras[0].addprevious(bg_para)
+    # Determine if bg_para is a direct body child (not inside a table cell)
+    bg_parent = bg_para.getparent()
+    bg_is_body_level = bg_parent is not None and bg_parent.tag == f"{{{_W}}}body"
 
-    # Clone with page-relative (0, 0) for overflow pages
+    # Move to body start only for body-level paragraphs not already first
+    if bg_is_body_level:
+        body_paras = [c for c in body if c.tag == f"{{{_W}}}p"]
+        if body_paras and bg_para is not body_paras[0]:
+            body.remove(bg_para)
+            body_paras[0].addprevious(bg_para)
+
+    # Clone with page-relative (0, 0) for overflow pages — always
     clone_p = deepcopy(bg_para)
     pPr = clone_p.find(f"{{{_W}}}pPr")
     if pPr is None:
@@ -1105,7 +1142,10 @@ def _find_and_move_bg_to_start(body, sectPr) -> None:
     else:
         body.append(clone_p)
 
-    _log.debug("OVERFLOW_BG: moved bg para to body start, cloned for overflow page")
+    _log.debug(
+        "OVERFLOW_BG: bg_para found (body_level=%s), cloned for overflow page",
+        bg_is_body_level,
+    )
 
 
 def _find_single_col_break_idx(layout_blocks) -> "int | None":
@@ -1123,18 +1163,28 @@ def _find_single_col_break_idx(layout_blocks) -> "int | None":
     return breaks[0] if len(breaks) == 1 else None
 
 
-def _has_layout_blip_bg(layout_blocks) -> bool:
-    """True if any layout block contains a full-page behindDoc image drawing.
+def _header_paras_have_blip_bg(doc, layout_blocks) -> bool:
+    """True if any HEADER-PARA block contains a full-page behindDoc image drawing.
 
-    Templates that use raster images as page backgrounds (blip-based behindDoc
-    anchors) have complex fixed-position layouts where converting native w:cols
-    to a 2-cell table causes blank pages and reading-order regressions.  Detecting
-    this class of template lets the renderer fall back to native column flow which,
-    while imperfect for overflow continuity, avoids hard-fail visual defects.
+    The critical distinction between blip-background templates:
+
+    - Blip in a HEADER block → that paragraph is rendered as a standalone body
+      element BEFORE the 2-cell table.  LibreOffice then creates a blank middle
+      page from the interaction of the full-page image height with the table
+      row — skip table conversion for these templates (samples 18, 23).
+
+    - Blip in a NON-HEADER block → the paragraph stays INSIDE a table cell.
+      LibreOffice handles this correctly and table conversion proceeds normally
+      (sample 16, where the background image is inside the right-column content).
     """
+    header_para_ids = frozenset(
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    )
     from lxml import etree as _et
     for lb in layout_blocks:
         if not isinstance(lb, LayoutParagraphBlock) or not lb.xml_proto_xml:
+            continue
+        if lb.para_id not in header_para_ids:
             continue
         if "behindDoc" not in lb.xml_proto_xml or "blip" not in lb.xml_proto_xml:
             continue
@@ -1256,6 +1306,15 @@ def _render_layout_two_col_table(
                 try:
                     left_w = int(col_elems[0].get(f"{{{_W}}}w", "0"))
                     right_w = int(col_elems[1].get(f"{{{_W}}}w", "0"))
+                except ValueError:
+                    pass
+            elif len(col_elems) == 1:
+                # Only the first column is explicit; compute second from text area minus
+                # first column width and inter-column space (sample 16 pattern).
+                try:
+                    left_w = int(col_elems[0].get(f"{{{_W}}}w", "0"))
+                    _space = int(col_elems[0].get(f"{{{_W}}}space", "0"))
+                    right_w = max(_text_area - left_w - _space, 1)
                 except ValueError:
                     pass
     if left_w == 0 or right_w == 0:
@@ -1480,7 +1539,11 @@ def _render_from_layout_blocks(
         if _col_break_idx is not None:
             _total_blocks = len(doc.layout_blocks)  # type: ignore[arg-type]
             _col_ratio = _col_break_idx / max(_total_blocks - 1, 1)
-            _has_blip = _has_layout_blip_bg(doc.layout_blocks)  # type: ignore[arg-type]
+            # Skip only when HEADER blocks carry the blip image — those get rendered
+            # as standalone body paragraphs before the table, causing blank middle
+            # pages in LibreOffice (samples 18, 23).  Non-header blip images stay
+            # inside a table cell and do not cause this problem (sample 16).
+            _has_blip = _header_paras_have_blip_bg(doc, doc.layout_blocks)  # type: ignore[arg-type]
             if _col_ratio <= 0.80 and not _has_blip:
                 _render_layout_two_col_table(
                     doc, body, sectPr,
@@ -1488,10 +1551,14 @@ def _render_from_layout_blocks(
                     _main_pgSz_w, _main_pgSz_h,
                     _main_is_multicolumn,
                 )
-                _find_and_move_bg_to_start(body, sectPr)
+                # allow_blip=True: table cells are scanned and blip backgrounds
+                # (sample 16) are cloned for overflow pages
+                _find_and_move_bg_to_start(body, sectPr, allow_blip=True)
                 return
             if _has_blip:
-                _log.debug("LAYOUT_TWO_COL_TABLE_SKIPPED: template has blip bg — using native columns")
+                _log.debug(
+                    "LAYOUT_TWO_COL_TABLE_SKIPPED: header block has blip bg — using native columns"
+                )
             else:
                 _log.debug(
                     "LAYOUT_TWO_COL_TABLE_SKIPPED: col_break_idx=%d total=%d ratio=%.2f > 0.80",
