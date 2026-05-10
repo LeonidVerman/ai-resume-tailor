@@ -68,12 +68,43 @@ def _has_word_columns(docx_path: str) -> bool:
 
 
 def _count_paragraphs(docx_path: str) -> tuple[int, int]:
-    """Return (total_paras, paras_with_text)."""
+    """Return (total_paras, paras_with_text).
+
+    Counts ALL paragraphs including those inside table cells so that
+    templates whose body paragraphs were converted from native w:cols to a
+    2-cell table (for overflow lane stability) are not incorrectly flagged
+    as truncated.
+    """
     from docx import Document
     doc = Document(docx_path)
-    total = len(doc.paragraphs)
-    with_text = sum(1 for p in doc.paragraphs if p.text.strip())
+    all_p = doc.element.body.findall(f".//{{{_W}}}p")
+    total = len(all_p)
+    with_text = sum(
+        1 for p in all_p
+        if "".join(t.text or "" for t in p.findall(f".//{{{_W}}}t")).strip()
+    )
     return total, with_text
+
+
+def _has_table_columns(docx_path: str) -> bool:
+    """True if any body-level table has ≥ 2 cells in a single row.
+
+    When native w:cols is converted to a 2-cell layout table for overflow
+    stability the result is functionally equivalent to native columns.  This
+    check lets the grader distinguish intentional table-based columns from
+    a genuine column-layout loss.
+    """
+    from docx import Document
+    try:
+        doc = Document(docx_path)
+        body = doc.element.body
+        for tbl in body.findall(f"{{{_W}}}tbl"):
+            for tr in tbl.findall(f"{{{_W}}}tr"):
+                if len(tr.findall(f"{{{_W}}}tc")) >= 2:
+                    return True
+        return False
+    except Exception:
+        return False
 
 
 def _count_tables(docx_path: str) -> int:
@@ -107,7 +138,10 @@ def compare_docx_structure(original_path: str, generated_path: str) -> DocxStruc
 
     orig_cols = _has_word_columns(original_path)
     gen_cols = _has_word_columns(generated_path)
-    columns_lost = orig_cols and not gen_cols
+    # Not "columns lost" when native w:cols was intentionally replaced by a
+    # 2-cell layout table for overflow lane stability (Tasks 2+3).
+    _gen_has_tbl_cols = _has_table_columns(generated_path) if orig_cols and not gen_cols else False
+    columns_lost = orig_cols and not gen_cols and not _gen_has_tbl_cols
 
     orig_sections = _count_sections(original_path)
     gen_sections = _count_sections(generated_path)

@@ -1123,6 +1123,42 @@ def _find_single_col_break_idx(layout_blocks) -> "int | None":
     return breaks[0] if len(breaks) == 1 else None
 
 
+def _has_layout_blip_bg(layout_blocks) -> bool:
+    """True if any layout block contains a full-page behindDoc image drawing.
+
+    Templates that use raster images as page backgrounds (blip-based behindDoc
+    anchors) have complex fixed-position layouts where converting native w:cols
+    to a 2-cell table causes blank pages and reading-order regressions.  Detecting
+    this class of template lets the renderer fall back to native column flow which,
+    while imperfect for overflow continuity, avoids hard-fail visual defects.
+    """
+    from lxml import etree as _et
+    for lb in layout_blocks:
+        if not isinstance(lb, LayoutParagraphBlock) or not lb.xml_proto_xml:
+            continue
+        if "behindDoc" not in lb.xml_proto_xml or "blip" not in lb.xml_proto_xml:
+            continue
+        try:
+            elem = _et.fromstring(lb.xml_proto_xml)
+            for anchor in elem.findall(f".//{{{_WP}}}anchor"):
+                if anchor.get("behindDoc") != "1":
+                    continue
+                ext = anchor.find(f"{{{_WP}}}extent")
+                if ext is None:
+                    continue
+                try:
+                    cx = int(ext.get("cx", "0"))
+                    cy = int(ext.get("cy", "0"))
+                except ValueError:
+                    continue
+                if cx >= 7_000_000 and cy >= 10_000_000:
+                    if anchor.find(f".//{{{_DML}}}blip") is not None:
+                        return True
+        except Exception:
+            pass
+    return False
+
+
 def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn):
     """Render one LayoutParagraphBlock → lxml element (None if empty)."""
     from lxml import etree
@@ -1432,15 +1468,20 @@ def _render_from_layout_blocks(
 
     # Task 3 — same-lane column continuation: convert native w:cols to a 2-cell
     # table so right-column overflow stays in the right column on the next page.
-    # Ratio guard: skip when col break is in the last 20% of blocks — in those
-    # templates the right column is very short and table row coupling would
-    # produce extra overflow pages (sample 23 LLM).
+    # Guards:
+    #  • Ratio > 0.80: skip when col break is in the last 20% of blocks — those
+    #    templates have a very short right column; the table's row-height coupling
+    #    produces extra overflow pages instead of fixing them.
+    #  • Blip background: skip when the template contains a full-page raster image
+    #    as a behindDoc drawing.  Those templates have fixed-position layouts where
+    #    the 2-cell table causes blank middle pages and PDF reading-order regressions.
     if _main_is_multicolumn:
         _col_break_idx = _find_single_col_break_idx(doc.layout_blocks)  # type: ignore[arg-type]
         if _col_break_idx is not None:
             _total_blocks = len(doc.layout_blocks)  # type: ignore[arg-type]
             _col_ratio = _col_break_idx / max(_total_blocks - 1, 1)
-            if _col_ratio <= 0.80:
+            _has_blip = _has_layout_blip_bg(doc.layout_blocks)  # type: ignore[arg-type]
+            if _col_ratio <= 0.80 and not _has_blip:
                 _render_layout_two_col_table(
                     doc, body, sectPr,
                     _col_break_idx,
@@ -1449,10 +1490,13 @@ def _render_from_layout_blocks(
                 )
                 _find_and_move_bg_to_start(body, sectPr)
                 return
-            _log.debug(
-                "LAYOUT_TWO_COL_TABLE_SKIPPED: col_break_idx=%d total=%d ratio=%.2f > 0.80",
-                _col_break_idx, _total_blocks, _col_ratio,
-            )
+            if _has_blip:
+                _log.debug("LAYOUT_TWO_COL_TABLE_SKIPPED: template has blip bg — using native columns")
+            else:
+                _log.debug(
+                    "LAYOUT_TWO_COL_TABLE_SKIPPED: col_break_idx=%d total=%d ratio=%.2f > 0.80",
+                    _col_break_idx, _total_blocks, _col_ratio,
+                )
 
     # Collect para_ids referenced by layout_blocks to detect unbound content.
     lb_para_ids: set[str] = set()
