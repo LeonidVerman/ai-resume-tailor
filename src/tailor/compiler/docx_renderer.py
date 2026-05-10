@@ -837,6 +837,8 @@ def _patch_bullet_numbering(d) -> None:
 # ---------------------------------------------------------------------------
 
 _WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+_DML = "http://schemas.openxmlformats.org/drawingml/2006/main"
+_WPS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 
 
 def _fix_anchor_layout_in_cell(cell_elem) -> None:
@@ -1009,6 +1011,330 @@ def _render_docx_native_two_col(
 # Layout-blocks rendering (Option B: XML prototype path)
 # ---------------------------------------------------------------------------
 
+
+# ---------------------------------------------------------------------------
+# Layout-blocks: overflow-page continuation helpers  (Tasks 1–3)
+# ---------------------------------------------------------------------------
+
+
+def _is_solid_bg_anchor(anchor) -> bool:
+    """True iff *anchor* is a full-page solid-colour background shape.
+
+    Accepts behindDoc anchors that are large (≥ 7 million EMU wide AND
+    ≥ 10 million EMU tall) and carry neither image-blip fill nor embedded
+    text — i.e. only solid-colour or gradient rectangles used as page
+    background bands, not photos, icons, or content labels.
+    """
+    if anchor is None or anchor.get("behindDoc") != "1":
+        return False
+    extent = anchor.find(f"{{{_WP}}}extent")
+    if extent is None:
+        return False
+    try:
+        cx = int(extent.get("cx", "0"))
+        cy = int(extent.get("cy", "0"))
+    except ValueError:
+        return False
+    if cx < 7_000_000 or cy < 10_000_000:
+        return False
+    if anchor.find(f".//{{{_DML}}}blip") is not None:
+        return False
+    if anchor.find(f".//{{{_WPS}}}txbx") is not None:
+        return False
+    return True
+
+
+def _find_and_move_bg_to_start(body, sectPr) -> None:
+    """Guarantee the page-background drawing anchors page 1.
+
+    1. Scans the rendered body for the first paragraph containing a qualifying
+       behindDoc drawing (solid colour, large extent, no image, no text).
+    2. Moves it to the very start of the body so it is anchored to page 1,
+       regardless of where the template layout block placed it.  This fixes
+       sample 32 where the background drawing ended up on page 2 after overflow.
+    3. Appends a repositioned clone (page-relative 0, 0) just before sectPr
+       so that any overflow continuation page also inherits the background.
+
+    Safe no-op when no qualifying drawing is found.
+    """
+    from copy import deepcopy
+    from lxml import etree
+
+    bg_para = None
+    for p in body.findall(f"{{{_W}}}p"):
+        for drawing in p.findall(f".//{{{_W}}}drawing"):
+            anchor = drawing.find(f".//{{{_WP}}}anchor")
+            if _is_solid_bg_anchor(anchor):
+                bg_para = p
+                break
+        if bg_para is not None:
+            break
+
+    if bg_para is None:
+        return
+
+    # Move bg_para to body start if it is not already the first paragraph.
+    body_paras = [c for c in body if c.tag == f"{{{_W}}}p"]
+    if body_paras and bg_para is not body_paras[0]:
+        body.remove(bg_para)
+        body_paras[0].addprevious(bg_para)
+
+    # Clone with page-relative (0, 0) for overflow pages
+    clone_p = deepcopy(bg_para)
+    pPr = clone_p.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        pPr = etree.SubElement(clone_p, f"{{{_W}}}pPr")
+        clone_p.insert(0, pPr)
+    spacing = pPr.find(f"{{{_W}}}spacing")
+    if spacing is None:
+        spacing = etree.SubElement(pPr, f"{{{_W}}}spacing")
+    spacing.set(f"{{{_W}}}after", "0")
+    spacing.set(f"{{{_W}}}line", "20")
+    spacing.set(f"{{{_W}}}lineRule", "exact")
+    for anchor in clone_p.findall(f".//{{{_WP}}}anchor"):
+        for tag in ("positionH", "positionV"):
+            pos = anchor.find(f"{{{_WP}}}{tag}")
+            if pos is not None:
+                pos.set("relativeFrom", "page")
+                off_el = pos.find(f"{{{_WP}}}posOffset")
+                if off_el is not None:
+                    off_el.text = "0"
+
+    if sectPr is not None:
+        sectPr.addprevious(clone_p)
+    else:
+        body.append(clone_p)
+
+    _log.debug("OVERFLOW_BG: moved bg para to body start, cloned for overflow page")
+
+
+def _find_single_col_break_idx(layout_blocks) -> "int | None":
+    """Return index of the sole column-break paragraph block, or None.
+
+    Returns None when there are 0 or 2+ column breaks — those layouts use a
+    different structure and should be left to native w:cols handling.
+    """
+    breaks = [
+        i for i, lb in enumerate(layout_blocks)
+        if isinstance(lb, LayoutParagraphBlock)
+        and lb.xml_proto_xml
+        and 'type="column"' in lb.xml_proto_xml
+    ]
+    return breaks[0] if len(breaks) == 1 else None
+
+
+def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn):
+    """Render one LayoutParagraphBlock → lxml element (None if empty)."""
+    from lxml import etree
+    if not block.xml_proto_xml:
+        return None
+    elem = etree.fromstring(block.xml_proto_xml)
+    _strip_last_rendered_page_breaks(elem)
+    _strip_non_column_section_break(elem, main_pgSz_w, main_pgSz_h, main_is_multicolumn)
+    _strip_column_break(elem)
+    pm = para_lookup.get(block.para_id) if block.para_id else None
+    if pm is not None:
+        _set_para_text(elem, pm.text)
+    return elem
+
+
+def _extract_first_tblPr(layout_blocks):
+    """Return a deep copy of tblPr from the first LayoutTableBlock, or None."""
+    from copy import deepcopy
+    from lxml import etree as _et
+    for lb in layout_blocks:
+        if isinstance(lb, LayoutTableBlock) and lb.xml_proto_xml:
+            try:
+                tbl_el = _et.fromstring(lb.xml_proto_xml)
+                tblPr = tbl_el.find(f"{{{_W}}}tblPr")
+                if tblPr is not None:
+                    return deepcopy(tblPr)
+            except Exception:
+                pass
+    return None
+
+
+def _add_tbl_no_borders(tblPr) -> None:
+    """Append no-border tblBorders to *tblPr*."""
+    from lxml import etree
+    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+        brd.set(f"{{{_W}}}val", "none")
+
+
+def _add_tbl_zero_cell_margins(tblPr) -> None:
+    """Append zero tblCellMar to *tblPr*."""
+    from lxml import etree
+    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        m = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+        m.set(f"{{{_W}}}w", "0")
+        m.set(f"{{{_W}}}type", "dxa")
+
+
+def _render_layout_two_col_table(
+    doc,
+    body,
+    sectPr,
+    col_break_idx: int,
+    main_pgSz_w,
+    main_pgSz_h,
+    main_is_multicolumn: bool,
+) -> None:
+    """Convert a native two-column layout into a 2-cell table for overflow stability.
+
+    Task 2 — table borders:
+        Uses the first LayoutTableBlock tblPr from each column (right preferred)
+        so templates with styled borders (e.g. sample 16 green borders) retain
+        them on overflow pages.  Falls back to no-borders when none found.
+
+    Task 3 — same column / same lane:
+        Left cell  → layout_blocks[:col_break_idx] excluding header-para blocks
+        Right cell → layout_blocks[col_break_idx+1:]
+        Header blocks (para_id in doc.header_paras) are rendered as normal
+        paragraphs BEFORE the table so they are never inside a repeating row.
+
+    Removes w:cols from sectPr so LibreOffice uses table layout, not native
+    columns, for the rendered body — preventing the overflow column-jump.
+    """
+    from copy import deepcopy
+    from lxml import etree
+
+    para_lookup = _build_para_lookup(doc)
+
+    # Column widths from sectPr w:cols/w:col elements
+    _pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
+    _pgMar = sectPr.find(f"{{{_W}}}pgMar") if sectPr is not None else None
+    _page_w = int(_pgSz.get(f"{{{_W}}}w", "12240")) if _pgSz is not None else 12240
+    _mar_left = int(_pgMar.get(f"{{{_W}}}left", "0")) if _pgMar is not None else 0
+    _mar_right = int(_pgMar.get(f"{{{_W}}}right", "0")) if _pgMar is not None else 0
+    _text_area = max(_page_w - _mar_left - _mar_right, 1)
+
+    left_w = right_w = 0
+    if sectPr is not None:
+        cols_elem = sectPr.find(f"{{{_W}}}cols")
+        if cols_elem is not None:
+            col_elems = cols_elem.findall(f"{{{_W}}}col")
+            if len(col_elems) == 2:
+                try:
+                    left_w = int(col_elems[0].get(f"{{{_W}}}w", "0"))
+                    right_w = int(col_elems[1].get(f"{{{_W}}}w", "0"))
+                except ValueError:
+                    pass
+    if left_w == 0 or right_w == 0:
+        left_w = right_w = _text_area // 2
+    else:
+        _col_sum = left_w + right_w
+        if _col_sum < _text_area * 0.92:
+            left_w = round(left_w / _col_sum * _text_area)
+            right_w = _text_area - left_w
+
+    # Remove w:cols so LibreOffice does not double-apply column flow to the table
+    if sectPr is not None:
+        cols_to_remove = sectPr.find(f"{{{_W}}}cols")
+        if cols_to_remove is not None:
+            sectPr.remove(cols_to_remove)
+
+    # Separate header blocks from left-column content (Task 3: no header in table)
+    header_para_ids = frozenset(
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    )
+    all_left = list(doc.layout_blocks[:col_break_idx])  # type: ignore[index]
+    right_blocks = list(doc.layout_blocks[col_break_idx + 1:])  # type: ignore[index]
+
+    header_blocks: list = []
+    left_blocks: list = []
+    for blk in all_left:
+        if isinstance(blk, LayoutParagraphBlock) and blk.para_id in header_para_ids:
+            header_blocks.append(blk)
+        else:
+            left_blocks.append(blk)
+
+    # Render header blocks as normal paragraphs before the table
+    for blk in header_blocks:
+        hdr_elem = _render_block_into_elem(
+            blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
+        )
+        if hdr_elem is not None:
+            if sectPr is not None:
+                sectPr.addprevious(hdr_elem)
+            else:
+                body.append(hdr_elem)
+
+    # Build tblPr: inherit borders from source table when available (Task 2)
+    source_tblPr = _extract_first_tblPr(right_blocks) or _extract_first_tblPr(left_blocks)
+
+    tbl = etree.Element(f"{{{_W}}}tbl")
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW_el.set(f"{{{_W}}}w", str(left_w + right_w))
+    tblW_el.set(f"{{{_W}}}type", "dxa")
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+
+    if source_tblPr is not None:
+        for child_tag in ("tblBorders", "tblCellMar", "tblCellSpacing", "tblLook"):
+            src_child = source_tblPr.find(f"{{{_W}}}{child_tag}")
+            if src_child is not None:
+                tblPr.append(deepcopy(src_child))
+        if source_tblPr.find(f"{{{_W}}}tblBorders") is None:
+            _add_tbl_no_borders(tblPr)
+        if source_tblPr.find(f"{{{_W}}}tblCellMar") is None:
+            _add_tbl_zero_cell_margins(tblPr)
+    else:
+        _add_tbl_no_borders(tblPr)
+        _add_tbl_zero_cell_margins(tblPr)
+
+    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+    def _fill_cell(tc, blocks) -> None:
+        for blk in blocks:
+            if isinstance(blk, LayoutTableBlock):
+                tbl_el = etree.fromstring(blk.xml_proto_xml)
+                for para_id, p_el in zip(blk.para_ids, tbl_el.findall(f".//{{{_W}}}p")):
+                    pm = para_lookup.get(para_id)
+                    if pm is not None:
+                        _set_para_text(p_el, pm.text)
+                tc.append(tbl_el)
+            else:
+                el = _render_block_into_elem(
+                    blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
+                )
+                if el is not None:
+                    tc.append(el)
+        has_content = any(c.tag != f"{{{_W}}}tcPr" for c in list(tc))
+        if not has_content:
+            etree.SubElement(tc, f"{{{_W}}}p")
+        _fix_anchor_layout_in_cell(tc)
+
+    left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
+    left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
+    left_tcW.set(f"{{{_W}}}w", str(left_w))
+    left_tcW.set(f"{{{_W}}}type", "dxa")
+    etree.SubElement(left_tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+    _fill_cell(left_tc, left_blocks)
+
+    right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
+    right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
+    right_tcW.set(f"{{{_W}}}w", str(right_w))
+    right_tcW.set(f"{{{_W}}}type", "dxa")
+    etree.SubElement(right_tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+    _fill_cell(right_tc, right_blocks)
+
+    if sectPr is not None:
+        sectPr.addprevious(tbl)
+    else:
+        body.append(tbl)
+
+    _log.debug(
+        "LAYOUT_TWO_COL_TABLE: header=%d left=%d/%d-twips right=%d/%d-twips",
+        len(header_blocks), len(left_blocks), left_w, len(right_blocks), right_w,
+    )
+
+
 def _build_para_lookup(doc: ResumeDocument) -> dict[str, ParaModel]:
     """Build para_id → ParaModel from all semantic-model paragraphs.
 
@@ -1103,6 +1429,30 @@ def _render_from_layout_blocks(
             _mnum = _mcols.get(f"{{{_W}}}num")
             if _mnum is not None and int(_mnum) >= 2:
                 _main_is_multicolumn = True
+
+    # Task 3 — same-lane column continuation: convert native w:cols to a 2-cell
+    # table so right-column overflow stays in the right column on the next page.
+    # Ratio guard: skip when col break is in the last 20% of blocks — in those
+    # templates the right column is very short and table row coupling would
+    # produce extra overflow pages (sample 23 LLM).
+    if _main_is_multicolumn:
+        _col_break_idx = _find_single_col_break_idx(doc.layout_blocks)  # type: ignore[arg-type]
+        if _col_break_idx is not None:
+            _total_blocks = len(doc.layout_blocks)  # type: ignore[arg-type]
+            _col_ratio = _col_break_idx / max(_total_blocks - 1, 1)
+            if _col_ratio <= 0.80:
+                _render_layout_two_col_table(
+                    doc, body, sectPr,
+                    _col_break_idx,
+                    _main_pgSz_w, _main_pgSz_h,
+                    _main_is_multicolumn,
+                )
+                _find_and_move_bg_to_start(body, sectPr)
+                return
+            _log.debug(
+                "LAYOUT_TWO_COL_TABLE_SKIPPED: col_break_idx=%d total=%d ratio=%.2f > 0.80",
+                _col_break_idx, _total_blocks, _col_ratio,
+            )
 
     # Collect para_ids referenced by layout_blocks to detect unbound content.
     lb_para_ids: set[str] = set()
@@ -1246,6 +1596,10 @@ def _render_from_layout_blocks(
             sectPr.addprevious(elem)
         else:
             body.append(elem)
+
+    # Task 1 — page background: ensure background para anchors page 1 and clone
+    # for any overflow continuation page.
+    _find_and_move_bg_to_start(body, sectPr)
 
 
 # ---------------------------------------------------------------------------
