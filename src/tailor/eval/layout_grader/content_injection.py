@@ -80,6 +80,50 @@ def _is_llm_section(heading: str) -> bool:
     return any(kw in h for kw in _LLM_SECTION_KEYWORDS)
 
 
+def _parse_llm_target_text(llm_text: str) -> str:
+    """Extract only the target-section content from the raw LLM output string.
+
+    The LLM output is free text that may include header contact info, Education,
+    Languages, References, and other non-target sections alongside the rewritten
+    Summary, Experience, and Skills content.  Including all of it in the Jaccard
+    denominator dilutes sim_llm with tokens that should never appear in the
+    rendered target sections.
+
+    This function splits the output by candidate section headings (short
+    alphabetic lines that match _LLM_SECTION_KEYWORDS) and collects content
+    only from target sections.
+
+    Heuristic heading detection:
+      - 1–5 words, all alphabetic characters (plus /, space)
+      - Does NOT look like a bullet, date, or contact line
+    """
+    lines = llm_text.splitlines()
+    current_is_target = False
+    parts: list[str] = []
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        # Detect section heading: short, mostly alphabetic, no digits or @ or |
+        words = stripped.split()
+        _alpha_only = re.sub(r"[^a-zA-Z ]", "", stripped).strip()
+        is_heading = (
+            1 <= len(words) <= 5
+            and len(_alpha_only) >= len(stripped) * 0.80  # ≥ 80% alphabetic
+            and not any(ch in stripped for ch in "@|0123456789+")
+        )
+        if is_heading:
+            current_is_target = _is_llm_section(stripped)
+            if current_is_target:
+                parts.append(stripped)
+        elif current_is_target:
+            parts.append(stripped)
+
+    return " ".join(parts)
+
+
 def _ir_split_text(ir: dict) -> tuple[str, str]:
     """Split IR text into (llm_target_text, template_preserved_text).
 
@@ -182,13 +226,17 @@ def check_content_injection(
     if has_placeholder:
         evidence.append("Template placeholder text still present in rendered output")
 
-    # ── sim_llm: LLM-targeted sections vs LLM output ─────────────────────────
-    # Measures whether Professional Summary / Experience / Skills were rewritten.
-    llm_target_tokens = _tokenize(llm_target_text)
-    llm_tokens = _tokenize(llm_text)
+    # ── sim_llm: rendered target sections vs LLM target sections ─────────────
+    # Both sides are filtered to Summary/Experience/Skills only.
+    # Jaccard(rendered_target, llm_target) answers: "of the unique vocabulary
+    # that appeared in the LLM's rewritten sections, what fraction also appears
+    # in the rendered output's corresponding sections?"  This avoids dilution
+    # from non-target LLM content (Education, Languages, References, header).
+    llm_target_portion = _parse_llm_target_text(llm_text)
+    llm_target_tokens = _tokenize(llm_target_portion) if llm_target_portion else _tokenize(llm_text)
 
-    if llm_target_tokens and llm_tokens:
-        sim_llm = _jaccard(llm_target_tokens, llm_tokens)
+    if llm_target_text and llm_target_tokens:
+        sim_llm = _jaccard(_tokenize(llm_target_text), llm_target_tokens)
     else:
         sim_llm = 0.0
 
