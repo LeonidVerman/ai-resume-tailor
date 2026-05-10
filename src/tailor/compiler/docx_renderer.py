@@ -1523,42 +1523,17 @@ def _render_layout_two_col_table(
         if cols_to_remove is not None:
             sectPr.remove(cols_to_remove)
 
-    # Separate header blocks from left-column content (Task 3: no header in table)
-    header_para_ids = frozenset(
-        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
-    )
-    all_left = list(doc.layout_blocks[:col_break_idx])  # type: ignore[index]
+    # All left-column blocks go into the left cell — INCLUDING the contact/header
+    # paragraphs.  Previously these were extracted and rendered as body-level
+    # paragraphs BEFORE the table, but that consumed vertical space on page 1
+    # that caused LibreOffice to push the entire table to page 2.  With the
+    # table starting at the very top of the body, the page-1 area is fully
+    # available and the row splits correctly at the overflow point.
+    # The identity (name, title) paragraphs in the right column are kept as-is:
+    # they appear at the TOP of the right cell on page 1, and the overflow on
+    # page 2 begins only after those paragraphs — they do NOT repeat on page 2.
+    left_blocks = list(doc.layout_blocks[:col_break_idx])  # type: ignore[index]
     right_blocks = list(doc.layout_blocks[col_break_idx + 1:])  # type: ignore[index]
-
-    header_blocks: list = []
-    left_blocks: list = []
-    for blk in all_left:
-        if isinstance(blk, LayoutParagraphBlock) and blk.para_id in header_para_ids:
-            header_blocks.append(blk)
-        else:
-            left_blocks.append(blk)
-
-    # Render header blocks as normal paragraphs before the table
-    for blk in header_blocks:
-        hdr_elem = _render_block_into_elem(
-            blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
-        )
-        if hdr_elem is not None:
-            if sectPr is not None:
-                sectPr.addprevious(hdr_elem)
-            else:
-                body.append(hdr_elem)
-
-    # Strip pre-content identity blocks from the right column.
-    # The right column often begins with the candidate name, title, and empty
-    # spacers (all centered) before any actual body section.  These are already
-    # shown visually via the template's behindDoc composite background image
-    # and must NOT go into the right table cell — on overflow pages the cell
-    # restarts and the name/title would appear on page 2.
-    # The blip anchor paragraph(s) are kept at the front of the right cell so
-    # the background image continues to cover page 1 correctly.
-    _right_blip_blks, _right_dropped, _right_content_blks = _split_right_col_identity(right_blocks)
-    right_blocks = _right_blip_blks + _right_content_blks
 
     # Build tblPr: inherit borders from source table when available (Task 2).
     # When no source table exists, use no visible borders but add an insideV
@@ -1647,8 +1622,8 @@ def _render_layout_two_col_table(
         body.append(tbl)
 
     _log.debug(
-        "LAYOUT_TWO_COL_TABLE: header=%d left=%d/%d-twips right=%d/%d-twips accent=%s",
-        len(header_blocks), len(left_blocks), left_w, len(right_blocks), right_w, _accent,
+        "LAYOUT_TWO_COL_TABLE: left=%d/%d-twips right=%d/%d-twips accent=%s",
+        len(left_blocks), left_w, len(right_blocks), right_w, _accent,
     )
 
 
