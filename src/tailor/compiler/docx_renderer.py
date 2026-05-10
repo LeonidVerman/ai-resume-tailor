@@ -1349,6 +1349,98 @@ def _detect_accent_color(layout_blocks) -> "str | None":
     return max(counts, key=counts.get) if counts else None
 
 
+def _split_right_col_identity(right_blocks):
+    """Separate pre-content identity blocks from body-content blocks in the right column.
+
+    In two-column templates (e.g. sample 16) the right column often starts with
+    candidate identity paragraphs — the name, title, and associated empty spacers —
+    before any actual content sections (PROFILE, EXPERIENCES, SKILLS, etc.).
+
+    These identity paragraphs are:
+    - CENTERED (w:jc val='center') — distinguishing them from body content
+    - Empty spacers between the centered identity paragraphs
+    - All appear BEFORE the first non-centered, non-empty body paragraph
+
+    They must NOT go into the right table cell because when the table row spans
+    pages the right cell begins fresh on the overflow page, causing the name and
+    title to appear on page 2.  Instead they are silently dropped: the template's
+    behindDoc composite background image already provides the visual representation
+    of the name and title on page 1.  The blip anchor paragraph is kept as the
+    FIRST element of the right cell so the background image still covers page 1.
+
+    Returns (blip_blocks, identity_dropped, content_blocks):
+      blip_blocks    — behindDoc large-extent anchor paragraphs (kept at cell front)
+      identity_dropped — centered + empty paragraphs before first content (dropped)
+      content_blocks — body content from first non-centered non-empty paragraph
+    """
+    from lxml import etree as _et
+
+    blip_blocks: list = []
+    dropped: list = []
+    i = 0
+    while i < len(right_blocks):
+        blk = right_blocks[i]
+        if not isinstance(blk, LayoutParagraphBlock) or not blk.xml_proto_xml:
+            # Non-paragraph block (table) → treat as content start
+            break
+        try:
+            elem = _et.fromstring(blk.xml_proto_xml)
+        except Exception:
+            break
+
+        # Is it a large behindDoc anchor (background image)?
+        is_blip = False
+        for anc in elem.findall(f".//{{{_WP}}}anchor"):
+            if anc.get("behindDoc") != "1":
+                continue
+            ext = anc.find(f"{{{_WP}}}extent")
+            if ext is None:
+                continue
+            try:
+                if int(ext.get("cx", "0")) >= 7_000_000 and int(ext.get("cy", "0")) >= 10_000_000:
+                    is_blip = True
+                    break
+            except ValueError:
+                pass
+        if is_blip:
+            blip_blocks.append(blk)
+            i += 1
+            continue
+
+        # Is it a centered paragraph?
+        pPr = elem.find(f"{{{_W}}}pPr")
+        jc_val = ""
+        if pPr is not None:
+            jc_el = pPr.find(f"{{{_W}}}jc")
+            if jc_el is not None:
+                jc_val = jc_el.get(f"{{{_W}}}val", "")
+
+        # Non-empty text in the paragraph?
+        text = "".join(t.text or "" for t in elem.findall(f".//{{{_W}}}t")).strip()
+
+        if jc_val == "center":
+            # Centered paragraph (name, title, etc.) — drop
+            dropped.append(blk)
+            i += 1
+            continue
+
+        if not text:
+            # Empty spacer before we've seen real content — drop
+            dropped.append(blk)
+            i += 1
+            continue
+
+        # First non-centered non-empty paragraph: content starts here
+        break
+
+    content_blocks = right_blocks[i:]
+    _log.debug(
+        "RIGHT_COL_IDENTITY_STRIP: blip=%d dropped=%d content=%d",
+        len(blip_blocks), len(dropped), len(content_blocks),
+    )
+    return blip_blocks, dropped, content_blocks
+
+
 def _render_layout_two_col_table(
     doc,
     body,
@@ -1456,6 +1548,17 @@ def _render_layout_two_col_table(
                 sectPr.addprevious(hdr_elem)
             else:
                 body.append(hdr_elem)
+
+    # Strip pre-content identity blocks from the right column.
+    # The right column often begins with the candidate name, title, and empty
+    # spacers (all centered) before any actual body section.  These are already
+    # shown visually via the template's behindDoc composite background image
+    # and must NOT go into the right table cell — on overflow pages the cell
+    # restarts and the name/title would appear on page 2.
+    # The blip anchor paragraph(s) are kept at the front of the right cell so
+    # the background image continues to cover page 1 correctly.
+    _right_blip_blks, _right_dropped, _right_content_blks = _split_right_col_identity(right_blocks)
+    right_blocks = _right_blip_blks + _right_content_blks
 
     # Build tblPr: inherit borders from source table when available (Task 2).
     # When no source table exists, use no visible borders but add an insideV
