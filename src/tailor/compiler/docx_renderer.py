@@ -1833,6 +1833,120 @@ def _render_from_layout_blocks(
 
 
 # ---------------------------------------------------------------------------
+# Background color inheritance from blip image
+# ---------------------------------------------------------------------------
+
+def _maybe_set_document_background(doc_element, docx_path: str, body) -> None:
+    """Set w:background on the document using the dominant color from a behindDoc blip.
+
+    When a template uses a full-page raster image as its page background
+    (behindDoc anchor with large extent and a blip), overflow pages lack the
+    background because the drawing is anchored to a body paragraph on page 1.
+    The image cannot be cloned (it contains composite foreground content — photo,
+    icons, divider).
+
+    Safe alternative: extract the DOMINANT BACKGROUND COLOR from the image
+    (sampling edge pixels away from photo/icon regions) and set it as the
+    document-level w:background.  This applies to ALL pages automatically with
+    no foreground content copied.
+
+    Silently skips when:
+    - No qualifying behindDoc blip found in body
+    - PIL (Pillow) is not installed
+    - Dominant color is pure white (no meaningful background)
+    - Any I/O or image-decoding error
+    """
+    _WP_NS = _WP
+    _DML_NS = _DML
+    _RELS_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
+    _R_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+
+    # Find first behindDoc blip anchor in the body (including inside table cells)
+    rel_id: "str | None" = None
+    for anchor in body.findall(f".//{{{_WP_NS}}}anchor"):
+        if anchor.get("behindDoc") != "1":
+            continue
+        ext = anchor.find(f"{{{_WP_NS}}}extent")
+        if ext is None:
+            continue
+        try:
+            cx = int(ext.get("cx", "0"))
+            cy = int(ext.get("cy", "0"))
+        except ValueError:
+            continue
+        if cx < 7_000_000 or cy < 10_000_000:
+            continue
+        blip = anchor.find(f".//{{{_DML_NS}}}blip")
+        if blip is None:
+            continue
+        rel_id = blip.get(f"{{{_R_NS}}}embed")
+        break
+
+    if not rel_id:
+        return
+
+    try:
+        import zipfile as _zf
+        from PIL import Image as _PILImage
+        import io as _io
+
+        with _zf.ZipFile(docx_path, "r") as zf:
+            rels_data = zf.read("word/_rels/document.xml.rels")
+            from lxml import etree as _et
+            rels_xml = _et.fromstring(rels_data)
+            img_path: "str | None" = None
+            for rel in rels_xml.findall(f".//{{{_RELS_NS}}}Relationship"):
+                if rel.get("Id") == rel_id:
+                    target = rel.get("Target", "")
+                    img_path = (
+                        f"word/{target}" if not target.startswith("/") else target[1:]
+                    )
+                    break
+            if not img_path:
+                return
+            img_bytes = zf.read(img_path)
+
+        img = _PILImage.open(_io.BytesIO(img_bytes)).convert("RGB")
+        iw, ih = img.size
+
+        # Sample edge pixels well away from any centered photo/icon content.
+        # Background images typically have uniform fill at page margins.
+        sample_pts = [
+            (max(iw // 20, 1), ih // 2),       # left edge, mid-height
+            (max(iw // 20, 1), ih * 3 // 4),   # left edge, lower
+            (iw * 19 // 20, ih // 2),            # right edge, mid-height
+            (iw * 19 // 20, ih * 3 // 4),        # right edge, lower
+            (iw // 2, ih * 9 // 10),              # bottom center
+        ]
+        pixels = [img.getpixel(pt) for pt in sample_pts]
+        r = sorted(p[0] for p in pixels)[len(pixels) // 2]
+        g = sorted(p[1] for p in pixels)[len(pixels) // 2]
+        b = sorted(p[2] for p in pixels)[len(pixels) // 2]
+        hex_color = f"{r:02X}{g:02X}{b:02X}"
+
+        if hex_color.upper() == "FFFFFF":
+            return
+
+        # Set w:background on the document root (child of w:document, before w:body)
+        existing = doc_element.find(f"{{{_W}}}background")
+        if existing is None:
+            from lxml import etree as _et2
+            bg_elem = _et2.Element(f"{{{_W}}}background")
+            doc_element.insert(0, bg_elem)
+        else:
+            bg_elem = existing
+        bg_elem.set(f"{{{_W}}}color", hex_color)
+
+        _log.debug(
+            "DOC_BACKGROUND_FROM_BLIP: #%s sampled from rId=%s (%s)",
+            hex_color, rel_id, img_path,
+        )
+
+    except Exception as exc:
+        _log.debug("DOC_BACKGROUND_SKIP: %s", exc)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -1888,6 +2002,11 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         _use_lb = USE_LAYOUT_BLOCK_RENDERER or not _has_runtime_xml
         if _use_lb:
             _render_from_layout_blocks(doc, body, sectPr)
+            # Inherit page background color from blip background image (if any).
+            # Uses PIL to extract dominant edge-pixel color; sets w:background on
+            # the document element so ALL pages share the same background without
+            # cloning any foreground content (photo, icons, drawings).
+            _maybe_set_document_background(d.element, output_path, body)
             d.save(output_path)
             return
         _log.debug(
