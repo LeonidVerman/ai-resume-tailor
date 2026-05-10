@@ -842,18 +842,30 @@ _WPS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 
 
 def _fix_anchor_layout_in_cell(cell_elem) -> None:
-    """Set layoutInCell='0' on every floating anchor inside *cell_elem*.
+    """Selectively apply layoutInCell to anchored drawings inside a table cell.
 
-    Floating anchors with layoutInCell='1' interpret their position offsets
-    relative to the containing table cell instead of the page.  For background
-    decoration shapes that use absolute page-relative coordinates (e.g. the
-    full-page grey header/sidebar drawing group in the veeva_03 template), this
-    causes the drawing to shift down when the paragraph that owns it is placed
-    inside a table cell.  Setting layoutInCell='0' restores page-relative
-    positioning so the drawing always appears at its intended page coordinates.
+    Full-page behindDoc backgrounds (cx ≥ 7 M EMU, cy ≥ 10 M EMU) get
+    layoutInCell='0' so they use page-level coordinates and cover the full
+    page regardless of cell boundaries.
+
+    All other anchors are left UNCHANGED.  Foreground drawings (photo, contact
+    icons, etc.) must keep their original layoutInCell value so they appear
+    only on the page where their anchor paragraph's cell content is visible,
+    not bleeding onto overflow continuation pages where the cell is empty.
     """
     for anchor in cell_elem.findall(f".//{{{_WP}}}anchor"):
-        anchor.set("layoutInCell", "0")
+        if anchor.get("behindDoc") != "1":
+            continue
+        ext = anchor.find(f"{{{_WP}}}extent")
+        if ext is None:
+            continue
+        try:
+            cx = int(ext.get("cx", "0"))
+            cy = int(ext.get("cy", "0"))
+        except ValueError:
+            continue
+        if cx >= 7_000_000 and cy >= 10_000_000:
+            anchor.set("layoutInCell", "0")
 
 
 def _render_docx_native_two_col(
@@ -1259,6 +1271,84 @@ def _add_tbl_zero_cell_margins(tblPr) -> None:
         m.set(f"{{{_W}}}type", "dxa")
 
 
+_EMU_PER_TWIP = 635  # 914400 EMU/inch ÷ 1440 twip/inch
+
+
+def _fix_col_relative_anchors(elem, col_x_emu: int) -> None:
+    """Convert posH relativeFrom='column' → relativeFrom='page' for behindDoc backgrounds.
+
+    When w:cols is removed from sectPr (table conversion), any anchor that uses
+    posH relativeFrom='column' loses its correct reference: the 'column' it
+    addressed (e.g. the right column at x=5599 twips) is replaced by the single
+    remaining column at x=margin_left.  This causes full-page background images
+    to shift hundreds of twips to the left, damaging page 1 layout.
+
+    Fix: for behindDoc, large-extent anchors, compute the absolute page x-position
+    (col_x_emu + posH_offset_emu) and rewrite the anchor as page-relative.
+    For very tall anchors (full-page height) also convert posV paragraph-relative
+    to page-relative offset=0 so the background starts at the page top.
+
+    Only behindDoc anchors are touched; foreground drawings are left unchanged.
+    """
+    for anchor in elem.findall(f".//{{{_WP}}}anchor"):
+        if anchor.get("behindDoc") != "1":
+            continue
+        ext = anchor.find(f"{{{_WP}}}extent")
+        if ext is None:
+            continue
+        try:
+            cx = int(ext.get("cx", "0"))
+            cy = int(ext.get("cy", "0"))
+        except ValueError:
+            continue
+        if cx < 7_000_000 or cy < 10_000_000:
+            continue
+        # Fix posH: column-relative → absolute page position
+        posH = anchor.find(f"{{{_WP}}}positionH")
+        if posH is not None and posH.get("relativeFrom") == "column":
+            off_el = posH.find(f"{{{_WP}}}posOffset")
+            if off_el is not None:
+                try:
+                    abs_x = col_x_emu + int(off_el.text or "0")
+                    posH.set("relativeFrom", "page")
+                    off_el.text = str(abs_x)
+                except ValueError:
+                    pass
+        # Fix posV: paragraph-relative → page top for full-page backgrounds
+        posV = anchor.find(f"{{{_WP}}}positionV")
+        if posV is not None and posV.get("relativeFrom") == "paragraph":
+            posV.set("relativeFrom", "page")
+            off_el = posV.find(f"{{{_WP}}}posOffset")
+            if off_el is not None:
+                off_el.text = "0"
+
+
+def _detect_accent_color(layout_blocks) -> "str | None":
+    """Return the most-used non-black/white hex color across all layout blocks.
+
+    Used to pick a table column-divider color that matches the template's visual
+    accent color (e.g. the green used for section headings and phone text in
+    sample 16) when no source tblPr border style is available.
+    """
+    from lxml import etree as _et
+    counts: dict[str, int] = {}
+    for lb in layout_blocks:
+        if not isinstance(lb, LayoutParagraphBlock) or not lb.xml_proto_xml:
+            continue
+        try:
+            elem = _et.fromstring(lb.xml_proto_xml)
+            for rPr in elem.findall(f".//{{{_W}}}rPr"):
+                color = rPr.find(f"{{{_W}}}color")
+                if color is None:
+                    continue
+                val = (color.get(f"{{{_W}}}val") or "").upper()
+                if val and val not in ("AUTO", "000000", "FFFFFF"):
+                    counts[val] = counts.get(val, 0) + 1
+        except Exception:
+            pass
+    return max(counts, key=counts.get) if counts else None
+
+
 def _render_layout_two_col_table(
     doc,
     body,
@@ -1297,7 +1387,10 @@ def _render_layout_two_col_table(
     _mar_right = int(_pgMar.get(f"{{{_W}}}right", "0")) if _pgMar is not None else 0
     _text_area = max(_page_w - _mar_left - _mar_right, 1)
 
-    left_w = right_w = 0
+    # Parse column widths and inter-column space from sectPr.
+    # _col_space is needed for both the width calculation and the column-x-offset
+    # computation used when converting column-relative anchor positions to page-relative.
+    left_w = right_w = _col_space = 0
     if sectPr is not None:
         cols_elem = sectPr.find(f"{{{_W}}}cols")
         if cols_elem is not None:
@@ -1306,15 +1399,15 @@ def _render_layout_two_col_table(
                 try:
                     left_w = int(col_elems[0].get(f"{{{_W}}}w", "0"))
                     right_w = int(col_elems[1].get(f"{{{_W}}}w", "0"))
+                    _col_space = int(col_elems[0].get(f"{{{_W}}}space", "0"))
                 except ValueError:
                     pass
             elif len(col_elems) == 1:
-                # Only the first column is explicit; compute second from text area minus
-                # first column width and inter-column space (sample 16 pattern).
+                # Only first column explicit; compute second from text area (sample 16).
                 try:
                     left_w = int(col_elems[0].get(f"{{{_W}}}w", "0"))
-                    _space = int(col_elems[0].get(f"{{{_W}}}space", "0"))
-                    right_w = max(_text_area - left_w - _space, 1)
+                    _col_space = int(col_elems[0].get(f"{{{_W}}}space", "0"))
+                    right_w = max(_text_area - left_w - _col_space, 1)
                 except ValueError:
                     pass
     if left_w == 0 or right_w == 0:
@@ -1324,6 +1417,13 @@ def _render_layout_two_col_table(
         if _col_sum < _text_area * 0.92:
             left_w = round(left_w / _col_sum * _text_area)
             right_w = _text_area - left_w
+
+    # Precompute column left-edge x-positions in EMU for anchor-position correction.
+    # When w:cols is removed (below), any anchor using posH relativeFrom='column'
+    # would use the wrong reference; _fix_col_relative_anchors corrects this BEFORE
+    # the table is rendered, preserving page-1 layout (sample 16 background image).
+    _left_col_x_emu = _mar_left * _EMU_PER_TWIP
+    _right_col_x_emu = _left_col_x_emu + (left_w + _col_space) * _EMU_PER_TWIP
 
     # Remove w:cols so LibreOffice does not double-apply column flow to the table
     if sectPr is not None:
@@ -1357,8 +1457,13 @@ def _render_layout_two_col_table(
             else:
                 body.append(hdr_elem)
 
-    # Build tblPr: inherit borders from source table when available (Task 2)
+    # Build tblPr: inherit borders from source table when available (Task 2).
+    # When no source table exists, use no visible borders but add an insideV
+    # border matching the template's accent color as a column-divider line.
+    # This preserves the vertical lane separator on overflow pages without
+    # cloning the blip background image (which contains foreground elements).
     source_tblPr = _extract_first_tblPr(right_blocks) or _extract_first_tblPr(left_blocks)
+    _accent = _detect_accent_color(left_blocks + right_blocks)
 
     tbl = etree.Element(f"{{{_W}}}tbl")
     tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
@@ -1379,11 +1484,21 @@ def _render_layout_two_col_table(
             _add_tbl_zero_cell_margins(tblPr)
     else:
         _add_tbl_no_borders(tblPr)
+        # When the template uses an accent color (e.g. sample 16 green), use it
+        # for the insideV border as a column divider on overflow pages.
+        if _accent:
+            tblBorders = tblPr.find(f"{{{_W}}}tblBorders")
+            if tblBorders is not None:
+                iv = tblBorders.find(f"{{{_W}}}insideV")
+                if iv is not None:
+                    iv.set(f"{{{_W}}}val", "single")
+                    iv.set(f"{{{_W}}}sz", "6")
+                    iv.set(f"{{{_W}}}color", _accent)
         _add_tbl_zero_cell_margins(tblPr)
 
     tr = etree.SubElement(tbl, f"{{{_W}}}tr")
 
-    def _fill_cell(tc, blocks) -> None:
+    def _fill_cell(tc, blocks, col_x_emu: int) -> None:
         for blk in blocks:
             if isinstance(blk, LayoutTableBlock):
                 tbl_el = etree.fromstring(blk.xml_proto_xml)
@@ -1397,6 +1512,10 @@ def _render_layout_two_col_table(
                     blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
                 )
                 if el is not None:
+                    # Convert column-relative background anchor positions to page-relative
+                    # BEFORE w:cols is used by LibreOffice: prevents background image
+                    # from shifting when the column reference changes (sample 16 fix).
+                    _fix_col_relative_anchors(el, col_x_emu)
                     tc.append(el)
         has_content = any(c.tag != f"{{{_W}}}tcPr" for c in list(tc))
         if not has_content:
@@ -1409,7 +1528,7 @@ def _render_layout_two_col_table(
     left_tcW.set(f"{{{_W}}}w", str(left_w))
     left_tcW.set(f"{{{_W}}}type", "dxa")
     etree.SubElement(left_tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
-    _fill_cell(left_tc, left_blocks)
+    _fill_cell(left_tc, left_blocks, _left_col_x_emu)
 
     right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
     right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
@@ -1417,7 +1536,7 @@ def _render_layout_two_col_table(
     right_tcW.set(f"{{{_W}}}w", str(right_w))
     right_tcW.set(f"{{{_W}}}type", "dxa")
     etree.SubElement(right_tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
-    _fill_cell(right_tc, right_blocks)
+    _fill_cell(right_tc, right_blocks, _right_col_x_emu)
 
     if sectPr is not None:
         sectPr.addprevious(tbl)
@@ -1425,8 +1544,8 @@ def _render_layout_two_col_table(
         body.append(tbl)
 
     _log.debug(
-        "LAYOUT_TWO_COL_TABLE: header=%d left=%d/%d-twips right=%d/%d-twips",
-        len(header_blocks), len(left_blocks), left_w, len(right_blocks), right_w,
+        "LAYOUT_TWO_COL_TABLE: header=%d left=%d/%d-twips right=%d/%d-twips accent=%s",
+        len(header_blocks), len(left_blocks), left_w, len(right_blocks), right_w, _accent,
     )
 
 
@@ -1551,9 +1670,9 @@ def _render_from_layout_blocks(
                     _main_pgSz_w, _main_pgSz_h,
                     _main_is_multicolumn,
                 )
-                # allow_blip=True: table cells are scanned and blip backgrounds
-                # (sample 16) are cloned for overflow pages
-                _find_and_move_bg_to_start(body, sectPr, allow_blip=True)
+                # Solid-colour backgrounds only — blip images are composite and
+                # must not be cloned (they contain foreground photo/icon content).
+                _find_and_move_bg_to_start(body, sectPr)
                 return
             if _has_blip:
                 _log.debug(
