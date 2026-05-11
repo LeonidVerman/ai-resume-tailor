@@ -1001,6 +1001,7 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
     dash_bounds = [
         i for i, ln in enumerate(body_lines)
         if _ROLE_BODY_SEP_RE.search(ln)
+        and not _STANDALONE_DATE_LINE_RE.match(ln.strip())
     ]
     date_bounds = [
         i for i, ln in enumerate(body_lines)
@@ -1451,6 +1452,11 @@ def _extract_company_tokens(text: str) -> frozenset[str]:
 
     Strips date ranges, splits on common role separators (pipe, dash) to keep
     only the company half, removes stop-words and punctuation.
+
+    Also splits concatenated digit+letter sequences (e.g. "2023Ginyard" →
+    "2023 ginyard") so Pattern B combined headers ("2023Ginyard Co. Title")
+    yield the same company token ("ginyard") as the LLM's dash-separated
+    header ("Ginyard Co. — Title").
     """
     # Drop parenthesised date ranges like "(2014-Now)", "(2010–2013)"
     text = re.sub(r"\([^)]*(?:19|20)\d{2}[^)]*\)", "", text)
@@ -1459,6 +1465,8 @@ def _extract_company_tokens(text: str) -> frozenset[str]:
     company_part = parts[0].strip().lower()
     # Remove punctuation
     company_part = re.sub(r"[^\w\s]", " ", company_part)
+    # Split concatenated year+word tokens (e.g. "2023ginyard" → "2023 ginyard")
+    company_part = re.sub(r"(?<=\d)(?=[a-z])", " ", company_part)
     tokens = frozenset(
         t for t in company_part.split()
         if t and t not in _COMPANY_STOP_WORDS and len(t) > 1
@@ -1656,6 +1664,13 @@ def _match_llm_to_ir_roles(
                 continue
             union = ir_tokens | llm_tokens
             score = len(ir_tokens & llm_tokens) / len(union)
+            # Subset bonus: if all LLM company tokens appear in the (broader)
+            # IR tokens — typical for Pattern B combined headers where the IR
+            # para reads "2023Ginyard Co. Title" and the LLM para reads
+            # "Ginyard Co. — Title" giving IR={"2023","ginyard",...},
+            # LLM={"ginyard"}.  Jaccard alone is low; boost to 0.5.
+            if llm_tokens and llm_tokens <= ir_tokens:
+                score = max(score, 0.5)
             if score > best_score:
                 best_score = score
                 best_llm_idx = llm_idx
