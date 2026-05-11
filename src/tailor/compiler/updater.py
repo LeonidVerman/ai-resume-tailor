@@ -1761,6 +1761,8 @@ def _update_experience_date_first(
     # When the template has no bullet-semantic paragraphs for a role (e.g. only a
     # single placeholder paragraph classified as header_extra), fall back to updating
     # header_extra paragraphs so LLM content is still injected.
+    # _extra_injections: anchor_para_id → [extra ParaModel, ...]
+    _extra_injections: "dict[str, list[ParaModel]]" = {}
     for ir_idx, ir_role in enumerate(rebuilt_roles):
         llm_idx = match_map[ir_idx]
         if llm_idx is None:
@@ -1801,15 +1803,49 @@ def _update_experience_date_first(
                 )
                 bullet_para.text = llm_bullets[i]
 
-    # Return with roles=[] so all_paras builder uses body_paras order
-    return ResumeSection(
+        # Extra LLM bullets beyond the template's existing slots.
+        # Clone from the last target paragraph; tag with synthetic para_ids so the
+        # layout-block injector in apply_tailored can place them at the right position.
+        if targets and len(llm_bullets) > len(targets):
+            arch = targets[-1]
+            arch_pid = arch.para_id  # injection anchor: insert after this block
+            if arch_pid:
+                for j, extra_text in enumerate(llm_bullets[len(targets):]):
+                    extra_pm = arch.clone_as(extra_text)
+                    extra_pm.para_id = f"{arch_pid}_ext_{j + 1}"
+                    _extra_injections.setdefault(arch_pid, []).append(extra_pm)
+                    _log.debug(
+                        "date-first: extra bullet para %r → %r",
+                        extra_pm.para_id,
+                        extra_text[:40],
+                    )
+
+    # Insert extra paragraphs into body_paras at the correct positions so they
+    # appear in document order (critical for the two-column table renderer).
+    if _extra_injections:
+        new_body: list[ParaModel] = []
+        for pm in orig.body_paras:
+            new_body.append(pm)
+            extras = _extra_injections.get(pm.para_id)
+            if extras:
+                new_body.extend(extras)
+        result_body = new_body
+    else:
+        result_body = orig.body_paras
+
+    # Return with roles=[] so all_paras builder uses body_paras order.
+    # Attach _extra_injections so apply_tailored can inject matching layout_blocks.
+    result = ResumeSection(
         title=orig.title,
         heading=orig.heading,
         semantic_type=orig.semantic_type,
-        body_paras=orig.body_paras,
+        body_paras=result_body,
         roles=[],
         section_id=orig.section_id,
     )
+    if _extra_injections:
+        result._extra_injections = _extra_injections  # type: ignore[attr-defined]
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -4024,6 +4060,40 @@ def apply_tailored(
                 "MULTI_COPY_TEMPLATE_DETECTED: %d copies, trimmed to first copy only",
                 _n_copies,
             )
+
+    # Inject extra layout_blocks for date-first extra bullets.
+    # _update_experience_date_first attaches _extra_injections (anchor_para_id →
+    # [ParaModel, ...]) when LLM produced more bullets than the template has slots.
+    # For each anchor, insert cloned LayoutParagraphBlock entries immediately after
+    # the anchor's block so the two-column table renderer places extras in the right
+    # position (not at the end-of-column catch-all).
+    _all_extra_injections: "dict[str, list[ParaModel]]" = {}
+    for _sec in new_sections:
+        _ei = getattr(_sec, "_extra_injections", None)
+        if _ei:
+            _all_extra_injections.update(_ei)
+    if _all_extra_injections:
+        from tailor.compiler.models import LayoutParagraphBlock as _LPB
+        _new_lb = list(_result_layout_blocks)
+        _offset = 0  # running offset from prior insertions
+        for _i, _blk in enumerate(list(_result_layout_blocks)):
+            if not isinstance(_blk, _LPB):
+                continue
+            _extras = _all_extra_injections.get(_blk.para_id)
+            if not _extras:
+                continue
+            _insert_at = _i + 1 + _offset
+            _new_blocks = [
+                _LPB(para_id=_pm.para_id, xml_proto_xml=_blk.xml_proto_xml)
+                for _pm in _extras
+            ]
+            _new_lb[_insert_at:_insert_at] = _new_blocks
+            _offset += len(_new_blocks)
+            _log.debug(
+                "DATE_FIRST_EXTRA_BULLETS_INJECTED: anchor=%r extra_count=%d",
+                _blk.para_id, len(_extras),
+            )
+        _result_layout_blocks = _new_lb
 
     _result = ResumeDocument(
         header_paras=effective_header_paras,
