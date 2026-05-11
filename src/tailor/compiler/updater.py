@@ -1754,7 +1754,20 @@ def _update_experience_classified(
     - Only bullet text is updated.
     - IR role count is authoritative: extra LLM roles are ignored; extra IR
       roles beyond the LLM output are kept verbatim.
+
+    When the template stores experience as flat body_paras (orig.roles=[]),
+    falls back to _update_body_classified so the LLM content is not silently
+    dropped.
     """
+    # Template has no role structure — treat like a body section so LLM
+    # content is applied to body_paras rather than silently dropped.
+    if not orig.roles:
+        _log.debug(
+            "classification: experience section %r has no roles → delegating to body update",
+            orig.title,
+        )
+        return _update_body_classified(orig, llm, cls_sec, layout_bound=layout_bound)
+
     # Resolve LLM roles: try pipe format first, then dash/date format.
     llm_roles = llm.roles
     if not llm_roles and llm.body_lines and orig.roles:
