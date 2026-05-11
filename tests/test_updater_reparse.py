@@ -73,19 +73,24 @@ class TestAsciiHyphenDateBoundary:
         assert roles[0].bullets == ["Streamlined office operations."]
         assert roles[0].meta_lines == ["Jan 20XX - Current"]
 
-    def test_en_dash_with_spaces_hits_strategy1(self):
-        # " – " triggers the existing em/en-dash boundary (Strategy 1):
-        # the boundary line itself becomes the header, not a meta line.
+    def test_en_dash_date_range_uses_strategy2(self):
+        # "Jan 20XX – Current" is a standalone date range (matches
+        # _STANDALONE_DATE_LINE_RE), so it is excluded from dash_bounds and
+        # Strategy 2 is used.  The date line becomes meta; the following line
+        # becomes the role header — same as the ASCII-hyphen case above.
         lines = ["Jan 20XX – Current", "Engineer, Corp", "Built things."]
         roles = _reparse_body_lines_as_roles(lines)
         assert len(roles) == 1
-        assert "Jan 20XX" in roles[0].header  # boundary line is the header in strategy 1
+        assert "Engineer" in roles[0].header
+        assert any("Jan 20XX" in m for m in roles[0].meta_lines)
+        assert roles[0].bullets == ["Built things."]
 
-    def test_em_dash_with_spaces_hits_strategy1(self):
+    def test_em_dash_date_range_uses_strategy2(self):
         lines = ["Jan 20XX — Current", "Engineer, Corp", "Built things."]
         roles = _reparse_body_lines_as_roles(lines)
         assert len(roles) == 1
-        assert "Jan 20XX" in roles[0].header
+        assert "Engineer" in roles[0].header
+        assert any("Jan 20XX" in m for m in roles[0].meta_lines)
 
     def test_no_spaces_around_hyphen(self):
         lines = ["Jan 20XX-Current", "Engineer, Corp", "Built things."]
