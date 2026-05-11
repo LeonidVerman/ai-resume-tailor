@@ -68,6 +68,7 @@ class SamplePair:
     cls_path: Path             # *_input.json classification file
     resume_path: Path          # actual .docx / .pdf template file
     gen_path: Path             # generation JSON
+    cls_output_path: Optional[Path] = None  # *_cls_output.json (ClassificationOutput)
 
 
 # ---------------------------------------------------------------------------
@@ -156,12 +157,19 @@ def discover(filter_arg: Optional[str] = None) -> tuple[list[SamplePair], list[s
                 )
                 continue
 
+            # Look for companion ClassificationOutput file (*_cls_output.json).
+            output_stem = re.sub(r"_input$", "", cls_stem)
+            cls_output_path = cls_path.parent / f"{output_stem}_cls_output.json"
+            if not cls_output_path.exists():
+                cls_output_path = None
+
             pairs.append(SamplePair(
                 prefix=n,
                 source_kind=kind,
                 cls_path=cls_path,
                 resume_path=resume_path,
                 gen_path=gen_path,
+                cls_output_path=cls_output_path,
             ))
             matched_any = True
 
@@ -244,7 +252,22 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
     out_docx = out_rend_dir / f"{stem}.docx"
     out_pdf  = out_rend_dir / f"{stem}.pdf"
 
-    # ── Stage 3: run the webapp rendering pipeline ─────────────────────────
+    # ── Stage 3: load classification if a companion *_cls_output.json exists ─
+    classification = None
+    if pair.cls_output_path is not None:
+        try:
+            sys.path.insert(0, str(_REPO / "src"))
+            from tailor.compiler.classification_models import ClassificationOutput
+            with open(pair.cls_output_path, encoding="utf-8") as f:
+                cls_dict = json.load(f)
+            classification = ClassificationOutput.from_dict(cls_dict)
+            if verbose:
+                print(f"  cls_output: {pair.cls_output_path.relative_to(_REPO)}")
+        except Exception as e:
+            print(f"{tag} WARN [stage=load-classification] {type(e).__name__}: {e} — rendering without classification")
+            classification = None
+
+    # ── Stage 4: run the webapp rendering pipeline ─────────────────────────
     try:
         sys.path.insert(0, str(_REPO / "src"))
         from tailor.compiler.pipeline import compile_resume
@@ -253,7 +276,7 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
             template_path=str(pair.resume_path),
             llm_text=llm_text,
             output_path=str(out_docx),
-            classification=None,   # classification format mismatch — see module docs
+            classification=classification,
         )
     except Exception as e:
         print(f"{tag} FAIL [stage=compile-resume] {type(e).__name__}: {e}")
@@ -264,7 +287,7 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
     if verbose:
         print(f"  DOCX  -> {out_docx.relative_to(_REPO)}")
 
-    # ── Stage 4: save fresh IR ─────────────────────────────────────────────
+    # ── Stage 5: save fresh IR ─────────────────────────────────────────────
     try:
         with open(out_ir, "w", encoding="utf-8") as f:
             json.dump(updated.to_dict(), f, indent=2, ensure_ascii=False)
