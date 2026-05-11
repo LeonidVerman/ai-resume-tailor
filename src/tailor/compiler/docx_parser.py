@@ -546,8 +546,17 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             # all other pre-role content is silently skipped
         elif state == "header":
             if s == "role_meta":
-                meta.append(pm)
-                state = "meta"
+                if header_is_role_meta:
+                    # Pattern B continuation: a new role_meta arrived before any
+                    # bullets were collected.  This is the next role boundary —
+                    # flush the current (possibly bullet-less) role and start over.
+                    _flush()
+                    header = pm
+                    header_is_role_meta = True
+                    state = "header"
+                else:
+                    meta.append(pm)
+                    state = "meta"
             elif s == "bullet":
                 bullets.append(pm)
                 state = "bullets"
@@ -562,6 +571,17 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                     pm.semantic = "role_meta"
                     meta.append(pm)
                     state = "meta"
+                elif header_is_role_meta:
+                    # Pattern B: non-date paragraph after a role_meta header.
+                    # Long text (>60 chars) is body content → treat as bullet.
+                    # Short text (≤60 chars) is likely a job title → add to
+                    # meta so it is included in all_paras (header_extra is not).
+                    if len(_txt) > 60:
+                        bullets.append(pm)
+                        state = "bullets"
+                    else:
+                        meta.append(pm)
+                        state = "meta"
                 else:
                     # Multi-line role header: Word can wrap long headers across
                     # two paragraphs.  Collect as header_extra; do not render.
