@@ -1555,6 +1555,68 @@ def _rebuild_date_first_roles(section: "ResumeSection") -> "list[RoleEntry]":
     return roles
 
 
+def _rebuild_roles_from_classification(
+    section: "ResumeSection",
+    cls_sec: "ClassificationSection",
+) -> "list[RoleEntry]":
+    """Rebuild RoleEntry list from classification block para_id assignments.
+
+    Used when the parser produced no role structure (e.g. Pattern B where
+    year+company+title appear in one role_meta paragraph) but the classification
+    LLM correctly identified role boundaries from the paragraph sequence.
+
+    Returned RoleEntry objects hold direct references to the ParaModel objects
+    inside body_paras (no copies are made), so in-place text updates by
+    _update_experience_date_first propagate back to body_paras automatically.
+    """
+    para_map: dict[str, "ParaModel"] = {
+        p.para_id: p for p in section.body_paras if p.para_id
+    }
+
+    roles: list[RoleEntry] = []
+    for cls_role in cls_sec.roles:
+        header_para: "ParaModel | None" = None
+        for block in cls_role.header_blocks:
+            p = para_map.get(block.para_id)
+            if p is not None:
+                header_para = p
+                break
+
+        if header_para is None:
+            _log.debug(
+                "cls-rebuild: role %r has no resolvable header para — skipped",
+                cls_role.role_id,
+            )
+            continue
+
+        meta_lines = [
+            para_map[b.para_id]
+            for b in cls_role.meta_blocks
+            if b.para_id in para_map
+        ]
+        bullets = [
+            para_map[b.para_id]
+            for b in cls_role.body_blocks
+            if b.para_id in para_map
+        ]
+
+        roles.append(RoleEntry(
+            header=header_para,
+            header_extra=[],
+            meta_lines=meta_lines,
+            bullets=bullets,
+            role_id=header_para.text.strip(),
+            role_id_stable=header_para.para_id or header_para.text.strip(),
+        ))
+
+    _log.debug(
+        "cls-rebuild: section %r → %d roles from classification "
+        "(cls_roles=%d, body_paras=%d)",
+        section.title, len(roles), len(cls_sec.roles), len(section.body_paras),
+    )
+    return roles
+
+
 def _match_llm_to_ir_roles(
     llm_roles: "list[LlmRole]",
     ir_roles: "list[RoleEntry]",
@@ -3025,7 +3087,12 @@ def apply_tailored(
             cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
             if cls_sec is not None and cls_sec.rewrite_policy == "preserve":
                 return orig_section
-            rebuilt = _rebuild_date_first_roles(orig_section)
+            # When classification has roles, use them to reconstruct role
+            # boundaries instead of the deterministic date-first heuristic.
+            if cls_sec is not None and cls_sec.roles:
+                rebuilt = _rebuild_roles_from_classification(orig_section, cls_sec)
+            else:
+                rebuilt = _rebuild_date_first_roles(orig_section)
             return _update_experience_date_first(orig_section, llm_section, rebuilt)
 
         # Classification-constrained path: look up by stable section_id.
