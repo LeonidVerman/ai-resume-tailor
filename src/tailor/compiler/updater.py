@@ -268,16 +268,13 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
         for i in range(min(n_orig, n_llm)):
             new_bullets.append(orig.bullets[i].with_text(llm.bullets[i]))
         if n_llm > n_orig:
-            # Pack extra LLM bullets into the last slot so no generated content
-            # is lost.  Use "; " separator — the renderer strips \n from text
-            # (_set_para_text line 118) so newline packing would concatenate.
-            extras = llm.bullets[n_orig:]
-            packed = new_bullets[-1].text + "; " + "; ".join(e.strip() for e in extras)
-            new_bullets[-1] = orig.bullets[-1].with_text(packed)
+            # Extra bullets: clone_as unbound paragraphs so they flow to overflow
+            # pages naturally rather than being concatenated into the last slot.
+            for extra_text in llm.bullets[n_orig:]:
+                new_bullets.append(arch.clone_as(extra_text, "bullet"))
             _log.debug(
-                "CONTENT_OVERFLOW_DETECTED: %d extra bullets for role %r — "
-                "CONTENT_REFLOW_APPLIED: packed into last slot",
-                len(extras), orig.role_id[:40],
+                "CONTENT_OVERFLOW_REFLOW: %d extra bullets for role %r → unbound paras",
+                n_llm - n_orig, orig.role_id[:40],
             )
     else:
         for i, bullet_text in enumerate(llm.bullets):
@@ -551,26 +548,13 @@ def _update_body_section(
     # Fall back to heading only when the section has no content paragraphs at all.
     arch = content_paras[0] if content_paras else orig.heading
 
-    # In layout-bound mode with more LLM lines than content slots: pack the extra
-    # lines into the last slot (newline-separated) so no generated content is lost.
-    # Budget enforcement is skipped for summary/skills body para_ids, so the
-    # expanded text survives apply_anchor_budgets unchanged.
+    # No packing: extra lines become unbound paragraphs that flow to overflow pages.
+    packed_llm = llm_lines
     if layout_bound and content_paras and len(llm_lines) > len(content_paras):
-        n_extra = len(llm_lines) - len(content_paras)
-        extras = llm_lines[len(content_paras):]
-        # Use "; " separator instead of "\n" — the DOCX renderer strips newlines
-        # from paragraph text (_set_para_text replaces \n with ""), so \n packing
-        # would silently concatenate category lines (e.g. "OracleDevOps").
-        sep = "; "
-        packed_last = llm_lines[len(content_paras) - 1] + sep + (sep.join(e.strip() for e in extras))
-        packed_llm = llm_lines[: len(content_paras) - 1] + [packed_last]
         _log.debug(
-            "CONTENT_OVERFLOW_DETECTED: %d extra lines from %r — "
-            "SKILLS_PACKED_WITH_SEPARATOR: packed into last body slot (sep=%r, n=%d)",
-            n_extra, orig.title[:40], sep, n_extra,
+            "CONTENT_OVERFLOW_REFLOW: %d extra lines from %r → unbound paras",
+            len(llm_lines) - len(content_paras), orig.title[:40],
         )
-    else:
-        packed_llm = llm_lines
 
     # Build updated versions of each content para (paired by position with LLM lines).
     updated: list[ParaModel] = []
@@ -579,10 +563,9 @@ def _update_body_section(
             updated.append(content_paras[i].with_text(line))
             _log.debug("UPDATER_LAYOUT_BOUND_REPLACEMENT: para_id=%r → %r",
                        content_paras[i].para_id, line[:60])
-        elif not layout_bound:
-            updated.append(arch.clone_as(line, "paragraph"))
         else:
-            _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: %r (no slot)", line[:60])
+            # Extra line: clone_as unbound so it flows to overflow pages
+            updated.append(arch.clone_as(line, "paragraph"))
 
     # Rebuild body_paras:
     # - empty paras → preserved (spacing)
@@ -605,10 +588,10 @@ def _update_body_section(
             new_body.append(p)  # keep original so para_id stays bound in layout tree
         # else (non-layout-bound): LLM produced fewer lines — drop trailing para
 
-    # Append extra LLM lines beyond the original content para count (non-layout-bound only).
-    if not layout_bound:
-        for i in range(len(content_paras), len(packed_llm)):
-            new_body.append(updated[i])
+    # Append any remaining unbound extra paras (LLM content beyond template slots).
+    # This covers both layout-bound (overflow reflow) and non-layout-bound cases.
+    for extra_pm in updated[content_cursor:]:
+        new_body.append(extra_pm)
 
     return ResumeSection(
         title=llm.heading,
@@ -1123,8 +1106,8 @@ def _update_role_bullets_only(
     Used when the LLM wrote roles in dash format: the header text is unreliable
     (formatting differs from template) so only the bullet content is used.
 
-    When *layout_bound* is True, extra bullets beyond the original count are
-    dropped instead of being cloned into unbound paragraphs.
+    When *layout_bound* is True, extra bullets beyond the original count become
+    unbound paragraphs that flow to overflow pages.
     """
     arch = orig.bullets[0] if orig.bullets else orig.header
     new_bullets: list[ParaModel] = []
@@ -1134,16 +1117,22 @@ def _update_role_bullets_only(
         for i in range(min(n_orig, n_llm)):
             new_bullets.append(orig.bullets[i].with_text(llm_bullets[i]))
         if n_llm > n_orig:
-            # Pack all extra bullets into the last slot so no LLM content is lost.
-            # Use "; " separator — renderer strips \n from text (_set_para_text).
-            extras = llm_bullets[n_orig:]
-            packed = new_bullets[-1].text + "; " + "; ".join(e.strip() for e in extras)
-            new_bullets[-1] = orig.bullets[-1].with_text(packed)
+            # Extra bullets: clone_as unbound so they flow to overflow pages.
+            for extra_text in llm_bullets[n_orig:]:
+                new_bullets.append(arch.clone_as(extra_text, "bullet"))
             _log.debug(
-                "CONTENT_OVERFLOW_DETECTED: %d extra bullets (bullets-only) — "
-                "CONTENT_REFLOW_APPLIED: packed into last slot",
-                len(extras),
+                "CONTENT_OVERFLOW_REFLOW: %d extra bullets (bullets-only) → unbound paras",
+                n_llm - n_orig,
             )
+    elif layout_bound and not orig.bullets and llm_bullets:
+        # Template role has no bullet slots — all LLM bullets become unbound paras
+        # that flow to overflow pages rather than being silently dropped.
+        for text in llm_bullets:
+            new_bullets.append(arch.clone_as(text, "bullet"))
+        _log.debug(
+            "CONTENT_OVERFLOW_REFLOW: %d LLM bullets → unbound paras (no template slots)",
+            len(llm_bullets),
+        )
     else:
         for i, text in enumerate(llm_bullets):
             if i < len(orig.bullets):
@@ -1819,6 +1808,7 @@ def _update_experience_classified(
         semantic_type=orig.semantic_type,
         body_paras=orig.body_paras,
         roles=updated_roles,
+        section_id=orig.section_id,
     )
 
 
@@ -1876,6 +1866,7 @@ def _update_body_classified(
             semantic_type=orig.semantic_type,
             body_paras=new_body,
             roles=[],
+            section_id=orig.section_id,
         )
 
     # No structure constraint — use existing body update, then restore heading if needed.
@@ -1894,6 +1885,7 @@ def _update_body_classified(
             semantic_type=updated.semantic_type,
             body_paras=updated.body_paras,
             roles=[],
+            section_id=orig.section_id,
         )
     return updated
 
@@ -2412,35 +2404,14 @@ def enforce_no_unbound_paragraphs(
         items: "list[ParaModel]",
         context: str,
     ) -> "list[ParaModel]":
-        """Return a new list with unbound non-empty items packed into the last anchor."""
+        """Keep all items including unbound — extra content flows to overflow pages."""
         unbound_texts = [p.text for p in items if not p.para_id and p.text.strip()]
-        if not unbound_texts:
-            return items
-        # Build a map of para_id → (possibly updated) para for anchored items
-        anchored: list[ParaModel] = [p for p in items if p.para_id and p.text.strip()]
-        if anchored:
-            packed_text = anchored[-1].text + "\n" + "\n".join(unbound_texts)
-            anchored_map: dict[str, ParaModel] = {p.para_id: p for p in anchored}
-            anchored_map[anchored[-1].para_id] = anchored[-1].with_text(packed_text)
+        if unbound_texts:
             _log.debug(
-                "STRUCTURAL_REPAIR_ATTEMPTED: packed %d unbound into %s",
+                "CONTENT_OVERFLOW_REFLOW: keeping %d unbound para(s) in %s for overflow rendering",
                 len(unbound_texts), context,
             )
-        else:
-            anchored_map = {}
-            _log.debug(
-                "STRUCTURAL_REPAIR_ATTEMPTED: dropped %d unbound (no anchor) from %s",
-                len(unbound_texts), context,
-            )
-        # Rebuild: spacers kept; anchored replaced with (possibly packed) version; unbound dropped
-        result: list[ParaModel] = []
-        for p in items:
-            if not p.text.strip():
-                result.append(p)       # spacer / empty → keep
-            elif p.para_id:
-                result.append(anchored_map.get(p.para_id, p))  # anchored
-            # unbound non-empty: drop
-        return result
+        return list(items)
 
     # Header paras — normally never have unbound content, but check as a safety net
     if any(not p.para_id and p.text.strip() for p in effective_header_paras):
