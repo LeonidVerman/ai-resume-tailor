@@ -269,8 +269,8 @@ class TestHardBanSyntheticSections:
 # ---------------------------------------------------------------------------
 
 class TestSkillsOverflowDrop:
-    def test_skills_8_lines_2_slots_packs_overflow(self, monkeypatch):
-        """8 LLM skill lines with 2 original slots → all 8 lines packed across 2 slots."""
+    def test_skills_8_lines_2_slots_reflow_as_unbound(self, monkeypatch):
+        """8 LLM skill lines with 2 original slots → 2 bound + 6 unbound overflow paras."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -295,16 +295,21 @@ class TestSkillsOverflowDrop:
 
         skills = next(s for s in updated.sections if s.semantic_type == "skills")
         content = [p for p in skills.body_paras if p.text.strip()]
-        assert len(content) == 2, f"expected 2 content paras, got {len(content)}"
-        # First slot: first LLM line
-        assert "Python" in content[0].text
-        # Last slot: second LLM line + all extras packed — nothing dropped
-        combined = content[0].text + " " + content[1].text
+        # 8 total: 2 bound + 6 unbound overflow
+        assert len(content) == 8, f"expected 8 content paras, got {len(content)}"
+        bound = [p for p in content if p.para_id]
+        unbound = [p for p in content if not p.para_id]
+        assert len(bound) == 2, f"expected 2 bound paras, got {len(bound)}"
+        assert len(unbound) == 6, f"expected 6 unbound overflow paras, got {len(unbound)}"
+        # First bound slot: first LLM line
+        assert "Python" in bound[0].text
+        # All content present across bound + overflow paras
+        combined = " ".join(p.text for p in content)
         for expected in ["AWS", "PostgreSQL", "Kafka", "TensorFlow", "React", "GraphQL", "Linux"]:
-            assert expected in combined, f"{expected!r} missing from packed content"
+            assert expected in combined, f"{expected!r} missing from content"
 
-    def test_skills_overflow_no_unbound_paras(self, monkeypatch):
-        """Skills overflow drop leaves zero unbound non-empty paras."""
+    def test_skills_overflow_creates_unbound_paras(self, monkeypatch):
+        """Skills overflow creates unbound overflow paras (4 extra → 4 unbound paras)."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -319,7 +324,8 @@ class TestSkillsOverflowDrop:
         updated = apply_tailored(doc, llm_secs)
 
         metrics = validate_layout_binding(updated)
-        assert metrics["unbound_non_empty_paras"] == 0
+        # 4 extra lines → 4 unbound overflow paras
+        assert metrics["unbound_non_empty_paras"] == 4
 
 
 # ---------------------------------------------------------------------------

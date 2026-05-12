@@ -29,17 +29,19 @@ def check_layout_bound_ir_health(doc: "ResumeDocument") -> dict:  # type: ignore
     """Check layout-bound invariants on a ResumeDocument.
 
     Returns a dict with:
-      A. non_empty_unbound_semantic_paras  — para_id='' with text
+      A. non_empty_unbound_semantic_paras  — para_id='' with text (INFO: overflow reflow)
       B. synthetic_sections               — section_id='' with content
       C. unbound_layout_blocks            — LayoutParagraphBlock with para_id=''
       D. split_brain_experience           — experience has roles AND role-like body_paras
-      E. role_bullets_unbound             — role bullet with para_id=''
+      E. role_bullets_unbound             — role bullet with para_id='' (INFO: overflow reflow)
       F. role_count                       — total experience roles across all sections
       G. layout_blocks_count              — total layout_blocks entries
       H. layout_semantic_mismatches       — layout para_ids not in semantic model
 
-    Hard violations (must be 0): A, B, C, D, E
-    Info: F, G, H
+    Hard violations (must be 0): B, C, D
+    Info: A, E, F, G, H
+    Note: A and E are intentionally allowed — unbound paras are overflow-reflow content
+          that flows to continuation pages via the renderer.
     """
     from tailor.compiler.models import LayoutParagraphBlock, LayoutTableBlock
 
@@ -145,10 +147,19 @@ def _print_summary(doc: "ResumeDocument", violations: dict) -> None:
     print(f"  layout_blocks_count          : {violations['layout_blocks_count']}")
     print(f"  role_count (all experience)  : {violations['role_count']}")
 
-    hard = {k: v for k, v in violations.items()
-            if k not in ("role_count", "layout_blocks_count", "layout_semantic_mismatches")}
+    # A (non_empty_unbound_semantic_paras) and E (role_bullets_unbound) are intentionally
+    # info-only: unbound paras are overflow-reflow content that flows to continuation pages.
+    _INFO_KEYS = frozenset({
+        "role_count", "layout_blocks_count", "layout_semantic_mismatches",
+        "non_empty_unbound_semantic_paras", "role_bullets_unbound",
+    })
+    hard = {k: v for k, v in violations.items() if k not in _INFO_KEYS}
     total_hard = sum(hard.values())
-    info = {"layout_semantic_mismatches": violations["layout_semantic_mismatches"]}
+    info = {
+        "layout_semantic_mismatches": violations["layout_semantic_mismatches"],
+        "non_empty_unbound_semantic_paras (overflow)": violations["non_empty_unbound_semantic_paras"],
+        "role_bullets_unbound (overflow)": violations["role_bullets_unbound"],
+    }
 
     print(f"\n  Hard violations (must be 0):")
     for k, v in hard.items():
@@ -217,8 +228,12 @@ def assert_layout_bound_clean(
     violations = check_layout_bound_ir_health(doc)
     _print_summary(doc, violations)
 
-    hard = {k: v for k, v in violations.items()
-            if k not in ("role_count", "layout_blocks_count", "layout_semantic_mismatches")}
+    # A and E are info-only (overflow reflow content, intentionally unbound)
+    _INFO_KEYS_ASSERT = frozenset({
+        "role_count", "layout_blocks_count", "layout_semantic_mismatches",
+        "non_empty_unbound_semantic_paras", "role_bullets_unbound",
+    })
+    hard = {k: v for k, v in violations.items() if k not in _INFO_KEYS_ASSERT}
     failures = {k: v for k, v in hard.items() if v}
 
     if expected_experience_roles is not None:
@@ -239,8 +254,11 @@ def main() -> None:
         print("Usage: check_layout_bound_ir_health.py <debug_json_path>")
         sys.exit(1)
     violations = check_from_debug_json(sys.argv[1])
-    hard = {k: v for k, v in violations.items()
-            if k not in ("role_count", "layout_blocks_count", "layout_semantic_mismatches")}
+    _INFO = frozenset({
+        "role_count", "layout_blocks_count", "layout_semantic_mismatches",
+        "non_empty_unbound_semantic_paras", "role_bullets_unbound",
+    })
+    hard = {k: v for k, v in violations.items() if k not in _INFO}
     sys.exit(0 if all(v == 0 for v in hard.values()) else 1)
 
 

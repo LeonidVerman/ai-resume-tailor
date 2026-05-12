@@ -1,7 +1,7 @@
-"""Tests for skills packing separator correctness and summary insertion position.
+"""Tests for skills overflow reflow and summary insertion position.
 
 Covers:
-I. Skill lines packed with '; ' separator — no raw newline concatenation.
+I. Skill lines overflow to unbound paras — no raw concatenation or truncation.
 J. Summary inserted after profile/title block, before first major section.
 """
 from __future__ import annotations
@@ -51,7 +51,7 @@ def _make_layout_doc_skills(n_slots, skill_slots):
 # ---------------------------------------------------------------------------
 
 class TestSkillsPackingSeparator:
-    """DOCX renderer strips \\n from paragraph text — packed lines must use '; '."""
+    """Extra skill lines become unbound overflow paras — no concatenation or truncation."""
 
     _SKILL_LINES = [
         "Datastores: MySQL, SQL Server, Oracle",
@@ -74,35 +74,50 @@ class TestSkillsPackingSeparator:
         updated = self._apply(monkeypatch, self._SKILL_LINES, n_slots=1)
         all_text = " ".join(p.text for p in updated.sections[0].body_paras if p.text.strip())
         for cat in ["Datastores", "DevOps", "Frontend", "Other"]:
-            assert cat in all_text, f"Category {cat!r} missing from packed skills"
+            assert cat in all_text, f"Category {cat!r} missing from overflow skills"
 
     def test_no_direct_concatenation(self, monkeypatch):
-        """Category names must not run together without a separator."""
+        """Category names must not run together without a separator (each in its own para)."""
         updated = self._apply(monkeypatch, self._SKILL_LINES, n_slots=1)
         all_text = " ".join(p.text for p in updated.sections[0].body_paras if p.text.strip())
         # These are the bad concatenations produced by raw-newline packing
         for bad in ["OracleDevOps", "CommunicationAnalysis", "AutomationFrontend", "AnsibleFrontend"]:
             assert bad not in all_text, f"Direct concatenation detected: {bad!r}"
 
-    def test_semicolon_separator_used(self, monkeypatch):
+    def test_no_semicolon_in_overflow_paras(self, monkeypatch):
+        """Each overflow para contains a single skill line — no '; ' separator needed."""
         updated = self._apply(monkeypatch, self._SKILL_LINES, n_slots=1)
-        all_text = " ".join(p.text for p in updated.sections[0].body_paras if p.text.strip())
-        assert "; " in all_text, "Expected '; ' separator between packed skill lines"
+        paras = [p for p in updated.sections[0].body_paras if p.text.strip()]
+        # Each para should contain at most one skill line (no packing separator)
+        for p in paras:
+            # The individual lines contain ':' (category separator) but not '; '
+            # between different category lines
+            lines_in_para = [l for l in p.text.split("; ") if l.strip()]
+            assert len(lines_in_para) == 1, (
+                f"Para should contain single skill line, got packing: {p.text!r}"
+            )
 
     def test_no_ellipsis_truncation(self, monkeypatch):
         updated = self._apply(monkeypatch, self._SKILL_LINES, n_slots=1)
         all_text = " ".join(p.text for p in updated.sections[0].body_paras if p.text.strip())
         assert "..." not in all_text, "Skill lines must not be truncated with '...'"
 
-    def test_all_slots_filled_first(self, monkeypatch):
-        """When 2 slots and 4 lines: slot 1 gets line 1, slot 2 gets lines 2-4 packed."""
+    def test_all_slots_filled_then_overflow(self, monkeypatch):
+        """When 2 slots and 4 lines: slots 1-2 get lines 1-2, lines 3-4 become overflow."""
         updated = self._apply(monkeypatch, self._SKILL_LINES, n_slots=2)
         content = [p for p in updated.sections[0].body_paras if p.text.strip()]
-        assert len(content) == 2
-        assert "Datastores" in content[0].text
-        # All remaining lines in slot 2
-        for cat in ["DevOps", "Frontend", "Other"]:
-            assert cat in content[1].text
+        # 4 total: 2 bound + 2 unbound overflow
+        assert len(content) == 4
+        bound = [p for p in content if p.para_id]
+        unbound = [p for p in content if not p.para_id]
+        assert len(bound) == 2
+        assert len(unbound) == 2
+        assert "Datastores" in bound[0].text
+        assert "DevOps" in bound[1].text
+        # Overflow paras have the remaining lines
+        overflow_text = " ".join(p.text for p in unbound)
+        for cat in ["Frontend", "Other"]:
+            assert cat in overflow_text, f"{cat!r} missing from overflow paras"
 
 
 # ---------------------------------------------------------------------------

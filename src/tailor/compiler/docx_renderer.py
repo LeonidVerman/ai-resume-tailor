@@ -837,21 +837,35 @@ def _patch_bullet_numbering(d) -> None:
 # ---------------------------------------------------------------------------
 
 _WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+_DML = "http://schemas.openxmlformats.org/drawingml/2006/main"
+_WPS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 
 
 def _fix_anchor_layout_in_cell(cell_elem) -> None:
-    """Set layoutInCell='0' on every floating anchor inside *cell_elem*.
+    """Selectively apply layoutInCell to anchored drawings inside a table cell.
 
-    Floating anchors with layoutInCell='1' interpret their position offsets
-    relative to the containing table cell instead of the page.  For background
-    decoration shapes that use absolute page-relative coordinates (e.g. the
-    full-page grey header/sidebar drawing group in the veeva_03 template), this
-    causes the drawing to shift down when the paragraph that owns it is placed
-    inside a table cell.  Setting layoutInCell='0' restores page-relative
-    positioning so the drawing always appears at its intended page coordinates.
+    Full-page behindDoc backgrounds (cx ≥ 7 M EMU, cy ≥ 10 M EMU) get
+    layoutInCell='0' so they use page-level coordinates and cover the full
+    page regardless of cell boundaries.
+
+    All other anchors are left UNCHANGED.  Foreground drawings (photo, contact
+    icons, etc.) must keep their original layoutInCell value so they appear
+    only on the page where their anchor paragraph's cell content is visible,
+    not bleeding onto overflow continuation pages where the cell is empty.
     """
     for anchor in cell_elem.findall(f".//{{{_WP}}}anchor"):
-        anchor.set("layoutInCell", "0")
+        if anchor.get("behindDoc") != "1":
+            continue
+        ext = anchor.find(f"{{{_WP}}}extent")
+        if ext is None:
+            continue
+        try:
+            cx = int(ext.get("cx", "0"))
+            cy = int(ext.get("cy", "0"))
+        except ValueError:
+            continue
+        if cx >= 7_000_000 and cy >= 10_000_000:
+            anchor.set("layoutInCell", "0")
 
 
 def _render_docx_native_two_col(
@@ -1009,6 +1023,623 @@ def _render_docx_native_two_col(
 # Layout-blocks rendering (Option B: XML prototype path)
 # ---------------------------------------------------------------------------
 
+
+# ---------------------------------------------------------------------------
+# Layout-blocks: overflow-page continuation helpers  (Tasks 1–3)
+# ---------------------------------------------------------------------------
+
+
+def _is_solid_bg_anchor(anchor) -> bool:
+    """True iff *anchor* is a full-page solid-colour background shape (no blip)."""
+    if anchor is None or anchor.get("behindDoc") != "1":
+        return False
+    extent = anchor.find(f"{{{_WP}}}extent")
+    if extent is None:
+        return False
+    try:
+        cx = int(extent.get("cx", "0"))
+        cy = int(extent.get("cy", "0"))
+    except ValueError:
+        return False
+    if cx < 7_000_000 or cy < 10_000_000:
+        return False
+    if anchor.find(f".//{{{_DML}}}blip") is not None:
+        return False
+    if anchor.find(f".//{{{_WPS}}}txbx") is not None:
+        return False
+    return True
+
+
+def _is_bg_anchor_any(anchor) -> bool:
+    """True iff *anchor* is a full-page background shape — solid colour OR raster image.
+
+    Wider than _is_solid_bg_anchor: also accepts blip-based backgrounds so that
+    templates like sample 16 (background image inside a right-column layout block)
+    can have their background cloned onto overflow pages.  Still rejects text boxes.
+    """
+    if anchor is None or anchor.get("behindDoc") != "1":
+        return False
+    extent = anchor.find(f"{{{_WP}}}extent")
+    if extent is None:
+        return False
+    try:
+        cx = int(extent.get("cx", "0"))
+        cy = int(extent.get("cy", "0"))
+    except ValueError:
+        return False
+    if cx < 7_000_000 or cy < 10_000_000:
+        return False
+    if anchor.find(f".//{{{_WPS}}}txbx") is not None:
+        return False
+    return True
+
+
+def _find_and_move_bg_to_start(body, sectPr, allow_blip: bool = False) -> None:
+    """Guarantee the page-background drawing anchors page 1.
+
+    allow_blip=False (default, regular rendering path):
+      Scans DIRECT body children only for solid-colour backgrounds (no blip).
+      Used for single-column and native-two-col templates to avoid adding
+      spurious clone paragraphs that would change roundtrip structure.
+
+    allow_blip=True (two-col table conversion path):
+      Scans ALL paragraphs including table cells and also accepts raster-image
+      (blip) backgrounds.  Used after the 2-cell table is built so that blip
+      backgrounds inside right-column content (sample 16) are cloned onto the
+      overflow page.
+
+    Body-level paragraphs: moved to body start (fixes sample 32 reversed-background
+      pattern) then cloned before sectPr.
+    Table-cell paragraphs: NOT moved (would break table); clone only.
+
+    Safe no-op when no qualifying drawing is found.
+    """
+    from copy import deepcopy
+    from lxml import etree
+
+    _anchor_test = _is_bg_anchor_any if allow_blip else _is_solid_bg_anchor
+    _para_iter = (
+        body.findall(f".//{{{_W}}}p")   # recurse into cells when allow_blip
+        if allow_blip
+        else body.findall(f"{{{_W}}}p")  # direct children only otherwise
+    )
+
+    bg_para = None
+    for p in _para_iter:
+        for drawing in p.findall(f".//{{{_W}}}drawing"):
+            anchor = drawing.find(f".//{{{_WP}}}anchor")
+            if _anchor_test(anchor):
+                bg_para = p
+                break
+        if bg_para is not None:
+            break
+
+    if bg_para is None:
+        return
+
+    # Determine if bg_para is a direct body child (not inside a table cell)
+    bg_parent = bg_para.getparent()
+    bg_is_body_level = bg_parent is not None and bg_parent.tag == f"{{{_W}}}body"
+
+    # Move to body start only for body-level paragraphs not already first
+    if bg_is_body_level:
+        body_paras = [c for c in body if c.tag == f"{{{_W}}}p"]
+        if body_paras and bg_para is not body_paras[0]:
+            body.remove(bg_para)
+            body_paras[0].addprevious(bg_para)
+
+    # Clone with page-relative (0, 0) for overflow pages — always
+    clone_p = deepcopy(bg_para)
+    pPr = clone_p.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        pPr = etree.SubElement(clone_p, f"{{{_W}}}pPr")
+        clone_p.insert(0, pPr)
+    spacing = pPr.find(f"{{{_W}}}spacing")
+    if spacing is None:
+        spacing = etree.SubElement(pPr, f"{{{_W}}}spacing")
+    spacing.set(f"{{{_W}}}after", "0")
+    spacing.set(f"{{{_W}}}line", "20")
+    spacing.set(f"{{{_W}}}lineRule", "exact")
+    for anchor in clone_p.findall(f".//{{{_WP}}}anchor"):
+        for tag in ("positionH", "positionV"):
+            pos = anchor.find(f"{{{_WP}}}{tag}")
+            if pos is not None:
+                pos.set("relativeFrom", "page")
+                off_el = pos.find(f"{{{_WP}}}posOffset")
+                if off_el is not None:
+                    off_el.text = "0"
+
+    if sectPr is not None:
+        sectPr.addprevious(clone_p)
+    else:
+        body.append(clone_p)
+
+    _log.debug(
+        "OVERFLOW_BG: bg_para found (body_level=%s), cloned for overflow page",
+        bg_is_body_level,
+    )
+
+
+def _find_single_col_break_idx(layout_blocks) -> "int | None":
+    """Return index of the sole column-break paragraph block, or None.
+
+    Returns None when there are 0 or 2+ column breaks — those layouts use a
+    different structure and should be left to native w:cols handling.
+    """
+    breaks = [
+        i for i, lb in enumerate(layout_blocks)
+        if isinstance(lb, LayoutParagraphBlock)
+        and lb.xml_proto_xml
+        and 'type="column"' in lb.xml_proto_xml
+    ]
+    return breaks[0] if len(breaks) == 1 else None
+
+
+def _header_paras_have_blip_bg(doc, layout_blocks) -> bool:
+    """True if any HEADER-PARA block contains a full-page behindDoc image drawing.
+
+    The critical distinction between blip-background templates:
+
+    - Blip in a HEADER block → that paragraph is rendered as a standalone body
+      element BEFORE the 2-cell table.  LibreOffice then creates a blank middle
+      page from the interaction of the full-page image height with the table
+      row — skip table conversion for these templates (samples 18, 23).
+
+    - Blip in a NON-HEADER block → the paragraph stays INSIDE a table cell.
+      LibreOffice handles this correctly and table conversion proceeds normally
+      (sample 16, where the background image is inside the right-column content).
+    """
+    header_para_ids = frozenset(
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    )
+    from lxml import etree as _et
+    for lb in layout_blocks:
+        if not isinstance(lb, LayoutParagraphBlock) or not lb.xml_proto_xml:
+            continue
+        if lb.para_id not in header_para_ids:
+            continue
+        if "behindDoc" not in lb.xml_proto_xml or "blip" not in lb.xml_proto_xml:
+            continue
+        try:
+            elem = _et.fromstring(lb.xml_proto_xml)
+            for anchor in elem.findall(f".//{{{_WP}}}anchor"):
+                if anchor.get("behindDoc") != "1":
+                    continue
+                ext = anchor.find(f"{{{_WP}}}extent")
+                if ext is None:
+                    continue
+                try:
+                    cx = int(ext.get("cx", "0"))
+                    cy = int(ext.get("cy", "0"))
+                except ValueError:
+                    continue
+                if cx >= 7_000_000 and cy >= 10_000_000:
+                    if anchor.find(f".//{{{_DML}}}blip") is not None:
+                        return True
+        except Exception:
+            pass
+    return False
+
+
+def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn):
+    """Render one LayoutParagraphBlock → lxml element (None if empty)."""
+    from lxml import etree
+    if not block.xml_proto_xml:
+        return None
+    elem = etree.fromstring(block.xml_proto_xml)
+    _strip_last_rendered_page_breaks(elem)
+    _strip_non_column_section_break(elem, main_pgSz_w, main_pgSz_h, main_is_multicolumn)
+    _strip_column_break(elem)
+    pm = para_lookup.get(block.para_id) if block.para_id else None
+    if pm is not None:
+        _set_para_text(elem, pm.text)
+    return elem
+
+
+def _extract_first_tblPr(layout_blocks):
+    """Return a deep copy of tblPr from the first LayoutTableBlock, or None."""
+    from copy import deepcopy
+    from lxml import etree as _et
+    for lb in layout_blocks:
+        if isinstance(lb, LayoutTableBlock) and lb.xml_proto_xml:
+            try:
+                tbl_el = _et.fromstring(lb.xml_proto_xml)
+                tblPr = tbl_el.find(f"{{{_W}}}tblPr")
+                if tblPr is not None:
+                    return deepcopy(tblPr)
+            except Exception:
+                pass
+    return None
+
+
+def _add_tbl_no_borders(tblPr) -> None:
+    """Append no-border tblBorders to *tblPr*."""
+    from lxml import etree
+    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+        brd.set(f"{{{_W}}}val", "none")
+
+
+def _add_tbl_zero_cell_margins(tblPr) -> None:
+    """Append zero tblCellMar to *tblPr*."""
+    from lxml import etree
+    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        m = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+        m.set(f"{{{_W}}}w", "0")
+        m.set(f"{{{_W}}}type", "dxa")
+
+
+_EMU_PER_TWIP = 635  # 914400 EMU/inch ÷ 1440 twip/inch
+
+
+def _fix_col_relative_anchors(elem, col_x_emu: int) -> None:
+    """Convert posH relativeFrom='column' → relativeFrom='page' for behindDoc backgrounds.
+
+    When w:cols is removed from sectPr (table conversion), any anchor that uses
+    posH relativeFrom='column' loses its correct reference: the 'column' it
+    addressed (e.g. the right column at x=5599 twips) is replaced by the single
+    remaining column at x=margin_left.  This causes full-page background images
+    to shift hundreds of twips to the left, damaging page 1 layout.
+
+    Fix: for behindDoc, large-extent anchors, compute the absolute page x-position
+    (col_x_emu + posH_offset_emu) and rewrite the anchor as page-relative.
+    For very tall anchors (full-page height) also convert posV paragraph-relative
+    to page-relative offset=0 so the background starts at the page top.
+
+    Only behindDoc anchors are touched; foreground drawings are left unchanged.
+    """
+    for anchor in elem.findall(f".//{{{_WP}}}anchor"):
+        if anchor.get("behindDoc") != "1":
+            continue
+        ext = anchor.find(f"{{{_WP}}}extent")
+        if ext is None:
+            continue
+        try:
+            cx = int(ext.get("cx", "0"))
+            cy = int(ext.get("cy", "0"))
+        except ValueError:
+            continue
+        if cx < 7_000_000 or cy < 10_000_000:
+            continue
+        # Fix posH: column-relative → absolute page position
+        posH = anchor.find(f"{{{_WP}}}positionH")
+        if posH is not None and posH.get("relativeFrom") == "column":
+            off_el = posH.find(f"{{{_WP}}}posOffset")
+            if off_el is not None:
+                try:
+                    abs_x = col_x_emu + int(off_el.text or "0")
+                    posH.set("relativeFrom", "page")
+                    off_el.text = str(abs_x)
+                except ValueError:
+                    pass
+        # Fix posV: paragraph-relative → page top for full-page backgrounds
+        posV = anchor.find(f"{{{_WP}}}positionV")
+        if posV is not None and posV.get("relativeFrom") == "paragraph":
+            posV.set("relativeFrom", "page")
+            off_el = posV.find(f"{{{_WP}}}posOffset")
+            if off_el is not None:
+                off_el.text = "0"
+
+
+def _detect_accent_color(layout_blocks) -> "str | None":
+    """Return the most-used non-black/white hex color across all layout blocks.
+
+    Used to pick a table column-divider color that matches the template's visual
+    accent color (e.g. the green used for section headings and phone text in
+    sample 16) when no source tblPr border style is available.
+    """
+    from lxml import etree as _et
+    counts: dict[str, int] = {}
+    for lb in layout_blocks:
+        if not isinstance(lb, LayoutParagraphBlock) or not lb.xml_proto_xml:
+            continue
+        try:
+            elem = _et.fromstring(lb.xml_proto_xml)
+            for rPr in elem.findall(f".//{{{_W}}}rPr"):
+                color = rPr.find(f"{{{_W}}}color")
+                if color is None:
+                    continue
+                val = (color.get(f"{{{_W}}}val") or "").upper()
+                if val and val not in ("AUTO", "000000", "FFFFFF"):
+                    counts[val] = counts.get(val, 0) + 1
+        except Exception:
+            pass
+    return max(counts, key=counts.get) if counts else None
+
+
+def _split_right_col_identity(right_blocks):
+    """Separate pre-content identity blocks from body-content blocks in the right column.
+
+    In two-column templates (e.g. sample 16) the right column often starts with
+    candidate identity paragraphs — the name, title, and associated empty spacers —
+    before any actual content sections (PROFILE, EXPERIENCES, SKILLS, etc.).
+
+    These identity paragraphs are:
+    - CENTERED (w:jc val='center') — distinguishing them from body content
+    - Empty spacers between the centered identity paragraphs
+    - All appear BEFORE the first non-centered, non-empty body paragraph
+
+    They must NOT go into the right table cell because when the table row spans
+    pages the right cell begins fresh on the overflow page, causing the name and
+    title to appear on page 2.  Instead they are silently dropped: the template's
+    behindDoc composite background image already provides the visual representation
+    of the name and title on page 1.  The blip anchor paragraph is kept as the
+    FIRST element of the right cell so the background image still covers page 1.
+
+    Returns (blip_blocks, identity_dropped, content_blocks):
+      blip_blocks    — behindDoc large-extent anchor paragraphs (kept at cell front)
+      identity_dropped — centered + empty paragraphs before first content (dropped)
+      content_blocks — body content from first non-centered non-empty paragraph
+    """
+    from lxml import etree as _et
+
+    blip_blocks: list = []
+    dropped: list = []
+    i = 0
+    while i < len(right_blocks):
+        blk = right_blocks[i]
+        if not isinstance(blk, LayoutParagraphBlock) or not blk.xml_proto_xml:
+            # Non-paragraph block (table) → treat as content start
+            break
+        try:
+            elem = _et.fromstring(blk.xml_proto_xml)
+        except Exception:
+            break
+
+        # Is it a large behindDoc anchor (background image)?
+        is_blip = False
+        for anc in elem.findall(f".//{{{_WP}}}anchor"):
+            if anc.get("behindDoc") != "1":
+                continue
+            ext = anc.find(f"{{{_WP}}}extent")
+            if ext is None:
+                continue
+            try:
+                if int(ext.get("cx", "0")) >= 7_000_000 and int(ext.get("cy", "0")) >= 10_000_000:
+                    is_blip = True
+                    break
+            except ValueError:
+                pass
+        if is_blip:
+            blip_blocks.append(blk)
+            i += 1
+            continue
+
+        # Is it a centered paragraph?
+        pPr = elem.find(f"{{{_W}}}pPr")
+        jc_val = ""
+        if pPr is not None:
+            jc_el = pPr.find(f"{{{_W}}}jc")
+            if jc_el is not None:
+                jc_val = jc_el.get(f"{{{_W}}}val", "")
+
+        # Non-empty text in the paragraph?
+        text = "".join(t.text or "" for t in elem.findall(f".//{{{_W}}}t")).strip()
+
+        if jc_val == "center":
+            # Centered paragraph (name, title, etc.) — drop
+            dropped.append(blk)
+            i += 1
+            continue
+
+        if not text:
+            # Empty spacer before we've seen real content — drop
+            dropped.append(blk)
+            i += 1
+            continue
+
+        # First non-centered non-empty paragraph: content starts here
+        break
+
+    content_blocks = right_blocks[i:]
+    _log.debug(
+        "RIGHT_COL_IDENTITY_STRIP: blip=%d dropped=%d content=%d",
+        len(blip_blocks), len(dropped), len(content_blocks),
+    )
+    return blip_blocks, dropped, content_blocks
+
+
+def _render_layout_two_col_table(
+    doc,
+    body,
+    sectPr,
+    col_break_idx: int,
+    main_pgSz_w,
+    main_pgSz_h,
+    main_is_multicolumn: bool,
+) -> None:
+    """Convert a native two-column layout into a 2-cell table for overflow stability.
+
+    Task 2 — table borders:
+        Uses the first LayoutTableBlock tblPr from each column (right preferred)
+        so templates with styled borders (e.g. sample 16 green borders) retain
+        them on overflow pages.  Falls back to no-borders when none found.
+
+    Task 3 — same column / same lane:
+        Left cell  → layout_blocks[:col_break_idx] excluding header-para blocks
+        Right cell → layout_blocks[col_break_idx+1:]
+        Header blocks (para_id in doc.header_paras) are rendered as normal
+        paragraphs BEFORE the table so they are never inside a repeating row.
+
+    Removes w:cols from sectPr so LibreOffice uses table layout, not native
+    columns, for the rendered body — preventing the overflow column-jump.
+    """
+    from copy import deepcopy
+    from lxml import etree
+
+    para_lookup = _build_para_lookup(doc)
+
+    # Column widths from sectPr w:cols/w:col elements
+    _pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
+    _pgMar = sectPr.find(f"{{{_W}}}pgMar") if sectPr is not None else None
+    _page_w = int(_pgSz.get(f"{{{_W}}}w", "12240")) if _pgSz is not None else 12240
+    _mar_left = int(_pgMar.get(f"{{{_W}}}left", "0")) if _pgMar is not None else 0
+    _mar_right = int(_pgMar.get(f"{{{_W}}}right", "0")) if _pgMar is not None else 0
+    _text_area = max(_page_w - _mar_left - _mar_right, 1)
+
+    # Parse column widths and inter-column space from sectPr.
+    # _col_space is needed for both the width calculation and the column-x-offset
+    # computation used when converting column-relative anchor positions to page-relative.
+    left_w = right_w = _col_space = 0
+    if sectPr is not None:
+        cols_elem = sectPr.find(f"{{{_W}}}cols")
+        if cols_elem is not None:
+            col_elems = cols_elem.findall(f"{{{_W}}}col")
+            if len(col_elems) == 2:
+                try:
+                    left_w = int(col_elems[0].get(f"{{{_W}}}w", "0"))
+                    right_w = int(col_elems[1].get(f"{{{_W}}}w", "0"))
+                    _col_space = int(col_elems[0].get(f"{{{_W}}}space", "0"))
+                except ValueError:
+                    pass
+            elif len(col_elems) == 1:
+                # Only first column explicit; compute second from text area (sample 16).
+                try:
+                    left_w = int(col_elems[0].get(f"{{{_W}}}w", "0"))
+                    _col_space = int(col_elems[0].get(f"{{{_W}}}space", "0"))
+                    right_w = max(_text_area - left_w - _col_space, 1)
+                except ValueError:
+                    pass
+    if left_w == 0 or right_w == 0:
+        left_w = right_w = _text_area // 2
+    else:
+        _col_sum = left_w + right_w
+        if _col_sum < _text_area * 0.92:
+            left_w = round(left_w / _col_sum * _text_area)
+            right_w = _text_area - left_w
+
+    # Precompute column left-edge x-positions in EMU for anchor-position correction.
+    # When w:cols is removed (below), any anchor using posH relativeFrom='column'
+    # would use the wrong reference; _fix_col_relative_anchors corrects this BEFORE
+    # the table is rendered, preserving page-1 layout (sample 16 background image).
+    _left_col_x_emu = _mar_left * _EMU_PER_TWIP
+    _right_col_x_emu = _left_col_x_emu + (left_w + _col_space) * _EMU_PER_TWIP
+
+    # Remove w:cols so LibreOffice does not double-apply column flow to the table
+    if sectPr is not None:
+        cols_to_remove = sectPr.find(f"{{{_W}}}cols")
+        if cols_to_remove is not None:
+            sectPr.remove(cols_to_remove)
+
+    # All left-column blocks go into the left cell — INCLUDING the contact/header
+    # paragraphs.  Previously these were extracted and rendered as body-level
+    # paragraphs BEFORE the table, but that consumed vertical space on page 1
+    # that caused LibreOffice to push the entire table to page 2.  With the
+    # table starting at the very top of the body, the page-1 area is fully
+    # available and the row splits correctly at the overflow point.
+    # The identity (name, title) paragraphs in the right column are kept as-is:
+    # they appear at the TOP of the right cell on page 1, and the overflow on
+    # page 2 begins only after those paragraphs — they do NOT repeat on page 2.
+    left_blocks = list(doc.layout_blocks[:col_break_idx])  # type: ignore[index]
+    right_blocks = list(doc.layout_blocks[col_break_idx + 1:])  # type: ignore[index]
+
+    # Build tblPr: inherit borders from source table when available (Task 2).
+    # When no source table exists, use no visible borders but add an insideV
+    # border matching the template's accent color as a column-divider line.
+    # This preserves the vertical lane separator on overflow pages without
+    # cloning the blip background image (which contains foreground elements).
+    source_tblPr = _extract_first_tblPr(right_blocks) or _extract_first_tblPr(left_blocks)
+    _accent = _detect_accent_color(left_blocks + right_blocks)
+
+    tbl = etree.Element(f"{{{_W}}}tbl")
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW_el.set(f"{{{_W}}}w", str(left_w + right_w))
+    tblW_el.set(f"{{{_W}}}type", "dxa")
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+
+    if source_tblPr is not None:
+        for child_tag in ("tblBorders", "tblCellMar", "tblCellSpacing", "tblLook"):
+            src_child = source_tblPr.find(f"{{{_W}}}{child_tag}")
+            if src_child is not None:
+                tblPr.append(deepcopy(src_child))
+        if source_tblPr.find(f"{{{_W}}}tblBorders") is None:
+            _add_tbl_no_borders(tblPr)
+        if source_tblPr.find(f"{{{_W}}}tblCellMar") is None:
+            _add_tbl_zero_cell_margins(tblPr)
+    else:
+        _add_tbl_no_borders(tblPr)
+        # When the template uses an accent color (e.g. sample 16 green), use it
+        # for the insideV border as a column divider on overflow pages.
+        if _accent:
+            tblBorders = tblPr.find(f"{{{_W}}}tblBorders")
+            if tblBorders is not None:
+                iv = tblBorders.find(f"{{{_W}}}insideV")
+                if iv is not None:
+                    iv.set(f"{{{_W}}}val", "single")
+                    iv.set(f"{{{_W}}}sz", "6")
+                    iv.set(f"{{{_W}}}color", _accent)
+        _add_tbl_zero_cell_margins(tblPr)
+
+    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+    def _fill_cell(tc, blocks, col_x_emu: int, extra_paras=None) -> None:
+        for blk in blocks:
+            if isinstance(blk, LayoutTableBlock):
+                tbl_el = etree.fromstring(blk.xml_proto_xml)
+                for para_id, p_el in zip(blk.para_ids, tbl_el.findall(f".//{{{_W}}}p")):
+                    pm = para_lookup.get(para_id)
+                    if pm is not None:
+                        _set_para_text(p_el, pm.text)
+                tc.append(tbl_el)
+            else:
+                el = _render_block_into_elem(
+                    blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
+                )
+                if el is not None:
+                    # Convert column-relative background anchor positions to page-relative
+                    # BEFORE w:cols is used by LibreOffice: prevents background image
+                    # from shifting when the column reference changes (sample 16 fix).
+                    _fix_col_relative_anchors(el, col_x_emu)
+                    tc.append(el)
+        # Append extra unbound paragraphs (LLM overflow content)
+        if extra_paras:
+            for pm in extra_paras:
+                if pm.style.xml_proto is not None:
+                    from copy import deepcopy
+                    _xel = deepcopy(pm.style.xml_proto)
+                    _strip_last_rendered_page_breaks(_xel)
+                    _set_para_text(_xel, pm.text)
+                    tc.append(_xel)
+                elif pm.paragraph_profile is not None:
+                    from tailor.compiler.para_builder import build_para_element
+                    tc.append(build_para_element(pm))
+        has_content = any(c.tag != f"{{{_W}}}tcPr" for c in list(tc))
+        if not has_content:
+            etree.SubElement(tc, f"{{{_W}}}p")
+        _fix_anchor_layout_in_cell(tc)
+
+    left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
+    left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
+    left_tcW.set(f"{{{_W}}}w", str(left_w))
+    left_tcW.set(f"{{{_W}}}type", "dxa")
+    etree.SubElement(left_tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+    _fill_cell(left_tc, left_blocks, _left_col_x_emu)
+
+    right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
+    right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
+    right_tcW.set(f"{{{_W}}}w", str(right_w))
+    right_tcW.set(f"{{{_W}}}type", "dxa")
+    etree.SubElement(right_tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+    _unbound_extra = [pm for pm in (doc.all_paras or []) if not pm.para_id and pm.text.strip()]
+    _fill_cell(right_tc, right_blocks, _right_col_x_emu, extra_paras=_unbound_extra if _unbound_extra else None)
+
+    if sectPr is not None:
+        sectPr.addprevious(tbl)
+    else:
+        body.append(tbl)
+
+    _log.debug(
+        "LAYOUT_TWO_COL_TABLE: left=%d/%d-twips right=%d/%d-twips accent=%s",
+        len(left_blocks), left_w, len(right_blocks), right_w, _accent,
+    )
+
+
 def _build_para_lookup(doc: ResumeDocument) -> dict[str, ParaModel]:
     """Build para_id → ParaModel from all semantic-model paragraphs.
 
@@ -1103,6 +1734,46 @@ def _render_from_layout_blocks(
             _mnum = _mcols.get(f"{{{_W}}}num")
             if _mnum is not None and int(_mnum) >= 2:
                 _main_is_multicolumn = True
+
+    # Task 3 — same-lane column continuation: convert native w:cols to a 2-cell
+    # table so right-column overflow stays in the right column on the next page.
+    # Guards:
+    #  • Ratio > 0.80: skip when col break is in the last 20% of blocks — those
+    #    templates have a very short right column; the table's row-height coupling
+    #    produces extra overflow pages instead of fixing them.
+    #  • Blip background: skip when the template contains a full-page raster image
+    #    as a behindDoc drawing.  Those templates have fixed-position layouts where
+    #    the 2-cell table causes blank middle pages and PDF reading-order regressions.
+    if _main_is_multicolumn:
+        _col_break_idx = _find_single_col_break_idx(doc.layout_blocks)  # type: ignore[arg-type]
+        if _col_break_idx is not None:
+            _total_blocks = len(doc.layout_blocks)  # type: ignore[arg-type]
+            _col_ratio = _col_break_idx / max(_total_blocks - 1, 1)
+            # Skip only when HEADER blocks carry the blip image — those get rendered
+            # as standalone body paragraphs before the table, causing blank middle
+            # pages in LibreOffice (samples 18, 23).  Non-header blip images stay
+            # inside a table cell and do not cause this problem (sample 16).
+            _has_blip = _header_paras_have_blip_bg(doc, doc.layout_blocks)  # type: ignore[arg-type]
+            if _col_ratio <= 0.80 and not _has_blip:
+                _render_layout_two_col_table(
+                    doc, body, sectPr,
+                    _col_break_idx,
+                    _main_pgSz_w, _main_pgSz_h,
+                    _main_is_multicolumn,
+                )
+                # Solid-colour backgrounds only — blip images are composite and
+                # must not be cloned (they contain foreground photo/icon content).
+                _find_and_move_bg_to_start(body, sectPr)
+                return
+            if _has_blip:
+                _log.debug(
+                    "LAYOUT_TWO_COL_TABLE_SKIPPED: header block has blip bg — using native columns"
+                )
+            else:
+                _log.debug(
+                    "LAYOUT_TWO_COL_TABLE_SKIPPED: col_break_idx=%d total=%d ratio=%.2f > 0.80",
+                    _col_break_idx, _total_blocks, _col_ratio,
+                )
 
     # Collect para_ids referenced by layout_blocks to detect unbound content.
     lb_para_ids: set[str] = set()
@@ -1247,6 +1918,237 @@ def _render_from_layout_blocks(
         else:
             body.append(elem)
 
+    # NOTE: unbound paragraphs (para_id="") are intentionally NOT appended here.
+    # Extra LLM content beyond template capacity is placed via the _extra_injections
+    # mechanism in apply_tailored, which inserts LayoutParagraphBlock entries (or
+    # modifies LayoutTableBlock XML) at the correct position so content stays inside
+    # its section.  Appending unbound paras at document end caused experience bullets
+    # to appear after Education/Technical Skills sections (samples 1, 6, 13, 14, 18).
+
+    # Task 1 — page background: ensure background para anchors page 1 and clone
+    # for any overflow continuation page.
+    _find_and_move_bg_to_start(body, sectPr)
+
+
+# ---------------------------------------------------------------------------
+# Background color inheritance from blip image
+# ---------------------------------------------------------------------------
+
+def _maybe_insert_bg_rect(docx_path: str, body, sectPr) -> None:
+    """Insert a solid-fill background rectangle for the overflow continuation page.
+
+    Problem: LibreOffice does not render w:background on every page — only on
+    page 1.  Templates that use a full-page behindDoc blip as background (e.g.
+    sample 16) lose the background on page 2.  The blip cannot be cloned because
+    it is a composite image containing the candidate photo, contact icons, and
+    other foreground content.
+
+    Solution: extract the DOMINANT BACKGROUND COLOR from the blip image (sampling
+    five edge pixels away from photo/icon regions), then create a brand-new
+    solid-fill DrawingML rectangle shape with NO image, NO text, NO stroke and
+    insert it as the LAST body paragraph (just before sectPr).
+
+    The rectangle uses:
+      - behindDoc="1"   — behind all content, z-order lowest
+      - layoutInCell="0" — page-relative positioning inside table cells
+      - posH/posV relativeFrom="page" offset=0 — covers the full page from (0,0)
+      - Solid fill = sampled hex color (e.g. #F8F8F6)
+      - No stroke (a:noFill on border)
+      - No text body (empty wps:bodyPr)
+
+    When content overflows to page 2, this paragraph is the last element before
+    sectPr and lands on page 2.  The page-relative rectangle covers page 2 with
+    the same background color as page 1.  If content does NOT overflow (all on
+    page 1), this paragraph also appears on page 1 with the same #F8F8F6 color
+    as the blip image — visually indistinguishable from the existing background.
+
+    Silently skips when: no qualifying behindDoc blip found, PIL not installed,
+    dominant color is pure white, or any I/O/decoding error.
+    """
+    _WP_NS = _WP
+    _DML_NS = _DML
+    _RELS_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
+    _R_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+
+    # Find first behindDoc blip anchor in the body (including inside table cells)
+    rel_id: "str | None" = None
+    for anchor in body.findall(f".//{{{_WP_NS}}}anchor"):
+        if anchor.get("behindDoc") != "1":
+            continue
+        ext = anchor.find(f"{{{_WP_NS}}}extent")
+        if ext is None:
+            continue
+        try:
+            cx_src = int(ext.get("cx", "0"))
+            cy_src = int(ext.get("cy", "0"))
+        except ValueError:
+            continue
+        if cx_src < 7_000_000 or cy_src < 10_000_000:
+            continue
+        blip = anchor.find(f".//{{{_DML_NS}}}blip")
+        if blip is None:
+            continue
+        rel_id = blip.get(f"{{{_R_NS}}}embed")
+        break
+
+    if not rel_id:
+        return
+
+    try:
+        import zipfile as _zf
+        from PIL import Image as _PILImage
+        import io as _io
+        from lxml import etree as _et
+
+        # --- Extract dominant background color from the blip image ---
+        with _zf.ZipFile(docx_path, "r") as zf:
+            rels_xml = _et.fromstring(zf.read("word/_rels/document.xml.rels"))
+            img_path: "str | None" = None
+            for rel in rels_xml.findall(f".//{{{_RELS_NS}}}Relationship"):
+                if rel.get("Id") == rel_id:
+                    target = rel.get("Target", "")
+                    img_path = (
+                        f"word/{target}" if not target.startswith("/") else target[1:]
+                    )
+                    break
+            if not img_path:
+                return
+            img_bytes = zf.read(img_path)
+
+        img = _PILImage.open(_io.BytesIO(img_bytes)).convert("RGB")
+        iw, ih = img.size
+        # Five edge-pixel samples far from photo/icon content
+        sample_pts = [
+            (max(iw // 20, 1), ih // 2),
+            (max(iw // 20, 1), ih * 3 // 4),
+            (iw * 19 // 20, ih // 2),
+            (iw * 19 // 20, ih * 3 // 4),
+            (iw // 2, ih * 9 // 10),
+        ]
+        pixels = [img.getpixel(pt) for pt in sample_pts]
+        r = sorted(p[0] for p in pixels)[len(pixels) // 2]
+        g = sorted(p[1] for p in pixels)[len(pixels) // 2]
+        b = sorted(p[2] for p in pixels)[len(pixels) // 2]
+        hex_color = f"{r:02X}{g:02X}{b:02X}"
+        if hex_color.upper() == "FFFFFF":
+            return
+
+        # --- Determine rectangle size from page dimensions ---
+        _pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
+        if _pgSz is not None:
+            try:
+                cx_emu = int(_pgSz.get(f"{{{_W}}}w", "11920")) * _EMU_PER_TWIP
+                cy_emu = int(_pgSz.get(f"{{{_W}}}h", "16840")) * _EMU_PER_TWIP
+            except ValueError:
+                cx_emu, cy_emu = 7568800, 10693400
+        else:
+            cx_emu, cy_emu = 7568800, 10693400  # A4 portrait fallback
+
+        # --- Build the solid-fill rectangle as a DrawingML anchor ---
+        _A = _DML_NS
+        _WPS_NS = _WPS
+
+        bg_p = _et.Element(f"{{{_W}}}p")
+        pPr = _et.SubElement(bg_p, f"{{{_W}}}pPr")
+        spacing = _et.SubElement(pPr, f"{{{_W}}}spacing")
+        spacing.set(f"{{{_W}}}after", "0")
+        spacing.set(f"{{{_W}}}line", "20")
+        spacing.set(f"{{{_W}}}lineRule", "exact")
+
+        run = _et.SubElement(bg_p, f"{{{_W}}}r")
+        drawing = _et.SubElement(run, f"{{{_W}}}drawing")
+
+        anc = _et.SubElement(drawing, f"{{{_WP_NS}}}anchor")
+        anc.set("distT", "0")
+        anc.set("distB", "0")
+        anc.set("distL", "0")
+        anc.set("distR", "0")
+        anc.set("simplePos", "0")
+        anc.set("relativeHeight", "2251658")
+        anc.set("behindDoc", "1")
+        anc.set("locked", "0")
+        anc.set("layoutInCell", "0")
+        anc.set("allowOverlap", "1")
+
+        sp = _et.SubElement(anc, f"{{{_WP_NS}}}simplePos")
+        sp.set("x", "0")
+        sp.set("y", "0")
+
+        pH = _et.SubElement(anc, f"{{{_WP_NS}}}positionH")
+        pH.set("relativeFrom", "page")
+        _et.SubElement(pH, f"{{{_WP_NS}}}posOffset").text = "0"
+
+        pV = _et.SubElement(anc, f"{{{_WP_NS}}}positionV")
+        pV.set("relativeFrom", "page")
+        _et.SubElement(pV, f"{{{_WP_NS}}}posOffset").text = "0"
+
+        ext_el = _et.SubElement(anc, f"{{{_WP_NS}}}extent")
+        ext_el.set("cx", str(cx_emu))
+        ext_el.set("cy", str(cy_emu))
+
+        eff = _et.SubElement(anc, f"{{{_WP_NS}}}effectExtent")
+        eff.set("l", "0")
+        eff.set("t", "0")
+        eff.set("r", "0")
+        eff.set("b", "0")
+
+        _et.SubElement(anc, f"{{{_WP_NS}}}wrapNone")
+
+        dpr = _et.SubElement(anc, f"{{{_WP_NS}}}docPr")
+        dpr.set("id", "99999")
+        dpr.set("name", "OverflowBgRect")
+
+        _et.SubElement(anc, f"{{{_WP_NS}}}cNvGraphicFramePr")
+
+        graphic = _et.SubElement(anc, f"{{{_A}}}graphic")
+        graphicData = _et.SubElement(graphic, f"{{{_A}}}graphicData")
+        graphicData.set(
+            "uri", "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+        )
+
+        wsp = _et.SubElement(graphicData, f"{{{_WPS_NS}}}wsp")
+
+        cNvSpPr = _et.SubElement(wsp, f"{{{_WPS_NS}}}cNvSpPr")
+        spLocks = _et.SubElement(cNvSpPr, f"{{{_A}}}spLocks")
+        spLocks.set("noChangeArrowheads", "1")
+
+        spPr = _et.SubElement(wsp, f"{{{_WPS_NS}}}spPr")
+
+        xfrm = _et.SubElement(spPr, f"{{{_A}}}xfrm")
+        off = _et.SubElement(xfrm, f"{{{_A}}}off")
+        off.set("x", "0")
+        off.set("y", "0")
+        sz = _et.SubElement(xfrm, f"{{{_A}}}ext")
+        sz.set("cx", str(cx_emu))
+        sz.set("cy", str(cy_emu))
+
+        prstGeom = _et.SubElement(spPr, f"{{{_A}}}prstGeom")
+        prstGeom.set("prst", "rect")
+        _et.SubElement(prstGeom, f"{{{_A}}}avLst")
+
+        solidFill = _et.SubElement(spPr, f"{{{_A}}}solidFill")
+        srgbClr = _et.SubElement(solidFill, f"{{{_A}}}srgbClr")
+        srgbClr.set("val", hex_color)
+
+        ln = _et.SubElement(spPr, f"{{{_A}}}ln")
+        _et.SubElement(ln, f"{{{_A}}}noFill")
+
+        _et.SubElement(wsp, f"{{{_WPS_NS}}}bodyPr")
+
+        # Insert as the last body element before sectPr
+        if sectPr is not None:
+            sectPr.addprevious(bg_p)
+        else:
+            body.append(bg_p)
+
+        _log.debug(
+            "OVERFLOW_BG_RECT: inserted solid-fill rect #%s cx=%d cy=%d (rId=%s)",
+            hex_color, cx_emu, cy_emu, rel_id,
+        )
+
+    except Exception as exc:
+        _log.debug("OVERFLOW_BG_RECT_SKIP: %s", exc)
+
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -1304,6 +2206,12 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         _use_lb = USE_LAYOUT_BLOCK_RENDERER or not _has_runtime_xml
         if _use_lb:
             _render_from_layout_blocks(doc, body, sectPr)
+            # Inherit page background color for overflow pages.  Extracts the
+            # dominant edge-pixel color from any behindDoc blip background and
+            # inserts a solid-fill rectangle (no image, no text, no foreground
+            # content) at the body end.  That paragraph lands on page 2 when
+            # content overflows, covering it with the same background fill.
+            _maybe_insert_bg_rect(output_path, body, sectPr)
             d.save(output_path)
             return
         _log.debug(

@@ -194,8 +194,13 @@ class TestSample31ArtifactPipeline:
         updated = apply_tailored(doc, llm_sections)
 
         violations = check_layout_bound_ir_health(updated)
-        hard = {k: v for k, v in violations.items()
-                if k not in ("role_count", "layout_blocks_count", "layout_semantic_mismatches")}
+        # A (non_empty_unbound_semantic_paras) and E (role_bullets_unbound) are
+        # intentionally info-only: unbound paras are overflow-reflow content.
+        _INFO = frozenset({
+            "role_count", "layout_blocks_count", "layout_semantic_mismatches",
+            "non_empty_unbound_semantic_paras", "role_bullets_unbound",
+        })
+        hard = {k: v for k, v in violations.items() if k not in _INFO}
         assert all(v == 0 for v in hard.values()), f"IR violations: {hard}"
         assert violations["role_count"] == 3
 

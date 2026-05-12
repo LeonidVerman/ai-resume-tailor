@@ -1,0 +1,43 @@
+{
+  "document_id": "16",
+  "classification_version": "v5.8",
+  "source_kind": "docx",
+  "sections": [
+    {
+      "section_id": "sec_6",
+      "raw_title": "EXPERIENCES",
+      "display_title": "Experience",
+      "semantic_type": "experience",
+      "rewrite_policy": "rewrite_bullets_only",
+      "preserve_heading": true,
+      "preserve_body_structure": true,
+      "blocks": [],
+      "roles": [
+        {
+          "role_id": "role_ginyard",
+          "header_blocks": [
+            {"block_id": "para_74", "para_id": "para_74", "semantic_type": "role_header", "rewrite_policy": "preserve", "new": false}
+          ],
+          "meta_blocks": [],
+          "body_blocks": [
+            {"block_id": "para_76", "para_id": "para_76", "semantic_type": "bullet", "rewrite_policy": "rewrite_text", "new": false},
+            {"block_id": "para_78", "para_id": "para_78", "semantic_type": "bullet", "rewrite_policy": "rewrite_text", "new": false}
+          ]
+        },
+        {
+          "role_id": "role_larana",
+          "header_blocks": [
+            {"block_id": "para_80", "para_id": "para_80", "semantic_type": "role_header", "rewrite_policy": "preserve", "new": false}
+          ],
+          "meta_blocks": [
+            {"block_id": "para_82", "para_id": "para_82", "semantic_type": "role_meta", "rewrite_policy": "preserve", "new": false}
+          ],
+          "body_blocks": [
+            {"block_id": "para_84", "para_id": "para_84", "semantic_type": "bullet", "rewrite_policy": "rewrite_text", "new": false},
+            {"block_id": "para_85", "para_id": "para_85", "semantic_type": "bullet", "rewrite_policy": "rewrite_text", "new": false}
+          ]
+        }
+      ]
+    }
+  ]
+}
