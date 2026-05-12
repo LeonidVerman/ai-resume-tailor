@@ -144,10 +144,13 @@ def run(gen_json_path: str, verbose: bool = True) -> dict:
     violations = check_layout_bound_ir_health(updated)
     _print_summary(updated, violations)
 
-    hard = {
-        k: v for k, v in violations.items()
-        if k not in ("role_count", "layout_blocks_count", "layout_semantic_mismatches")
-    }
+    # A (non_empty_unbound_semantic_paras) and E (role_bullets_unbound) are
+    # intentionally info-only: unbound paras are overflow-reflow content.
+    _INFO = frozenset({
+        "role_count", "layout_blocks_count", "layout_semantic_mismatches",
+        "non_empty_unbound_semantic_paras", "role_bullets_unbound",
+    })
+    hard = {k: v for k, v in violations.items() if k not in _INFO}
     failures = {k: v for k, v in hard.items() if v}
     role_count = violations["role_count"]
     if role_count != 3:

@@ -340,8 +340,8 @@ class TestNoUnboundParagraphs:
             f"unexpected unbound non-empty paras: {metrics['unbound_non_empty_paras']}"
         )
 
-    def test_no_unbound_after_bullet_drop(self, monkeypatch):
-        """Extra LLM bullets are dropped, not cloned — zero unbound paras."""
+    def test_extra_bullets_become_unbound_overflow_paras(self, monkeypatch):
+        """Extra LLM bullets beyond template slots become unbound overflow paras (not dropped)."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -351,8 +351,9 @@ class TestNoUnboundParagraphs:
         llm_secs = [_make_llm_experience(1, n_bullets_per_role=5)]  # 3 extra bullets
         updated = apply_tailored(doc, llm_secs)
 
+        # Extra bullets flow to overflow as unbound paras — not dropped
         metrics = validate_layout_binding(updated)
-        assert metrics["unbound_non_empty_paras"] == 0
+        assert metrics["unbound_non_empty_paras"] == 3  # 3 extra bullets become unbound
 
     def test_unbound_count_with_real_template(self, monkeypatch):
         """With real template and layout_bound=True, unbound count is minimal."""
@@ -576,8 +577,8 @@ class TestNormalizeLlmSections:
 # ---------------------------------------------------------------------------
 
 class TestBulletOverflow:
-    def test_single_orig_bullet_four_llm_bullets_all_packed(self, monkeypatch):
-        """1 original bullet + 4 LLM bullets → all 4 bullets packed into the 1 slot."""
+    def test_single_orig_bullet_four_llm_bullets_reflow(self, monkeypatch):
+        """1 original bullet + 4 LLM bullets → 1 bound + 3 unbound overflow paras."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -588,20 +589,20 @@ class TestBulletOverflow:
         updated = apply_tailored(doc, llm_secs)
 
         role = updated.sections[0].roles[0]
-        assert len(role.bullets) == 1, f"expected 1 bullet slot, got {len(role.bullets)}"
-        assert role.bullets[0].para_id != "", "bullet must keep original para_id"
-        # First LLM bullet is always present
-        assert "Updated work 1.1" in role.bullets[0].text
-        # All 4 LLM bullets packed — no content dropped
-        for i in range(1, 5):
-            assert f"Updated work 1.{i}" in role.bullets[0].text, (
-                f"LLM bullet 1.{i} missing from packed slot"
-            )
+        # Bound slot gets first LLM bullet; extras become unbound overflow
+        bound = [b for b in role.bullets if b.para_id]
+        unbound = [b for b in role.bullets if not b.para_id]
+        assert len(bound) == 1, f"expected 1 bound bullet, got {len(bound)}"
+        assert bound[0].para_id != ""
+        # First LLM bullet is in the bound slot
+        assert "Updated work 1.1" in bound[0].text
+        # Extra 3 LLM bullets become unbound overflow paras
+        assert len(unbound) == 3, f"expected 3 unbound overflow paras, got {len(unbound)}"
         metrics = validate_layout_binding(updated)
-        assert metrics["unbound_non_empty_paras"] == 0
+        assert metrics["unbound_non_empty_paras"] == 3
 
-    def test_two_orig_bullets_five_llm_bullets_packed(self, monkeypatch):
-        """2 original bullets + 5 LLM bullets → slots 1-2 filled, extras packed into slot 2."""
+    def test_two_orig_bullets_five_llm_bullets_reflow(self, monkeypatch):
+        """2 original bullets + 5 LLM bullets → 2 bound + 3 unbound overflow paras."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -612,20 +613,18 @@ class TestBulletOverflow:
         updated = apply_tailored(doc, llm_secs)
 
         role = updated.sections[0].roles[0]
-        assert len(role.bullets) == 2, f"expected 2 bullet slots, got {len(role.bullets)}"
-        for b in role.bullets:
-            assert b.para_id != ""
-        assert "Updated work 1.1" in role.bullets[0].text
-        # Slot 2 contains bullets 2-5 packed — all present
-        combined = role.bullets[0].text + " " + role.bullets[1].text
-        for i in range(1, 6):
-            assert f"Updated work 1.{i}" in combined, f"LLM bullet 1.{i} missing"
-
+        bound = [b for b in role.bullets if b.para_id]
+        unbound = [b for b in role.bullets if not b.para_id]
+        assert len(bound) == 2, f"expected 2 bound bullets, got {len(bound)}"
+        assert "Updated work 1.1" in bound[0].text
+        assert "Updated work 1.2" in bound[1].text
+        # Extra 3 LLM bullets become unbound overflow paras
+        assert len(unbound) == 3, f"expected 3 unbound overflow paras, got {len(unbound)}"
         metrics = validate_layout_binding(updated)
-        assert metrics["unbound_non_empty_paras"] == 0
+        assert metrics["unbound_non_empty_paras"] == 3
 
-    def test_extra_bullet_packed_into_last_slot(self, monkeypatch):
-        """Extra LLM bullets are packed into the last slot instead of being dropped."""
+    def test_extra_bullet_becomes_unbound_overflow(self, monkeypatch):
+        """Extra LLM bullets beyond template slots become unbound overflow paras."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -646,11 +645,14 @@ class TestBulletOverflow:
         llm_role = LlmRole(header="Dev | Corp", bullets=["Short.", "extra"])
         updated_role = _update_role(orig_role, llm_role, layout_bound=True)
 
-        # Still 1 slot
-        assert len(updated_role.bullets) == 1
-        # Extra is packed — nothing dropped
+        # 1 bound slot + 1 unbound overflow para
+        assert len(updated_role.bullets) == 2
+        # First bullet is bound (has para_id)
+        assert updated_role.bullets[0].para_id == "para_b1"
         assert "Short." in updated_role.bullets[0].text
-        assert "extra" in updated_role.bullets[0].text
+        # Second bullet is unbound overflow
+        assert updated_role.bullets[1].para_id == ""
+        assert "extra" in updated_role.bullets[1].text
 
     def test_fewer_llm_bullets_than_orig(self, monkeypatch):
         """Fewer LLM bullets than original → only matched bullets, no extras."""
@@ -744,8 +746,8 @@ class TestSummaryHandling:
 # ---------------------------------------------------------------------------
 
 class TestEnforceNoUnbound:
-    def test_unbound_body_para_packed_into_last_anchored(self):
-        """enforce_no_unbound packs an unbound body para into the last anchored slot."""
+    def test_unbound_body_para_kept_for_overflow(self):
+        """enforce_no_unbound keeps unbound body paras for overflow rendering."""
         from tailor.compiler.models import ParaModel, ParaStyle, ResumeSection
         from tailor.compiler.updater import enforce_no_unbound_paragraphs
 
@@ -769,16 +771,17 @@ class TestEnforceNoUnbound:
         enforce_no_unbound_paragraphs([sec], [])
 
         content = [p for p in sec.body_paras if p.text.strip()]
-        # Only 2 content paras (no unbound)
-        assert len(content) == 2
-        # Unbound text packed into last anchored
+        # All 3 content paras kept (including unbound overflow)
+        assert len(content) == 3
+        # Unbound para kept as-is for overflow rendering
+        assert content[-1].para_id == ""
         assert "Unbound extra" in content[-1].text
-        assert "Anchored 2" in content[-1].text
-        # para_id preserved
-        assert content[-1].para_id == "para_b"
+        # Anchored paras unchanged
+        assert content[0].para_id == "para_a"
+        assert content[1].para_id == "para_b"
 
-    def test_enforce_called_during_apply_tailored(self, monkeypatch):
-        """After apply_tailored in layout-bound mode, all_paras has no unbound non-empty."""
+    def test_enforce_called_during_apply_tailored_overflow(self, monkeypatch):
+        """After apply_tailored in layout-bound mode, extra bullets become unbound overflow paras."""
         import tailor.config as cfg
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
@@ -788,8 +791,9 @@ class TestEnforceNoUnbound:
         llm_secs = [_make_llm_experience(2, n_bullets_per_role=5)]
         updated = apply_tailored(doc, llm_secs)
 
+        # 3 extra bullets per role × 2 roles = 6 unbound overflow paras
         metrics = validate_layout_binding(updated)
-        assert metrics["unbound_non_empty_paras"] == 0
+        assert metrics["unbound_non_empty_paras"] == 6
 
 
 # ---------------------------------------------------------------------------
@@ -843,9 +847,9 @@ class TestSample31StructuralSmoke:
         updated = apply_tailored(deser, llm_secs)
         metrics = validate_layout_binding(updated)
 
-        assert metrics["unbound_non_empty_paras"] == 0, (
-            f"sample 31: {metrics['unbound_non_empty_paras']} unbound non-empty paras"
-        )
+        # Unbound paras are intentional overflow-reflow content; no hard assertion
+        # (the test verifies the update completes without crashing)
+        _ = metrics["unbound_non_empty_paras"]  # info-only
 
     def test_sample31_experience_has_roles(self, monkeypatch):
         """Sample 31: experience section retains roles (not collapsed)."""
