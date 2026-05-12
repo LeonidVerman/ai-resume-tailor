@@ -1,5 +1,17 @@
 # Release Notes
 
+## 0.8.6.BETA — 2026-05-11
+
+### Bug fixes
+- **#56 Fix rendering issues**: LLM-driven classification now drives experience section
+  rendering for date-first (Pattern B) resume layouts. Extra bullets and skill lines beyond
+  template slots reflow as overflow paragraphs rather than being truncated or packed with
+  semicolons. Technical Skills and Professional Summary are no longer truncated for linear
+  (non-sidebar) templates. Content injection grader updated to recall-based metric for
+  accurate coverage reporting.
+
+---
+
 ## 0.8.5.BETA — 2026-05-09
 
 ### Bug fixes

@@ -268,16 +268,13 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
         for i in range(min(n_orig, n_llm)):
             new_bullets.append(orig.bullets[i].with_text(llm.bullets[i]))
         if n_llm > n_orig:
-            # Pack extra LLM bullets into the last slot so no generated content
-            # is lost.  Use "; " separator — the renderer strips \n from text
-            # (_set_para_text line 118) so newline packing would concatenate.
-            extras = llm.bullets[n_orig:]
-            packed = new_bullets[-1].text + "; " + "; ".join(e.strip() for e in extras)
-            new_bullets[-1] = orig.bullets[-1].with_text(packed)
+            # Extra bullets: clone_as unbound paragraphs so they flow to overflow
+            # pages naturally rather than being concatenated into the last slot.
+            for extra_text in llm.bullets[n_orig:]:
+                new_bullets.append(arch.clone_as(extra_text, "bullet"))
             _log.debug(
-                "CONTENT_OVERFLOW_DETECTED: %d extra bullets for role %r — "
-                "CONTENT_REFLOW_APPLIED: packed into last slot",
-                len(extras), orig.role_id[:40],
+                "CONTENT_OVERFLOW_REFLOW: %d extra bullets for role %r → unbound paras",
+                n_llm - n_orig, orig.role_id[:40],
             )
     else:
         for i, bullet_text in enumerate(llm.bullets):
@@ -478,7 +475,7 @@ _SKILLS_FILTER_RE = re.compile(
 _ADDITIONAL_RE = re.compile(r"^additional\b", re.IGNORECASE)
 # Non-skill labeled categories that LLMs sometimes append to Technical Skills sections.
 _NON_SKILL_LABEL_RE = re.compile(
-    r"^(?:hobbies?|awards?|activities|interests?|volunteering?|publications?)\s*[:：]\s*",
+    r"^(?:hobbies?|awards?|activities|interests?|volunteering?|publications?|references?|languages?)\s*[:：]\s*",
     re.IGNORECASE,
 )
 # Bare social-media or website names that are not skill tokens (e.g. "LinkedIn" alone).
@@ -551,26 +548,13 @@ def _update_body_section(
     # Fall back to heading only when the section has no content paragraphs at all.
     arch = content_paras[0] if content_paras else orig.heading
 
-    # In layout-bound mode with more LLM lines than content slots: pack the extra
-    # lines into the last slot (newline-separated) so no generated content is lost.
-    # Budget enforcement is skipped for summary/skills body para_ids, so the
-    # expanded text survives apply_anchor_budgets unchanged.
+    # No packing: extra lines become unbound paragraphs that flow to overflow pages.
+    packed_llm = llm_lines
     if layout_bound and content_paras and len(llm_lines) > len(content_paras):
-        n_extra = len(llm_lines) - len(content_paras)
-        extras = llm_lines[len(content_paras):]
-        # Use "; " separator instead of "\n" — the DOCX renderer strips newlines
-        # from paragraph text (_set_para_text replaces \n with ""), so \n packing
-        # would silently concatenate category lines (e.g. "OracleDevOps").
-        sep = "; "
-        packed_last = llm_lines[len(content_paras) - 1] + sep + (sep.join(e.strip() for e in extras))
-        packed_llm = llm_lines[: len(content_paras) - 1] + [packed_last]
         _log.debug(
-            "CONTENT_OVERFLOW_DETECTED: %d extra lines from %r — "
-            "SKILLS_PACKED_WITH_SEPARATOR: packed into last body slot (sep=%r, n=%d)",
-            n_extra, orig.title[:40], sep, n_extra,
+            "CONTENT_OVERFLOW_REFLOW: %d extra lines from %r → unbound paras",
+            len(llm_lines) - len(content_paras), orig.title[:40],
         )
-    else:
-        packed_llm = llm_lines
 
     # Build updated versions of each content para (paired by position with LLM lines).
     updated: list[ParaModel] = []
@@ -579,10 +563,9 @@ def _update_body_section(
             updated.append(content_paras[i].with_text(line))
             _log.debug("UPDATER_LAYOUT_BOUND_REPLACEMENT: para_id=%r → %r",
                        content_paras[i].para_id, line[:60])
-        elif not layout_bound:
-            updated.append(arch.clone_as(line, "paragraph"))
         else:
-            _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: %r (no slot)", line[:60])
+            # Extra line: clone_as unbound so it flows to overflow pages
+            updated.append(arch.clone_as(line, "paragraph"))
 
     # Rebuild body_paras:
     # - empty paras → preserved (spacing)
@@ -605,12 +588,18 @@ def _update_body_section(
             new_body.append(p)  # keep original so para_id stays bound in layout tree
         # else (non-layout-bound): LLM produced fewer lines — drop trailing para
 
-    # Append extra LLM lines beyond the original content para count (non-layout-bound only).
-    if not layout_bound:
-        for i in range(len(content_paras), len(packed_llm)):
-            new_body.append(updated[i])
+    # Append any remaining unbound extra paras (LLM content beyond template slots).
+    # Register them under the last content para's ID so apply_tailored can inject
+    # matching LayoutParagraphBlock entries.  para_id is left "" here — the
+    # injector assigns IDs only when the anchor block has an xml_proto_xml.
+    _body_extra_injections: "dict[str, list[ParaModel]]" = {}
+    _anchor_pid = content_paras[-1].para_id if content_paras else ""
+    for extra_pm in updated[content_cursor:]:
+        if _anchor_pid:
+            _body_extra_injections.setdefault(_anchor_pid, []).append(extra_pm)
+        new_body.append(extra_pm)
 
-    return ResumeSection(
+    result = ResumeSection(
         title=llm.heading,
         heading=orig.heading.with_text(llm.heading),
         semantic_type=orig.semantic_type,
@@ -618,6 +607,9 @@ def _update_body_section(
         roles=[],
         section_id=orig.section_id,
     )
+    if _body_extra_injections:
+        result._extra_injections = _body_extra_injections  # type: ignore[attr-defined]
+    return result
 
 
 def _find_body_prototype(
@@ -1018,6 +1010,7 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
     dash_bounds = [
         i for i, ln in enumerate(body_lines)
         if _ROLE_BODY_SEP_RE.search(ln)
+        and not _STANDALONE_DATE_LINE_RE.match(ln.strip())
     ]
     date_bounds = [
         i for i, ln in enumerate(body_lines)
@@ -1123,8 +1116,8 @@ def _update_role_bullets_only(
     Used when the LLM wrote roles in dash format: the header text is unreliable
     (formatting differs from template) so only the bullet content is used.
 
-    When *layout_bound* is True, extra bullets beyond the original count are
-    dropped instead of being cloned into unbound paragraphs.
+    When *layout_bound* is True, extra bullets beyond the original count become
+    unbound paragraphs that flow to overflow pages.
     """
     arch = orig.bullets[0] if orig.bullets else orig.header
     new_bullets: list[ParaModel] = []
@@ -1134,16 +1127,22 @@ def _update_role_bullets_only(
         for i in range(min(n_orig, n_llm)):
             new_bullets.append(orig.bullets[i].with_text(llm_bullets[i]))
         if n_llm > n_orig:
-            # Pack all extra bullets into the last slot so no LLM content is lost.
-            # Use "; " separator — renderer strips \n from text (_set_para_text).
-            extras = llm_bullets[n_orig:]
-            packed = new_bullets[-1].text + "; " + "; ".join(e.strip() for e in extras)
-            new_bullets[-1] = orig.bullets[-1].with_text(packed)
+            # Extra bullets: clone_as unbound so they flow to overflow pages.
+            for extra_text in llm_bullets[n_orig:]:
+                new_bullets.append(arch.clone_as(extra_text, "bullet"))
             _log.debug(
-                "CONTENT_OVERFLOW_DETECTED: %d extra bullets (bullets-only) — "
-                "CONTENT_REFLOW_APPLIED: packed into last slot",
-                len(extras),
+                "CONTENT_OVERFLOW_REFLOW: %d extra bullets (bullets-only) → unbound paras",
+                n_llm - n_orig,
             )
+    elif layout_bound and not orig.bullets and llm_bullets:
+        # Template role has no bullet slots — all LLM bullets become unbound paras
+        # that flow to overflow pages rather than being silently dropped.
+        for text in llm_bullets:
+            new_bullets.append(arch.clone_as(text, "bullet"))
+        _log.debug(
+            "CONTENT_OVERFLOW_REFLOW: %d LLM bullets → unbound paras (no template slots)",
+            len(llm_bullets),
+        )
     else:
         for i, text in enumerate(llm_bullets):
             if i < len(orig.bullets):
@@ -1462,6 +1461,11 @@ def _extract_company_tokens(text: str) -> frozenset[str]:
 
     Strips date ranges, splits on common role separators (pipe, dash) to keep
     only the company half, removes stop-words and punctuation.
+
+    Also splits concatenated digit+letter sequences (e.g. "2023Ginyard" →
+    "2023 ginyard") so Pattern B combined headers ("2023Ginyard Co. Title")
+    yield the same company token ("ginyard") as the LLM's dash-separated
+    header ("Ginyard Co. — Title").
     """
     # Drop parenthesised date ranges like "(2014-Now)", "(2010–2013)"
     text = re.sub(r"\([^)]*(?:19|20)\d{2}[^)]*\)", "", text)
@@ -1470,6 +1474,8 @@ def _extract_company_tokens(text: str) -> frozenset[str]:
     company_part = parts[0].strip().lower()
     # Remove punctuation
     company_part = re.sub(r"[^\w\s]", " ", company_part)
+    # Split concatenated year+word tokens (e.g. "2023ginyard" → "2023 ginyard")
+    company_part = re.sub(r"(?<=\d)(?=[a-z])", " ", company_part)
     tokens = frozenset(
         t for t in company_part.split()
         if t and t not in _COMPANY_STOP_WORDS and len(t) > 1
@@ -1566,6 +1572,68 @@ def _rebuild_date_first_roles(section: "ResumeSection") -> "list[RoleEntry]":
     return roles
 
 
+def _rebuild_roles_from_classification(
+    section: "ResumeSection",
+    cls_sec: "ClassificationSection",
+) -> "list[RoleEntry]":
+    """Rebuild RoleEntry list from classification block para_id assignments.
+
+    Used when the parser produced no role structure (e.g. Pattern B where
+    year+company+title appear in one role_meta paragraph) but the classification
+    LLM correctly identified role boundaries from the paragraph sequence.
+
+    Returned RoleEntry objects hold direct references to the ParaModel objects
+    inside body_paras (no copies are made), so in-place text updates by
+    _update_experience_date_first propagate back to body_paras automatically.
+    """
+    para_map: dict[str, "ParaModel"] = {
+        p.para_id: p for p in section.body_paras if p.para_id
+    }
+
+    roles: list[RoleEntry] = []
+    for cls_role in cls_sec.roles:
+        header_para: "ParaModel | None" = None
+        for block in cls_role.header_blocks:
+            p = para_map.get(block.para_id)
+            if p is not None:
+                header_para = p
+                break
+
+        if header_para is None:
+            _log.debug(
+                "cls-rebuild: role %r has no resolvable header para — skipped",
+                cls_role.role_id,
+            )
+            continue
+
+        meta_lines = [
+            para_map[b.para_id]
+            for b in cls_role.meta_blocks
+            if b.para_id in para_map
+        ]
+        bullets = [
+            para_map[b.para_id]
+            for b in cls_role.body_blocks
+            if b.para_id in para_map
+        ]
+
+        roles.append(RoleEntry(
+            header=header_para,
+            header_extra=[],
+            meta_lines=meta_lines,
+            bullets=bullets,
+            role_id=header_para.text.strip(),
+            role_id_stable=header_para.para_id or header_para.text.strip(),
+        ))
+
+    _log.debug(
+        "cls-rebuild: section %r → %d roles from classification "
+        "(cls_roles=%d, body_paras=%d)",
+        section.title, len(roles), len(cls_sec.roles), len(section.body_paras),
+    )
+    return roles
+
+
 def _match_llm_to_ir_roles(
     llm_roles: "list[LlmRole]",
     ir_roles: "list[RoleEntry]",
@@ -1605,6 +1673,13 @@ def _match_llm_to_ir_roles(
                 continue
             union = ir_tokens | llm_tokens
             score = len(ir_tokens & llm_tokens) / len(union)
+            # Subset bonus: if all LLM company tokens appear in the (broader)
+            # IR tokens — typical for Pattern B combined headers where the IR
+            # para reads "2023Ginyard Co. Title" and the LLM para reads
+            # "Ginyard Co. — Title" giving IR={"2023","ginyard",...},
+            # LLM={"ginyard"}.  Jaccard alone is low; boost to 0.5.
+            if llm_tokens and llm_tokens <= ir_tokens:
+                score = max(score, 0.5)
             if score > best_score:
                 best_score = score
                 best_llm_idx = llm_idx
@@ -1695,6 +1770,8 @@ def _update_experience_date_first(
     # When the template has no bullet-semantic paragraphs for a role (e.g. only a
     # single placeholder paragraph classified as header_extra), fall back to updating
     # header_extra paragraphs so LLM content is still injected.
+    # _extra_injections: anchor_para_id → [extra ParaModel, ...]
+    _extra_injections: "dict[str, list[ParaModel]]" = {}
     for ir_idx, ir_role in enumerate(rebuilt_roles):
         llm_idx = match_map[ir_idx]
         if llm_idx is None:
@@ -1735,15 +1812,50 @@ def _update_experience_date_first(
                 )
                 bullet_para.text = llm_bullets[i]
 
-    # Return with roles=[] so all_paras builder uses body_paras order
-    return ResumeSection(
+        # Extra LLM bullets beyond the template's existing slots.
+        # Clone from the last target paragraph; leave para_id="" — the injection
+        # code in apply_tailored assigns IDs and creates layout_blocks only when
+        # the anchor block has an xml_proto_xml (real DOCX template).
+        if targets and len(llm_bullets) > len(targets):
+            arch = targets[-1]
+            arch_pid = arch.para_id  # injection anchor: insert after this block
+            if arch_pid:
+                for extra_text in llm_bullets[len(targets):]:
+                    extra_pm = arch.clone_as(extra_text)
+                    # para_id intentionally left "" — injector assigns it later
+                    _extra_injections.setdefault(arch_pid, []).append(extra_pm)
+                    _log.debug(
+                        "date-first: extra bullet (anchor=%r) → %r",
+                        arch_pid,
+                        extra_text[:40],
+                    )
+
+    # Insert extra paragraphs into body_paras at the correct positions so they
+    # appear in document order (critical for the two-column table renderer).
+    if _extra_injections:
+        new_body: list[ParaModel] = []
+        for pm in orig.body_paras:
+            new_body.append(pm)
+            extras = _extra_injections.get(pm.para_id)
+            if extras:
+                new_body.extend(extras)
+        result_body = new_body
+    else:
+        result_body = orig.body_paras
+
+    # Return with roles=[] so all_paras builder uses body_paras order.
+    # Attach _extra_injections so apply_tailored can inject matching layout_blocks.
+    result = ResumeSection(
         title=orig.title,
         heading=orig.heading,
         semantic_type=orig.semantic_type,
-        body_paras=orig.body_paras,
+        body_paras=result_body,
         roles=[],
         section_id=orig.section_id,
     )
+    if _extra_injections:
+        result._extra_injections = _extra_injections  # type: ignore[attr-defined]
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -1765,7 +1877,20 @@ def _update_experience_classified(
     - Only bullet text is updated.
     - IR role count is authoritative: extra LLM roles are ignored; extra IR
       roles beyond the LLM output are kept verbatim.
+
+    When the template stores experience as flat body_paras (orig.roles=[]),
+    falls back to _update_body_classified so the LLM content is not silently
+    dropped.
     """
+    # Template has no role structure — treat like a body section so LLM
+    # content is applied to body_paras rather than silently dropped.
+    if not orig.roles:
+        _log.debug(
+            "classification: experience section %r has no roles → delegating to body update",
+            orig.title,
+        )
+        return _update_body_classified(orig, llm, cls_sec, layout_bound=layout_bound)
+
     # Resolve LLM roles: try pipe format first, then dash/date format.
     llm_roles = llm.roles
     if not llm_roles and llm.body_lines and orig.roles:
@@ -1819,6 +1944,7 @@ def _update_experience_classified(
         semantic_type=orig.semantic_type,
         body_paras=orig.body_paras,
         roles=updated_roles,
+        section_id=orig.section_id,
     )
 
 
@@ -1876,6 +2002,7 @@ def _update_body_classified(
             semantic_type=orig.semantic_type,
             body_paras=new_body,
             roles=[],
+            section_id=orig.section_id,
         )
 
     # No structure constraint — use existing body update, then restore heading if needed.
@@ -1894,6 +2021,7 @@ def _update_body_classified(
             semantic_type=updated.semantic_type,
             body_paras=updated.body_paras,
             roles=[],
+            section_id=orig.section_id,
         )
     return updated
 
@@ -2412,35 +2540,14 @@ def enforce_no_unbound_paragraphs(
         items: "list[ParaModel]",
         context: str,
     ) -> "list[ParaModel]":
-        """Return a new list with unbound non-empty items packed into the last anchor."""
+        """Keep all items including unbound — extra content flows to overflow pages."""
         unbound_texts = [p.text for p in items if not p.para_id and p.text.strip()]
-        if not unbound_texts:
-            return items
-        # Build a map of para_id → (possibly updated) para for anchored items
-        anchored: list[ParaModel] = [p for p in items if p.para_id and p.text.strip()]
-        if anchored:
-            packed_text = anchored[-1].text + "\n" + "\n".join(unbound_texts)
-            anchored_map: dict[str, ParaModel] = {p.para_id: p for p in anchored}
-            anchored_map[anchored[-1].para_id] = anchored[-1].with_text(packed_text)
+        if unbound_texts:
             _log.debug(
-                "STRUCTURAL_REPAIR_ATTEMPTED: packed %d unbound into %s",
+                "CONTENT_OVERFLOW_REFLOW: keeping %d unbound para(s) in %s for overflow rendering",
                 len(unbound_texts), context,
             )
-        else:
-            anchored_map = {}
-            _log.debug(
-                "STRUCTURAL_REPAIR_ATTEMPTED: dropped %d unbound (no anchor) from %s",
-                len(unbound_texts), context,
-            )
-        # Rebuild: spacers kept; anchored replaced with (possibly packed) version; unbound dropped
-        result: list[ParaModel] = []
-        for p in items:
-            if not p.text.strip():
-                result.append(p)       # spacer / empty → keep
-            elif p.para_id:
-                result.append(anchored_map.get(p.para_id, p))  # anchored
-            # unbound non-empty: drop
-        return result
+        return list(items)
 
     # Header paras — normally never have unbound content, but check as a safety net
     if any(not p.para_id and p.text.strip() for p in effective_header_paras):
@@ -3041,7 +3148,12 @@ def apply_tailored(
             cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
             if cls_sec is not None and cls_sec.rewrite_policy == "preserve":
                 return orig_section
-            rebuilt = _rebuild_date_first_roles(orig_section)
+            # When classification has roles, use them to reconstruct role
+            # boundaries instead of the deterministic date-first heuristic.
+            if cls_sec is not None and cls_sec.roles:
+                rebuilt = _rebuild_roles_from_classification(orig_section, cls_sec)
+            else:
+                rebuilt = _rebuild_date_first_roles(orig_section)
             return _update_experience_date_first(orig_section, llm_section, rebuilt)
 
         # Classification-constrained path: look up by stable section_id.
@@ -3958,6 +4070,144 @@ def apply_tailored(
                 "MULTI_COPY_TEMPLATE_DETECTED: %d copies, trimmed to first copy only",
                 _n_copies,
             )
+
+    # ── Auto-register unbound experience extras ───────────────────────────────
+    # _update_role_bullets_only (standard experience path) produces extra clones
+    # with para_id="" when the LLM generates more bullets than the template has
+    # slots.  Register them in _extra_injections so the injection step below
+    # places them at the correct position rather than at document end.
+    for _sec in new_sections:
+        if _sec.semantic_type != "experience":
+            continue
+        if getattr(_sec, "_extra_injections", None):
+            continue  # already set (date-first or body path)
+        _exp_extras: "dict[str, list[ParaModel]]" = {}
+        for _role in _sec.roles:
+            _bound_bullets = [_b for _b in _role.bullets if _b.para_id]
+            _unbound_bullets = [_b for _b in _role.bullets if not _b.para_id and _b.text.strip()]
+            if _unbound_bullets and _bound_bullets:
+                _exp_extras.setdefault(_bound_bullets[-1].para_id, []).extend(_unbound_bullets)
+        if _exp_extras:
+            _sec._extra_injections = _exp_extras  # type: ignore[attr-defined]
+
+    # ── Collect all extra injections ──────────────────────────────────────────
+    # Sources: _update_experience_date_first, _update_body_section (skills/summary),
+    # and the auto-registration above for standard experience roles.
+    _all_extra_injections: "dict[str, list[ParaModel]]" = {}
+    for _sec in new_sections:
+        _ei = getattr(_sec, "_extra_injections", None)
+        if _ei:
+            _all_extra_injections.update(_ei)
+
+    if _all_extra_injections and _result_layout_blocks:
+        from tailor.compiler.models import LayoutParagraphBlock as _LPB, LayoutTableBlock as _LTB
+        from lxml import etree as _etree
+        _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
+        _new_lb = list(_result_layout_blocks)
+        _offset = 0  # running offset from prior LayoutParagraphBlock insertions
+
+        for _i, _blk in enumerate(list(_result_layout_blocks)):
+
+            # ── LayoutParagraphBlock path ──────────────────────────────────────
+            if isinstance(_blk, _LPB):
+                _extras = _all_extra_injections.get(_blk.para_id)
+                if not _extras:
+                    continue
+                if _blk.xml_proto_xml is None:
+                    # No XML prototype (minimal test fixture / PDF IR).  Leave
+                    # extras unbound — they'll be silently omitted rather than
+                    # appearing at document end.
+                    _log.debug(
+                        "EXTRA_INJECTION_SKIPPED_NO_PROTO: anchor=%r extra_count=%d",
+                        _blk.para_id, len(_extras),
+                    )
+                    continue
+                # Assign stable synthetic IDs and insert new LayoutParagraphBlock entries.
+                for _j, _pm in enumerate(_extras):
+                    _pm.para_id = f"{_blk.para_id}_ext_{_j + 1}"
+                _insert_at = _i + 1 + _offset
+                _new_blocks = [
+                    _LPB(para_id=_pm.para_id, xml_proto_xml=_blk.xml_proto_xml)
+                    for _pm in _extras
+                ]
+                _new_lb[_insert_at:_insert_at] = _new_blocks
+                _offset += len(_new_blocks)
+                _log.debug(
+                    "EXTRA_BULLETS_INJECTED: anchor=%r extra_count=%d",
+                    _blk.para_id, len(_extras),
+                )
+
+            # ── LayoutTableBlock path ──────────────────────────────────────────
+            elif isinstance(_blk, _LTB):
+                # Check whether any anchor para_id lives inside this table.
+                _tbl_anchor_map = {
+                    _anchor: _extras
+                    for _anchor, _extras in _all_extra_injections.items()
+                    if _anchor in _blk.para_ids
+                }
+                if not _tbl_anchor_map:
+                    continue
+                if not _blk.xml_proto_xml:
+                    continue
+
+                # Parse the table XML and build a para_id → <w:p> element map.
+                try:
+                    _tbl_tree = _etree.fromstring(_blk.xml_proto_xml.encode("utf-8"))
+                except Exception:
+                    continue
+                _all_p = _tbl_tree.findall(f".//{{{_W_NS}}}p")
+                _pid_to_pelem: "dict[str, Any]" = {}
+                for _pid, _pelem in zip(_blk.para_ids, _all_p):
+                    if _pid:
+                        _pid_to_pelem[_pid] = _pelem
+
+                # Insert extra <w:p> elements after each anchor, in reverse order
+                # of their table position so earlier insertions don't shift later ones.
+                _new_para_ids = list(_blk.para_ids)
+                _anchors_sorted = sorted(
+                    _tbl_anchor_map.keys(),
+                    key=lambda _a: _blk.para_ids.index(_a) if _a in _blk.para_ids else -1,
+                    reverse=True,
+                )
+                for _anchor in _anchors_sorted:
+                    _extras = _tbl_anchor_map[_anchor]
+                    _anchor_elem = _pid_to_pelem.get(_anchor)
+                    if _anchor_elem is None:
+                        continue
+                    _anchor_idx = _blk.para_ids.index(_anchor)
+                    _parent = _anchor_elem.getparent()
+                    _pos = list(_parent).index(_anchor_elem)
+                    for _j, _pm in enumerate(_extras):
+                        _new_pid = f"{_anchor}_ext_{_j + 1}"
+                        _pm.para_id = _new_pid
+                        from copy import deepcopy as _deepcopy
+                        _new_p = _deepcopy(_anchor_elem)
+                        # Clear all text runs and set new content
+                        for _t in _new_p.findall(f".//{{{_W_NS}}}t"):
+                            _t.text = ""
+                        _runs = _new_p.findall(f".//{{{_W_NS}}}r")
+                        if _runs:
+                            _runs[0].find(f"{{{_W_NS}}}t").text = _pm.text
+                            for _r in _runs[1:]:
+                                _r.getparent().remove(_r)
+                        _parent.insert(_pos + 1 + _j, _new_p)
+                        _new_para_ids.insert(_anchor_idx + 1 + _j, _new_pid)
+                    _log.debug(
+                        "EXTRA_BULLETS_TABLE_INJECTED: anchor=%r extra_count=%d table=%r",
+                        _anchor, len(_extras), _blk.table_id,
+                    )
+
+                # Re-serialise the modified table XML and replace the layout block.
+                _new_xml = _etree.tostring(_tbl_tree, encoding="unicode")
+                _adj = _i + _offset
+                _new_lb[_adj] = _LTB(
+                    table_id=_blk.table_id,
+                    xml_proto_xml=_new_xml,
+                    para_ids=_new_para_ids,
+                )
+
+        _result_layout_blocks = _new_lb
 
     _result = ResumeDocument(
         header_paras=effective_header_paras,

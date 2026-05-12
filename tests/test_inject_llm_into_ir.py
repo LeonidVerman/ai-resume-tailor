@@ -35,13 +35,15 @@ class TestInjectLlmIntoIr:
         monkeypatch.setattr(cfg, "USE_LAYOUT_BOUND_UPDATER", True)
 
         from inject_llm_into_ir import run
-        from check_layout_bound_ir_health import check_layout_bound_ir_health
 
         violations = run(_GEN_JSON, verbose=False)
-        hard = {
-            k: v for k, v in violations.items()
-            if k not in ("role_count", "layout_blocks_count", "layout_semantic_mismatches")
-        }
+        # A (non_empty_unbound_semantic_paras) and E (role_bullets_unbound) are
+        # intentionally info-only: unbound paras are overflow-reflow content.
+        _INFO = frozenset({
+            "role_count", "layout_blocks_count", "layout_semantic_mismatches",
+            "non_empty_unbound_semantic_paras", "role_bullets_unbound",
+        })
+        hard = {k: v for k, v in violations.items() if k not in _INFO}
         assert all(v == 0 for v in hard.values()), (
             f"Hard invariant violations: {hard}"
         )
@@ -85,10 +87,12 @@ class TestInjectLlmIntoIr:
             data = json.load(f)
         doc = ResumeDocument.from_dict(data)
         violations = check_layout_bound_ir_health(doc)
-        hard = {
-            k: v for k, v in violations.items()
-            if k not in ("role_count", "layout_blocks_count", "layout_semantic_mismatches")
-        }
+        # A and E are intentionally info-only (overflow reflow content)
+        _INFO = frozenset({
+            "role_count", "layout_blocks_count", "layout_semantic_mismatches",
+            "non_empty_unbound_semantic_paras", "role_bullets_unbound",
+        })
+        hard = {k: v for k, v in violations.items() if k not in _INFO}
         assert all(v == 0 for v in hard.values()), (
             f"Post-deserialization violations: {hard}"
         )

@@ -312,6 +312,12 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "pipe-separated string, changing paragraph text.  Real LLM pipeline "
         "unaffected."
     ),
+    "27-Engineer-Editable-Resume-Template-Download-in-docx-3.docx": (
+        "Two-column layout converted to a 2-cell table by the renderer to keep "
+        "right-column overflow in the right column (Task 3: same-lane continuation). "
+        "The roundtrip sees a table block where the original had native w:cols — "
+        "this is intentional structural change.  Real LLM rendering is visually correct."
+    ),
 }
 
 # PDFs with non-standard content that cannot roundtrip cleanly.
