@@ -162,6 +162,27 @@ def _strip_column_break(p_elem) -> None:
                 r_elem.remove(br)
 
 
+def _strip_text_wrapping_breaks(p_elem) -> None:
+    """Remove w:br type='textWrapping' elements from runs in a paragraph.
+
+    Template paragraphs sometimes encode multi-line content using soft-return
+    breaks (w:br type='textWrapping').  When LLM text replaces the original
+    content, _set_para_text distributes the new (often shorter) text
+    proportionally across the original runs.  Each run then gets only a few
+    characters, and the surviving br elements force a line break between each
+    tiny fragment — producing "character-by-character" rendering with 1-3 chars
+    per line.  Stripping the breaks before text replacement lets the new content
+    flow naturally at full paragraph width.
+
+    Only called when content is being actively replaced (pm is not None), so
+    verbatim-preserved paragraphs keep their original break structure.
+    """
+    for r_elem in list(p_elem.findall(f"{{{_W}}}r")):
+        for br in list(r_elem.findall(f"{{{_W}}}br")):
+            if br.get(f"{{{_W}}}type") == "textWrapping":
+                r_elem.remove(br)
+
+
 def _ensure_keep_next(p_elem) -> None:
     """Add w:keepNext to the paragraph pPr if not already present.
 
@@ -1232,6 +1253,7 @@ def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_i
     _strip_column_break(elem)
     pm = para_lookup.get(block.para_id) if block.para_id else None
     if pm is not None:
+        _strip_text_wrapping_breaks(elem)
         _set_para_text(elem, pm.text)
     return elem
 
@@ -1502,13 +1524,26 @@ def _render_layout_two_col_table(
                     right_w = max(_text_area - left_w - _col_space, 1)
                 except ValueError:
                     pass
+    _was_stretched = False
     if left_w == 0 or right_w == 0:
         left_w = right_w = _text_area // 2
+        _was_stretched = True
     else:
         _col_sum = left_w + right_w
         if _col_sum < _text_area * 0.92:
             left_w = round(left_w / _col_sum * _text_area)
             right_w = _text_area - left_w
+            _was_stretched = True
+
+    # The column gap (_col_space) separates the two columns in the original w:cols
+    # layout but is absent from the 2-cell table.  Without it, right-cell content
+    # starts _col_space twips to the LEFT of where the original right column started,
+    # causing text to overlap the insideV border and the left-column photo (#61/#60).
+    # Fix: expand the right cell by _col_space and add that amount as a left cell
+    # margin so the right-cell text starts at the original right-column X position.
+    # Skip when the widths were already stretched to fill _text_area — in that case
+    # the proportional scaling implicitly absorbed the gap.
+    _right_col_gap = _col_space if (not _was_stretched and _col_space > 0) else 0
 
     # Precompute column left-edge x-positions in EMU for anchor-position correction.
     # When w:cols is removed (below), any anchor using posH relativeFrom='column'
@@ -1546,7 +1581,7 @@ def _render_layout_two_col_table(
     tbl = etree.Element(f"{{{_W}}}tbl")
     tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
     tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
-    tblW_el.set(f"{{{_W}}}w", str(left_w + right_w))
+    tblW_el.set(f"{{{_W}}}w", str(left_w + right_w + _right_col_gap))
     tblW_el.set(f"{{{_W}}}type", "dxa")
     tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
     tblLayout.set(f"{{{_W}}}type", "fixed")
@@ -1623,8 +1658,15 @@ def _render_layout_two_col_table(
     right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
     right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
     right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
-    right_tcW.set(f"{{{_W}}}w", str(right_w))
+    right_tcW.set(f"{{{_W}}}w", str(right_w + _right_col_gap))
     right_tcW.set(f"{{{_W}}}type", "dxa")
+    if _right_col_gap > 0:
+        # Cell-level left margin overrides the table-level zero margin, pushing
+        # right-column text to start at the original right-column X position.
+        right_tcMar = etree.SubElement(right_tcPr, f"{{{_W}}}tcMar")
+        right_tcMar_left = etree.SubElement(right_tcMar, f"{{{_W}}}left")
+        right_tcMar_left.set(f"{{{_W}}}w", str(_right_col_gap))
+        right_tcMar_left.set(f"{{{_W}}}type", "dxa")
     etree.SubElement(right_tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
     _unbound_extra = [pm for pm in (doc.all_paras or []) if not pm.para_id and pm.text.strip()]
     _fill_cell(right_tc, right_blocks, _right_col_x_emu, extra_paras=_unbound_extra if _unbound_extra else None)
@@ -1635,8 +1677,8 @@ def _render_layout_two_col_table(
         body.append(tbl)
 
     _log.debug(
-        "LAYOUT_TWO_COL_TABLE: left=%d/%d-twips right=%d/%d-twips accent=%s",
-        len(left_blocks), left_w, len(right_blocks), right_w, _accent,
+        "LAYOUT_TWO_COL_TABLE: left=%d/%d-twips right=%d/%d-twips gap=%d-twips accent=%s",
+        len(left_blocks), left_w, len(right_blocks), right_w, _right_col_gap, _accent,
     )
 
 
@@ -1829,6 +1871,7 @@ def _render_from_layout_blocks(
                     pid_to_pelem[para_id] = p_elem
                 pm = para_lookup.get(para_id)
                 if pm is not None:
+                    _strip_text_wrapping_breaks(p_elem)
                     _set_para_text(p_elem, pm.text)
                     patched += 1
                 else:
@@ -1865,6 +1908,7 @@ def _render_from_layout_blocks(
                     from copy import deepcopy
                     elem = deepcopy(pm.style.xml_proto)
                     _strip_last_rendered_page_breaks(elem)
+                    _strip_text_wrapping_breaks(elem)
                     _set_para_text(elem, pm.text)
                 elif pm.paragraph_profile is not None:
                     from tailor.compiler.para_builder import build_para_element
@@ -1887,6 +1931,7 @@ def _render_from_layout_blocks(
                 )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
                 if pm is not None:
+                    _strip_text_wrapping_breaks(elem)
                     _set_para_text(elem, pm.text)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
                 else:
