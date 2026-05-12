@@ -843,7 +843,10 @@ def apply_layout_fitting(
         fit = estimate_fit(container, llm_s)
 
         if llm_s.semantic_type == "summary" and container.is_narrow:
-            if fit.risk in ("medium", "high"):
+            if fit.risk in ("medium", "high") and tpl_class == "table_sidebar":
+                # Fixed-cell layout: sentence count must be capped to prevent
+                # height overflow.  For linear/multi-column templates the two-
+                # column table renderer handles overflow; don't truncate there.
                 new_lines = compact_summary(llm_s.body_lines, _SUMMARY_MAX_SENTENCES_NARROW)
                 log.debug(
                     "compact_summary: '%s' %d→%d lines (fit=%s)",

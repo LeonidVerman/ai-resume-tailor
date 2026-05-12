@@ -21,10 +21,11 @@ Section classification:
   Template-preserved: header_paras + all other sections.
 
 Scoring (contribution to composite):
-  PASS (100):    sim_llm ≥ 0.60 AND sim_template is not anomalously low
-  WARNING (75):  sim_llm 0.35–0.60 (partial injection)
-  FAIL (50):     sim_llm < 0.35 (weak injection)
-  HARD FAIL:     lorem ipsum detected
+  PERFECT (100): sim_llm = 1.0 (all LLM vocabulary reflected)
+  NOTE (100):    sim_llm 0.80–1.0 (minor gap, no penalty)
+  WARNING (85):  sim_llm 0.50–0.80 (partial injection, -15)
+  FAIL (70):     sim_llm 0.25–0.50 (significant gap, -30)
+  HARD FAIL:     sim_llm < 0.25 or lorem ipsum detected
 """
 from __future__ import annotations
 
@@ -62,7 +63,15 @@ class ContentInjectionResult:
 # ---------------------------------------------------------------------------
 
 def _tokenize(text: str) -> set[str]:
-    """Extract meaningful tokens: length >= 4, not a stopword."""
+    """Extract meaningful tokens: length >= 4, not a stopword.
+
+    Pre-splits concatenated digit+letter strings (e.g. "2023Ginyard" →
+    "2023 Ginyard") so company names embedded in year-prefixed headers
+    produce the same tokens in both the IR and the LLM output.
+    """
+    # Insert a space between a run of digits and the following letter so
+    # "2023Ginyard" tokenizes to "ginyard" the same way "Ginyard" does.
+    text = re.sub(r"(?<=\d)(?=[A-Za-z])", " ", text)
     words = re.findall(r"\b[a-z]{4,}\b", text.lower())
     return {w for w in words if w not in _STOPWORDS}
 
@@ -72,6 +81,18 @@ def _jaccard(a: set, b: set) -> float:
     if not union:
         return 0.0
     return len(a & b) / len(union)
+
+
+def _recall(rendered: set, reference: set) -> float:
+    """Fraction of *reference* tokens that appear in *rendered*.
+
+    Used for sim_llm: measures LLM-token coverage in the rendered output.
+    Returns 1.0 when all reference tokens are present (regardless of extra
+    tokens in rendered), 0.0 when none are present.
+    """
+    if not reference:
+        return 0.0
+    return len(rendered & reference) / len(reference)
 
 
 def _is_llm_section(heading: str) -> bool:
@@ -236,7 +257,11 @@ def check_content_injection(
     llm_target_tokens = _tokenize(llm_target_portion) if llm_target_portion else _tokenize(llm_text)
 
     if llm_target_text and llm_target_tokens:
-        sim_llm = _jaccard(_tokenize(llm_target_text), llm_target_tokens)
+        # Use recall (coverage) not Jaccard: measures what fraction of the LLM's
+        # target-section vocabulary appears in the rendered output.  Extra tokens
+        # in the rendered output don't reduce the score — only missing LLM tokens
+        # do.  This matches the warning message ("X% of LLM vocabulary not reflected").
+        sim_llm = _recall(_tokenize(llm_target_text), llm_target_tokens)
     else:
         sim_llm = 0.0
 
@@ -258,18 +283,29 @@ def check_content_injection(
         score -= 25.0
 
     # Primary signal: LLM injection quality in target sections.
-    # Scoring is based entirely on sim_llm.  sim_template is informational only —
-    # it is not penalised because candidate content (name, education, contact)
-    # legitimately differs from template placeholder text even when correctly applied.
+    # Ideal is sim_llm = 1.0 (all LLM target-section vocabulary reflected in rendered output).
+    # Any deviation from 1.0 is reported as a warning. Score penalty applies only when
+    # the shortfall is significant.
     if not llm_target_tokens:
-        # No identifiable LLM-target sections — cannot assess injection
         evidence.append("No Summary/Experience/Skills sections found to assess injection")
-    elif sim_llm >= 0.60:
-        pass  # Good injection — no penalty
-    elif sim_llm >= 0.35:
-        score -= 25.0
+    elif sim_llm >= 1.0:
+        pass  # Perfect — all target-section LLM content is reflected
+    elif sim_llm >= 0.80:
+        # Minor gap — note it but no score penalty
+        evidence.append(
+            f"Minor content gap in target sections: sim_llm={sim_llm:.2f} "
+            f"(~{round((1.0 - sim_llm) * 100)}% of LLM target vocabulary not reflected)"
+        )
+    elif sim_llm >= 0.50:
+        score -= 15.0
         evidence.append(
             f"Partial content injection in target sections: sim_llm={sim_llm:.2f}, "
+            f"sim_template={sim_template:.2f}"
+        )
+    elif sim_llm >= 0.25:
+        score -= 30.0
+        evidence.append(
+            f"Significant content injection gap: sim_llm={sim_llm:.2f}, "
             f"sim_template={sim_template:.2f}"
         )
     else:
