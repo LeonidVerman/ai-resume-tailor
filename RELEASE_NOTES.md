@@ -1,6 +1,6 @@
 # Release Notes
 
-## 0.8.7.BETA — 2026-05-11
+## 0.8.6.BETA — 2026-05-11
 
 ### Bug fixes
 - **#56 Fix rendering issues**: LLM-driven classification now drives experience section
