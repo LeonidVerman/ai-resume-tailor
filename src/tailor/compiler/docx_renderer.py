@@ -162,6 +162,27 @@ def _strip_column_break(p_elem) -> None:
                 r_elem.remove(br)
 
 
+def _strip_text_wrapping_breaks(p_elem) -> None:
+    """Remove w:br type='textWrapping' elements from runs in a paragraph.
+
+    Template paragraphs sometimes encode multi-line content using soft-return
+    breaks (w:br type='textWrapping').  When LLM text replaces the original
+    content, _set_para_text distributes the new (often shorter) text
+    proportionally across the original runs.  Each run then gets only a few
+    characters, and the surviving br elements force a line break between each
+    tiny fragment — producing "character-by-character" rendering with 1-3 chars
+    per line.  Stripping the breaks before text replacement lets the new content
+    flow naturally at full paragraph width.
+
+    Only called when content is being actively replaced (pm is not None), so
+    verbatim-preserved paragraphs keep their original break structure.
+    """
+    for r_elem in list(p_elem.findall(f"{{{_W}}}r")):
+        for br in list(r_elem.findall(f"{{{_W}}}br")):
+            if br.get(f"{{{_W}}}type") == "textWrapping":
+                r_elem.remove(br)
+
+
 def _ensure_keep_next(p_elem) -> None:
     """Add w:keepNext to the paragraph pPr if not already present.
 
@@ -1232,6 +1253,7 @@ def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_i
     _strip_column_break(elem)
     pm = para_lookup.get(block.para_id) if block.para_id else None
     if pm is not None:
+        _strip_text_wrapping_breaks(elem)
         _set_para_text(elem, pm.text)
     return elem
 
@@ -1829,6 +1851,7 @@ def _render_from_layout_blocks(
                     pid_to_pelem[para_id] = p_elem
                 pm = para_lookup.get(para_id)
                 if pm is not None:
+                    _strip_text_wrapping_breaks(p_elem)
                     _set_para_text(p_elem, pm.text)
                     patched += 1
                 else:
@@ -1865,6 +1888,7 @@ def _render_from_layout_blocks(
                     from copy import deepcopy
                     elem = deepcopy(pm.style.xml_proto)
                     _strip_last_rendered_page_breaks(elem)
+                    _strip_text_wrapping_breaks(elem)
                     _set_para_text(elem, pm.text)
                 elif pm.paragraph_profile is not None:
                     from tailor.compiler.para_builder import build_para_element
@@ -1887,6 +1911,7 @@ def _render_from_layout_blocks(
                 )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
                 if pm is not None:
+                    _strip_text_wrapping_breaks(elem)
                     _set_para_text(elem, pm.text)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
                 else:
