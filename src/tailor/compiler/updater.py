@@ -475,7 +475,7 @@ _SKILLS_FILTER_RE = re.compile(
 _ADDITIONAL_RE = re.compile(r"^additional\b", re.IGNORECASE)
 # Non-skill labeled categories that LLMs sometimes append to Technical Skills sections.
 _NON_SKILL_LABEL_RE = re.compile(
-    r"^(?:hobbies?|awards?|activities|interests?|volunteering?|publications?)\s*[:：]\s*",
+    r"^(?:hobbies?|awards?|activities|interests?|volunteering?|publications?|references?|languages?)\s*[:：]\s*",
     re.IGNORECASE,
 )
 # Bare social-media or website names that are not skill tokens (e.g. "LinkedIn" alone).
@@ -589,11 +589,17 @@ def _update_body_section(
         # else (non-layout-bound): LLM produced fewer lines — drop trailing para
 
     # Append any remaining unbound extra paras (LLM content beyond template slots).
-    # This covers both layout-bound (overflow reflow) and non-layout-bound cases.
+    # Register them under the last content para's ID so apply_tailored can inject
+    # matching LayoutParagraphBlock entries.  para_id is left "" here — the
+    # injector assigns IDs only when the anchor block has an xml_proto_xml.
+    _body_extra_injections: "dict[str, list[ParaModel]]" = {}
+    _anchor_pid = content_paras[-1].para_id if content_paras else ""
     for extra_pm in updated[content_cursor:]:
+        if _anchor_pid:
+            _body_extra_injections.setdefault(_anchor_pid, []).append(extra_pm)
         new_body.append(extra_pm)
 
-    return ResumeSection(
+    result = ResumeSection(
         title=llm.heading,
         heading=orig.heading.with_text(llm.heading),
         semantic_type=orig.semantic_type,
@@ -601,6 +607,9 @@ def _update_body_section(
         roles=[],
         section_id=orig.section_id,
     )
+    if _body_extra_injections:
+        result._extra_injections = _body_extra_injections  # type: ignore[attr-defined]
+    return result
 
 
 def _find_body_prototype(
@@ -1804,19 +1813,20 @@ def _update_experience_date_first(
                 bullet_para.text = llm_bullets[i]
 
         # Extra LLM bullets beyond the template's existing slots.
-        # Clone from the last target paragraph; tag with synthetic para_ids so the
-        # layout-block injector in apply_tailored can place them at the right position.
+        # Clone from the last target paragraph; leave para_id="" — the injection
+        # code in apply_tailored assigns IDs and creates layout_blocks only when
+        # the anchor block has an xml_proto_xml (real DOCX template).
         if targets and len(llm_bullets) > len(targets):
             arch = targets[-1]
             arch_pid = arch.para_id  # injection anchor: insert after this block
             if arch_pid:
-                for j, extra_text in enumerate(llm_bullets[len(targets):]):
+                for extra_text in llm_bullets[len(targets):]:
                     extra_pm = arch.clone_as(extra_text)
-                    extra_pm.para_id = f"{arch_pid}_ext_{j + 1}"
+                    # para_id intentionally left "" — injector assigns it later
                     _extra_injections.setdefault(arch_pid, []).append(extra_pm)
                     _log.debug(
-                        "date-first: extra bullet para %r → %r",
-                        extra_pm.para_id,
+                        "date-first: extra bullet (anchor=%r) → %r",
+                        arch_pid,
                         extra_text[:40],
                     )
 
@@ -4072,7 +4082,7 @@ def apply_tailored(
         _ei = getattr(_sec, "_extra_injections", None)
         if _ei:
             _all_extra_injections.update(_ei)
-    if _all_extra_injections:
+    if _all_extra_injections and _result_layout_blocks:
         from tailor.compiler.models import LayoutParagraphBlock as _LPB
         _new_lb = list(_result_layout_blocks)
         _offset = 0  # running offset from prior insertions
@@ -4082,6 +4092,19 @@ def apply_tailored(
             _extras = _all_extra_injections.get(_blk.para_id)
             if not _extras:
                 continue
+            if _blk.xml_proto_xml is None:
+                # No XML prototype on this block (e.g. minimal test fixture or
+                # PDF-sourced IR).  Cannot clone the paragraph formatting, so
+                # leave the extras as unbound (para_id="") and let the renderer
+                # append them via its existing _unbound_extra path.
+                _log.debug(
+                    "EXTRA_INJECTION_SKIPPED_NO_PROTO: anchor=%r extra_count=%d",
+                    _blk.para_id, len(_extras),
+                )
+                continue
+            # Assign stable synthetic IDs now (injected at render time).
+            for _j, _pm in enumerate(_extras):
+                _pm.para_id = f"{_blk.para_id}_ext_{_j + 1}"
             _insert_at = _i + 1 + _offset
             _new_blocks = [
                 _LPB(para_id=_pm.para_id, xml_proto_xml=_blk.xml_proto_xml)
@@ -4090,7 +4113,7 @@ def apply_tailored(
             _new_lb[_insert_at:_insert_at] = _new_blocks
             _offset += len(_new_blocks)
             _log.debug(
-                "DATE_FIRST_EXTRA_BULLETS_INJECTED: anchor=%r extra_count=%d",
+                "EXTRA_BULLETS_INJECTED: anchor=%r extra_count=%d",
                 _blk.para_id, len(_extras),
             )
         _result_layout_blocks = _new_lb

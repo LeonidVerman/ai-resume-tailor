@@ -417,9 +417,25 @@ def redistribute_additional(
 
     for subkind, lines in subgroups.items():
         dedicated = _find_container_for_subkind(subkind, containers)
-        if dedicated is None or dedicated.semantic_type in _LOCKED_TYPES:
-            # No dedicated container, or the container is locked (verbatim-only).
-            # Return the content to Technical Skills as plain lines.
+        if dedicated is None:
+            # No dedicated container — return content to Technical Skills as
+            # plain lines (e.g. "Languages: Java, Python" when no Languages
+            # block exists).
+            cur = result[skills_idx]
+            result[skills_idx] = LlmSection(
+                heading=cur.heading,
+                semantic_type=cur.semantic_type,
+                body_lines=cur.body_lines + lines,
+                roles=cur.roles,
+            )
+            continue
+        if dedicated.semantic_type in _LOCKED_TYPES:
+            # Dedicated container exists but is locked (verbatim-only).
+            # Return the content to Technical Skills as plain lines so it is
+            # not silently discarded (e.g. "Languages: Java, Python" should
+            # remain visible even when the template LANGUAGES section is locked).
+            # Natural-language proficiency lines ("English (native), German…")
+            # are then removed by _sanitize_skills_body before rendering.
             cur = result[skills_idx]
             result[skills_idx] = LlmSection(
                 heading=cur.heading,
@@ -845,7 +861,17 @@ def apply_layout_fitting(
             container.is_narrow or tpl_class == "table_sidebar"
         ):
             if fit.risk in ("medium", "high"):
-                target = max(container.orig_para_count, 3)
+                # table_sidebar: fixed cell height — hard count cap is required.
+                # linear (native columns): overflow is handled by the two-column
+                # table renderer; only apply per-line char limits, not count cap.
+                if tpl_class == "table_sidebar":
+                    target = max(container.orig_para_count, 3)
+                else:
+                    # Allow all lines through; updater injects overflow as extra
+                    # layout_blocks so they appear in-column, not at end-of-doc.
+                    target = max(
+                        len([l for l in llm_s.body_lines if l.strip()]), 1
+                    )
                 # For narrow containers, also cap per-line character length to
                 # prevent long wrapped lines from expanding the cell height.
                 # Compute the cap as max(original average chars * 1.2, 60).
@@ -893,10 +919,17 @@ def apply_layout_fitting(
 # ---------------------------------------------------------------------------
 
 _SKILLS_MARKER_RE = re.compile(
-    r"CURRENT_DATE|Generated\s+on|__TEMPLATE__|\{\{|\}\}",
+    r"CURRENT_DATE|Generated\s+on|__TEMPLATE__|\{\||\}\}",
     re.IGNORECASE,
 )
 _SKILLS_ADDITIONAL_RE = re.compile(r"^additional\b", re.IGNORECASE)
+# Natural-language proficiency markers: lines like "English (native), German (speaking/reading)"
+# that were returned from a locked Languages container back to Technical Skills.
+_SPOKEN_LANG_PROFICIENCY_RE = re.compile(
+    r"\((?:native|fluent|conversational|proficient|speaking|reading|writing"
+    r"|speaking/reading|speaking/reading/writing|reading/writing)\)",
+    re.IGNORECASE,
+)
 
 
 def _sanitize_skills_body(body_lines: list[str]) -> list[str]:
@@ -905,6 +938,7 @@ def _sanitize_skills_body(body_lines: list[str]) -> list[str]:
     Removes:
     - Lines containing internal markers (CURRENT_DATE, Generated on, etc.).
     - Lines starting with "Additional".
+    - Lines that are natural-language proficiency lists (e.g. "English (native), German…").
     - Full sentences: 8+ space-separated tokens ending with sentence punctuation.
     """
     clean: list[str] = []
@@ -918,6 +952,9 @@ def _sanitize_skills_body(body_lines: list[str]) -> list[str]:
             continue
         if _SKILLS_ADDITIONAL_RE.match(stripped):
             log.debug("sanitize_skills: dropping 'Additional' line %r", stripped[:80])
+            continue
+        if _SPOKEN_LANG_PROFICIENCY_RE.search(stripped):
+            log.debug("sanitize_skills: dropping spoken-language line %r", stripped[:80])
             continue
         tokens = stripped.split()
         if len(tokens) >= 8 and stripped[-1] in ".!?":
