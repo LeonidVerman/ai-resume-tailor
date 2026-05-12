@@ -1576,7 +1576,7 @@ def _render_layout_two_col_table(
 
     tr = etree.SubElement(tbl, f"{{{_W}}}tr")
 
-    def _fill_cell(tc, blocks, col_x_emu: int) -> None:
+    def _fill_cell(tc, blocks, col_x_emu: int, extra_paras=None) -> None:
         for blk in blocks:
             if isinstance(blk, LayoutTableBlock):
                 tbl_el = etree.fromstring(blk.xml_proto_xml)
@@ -1595,6 +1595,18 @@ def _render_layout_two_col_table(
                     # from shifting when the column reference changes (sample 16 fix).
                     _fix_col_relative_anchors(el, col_x_emu)
                     tc.append(el)
+        # Append extra unbound paragraphs (LLM overflow content)
+        if extra_paras:
+            for pm in extra_paras:
+                if pm.style.xml_proto is not None:
+                    from copy import deepcopy
+                    _xel = deepcopy(pm.style.xml_proto)
+                    _strip_last_rendered_page_breaks(_xel)
+                    _set_para_text(_xel, pm.text)
+                    tc.append(_xel)
+                elif pm.paragraph_profile is not None:
+                    from tailor.compiler.para_builder import build_para_element
+                    tc.append(build_para_element(pm))
         has_content = any(c.tag != f"{{{_W}}}tcPr" for c in list(tc))
         if not has_content:
             etree.SubElement(tc, f"{{{_W}}}p")
@@ -1614,7 +1626,8 @@ def _render_layout_two_col_table(
     right_tcW.set(f"{{{_W}}}w", str(right_w))
     right_tcW.set(f"{{{_W}}}type", "dxa")
     etree.SubElement(right_tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
-    _fill_cell(right_tc, right_blocks, _right_col_x_emu)
+    _unbound_extra = [pm for pm in (doc.all_paras or []) if not pm.para_id and pm.text.strip()]
+    _fill_cell(right_tc, right_blocks, _right_col_x_emu, extra_paras=_unbound_extra if _unbound_extra else None)
 
     if sectPr is not None:
         sectPr.addprevious(tbl)
@@ -1904,6 +1917,13 @@ def _render_from_layout_blocks(
             sectPr.addprevious(elem)
         else:
             body.append(elem)
+
+    # NOTE: unbound paragraphs (para_id="") are intentionally NOT appended here.
+    # Extra LLM content beyond template capacity is placed via the _extra_injections
+    # mechanism in apply_tailored, which inserts LayoutParagraphBlock entries (or
+    # modifies LayoutTableBlock XML) at the correct position so content stays inside
+    # its section.  Appending unbound paras at document end caused experience bullets
+    # to appear after Education/Technical Skills sections (samples 1, 6, 13, 14, 18).
 
     # Task 1 — page background: ensure background para anchors page 1 and clone
     # for any overflow continuation page.
