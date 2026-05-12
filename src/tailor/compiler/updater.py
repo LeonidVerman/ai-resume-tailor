@@ -4071,51 +4071,142 @@ def apply_tailored(
                 _n_copies,
             )
 
-    # Inject extra layout_blocks for date-first extra bullets.
-    # _update_experience_date_first attaches _extra_injections (anchor_para_id →
-    # [ParaModel, ...]) when LLM produced more bullets than the template has slots.
-    # For each anchor, insert cloned LayoutParagraphBlock entries immediately after
-    # the anchor's block so the two-column table renderer places extras in the right
-    # position (not at the end-of-column catch-all).
+    # ── Auto-register unbound experience extras ───────────────────────────────
+    # _update_role_bullets_only (standard experience path) produces extra clones
+    # with para_id="" when the LLM generates more bullets than the template has
+    # slots.  Register them in _extra_injections so the injection step below
+    # places them at the correct position rather than at document end.
+    for _sec in new_sections:
+        if _sec.semantic_type != "experience":
+            continue
+        if getattr(_sec, "_extra_injections", None):
+            continue  # already set (date-first or body path)
+        _exp_extras: "dict[str, list[ParaModel]]" = {}
+        for _role in _sec.roles:
+            _bound_bullets = [_b for _b in _role.bullets if _b.para_id]
+            _unbound_bullets = [_b for _b in _role.bullets if not _b.para_id and _b.text.strip()]
+            if _unbound_bullets and _bound_bullets:
+                _exp_extras.setdefault(_bound_bullets[-1].para_id, []).extend(_unbound_bullets)
+        if _exp_extras:
+            _sec._extra_injections = _exp_extras  # type: ignore[attr-defined]
+
+    # ── Collect all extra injections ──────────────────────────────────────────
+    # Sources: _update_experience_date_first, _update_body_section (skills/summary),
+    # and the auto-registration above for standard experience roles.
     _all_extra_injections: "dict[str, list[ParaModel]]" = {}
     for _sec in new_sections:
         _ei = getattr(_sec, "_extra_injections", None)
         if _ei:
             _all_extra_injections.update(_ei)
+
     if _all_extra_injections and _result_layout_blocks:
-        from tailor.compiler.models import LayoutParagraphBlock as _LPB
+        from tailor.compiler.models import LayoutParagraphBlock as _LPB, LayoutTableBlock as _LTB
+        from lxml import etree as _etree
+        _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
         _new_lb = list(_result_layout_blocks)
-        _offset = 0  # running offset from prior insertions
+        _offset = 0  # running offset from prior LayoutParagraphBlock insertions
+
         for _i, _blk in enumerate(list(_result_layout_blocks)):
-            if not isinstance(_blk, _LPB):
-                continue
-            _extras = _all_extra_injections.get(_blk.para_id)
-            if not _extras:
-                continue
-            if _blk.xml_proto_xml is None:
-                # No XML prototype on this block (e.g. minimal test fixture or
-                # PDF-sourced IR).  Cannot clone the paragraph formatting, so
-                # leave the extras as unbound (para_id="") and let the renderer
-                # append them via its existing _unbound_extra path.
+
+            # ── LayoutParagraphBlock path ──────────────────────────────────────
+            if isinstance(_blk, _LPB):
+                _extras = _all_extra_injections.get(_blk.para_id)
+                if not _extras:
+                    continue
+                if _blk.xml_proto_xml is None:
+                    # No XML prototype (minimal test fixture / PDF IR).  Leave
+                    # extras unbound — they'll be silently omitted rather than
+                    # appearing at document end.
+                    _log.debug(
+                        "EXTRA_INJECTION_SKIPPED_NO_PROTO: anchor=%r extra_count=%d",
+                        _blk.para_id, len(_extras),
+                    )
+                    continue
+                # Assign stable synthetic IDs and insert new LayoutParagraphBlock entries.
+                for _j, _pm in enumerate(_extras):
+                    _pm.para_id = f"{_blk.para_id}_ext_{_j + 1}"
+                _insert_at = _i + 1 + _offset
+                _new_blocks = [
+                    _LPB(para_id=_pm.para_id, xml_proto_xml=_blk.xml_proto_xml)
+                    for _pm in _extras
+                ]
+                _new_lb[_insert_at:_insert_at] = _new_blocks
+                _offset += len(_new_blocks)
                 _log.debug(
-                    "EXTRA_INJECTION_SKIPPED_NO_PROTO: anchor=%r extra_count=%d",
+                    "EXTRA_BULLETS_INJECTED: anchor=%r extra_count=%d",
                     _blk.para_id, len(_extras),
                 )
-                continue
-            # Assign stable synthetic IDs now (injected at render time).
-            for _j, _pm in enumerate(_extras):
-                _pm.para_id = f"{_blk.para_id}_ext_{_j + 1}"
-            _insert_at = _i + 1 + _offset
-            _new_blocks = [
-                _LPB(para_id=_pm.para_id, xml_proto_xml=_blk.xml_proto_xml)
-                for _pm in _extras
-            ]
-            _new_lb[_insert_at:_insert_at] = _new_blocks
-            _offset += len(_new_blocks)
-            _log.debug(
-                "EXTRA_BULLETS_INJECTED: anchor=%r extra_count=%d",
-                _blk.para_id, len(_extras),
-            )
+
+            # ── LayoutTableBlock path ──────────────────────────────────────────
+            elif isinstance(_blk, _LTB):
+                # Check whether any anchor para_id lives inside this table.
+                _tbl_anchor_map = {
+                    _anchor: _extras
+                    for _anchor, _extras in _all_extra_injections.items()
+                    if _anchor in _blk.para_ids
+                }
+                if not _tbl_anchor_map:
+                    continue
+                if not _blk.xml_proto_xml:
+                    continue
+
+                # Parse the table XML and build a para_id → <w:p> element map.
+                try:
+                    _tbl_tree = _etree.fromstring(_blk.xml_proto_xml.encode("utf-8"))
+                except Exception:
+                    continue
+                _all_p = _tbl_tree.findall(f".//{{{_W_NS}}}p")
+                _pid_to_pelem: "dict[str, Any]" = {}
+                for _pid, _pelem in zip(_blk.para_ids, _all_p):
+                    if _pid:
+                        _pid_to_pelem[_pid] = _pelem
+
+                # Insert extra <w:p> elements after each anchor, in reverse order
+                # of their table position so earlier insertions don't shift later ones.
+                _new_para_ids = list(_blk.para_ids)
+                _anchors_sorted = sorted(
+                    _tbl_anchor_map.keys(),
+                    key=lambda _a: _blk.para_ids.index(_a) if _a in _blk.para_ids else -1,
+                    reverse=True,
+                )
+                for _anchor in _anchors_sorted:
+                    _extras = _tbl_anchor_map[_anchor]
+                    _anchor_elem = _pid_to_pelem.get(_anchor)
+                    if _anchor_elem is None:
+                        continue
+                    _anchor_idx = _blk.para_ids.index(_anchor)
+                    _parent = _anchor_elem.getparent()
+                    _pos = list(_parent).index(_anchor_elem)
+                    for _j, _pm in enumerate(_extras):
+                        _new_pid = f"{_anchor}_ext_{_j + 1}"
+                        _pm.para_id = _new_pid
+                        from copy import deepcopy as _deepcopy
+                        _new_p = _deepcopy(_anchor_elem)
+                        # Clear all text runs and set new content
+                        for _t in _new_p.findall(f".//{{{_W_NS}}}t"):
+                            _t.text = ""
+                        _runs = _new_p.findall(f".//{{{_W_NS}}}r")
+                        if _runs:
+                            _runs[0].find(f"{{{_W_NS}}}t").text = _pm.text
+                            for _r in _runs[1:]:
+                                _r.getparent().remove(_r)
+                        _parent.insert(_pos + 1 + _j, _new_p)
+                        _new_para_ids.insert(_anchor_idx + 1 + _j, _new_pid)
+                    _log.debug(
+                        "EXTRA_BULLETS_TABLE_INJECTED: anchor=%r extra_count=%d table=%r",
+                        _anchor, len(_extras), _blk.table_id,
+                    )
+
+                # Re-serialise the modified table XML and replace the layout block.
+                _new_xml = _etree.tostring(_tbl_tree, encoding="unicode")
+                _adj = _i + _offset
+                _new_lb[_adj] = _LTB(
+                    table_id=_blk.table_id,
+                    xml_proto_xml=_new_xml,
+                    para_ids=_new_para_ids,
+                )
+
         _result_layout_blocks = _new_lb
 
     _result = ResumeDocument(
