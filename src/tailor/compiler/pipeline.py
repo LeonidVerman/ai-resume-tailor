@@ -116,6 +116,51 @@ def compile_resume_from_ir(
     return updated
 
 
+def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
+    """Normalize styling on LLM-generated content paragraphs in a PDF-sourced doc.
+
+    Two problems are fixed here:
+
+    1. Color bleed: PDF-extracted text_color (hyperlink blue, author styling)
+       bleeds onto new content via clone_as when the updater copies it from a
+       colored archetype.  Bullets and body paragraphs are reset to the DOCX
+       default (no explicit color).  Section headings and role_headers keep their
+       accent color — they are structural design elements, not replaced content.
+
+    2. Heading-style bleed: when a section has no body paragraphs, the updater
+       falls back to the section heading as clone archetype.  The heading carries
+       bold=True and an elevated font_size_pt.  Body paragraphs and bullets
+       cloned from it inherit those properties and render far too large.  Any
+       paragraph/bullet whose font_size_pt is more than 10% above the document
+       default and is bold is treated as a heading-clone artefact and normalized
+       to body-text styling (bold=False, font_size_pt=default).
+    """
+    default_size = (doc.layout.default_font_size_pt if doc.layout else None) or 11.0
+
+    def _fix(paras):
+        for pm in paras:
+            pp = pm.paragraph_profile
+            if pp is None:
+                continue
+            if pm.semantic in ("section_heading", "role_header"):
+                continue  # keep design colors and styling on structural headings
+            # Strip color from replaced content (bullets, body paragraphs, meta).
+            pp.text_color = None
+            # Normalize heading-style bleed: bold + oversized font on body content
+            # means this paragraph was cloned from a section heading archetype.
+            if pm.semantic in ("paragraph", "bullet"):
+                if pp.bold and pp.font_size_pt and pp.font_size_pt > default_size * 1.1:
+                    pp.bold = False
+                    pp.font_size_pt = default_size
+
+    _fix(doc.header_paras)
+    _fix(doc.all_paras)
+    for sec in doc.sections:
+        _fix(sec.body_paras)
+        for role in sec.roles:
+            _fix([role.header] + list(role.header_extra) + role.meta_lines + role.bullets)
+
+
 def compile_resume_from_pdf(
     pdf_path: str,
     llm_text: str,
@@ -131,5 +176,13 @@ def compile_resume_from_pdf(
 
     with open(pdf_path, "rb") as f:
         template_ir = parse_pdf(f.read())
-    return compile_resume_from_ir(template_ir, llm_text, output_path, style_template_path, classification)
+    llm_sections = parse_llm_output(llm_text)
+    llm_sections = apply_layout_fitting(template_ir, llm_sections)
+    updated = apply_tailored(template_ir, llm_sections, classification=classification)
+    # Clear PDF-extracted text colors from all content paragraphs before rendering.
+    # This prevents colors from the original PDF (hyperlink blues, author styling)
+    # from bleeding onto LLM-generated replacement content via clone_as archetypes.
+    _clear_pdf_content_colors(updated)
+    render_docx(updated, style_template_path, output_path)
+    return updated
 
