@@ -990,9 +990,16 @@ def _extract_paragraphs(
             # For right-column blocks, indent is measured from right_col_origin
             # (the visual sidebar edge) so that a block at x=237 on a page
             # with a 215-pt sidebar gets indent = 22 pt, not page-relative 222 pt.
+            # Cross-column detection: a block whose x0 is in the left area but
+            # whose x1 extends more than 20 pt past the column split is a
+            # full-width element (merged name/header banner).  Such blocks get
+            # col_id=None so the renderer places them above the two-column table.
             if split_x is not None and x0 >= split_x:
                 col_id: str | None = "right"
                 col_origin = right_col_origin if right_col_origin is not None else split_x
+            elif split_x is not None and x1_blk > split_x + 20.0:
+                col_id = None
+                col_origin = page_margin_left
             elif split_x is not None:
                 col_id = "left"
                 col_origin = page_margin_left
@@ -1292,20 +1299,20 @@ def _infer_semantic(pm: ParaModel) -> str:
 # ---------------------------------------------------------------------------
 
 _EXPERIENCE_NAMES: frozenset[str] = frozenset({
-    "experience", "work experience", "professional experience",
+    "experience", "experiences", "work experience", "professional experience",
     "employment history", "employment", "career history",
     "work history", "professional background",
 })
 _SUMMARY_NAMES: frozenset[str] = frozenset({
     "professional summary", "summary", "objective", "career objective",
-    "profile", "professional profile", "about me", "career summary",
-    "executive summary",
+    "profile", "professional profile", "personal profile",
+    "about me", "about", "career summary", "executive summary",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "core competencies", "competencies",
     "technical expertise", "expertise", "key skills", "areas of expertise",
     "technologies", "tech stack", "relevant skills", "skills & abilities",
-    "skill summary",
+    "skill summary", "professional skills",
 })
 _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
@@ -1325,6 +1332,8 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         "affiliations", "affiliations and awards", "affiliations & awards",
         "certifications and training", "training and certifications",
         "professional certifications",
+        "portfolio", "qualifications", "key qualifications",
+        "achievements", "accomplishments", "training",
         # Contact sections appear in sidebar/column layouts; must be recognised
         # as headings so they don't bleed into adjacent experience sections.
         "contact", "contact info", "contact information",
@@ -1930,7 +1939,27 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     skip_pages = _deduplicate_page_indices(doc)
     hf_texts = _detect_header_footer_texts(doc)
     raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt, layout, skip_pages)
-    header_paras, sections = _group_sections(raw_paras)
+
+    # Two-column documents: run section grouping independently for each column
+    # so that left-column section headings (e.g. "CONTACT") do not trigger
+    # found_section=True and absorb right-column content into the wrong section.
+    # Single-column documents use the normal flat grouping path.
+    if layout.column_split_x is not None:
+        def _col_id(pm: "ParaModel") -> "str | None":
+            return pm.paragraph_profile.column_id if pm.paragraph_profile else None
+
+        above_raw = [pm for pm in raw_paras if _col_id(pm) not in ("left", "right")]
+        left_raw  = [pm for pm in raw_paras if _col_id(pm) == "left"]
+        right_raw = [pm for pm in raw_paras if _col_id(pm) == "right"]
+
+        above_hdrs, above_secs = _group_sections(above_raw)
+        left_hdrs,  left_secs  = _group_sections(left_raw)
+        right_hdrs, right_secs = _group_sections(right_raw)
+
+        header_paras = above_hdrs + left_hdrs + right_hdrs
+        sections     = above_secs + left_secs + right_secs
+    else:
+        header_paras, sections = _group_sections(raw_paras)
 
     # Final color cleanup: _group_sections may reclassify paragraphs (e.g.
     # section_heading → role_header) after _extract_paragraphs already ran its
@@ -1985,6 +2014,17 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
                 all_paras.extend(role.bullets)
         else:
             all_paras.extend(section.body_paras)
+
+    # For two-column documents, reorder all_paras to match the rendered DOCX
+    # paragraph order: above (col=None) → left → right.  The renderer writes the
+    # left table cell before the right cell, so roundtrip tests must see the same
+    # order in the source IR.  Python's sort is stable, so relative order within
+    # each column is preserved.
+    if layout.column_split_x is not None:
+        def _col_order(pm: "ParaModel") -> int:
+            col = pm.paragraph_profile.column_id if pm.paragraph_profile else None
+            return 1 if col == "left" else (2 if col == "right" else 0)
+        all_paras.sort(key=_col_order)
 
     doc = ResumeDocument(
         header_paras=header_paras,
