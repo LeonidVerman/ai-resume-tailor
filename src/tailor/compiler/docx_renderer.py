@@ -340,6 +340,60 @@ def _set_run_text(r_elem, portion: str) -> None:
             t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
 
 
+def _clear_sdt_placeholder(p_elem) -> None:
+    """Flatten run-level SDT content controls inside a patched paragraph.
+
+    Some Word templates wrap each text segment in a w:sdt content control so
+    that the template author can tag placeholders.  When we patch the
+    paragraph text via _set_para_text the runs inside w:sdtContent are updated,
+    but LibreOffice may still render the old placeholder text from the SDT's
+    w:placeholder docPart reference even after w:showingPlcHdr is removed.
+
+    The most reliable fix is to flatten the SDT: replace each w:sdt child of
+    the paragraph with the runs from its w:sdtContent.  This removes all SDT
+    overhead and lets LibreOffice render our updated runs directly.
+
+    Only run-level SDTs (direct w:sdt children of w:p) are flattened.
+    Paragraph-level SDTs (where w:p is inside w:sdtContent) are handled by
+    clearing w:showingPlcHdr from the enclosing w:sdt instead, because those
+    SDTs span the entire paragraph and flattening them would require replacing
+    the paragraph itself — a much larger structural change.
+    """
+    sdt_ns = f"{{{_W}}}sdt"
+    sdt_pr_ns = f"{{{_W}}}sdtPr"
+    showing_ns = f"{{{_W}}}showingPlcHdr"
+    sdt_content_ns = f"{{{_W}}}sdtContent"
+
+    # Pattern A: p_elem lives inside w:sdtContent — clear showingPlcHdr only.
+    parent = p_elem.getparent()
+    if parent is not None and parent.tag == sdt_content_ns:
+        sdt = parent.getparent()
+        if sdt is not None and sdt.tag == sdt_ns:
+            sdt_pr = sdt.find(sdt_pr_ns)
+            if sdt_pr is not None:
+                showing = sdt_pr.find(showing_ns)
+                if showing is not None:
+                    sdt_pr.remove(showing)
+        return  # paragraph-level SDT handled; skip run-level flattening
+
+    # Pattern B: flatten each direct w:sdt child of the paragraph.
+    # Find SDT children in reverse order so index-based insertion stays valid.
+    sdt_children = p_elem.findall(sdt_ns)
+    for sdt_elem in sdt_children:
+        sdt_content = sdt_elem.find(sdt_content_ns)
+        if sdt_content is None:
+            continue
+        # Collect runs (and other inline content) from sdtContent.
+        runs = list(sdt_content)
+        if not runs:
+            continue
+        # Insert the runs at the position of the sdt element.
+        idx = list(p_elem).index(sdt_elem)
+        for offset, run in enumerate(runs):
+            p_elem.insert(idx + offset, run)
+        p_elem.remove(sdt_elem)
+
+
 def _set_para_text(p_elem, text: str) -> None:
     """Set text on p_elem in-place, preserving all per-run formatting.
 
@@ -1873,6 +1927,7 @@ def _render_from_layout_blocks(
                 if pm is not None:
                     _strip_text_wrapping_breaks(p_elem)
                     _set_para_text(p_elem, pm.text)
+                    _clear_sdt_placeholder(p_elem)
                     patched += 1
                 else:
                     _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: table para_id=%r", para_id)
@@ -2196,6 +2251,72 @@ def _maybe_insert_bg_rect(docx_path: str, body, sectPr) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Glossary cleanup
+# ---------------------------------------------------------------------------
+
+def _clear_docx_glossary(docx_path: str) -> None:
+    """Remove SDT placeholder content and thumbnail from generated DOCX.
+
+    Two problems are fixed here:
+
+    1. Glossary placeholder paragraphs (word/glossary/document.xml):
+       Word stores SDT placeholder text as building blocks in the glossary.
+       LibreOffice may render these paragraphs as a supplementary section
+       appended to the output PDF even after we flatten all SDTs.
+       Fix: replace the glossary with an empty <w:docParts/> element.
+
+    2. Document thumbnail (docProps/thumbnail.emf):
+       The thumbnail captures the template's original appearance including
+       SDT placeholder text (e.g. "Summarize your key responsibilities...").
+       LibreOffice reads this EMF and overlays its vector-text layer onto the
+       rendered PDF, causing the old placeholder text to appear alongside the
+       updated LLM content.
+       Fix: remove the thumbnail from the ZIP entirely.  LibreOffice renders
+       the document correctly without it; Word regenerates the thumbnail on
+       the next save.
+    """
+    import io
+    import zipfile as _zf
+
+    _GLOSSARY_PATH = "word/glossary/document.xml"
+    _THUMBNAIL_PATH = "docProps/thumbnail.emf"
+    _EMPTY_GLOSSARY = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<w:glossaryDocument xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"'
+        ' xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+        ' xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"'
+        ' mc:Ignorable="w14"'
+        ' xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">'
+        '<w:docParts/>'
+        '</w:glossaryDocument>'
+    )
+
+    try:
+        with open(docx_path, "rb") as f:
+            data = f.read()
+
+        buf = io.BytesIO(data)
+        out_buf = io.BytesIO()
+
+        with _zf.ZipFile(buf, "r") as zin, _zf.ZipFile(out_buf, "w", _zf.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                if item.filename == _THUMBNAIL_PATH:
+                    _log.debug("THUMBNAIL_REMOVED: %s stripped from %s", _THUMBNAIL_PATH, docx_path)
+                    continue  # drop the thumbnail entirely
+                if item.filename == _GLOSSARY_PATH:
+                    zout.writestr(item, _EMPTY_GLOSSARY.encode("utf-8"))
+                    _log.debug("GLOSSARY_CLEARED: %s emptied in %s", _GLOSSARY_PATH, docx_path)
+                else:
+                    zout.writestr(item, zin.read(item.filename))
+
+        with open(docx_path, "wb") as f:
+            f.write(out_buf.getvalue())
+
+    except Exception as exc:
+        _log.debug("GLOSSARY_CLEAR_FAILED: %s — %s", docx_path, exc)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -2258,6 +2379,12 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
             # content overflows, covering it with the same background fill.
             _maybe_insert_bg_rect(output_path, body, sectPr)
             d.save(output_path)
+            # After saving, remove the glossary document from the ZIP so that
+            # LibreOffice does not render the SDT placeholder paragraphs stored
+            # there as a supplementary section.  The glossary's content controls
+            # (w:placeholder / w:docPart entries) are no longer needed — we have
+            # already flattened all SDTs in the main document XML.
+            _clear_docx_glossary(output_path)
             return
         _log.debug(
             "LAYOUT_BLOCK_RENDERER_FALLBACK: layout_blocks present but runtime xml_proto "
