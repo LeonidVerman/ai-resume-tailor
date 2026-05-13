@@ -181,8 +181,14 @@ def _check_ir_summary_missing(
     if has_explicit_summary:
         return False, []
 
-    # Check for implicit summary in 'other' sections (first 3 sections only, not experience/skills)
-    _BODY_CONTENT_TYPES2 = {"experience", "skills", "education", "certifications",
+    # Check for implicit summary in any of the first 3 sections.
+    # Experience is excluded (bullets are not a summary).
+    # Skills is intentionally NOT excluded: some templates store the summary
+    # paragraph inside the skills section body (e.g. sample 2 where para_46
+    # holds the profile text alongside the skill bullets). The comma-density
+    # check below already filters out comma-separated skill lists, so including
+    # skills sections here does not cause false negatives.
+    _BODY_CONTENT_TYPES2 = {"experience", "education", "certifications",
                             "languages", "websites"}
     for sec in sections[:3]:
         sec_type = sec.get("semantic_type", "") or ""
