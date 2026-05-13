@@ -1085,16 +1085,13 @@ def _extract_paragraphs(
                     paragraph_profile=profile,
                 )
                 pm.semantic = _infer_semantic(pm)
-                # Content paragraphs should not carry text_color from the PDF template.
-                # Colors on these paragraphs come from the original author's text
-                # (hyperlinks, personal styling) and should not bleed onto
-                # LLM-generated replacement content.
-                # Section headings are left unchanged — their color is the template's
-                # accent design and should be preserved.
-                # role_header is also cleared: when no bullets exist in the original,
-                # the updater clones new bullets from the role header as archetype.
-                # Keeping its PDF-extracted color would taint all new bullet text.
-                if pm.semantic in ("bullet", "paragraph", "role_meta", "role_header") and pm.paragraph_profile:
+                # Content paragraphs (bullets, body text, date lines) should not carry
+                # text_color from the PDF template — those colors come from hyperlinks
+                # or author styling and must not bleed onto LLM-generated content.
+                # Section headings and role_headers keep their accent color (design intent).
+                # Bullet/paragraph colors are stripped here; any color that bleeds via
+                # clone_as archetypes is caught by the post-render sweep in pipeline.py.
+                if pm.semantic in ("bullet", "paragraph", "role_meta") and pm.paragraph_profile:
                     pm.paragraph_profile.text_color = None
                 # Role headers can have mixed-bold text (e.g. "Title | Company | Date"
                 # where only the title is bold).  Build per-run (text, bold) pairs
@@ -1943,7 +1940,9 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     # Only section_heading paragraphs may keep their accent color (template design).
     def _clear_content_colors(paras: "list[ParaModel]") -> None:
         for pm in paras:
-            if pm.semantic != "section_heading" and pm.paragraph_profile:
+            if pm.semantic in ("section_heading", "role_header") and pm.paragraph_profile:
+                continue  # keep accent colors on structural headings
+            if pm.paragraph_profile:
                 pm.paragraph_profile.text_color = None
 
     _clear_content_colors(header_paras)

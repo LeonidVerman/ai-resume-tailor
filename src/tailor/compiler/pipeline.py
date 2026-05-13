@@ -117,27 +117,48 @@ def compile_resume_from_ir(
 
 
 def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
-    """Strip text_color from all non-section-heading paragraphs in a PDF-sourced doc.
+    """Normalize styling on LLM-generated content paragraphs in a PDF-sourced doc.
 
-    PDF-extracted colors bleed onto LLM-generated content when the updater
-    clones paragraphs from colored archetypes (e.g. section headings used as
-    body-paragraph templates for empty sections, or role headers used as bullet
-    archetypes).  Section headings retain their accent color; all other content
-    uses the DOCX default text color.
+    Two problems are fixed here:
+
+    1. Color bleed: PDF-extracted text_color (hyperlink blue, author styling)
+       bleeds onto new content via clone_as when the updater copies it from a
+       colored archetype.  Bullets and body paragraphs are reset to the DOCX
+       default (no explicit color).  Section headings and role_headers keep their
+       accent color — they are structural design elements, not replaced content.
+
+    2. Heading-style bleed: when a section has no body paragraphs, the updater
+       falls back to the section heading as clone archetype.  The heading carries
+       bold=True and an elevated font_size_pt.  Body paragraphs and bullets
+       cloned from it inherit those properties and render far too large.  Any
+       paragraph/bullet whose font_size_pt is more than 10% above the document
+       default and is bold is treated as a heading-clone artefact and normalized
+       to body-text styling (bold=False, font_size_pt=default).
     """
-    from tailor.compiler.models import ParagraphProfile
+    default_size = (doc.layout.default_font_size_pt if doc.layout else None) or 11.0
 
-    def _clear(paras):
+    def _fix(paras):
         for pm in paras:
-            if pm.semantic != "section_heading" and pm.paragraph_profile is not None:
-                pm.paragraph_profile.text_color = None
+            pp = pm.paragraph_profile
+            if pp is None:
+                continue
+            if pm.semantic in ("section_heading", "role_header"):
+                continue  # keep design colors and styling on structural headings
+            # Strip color from replaced content (bullets, body paragraphs, meta).
+            pp.text_color = None
+            # Normalize heading-style bleed: bold + oversized font on body content
+            # means this paragraph was cloned from a section heading archetype.
+            if pm.semantic in ("paragraph", "bullet"):
+                if pp.bold and pp.font_size_pt and pp.font_size_pt > default_size * 1.1:
+                    pp.bold = False
+                    pp.font_size_pt = default_size
 
-    _clear(doc.header_paras)
-    _clear(doc.all_paras)
+    _fix(doc.header_paras)
+    _fix(doc.all_paras)
     for sec in doc.sections:
-        _clear(sec.body_paras)
+        _fix(sec.body_paras)
         for role in sec.roles:
-            _clear([role.header] + list(role.header_extra) + role.meta_lines + role.bullets)
+            _fix([role.header] + list(role.header_extra) + role.meta_lines + role.bullets)
 
 
 def compile_resume_from_pdf(
