@@ -116,6 +116,30 @@ def compile_resume_from_ir(
     return updated
 
 
+def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
+    """Strip text_color from all non-section-heading paragraphs in a PDF-sourced doc.
+
+    PDF-extracted colors bleed onto LLM-generated content when the updater
+    clones paragraphs from colored archetypes (e.g. section headings used as
+    body-paragraph templates for empty sections, or role headers used as bullet
+    archetypes).  Section headings retain their accent color; all other content
+    uses the DOCX default text color.
+    """
+    from tailor.compiler.models import ParagraphProfile
+
+    def _clear(paras):
+        for pm in paras:
+            if pm.semantic != "section_heading" and pm.paragraph_profile is not None:
+                pm.paragraph_profile.text_color = None
+
+    _clear(doc.header_paras)
+    _clear(doc.all_paras)
+    for sec in doc.sections:
+        _clear(sec.body_paras)
+        for role in sec.roles:
+            _clear([role.header] + list(role.header_extra) + role.meta_lines + role.bullets)
+
+
 def compile_resume_from_pdf(
     pdf_path: str,
     llm_text: str,
@@ -131,5 +155,13 @@ def compile_resume_from_pdf(
 
     with open(pdf_path, "rb") as f:
         template_ir = parse_pdf(f.read())
-    return compile_resume_from_ir(template_ir, llm_text, output_path, style_template_path, classification)
+    llm_sections = parse_llm_output(llm_text)
+    llm_sections = apply_layout_fitting(template_ir, llm_sections)
+    updated = apply_tailored(template_ir, llm_sections, classification=classification)
+    # Clear PDF-extracted text colors from all content paragraphs before rendering.
+    # This prevents colors from the original PDF (hyperlink blues, author styling)
+    # from bleeding onto LLM-generated replacement content via clone_as archetypes.
+    _clear_pdf_content_colors(updated)
+    render_docx(updated, style_template_path, output_path)
+    return updated
 

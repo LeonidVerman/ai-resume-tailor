@@ -1085,6 +1085,17 @@ def _extract_paragraphs(
                     paragraph_profile=profile,
                 )
                 pm.semantic = _infer_semantic(pm)
+                # Content paragraphs should not carry text_color from the PDF template.
+                # Colors on these paragraphs come from the original author's text
+                # (hyperlinks, personal styling) and should not bleed onto
+                # LLM-generated replacement content.
+                # Section headings are left unchanged — their color is the template's
+                # accent design and should be preserved.
+                # role_header is also cleared: when no bullets exist in the original,
+                # the updater clones new bullets from the role header as archetype.
+                # Keeping its PDF-extracted color would taint all new bullet text.
+                if pm.semantic in ("bullet", "paragraph", "role_meta", "role_header") and pm.paragraph_profile:
+                    pm.paragraph_profile.text_color = None
                 # Role headers can have mixed-bold text (e.g. "Title | Company | Date"
                 # where only the title is bold).  Build per-run (text, bold) pairs
                 # so para_builder can render each portion with the correct weight.
@@ -1923,6 +1934,23 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     hf_texts = _detect_header_footer_texts(doc)
     raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt, layout, skip_pages)
     header_paras, sections = _group_sections(raw_paras)
+
+    # Final color cleanup: _group_sections may reclassify paragraphs (e.g.
+    # section_heading → role_header) after _extract_paragraphs already ran its
+    # per-semantic clearing.  Sweep all paragraphs one more time so that any
+    # reclassified paragraph does not retain a PDF-extracted text_color that
+    # would bleed onto LLM-generated replacement content via clone_as.
+    # Only section_heading paragraphs may keep their accent color (template design).
+    def _clear_content_colors(paras: "list[ParaModel]") -> None:
+        for pm in paras:
+            if pm.semantic != "section_heading" and pm.paragraph_profile:
+                pm.paragraph_profile.text_color = None
+
+    _clear_content_colors(header_paras)
+    for _sec in sections:
+        _clear_content_colors(_sec.body_paras)
+        for _role in _sec.roles:
+            _clear_content_colors([_role.header] + list(_role.header_extra) + _role.meta_lines + _role.bullets)
 
     # Rebuild all_paras from the structured IR so it reflects any post-processing
     # done by _finalise (e.g. bullet continuation line merging).  The raw flat
