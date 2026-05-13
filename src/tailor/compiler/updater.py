@@ -867,8 +867,14 @@ def _is_role_like_heading(title: str) -> bool:
 
     Strips a leading date-range prefix (e.g. 'May 2018 - Dec 2019') before
     checking so that merged date+title headings are handled correctly.
+
+    For pipe-separated headings (e.g. 'Senior Engineer | Acme Corp | 2022–2024'),
+    only the first segment (the role title) is evaluated so that long combined
+    headings are not rejected by the word-count guard.
     """
-    clean = re.sub(r'^\w+\s+\d{4}\s*[-–]\s*\w+\s+\d{4}', '', title).strip()
+    # Extract just the title segment for pipe-separated headings
+    title_part = title.split("|")[0].strip() if "|" in title else title
+    clean = re.sub(r'^\w+\s+\d{4}\s*[-–]\s*\w+\s+\d{4}', '', title_part).strip()
     words = clean.lower().split()
     if not (1 <= len(words) <= 7):
         return False
@@ -1378,15 +1384,18 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
         # Skip named semantic sections that should never receive summary injection.
         if section.title.strip().lower() in _PROTECTED_INTRO_PROSE_TITLES:
             continue
-        # Skip sections that are adjacent to contact/social sections.
-        # Those are sidebar/contact areas — injecting the Professional Summary
-        # there would put it inside the Contact block rather than the body.
-        _neighbors = [
+        # Skip sections whose PREVIOUS section is a contact/social type.
+        # Those are inside a contact sidebar area — the candidate section follows
+        # contact info and injecting summary there would embed it in the contact block.
+        # The NEXT section being a contact type is fine: the candidate appears before
+        # contact info (e.g. "OFFICE MANAGER" before "LinkedIn profile") and is the
+        # natural profile/summary slot.
+        _prev_types = [
             _sections[j].semantic_type
-            for j in (_si - 1, _si + 1)
+            for j in (_si - 1,)
             if 0 <= j < len(_sections)
         ]
-        if any(nt in _CONTACT_AREA_TYPES for nt in _neighbors):
+        if any(nt in _CONTACT_AREA_TYPES for nt in _prev_types):
             continue
         for p in section.body_paras:
             text = p.text.strip()
@@ -3405,6 +3414,18 @@ def apply_tailored(
                         "SUMMARY_INSERTION_SKIPPED_NO_ANCHORS: %r (body_injected=%s)",
                         llm_s.heading, _body_injected,
                     )
+                elif llm_s.semantic_type == "skills":
+                    # Skills section with no header slot target: create as unbound content.
+                    # The renderer appends paragraphs with para_id='' to the document end
+                    # (single-column path) or right-cell bottom (two-column table path),
+                    # so skills overflow naturally to the next page if needed.
+                    _extra_skills = _make_extra_section(llm_s, heading_arch, body_arch)
+                    _extra_skills.section_id = "sec_skills_unbound"  # survives finalize cleanup
+                    llm_order_sections.append(_extra_skills)
+                    _log.debug(
+                        "apply_tailored: skills extra %r → unbound (appended at doc end)",
+                        llm_s.heading,
+                    )
                 else:
                     _log.debug(
                         "UPDATER_SECTION_ANCHOR_NOT_FOUND: %r dropped in layout-bound mode",
@@ -3438,6 +3459,12 @@ def apply_tailored(
                         heading_to_section.get(key, orig_section)
                     )
 
+            # Collect unbound skills sections (appended at end, carry to next page if needed)
+            unbound_skills_sections = [
+                s for s in llm_order_sections
+                if s.semantic_type == "skills" and s.section_id == "sec_skills_unbound"
+            ]
+
             if anchored_summaries:
                 # Insert after profile/title block, before first major content
                 # section (experience/education/skills).  Inserting at position 0
@@ -3451,6 +3478,7 @@ def apply_tailored(
                     ordered_sections[:first_major]
                     + anchored_summaries
                     + ordered_sections[first_major:]
+                    + unbound_skills_sections
                 )
                 _log.debug(
                     "SUMMARY_INSERTED_AFTER_PROFILE_BLOCK: inserted before %r "
@@ -3459,7 +3487,12 @@ def apply_tailored(
                     first_major,
                 )
             else:
-                new_sections = ordered_sections
+                new_sections = ordered_sections + unbound_skills_sections
+            if unbound_skills_sections:
+                _log.debug(
+                    "SKILLS_UNBOUND_APPENDED: %d skills section(s) appended at doc end",
+                    len(unbound_skills_sections),
+                )
         else:
             # Non-layout-bound: follow LLM output order with summary at top.
             template_has_summary = any(
@@ -4188,6 +4221,36 @@ def apply_tailored(
                 )
 
         _result_layout_blocks = _new_lb
+
+    # Append LayoutParagraphBlock entries for unbound skills sections (templates
+    # that originally had no skills section).  Each paragraph is assigned a
+    # synthetic para_id so the layout-blocks renderer looks it up via para_lookup
+    # and renders it using the paragraph's style.xml_proto at document end.
+    # Rule 2/4: content pushes to next page naturally if it overflows.
+    if _result_layout_blocks is not None:
+        _skills_unbound_secs = [
+            s for s in new_sections
+            if s.section_id == "sec_skills_unbound" and s.semantic_type == "skills"
+        ]
+        if _skills_unbound_secs:
+            from tailor.compiler.models import LayoutParagraphBlock as _SLPB
+            _skills_lb: list = []
+            _su_idx = 0
+            for _usk in _skills_unbound_secs:
+                _usk.heading.para_id = f"para_skills_u_{_su_idx}"
+                _skills_lb.append(_SLPB(para_id=_usk.heading.para_id, xml_proto_xml=None))
+                _su_idx += 1
+                for _ubp in _usk.body_paras:
+                    if _ubp.text.strip():
+                        _ubp.para_id = f"para_skills_u_{_su_idx}"
+                        _skills_lb.append(_SLPB(para_id=_ubp.para_id, xml_proto_xml=None))
+                        _su_idx += 1
+            if _skills_lb:
+                _result_layout_blocks = list(_result_layout_blocks) + _skills_lb
+                _log.debug(
+                    "SKILLS_UNBOUND_LAYOUT_BLOCKS: appended %d blocks for %d section(s)",
+                    len(_skills_lb), len(_skills_unbound_secs),
+                )
 
     _result = ResumeDocument(
         header_paras=effective_header_paras,
