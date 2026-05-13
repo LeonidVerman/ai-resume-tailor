@@ -282,6 +282,14 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
                 new_bullets.append(orig.bullets[i].with_text(bullet_text))
             elif not layout_bound:
                 new_bullets.append(arch.clone_as(bullet_text, "bullet"))
+            elif not orig.bullets:
+                # Template has no bullet slots — create unbound para so the auto-register
+                # pass can inject it after the role header via _extra_injections.
+                new_bullets.append(arch.clone_as(bullet_text, "bullet"))
+                _log.debug(
+                    "CONTENT_OVERFLOW_REFLOW: unbound bullet for role %r (no template slots)",
+                    orig.role_id[:40] if orig.role_id else "?",
+                )
             else:
                 _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra bullet %r", bullet_text[:60])
 
@@ -494,7 +502,13 @@ def _sanitize_skills_lines(lines: list[str]) -> list[str]:
     - Lines with known non-skill label prefixes (Hobbies:, Awards:, Interests:, …).
     - Bare social-media / website names (LinkedIn, GitHub, …) with no skill context.
     - Full sentences: 6+ whitespace-separated tokens ending in sentence punctuation.
+    - Bare single-word category names that duplicate an existing colon-labeled line
+      (e.g. "Communication" when "Communication: ..." already appears in the list).
     """
+    non_empty = [l.strip() for l in lines if l.strip()]
+    _colon_labels: set[str] = {
+        l.split(":")[0].strip().lower() for l in non_empty if ":" in l
+    }
     clean: list[str] = []
     for line in lines:
         stripped = line.strip()
@@ -512,6 +526,12 @@ def _sanitize_skills_lines(lines: list[str]) -> list[str]:
             continue
         if _SOCIAL_BARE_RE.match(stripped):
             _log.debug("skills sanitize: dropping bare social name %r", stripped[:80])
+            continue
+        # Drop bare single-word/phrase category labels that are already covered by
+        # a colon-labeled line (e.g. bare "Communication" when "Communication: ..."
+        # is present — avoids duplicate heading artifacts from LLM output).
+        if ":" not in stripped and " " not in stripped and stripped.lower() in _colon_labels:
+            _log.debug("skills sanitize: dropping duplicate category label %r", stripped[:80])
             continue
         # Full-sentence detection: 6+ words AND ends with a sentence-final punct.
         tokens = stripped.split()
@@ -3410,22 +3430,95 @@ def apply_tailored(
                                             break
                                     if _body_injected:
                                         break
+                    if not _body_injected and _has_table_lb:
+                        # For table templates with no intro-prose and no empty body slots:
+                        # inject the summary inline after the last non-empty header paragraph
+                        # (typically the title/role line, e.g. "registered nurse").
+                        # The renderer inserts a new paragraph in the table header cell.
+                        _last_title_para = next(
+                            (p for p in reversed(original.header_paras)
+                             if p.text.strip() and p.para_id),
+                            None,
+                        )
+                        if _last_title_para is not None:
+                            _inline_summary = (_last_title_para.para_id, _stext)
+                            _body_injected = True
+                            _log.debug(
+                                "SUMMARY_INLINE_AFTER_TITLE: para_id=%r title=%r",
+                                _last_title_para.para_id, _last_title_para.text[:30],
+                            )
                     _log.debug(
                         "SUMMARY_INSERTION_SKIPPED_NO_ANCHORS: %r (body_injected=%s)",
                         llm_s.heading, _body_injected,
                     )
                 elif llm_s.semantic_type == "skills":
-                    # Skills section with no header slot target: create as unbound content.
-                    # The renderer appends paragraphs with para_id='' to the document end
-                    # (single-column path) or right-cell bottom (two-column table path),
-                    # so skills overflow naturally to the next page if needed.
-                    _extra_skills = _make_extra_section(llm_s, heading_arch, body_arch)
-                    _extra_skills.section_id = "sec_skills_unbound"  # survives finalize cleanup
-                    llm_order_sections.append(_extra_skills)
-                    _log.debug(
-                        "apply_tailored: skills extra %r → unbound (appended at doc end)",
-                        llm_s.heading,
+                    # Try to inject skills into the left column (the column that contains
+                    # 'other'-type sections before the first education/experience section).
+                    # Find the boundary: first section of type education/experience marks
+                    # the start of the right/content column.
+                    _CONTENT_BOUNDARY_TYPES = frozenset({"education", "experience"})
+                    _left_col_end = next(
+                        (i for i, s in enumerate(original.sections)
+                         if s.semantic_type in _CONTENT_BOUNDARY_TYPES),
+                        None,
                     )
+                    _skills_injected = False
+                    if _left_col_end is not None and _left_col_end > 0:
+                        # Find the last 'other' section before the content boundary
+                        # that has a non-empty body_para with a para_id (anchor point).
+                        _left_sec = next(
+                            (s for s in reversed(original.sections[:_left_col_end])
+                             if s.semantic_type not in _LOCKED_SEMANTIC_TYPES
+                             and any(p.para_id and p.text.strip() for p in s.body_paras)),
+                            None,
+                        )
+                        if _left_sec is not None:
+                            _anchor_bp = next(
+                                (p for p in reversed(_left_sec.body_paras)
+                                 if p.para_id and p.text.strip()),
+                                None,
+                            )
+                            if _anchor_bp is not None:
+                                _skill_lines = _sanitize_skills_lines(
+                                    [l for l in llm_s.body_lines if l.strip()]
+                                )
+                                if _skill_lines:
+                                    # Create heading styled like the left-column section heading,
+                                    # and body lines styled like the left-column body paras.
+                                    _sk_heading = _left_sec.heading.clone_as(
+                                        llm_s.heading, "section_heading"
+                                    )
+                                    _sk_body = [
+                                        _anchor_bp.clone_as(line, "paragraph")
+                                        for line in _skill_lines
+                                    ]
+                                    # Find the matching updated section to attach _extra_injections
+                                    _left_sec_updated = next(
+                                        (s for s in list(heading_to_section.values()) + verbatim_sections
+                                         if s.section_id == _left_sec.section_id),
+                                        None,
+                                    )
+                                    if _left_sec_updated is not None:
+                                        if not hasattr(_left_sec_updated, "_extra_injections"):
+                                            _left_sec_updated._extra_injections = {}
+                                        _left_sec_updated._extra_injections.setdefault(
+                                            _anchor_bp.para_id, []
+                                        ).extend([_sk_heading] + _sk_body)
+                                        _skills_injected = True
+                                        _log.debug(
+                                            "SKILLS_LEFT_COLUMN_INJECTED: anchor=%r "
+                                            "heading=%r lines=%d",
+                                            _anchor_bp.para_id, llm_s.heading, len(_skill_lines),
+                                        )
+                    if not _skills_injected:
+                        # Fallback: create as unbound content appended at document end.
+                        _extra_skills = _make_extra_section(llm_s, heading_arch, body_arch)
+                        _extra_skills.section_id = "sec_skills_unbound"
+                        llm_order_sections.append(_extra_skills)
+                        _log.debug(
+                            "apply_tailored: skills extra %r → unbound (doc end fallback)",
+                            llm_s.heading,
+                        )
                 else:
                     _log.debug(
                         "UPDATER_SECTION_ANCHOR_NOT_FOUND: %r dropped in layout-bound mode",
@@ -4098,8 +4191,13 @@ def apply_tailored(
         for _role in _sec.roles:
             _bound_bullets = [_b for _b in _role.bullets if _b.para_id]
             _unbound_bullets = [_b for _b in _role.bullets if not _b.para_id and _b.text.strip()]
-            if _unbound_bullets and _bound_bullets:
-                _exp_extras.setdefault(_bound_bullets[-1].para_id, []).extend(_unbound_bullets)
+            if _unbound_bullets:
+                # Prefer the last bound bullet as anchor (overflow case);
+                # fall back to the role header when the template has NO bullet slots
+                # (all bullets are unbound).
+                _anchor = _bound_bullets[-1] if _bound_bullets else _role.header
+                if _anchor.para_id:
+                    _exp_extras.setdefault(_anchor.para_id, []).extend(_unbound_bullets)
         if _exp_extras:
             _sec._extra_injections = _exp_extras  # type: ignore[attr-defined]
 
