@@ -1652,13 +1652,6 @@ def _render_layout_two_col_table(
     left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
     left_tcW.set(f"{{{_W}}}w", str(left_w))
     left_tcW.set(f"{{{_W}}}type", "dxa")
-    # Explicit zero top margin on the left cell overrides any renderer default
-    # so that the first paragraph (e.g. the name/title line) starts flush with
-    # the table top edge, keeping it inside the page-header design band.
-    left_tcMar = etree.SubElement(left_tcPr, f"{{{_W}}}tcMar")
-    left_tcMar_top = etree.SubElement(left_tcMar, f"{{{_W}}}top")
-    left_tcMar_top.set(f"{{{_W}}}w", "0")
-    left_tcMar_top.set(f"{{{_W}}}type", "dxa")
     etree.SubElement(left_tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
     _fill_cell(left_tc, left_blocks, _left_col_x_emu)
 
@@ -1667,13 +1660,10 @@ def _render_layout_two_col_table(
     right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
     right_tcW.set(f"{{{_W}}}w", str(right_w + _right_col_gap))
     right_tcW.set(f"{{{_W}}}type", "dxa")
-    right_tcMar = etree.SubElement(right_tcPr, f"{{{_W}}}tcMar")
-    right_tcMar_top = etree.SubElement(right_tcMar, f"{{{_W}}}top")
-    right_tcMar_top.set(f"{{{_W}}}w", "0")
-    right_tcMar_top.set(f"{{{_W}}}type", "dxa")
     if _right_col_gap > 0:
         # Cell-level left margin overrides the table-level zero margin, pushing
         # right-column text to start at the original right-column X position.
+        right_tcMar = etree.SubElement(right_tcPr, f"{{{_W}}}tcMar")
         right_tcMar_left = etree.SubElement(right_tcMar, f"{{{_W}}}left")
         right_tcMar_left.set(f"{{{_W}}}w", str(_right_col_gap))
         right_tcMar_left.set(f"{{{_W}}}type", "dxa")
