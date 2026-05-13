@@ -160,6 +160,13 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
         pStyle_elem.set(f"{{{_W}}}val", "ListParagraph")
         indent_pt = (pp.indent_left_pt if pp is not None else 0) or 36
         hang_pt = pp.hanging_indent_pt if pp is not None else 0
+        # For inline "• " bullets with no explicit hanging, add a standard
+        # hanging indent so continuation lines align with the text following
+        # the bullet marker rather than with the marker itself.
+        # "• " at 12 pt ≈ 9 pt wide; scale with font size, cap at 15 pt.
+        if hang_pt == 0 and not use_tab_bullet:
+            _fsize = pp.font_size_pt if pp is not None else 12.0
+            hang_pt = min(round(_fsize * 0.75), 15)
         ind = etree.SubElement(pPr, f"{{{_W}}}ind")
         ind.set(f"{{{_W}}}left", str(int(indent_pt * 20)))
         ind.set(f"{{{_W}}}hanging", str(int(hang_pt * 20)))
