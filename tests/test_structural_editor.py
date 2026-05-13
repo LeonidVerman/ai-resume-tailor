@@ -737,13 +737,18 @@ class TestUpdaterNonCanonicalSections:
         )
 
     def test_skill_not_kept_verbatim(self, tmp_path):
-        """SKILL must be replaced by Technical Skills — not kept as a verbatim orphan."""
+        """SKILL content must be updated from LLM output — not kept as a verbatim orphan."""
         orig = self._orig(tmp_path)
         llm = parse_llm_output(_NONCANONICAL_LLM)
         updated = apply_tailored(orig, llm)
-        section_titles = [s.title for s in updated.sections]
-        assert "SKILL" not in section_titles, (
-            "SKILL section kept verbatim — semantic-type matching to 'Technical Skills' failed"
+        # Find by semantic_type: title may be preserved as 'SKILL' or renamed to 'Technical Skills',
+        # but content must always come from the LLM (not the original 'COBOL, Fortran, SQL').
+        skills_sec = next((s for s in updated.sections if s.semantic_type == "skills"), None)
+        assert skills_sec is not None, "No skills section in output"
+        body_text = " ".join(p.text for p in skills_sec.body_paras)
+        assert "COBOL" not in body_text, (
+            "SKILL section kept verbatim — semantic-type matching to 'Technical Skills' failed; "
+            "old content (COBOL) still present"
         )
 
     def test_no_duplicate_skills_sections(self, tmp_path):
