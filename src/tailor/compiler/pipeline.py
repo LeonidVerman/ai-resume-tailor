@@ -147,9 +147,12 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
             pp = pm.paragraph_profile
             if pp is None:
                 continue
-            if pm.semantic in ("section_heading", "role_header"):
-                continue  # keep design colors and styling on structural headings
-            # Strip color from replaced content (bullets, body paragraphs, meta).
+            # Strip PDF-extracted text colors from ALL paragraphs (including
+            # section_heading and role_header).  LibreOffice has a rendering defect
+            # where a paragraph with both an explicit w:color and w:ind inside a table
+            # cell is not rendered — the text becomes invisible.  Since the PDF template
+            # background image is not carried over, the original accent colors are
+            # meaningless in the DOCX context anyway; all headings render in black.
             pp.text_color = None
             if pm.semantic == "bullet":
                 # Bullets are never bold — clear unconditionally (fixes role-header

@@ -517,6 +517,68 @@ def _render_para(pm: ParaModel, body, sectPr, preserve_section_break: bool = Fal
         body.append(clone)
 
 
+def _strip_override_table_style_font_compat(d) -> None:
+    """Neutralize style-template settings that cause LibreOffice to suppress paragraphs.
+
+    Two problematic settings are removed from the style template when rendering
+    PDF-sourced two-column layouts:
+
+    1. overrideTableStyleFontSizeAndJustification compat setting (val='1'):
+       causes LibreOffice to ignore explicit run-level font sizes in table cells,
+       making large section headings and role entries invisible.
+
+    2. w:tblLayout w:type="fixed" in the default TableNormal style:
+       combined with fixed-width cell tables, this causes LibreOffice to clip
+       indented paragraph content outside the cell's paint region.  Removing
+       the tblLayout element from the style lets individual table-level
+       tblLayout (already set on our generated table) govern layout exclusively.
+    """
+    try:
+        from docx.oxml.ns import qn
+
+        # Remove the compat setting
+        settings_part = d.settings.element
+        compat = settings_part.find(qn("w:compat"))
+        if compat is not None:
+            for cs in list(compat.findall(qn("w:compatSetting"))):
+                if cs.get(qn("w:name")) == "overrideTableStyleFontSizeAndJustification":
+                    compat.remove(cs)
+
+        # Remove tblLayout from the default TableNormal style
+        styles_part = d.part.styles._element
+        for style in styles_part.findall(qn("w:style")):
+            if (
+                style.get(qn("w:type")) == "table"
+                and style.get(qn("w:default")) == "1"
+            ):
+                tblPr = style.find(qn("w:tblPr"))
+                if tblPr is not None:
+                    for tblLayout in list(tblPr.findall(qn("w:tblLayout"))):
+                        tblPr.remove(tblLayout)
+                break
+
+        # Remove w:sz / w:szCs from docDefaults rPrDefault.
+        # When docDefaults specifies a small font size (e.g. sz=22 = 11pt) and a
+        # table-cell paragraph carries an explicit large font (e.g. sz=60 = 30pt),
+        # LibreOffice positions the glyph relative to the small default baseline
+        # rather than the paragraph's own font metrics, placing the text outside
+        # the visible line box (invisible).  Removing the default sz leaves font
+        # sizing entirely to per-paragraph / per-run properties, which LibreOffice
+        # handles correctly for all indent and font-size combinations.
+        styles_elem = d.part.styles._element
+        doc_defaults = styles_elem.find(qn("w:docDefaults"))
+        if doc_defaults is not None:
+            rpr_default = doc_defaults.find(qn("w:rPrDefault"))
+            if rpr_default is not None:
+                rpr = rpr_default.find(qn("w:rPr"))
+                if rpr is not None:
+                    for tag in (qn("w:sz"), qn("w:szCs")):
+                        for el in list(rpr.findall(tag)):
+                            rpr.remove(el)
+    except Exception:
+        pass  # graceful: proceed without stripping if styles can't be modified
+
+
 def _apply_pdf_page_geometry(sectPr, layout) -> None:
     """Overwrite pgSz and pgMar in *sectPr* with the source PDF's page geometry.
 
@@ -589,11 +651,21 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     left_margin_twips = (
         int(pgMar.get(f"{{{_W}}}left", "1440")) if pgMar is not None else 1440
     )
+    right_margin_twips = (
+        int(pgMar.get(f"{{{_W}}}right", "1440")) if pgMar is not None else 1440
+    )
 
-    # Column widths: from layout (computed from visual sidebar drawing edge).
-    # Fall back to proportional split if layout widths are absent.
+    # Column widths.  The table is pushed to the physical page left edge via
+    # tblInd=-left_margin, so the table spans from x=0 to x=left_w+right_w.
+    # right_w must not exceed page_w - right_margin - left_w; otherwise the
+    # table overflows the right margin and LibreOffice clips the right cell.
     left_w = layout.left_col_width_twips or (page_w_twips // 3)
-    right_w = layout.right_col_width_twips or (page_w_twips - left_w)
+    right_w_max = page_w_twips - right_margin_twips - left_w
+    right_w = min(
+        layout.right_col_width_twips or right_w_max,
+        right_w_max,
+    )
+    right_w = max(right_w, 2000)  # floor: prevent degenerate right cell
     total_w = left_w + right_w
 
     # Table element
@@ -675,7 +747,21 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     ]
 
     for pm in left_paras:
-        left_tc.append(build_para_element(pm, doc_part=doc_part))
+        p_elem = build_para_element(pm, doc_part=doc_part)
+        # Shift all left-cell content right by left_margin_twips so it sits at
+        # the same x position as in the source PDF.  paragraph indent_left_pt is
+        # measured from the column origin (= page_margin_left), but the left
+        # cell starts at the physical page left edge (x=0), so we add the margin.
+        pPr = p_elem.find(f"{{{_W}}}pPr")
+        if pPr is not None:
+            ind = pPr.find(f"{{{_W}}}ind")
+            if ind is not None:
+                cur = int(ind.get(f"{{{_W}}}left", "0"))
+                ind.set(f"{{{_W}}}left", str(cur + left_margin_twips))
+            else:
+                new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
+                new_ind.set(f"{{{_W}}}left", str(left_margin_twips))
+        left_tc.append(p_elem)
     # DOCX requires at least one paragraph per cell
     if not left_paras:
         etree.SubElement(left_tc, f"{{{_W}}}p")
@@ -2218,6 +2304,20 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         If any paragraph in doc.all_paras has no xml_proto (cannot render).
     """
     # Start from a copy of the template so styles and document settings are preserved
+    # PDF two-column documents: use a fresh minimal DOCX rather than copying
+    # the style template.  Style templates carry DOCX compat settings (e.g.
+    # w:sz in docDefaults, compatibilityMode) that cause LibreOffice to suppress
+    # indented paragraphs in table cells.  A fresh Document() has clean defaults.
+    if doc.source_kind == "pdf" and doc.layout.column_split_x is not None:
+        d = Document()
+        _patch_bullet_numbering(d)
+        body = d.element.body
+        sectPr = body.find(f"{{{_W}}}sectPr")
+        _apply_pdf_page_geometry(sectPr, doc.layout)
+        _render_pdf_two_col(doc, body, sectPr, doc_part=d.part)
+        d.save(output_path)
+        return
+
     shutil.copy(template_path, output_path)
     d = Document(output_path)
     # PDF-sourced docs use numPr-based bullets; patch Symbol \uf0b7 → Unicode •
@@ -2273,6 +2373,11 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     # two-cell table so that sidebar and main content are placed in separate
     # columns with correct widths, indentation, and background colours.
     if doc.source_kind == "pdf" and doc.layout.column_split_x is not None:
+        # Strip the "overrideTableStyleFontSizeAndJustification" compat setting
+        # from the style template.  When this is set to 1, LibreOffice suppresses
+        # paragraphs inside table cells whose explicit font size differs from the
+        # table style's default — making section headings and role entries invisible.
+        _strip_override_table_style_font_compat(d)
         _render_pdf_two_col(doc, body, sectPr, doc_part=d.part)
         d.save(output_path)
         return

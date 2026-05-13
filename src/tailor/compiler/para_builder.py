@@ -122,6 +122,15 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
     p = etree.Element(f"{{{_W}}}p")
     pPr = etree.SubElement(p, f"{{{_W}}}pPr")
 
+    # All non-bullet paragraphs get pStyle="Normal" so LibreOffice renders them
+    # correctly inside table cells.  Without a pStyle, LibreOffice suppresses
+    # paragraphs that have w:ind w:left > ~800 twips, making section headings
+    # and role entries invisible.  Explicit w:pPr properties (spacing, indent)
+    # override the style-level defaults, so the visual output is unchanged.
+    if pm.semantic != "bullet":
+        _pStyle = etree.SubElement(pPr, f"{{{_W}}}pStyle")
+        _pStyle.set(f"{{{_W}}}val", "Normal")
+
     # Bullet paragraphs: use "ListParagraph" style.  Two strategies:
     #
     # 1. PUA-style bullets (hanging_indent_pt > 0, single-column): these came
@@ -187,13 +196,12 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
             _is_two_col_para = pp.column_id in ("left", "right")
             _line_factor = 1.1 if _is_two_col_para else 1.0
             spc.set(f"{{{_W}}}line", str(int(pp.font_size_pt * _line_factor * 20)))
-            # Content paragraphs use "atLeast" so the line height can expand when
-            # LLM text wraps to additional lines — preserving full generated content.
-            # Structural paras (section_heading, role_header, role_meta) use
-            # "exact" to keep layout anchors stable.
-            _is_content = pm.semantic in ("bullet", "paragraph", "summary_paragraph",
-                                          "skills_paragraph", "other_paragraph")
-            spc.set(f"{{{_W}}}lineRule", "atLeast" if _is_content else "exact")
+            # Always use "atLeast" so LibreOffice does not clip indented paragraphs.
+            # LibreOffice has a rendering defect where lineRule="exact" combined with
+            # w:ind makes the paragraph invisible inside a table cell.  "atLeast"
+            # produces correct output everywhere and still anchors layout because the
+            # specified value is the minimum line height.
+            spc.set(f"{{{_W}}}lineRule", "atLeast")
 
         # Indentation (twips = pt × 20).  Bullets already have w:ind set above.
         if pp.indent_left_pt and pm.semantic != "bullet":
