@@ -141,9 +141,10 @@ def _compute_page_count_score(
     if delta <= 0:
         return 100.0, False, evidence
     if delta == 1:
-        # Soft penalty: +1 page is undesirable but not critical
+        # +1 page is acceptable when LLM content is larger than the template
+        # placeholder — informational note only, no score penalty.
         evidence.append(f"Page count +1 ({orig_pages}->{gen_pages})")
-        return 80.0, False, evidence
+        return 100.0, False, evidence
     if delta == 2:
         evidence.append(f"Page count +2 ({orig_pages}->{gen_pages})")
         return 70.0, False, evidence

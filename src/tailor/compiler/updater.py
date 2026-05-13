@@ -243,15 +243,21 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     llm_meta = [m for m in llm.meta_lines if m.strip().lower() not in header_extra_texts]
 
     # Meta lines: reuse original protos; in layout-bound mode drop extras.
+    # When the LLM provides no meta lines (e.g. experience dates used "20XX"
+    # placeholders that were not recognised as dates), preserve the template's
+    # original meta lines verbatim so the role's date text is not lost.
     new_meta: list[ParaModel] = []
-    for i, meta_text in enumerate(llm_meta):
-        if i < len(orig.meta_lines):
-            new_meta.append(orig.meta_lines[i].with_text(meta_text))
-        elif not layout_bound:
-            src = orig.meta_lines[-1] if orig.meta_lines else orig.header
-            new_meta.append(src.clone_as(meta_text, "role_meta"))
-        else:
-            _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra meta line %r", meta_text[:60])
+    if not llm_meta and orig.meta_lines:
+        new_meta = list(orig.meta_lines)
+    else:
+        for i, meta_text in enumerate(llm_meta):
+            if i < len(orig.meta_lines):
+                new_meta.append(orig.meta_lines[i].with_text(meta_text))
+            elif not layout_bound:
+                src = orig.meta_lines[-1] if orig.meta_lines else orig.header
+                new_meta.append(src.clone_as(meta_text, "role_meta"))
+            else:
+                _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra meta line %r", meta_text[:60])
 
     # Bullets: reuse original protos.
     # layout-bound mode maps 1:1 and drops overflow to preserve visual density.

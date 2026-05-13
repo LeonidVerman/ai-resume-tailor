@@ -2280,6 +2280,8 @@ def _clear_docx_glossary(docx_path: str) -> None:
 
     _GLOSSARY_PATH = "word/glossary/document.xml"
     _THUMBNAIL_PATH = "docProps/thumbnail.emf"
+    _ROOT_RELS_PATH = "_rels/.rels"
+    _THUMBNAIL_TYPE = "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"
     _EMPTY_GLOSSARY = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<w:glossaryDocument xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"'
@@ -2302,10 +2304,30 @@ def _clear_docx_glossary(docx_path: str) -> None:
             for item in zin.infolist():
                 if item.filename == _THUMBNAIL_PATH:
                     _log.debug("THUMBNAIL_REMOVED: %s stripped from %s", _THUMBNAIL_PATH, docx_path)
-                    continue  # drop the thumbnail entirely
+                    continue  # drop the thumbnail file
                 if item.filename == _GLOSSARY_PATH:
                     zout.writestr(item, _EMPTY_GLOSSARY.encode("utf-8"))
                     _log.debug("GLOSSARY_CLEARED: %s emptied in %s", _GLOSSARY_PATH, docx_path)
+                elif item.filename == _ROOT_RELS_PATH:
+                    # Remove the thumbnail relationship so python-docx (and Word)
+                    # do not try to load the now-absent thumbnail file.
+                    try:
+                        from lxml import etree as _et
+                        rels_xml = zin.read(item.filename)
+                        root = _et.fromstring(rels_xml)
+                        removed = 0
+                        for rel in list(root):
+                            if rel.get("Type") == _THUMBNAIL_TYPE:
+                                root.remove(rel)
+                                removed += 1
+                        if removed:
+                            cleaned = _et.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+                            zout.writestr(item, cleaned)
+                            _log.debug("THUMBNAIL_REL_REMOVED: stripped %d rel(s) from %s", removed, _ROOT_RELS_PATH)
+                        else:
+                            zout.writestr(item, rels_xml)
+                    except Exception:
+                        zout.writestr(item, zin.read(item.filename))
                 else:
                     zout.writestr(item, zin.read(item.filename))
 
