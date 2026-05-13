@@ -301,6 +301,10 @@ def parse_llm_output(text: str) -> list[LlmSection]:
     cur_role: LlmRole | None = None
     state = "pre"
     found_section = False  # True once the first known heading has been seen
+    # Capture first long non-contact prose paragraph seen before any section heading.
+    # Some templates (e.g. "OFFICE MANAGER") put the summary paragraph before the
+    # first recognized heading; this preserves it for synthetic summary injection.
+    _pre_section_prose: str = ""
 
     def _finish_role() -> None:
         nonlocal cur_role
@@ -384,6 +388,21 @@ def parse_llm_output(text: str) -> list[LlmSection]:
             continue
 
         if current is None:
+            # Capture the first long non-contact prose line before any heading as a
+            # potential summary.  Safe criteria: ≥60 chars, has spaces, no email/URL/pipe,
+            # not a bullet, not starting with digit (avoids phone numbers and dates).
+            if (
+                not _pre_section_prose
+                and stripped
+                and len(stripped) >= 60
+                and " " in stripped
+                and "@" not in stripped
+                and "://" not in stripped
+                and "|" not in stripped
+                and stripped[0] not in ("-", "•", "·", "–", "*")
+                and not stripped[0].isdigit()
+            ):
+                _pre_section_prose = stripped
             continue  # text before first section heading
 
         if not stripped:
@@ -434,4 +453,15 @@ def parse_llm_output(text: str) -> list[LlmSection]:
 
     _finish_role()
     _finish_section()
+
+    # If pre-section prose was captured and no summary section exists, inject a
+    # synthetic "Professional Summary" section at position 0 so the updater can
+    # place it in the template's intro-prose slot.
+    if _pre_section_prose and not any(s.semantic_type == "summary" for s in sections):
+        sections.insert(0, LlmSection(
+            heading="Professional Summary",
+            semantic_type="summary",
+            body_lines=[_pre_section_prose],
+        ))
+
     return sections

@@ -1249,6 +1249,21 @@ def _find_header_skills_block(
     if start == 0:
         return None
 
+    # Guard: if the candidate block contains contact-info content (email, URL,
+    # phone-number), it is a contact section, not a skills block.  Templates
+    # like sample 12 have the contact info (phone, email, website) at the end
+    # of header_paras; without this guard the injector overwrites contact info.
+    _contact_markers = ("@", "www.", "http://", "https://")
+    _phone_re = re.compile(r"^\d[\d\s\-\.\(\)]{6,}$")
+    for _i in range(start, end + 1):
+        _t = header_paras[_i].text.strip()
+        if not _t:
+            continue
+        if any(m in _t for m in _contact_markers):
+            return None
+        if _phone_re.match(_t):
+            return None
+
     return (start, end + 1)
 
 
@@ -1394,8 +1409,11 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
     # "contact", "social", and "websites" sections indicate a contact/sidebar area.
     # The grader flags any summary text in a section adjacent to these types as
     # SUMMARY_IN_WRONG_SECTION, so the renderer must reject those same sections
-    # as intro-prose anchors.
-    _CONTACT_AREA_TYPES: frozenset[str] = frozenset({"contact", "social", "websites"})
+    # as intro-prose anchors.  "websites" is intentionally excluded: a websites
+    # section before a skills/other section does not indicate a contact sidebar,
+    # and the section after it may legitimately hold intro-prose summary content
+    # (e.g. sample 2 where the Skills section body contains the profile paragraph).
+    _CONTACT_AREA_TYPES: frozenset[str] = frozenset({"contact", "social"})
     for _si, section in enumerate(_sections):
         if section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             continue
@@ -2669,21 +2687,14 @@ def _build_anchored_summary_section(
     compacted to 1 sentence to avoid expanding a narrow template header slot
     (typically an empty trailing paragraph in a compact table template).
     """
-    from tailor.compiler.layout import compact_summary
     if heading_anchor is None:
-        # Single-anchor: only the body slot exists; compact aggressively to
-        # prevent a narrow slot from overflowing and pushing page content down.
-        _raw = _clean_summary_text(llm_section.body_lines)
-        _lines = compact_summary([_raw], max_sentences=1)
-        body_text = " ".join(_lines).strip() if _lines else _raw
-        # Further cap at 300 chars: a single long sentence can still exceed
-        # the slot height when the summary cell is narrow (e.g. table sidebar).
-        if len(body_text) > 300:
-            cut = body_text.rfind(" ", 0, 300)
-            body_text = body_text[:cut] if cut > 0 else body_text[:300]
+        # Single-anchor: only the body slot exists.  Use the full summary text
+        # and let the table cell expand naturally — the user expects the complete
+        # summary to appear and is aware that later content may shift down.
+        body_text = _clean_summary_text(llm_section.body_lines)
         _log.debug(
-            "ANCHORED_SUMMARY_SINGLE_SLOT_COMPACTED: len %d → %d chars",
-            len(_raw), len(body_text),
+            "ANCHORED_SUMMARY_SINGLE_SLOT: len=%d chars (full text, no compaction)",
+            len(body_text),
         )
     else:
         body_text = _clean_summary_text(llm_section.body_lines)
