@@ -119,7 +119,7 @@ def compile_resume_from_ir(
 def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
     """Normalize styling on LLM-generated content paragraphs in a PDF-sourced doc.
 
-    Two problems are fixed here:
+    Three problems are fixed here:
 
     1. Color bleed: PDF-extracted text_color (hyperlink blue, author styling)
        bleeds onto new content via clone_as when the updater copies it from a
@@ -127,13 +127,18 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
        default (no explicit color).  Section headings and role_headers keep their
        accent color — they are structural design elements, not replaced content.
 
-    2. Heading-style bleed: when a section has no body paragraphs, the updater
-       falls back to the section heading as clone archetype.  The heading carries
-       bold=True and an elevated font_size_pt.  Body paragraphs and bullets
-       cloned from it inherit those properties and render far too large.  Any
-       paragraph/bullet whose font_size_pt is more than 10% above the document
-       default and is bold is treated as a heading-clone artefact and normalized
-       to body-text styling (bold=False, font_size_pt=default).
+    2. Heading-style bleed (oversized): when a section has no body paragraphs,
+       the updater falls back to the section heading as clone archetype.  The
+       heading carries bold=True and an elevated font_size_pt.  Any paragraph/
+       bullet whose font_size_pt is more than 10% above the document default AND
+       is bold is treated as a heading-clone artefact and normalized to body-text
+       styling (bold=False, font_size_pt=default).
+
+    3. Role-header bold bleed (same-size): when a role has no bullets, the updater
+       uses orig.header as the bullet archetype.  Role headers are bold even when
+       their font_size equals the document default, so new bullets inherit bold.
+       Bullets are never legitimately bold in a resume, so bold is unconditionally
+       cleared from all bullet semantics regardless of font size.
     """
     default_size = (doc.layout.default_font_size_pt if doc.layout else None) or 11.0
 
@@ -146,9 +151,13 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
                 continue  # keep design colors and styling on structural headings
             # Strip color from replaced content (bullets, body paragraphs, meta).
             pp.text_color = None
-            # Normalize heading-style bleed: bold + oversized font on body content
-            # means this paragraph was cloned from a section heading archetype.
-            if pm.semantic in ("paragraph", "bullet"):
+            if pm.semantic == "bullet":
+                # Bullets are never bold — clear unconditionally (fixes role-header
+                # bold bleed when the role header is the only archetype available).
+                pp.bold = False
+            elif pm.semantic == "paragraph":
+                # Normalize heading-style bleed: bold + oversized font on body
+                # content means this paragraph was cloned from a heading archetype.
                 if pp.bold and pp.font_size_pt and pp.font_size_pt > default_size * 1.1:
                     pp.bold = False
                     pp.font_size_pt = default_size
