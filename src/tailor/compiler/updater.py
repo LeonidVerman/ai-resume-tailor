@@ -335,8 +335,8 @@ def _update_experience_section(
             else:
                 clean_body_d = orig.body_paras
             return ResumeSection(
-                title=llm.heading,
-                heading=_strip_col_break_para(orig.heading.with_text(llm.heading)),
+                title=orig.title,
+                heading=orig.heading,
                 semantic_type=orig.semantic_type,
                 body_paras=clean_body_d,
                 roles=updated_roles,
@@ -350,8 +350,8 @@ def _update_experience_section(
             orig.title, len(llm.body_lines), len(orig.roles),
         )
         return ResumeSection(
-            title=llm.heading,
-            heading=_strip_col_break_para(orig.heading.with_text(llm.heading)),
+            title=orig.title,
+            heading=orig.heading,
             semantic_type=orig.semantic_type,
             body_paras=orig.body_paras,
             roles=list(orig.roles),
@@ -422,8 +422,8 @@ def _update_experience_section(
         clean_body = orig.body_paras
 
     return ResumeSection(
-        title=llm.heading,
-        heading=_strip_col_break_para(orig.heading.with_text(llm.heading)),
+        title=orig.title,
+        heading=orig.heading,
         semantic_type=orig.semantic_type,
         body_paras=clean_body,
         roles=updated_roles,
@@ -600,8 +600,8 @@ def _update_body_section(
         new_body.append(extra_pm)
 
     result = ResumeSection(
-        title=llm.heading,
-        heading=orig.heading.with_text(llm.heading),
+        title=orig.title,
+        heading=orig.heading,
         semantic_type=orig.semantic_type,
         body_paras=new_body,
         roles=[],
@@ -1929,18 +1929,13 @@ def _update_experience_classified(
             _log.debug("classification: role %r → verbatim (no LLM counterpart)", o_role.role_id)
         updated_roles.append(updated)
 
-    new_heading = (
-        orig.heading
-        if cls_sec.preserve_heading
-        else _strip_col_break_para(orig.heading.with_text(llm.heading))
-    )
     _log.debug(
         "classification: section %r preserve_heading=%s rewrite_policy=%s",
         orig.title, cls_sec.preserve_heading, cls_sec.rewrite_policy,
     )
     return ResumeSection(
-        title=orig.title if cls_sec.preserve_heading else llm.heading,
-        heading=new_heading,
+        title=orig.title,
+        heading=orig.heading,
         semantic_type=orig.semantic_type,
         body_paras=orig.body_paras,
         roles=updated_roles,
@@ -1963,11 +1958,6 @@ def _update_body_classified(
     When preserve_body_structure is False: delegates to _update_body_section
     (existing behaviour), then patches the heading back if preserve_heading.
     """
-    new_heading = (
-        orig.heading
-        if cls_sec.preserve_heading
-        else orig.heading.with_text(llm.heading)
-    )
     _log.debug(
         "classification: body section %r preserve_heading=%s preserve_body_structure=%s",
         orig.title, cls_sec.preserve_heading, cls_sec.preserve_body_structure,
@@ -1997,15 +1987,15 @@ def _update_body_classified(
                 len(llm_lines) - llm_cursor,
             )
         return ResumeSection(
-            title=orig.title if cls_sec.preserve_heading else llm.heading,
-            heading=new_heading,
+            title=orig.title,
+            heading=orig.heading,
             semantic_type=orig.semantic_type,
             body_paras=new_body,
             roles=[],
             section_id=orig.section_id,
         )
 
-    # No structure constraint — use existing body update, then restore heading if needed.
+    # No structure constraint — use existing body update.
     if orig.semantic_type == "skills":
         llm = LlmSection(
             heading=llm.heading,
@@ -2013,17 +2003,7 @@ def _update_body_classified(
             body_lines=_sanitize_skills_lines(llm.body_lines),
             roles=llm.roles,
         )
-    updated = _update_body_section(orig, llm, layout_bound=layout_bound)
-    if cls_sec.preserve_heading:
-        return ResumeSection(
-            title=orig.title,
-            heading=orig.heading,
-            semantic_type=updated.semantic_type,
-            body_paras=updated.body_paras,
-            roles=[],
-            section_id=orig.section_id,
-        )
-    return updated
+    return _update_body_section(orig, llm, layout_bound=layout_bound)
 
 
 def _apply_section_classified(
