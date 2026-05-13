@@ -3501,9 +3501,15 @@ def apply_tailored(
                                     if _left_sec_updated is not None:
                                         if not hasattr(_left_sec_updated, "_extra_injections"):
                                             _left_sec_updated._extra_injections = {}
+                                        # Two empty spacers before the heading create visual
+                                        # separation matching the gap before other sections.
+                                        _sk_spacers = [
+                                            _anchor_bp.clone_as("", "spacer"),
+                                            _anchor_bp.clone_as("", "spacer"),
+                                        ]
                                         _left_sec_updated._extra_injections.setdefault(
                                             _anchor_bp.para_id, []
-                                        ).extend([_sk_heading] + _sk_body)
+                                        ).extend(_sk_spacers + [_sk_heading] + _sk_body)
                                         _skills_injected = True
                                         _log.debug(
                                             "SKILLS_LEFT_COLUMN_INJECTED: anchor=%r "
@@ -4293,7 +4299,13 @@ def apply_tailored(
                         _new_pid = f"{_anchor}_ext_{_j + 1}"
                         _pm.para_id = _new_pid
                         from copy import deepcopy as _deepcopy
-                        _new_p = _deepcopy(_anchor_elem)
+                        # Use the paragraph's own xml_proto (e.g. Heading2 for section
+                        # headings) so the injected element inherits the correct style.
+                        # Fall back to the anchor element for bullets/body paras.
+                        if getattr(_pm, 'style', None) is not None and _pm.style.xml_proto is not None:
+                            _new_p = _deepcopy(_pm.style.xml_proto)
+                        else:
+                            _new_p = _deepcopy(_anchor_elem)
                         # Clear all text runs and set new content
                         for _t in _new_p.findall(f".//{{{_W_NS}}}t"):
                             _t.text = ""
