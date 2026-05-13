@@ -115,3 +115,21 @@ def compile_resume_from_ir(
     )
     return updated
 
+
+def compile_resume_from_pdf(
+    pdf_path: str,
+    llm_text: str,
+    output_path: str,
+    style_template_path: str,
+    classification: "ClassificationOutput | None" = None,
+) -> ResumeDocument:
+    """Parse *pdf_path* directly into IR, apply *llm_text*, render to *output_path*.
+
+    *style_template_path* must be a DOCX file used only for page geometry.
+    """
+    from tailor.compiler.pdf_parser import parse_pdf
+
+    with open(pdf_path, "rb") as f:
+        template_ir = parse_pdf(f.read())
+    return compile_resume_from_ir(template_ir, llm_text, output_path, style_template_path, classification)
+

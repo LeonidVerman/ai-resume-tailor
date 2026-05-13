@@ -143,7 +143,7 @@ def discover(filter_arg: Optional[str] = None) -> tuple[list[SamplePair], list[s
         gen_path = gen_index[n][0]
         matched_any = False
 
-        for kind in ("docx",):   # PDF path skipped — see module docstring
+        for kind in ("docx", "pdf"):
             key = (n, kind)
             if key not in cls_index:
                 continue
@@ -270,14 +270,28 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
     # ── Stage 4: run the webapp rendering pipeline ─────────────────────────
     try:
         sys.path.insert(0, str(_REPO / "src"))
-        from tailor.compiler.pipeline import compile_resume
 
-        updated = compile_resume(
-            template_path=str(pair.resume_path),
-            llm_text=llm_text,
-            output_path=str(out_docx),
-            classification=classification,
-        )
+        if pair.source_kind == "docx":
+            from tailor.compiler.pipeline import compile_resume
+            updated = compile_resume(
+                template_path=str(pair.resume_path),
+                llm_text=llm_text,
+                output_path=str(out_docx),
+                classification=classification,
+            )
+        else:  # pdf
+            from tailor.compiler.pipeline import compile_resume_from_pdf
+            style_docx = _RES_DOCX_DIR / (stem + ".docx")
+            if not style_docx.exists():
+                print(f"{tag} SKIP — no companion DOCX style template for {stem!r}")
+                return False
+            updated = compile_resume_from_pdf(
+                pdf_path=str(pair.resume_path),
+                llm_text=llm_text,
+                output_path=str(out_docx),
+                style_template_path=str(style_docx),
+                classification=classification,
+            )
     except Exception as e:
         print(f"{tag} FAIL [stage=compile-resume] {type(e).__name__}: {e}")
         if verbose:
