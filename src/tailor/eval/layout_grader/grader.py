@@ -672,10 +672,21 @@ def grade_sample(
             # cells or absolutely positioned text boxes.
             # Only trusted when LibreOffice was the PDF converter (xhtml2pdf cannot
             # reliably detect column counts for non-sectPr layouts).
+            # Guard: require at least one table in the original DOCX.  Tab-stop-based
+            # multi-column formatting (e.g. 3-tab skills rows) produces a PDF that
+            # looks multi-column but is NOT a structural layout — losing the tab stops
+            # when the updater injects longer content is expected behaviour, not a
+            # collapse.  Text-box-based templates without tables are not yet detected
+            # (would need wp:anchor presence check in the DOCX comparator).
             _used_lo = pdf_method in ("subprocess", "docker")
+            _has_structural_cols = (
+                docx_result is not None
+                and docx_result.table_count_original > 0
+            )
             if ("COLUMN_LAYOUT_LOST" in pdf_result.hard_fail_reasons
                     and not _docx_has_orig_cols   # no native Word columns
                     and _used_lo                   # LibreOffice PDF → trusted
+                    and _has_structural_cols       # table-based columns only
                     and orig_columns >= 2
                     and gen_columns_count < 2):
                 hard_fail = True

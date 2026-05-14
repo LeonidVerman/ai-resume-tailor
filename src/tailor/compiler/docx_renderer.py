@@ -556,6 +556,7 @@ def _render_para(pm: ParaModel, body, sectPr, preserve_section_break: bool = Fal
         if not preserve_section_break:
             _strip_section_break(clone)
         _set_para_text(clone, pm.text)
+        _clear_sdt_placeholder(clone)
     elif pm.paragraph_profile is not None:
         from tailor.compiler.para_builder import build_para_element
         clone = build_para_element(pm)
@@ -804,6 +805,7 @@ def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> 
         # Happy path: counts match — update each paragraph in place.
         for p_elem, pm in zip(clone_paras, tb.para_models):
             _set_para_text(p_elem, pm.text)
+            _clear_sdt_placeholder(p_elem)
     # else: count mismatch (shouldn't happen unless LLM restructured the table);
     # fall through and insert the unmodified clone so the layout is preserved.
 
@@ -1309,6 +1311,7 @@ def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_i
     if pm is not None:
         _strip_text_wrapping_breaks(elem)
         _set_para_text(elem, pm.text)
+        _clear_sdt_placeholder(elem)
     return elem
 
 
@@ -1673,6 +1676,7 @@ def _render_layout_two_col_table(
                     pm = para_lookup.get(para_id)
                     if pm is not None:
                         _set_para_text(p_el, pm.text)
+                        _clear_sdt_placeholder(p_el)
                 tc.append(tbl_el)
             else:
                 el = _render_block_into_elem(
@@ -1692,6 +1696,7 @@ def _render_layout_two_col_table(
                     _xel = deepcopy(pm.style.xml_proto)
                     _strip_last_rendered_page_breaks(_xel)
                     _set_para_text(_xel, pm.text)
+                    _clear_sdt_placeholder(_xel)
                     tc.append(_xel)
                 elif pm.paragraph_profile is not None:
                     from tailor.compiler.para_builder import build_para_element
@@ -1965,6 +1970,7 @@ def _render_from_layout_blocks(
                     _strip_last_rendered_page_breaks(elem)
                     _strip_text_wrapping_breaks(elem)
                     _set_para_text(elem, pm.text)
+                    _clear_sdt_placeholder(elem)
                 elif pm.paragraph_profile is not None:
                     from tailor.compiler.para_builder import build_para_element
                     elem = build_para_element(pm)
@@ -1988,6 +1994,7 @@ def _render_from_layout_blocks(
                 if pm is not None:
                     _strip_text_wrapping_breaks(elem)
                     _set_para_text(elem, pm.text)
+                    _clear_sdt_placeholder(elem)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
                 else:
                     if block.para_id:

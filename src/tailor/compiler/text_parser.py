@@ -196,6 +196,11 @@ _ALL_KNOWN: frozenset[str] = (
         # "Technical Skills" body lines in a template that has a separate
         # Communication section).
         "communication",
+        # Contact and affiliation sections: LLMs sometimes append these under an
+        # "ADDITIONAL" filler heading after "TECHNICAL SKILLS", causing the updater
+        # to inject them into skill slots.  Treating them as known section headings
+        # makes the parser break at those boundaries instead.
+        "contact information", "contact info", "affiliations",
     })
 )
 

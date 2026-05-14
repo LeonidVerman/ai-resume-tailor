@@ -1333,6 +1333,7 @@ def _detect_thin_overflow_page(
 
     evidence: list[str] = []
     triggered = False
+    last_page_number = gen_extracted.pages[-1].page_number
 
     for page in gen_extracted.pages[1:]:
         ar, _, _, _, ml = _compute_effective_area_metrics(page)
@@ -1346,12 +1347,14 @@ def _detect_thin_overflow_page(
             if orig_ml < _THIN_PAGE_MAX_LINES and orig_ar < _THIN_PAGE_MAX_AREA:
                 continue  # structural — template is also thin at this position
 
-        triggered = True
+        is_last = page.page_number == last_page_number
         evidence.append(
             f"Thin overflow page {page.page_number}: "
             f"{ml} content line(s), {ar * 100:.0f}% area coverage — "
             f"small amount of content spilled onto an otherwise empty page"
         )
+        if not is_last:
+            triggered = True  # only penalise sparse middle pages, not trailing overflow
 
     if triggered:
         return 0.0, False, evidence
