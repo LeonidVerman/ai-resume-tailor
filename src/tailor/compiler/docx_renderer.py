@@ -738,8 +738,53 @@ def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=
         top_brd.set(f"{{{_W}}}sz", "6")
         top_brd.set(f"{{{_W}}}color", "000000")
 
+    def _shift_para_indent(p_elem, delta_twips: int) -> None:
+        """Subtract delta_twips from the left indent of a w:p element (floor at 0)."""
+        if delta_twips <= 0:
+            return
+        pPr = p_elem.find(f"{{{_W}}}pPr")
+        if pPr is None:
+            return
+        ind = pPr.find(f"{{{_W}}}ind")
+        if ind is not None:
+            cur = int(ind.get(f"{{{_W}}}left", "0"))
+            ind.set(f"{{{_W}}}left", str(max(0, cur - delta_twips)))
+
+    def _section_right_paras(section):
+        """Yield (ParaModel, is_role_header) for all right-cell paras in a section."""
+        if section.semantic_type == "experience" and section.roles:
+            _has_orphan = any(bp.semantic == "role_header" for bp in section.body_paras)
+            if _has_orphan:
+                for bp in section.body_paras:
+                    if bp.semantic == "role_header":
+                        break
+                    if bp.text.strip():
+                        yield bp
+            for role in section.roles:
+                yield role.header
+                yield from role.meta_lines
+                yield from role.bullets
+        else:
+            yield from section.body_paras
+
+    def _min_indent_twips(section) -> int:
+        """Return the minimum indent across all right-cell paras in a section (twips)."""
+        vals = [
+            int(pm.paragraph_profile.indent_left_pt * 20)
+            for pm in _section_right_paras(section)
+            if pm.paragraph_profile and pm.paragraph_profile.indent_left_pt > 0
+        ]
+        return min(vals) if vals else 0
+
     for section in doc.sections:
         tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+        # Compute per-section indent baseline to normalise all body content
+        # to the same visual left edge within the right cell.  Different PDF
+        # templates place right-column content at varying x offsets (e.g. skills
+        # at x=231 vs. role headers at x=215); subtracting the section minimum
+        # makes each section's content start flush at the right-cell left edge.
+        sec_min_ind = _min_indent_twips(section)
 
         # Left cell: section heading
         left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
@@ -769,6 +814,13 @@ def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=
         right_tcW.set(f"{{{_W}}}type", "dxa")
         _add_top_border(right_tcPr)
 
+        def _append(pm, combined_text=None):
+            """Build and append a para element with normalised indent."""
+            src = pm.with_text(combined_text) if combined_text else pm
+            p_elem = build_para_element(src, doc_part=doc_part)
+            _shift_para_indent(p_elem, sec_min_ind)
+            right_tc.append(p_elem)
+
         if section.semantic_type == "experience" and section.roles:
             _has_orphan = any(bp.semantic == "role_header" for bp in section.body_paras)
             if _has_orphan:
@@ -776,24 +828,22 @@ def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=
                     if bp.semantic == "role_header":
                         break
                     if bp.text.strip():
-                        right_tc.append(build_para_element(bp, doc_part=doc_part))
+                        _append(bp)
             for role in section.roles:
                 if role.header_extra and "|" not in role.header.text:
                     _combined = role.header.text.strip() + " | " + " | ".join(
                         he.text.strip() for he in role.header_extra if he.text.strip()
                     )
-                    right_tc.append(build_para_element(
-                        role.header.with_text(_combined), doc_part=doc_part
-                    ))
+                    _append(role.header, _combined)
                 else:
-                    right_tc.append(build_para_element(role.header, doc_part=doc_part))
+                    _append(role.header)
                 for pm in role.meta_lines:
-                    right_tc.append(build_para_element(pm, doc_part=doc_part))
+                    _append(pm)
                 for pm in role.bullets:
-                    right_tc.append(build_para_element(pm, doc_part=doc_part))
+                    _append(pm)
         else:
             for pm in section.body_paras:
-                right_tc.append(build_para_element(pm, doc_part=doc_part))
+                _append(pm)
 
         if not right_tc.findall(f"{{{_W}}}p"):
             etree.SubElement(right_tc, f"{{{_W}}}p")
