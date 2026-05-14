@@ -751,7 +751,7 @@ def _detect_column_split(
                 _adjacent_sig += 1
     if _adjacent_sig >= 2:
         return None
-    top_cutoff = page_height * 0.15 if page_height > 0 else 0.0
+    top_cutoff = page_height * 0.20 if page_height > 0 else 0.0
     # Full-width elements that span ≥ 50 % of the page width are cross-column
     # design elements (e.g. name banner, summary paragraph, section heading
     # that overflows visually) and should not veto the column split.
@@ -897,6 +897,25 @@ def _extract_paragraphs(
             blocks = left_blks + right_blks
             right_col_start_idx = len(left_blks)
 
+        # Merged-header-band detection: when NO right-column text block exists
+        # in the top 22 % of the page the template uses a full-width header
+        # banner (name, title, summary) above the two-column body.  Every block
+        # in that top band is forced to col_id=None so the renderer places it
+        # above the two-column table rather than inside the left cell.
+        # When right-column content IS present near the top (sidebar starts at
+        # page top with no banner) this is skipped and the normal x-width
+        # heuristic applies.
+        _header_band_y = page.rect.height * 0.22 if split_x is not None else 0.0
+        _has_right_in_header = split_x is not None and any(
+            b.get("type") == 0
+            and b["bbox"][0] >= split_x
+            and b["bbox"][1] < _header_band_y
+            for b in blocks
+        )
+        merged_header_band = (
+            _header_band_y if split_x is not None and not _has_right_in_header else 0.0
+        )
+
         # Reset inter-page spacing
         prev_block_y1 = None
 
@@ -994,8 +1013,13 @@ def _extract_paragraphs(
             # whose x1 extends more than 20 pt past the column split is a
             # full-width element (merged name/header banner).  Such blocks get
             # col_id=None so the renderer places them above the two-column table.
-            if split_x is not None and x0 >= split_x:
-                col_id: str | None = "right"
+            if merged_header_band > 0 and y0 < merged_header_band:
+                # Block is inside the top merged-header band (no right-column
+                # content exists there): treat as full-width above the table.
+                col_id: str | None = None
+                col_origin = page_margin_left
+            elif split_x is not None and x0 >= split_x:
+                col_id = "right"
                 col_origin = right_col_origin if right_col_origin is not None else split_x
             elif split_x is not None and x1_blk > split_x + 20.0:
                 col_id = None

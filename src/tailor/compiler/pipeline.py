@@ -239,6 +239,77 @@ def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocumen
                 _move(pm, right_body_indent)
 
 
+def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
+    """Promote LLM-injected Professional Summary into the merged header area.
+
+    Templates like sample 18 have a full-width header (name, title, summary)
+    above the two-column body.  pdf_parser places the original summary lines in
+    header_paras.  apply_tailored then injects the LLM's "Professional Summary"
+    as a left-column section (the archetype is the first left-column section).
+
+    This function moves the LLM summary body into header_paras (col_id=None so
+    the renderer places it above the two-column table), replaces the original
+    template summary lines, and removes the injected section so its heading is
+    not rendered as a left-column "PROFESSIONAL SUMMARY" banner.
+
+    Only runs for two-column PDF docs where header_paras contain original
+    summary text beyond the name/title lines.
+    """
+    if doc.layout.column_split_x is None:
+        return
+
+    SUMMARY_TITLES = frozenset({"professional summary", "summary", "profile", "objective"})
+    summary_idx: int | None = None
+    for i, sec in enumerate(doc.sections):
+        if sec.title.lower().strip() in SUMMARY_TITLES and sec.body_paras:
+            summary_idx = i
+            break
+    if summary_idx is None:
+        return
+
+    summary_sec = doc.sections[summary_idx]
+    default_size = doc.layout.default_font_size_pt or 11.0
+
+    # Split header_paras into name/title lines (large font or bold) and the
+    # original-template summary lines (body-sized, not bold) that follow them.
+    name_title_end = 0
+    for j, hp in enumerate(doc.header_paras):
+        pp = hp.paragraph_profile
+        if pp and ((pp.font_size_pt or 0) > default_size * 1.2 or pp.bold):
+            name_title_end = j + 1
+
+    # Skip if there are no original summary lines to replace.
+    if name_title_end >= len(doc.header_paras):
+        return
+
+    # Lift LLM summary body paragraphs into the above-table header area.
+    for bp in summary_sec.body_paras:
+        if bp.paragraph_profile:
+            bp.paragraph_profile.column_id = None
+
+    doc.header_paras = doc.header_paras[:name_title_end] + list(summary_sec.body_paras)
+    doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+
+    # Rebuild all_paras so the renderer sees the updated structure.
+    from tailor.compiler.models import ParaModel
+    new_all: list[ParaModel] = list(doc.header_paras)
+    for sec in doc.sections:
+        new_all.append(sec.heading)
+        new_all.extend(sec.body_paras)
+        for role in sec.roles:
+            new_all.append(role.header)
+            new_all.extend(role.header_extra)
+            new_all.extend(role.meta_lines)
+            new_all.extend(role.bullets)
+
+    def _col_order(pm) -> int:
+        col = pm.paragraph_profile.column_id if pm.paragraph_profile else None
+        return 1 if col == "left" else (2 if col == "right" else 0)
+
+    new_all.sort(key=_col_order)
+    doc.all_paras = new_all
+
+
 def compile_resume_from_pdf(
     pdf_path: str,
     llm_text: str,
@@ -261,6 +332,9 @@ def compile_resume_from_pdf(
     # This prevents colors from the original PDF (hyperlink blues, author styling)
     # from bleeding onto LLM-generated replacement content via clone_as archetypes.
     _clear_pdf_content_colors(updated)
+    # For two-column templates with a full-width header: move the LLM-injected
+    # Professional Summary body into header_paras so it renders above the table.
+    _inject_llm_summary_into_header(updated)
     # Move extra LLM sections (e.g. Professional Summary) out of the left sidebar
     # column for two-column PDF templates that have no matching left-column section.
     _fix_extra_left_sections(template_ir, updated)
