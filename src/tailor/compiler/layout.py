@@ -391,6 +391,19 @@ def redistribute_additional(
         return llm_sections
 
     skills_section = llm_sections[skills_idx]
+
+    # Pre-check: only proceed if at least one subkind has a dedicated container.
+    # When no dedicated container exists for ANY label subkind, redistribution
+    # would just re-append extracted content at the END of Technical Skills,
+    # destroying the LLM output order.  Skip entirely in that case to preserve
+    # the original line order inside Technical Skills.
+    _has_dedicated_subkind_container = any(
+        _find_container_for_subkind(sk, containers) is not None
+        for _, sk in _LABEL_PATTERNS
+    )
+    if not _has_dedicated_subkind_container:
+        return llm_sections
+
     clean_lines, subgroups = extract_additional_subgroups(skills_section.body_lines)
 
     if not subgroups:

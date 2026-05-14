@@ -587,7 +587,19 @@ def _sanitize_skills_lines(lines: list[str]) -> list[str]:
             _log.debug("skills sanitize: dropping 'Additional' line %r", stripped[:80])
             continue
         if _NON_SKILL_LABEL_RE.match(stripped):
-            _log.debug("skills sanitize: dropping non-skill label line %r", stripped[:80])
+            # Strip the non-skill category label but keep the content.
+            # "Languages: Java, Python, C++" → "Java, Python, C++" (preserved at its
+            # original position in the LLM output order, label removed).
+            m = _NON_SKILL_LABEL_RE.match(stripped)
+            content = stripped[m.end():].strip()
+            if content:
+                _log.debug(
+                    "skills sanitize: stripping label prefix from %r → %r",
+                    stripped[:60], content[:60],
+                )
+                clean.append(content)
+            else:
+                _log.debug("skills sanitize: dropping empty-after-label line %r", stripped[:60])
             continue
         if _SOCIAL_BARE_RE.match(stripped):
             _log.debug("skills sanitize: dropping bare social name %r", stripped[:80])
@@ -3653,6 +3665,15 @@ def apply_tailored(
                         "UPDATER_SECTION_ANCHOR_NOT_FOUND: %r dropped in layout-bound mode",
                         llm_s.heading,
                     )
+            elif llm_s.semantic_type == "other" and verbatim_sections:
+                # Template already has verbatim "other" sections (e.g. Affiliations).
+                # Drop the LLM "other" extra (e.g. "Additional") to avoid a duplicate
+                # with mismatched formatting.  The verbatim section carries the original
+                # template styling (bold role headers, etc.) and is placed at the end.
+                _log.debug(
+                    "apply_tailored: discarding other-type extra %r "
+                    "(verbatim other sections exist)", llm_s.heading,
+                )
             else:
                 llm_order_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
 
@@ -3728,7 +3749,11 @@ def apply_tailored(
                 else:
                     new_sections = verbatim_sections + llm_order_sections
             else:
-                new_sections = verbatim_sections + llm_order_sections
+                # Append verbatim sections at the END so they appear after all
+                # LLM-ordered matched sections.  Verbatim "other" sections (e.g.
+                # Affiliations & Awards) naturally belong at the end of a resume;
+                # prepending them would displace Summary / Experience to the bottom.
+                new_sections = llm_order_sections + verbatim_sections
 
     # Fragmented-experience injection: LLM had experience roles but no original
     # experience section existed to match them.  Inject into role-like 'other'
