@@ -242,19 +242,24 @@ def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocumen
 def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     """Promote LLM-injected Professional Summary into the merged header area.
 
-    Templates like sample 18 have a full-width header (name, title, summary)
-    above the two-column body.  pdf_parser places the original summary lines in
-    header_paras.  apply_tailored then injects the LLM's "Professional Summary"
-    as a left-column section (the archetype is the first left-column section).
+    Templates like sample 18/19 have a full-width header (name, title, contact,
+    summary) above the two-column body.  pdf_parser places the original summary
+    lines in header_paras.  apply_tailored then injects the LLM's "Professional
+    Summary" as a left-column section (archetype = first left-column section).
 
-    This function moves the LLM summary body into header_paras (col_id=None so
-    the renderer places it above the two-column table), replaces the original
-    template summary lines, and removes the injected section so its heading is
-    not rendered as a left-column "PROFESSIONAL SUMMARY" banner.
+    This function:
+    - Identifies original template summary lines in header_paras using a
+      heuristic: long descriptive sentences that are NOT contact info (email,
+      phone, url, address digits, license labels, all-caps short headers).
+    - Removes those lines and adds the LLM summary body (col_id=None) so the
+      renderer places it above the two-column table.
+    - Removes the injected section so its heading is not rendered as a banner.
 
-    Only runs for two-column PDF docs where header_paras contain original
-    summary text beyond the name/title lines.
+    Only runs for two-column PDF docs that have a LLM-injected summary section
+    AND at least one original summary line in header_paras.
     """
+    import re
+
     if doc.layout.column_split_x is None:
         return
 
@@ -267,27 +272,49 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     if summary_idx is None:
         return
 
+    def _is_original_summary_line(text: str) -> bool:
+        """Return True if this header_para looks like a template summary line.
+
+        Rejects contact info (email, phone digits, url, address numbers,
+        license-label lines) and very short lines — those should stay in the
+        header.  Long descriptive sentences about the candidate's experience
+        are treated as the original summary that the LLM should replace.
+        """
+        t = text.strip()
+        if len(t) < 25:
+            return False
+        if "@" in t:                                          # email address
+            return False
+        if re.search(r"\d[\d\s.()\-]{5,}", t):               # phone-like digit run
+            return False
+        if re.search(r"\b\d{4}\b", t):                       # 4-digit year/zip/id
+            return False
+        if any(k in t.lower() for k in ("linkedin", "http", "www.", ".com", ".net", ".org")):
+            return False
+        if re.match(r"[A-Z][A-Z\s]+NO\.?\s", t):             # "LICENSE NO." style label
+            return False
+        if re.match(r"^[A-Z\s]+$", t) and len(t) < 40:      # short all-caps heading
+            return False
+        return True
+
+    summary_indices = {
+        j for j, hp in enumerate(doc.header_paras)
+        if _is_original_summary_line(hp.text)
+    }
+    if not summary_indices:
+        return  # no original summary lines to replace
+
     summary_sec = doc.sections[summary_idx]
-    default_size = doc.layout.default_font_size_pt or 11.0
-
-    # Split header_paras into name/title lines (large font or bold) and the
-    # original-template summary lines (body-sized, not bold) that follow them.
-    name_title_end = 0
-    for j, hp in enumerate(doc.header_paras):
-        pp = hp.paragraph_profile
-        if pp and ((pp.font_size_pt or 0) > default_size * 1.2 or pp.bold):
-            name_title_end = j + 1
-
-    # Skip if there are no original summary lines to replace.
-    if name_title_end >= len(doc.header_paras):
-        return
 
     # Lift LLM summary body paragraphs into the above-table header area.
     for bp in summary_sec.body_paras:
         if bp.paragraph_profile:
             bp.paragraph_profile.column_id = None
 
-    doc.header_paras = doc.header_paras[:name_title_end] + list(summary_sec.body_paras)
+    doc.header_paras = (
+        [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
+        + list(summary_sec.body_paras)
+    )
     doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
 
     # Rebuild all_paras so the renderer sees the updated structure.
