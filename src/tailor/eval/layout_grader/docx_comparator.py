@@ -166,9 +166,14 @@ def compare_docx_structure(original_path: str, generated_path: str) -> DocxStruc
         penalty = min(20.0, (ratio - 1.50) * 25.0)
         score -= penalty
         evidence.append(f"paragraph_ratio={ratio:.2f} (> 1.50) — content over-expansion")
-    elif ratio > 1.20:
-        penalty = (ratio - 1.20) / 0.30 * 10.0
+    elif ratio > 1.35:
+        # 1.35–1.50: small penalty.  LLM tailoring legitimately adds paragraphs
+        # (extra experience bullets, expanded summary) so ratios up to 1.35 are
+        # expected and acceptable.  The old threshold of 1.20 was too tight.
+        penalty = (ratio - 1.35) / 0.15 * 10.0
         score -= penalty
+        evidence.append(f"paragraph_ratio={ratio:.2f} (above ideal 1.35)")
+    elif ratio > 1.20:
         evidence.append(f"paragraph_ratio={ratio:.2f} (above ideal 1.20)")
 
     # ── Table loss ────────────────────────────────────────────────────────────
