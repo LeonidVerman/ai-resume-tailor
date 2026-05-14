@@ -716,8 +716,10 @@ def grade_sample(
                     failure_classes.append("D_LAYER_ORDER_DEGRADED")
             # K. Duplicate top-area content
             if "DUPLICATE_TOP_CONTENT" in pdf_result.hard_fail_reasons:
-                if "E_DUPLICATE_SUMMARY" not in failure_classes:
-                    failure_classes.append("E_DUPLICATE_SUMMARY")
+                if "DUPLICATE_TOP_CONTENT" not in _sdt_suppressed:
+                    if "E_DUPLICATE_SUMMARY" not in failure_classes:
+                        failure_classes.append("E_DUPLICATE_SUMMARY")
+                # When suppressed: already noted in evidence; no failure class added
             elif getattr(pdf_result, "duplicate_top_content", False):
                 if "E_DUPLICATE_SUMMARY" not in failure_classes:
                     failure_classes.append("E_DUPLICATE_SUMMARY")
@@ -802,11 +804,15 @@ def grade_sample(
                     failure_classes.append("F_WORD_FRAGMENTATION")
             # R. Duplicate semantic block (extended area detection)
             if "DUPLICATE_BODY_BLOCK" in pdf_result.hard_fail_reasons:
-                hard_fail = True
-                if "DUPLICATE_BODY_BLOCK" not in hard_fail_reasons:
-                    hard_fail_reasons.append("DUPLICATE_BODY_BLOCK")
-                if "E_DUPLICATE_SEMANTIC_BLOCK" not in failure_classes:
-                    failure_classes.append("E_DUPLICATE_SEMANTIC_BLOCK")
+                if "DUPLICATE_BODY_BLOCK" not in _sdt_suppressed:
+                    # Real content duplication — hard fail.
+                    hard_fail = True
+                    if "DUPLICATE_BODY_BLOCK" not in hard_fail_reasons:
+                        hard_fail_reasons.append("DUPLICATE_BODY_BLOCK")
+                    if "E_DUPLICATE_SEMANTIC_BLOCK" not in failure_classes:
+                        failure_classes.append("E_DUPLICATE_SEMANTIC_BLOCK")
+                # When suppressed (sim_llm ≥ 0.95): no hard fail, no failure class.
+                # Already noted in evidence as a LibreOffice SDT rendering artefact.
             elif getattr(pdf_result, "duplicate_body_block", False):
                 if "E_DUPLICATE_SEMANTIC_BLOCK" not in failure_classes:
                     failure_classes.append("E_DUPLICATE_SEMANTIC_BLOCK")
