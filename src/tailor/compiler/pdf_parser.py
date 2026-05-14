@@ -751,7 +751,7 @@ def _detect_column_split(
                 _adjacent_sig += 1
     if _adjacent_sig >= 2:
         return None
-    top_cutoff = page_height * 0.15 if page_height > 0 else 0.0
+    top_cutoff = page_height * 0.20 if page_height > 0 else 0.0
     # Full-width elements that span ≥ 50 % of the page width are cross-column
     # design elements (e.g. name banner, summary paragraph, section heading
     # that overflows visually) and should not veto the column split.
@@ -897,6 +897,25 @@ def _extract_paragraphs(
             blocks = left_blks + right_blks
             right_col_start_idx = len(left_blks)
 
+        # Merged-header-band detection: when NO right-column text block exists
+        # in the top 22 % of the page the template uses a full-width header
+        # banner (name, title, summary) above the two-column body.  Every block
+        # in that top band is forced to col_id=None so the renderer places it
+        # above the two-column table rather than inside the left cell.
+        # When right-column content IS present near the top (sidebar starts at
+        # page top with no banner) this is skipped and the normal x-width
+        # heuristic applies.
+        _header_band_y = page.rect.height * 0.22 if split_x is not None else 0.0
+        _has_right_in_header = split_x is not None and any(
+            b.get("type") == 0
+            and b["bbox"][0] >= split_x
+            and b["bbox"][1] < _header_band_y
+            for b in blocks
+        )
+        merged_header_band = (
+            _header_band_y if split_x is not None and not _has_right_in_header else 0.0
+        )
+
         # Reset inter-page spacing
         prev_block_y1 = None
 
@@ -990,9 +1009,21 @@ def _extract_paragraphs(
             # For right-column blocks, indent is measured from right_col_origin
             # (the visual sidebar edge) so that a block at x=237 on a page
             # with a 215-pt sidebar gets indent = 22 pt, not page-relative 222 pt.
-            if split_x is not None and x0 >= split_x:
-                col_id: str | None = "right"
+            # Cross-column detection: a block whose x0 is in the left area but
+            # whose x1 extends more than 20 pt past the column split is a
+            # full-width element (merged name/header banner).  Such blocks get
+            # col_id=None so the renderer places them above the two-column table.
+            if merged_header_band > 0 and y0 < merged_header_band:
+                # Block is inside the top merged-header band (no right-column
+                # content exists there): treat as full-width above the table.
+                col_id: str | None = None
+                col_origin = page_margin_left
+            elif split_x is not None and x0 >= split_x:
+                col_id = "right"
                 col_origin = right_col_origin if right_col_origin is not None else split_x
+            elif split_x is not None and x1_blk > split_x + 20.0:
+                col_id = None
+                col_origin = page_margin_left
             elif split_x is not None:
                 col_id = "left"
                 col_origin = page_margin_left
@@ -1172,13 +1203,12 @@ def _extract_paragraphs(
                         pm.paragraph_profile.space_before_pt = _heading_sb
                     elif pm.paragraph_profile.space_before_pt > 6.0:
                         pm.paragraph_profile.space_before_pt = 6.0
-                    # Left-column headings often overflow the visual column
-                    # boundary in the source PDF (PDF allows overflow; DOCX
-                    # table cells enforce width and wrap the text).  Zeroing
-                    # the indent gives the heading the full cell width so it
-                    # renders on a single line.
-                    if col_id == "left" and pm.paragraph_profile.indent_left_pt > 0:
-                        pm.paragraph_profile.indent_left_pt = 0.0
+                    # Preserve the left-column heading indent so it aligns
+                    # with the original PDF position.  The renderer adds the
+                    # page left-margin offset on top, placing the heading at
+                    # margin + indent (matching the source template layout).
+                    # Zeroing was previously used to prevent cell overflow, but
+                    # the fresh-Document rendering path avoids that concern.
                 # Global cap: PDF absolute-position inter-block gaps inflate
                 # DOCX flow-layout height.  Apply per-type limits:
                 #   role_header: 4 pt max (block-level gap, needs some spacing)
@@ -1292,20 +1322,20 @@ def _infer_semantic(pm: ParaModel) -> str:
 # ---------------------------------------------------------------------------
 
 _EXPERIENCE_NAMES: frozenset[str] = frozenset({
-    "experience", "work experience", "professional experience",
+    "experience", "experiences", "work experience", "professional experience",
     "employment history", "employment", "career history",
     "work history", "professional background",
 })
 _SUMMARY_NAMES: frozenset[str] = frozenset({
     "professional summary", "summary", "objective", "career objective",
-    "profile", "professional profile", "about me", "career summary",
-    "executive summary",
+    "profile", "professional profile", "personal profile",
+    "about me", "about", "career summary", "executive summary",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "core competencies", "competencies",
     "technical expertise", "expertise", "key skills", "areas of expertise",
     "technologies", "tech stack", "relevant skills", "skills & abilities",
-    "skill summary",
+    "skill summary", "professional skills",
 })
 _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
@@ -1325,6 +1355,8 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         "affiliations", "affiliations and awards", "affiliations & awards",
         "certifications and training", "training and certifications",
         "professional certifications",
+        "portfolio", "qualifications", "key qualifications",
+        "achievements", "accomplishments", "training",
         # Contact sections appear in sidebar/column layouts; must be recognised
         # as headings so they don't bleed into adjacent experience sections.
         "contact", "contact info", "contact information",
@@ -1451,16 +1483,45 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
         pending.clear()
         # Normalise meta-line layout properties that don't translate to DOCX:
         # • Column-relative indents (90+ pt in two-column PDFs) create huge
-        #   indentation in the single-column output.
+        #   indentation in the single-column output.  Zeroing is skipped for
+        #   two-column paragraphs (column_id is set) whose indents are
+        #   column-relative and must be preserved for correct cell rendering.
         # • Large space_before values come from inter-bullet group gaps in the
         #   original PDF; they were capped at 3 pt for bullet paragraphs but
         #   must also be capped here to prevent page-count regressions.
         for _pm in meta:
             if _pm.paragraph_profile:
-                if _pm.paragraph_profile.indent_left_pt > 4.0:
+                _in_two_col = _pm.paragraph_profile.column_id in ("left", "right")
+                if not _in_two_col and _pm.paragraph_profile.indent_left_pt > 4.0:
                     _pm.paragraph_profile.indent_left_pt = 0.0
                 if _pm.paragraph_profile.space_before_pt > 3.0:
                     _pm.paragraph_profile.space_before_pt = 3.0
+
+        # When no explicit bullet markers exist (has_explicit_bullets=False),
+        # promote paragraph-semantic meta lines to bullets so the updater can
+        # use them as cloning archetypes.  This preserves the original x-position
+        # of role body content (e.g. 49 pt for template 16 experience entries)
+        # rather than falling back to the role header indent (70 pt).
+        # Restricted to two-column paragraphs (column_id set): single-column
+        # resumes use PUA-glyph bullets that are merged to "bullet" semantic
+        # AFTER _group_roles runs, so their paragraphs must stay in meta here.
+        if not bullets:
+            _promoted: list[ParaModel] = []
+            _remaining_meta: list[ParaModel] = []
+            for _pm in meta:
+                if (
+                    _pm.semantic == "paragraph"
+                    and _pm.paragraph_profile is not None
+                    and _pm.paragraph_profile.column_id in ("left", "right")
+                ):
+                    _pm.semantic = "bullet"
+                    _promoted.append(_pm)
+                else:
+                    _remaining_meta.append(_pm)
+            if _promoted:
+                bullets.extend(_promoted)
+                meta[:] = _remaining_meta
+
         roles.append(RoleEntry(
             header=header,
             header_extra=list(header_extra),
@@ -1541,14 +1602,27 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
             elif s == "paragraph":
-                # Short line with no year and no sentence-end → continuation of
-                # the role header (e.g. wrapped company name).  Otherwise,
-                # check list geometry before buffering as potential bullet.
+                # Short line with no year and no sentence-end AND aligned with
+                # the role header → continuation of the role header (e.g. a
+                # wrapped company name).  A paragraph at a substantially different
+                # indent from the header is role content (bullets/body), not a
+                # wrapped header fragment, even if it is short.
                 _txt = pm.text.strip()
+                _para_ind = pm.paragraph_profile.indent_left_pt if pm.paragraph_profile else 0.0
+                _in_two_col_para = (
+                    pm.paragraph_profile is not None
+                    and pm.paragraph_profile.column_id in ("left", "right")
+                )
                 _is_continuation = (
                     len(_txt) <= 60
                     and not _YEAR_RE.search(_txt)
                     and not _SENTENCE_END_RE.search(_txt)
+                    # In two-column layouts, only treat as continuation when
+                    # the paragraph is at the same indent as the role header
+                    # (≤ 5 pt difference).  A company name at a different
+                    # x-position (e.g. 49 pt vs 70 pt for the header) is
+                    # role body content, not a wrapped header fragment.
+                    and (not _in_two_col_para or abs(_para_ind - _hdr_indent()) <= 5.0)
                 )
                 if _is_continuation:
                     pm.semantic = "role_meta"
@@ -1930,7 +2004,27 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     skip_pages = _deduplicate_page_indices(doc)
     hf_texts = _detect_header_footer_texts(doc)
     raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt, layout, skip_pages)
-    header_paras, sections = _group_sections(raw_paras)
+
+    # Two-column documents: run section grouping independently for each column
+    # so that left-column section headings (e.g. "CONTACT") do not trigger
+    # found_section=True and absorb right-column content into the wrong section.
+    # Single-column documents use the normal flat grouping path.
+    if layout.column_split_x is not None:
+        def _col_id(pm: "ParaModel") -> "str | None":
+            return pm.paragraph_profile.column_id if pm.paragraph_profile else None
+
+        above_raw = [pm for pm in raw_paras if _col_id(pm) not in ("left", "right")]
+        left_raw  = [pm for pm in raw_paras if _col_id(pm) == "left"]
+        right_raw = [pm for pm in raw_paras if _col_id(pm) == "right"]
+
+        above_hdrs, above_secs = _group_sections(above_raw)
+        left_hdrs,  left_secs  = _group_sections(left_raw)
+        right_hdrs, right_secs = _group_sections(right_raw)
+
+        header_paras = above_hdrs + left_hdrs + right_hdrs
+        sections     = above_secs + left_secs + right_secs
+    else:
+        header_paras, sections = _group_sections(raw_paras)
 
     # Final color cleanup: _group_sections may reclassify paragraphs (e.g.
     # section_heading → role_header) after _extract_paragraphs already ran its
@@ -1985,6 +2079,17 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
                 all_paras.extend(role.bullets)
         else:
             all_paras.extend(section.body_paras)
+
+    # For two-column documents, reorder all_paras to match the rendered DOCX
+    # paragraph order: above (col=None) → left → right.  The renderer writes the
+    # left table cell before the right cell, so roundtrip tests must see the same
+    # order in the source IR.  Python's sort is stable, so relative order within
+    # each column is preserved.
+    if layout.column_split_x is not None:
+        def _col_order(pm: "ParaModel") -> int:
+            col = pm.paragraph_profile.column_id if pm.paragraph_profile else None
+            return 1 if col == "left" else (2 if col == "right" else 0)
+        all_paras.sort(key=_col_order)
 
     doc = ResumeDocument(
         header_paras=header_paras,

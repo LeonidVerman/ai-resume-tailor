@@ -53,6 +53,11 @@ _OUT_IR_DOCX  = _REPO / "tmp" / "artefacts" / "ir"      / "docx"
 _OUT_IR_PDF   = _REPO / "tmp" / "artefacts" / "ir"      / "pdf"
 _OUT_REND_DOCX = _REPO / "tmp" / "artefacts" / "rendering" / "docx"
 _OUT_REND_PDF  = _REPO / "tmp" / "artefacts" / "rendering" / "pdf"
+# Staging dir: intermediate DOCX that LibreOffice converts.  Kept separate from
+# _OUT_REND_PDF so that LibreOffice's output PDF lands in a fresh location and
+# the subsequent shutil.copy2 to _OUT_REND_PDF is never a same-file copy
+# (which causes PermissionError [WinError 32] on Windows).
+_OUT_STAGE_PDF = _OUT_REND_PDF / "_stage"
 
 _NUM_RE = re.compile(r"^(\d+)-")
 
@@ -243,7 +248,10 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
         out_rend_dir = _OUT_REND_DOCX
     else:
         out_ir_dir   = _OUT_IR_PDF
-        out_rend_dir = _OUT_REND_PDF
+        # Use a staging sub-dir so LibreOffice writes its PDF next to a fresh
+        # DOCX (no pre-existing same-named PDF), and the later shutil.copy2 to
+        # _OUT_REND_PDF is always a genuine different-file copy.
+        out_rend_dir = _OUT_STAGE_PDF
 
     out_ir_dir.mkdir(parents=True, exist_ok=True)
     out_rend_dir.mkdir(parents=True, exist_ok=True)
@@ -314,30 +322,37 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
 
     # ── Stage 5: DOCX → PDF via LibreOffice ───────────────────────────────
     try:
+        import gc
+        gc.collect()  # release any lingering python-docx / lxml handles before LibreOffice
+
         from tailor.docx.pdf import _docx_to_pdf_subprocess
 
         _docx_to_pdf_subprocess(str(out_docx))
         lo_pdf = out_docx.with_suffix(".pdf")
+        grader_pdf = _OUT_REND_PDF / lo_pdf.name
         if lo_pdf.exists():
             # The grader reads PDFs from _OUT_REND_PDF.  Always copy the freshly
             # rendered PDF there so the grader uses the latest version.
-            grader_pdf = _OUT_REND_PDF / lo_pdf.name
+            # For PDF-path, out_docx is in _OUT_STAGE_PDF so lo_pdf != grader_pdf
+            # and shutil.copy2 is a genuine different-file copy (no WinError 32).
             _OUT_REND_PDF.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(str(lo_pdf), str(grader_pdf))
-            # Keep the docx-dir copy in place (used by test_sparse_page_detection)
-        elif out_pdf.exists():
-            # lo_pdf wasn't created by LibreOffice; copy existing pdf from
-            # grader dir back to out_pdf location if needed.
+            if lo_pdf.resolve() != grader_pdf.resolve():
+                shutil.copy2(str(lo_pdf), str(grader_pdf))
+            # Keep the docx-dir / staging copy in place (used by test_sparse_page_detection)
+        elif grader_pdf.exists():
+            # lo_pdf wasn't created by LibreOffice but the grader already has a copy.
             if verbose:
                 print(f"{tag} WARN: PDF not refreshed — LibreOffice did not produce {lo_pdf.name}")
         else:
-            raise FileNotFoundError(f"PDF not found at {out_pdf}")
+            raise FileNotFoundError(f"PDF not found at {grader_pdf}")
     except Exception as e:
         print(f"{tag} FAIL [stage=docx-to-pdf] {type(e).__name__}: {e}")
+        if verbose:
+            traceback.print_exc()
         return False
 
     if verbose:
-        print(f"  PDF   -> {out_pdf.relative_to(_REPO)}")
+        print(f"  PDF   -> {grader_pdf.relative_to(_REPO)}")
 
     if verbose:
         print(f"{tag} OK")
@@ -393,7 +408,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if n_fail:
         print("\nOutput artifacts (where generated):")
-        for d in (_OUT_IR_DOCX, _OUT_IR_PDF, _OUT_REND_DOCX, _OUT_REND_PDF):
+        for d in (_OUT_IR_DOCX, _OUT_IR_PDF, _OUT_REND_DOCX, _OUT_REND_PDF, _OUT_STAGE_PDF):
             if d.exists():
                 files = sorted(d.iterdir())
                 if files:
