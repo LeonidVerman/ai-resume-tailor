@@ -723,7 +723,19 @@ def _detect_column_split(
 
     Returns the midpoint of the detected gap as the column split x-coordinate.
     """
-    x0s = sorted({round(blk["bbox"][0]) for blk in blocks if blk.get("type") == 0})
+    # Exclude blocks in the top 24 % of the page from x0 collection.  Templates
+    # with a full-width merged header (name, title, photo row) often place the
+    # name text at an x0 that sits BETWEEN the two body columns (e.g. x0=235 on
+    # a page whose left column is at x0=60-95 and right column at x0=320).
+    # Including that block's x0 creates a spurious gap candidate and causes the
+    # detector to return the wrong split.  Using body-only blocks removes those
+    # false x0 anchors so the real inter-column gap is found instead.
+    top_cutoff = page_height * 0.24 if page_height > 0 else 0.0
+    x0s = sorted({
+        round(blk["bbox"][0])
+        for blk in blocks
+        if blk.get("type") == 0 and blk["bbox"][1] >= top_cutoff
+    })
     if len(x0s) < 2:
         return None
 
@@ -751,7 +763,6 @@ def _detect_column_split(
                 _adjacent_sig += 1
     if _adjacent_sig >= 2:
         return None
-    top_cutoff = page_height * 0.20 if page_height > 0 else 0.0
     # Full-width elements that span ≥ 50 % of the page width are cross-column
     # design elements (e.g. name banner, summary paragraph, section heading
     # that overflows visually) and should not veto the column split.
@@ -788,7 +799,7 @@ def _detect_column_split(
 
             # Reject if any BODY block bridges the gap: starts in the left
             # "column" and extends at least 5 % past the right edge.  Blocks
-            # in the top 15 % (header banner) are excluded.  Full-width blocks
+            # in the top 24 % (header banner) are excluded.  Full-width blocks
             # (≥ 50 % page width) are also excluded — they are intentional
             # cross-column design elements, not evidence of a single column.
             bridge_x1_threshold = right_edge * 1.05
@@ -806,12 +817,16 @@ def _detect_column_split(
                 # Use the midpoint of the *content* gap instead — but only when
                 # max_left_x1 stays strictly below right_edge (i.e. left content
                 # does not actually overlap the right column).
+                # Exclude full-width cross-column blocks so a contact line at
+                # x0=60 x1=530 does not inflate max_left_x1 to 530 and prevent
+                # the refinement from kicking in on the real body gap.
                 x0_mid = (x0s[i] + x0s[i + 1]) / 2.0
                 left_body_x1s = [
                     b["bbox"][2] for b in blocks
                     if b.get("type") == 0
                     and b["bbox"][0] <= x0s[i]
                     and b["bbox"][1] >= top_cutoff
+                    and (b["bbox"][2] - b["bbox"][0]) < wide_block_min
                 ]
                 if left_body_x1s:
                     max_left_x1 = max(left_body_x1s)
