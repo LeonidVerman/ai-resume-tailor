@@ -339,28 +339,33 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
 
 
 def _remove_orphan_subsections(doc: ResumeDocument) -> None:
-    """Remove PDF-parser sub-entry sections that duplicate LLM-injected roles.
+    """Clean up PDF-parser sub-entry sections misclassified as top-level sections.
 
     The PDF parser classifies bold role/affiliation headings (e.g. "Back-End
-    Developer", "Yellow Tree Organization") as section headings.  This creates
-    orphan sections separate from their parent category section (WORK EXPERIENCE,
-    AFFILIATIONS).  After apply_tailored injects LLM content into the parent
-    section's roles, the orphan sections remain with stale original content,
-    causing visible duplication in the rendered output.
+    Developer", "Yellow Tree Organization") as section headings, creating orphan
+    sections separate from their parent (WORK EXPERIENCE, AFFILIATIONS).
 
-    A section is treated as an orphan sub-entry when:
-    - Its title is NOT predominantly upper-case (upper-ratio < 0.70) — real
-      category headings like WORK EXPERIENCE, AFFILIATIONS are all-caps.
-    - At least one body_para is bold — original role/org lines are bold;
-      LLM-injected body content is not bold.
-    - Its column contains at least one upper-case category section — so we do
-      not accidentally drop sections in a column that has only mixed-case titles.
+    Identification heuristic — a section is an orphan when:
+    - Its title is NOT predominantly upper-case (ratio < 0.70).
+    - At least one body_para is bold (original template sub-entries have bold
+      company/date lines; LLM-injected sections do not).
+    - Its column contains at least one ALL-CAPS category section.
 
-    Additionally this function:
-    - Removes bold body_paras from sections with roles (original role-header
-      lines that were also parsed as roles, causing double-rendering).
-    - Clears meta_lines for roles whose header uses the pipe-separated LLM
-      format (company+dates already in the header; cloned meta_lines are stale).
+    Treatment by column:
+    - LEFT-column orphans (experience sub-entries such as "Back-End Developer"):
+      removed.  The LLM-injected roles in WORK EXPERIENCE already carry the
+      correct content.
+    - RIGHT-column orphans (affiliation/reference sub-entries such as "Yellow
+      Tree Organization"): absorbed into the LAST ALL-CAPS right-column section
+      (typically AFFILIATIONS).  Their bold org-name headings are preserved as
+      body_paras, restoring the original formatting and replacing the LLM-
+      overwritten body content with the original template entries.
+
+    Additionally:
+    - For sections with roles, all body_paras are cleared (original role-header
+      lines and bullets already encoded in role objects cause double-rendering).
+    - Stale cloned meta_lines are cleared for pipe-format role headers (company
+      and dates are already in the header; the meta_line copy is redundant).
     """
     if doc.layout.column_split_x is None:
         return
@@ -395,9 +400,39 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
             for bp in sec.body_paras
         )
 
-    orphan_idxs = {i for i, s in enumerate(doc.sections) if _is_orphan(s)}
+    left_orphan_idxs = {
+        i for i, s in enumerate(doc.sections)
+        if _is_orphan(s) and _col_of(s) == "left"
+    }
+    right_orphan_idxs = {
+        i for i, s in enumerate(doc.sections)
+        if _is_orphan(s) and _col_of(s) == "right"
+    }
+    orphan_idxs = left_orphan_idxs | right_orphan_idxs
     if not orphan_idxs:
         return
+
+    # Right-column orphans are affiliation/reference sub-entries with bold
+    # org-name headings (e.g. "Yellow Tree Organization").  Rather than
+    # discarding them, absorb them into the LAST ALL-CAPS right-column section
+    # (typically AFFILIATIONS), restoring the bold org-name headers and the
+    # original template content instead of the LLM-overwritten version.
+    if right_orphan_idxs:
+        right_cat_secs = [
+            (i, s) for i, s in enumerate(doc.sections)
+            if _col_of(s) == "right"
+            and _is_category_heading(s.title)
+            and i not in orphan_idxs
+        ]
+        if right_cat_secs:
+            _, parent_sec = right_cat_secs[-1]   # last ALL-CAPS right section
+            absorbed: list = []
+            for i in sorted(right_orphan_idxs):
+                orphan = doc.sections[i]
+                absorbed.append(orphan.heading)  # bold org-name heading
+                absorbed.extend(orphan.body_paras)
+            # Replace LLM-injected content with the original template sub-entries.
+            parent_sec.body_paras = absorbed
 
     doc.sections = [s for i, s in enumerate(doc.sections) if i not in orphan_idxs]
 
