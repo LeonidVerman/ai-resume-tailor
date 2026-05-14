@@ -547,8 +547,12 @@ _SKILLS_FILTER_RE = re.compile(
 )
 _ADDITIONAL_RE = re.compile(r"^additional\b", re.IGNORECASE)
 # Non-skill labeled categories that LLMs sometimes append to Technical Skills sections.
+# Note: "languages?" is intentionally excluded — "Languages: Java, Python, C++" is a
+# valid technical-skill category line and should pass through unchanged.
+# Spoken-language proficiency lines are filtered separately in layout.py via
+# _SPOKEN_LANG_PROFICIENCY_RE (which detects markers like "(native)", "(fluent)").
 _NON_SKILL_LABEL_RE = re.compile(
-    r"^(?:hobbies?|awards?|activities|interests?|volunteering?|publications?|references?|languages?)\s*[:：]\s*",
+    r"^(?:hobbies?|awards?|activities|interests?|volunteering?|publications?|references?)\s*[:：]\s*",
     re.IGNORECASE,
 )
 # Bare social-media or website names that are not skill tokens (e.g. "LinkedIn" alone).
