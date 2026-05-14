@@ -243,15 +243,21 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     llm_meta = [m for m in llm.meta_lines if m.strip().lower() not in header_extra_texts]
 
     # Meta lines: reuse original protos; in layout-bound mode drop extras.
+    # When the LLM provides no meta lines (e.g. experience dates used "20XX"
+    # placeholders that were not recognised as dates), preserve the template's
+    # original meta lines verbatim so the role's date text is not lost.
     new_meta: list[ParaModel] = []
-    for i, meta_text in enumerate(llm_meta):
-        if i < len(orig.meta_lines):
-            new_meta.append(orig.meta_lines[i].with_text(meta_text))
-        elif not layout_bound:
-            src = orig.meta_lines[-1] if orig.meta_lines else orig.header
-            new_meta.append(src.clone_as(meta_text, "role_meta"))
-        else:
-            _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra meta line %r", meta_text[:60])
+    if not llm_meta and orig.meta_lines:
+        new_meta = list(orig.meta_lines)
+    else:
+        for i, meta_text in enumerate(llm_meta):
+            if i < len(orig.meta_lines):
+                new_meta.append(orig.meta_lines[i].with_text(meta_text))
+            elif not layout_bound:
+                src = orig.meta_lines[-1] if orig.meta_lines else orig.header
+                new_meta.append(src.clone_as(meta_text, "role_meta"))
+            else:
+                _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra meta line %r", meta_text[:60])
 
     # Bullets: reuse original protos.
     # layout-bound mode maps 1:1 and drops overflow to preserve visual density.
@@ -639,11 +645,18 @@ def _find_body_prototype(
 
     B: Selection criteria (in priority order):
     1. Non-empty body paragraph from a non-'other' section.
-    2. Not bold (avoids cloning heading-style paragraphs).
+    2. Not bold — explicit style.bold OR heading-named paragraph style
+       (e.g. 'Heading 3') are both excluded; heading styles render bold in
+       Word/LibreOffice even when style.bold is None.
     3. Not explicitly center- or right-aligned (hard left-alignment rule).
-    Falls back to any non-empty body para, then to the first section heading.
+    Falls back to any non-empty non-bold body para, then any non-empty body
+    para, then the first section heading.
     """
-    # Preferred: non-other, non-bold, non-center/right para
+    def _is_heading_style(p: "ParaModel") -> bool:
+        sn = (p.style.style_name or "").lower()
+        return sn.startswith("heading")
+
+    # Preferred: non-other, non-bold, non-heading-style, non-center/right para
     for orig_section, _ in pairs:
         if orig_section.semantic_type == "other":
             continue
@@ -652,10 +665,17 @@ def _find_body_prototype(
                 continue
             if p.style.bold:
                 continue
+            if _is_heading_style(p):
+                continue
             if p.style.alignment in ("center", "right"):
                 continue
             return p
-    # Fallback: any non-empty body para
+    # Fallback: any non-empty non-bold para (including 'other' sections)
+    for orig_section, _ in pairs:
+        for p in orig_section.body_paras:
+            if p.text.strip() and not p.style.bold and not _is_heading_style(p):
+                return p
+    # Final fallback: any non-empty body para
     for orig_section, _ in pairs:
         for p in orig_section.body_paras:
             if p.text.strip():
@@ -734,10 +754,43 @@ def _make_extra_section(
     """
     new_heading = _strip_col_break_para(heading_arch.clone_as(llm.heading, "section_heading"))
 
+    # Safety-net: strip bold and any inherited heading paragraph style from
+    # body paragraphs.  _find_body_prototype already excludes heading-style
+    # paragraphs, but in case the archetype carries a named heading style (e.g.
+    # 'Heading 3' which is bold in most themes), normalise it here so the
+    # injected section body text renders as regular weight.
+    def _normalise_body_pm(pm: "ParaModel") -> "ParaModel":
+        sn = (pm.style.style_name or "").lower()
+        if not sn.startswith("heading") and not pm.style.bold:
+            return pm
+        from dataclasses import replace as _dc_replace
+        from copy import deepcopy as _deepcopy
+        new_style = _dc_replace(pm.style, bold=False)
+        # If the xml_proto carries a heading pStyle, remove it so the paragraph
+        # inherits the document's Normal/body style (typically not bold).
+        if new_style.xml_proto is not None and sn.startswith("heading"):
+            new_proto = _deepcopy(new_style.xml_proto)
+            pPr = new_proto.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                pStyle = pPr.find(f"{{{_W}}}pStyle")
+                if pStyle is not None:
+                    pPr.remove(pStyle)
+            new_style = _dc_replace(new_style, xml_proto=new_proto)
+        if pm.paragraph_profile is not None:
+            from tailor.compiler.models import ParagraphProfile
+            pp = ParagraphProfile.from_dict(pm.paragraph_profile.to_dict())
+            pp.bold = False
+        else:
+            pp = pm.paragraph_profile
+        return ParaModel(
+            text=pm.text, style=new_style, semantic=pm.semantic,
+            paragraph_profile=pp if pm.paragraph_profile else None,
+        )
+
     body_paras: list[ParaModel] = []
     for line in llm.body_lines:
         if line.strip():
-            body_paras.append(body_arch.clone_as(line, "paragraph"))
+            body_paras.append(_normalise_body_pm(body_arch.clone_as(line, "paragraph")))
 
     return ResumeSection(
         title=llm.heading,
@@ -1249,6 +1302,21 @@ def _find_header_skills_block(
     if start == 0:
         return None
 
+    # Guard: if the candidate block contains contact-info content (email, URL,
+    # phone-number), it is a contact section, not a skills block.  Templates
+    # like sample 12 have the contact info (phone, email, website) at the end
+    # of header_paras; without this guard the injector overwrites contact info.
+    _contact_markers = ("@", "www.", "http://", "https://")
+    _phone_re = re.compile(r"^\d[\d\s\-\.\(\)]{6,}$")
+    for _i in range(start, end + 1):
+        _t = header_paras[_i].text.strip()
+        if not _t:
+            continue
+        if any(m in _t for m in _contact_markers):
+            return None
+        if _phone_re.match(_t):
+            return None
+
     return (start, end + 1)
 
 
@@ -1394,8 +1462,11 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
     # "contact", "social", and "websites" sections indicate a contact/sidebar area.
     # The grader flags any summary text in a section adjacent to these types as
     # SUMMARY_IN_WRONG_SECTION, so the renderer must reject those same sections
-    # as intro-prose anchors.
-    _CONTACT_AREA_TYPES: frozenset[str] = frozenset({"contact", "social", "websites"})
+    # as intro-prose anchors.  "websites" is intentionally excluded: a websites
+    # section before a skills/other section does not indicate a contact sidebar,
+    # and the section after it may legitimately hold intro-prose summary content
+    # (e.g. sample 2 where the Skills section body contains the profile paragraph).
+    _CONTACT_AREA_TYPES: frozenset[str] = frozenset({"contact", "social"})
     for _si, section in enumerate(_sections):
         if section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             continue
@@ -2669,21 +2740,14 @@ def _build_anchored_summary_section(
     compacted to 1 sentence to avoid expanding a narrow template header slot
     (typically an empty trailing paragraph in a compact table template).
     """
-    from tailor.compiler.layout import compact_summary
     if heading_anchor is None:
-        # Single-anchor: only the body slot exists; compact aggressively to
-        # prevent a narrow slot from overflowing and pushing page content down.
-        _raw = _clean_summary_text(llm_section.body_lines)
-        _lines = compact_summary([_raw], max_sentences=1)
-        body_text = " ".join(_lines).strip() if _lines else _raw
-        # Further cap at 300 chars: a single long sentence can still exceed
-        # the slot height when the summary cell is narrow (e.g. table sidebar).
-        if len(body_text) > 300:
-            cut = body_text.rfind(" ", 0, 300)
-            body_text = body_text[:cut] if cut > 0 else body_text[:300]
+        # Single-anchor: only the body slot exists.  Use the full summary text
+        # and let the table cell expand naturally — the user expects the complete
+        # summary to appear and is aware that later content may shift down.
+        body_text = _clean_summary_text(llm_section.body_lines)
         _log.debug(
-            "ANCHORED_SUMMARY_SINGLE_SLOT_COMPACTED: len %d → %d chars",
-            len(_raw), len(body_text),
+            "ANCHORED_SUMMARY_SINGLE_SLOT: len=%d chars (full text, no compaction)",
+            len(body_text),
         )
     else:
         body_text = _clean_summary_text(llm_section.body_lines)

@@ -137,8 +137,11 @@ def _parse_llm_target_text(llm_text: str) -> str:
         )
         if is_heading:
             current_is_target = _is_llm_section(stripped)
-            if current_is_target:
-                parts.append(stripped)
+            # Do NOT append the heading itself: template headings replace LLM headings
+            # in the rendered output, so including LLM heading words (e.g. "Technical"
+            # from "Technical Skills" when the template uses "Skill") would add tokens
+            # to llm_target_tokens that can never appear in the rendered IR, causing a
+            # spurious gap in sim_llm even when content is fully injected.
         elif current_is_target:
             parts.append(stripped)
 
