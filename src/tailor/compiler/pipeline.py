@@ -173,6 +173,72 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
             _fix([role.header] + list(role.header_extra) + role.meta_lines + role.bullets)
 
 
+def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocument) -> None:
+    """Reassign extra LLM sections from left column to right column.
+
+    When apply_tailored creates sections not present in the template (e.g. a
+    Professional Summary for a template that has none), it uses the first
+    template section as an archetype.  For sidebar-layout templates the first
+    section is in the left column, so all new section content inherits
+    column_id='left' and left-column indents — placing it inside the narrow
+    sidebar instead of the main content area.
+
+    This function moves any section whose heading has column_id='left' but
+    whose normalised title is absent from the template's left-column section
+    titles into the right column, resetting indents to match the template's
+    first right-column section.
+    """
+    if template_ir.layout.column_split_x is None:
+        return
+
+    def _norm(s: str) -> str:
+        return s.lower().strip()
+
+    template_left_titles = {
+        _norm(sec.title)
+        for sec in template_ir.sections
+        if sec.heading.paragraph_profile
+        and sec.heading.paragraph_profile.column_id == "left"
+    }
+
+    # Reference indents from the template's first right-column section.
+    right_heading_indent = 0.0
+    right_body_indent = 0.0
+    for sec in template_ir.sections:
+        h_pp = sec.heading.paragraph_profile
+        if h_pp and h_pp.column_id == "right":
+            right_heading_indent = h_pp.indent_left_pt
+            for bp in sec.body_paras:
+                if bp.paragraph_profile:
+                    right_body_indent = bp.paragraph_profile.indent_left_pt
+                    break
+            if right_body_indent == 0.0 and sec.roles:
+                rpp = sec.roles[0].header.paragraph_profile
+                if rpp:
+                    right_body_indent = rpp.indent_left_pt
+            break
+
+    def _move(pm, indent: float) -> None:
+        pp = pm.paragraph_profile
+        if pp is not None and pp.column_id == "left":
+            pp.column_id = "right"
+            pp.indent_left_pt = indent
+
+    for sec in updated.sections:
+        h_pp = sec.heading.paragraph_profile
+        if not (h_pp and h_pp.column_id == "left"):
+            continue
+        if _norm(sec.title) in template_left_titles:
+            continue
+        _move(sec.heading, right_heading_indent)
+        for bp in sec.body_paras:
+            _move(bp, right_body_indent)
+        for role in sec.roles:
+            _move(role.header, right_body_indent)
+            for pm in list(role.header_extra) + role.meta_lines + role.bullets:
+                _move(pm, right_body_indent)
+
+
 def compile_resume_from_pdf(
     pdf_path: str,
     llm_text: str,
@@ -195,6 +261,9 @@ def compile_resume_from_pdf(
     # This prevents colors from the original PDF (hyperlink blues, author styling)
     # from bleeding onto LLM-generated replacement content via clone_as archetypes.
     _clear_pdf_content_colors(updated)
+    # Move extra LLM sections (e.g. Professional Summary) out of the left sidebar
+    # column for two-column PDF templates that have no matching left-column section.
+    _fix_extra_left_sections(template_ir, updated)
     render_docx(updated, style_template_path, output_path)
     return updated
 
