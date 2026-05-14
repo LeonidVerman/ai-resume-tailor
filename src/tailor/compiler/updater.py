@@ -645,11 +645,18 @@ def _find_body_prototype(
 
     B: Selection criteria (in priority order):
     1. Non-empty body paragraph from a non-'other' section.
-    2. Not bold (avoids cloning heading-style paragraphs).
+    2. Not bold — explicit style.bold OR heading-named paragraph style
+       (e.g. 'Heading 3') are both excluded; heading styles render bold in
+       Word/LibreOffice even when style.bold is None.
     3. Not explicitly center- or right-aligned (hard left-alignment rule).
-    Falls back to any non-empty body para, then to the first section heading.
+    Falls back to any non-empty non-bold body para, then any non-empty body
+    para, then the first section heading.
     """
-    # Preferred: non-other, non-bold, non-center/right para
+    def _is_heading_style(p: "ParaModel") -> bool:
+        sn = (p.style.style_name or "").lower()
+        return sn.startswith("heading")
+
+    # Preferred: non-other, non-bold, non-heading-style, non-center/right para
     for orig_section, _ in pairs:
         if orig_section.semantic_type == "other":
             continue
@@ -658,10 +665,17 @@ def _find_body_prototype(
                 continue
             if p.style.bold:
                 continue
+            if _is_heading_style(p):
+                continue
             if p.style.alignment in ("center", "right"):
                 continue
             return p
-    # Fallback: any non-empty body para
+    # Fallback: any non-empty non-bold para (including 'other' sections)
+    for orig_section, _ in pairs:
+        for p in orig_section.body_paras:
+            if p.text.strip() and not p.style.bold and not _is_heading_style(p):
+                return p
+    # Final fallback: any non-empty body para
     for orig_section, _ in pairs:
         for p in orig_section.body_paras:
             if p.text.strip():
@@ -740,10 +754,43 @@ def _make_extra_section(
     """
     new_heading = _strip_col_break_para(heading_arch.clone_as(llm.heading, "section_heading"))
 
+    # Safety-net: strip bold and any inherited heading paragraph style from
+    # body paragraphs.  _find_body_prototype already excludes heading-style
+    # paragraphs, but in case the archetype carries a named heading style (e.g.
+    # 'Heading 3' which is bold in most themes), normalise it here so the
+    # injected section body text renders as regular weight.
+    def _normalise_body_pm(pm: "ParaModel") -> "ParaModel":
+        sn = (pm.style.style_name or "").lower()
+        if not sn.startswith("heading") and not pm.style.bold:
+            return pm
+        from dataclasses import replace as _dc_replace
+        from copy import deepcopy as _deepcopy
+        new_style = _dc_replace(pm.style, bold=False)
+        # If the xml_proto carries a heading pStyle, remove it so the paragraph
+        # inherits the document's Normal/body style (typically not bold).
+        if new_style.xml_proto is not None and sn.startswith("heading"):
+            new_proto = _deepcopy(new_style.xml_proto)
+            pPr = new_proto.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                pStyle = pPr.find(f"{{{_W}}}pStyle")
+                if pStyle is not None:
+                    pPr.remove(pStyle)
+            new_style = _dc_replace(new_style, xml_proto=new_proto)
+        if pm.paragraph_profile is not None:
+            from tailor.compiler.models import ParagraphProfile
+            pp = ParagraphProfile.from_dict(pm.paragraph_profile.to_dict())
+            pp.bold = False
+        else:
+            pp = pm.paragraph_profile
+        return ParaModel(
+            text=pm.text, style=new_style, semantic=pm.semantic,
+            paragraph_profile=pp if pm.paragraph_profile else None,
+        )
+
     body_paras: list[ParaModel] = []
     for line in llm.body_lines:
         if line.strip():
-            body_paras.append(body_arch.clone_as(line, "paragraph"))
+            body_paras.append(_normalise_body_pm(body_arch.clone_as(line, "paragraph")))
 
     return ResumeSection(
         title=llm.heading,
