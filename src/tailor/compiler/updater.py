@@ -432,6 +432,65 @@ def _update_experience_section(
             "split_brain_fix: cleaned %d role-claimed paras from body_paras of %r",
             len(orig.body_paras) - len(clean_body), orig.title,
         )
+
+        # Extension-bullet deduplication: when a role has no original bullet slots but
+        # the LLM provides bullets, the updater creates UNBOUND bullets (para_id="")
+        # that will later become _ext_ layout blocks in apply_tailored.  The original
+        # template body paragraphs that fell between role headers (plain Normal-style
+        # paragraphs without bullet markers — e.g. template 17's "Spearheads..." and
+        # "Works collaboratively...") remain in clean_body with their original text and
+        # duplicate the ext bullets in the rendered DOCX.
+        # Fix: clear any non-empty 'paragraph'-semantic body_para that falls AFTER a
+        # role header (in para_id numeric order) when that role has unbound bullets,
+        # UNLESS the paragraph is a visual role-title line for one of the roles.
+        _roles_with_ext = [
+            _r for _r in updated_roles
+            if any(not (_b.para_id or "") for _b in _r.bullets)
+        ]
+        if _roles_with_ext:
+            def _pid_num(pid: str) -> int:
+                m = re.search(r"(\d+)", (pid or "").split("_ext_")[0])
+                return int(m.group(1)) if m else 0
+
+            _role_header_nums = sorted(
+                _pid_num(_r.header.para_id) for _r in updated_roles if _r.header.para_id
+            )
+            _ext_role_nums = {
+                _pid_num(_r.header.para_id) for _r in _roles_with_ext if _r.header.para_id
+            }
+
+            def _is_role_title_line(text: str) -> bool:
+                """True if text looks like a visual role-title prefix for one of the roles."""
+                t = text.strip().lower()
+                for _r in updated_roles:
+                    rh = _r.header.text.strip()
+                    title_part = rh.split("|")[0].strip().lower()
+                    if title_part and t and title_part.startswith(t[:20]) or t.startswith(title_part[:20]):
+                        return True
+                return False
+
+            new_clean_body: list = []
+            for _bp in clean_body:
+                if (
+                    _bp.text.strip()
+                    and _bp.semantic == "paragraph"
+                    and _bp.para_id
+                    and not _is_role_title_line(_bp.text)
+                ):
+                    _bp_num = _pid_num(_bp.para_id)
+                    _preceding = max(
+                        (n for n in _role_header_nums if n < _bp_num), default=None
+                    )
+                    if _preceding in _ext_role_nums:
+                        _log.debug(
+                            "ext_bullet_dedup: cleared body_para %r (original plain-text"
+                            " role content duplicated by ext bullets)",
+                            _bp.para_id,
+                        )
+                        new_clean_body.append(_bp.with_text(""))
+                        continue
+                new_clean_body.append(_bp)
+            clean_body = new_clean_body
     else:
         clean_body = orig.body_paras
 
