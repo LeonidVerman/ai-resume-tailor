@@ -310,6 +310,7 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     for bp in summary_sec.body_paras:
         if bp.paragraph_profile:
             bp.paragraph_profile.column_id = None
+            bp.paragraph_profile.bold = False  # summary text is never bold
 
     doc.header_paras = (
         [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
@@ -330,6 +331,102 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             new_all.extend(role.bullets)
 
     def _col_order(pm) -> int:
+        col = pm.paragraph_profile.column_id if pm.paragraph_profile else None
+        return 1 if col == "left" else (2 if col == "right" else 0)
+
+    new_all.sort(key=_col_order)
+    doc.all_paras = new_all
+
+
+def _remove_orphan_subsections(doc: ResumeDocument) -> None:
+    """Remove PDF-parser sub-entry sections that duplicate LLM-injected roles.
+
+    The PDF parser classifies bold role/affiliation headings (e.g. "Back-End
+    Developer", "Yellow Tree Organization") as section headings.  This creates
+    orphan sections separate from their parent category section (WORK EXPERIENCE,
+    AFFILIATIONS).  After apply_tailored injects LLM content into the parent
+    section's roles, the orphan sections remain with stale original content,
+    causing visible duplication in the rendered output.
+
+    A section is treated as an orphan sub-entry when:
+    - Its title is NOT predominantly upper-case (upper-ratio < 0.70) — real
+      category headings like WORK EXPERIENCE, AFFILIATIONS are all-caps.
+    - At least one body_para is bold — original role/org lines are bold;
+      LLM-injected body content is not bold.
+    - Its column contains at least one upper-case category section — so we do
+      not accidentally drop sections in a column that has only mixed-case titles.
+
+    Additionally this function:
+    - Removes bold body_paras from sections with roles (original role-header
+      lines that were also parsed as roles, causing double-rendering).
+    - Clears meta_lines for roles whose header uses the pipe-separated LLM
+      format (company+dates already in the header; cloned meta_lines are stale).
+    """
+    if doc.layout.column_split_x is None:
+        return
+
+    def _is_category_heading(title: str) -> bool:
+        t = title.strip()
+        if not t:
+            return True
+        alpha = [c for c in t if c.isalpha()]
+        if not alpha:
+            return True
+        return sum(1 for c in alpha if c.isupper()) / len(alpha) >= 0.70
+
+    def _col_of(sec) -> "str | None":
+        pp = sec.heading.paragraph_profile
+        return pp.column_id if pp else None
+
+    # Which columns have at least one ALL-CAPS category section?
+    cols_with_category: "set[str | None]" = {
+        _col_of(s) for s in doc.sections if _is_category_heading(s.title)
+    }
+
+    def _is_orphan(sec) -> bool:
+        if _is_category_heading(sec.title):
+            return False
+        if _col_of(sec) not in cols_with_category:
+            return False
+        # Only remove if at least one body_para is bold — template sub-entries
+        # have bold company/date lines; LLM-injected sections do not.
+        return any(
+            bp.paragraph_profile and bp.paragraph_profile.bold
+            for bp in sec.body_paras
+        )
+
+    orphan_idxs = {i for i, s in enumerate(doc.sections) if _is_orphan(s)}
+    if not orphan_idxs:
+        return
+
+    doc.sections = [s for i, s in enumerate(doc.sections) if i not in orphan_idxs]
+
+    # For sections that have roles, remove ALL body_paras.  In PDF-sourced
+    # experience sections, body_paras contain original role-header lines (bold)
+    # and original role bullets (non-bold), both of which are already encoded
+    # inside the role objects.  Keeping them causes duplicate rendering before
+    # the LLM-injected roles.  Also clear stale cloned meta_lines from roles
+    # whose header already carries the pipe-separated company+date string.
+    for sec in doc.sections:
+        if sec.roles:
+            sec.body_paras = []
+            for role in sec.roles:
+                if role.header.text and "|" in role.header.text:
+                    role.meta_lines.clear()
+
+    # Rebuild all_paras to reflect removed sections and cleared content.
+    from tailor.compiler.models import ParaModel
+    new_all: list[ParaModel] = list(doc.header_paras)
+    for sec in doc.sections:
+        new_all.append(sec.heading)
+        new_all.extend(sec.body_paras)
+        for role in sec.roles:
+            new_all.append(role.header)
+            new_all.extend(role.header_extra)
+            new_all.extend(role.meta_lines)
+            new_all.extend(role.bullets)
+
+    def _col_order(pm: ParaModel) -> int:
         col = pm.paragraph_profile.column_id if pm.paragraph_profile else None
         return 1 if col == "left" else (2 if col == "right" else 0)
 
@@ -362,6 +459,9 @@ def compile_resume_from_pdf(
     # For two-column templates with a full-width header: move the LLM-injected
     # Professional Summary body into header_paras so it renders above the table.
     _inject_llm_summary_into_header(updated)
+    # Remove orphan sections created by the PDF parser from bold role/affiliation
+    # headings that duplicate LLM-injected content in the parent section.
+    _remove_orphan_subsections(updated)
     # Move extra LLM sections (e.g. Professional Summary) out of the left sidebar
     # column for two-column PDF templates that have no matching left-column section.
     _fix_extra_left_sections(template_ir, updated)
