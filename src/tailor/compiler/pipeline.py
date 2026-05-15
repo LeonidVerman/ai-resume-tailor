@@ -409,7 +409,44 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
         if _is_orphan(s) and _col_of(s) == "right"
     }
     orphan_idxs = left_orphan_idxs | right_orphan_idxs
+
+    # Clear stale body_paras for sections that have role objects.  PDF-sourced
+    # experience sections often have body_paras containing the original role-header
+    # lines and bullets (not recognised as role objects due to non-standard
+    # formatting) alongside proper role objects for entries the parser DID parse.
+    # Keeping both causes duplicate or misplaced rendering; since the role objects
+    # carry the LLM-updated content, the body_paras are redundant.
+    # Run unconditionally (before the orphan early-return) so section-row table
+    # layouts with no orphans still benefit from this cleanup.
+    _body_cleared = False
+    for sec in doc.sections:
+        if sec.roles and sec.body_paras:
+            sec.body_paras = []
+            _body_cleared = True
+            for role in sec.roles:
+                if role.header.text and "|" in role.header.text:
+                    role.meta_lines.clear()
+
     if not orphan_idxs:
+        if _body_cleared:
+            # Rebuild all_paras to reflect the cleared body_paras.
+            from tailor.compiler.models import ParaModel as _PM
+            new_all: "list[_PM]" = list(doc.header_paras)
+            for sec in doc.sections:
+                new_all.append(sec.heading)
+                new_all.extend(sec.body_paras)
+                for role in sec.roles:
+                    new_all.append(role.header)
+                    new_all.extend(role.header_extra)
+                    new_all.extend(role.meta_lines)
+                    new_all.extend(role.bullets)
+
+            def _col_ord(pm: "_PM") -> int:
+                col = pm.paragraph_profile.column_id if pm.paragraph_profile else None
+                return 1 if col == "left" else (2 if col == "right" else 0)
+
+            new_all.sort(key=_col_ord)
+            doc.all_paras = new_all
         return
 
     # Right-column orphans are affiliation/reference sub-entries with bold
@@ -435,19 +472,6 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
             parent_sec.body_paras = absorbed
 
     doc.sections = [s for i, s in enumerate(doc.sections) if i not in orphan_idxs]
-
-    # For sections that have roles, remove ALL body_paras.  In PDF-sourced
-    # experience sections, body_paras contain original role-header lines (bold)
-    # and original role bullets (non-bold), both of which are already encoded
-    # inside the role objects.  Keeping them causes duplicate rendering before
-    # the LLM-injected roles.  Also clear stale cloned meta_lines from roles
-    # whose header already carries the pipe-separated company+date string.
-    for sec in doc.sections:
-        if sec.roles:
-            sec.body_paras = []
-            for role in sec.roles:
-                if role.header.text and "|" in role.header.text:
-                    role.meta_lines.clear()
 
     # Rebuild all_paras to reflect removed sections and cleared content.
     from tailor.compiler.models import ParaModel
@@ -488,15 +512,24 @@ def compile_resume_from_pdf(
     llm_sections = apply_layout_fitting(template_ir, llm_sections)
     updated = apply_tailored(template_ir, llm_sections, classification=classification)
 
-    # Re-sort all_paras by (column, y_top_pt) for PDF two-column documents.
-    # apply_tailored's extras path reorders sections to follow LLM output order,
-    # which may displace verbatim "other" sections from their original visual Y
-    # position.  Re-sorting by Y restores the template's reading order within
-    # each column so the renderer places each section at the correct position.
+    # Clear PDF-extracted text colors from all content paragraphs before rendering.
+    _clear_pdf_content_colors(updated)
+    # For two-column templates with a full-width header: move the LLM-injected
+    # Professional Summary body into header_paras so it renders above the table.
+    _inject_llm_summary_into_header(updated)
+    # Remove orphan sections and clear stale body_paras for sections with roles.
+    _remove_orphan_subsections(updated)
+    # Move extra LLM sections (e.g. Professional Summary) out of the left sidebar
+    # column for two-column PDF templates that have no matching left-column section.
+    _fix_extra_left_sections(template_ir, updated)
+
+    # Re-sort sections by (column, y_top_pt) for PDF two-column documents.
+    # Done AFTER _fix_extra_left_sections so LLM-injected extra sections (e.g.
+    # Technical Skills) already have col_id="right" and sort correctly after
+    # the template's left-column sections rather than interleaving with them.
     if (
         updated.source_kind == "pdf"
         and updated.layout.column_split_x is not None
-        and not updated.layout.section_row_table
     ):
         from tailor.compiler.models import ParaModel as _ParaModel  # local import
 
@@ -511,39 +544,27 @@ def compile_resume_from_pdf(
 
         updated.sections.sort(key=_sec_col_y_key)
 
-        # Re-order all_paras to reflect the new section order while preserving
-        # each para's existing position within its section.  Rebuilding from
-        # scratch would add body_paras that apply_tailored excluded, causing
-        # duplicate content.  Instead we map each existing para to its section
-        # index (post-sort) and use its original all_paras position as tiebreaker.
-        sec_order: "dict[int, int]" = {}
-        for si, sec in enumerate(updated.sections):
-            sec_order[id(sec.heading)] = si
-            for pm in sec.body_paras:
-                sec_order[id(pm)] = si
-            for role in sec.roles:
-                for pm in [role.header, *role.header_extra, *role.meta_lines, *role.bullets]:
+        if not updated.layout.section_row_table:
+            # Re-order all_paras to reflect the new section order while preserving
+            # each para's existing position within its section.  Rebuilding from
+            # scratch would add body_paras that apply_tailored excluded, causing
+            # duplicate content.  Instead we map each existing para to its section
+            # index (post-sort) and use its original all_paras position as tiebreaker.
+            sec_order: "dict[int, int]" = {}
+            for si, sec in enumerate(updated.sections):
+                sec_order[id(sec.heading)] = si
+                for pm in sec.body_paras:
                     sec_order[id(pm)] = si
+                for role in sec.roles:
+                    for pm in [role.header, *role.header_extra, *role.meta_lines, *role.bullets]:
+                        sec_order[id(pm)] = si
 
-        orig_pos = {id(pm): i for i, pm in enumerate(updated.all_paras)}
+            orig_pos = {id(pm): i for i, pm in enumerate(updated.all_paras)}
 
-        updated.all_paras.sort(
-            key=lambda pm: (sec_order.get(id(pm), -1), orig_pos.get(id(pm), 0))
-        )
+            updated.all_paras.sort(
+                key=lambda pm: (sec_order.get(id(pm), -1), orig_pos.get(id(pm), 0))
+            )
 
-    # Clear PDF-extracted text colors from all content paragraphs before rendering.
-    # This prevents colors from the original PDF (hyperlink blues, author styling)
-    # from bleeding onto LLM-generated replacement content via clone_as archetypes.
-    _clear_pdf_content_colors(updated)
-    # For two-column templates with a full-width header: move the LLM-injected
-    # Professional Summary body into header_paras so it renders above the table.
-    _inject_llm_summary_into_header(updated)
-    # Remove orphan sections created by the PDF parser from bold role/affiliation
-    # headings that duplicate LLM-injected content in the parent section.
-    _remove_orphan_subsections(updated)
-    # Move extra LLM sections (e.g. Professional Summary) out of the left sidebar
-    # column for two-column PDF templates that have no matching left-column section.
-    _fix_extra_left_sections(template_ir, updated)
     render_docx(updated, style_template_path, output_path)
     return updated
 

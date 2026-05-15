@@ -1065,9 +1065,13 @@ def _extract_paragraphs(
             # (the visual sidebar edge) so that a block at x=237 on a page
             # with a 215-pt sidebar gets indent = 22 pt, not page-relative 222 pt.
             # Cross-column detection: a block whose x0 is in the left area but
-            # whose x1 extends more than 20 pt past the column split is a
-            # full-width element (merged name/header banner).  Such blocks get
-            # col_id=None so the renderer places them above the two-column table.
+            # whose x1 extends more than 20 pt past the column split is usually
+            # a full-width element (merged name/header banner), col_id=None.
+            # Exception: section-row table layouts have left section labels and
+            # right body text at the same Y, so PyMuPDF merges them into one
+            # block.  For these blocks we defer column assignment to per-line
+            # basis (_cross_col_block=True) so each line gets its true col_id.
+            _cross_col_block = False
             if merged_header_band > 0 and y0 < merged_header_band:
                 # Block is inside the top merged-header band (no right-column
                 # content exists there): treat as full-width above the table.
@@ -1077,8 +1081,10 @@ def _extract_paragraphs(
                 col_id = "right"
                 col_origin = right_col_origin if right_col_origin is not None else split_x
             elif split_x is not None and x1_blk > split_x + 20.0:
+                # Cross-column block below the header band: split per line.
                 col_id = None
                 col_origin = page_margin_left
+                _cross_col_block = True
             elif split_x is not None:
                 col_id = "left"
                 col_origin = page_margin_left
@@ -1118,11 +1124,24 @@ def _extract_paragraphs(
                 line_text_color = (
                     _dominant_text_color(line_spans) if line_spans else block_text_color
                 )
+                # For cross-column blocks (section-row table pairs), assign
+                # each line its own column based on line_x0 vs split_x.
+                if _cross_col_block and split_x is not None:
+                    _line_col_id: str | None = "right" if line_x0 >= split_x else "left"
+                    _line_col_origin = (
+                        (right_col_origin if right_col_origin is not None else split_x)
+                        if _line_col_id == "right"
+                        else page_margin_left
+                    )
+                else:
+                    _line_col_id = col_id
+                    _line_col_origin = col_origin
+
                 # Attach icon image to first line only (line_idx == 0) for
                 # left-column paragraphs that coincide with a sidebar icon.
                 icon_png: bytes | None = None
                 icon_size_pt: float = 0.0
-                if line_idx == 0 and col_id == "left" and icon_map:
+                if line_idx == 0 and _line_col_id == "left" and icon_map:
                     icon_png = _match_icon(icon_map, y0, y1)
                     if icon_png is not None:
                         icon_size_pt = min(y1 - y0, x1_blk - x0)
@@ -1155,12 +1174,12 @@ def _extract_paragraphs(
                     font_size_pt=line_fi["font_size_pt"],
                     bold=line_fi["bold"],
                     italic=line_fi["italic"],
-                    indent_left_pt=max(0.0, _indent_x - col_origin),
+                    indent_left_pt=max(0.0, _indent_x - _line_col_origin),
                     body_text_x0_pt=line_x0,
                     space_before_pt=space_before if line_idx == 0 else 0.0,
                     text_color=line_text_color,
                     background_color=block_bg_color,
-                    column_id=col_id,
+                    column_id=_line_col_id,
                     inline_image_bytes=icon_png,
                     inline_image_size_pt=icon_size_pt,
                     y_top_pt=line_y0,
@@ -1386,6 +1405,7 @@ _SUMMARY_NAMES: frozenset[str] = frozenset({
     "professional summary", "summary", "objective", "career objective",
     "profile", "professional profile", "personal profile",
     "about me", "about", "career summary", "executive summary",
+    "general info", "general information",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "core competencies", "competencies",
@@ -1396,6 +1416,7 @@ _SKILLS_NAMES: frozenset[str] = frozenset({
 _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
     "educational background", "degrees", "educational history",
+    "education summary",
 })
 
 _ALL_KNOWN: frozenset[str] = (
@@ -2072,23 +2093,98 @@ def _finalise(section: ResumeSection) -> None:
 # Section-label column helpers (for "row-per-section" table layouts)
 # ---------------------------------------------------------------------------
 
+_FOOTER_ITEM_RE = re.compile(r"[@]|^\+?\d[\d\s\-().]{4,}|https?://|www\.", re.IGNORECASE)
+
+
+def _merge_left_col_wraps(left_raw: "list[ParaModel]") -> "list[ParaModel]":
+    """Merge consecutive word-wrapped section label lines in the left column.
+
+    Some templates split two-word section labels across two lines, e.g.
+    'GENERAL' / 'INFO', 'EDUCATION' / 'SUMMARY', 'WORK' / 'HISTORY'.
+    This function merges such pairs into a single 'GENERAL INFO' paragraph so
+    that _is_section_label_column can recognise 'WORK HISTORY' as a known
+    experience heading and _interleave_section_label_column creates one section
+    per label rather than two.
+
+    Merge criteria:
+    - Both lines are bold AND ALL-CAPS AND ≤ 3 words.
+    - Y gap between them is ≤ 30 pt (word-wrap spacing, not a new section).
+    """
+    _MAX_WRAP_GAP = 30.0
+    result: "list[ParaModel]" = []
+    i = 0
+    while i < len(left_raw):
+        pm = left_raw[i]
+        pp = pm.paragraph_profile
+        t = pm.text.strip()
+        is_label = (
+            pp is not None
+            and pp.bold
+            and t
+            and t.upper() == t        # ALL-CAPS
+            and len(t.split()) <= 3
+        )
+        if is_label and i + 1 < len(left_raw):
+            nxt = left_raw[i + 1]
+            npp = nxt.paragraph_profile
+            nt = nxt.text.strip()
+            y_gap = (npp.y_top_pt if npp else 9999) - (pp.y_top_pt if pp else 0.0)
+            next_is_label = (
+                npp is not None
+                and npp.bold
+                and nt
+                and nt.upper() == nt
+                and len(nt.split()) <= 3
+            )
+            if next_is_label and 0 < y_gap <= _MAX_WRAP_GAP:
+                merged_pm = pm.with_text(t + " " + nt)
+                if merged_pm.paragraph_profile:
+                    merged_pm.paragraph_profile.y_top_pt = pp.y_top_pt
+                result.append(merged_pm)
+                i += 2
+                continue
+        result.append(pm)
+        i += 1
+    return result
+
+
 def _is_section_label_column(left_raw: "list[ParaModel]") -> bool:
     """Return True when the left column contains only known section label text.
 
     Detects a 'section-row table' layout where the left column holds only
-    section headings (e.g. 'Summary', 'Work Experience') and the right column
-    holds all body content.  Requires ≥ 2 matching labels, no bullet paras,
-    and a high match rate (≥ 60 % of items are known section names).
+    section headings and the right column holds all body content.
+
+    Two acceptance paths:
+    1. Known-name match: ≥ 2 items match _ALL_HEADING_NAMES_NOSPACE AND
+       match rate ≥ 60 % (after filtering contact-info items).
+    2. Structural match: after filtering contact info, ≥ 2 items are ALL-CAPS
+       + bold + ≤ 4 words — consistent with a template using non-standard
+       section label names (e.g. 'GENERAL INFO', 'EDUCATION SUMMARY').
     """
     if len(left_raw) < 2:
         return False
     if any(pm.semantic == "bullet" for pm in left_raw):
         return False
+    # Strip obvious contact/footer items (phone, email, URL) before matching.
+    section_items = [pm for pm in left_raw if not _FOOTER_ITEM_RE.search(pm.text)]
+    if len(section_items) < 2:
+        return False
+    # Known-name path
     matches = sum(
-        1 for pm in left_raw
+        1 for pm in section_items
         if _normalize_heading_text(pm.text) in _ALL_HEADING_NAMES_NOSPACE
     )
-    return matches >= 2 and matches >= len(left_raw) * 0.6
+    if matches >= 2 and matches >= len(section_items) * 0.6:
+        return True
+    # Structural fallback: all-caps + bold + short (non-standard label names)
+    structural = sum(
+        1 for pm in section_items
+        if (pm.paragraph_profile and pm.paragraph_profile.bold
+            and pm.text.strip()
+            and pm.text.strip().upper() == pm.text.strip()
+            and len(pm.text.split()) <= 4)
+    )
+    return structural >= 2 and structural >= len(section_items) * 0.6
 
 
 def _interleave_section_label_column(
@@ -2204,14 +2300,21 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
         left_raw  = [pm for pm in raw_paras if _col_id(pm) == "left"]
         right_raw = [pm for pm in raw_paras if _col_id(pm) == "right"]
 
-        if _is_section_label_column(left_raw):
+        # Merge word-wrapped section labels before detection.  Some templates
+        # split two-word labels across two lines (e.g. 'GENERAL'/'INFO',
+        # 'WORK'/'HISTORY') so each word appears as a separate paragraph.
+        merged_left_raw = _merge_left_col_wraps(left_raw)
+        if _is_section_label_column(merged_left_raw):
             # Section-row table layout: left column holds only section labels,
             # right column holds all body content.  Merge them into a flat list
             # (section label followed by its right-column content) and run a
             # single _group_sections pass so all existing logic (_group_roles,
             # bullet merging, etc.) works correctly.
+            # Filter contact/footer items (phone, email) from the label list;
+            # they are not section headings and would create spurious sections.
             layout.section_row_table = True
-            merged = _interleave_section_label_column(left_raw, right_raw)
+            label_left = [pm for pm in merged_left_raw if not _FOOTER_ITEM_RE.search(pm.text)]
+            merged = _interleave_section_label_column(label_left, right_raw)
             above_hdrs, above_secs = _group_sections(above_raw)
             main_hdrs,  main_secs  = _group_sections(merged)
             header_paras = above_hdrs + main_hdrs
