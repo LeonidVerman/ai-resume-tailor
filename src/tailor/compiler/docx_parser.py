@@ -76,6 +76,13 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         "additional information", "communication",
         "affiliations", "affiliations and awards", "affiliations & awards",
         "contact",
+        # Contact / reference sections that some templates place as standalone
+        # sub-sections within a sidebar (e.g. template 23 CONTACT INFO and
+        # PERSONAL REFERENCES inside the left column).  Without these entries
+        # the absorption guard in _parse_sections treats them as body paragraphs
+        # of the preceding "other" section rather than starting a new section.
+        "contact info", "contact information",
+        "personal references", "personal reference",
     })
 )
 
@@ -87,6 +94,9 @@ _SKILLS_LIKE_WORDS: frozenset[str] = frozenset({
     "skill", "technical", "technologies", "technology",
     "keywords", "competencies", "competency",
     "expertise", "proficiencies", "proficiency",
+    # "qualifications" covers headings like "MY QUALIFICATIONS" / "KEY QUALIFICATIONS"
+    # which some templates use as their skills section.
+    "qualifications", "qualification",
 })
 
 # E: keyword set for noncanonical websites/portfolio headings.
