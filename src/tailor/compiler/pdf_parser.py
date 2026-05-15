@@ -723,7 +723,19 @@ def _detect_column_split(
 
     Returns the midpoint of the detected gap as the column split x-coordinate.
     """
-    x0s = sorted({round(blk["bbox"][0]) for blk in blocks if blk.get("type") == 0})
+    # Exclude blocks in the top 24 % of the page from x0 collection.  Templates
+    # with a full-width merged header (name, title, photo row) often place the
+    # name text at an x0 that sits BETWEEN the two body columns (e.g. x0=235 on
+    # a page whose left column is at x0=60-95 and right column at x0=320).
+    # Including that block's x0 creates a spurious gap candidate and causes the
+    # detector to return the wrong split.  Using body-only blocks removes those
+    # false x0 anchors so the real inter-column gap is found instead.
+    top_cutoff = page_height * 0.24 if page_height > 0 else 0.0
+    x0s = sorted({
+        round(blk["bbox"][0])
+        for blk in blocks
+        if blk.get("type") == 0 and blk["bbox"][1] >= top_cutoff
+    })
     if len(x0s) < 2:
         return None
 
@@ -751,7 +763,6 @@ def _detect_column_split(
                 _adjacent_sig += 1
     if _adjacent_sig >= 2:
         return None
-    top_cutoff = page_height * 0.20 if page_height > 0 else 0.0
     # Full-width elements that span ≥ 50 % of the page width are cross-column
     # design elements (e.g. name banner, summary paragraph, section heading
     # that overflows visually) and should not veto the column split.
@@ -788,7 +799,7 @@ def _detect_column_split(
 
             # Reject if any BODY block bridges the gap: starts in the left
             # "column" and extends at least 5 % past the right edge.  Blocks
-            # in the top 15 % (header banner) are excluded.  Full-width blocks
+            # in the top 24 % (header banner) are excluded.  Full-width blocks
             # (≥ 50 % page width) are also excluded — they are intentional
             # cross-column design elements, not evidence of a single column.
             bridge_x1_threshold = right_edge * 1.05
@@ -806,12 +817,16 @@ def _detect_column_split(
                 # Use the midpoint of the *content* gap instead — but only when
                 # max_left_x1 stays strictly below right_edge (i.e. left content
                 # does not actually overlap the right column).
+                # Exclude full-width cross-column blocks so a contact line at
+                # x0=60 x1=530 does not inflate max_left_x1 to 530 and prevent
+                # the refinement from kicking in on the real body gap.
                 x0_mid = (x0s[i] + x0s[i + 1]) / 2.0
                 left_body_x1s = [
                     b["bbox"][2] for b in blocks
                     if b.get("type") == 0
-                    and b["bbox"][0] <= x0s[i]
+                    and round(b["bbox"][0]) <= x0s[i]  # round() matches how x0s was built
                     and b["bbox"][1] >= top_cutoff
+                    and (b["bbox"][2] - b["bbox"][0]) < wide_block_min
                 ]
                 if left_body_x1s:
                     max_left_x1 = max(left_body_x1s)
@@ -1108,6 +1123,7 @@ def _extract_paragraphs(
                     column_id=col_id,
                     inline_image_bytes=icon_png,
                     inline_image_size_pt=icon_size_pt,
+                    y_top_pt=line_y0,
                 )
                 pm = ParaModel(
                     text=line_text,
@@ -1960,6 +1976,84 @@ def _finalise(section: ResumeSection) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Section-label column helpers (for "row-per-section" table layouts)
+# ---------------------------------------------------------------------------
+
+def _is_section_label_column(left_raw: "list[ParaModel]") -> bool:
+    """Return True when the left column contains only known section label text.
+
+    Detects a 'section-row table' layout where the left column holds only
+    section headings (e.g. 'Summary', 'Work Experience') and the right column
+    holds all body content.  Requires ≥ 2 matching labels, no bullet paras,
+    and a high match rate (≥ 60 % of items are known section names).
+    """
+    if len(left_raw) < 2:
+        return False
+    if any(pm.semantic == "bullet" for pm in left_raw):
+        return False
+    matches = sum(
+        1 for pm in left_raw
+        if _normalize_heading_text(pm.text) in _ALL_HEADING_NAMES_NOSPACE
+    )
+    return matches >= 2 and matches >= len(left_raw) * 0.6
+
+
+def _interleave_section_label_column(
+    left_raw: "list[ParaModel]",
+    right_raw: "list[ParaModel]",
+) -> "list[ParaModel]":
+    """Merge a section-label left column with right-column body content.
+
+    Forces section_heading semantic on each left label, then inserts it just
+    before the right-column paras that fall within its Y-range.  A 20 pt
+    tolerance handles table-cell top-padding where right content starts
+    slightly above the left label.
+
+    Any right paras that fall outside all section Y-ranges (should not occur
+    in practice) are appended to the last section to avoid data loss.
+    """
+    _TOLERANCE = 20  # pt: right content may start slightly above the label
+
+    for pm in left_raw:
+        pm.semantic = "section_heading"
+
+    # In a section-label table the right column contains NO real section
+    # headings — all section labels live in the left column.  Any right-column
+    # para that _infer_semantic classified as section_heading (e.g. a bold
+    # role title like "BACK-END DEVELOPER") is actually a role_header.
+    # Reclassifying them before interleaving prevents _group_sections from
+    # breaking the experience section into spurious extra sections.
+    for pm in right_raw:
+        if (
+            pm.semantic == "section_heading"
+            and _normalize_heading_text(pm.text) not in _ALL_HEADING_NAMES_NOSPACE
+        ):
+            pm.semantic = "role_header"
+
+    def _y(pm: "ParaModel") -> float:
+        pp = pm.paragraph_profile
+        return pp.y_top_pt if pp is not None else 0.0
+
+    label_ys = [_y(lbl) for lbl in left_raw]
+    result: list[ParaModel] = []
+    assigned_ids: set[int] = set()
+
+    for i, label in enumerate(left_raw):
+        y_start = label_ys[i] - _TOLERANCE
+        y_end = (label_ys[i + 1] - _TOLERANCE) if i + 1 < len(left_raw) else float("inf")
+        section_right = [pm for pm in right_raw if y_start <= _y(pm) < y_end]
+        result.append(label)
+        result.extend(section_right)
+        assigned_ids.update(id(pm) for pm in section_right)
+
+    # Append any right paras that fell outside all Y-ranges (stragglers)
+    stragglers = [pm for pm in right_raw if id(pm) not in assigned_ids]
+    result.extend(stragglers)
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -2017,12 +2111,24 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
         left_raw  = [pm for pm in raw_paras if _col_id(pm) == "left"]
         right_raw = [pm for pm in raw_paras if _col_id(pm) == "right"]
 
-        above_hdrs, above_secs = _group_sections(above_raw)
-        left_hdrs,  left_secs  = _group_sections(left_raw)
-        right_hdrs, right_secs = _group_sections(right_raw)
-
-        header_paras = above_hdrs + left_hdrs + right_hdrs
-        sections     = above_secs + left_secs + right_secs
+        if _is_section_label_column(left_raw):
+            # Section-row table layout: left column holds only section labels,
+            # right column holds all body content.  Merge them into a flat list
+            # (section label followed by its right-column content) and run a
+            # single _group_sections pass so all existing logic (_group_roles,
+            # bullet merging, etc.) works correctly.
+            layout.section_row_table = True
+            merged = _interleave_section_label_column(left_raw, right_raw)
+            above_hdrs, above_secs = _group_sections(above_raw)
+            main_hdrs,  main_secs  = _group_sections(merged)
+            header_paras = above_hdrs + main_hdrs
+            sections     = above_secs + main_secs
+        else:
+            above_hdrs, above_secs = _group_sections(above_raw)
+            left_hdrs,  left_secs  = _group_sections(left_raw)
+            right_hdrs, right_secs = _group_sections(right_raw)
+            header_paras = above_hdrs + left_hdrs + right_hdrs
+            sections     = above_secs + left_secs + right_secs
     else:
         header_paras, sections = _group_sections(raw_paras)
 
@@ -2085,7 +2191,10 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     # left table cell before the right cell, so roundtrip tests must see the same
     # order in the source IR.  Python's sort is stable, so relative order within
     # each column is preserved.
-    if layout.column_split_x is not None:
+    # Section-row table layouts keep the natural section-interleaved order
+    # (heading followed by its body) so the grader and LLM text serialiser
+    # see sections in the correct reading sequence.
+    if layout.column_split_x is not None and not layout.section_row_table:
         def _col_order(pm: "ParaModel") -> int:
             col = pm.paragraph_profile.column_id if pm.paragraph_profile else None
             return 1 if col == "left" else (2 if col == "right" else 0)

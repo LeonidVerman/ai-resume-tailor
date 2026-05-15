@@ -201,6 +201,9 @@ _ALL_KNOWN: frozenset[str] = (
         # to inject them into skill slots.  Treating them as known section headings
         # makes the parser break at those boundaries instead.
         "contact information", "contact info", "affiliations",
+        # "Additional" (bare word) used by some LLMs as a catch-all section after
+        # Technical Skills — must be a section boundary, not a body line.
+        "additional",
     })
 )
 

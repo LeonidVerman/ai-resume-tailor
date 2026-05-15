@@ -708,6 +708,183 @@ def _get_text_area_width_twips(sectPr) -> int:
     return max(1, page_w - left - right)
 
 
+def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=None) -> None:
+    """Render a section-row PDF as a DOCX table with one row per section.
+
+    The PDF has a two-column table where left cell = section label and
+    right cell = section body content.  Each section gets its own table
+    row so that labels and bodies stay side-by-side (vs. all labels in one
+    cell and all bodies in another, which is the independent-column layout).
+    """
+    from lxml import etree
+    from tailor.compiler.para_builder import build_para_element
+
+    layout = doc.layout
+
+    pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
+    pgMar = sectPr.find(f"{{{_W}}}pgMar") if sectPr is not None else None
+    page_w_twips = int(pgSz.get(f"{{{_W}}}w", "12240")) if pgSz is not None else 12240
+    left_margin_twips = int(pgMar.get(f"{{{_W}}}left", "1440")) if pgMar is not None else 1440
+    right_margin_twips = int(pgMar.get(f"{{{_W}}}right", "1440")) if pgMar is not None else 1440
+
+    left_w = layout.left_col_width_twips or (page_w_twips // 3)
+    right_w_max = page_w_twips - right_margin_twips - left_w
+    right_w = min(layout.right_col_width_twips or right_w_max, right_w_max)
+    right_w = max(right_w, 2000)
+    total_w = left_w + right_w
+
+    # Build the section-row table
+    tbl = etree.Element(f"{{{_W}}}tbl")
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW_elem = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW_elem.set(f"{{{_W}}}w", str(total_w))
+    tblW_elem.set(f"{{{_W}}}type", "dxa")
+    tblInd = etree.SubElement(tblPr, f"{{{_W}}}tblInd")
+    tblInd.set(f"{{{_W}}}w", str(-left_margin_twips))
+    tblInd.set(f"{{{_W}}}type", "dxa")
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+        brd.set(f"{{{_W}}}val", "none")
+    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        m = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+        m.set(f"{{{_W}}}w", "0")
+        m.set(f"{{{_W}}}type", "dxa")
+
+    def _add_top_border(tcPr_elem):
+        """Add a thin top separator line to a table cell."""
+        tc_brd = etree.SubElement(tcPr_elem, f"{{{_W}}}tcBorders")
+        top_brd = etree.SubElement(tc_brd, f"{{{_W}}}top")
+        top_brd.set(f"{{{_W}}}val", "single")
+        top_brd.set(f"{{{_W}}}sz", "6")
+        top_brd.set(f"{{{_W}}}color", "000000")
+
+    def _shift_para_indent(p_elem, delta_twips: int) -> None:
+        """Subtract delta_twips from the left indent of a w:p element (floor at 0)."""
+        if delta_twips <= 0:
+            return
+        pPr = p_elem.find(f"{{{_W}}}pPr")
+        if pPr is None:
+            return
+        ind = pPr.find(f"{{{_W}}}ind")
+        if ind is not None:
+            cur = int(ind.get(f"{{{_W}}}left", "0"))
+            ind.set(f"{{{_W}}}left", str(max(0, cur - delta_twips)))
+
+    def _section_right_paras(section):
+        """Yield (ParaModel, is_role_header) for all right-cell paras in a section."""
+        if section.semantic_type == "experience" and section.roles:
+            _has_orphan = any(bp.semantic == "role_header" for bp in section.body_paras)
+            if _has_orphan:
+                for bp in section.body_paras:
+                    if bp.semantic == "role_header":
+                        break
+                    if bp.text.strip():
+                        yield bp
+            for role in section.roles:
+                yield role.header
+                yield from role.meta_lines
+                yield from role.bullets
+        else:
+            yield from section.body_paras
+
+    def _min_indent_twips(section) -> int:
+        """Return the minimum indent across all right-cell paras in a section (twips)."""
+        vals = [
+            int(pm.paragraph_profile.indent_left_pt * 20)
+            for pm in _section_right_paras(section)
+            if pm.paragraph_profile and pm.paragraph_profile.indent_left_pt > 0
+        ]
+        return min(vals) if vals else 0
+
+    for section in doc.sections:
+        tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+        # Compute per-section indent baseline to normalise all body content
+        # to the same visual left edge within the right cell.  Different PDF
+        # templates place right-column content at varying x offsets (e.g. skills
+        # at x=231 vs. role headers at x=215); subtracting the section minimum
+        # makes each section's content start flush at the right-cell left edge.
+        sec_min_ind = _min_indent_twips(section)
+
+        # Left cell: section heading
+        left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+        left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
+        left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
+        left_tcW.set(f"{{{_W}}}w", str(left_w))
+        left_tcW.set(f"{{{_W}}}type", "dxa")
+        _add_top_border(left_tcPr)
+
+        heading_elem = build_para_element(section.heading, doc_part=doc_part)
+        pPr = heading_elem.find(f"{{{_W}}}pPr")
+        if pPr is not None:
+            ind = pPr.find(f"{{{_W}}}ind")
+            if ind is not None:
+                cur = int(ind.get(f"{{{_W}}}left", "0"))
+                ind.set(f"{{{_W}}}left", str(cur + left_margin_twips))
+            else:
+                new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
+                new_ind.set(f"{{{_W}}}left", str(left_margin_twips))
+        left_tc.append(heading_elem)
+
+        # Right cell: section body content
+        right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+        right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
+        right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
+        right_tcW.set(f"{{{_W}}}w", str(right_w))
+        right_tcW.set(f"{{{_W}}}type", "dxa")
+        _add_top_border(right_tcPr)
+
+        def _append(pm, combined_text=None):
+            """Build and append a para element with normalised indent."""
+            src = pm.with_text(combined_text) if combined_text else pm
+            p_elem = build_para_element(src, doc_part=doc_part)
+            _shift_para_indent(p_elem, sec_min_ind)
+            right_tc.append(p_elem)
+
+        if section.semantic_type == "experience" and section.roles:
+            _has_orphan = any(bp.semantic == "role_header" for bp in section.body_paras)
+            if _has_orphan:
+                for bp in section.body_paras:
+                    if bp.semantic == "role_header":
+                        break
+                    if bp.text.strip():
+                        _append(bp)
+            for role in section.roles:
+                if role.header_extra and "|" not in role.header.text:
+                    _combined = role.header.text.strip() + " | " + " | ".join(
+                        he.text.strip() for he in role.header_extra if he.text.strip()
+                    )
+                    _append(role.header, _combined)
+                else:
+                    _append(role.header)
+                for pm in role.meta_lines:
+                    _append(pm)
+                for pm in role.bullets:
+                    _append(pm)
+        else:
+            for pm in section.body_paras:
+                _append(pm)
+
+        if not right_tc.findall(f"{{{_W}}}p"):
+            etree.SubElement(right_tc, f"{{{_W}}}p")
+
+    # Render header paras (name, title, license) as full-width above the table
+    header_elements = [build_para_element(pm, doc_part=doc_part) for pm in doc.header_paras]
+
+    if sectPr is not None:
+        for elem in header_elements:
+            sectPr.addprevious(elem)
+        sectPr.addprevious(tbl)
+    else:
+        for elem in header_elements:
+            body.append(elem)
+        body.append(tbl)
+
+
 def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> None:
     """Render a two-column PDF-sourced document as a borderless DOCX table.
 
@@ -2488,7 +2665,10 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         body = d.element.body
         sectPr = body.find(f"{{{_W}}}sectPr")
         _apply_pdf_page_geometry(sectPr, doc.layout)
-        _render_pdf_two_col(doc, body, sectPr, doc_part=d.part)
+        if doc.layout.section_row_table:
+            _render_pdf_section_row_table(doc, body, sectPr, doc_part=d.part)
+        else:
+            _render_pdf_two_col(doc, body, sectPr, doc_part=d.part)
         d.save(output_path)
         return
 
