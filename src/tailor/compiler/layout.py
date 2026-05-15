@@ -243,28 +243,15 @@ def compact_summary(body_lines: list[str], max_sentences: int = 3) -> list[str]:
 def compact_skills(
     body_lines: list[str],
     target_count: int,
-    max_chars_per_line: int | None = None,
 ) -> list[str]:
     """Reduce skills body lines to *target_count* non-empty lines.
 
     Drops trailing lines first (lowest-priority tail items).
     Returns *body_lines* unchanged when already within target.
-
-    When *max_chars_per_line* is given, also truncates each surviving
-    line to that length (at the last word boundary).  Used for narrow
-    containers where long wrapped lines expand the cell height.
     """
     non_empty = [l for l in body_lines if l.strip()]
     if len(non_empty) > target_count:
         non_empty = non_empty[:target_count]
-    if max_chars_per_line is not None:
-        capped = []
-        for line in non_empty:
-            if len(line) > max_chars_per_line:
-                cut = line.rfind(" ", 0, max_chars_per_line)
-                line = line[:cut] if cut > 0 else line[:max_chars_per_line]
-            capped.append(line)
-        return capped
     if len([l for l in body_lines if l.strip()]) <= target_count:
         return body_lines
     return non_empty
@@ -888,23 +875,11 @@ def apply_layout_fitting(
                     target = max(
                         len([l for l in llm_s.body_lines if l.strip()]), 1
                     )
-                # For narrow containers, also cap per-line character length to
-                # prevent long wrapped lines from expanding the cell height.
-                # Compute the cap as max(original average chars * 1.2, 60).
-                # This limits each skill line to ~20% above the original average
-                # length, preventing categorised comma-separated skill lists from
-                # wrapping many times in a narrow column (e.g. "DevOps &
-                # Infrastructure: CI/CD, IaC, ..." would wrap 10× in a 60pt column
-                # but the original had simple 40–80 char sentences).
-                _max_chars: int | None = None
-                if container.is_narrow and container.orig_para_count > 0:
-                    _avg_orig = container.orig_char_count / container.orig_para_count
-                    _max_chars = max(int(_avg_orig * 1.2), 60)
-                new_lines = compact_skills(llm_s.body_lines, target, _max_chars)
+                new_lines = compact_skills(llm_s.body_lines, target)
                 log.debug(
-                    "compact_skills: '%s' %d→%d lines (fit=%s, target=%d, max_chars=%s)",
+                    "compact_skills: '%s' %d→%d lines (fit=%s, target=%d)",
                     llm_s.heading, len(llm_s.body_lines), len(new_lines),
-                    fit.risk, target, _max_chars,
+                    fit.risk, target,
                 )
                 compacted.append(LlmSection(
                     heading=llm_s.heading,

@@ -509,6 +509,26 @@ def _set_para_text(p_elem, text: str) -> None:
         _set_run_text(all_runs[content_indices[0]], text)
         return
 
+    # Tab-column overflow guard: when a paragraph uses pure-tab separator runs
+    # (no <w:t>, only <w:tab/>) as column dividers and the new text is significantly
+    # longer than the original total, proportional distribution would cut words
+    # mid-column.  Put the full text in the first content run and clear the rest so
+    # it wraps within the first column rather than being sliced across columns.
+    # This applies to skills-grid rows when the LLM provides long categorised lines.
+    # It does NOT trigger for round-trip identical text (same length) or when the
+    # text is shorter — those cases use proportional distribution as before.
+    _pure_tab_idx: set[int] = {
+        i for i, r in enumerate(all_runs)
+        if not any((t.text or "") for t in r.findall(f"{{{_W}}}t"))
+        and r.findall(f"{{{_W}}}tab")
+    }
+    if _pure_tab_idx and len(text) > total_orig * 1.1:
+        _first_ci = content_indices[0]
+        _set_run_text(all_runs[_first_ci], text)
+        for ci in content_indices[1:]:
+            _set_run_text(all_runs[ci], "")
+        return
+
     # Distribute new text proportionally across content runs only.
     last_ci = content_indices[-1]
 
@@ -526,15 +546,19 @@ def _set_para_text(p_elem, text: str) -> None:
             assigned = end
         _set_run_text(r, portion)
 
-    # Strip any <w:tab/> elements left over in runs after text distribution.
+    # Strip <w:tab/> elements from runs that also carry text content.
     # Tab-column role headers and bullet paragraphs (e.g. \u25cf + <w:tab/> +
     # text) use tab stops for original alignment.  After setting new LLM text
-    # the alignment comes from the text itself (pipe separators or paragraph
-    # indent), so residual <w:tab/> elements only produce mid-word tab
-    # characters when the paragraph is read back.
+    # the alignment comes from the text itself, so residual <w:tab/> elements
+    # inside text-bearing runs produce mid-word tab characters when read back.
+    # Pure-tab separator runs (no <w:t> text) must be left intact so that
+    # contact-row paragraphs (email <tab> phone <tab> LinkedIn) keep their
+    # even distribution across tab stops.
     for r in all_runs:
-        for tab in list(r.findall(f"{{{_W}}}tab")):
-            r.remove(tab)
+        has_text_content = any((t.text or "") for t in r.findall(f"{{{_W}}}t"))
+        if has_text_content:
+            for tab in list(r.findall(f"{{{_W}}}tab")):
+                r.remove(tab)
 
 
 # ---------------------------------------------------------------------------
@@ -1561,6 +1585,64 @@ def _header_paras_have_blip_bg(doc, layout_blocks) -> bool:
     return False
 
 
+_SPACER_LINE_THRESHOLD = 500  # twips; spacer paras above this push content to column bottom
+
+
+def _collapse_oversized_spacer(elem) -> bool:
+    """Reduce extreme line-spacing on empty template spacer paragraphs.
+
+    Some templates use a paragraph with w:spacing w:line set to a very large
+    value (e.g. 2541 twips ≈ 127 pt) to push the next section (e.g. AFFILIATIONS)
+    to the bottom of the right column.  When the LLM-rendered content is shorter
+    than the original, this spacer creates a large blank gap.  Reduce it to a
+    minimal line height so AFFILIATIONS follows directly after CONTACT INFORMATION.
+
+    Returns True if the spacer was collapsed, False otherwise.
+    """
+    pPr = elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        return False
+    spacing = pPr.find(f"{{{_W}}}spacing")
+    if spacing is None:
+        return False
+    line_val = spacing.get(f"{{{_W}}}line")
+    if line_val is None:
+        return False
+    try:
+        line_int = int(line_val)
+    except ValueError:
+        return False
+    if line_int > _SPACER_LINE_THRESHOLD:
+        # Only collapse when the paragraph carries no text content
+        has_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
+        if not has_text:
+            spacing.set(f"{{{_W}}}before", "0")
+            spacing.set(f"{{{_W}}}after", "0")
+            spacing.set(f"{{{_W}}}line", "1")
+            spacing.set(f"{{{_W}}}lineRule", "exact")
+            return True
+    return False
+
+
+def _minimize_empty_para(elem) -> None:
+    """Reduce an empty spacer paragraph to near-zero height (before=0, after=0, line=1)."""
+    from lxml import etree as _etree
+    has_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
+    if has_text:
+        return
+    pPr = elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        pPr = _etree.SubElement(elem, f"{{{_W}}}pPr")
+        elem.insert(0, pPr)
+    spacing = pPr.find(f"{{{_W}}}spacing")
+    if spacing is None:
+        spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
+    spacing.set(f"{{{_W}}}before", "0")
+    spacing.set(f"{{{_W}}}after", "0")
+    spacing.set(f"{{{_W}}}line", "1")
+    spacing.set(f"{{{_W}}}lineRule", "exact")
+
+
 def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn):
     """Render one LayoutParagraphBlock → lxml element (None if empty)."""
     from lxml import etree
@@ -1575,6 +1657,7 @@ def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_i
         _strip_text_wrapping_breaks(elem)
         _set_para_text(elem, pm.text)
         _clear_sdt_placeholder(elem)
+    _collapse_oversized_spacer(elem)
     return elem
 
 
@@ -2180,6 +2263,7 @@ def _render_from_layout_blocks(
         None,
     )
     _compress_remaining: int = 0  # count of subsequent empty paras still to compress
+    _spacer_followup_remaining: int = 0  # minimize empty paras following an oversized spacer
 
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
@@ -2263,6 +2347,22 @@ def _render_from_layout_blocks(
                     if block.para_id:
                         _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)
                     # Structural/orphan paragraph — insert verbatim (original text kept)
+                _did_collapse = _collapse_oversized_spacer(elem)
+                if _did_collapse:
+                    # After collapsing a large spacer, also minimize subsequent
+                    # consecutive empty paragraphs (e.g. para_104-109 after para_102
+                    # in template 17) that together create the same blank gap.
+                    _spacer_followup_remaining = 20
+                elif _spacer_followup_remaining > 0:
+                    _has_xml_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
+                    _pm_text = (pm.text.strip() if pm else "")
+                    if not _pm_text and not _has_xml_text:
+                        _minimize_empty_para(elem)
+                        _spacer_followup_remaining -= 1
+                        _log.debug("SPACER_FOLLOWUP_MINIMIZED: para_id=%r", block.para_id)
+                    else:
+                        _spacer_followup_remaining = 0  # hit real content, stop
+
 
             # Post-summary spacer compression: once the summary body anchor para
             # has been rendered, compress the spacing of subsequent empty paras.
