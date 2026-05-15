@@ -390,11 +390,77 @@ def _update_experience_section(
                     "EXPERIENCE_ROLE_COUNT_MISMATCH: section=%r orig_roles=%d reparsed_roles=%d",
                     orig.title, len(orig.roles), len(reparsed),
                 )
+            # Reorder reparsed roles to match the template's role order by date.
+            # Template role.meta_lines may be empty (dates are in pre-role body_paras);
+            # extract dates from body_paras to build the template year sequence.
+            if len(reparsed) == len(orig.roles):
+                _yr_re = _YEAR_EXTRACT_RE
+                # For each template role, find its year from pre-role body_paras
+                # (body_paras before the role_header carry the date/company lines).
+                tmpl_body_years: list[int] = []
+                rh_positions = [
+                    i for i, p in enumerate(orig.body_paras)
+                    if p.semantic == "role_header"
+                ]
+                prev = 0
+                for rh_pos in rh_positions:
+                    seg_years = [
+                        int(m.group())
+                        for p in orig.body_paras[prev:rh_pos]
+                        for m in _yr_re.finditer(p.text)
+                    ]
+                    tmpl_body_years.append(min(seg_years) if seg_years else 9999)
+                    prev = rh_pos + 1
+                # Pad remaining roles with meta-line years (fallback)
+                while len(tmpl_body_years) < len(orig.roles):
+                    extra_texts = [m.text for m in orig.roles[len(tmpl_body_years)].meta_lines]
+                    extra_years = [int(m.group()) for t in extra_texts for m in _yr_re.finditer(t)]
+                    tmpl_body_years.append(min(extra_years) if extra_years else 9999)
+
+                # Build the enriched _reorder helper with body-derived years
+                if any(y != 9999 for y in tmpl_body_years):
+                    llm_years_ord = sorted(
+                        range(len(reparsed)),
+                        key=lambda j: _role_min_year(
+                            [str(reparsed[j].header)] + [str(m) for m in reparsed[j].meta_lines]
+                        ),
+                    )
+                    tmpl_order = sorted(range(len(orig.roles)), key=lambda i: tmpl_body_years[i])
+                    _reordered: list[None] = [None] * len(reparsed)  # type: ignore[assignment]
+                    for rank, tmpl_idx in enumerate(tmpl_order):
+                        if rank < len(llm_years_ord):
+                            _reordered[tmpl_idx] = reparsed[llm_years_ord[rank]]  # type: ignore[index]
+                    if None not in _reordered:
+                        reparsed = _reordered  # type: ignore[assignment]
+                        _log.debug(
+                            "REPARSED_ROLE_REORDER: using body_paras dates; "
+                            "tmpl_years=%s", tmpl_body_years,
+                        )
+
             updated_roles: list[RoleEntry] = []
+            _dash_company_re = re.compile(r'^(.+?)\s+[–—]\s+.+$')
             for o_role, r_role in zip(orig.roles, reparsed):
-                updated_roles.append(
-                    _update_role_bullets_only(o_role, r_role.bullets, layout_bound=layout_bound)
-                )
+                updated = _update_role_bullets_only(o_role, r_role.bullets, layout_bound=layout_bound)
+                # Inject company name from reparsed role header (em-dash format) when
+                # the template meta has a date line but no company name.  Roles whose
+                # meta is empty already render the company via pre-role orphan body_paras.
+                if o_role.meta_lines:
+                    _cm = _dash_company_re.match(str(r_role.header).strip())
+                    _company = _cm.group(1).strip() if _cm else None
+                    if _company and not any(
+                        _company.lower() in m.text.lower()
+                        for m in updated.meta_lines
+                    ):
+                        _arch = updated.meta_lines[-1] if updated.meta_lines else updated.header
+                        _company_pm = _arch.clone_as(_company, "role_meta")
+                        updated = RoleEntry(
+                            header=updated.header,
+                            header_extra=updated.header_extra,
+                            meta_lines=list(updated.meta_lines) + [_company_pm],
+                            bullets=updated.bullets,
+                            role_id=updated.role_id,
+                        )
+                updated_roles.append(updated)
             # Template roles with no LLM counterpart are kept verbatim
             for o_role in orig.roles[len(reparsed):]:
                 updated_roles.append(o_role)
