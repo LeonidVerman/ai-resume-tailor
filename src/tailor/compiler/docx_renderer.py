@@ -1616,10 +1616,31 @@ def _collapse_oversized_spacer(elem) -> bool:
         # Only collapse when the paragraph carries no text content
         has_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
         if not has_text:
-            spacing.set(f"{{{_W}}}line", "200")
+            spacing.set(f"{{{_W}}}before", "0")
+            spacing.set(f"{{{_W}}}after", "0")
+            spacing.set(f"{{{_W}}}line", "1")
             spacing.set(f"{{{_W}}}lineRule", "exact")
             return True
     return False
+
+
+def _minimize_empty_para(elem) -> None:
+    """Reduce an empty spacer paragraph to near-zero height (before=0, after=0, line=1)."""
+    from lxml import etree as _etree
+    has_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
+    if has_text:
+        return
+    pPr = elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        pPr = _etree.SubElement(elem, f"{{{_W}}}pPr")
+        elem.insert(0, pPr)
+    spacing = pPr.find(f"{{{_W}}}spacing")
+    if spacing is None:
+        spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
+    spacing.set(f"{{{_W}}}before", "0")
+    spacing.set(f"{{{_W}}}after", "0")
+    spacing.set(f"{{{_W}}}line", "1")
+    spacing.set(f"{{{_W}}}lineRule", "exact")
 
 
 def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn):
@@ -2242,7 +2263,8 @@ def _render_from_layout_blocks(
         None,
     )
     _compress_remaining: int = 0  # count of subsequent empty paras still to compress
-    _spacer_followup_remaining: int = 0  # collapse empty paras following an oversized spacer
+    _spacer_followup_remaining: int = 0  # minimize empty paras following an oversized spacer
+    _col_break_followup_remaining: int = 0  # minimize empty paras following a column break
 
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
@@ -2328,7 +2350,7 @@ def _render_from_layout_blocks(
                     # Structural/orphan paragraph — insert verbatim (original text kept)
                 _did_collapse = _collapse_oversized_spacer(elem)
                 if _did_collapse:
-                    # After collapsing a large spacer, also zero out subsequent
+                    # After collapsing a large spacer, also minimize subsequent
                     # consecutive empty paragraphs (e.g. para_104-109 after para_102
                     # in template 17) that together create the same blank gap.
                     _spacer_followup_remaining = 20
@@ -2336,11 +2358,30 @@ def _render_from_layout_blocks(
                     _has_xml_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
                     _pm_text = (pm.text.strip() if pm else "")
                     if not _pm_text and not _has_xml_text:
-                        _zero_para_spacing(elem)
+                        _minimize_empty_para(elem)
                         _spacer_followup_remaining -= 1
-                        _log.debug("SPACER_FOLLOWUP_COMPRESSED: para_id=%r", block.para_id)
+                        _log.debug("SPACER_FOLLOWUP_MINIMIZED: para_id=%r", block.para_id)
                     else:
                         _spacer_followup_remaining = 0  # hit real content, stop
+
+                # After a column break, minimize the cluster of empty paragraphs
+                # that templates use to pad the start of the new column (e.g. the
+                # 8 empty para_61-68 before PROFESSIONAL OVERVIEW in template 17).
+                _has_col_break = any(
+                    br.get(f"{{{_W}}}type") == "column"
+                    for br in elem.iter(f"{{{_W}}}br")
+                )
+                if _has_col_break:
+                    _col_break_followup_remaining = 20
+                elif _col_break_followup_remaining > 0:
+                    _has_xml_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
+                    _pm_text = (pm.text.strip() if pm else "")
+                    if not _pm_text and not _has_xml_text:
+                        _minimize_empty_para(elem)
+                        _col_break_followup_remaining -= 1
+                        _log.debug("COL_BREAK_FOLLOWUP_MINIMIZED: para_id=%r", block.para_id)
+                    else:
+                        _col_break_followup_remaining = 0  # hit real content, stop
 
             # Post-summary spacer compression: once the summary body anchor para
             # has been rendered, compress the spacing of subsequent empty paras.
