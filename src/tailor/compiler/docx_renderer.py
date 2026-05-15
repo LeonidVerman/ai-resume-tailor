@@ -1588,7 +1588,7 @@ def _header_paras_have_blip_bg(doc, layout_blocks) -> bool:
 _SPACER_LINE_THRESHOLD = 500  # twips; spacer paras above this push content to column bottom
 
 
-def _collapse_oversized_spacer(elem) -> None:
+def _collapse_oversized_spacer(elem) -> bool:
     """Reduce extreme line-spacing on empty template spacer paragraphs.
 
     Some templates use a paragraph with w:spacing w:line set to a very large
@@ -1596,26 +1596,30 @@ def _collapse_oversized_spacer(elem) -> None:
     to the bottom of the right column.  When the LLM-rendered content is shorter
     than the original, this spacer creates a large blank gap.  Reduce it to a
     minimal line height so AFFILIATIONS follows directly after CONTACT INFORMATION.
+
+    Returns True if the spacer was collapsed, False otherwise.
     """
     pPr = elem.find(f"{{{_W}}}pPr")
     if pPr is None:
-        return
+        return False
     spacing = pPr.find(f"{{{_W}}}spacing")
     if spacing is None:
-        return
+        return False
     line_val = spacing.get(f"{{{_W}}}line")
     if line_val is None:
-        return
+        return False
     try:
         line_int = int(line_val)
     except ValueError:
-        return
+        return False
     if line_int > _SPACER_LINE_THRESHOLD:
         # Only collapse when the paragraph carries no text content
         has_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
         if not has_text:
             spacing.set(f"{{{_W}}}line", "200")
             spacing.set(f"{{{_W}}}lineRule", "exact")
+            return True
+    return False
 
 
 def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn):
@@ -2238,6 +2242,7 @@ def _render_from_layout_blocks(
         None,
     )
     _compress_remaining: int = 0  # count of subsequent empty paras still to compress
+    _spacer_followup_remaining: int = 0  # collapse empty paras following an oversized spacer
 
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
@@ -2321,7 +2326,21 @@ def _render_from_layout_blocks(
                     if block.para_id:
                         _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)
                     # Structural/orphan paragraph — insert verbatim (original text kept)
-                _collapse_oversized_spacer(elem)
+                _did_collapse = _collapse_oversized_spacer(elem)
+                if _did_collapse:
+                    # After collapsing a large spacer, also zero out subsequent
+                    # consecutive empty paragraphs (e.g. para_104-109 after para_102
+                    # in template 17) that together create the same blank gap.
+                    _spacer_followup_remaining = 20
+                elif _spacer_followup_remaining > 0:
+                    _has_xml_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
+                    _pm_text = (pm.text.strip() if pm else "")
+                    if not _pm_text and not _has_xml_text:
+                        _zero_para_spacing(elem)
+                        _spacer_followup_remaining -= 1
+                        _log.debug("SPACER_FOLLOWUP_COMPRESSED: para_id=%r", block.para_id)
+                    else:
+                        _spacer_followup_remaining = 0  # hit real content, stop
 
             # Post-summary spacer compression: once the summary body anchor para
             # has been rendered, compress the spacing of subsequent empty paras.
