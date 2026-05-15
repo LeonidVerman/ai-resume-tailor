@@ -308,6 +308,72 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     )
 
 
+_YEAR_EXTRACT_RE = re.compile(r"\b(19|20)\d{2}\b")
+
+
+def _role_min_year(texts: "list[str]") -> int:
+    """Extract the earliest 4-digit year from a list of text strings.
+
+    Returns 9999 (sentinel for 'no year found') so roles without dates sort
+    to the end regardless of template/LLM order.
+    """
+    years = [int(m.group()) for t in texts for m in _YEAR_EXTRACT_RE.finditer(t)]
+    return min(years) if years else 9999
+
+
+def _reorder_llm_roles_by_date(
+    orig_roles: "list[RoleEntry]",
+    llm_roles: "list[LlmRole]",
+) -> "list[LlmRole]":
+    """Reorder LLM roles so their date order matches the template's date order.
+
+    Handles the common case where the LLM returns roles in reverse-chronological
+    order (newest first) while the source template uses chronological order
+    (oldest first), or vice versa.  Roles are matched by sorting both lists by
+    start year and pairing them positionally; the result is then placed back into
+    the template's original index positions.
+
+    If role counts differ, dates cannot be extracted, or matching is ambiguous,
+    the original LLM order is returned unchanged.
+    """
+    if len(orig_roles) != len(llm_roles) or len(orig_roles) < 2:
+        return llm_roles
+
+    def _tmpl_year(role: "RoleEntry") -> int:
+        texts = [role.header.text] + [m.text for m in role.meta_lines]
+        return _role_min_year(texts)
+
+    def _llm_year(role: "LlmRole") -> int:
+        texts = [str(role.header)] + [str(m) for m in role.meta_lines]
+        return _role_min_year(texts)
+
+    tmpl_years = [_tmpl_year(r) for r in orig_roles]
+    llm_years = [_llm_year(r) for r in llm_roles]
+
+    # If all years are unknown, fall back to positional matching
+    if all(y == 9999 for y in tmpl_years) or all(y == 9999 for y in llm_years):
+        return llm_roles
+
+    # Sort both by start year; pair k-th template (by year) with k-th LLM (by year)
+    tmpl_order = sorted(range(len(orig_roles)), key=lambda i: tmpl_years[i])
+    llm_by_year = sorted(range(len(llm_roles)), key=lambda j: llm_years[j])
+
+    reordered = [None] * len(llm_roles)
+    for rank, tmpl_idx in enumerate(tmpl_order):
+        if rank < len(llm_by_year):
+            reordered[tmpl_idx] = llm_roles[llm_by_year[rank]]
+
+    if any(r is None for r in reordered):
+        return llm_roles  # matching failed — fall back to original order
+
+    _log.debug(
+        "ROLE_DATE_REORDER: section reordered LLM roles by year; "
+        "tmpl_years=%s llm_years=%s",
+        tmpl_years, llm_years,
+    )
+    return reordered  # type: ignore[return-value]
+
+
 def _update_experience_section(
     orig: ResumeSection,
     llm: LlmSection,
@@ -373,12 +439,17 @@ def _update_experience_section(
         )
 
     # Normal path: pipe-separated LLM roles matched by position.
+    # Reorder LLM roles to match the template's role order by date so that
+    # reversed-chronological LLM output (newest first) maps correctly to
+    # chronological template layouts (oldest first), and vice versa.
+    reordered_llm_roles = _reorder_llm_roles_by_date(orig.roles, llm.roles)
+
     # In layout-bound mode:
     #   - surplus LLM roles are dropped (no unbound clones)
     #   - unmatched original roles are PRESERVED verbatim (Invariant 3: cardinality)
     updated_roles = [
         _update_role(o, l, layout_bound=layout_bound)
-        for o, l in zip(orig.roles, llm.roles)
+        for o, l in zip(orig.roles, reordered_llm_roles)
     ]
 
     if len(llm.roles) > len(orig.roles) and orig.roles and not layout_bound:

@@ -1632,6 +1632,16 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                         and bool(_txt_init) and _txt_init[0].isupper()
                     )
                 )
+                # Guard: if the very next paragraph is already a role_header,
+                # this paragraph is likely the company / affiliation name that
+                # precedes the role title (e.g. "Ginyard International Co."
+                # before "RESPONSIBLE FOR NETWORK AND SOFTWARE").  Treating it as
+                # a role title would create a spurious empty role.  Buffer it in
+                # pre_header_meta instead so it becomes meta for the real role.
+                _next_is_role_header = _peek(idx + 1) == "role_header"
+                if _can_promote and _next_is_role_header:
+                    _can_promote = False
+
                 if _can_promote:
                     # Separate-line format: this paragraph is the role title.
                     header = pm
@@ -1641,6 +1651,9 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                         pre_header_meta.clear()
                         used_pattern_b = True
                     state = "header"
+                else:
+                    # Not promotable — buffer as pre-role meta so it is not lost.
+                    pre_header_meta.append(pm)
             elif s == "role_meta" and not has_pipe_role_headers:
                 # Pattern B: date appears before the title — buffer it.
                 pre_header_meta.append(pm)
@@ -1700,6 +1713,14 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 if used_pattern_b:
                     # Pattern B continuation: this date starts the next role.
                     _start_pattern_b(pm)
+                elif re.match(
+                    r"^\(\d{4}[-–—](?:\d{4}|now|present|current|today)\)$",
+                    pm.text.strip(), re.IGNORECASE
+                ) or re.match(r"^\d{4}[-–—](?:\d{4}|now|present|current|today)$",
+                    pm.text.strip(), re.IGNORECASE):
+                    # Pure year-range date (e.g. "(2014-Now)", "2010-2013") appearing
+                    # after meta content: this is the next role's date, not a continuation.
+                    _start_pattern_b(pm)
                 else:
                     meta.append(pm)
             elif s == "bullet":
@@ -1744,6 +1765,14 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             elif s == "role_meta":
                 if used_pattern_b:
                     # Pattern B continuation from bullets state.
+                    _start_pattern_b(pm)
+                elif re.match(
+                    r"^\(\d{4}[-–—](?:\d{4}|now|present|current|today)\)$",
+                    pm.text.strip(), re.IGNORECASE
+                ) or re.match(r"^\d{4}[-–—](?:\d{4}|now|present|current|today)$",
+                    pm.text.strip(), re.IGNORECASE):
+                    # Pure year-range date (e.g. "(2014-Now)", "2010-2013") appearing
+                    # after bullets: this is the next role's date.  Start a new role.
                     _start_pattern_b(pm)
                 else:
                     # role_meta can appear mid-bullet-list when a line contains
@@ -2228,11 +2257,19 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
             # separate-line format resumes there is no role_header in
             # body_paras; skipping the orphan loop avoids duplicating all
             # body content that was already consumed into section.roles.
+            # Paras already absorbed into a role's meta_lines (via pre_header_meta
+            # buffering in _group_roles) are excluded by object-identity check to
+            # prevent them from appearing twice in all_paras.
             if any(bp.semantic == "role_header" for bp in section.body_paras):
+                _consumed_meta_ids = {
+                    id(pm)
+                    for role in section.roles
+                    for pm in role.meta_lines
+                }
                 for bp in section.body_paras:
                     if bp.semantic == "role_header":
                         break
-                    if bp.text.strip():
+                    if bp.text.strip() and id(bp) not in _consumed_meta_ids:
                         all_paras.append(bp)
             for role in section.roles:
                 if role.header_extra and "|" not in role.header.text:
