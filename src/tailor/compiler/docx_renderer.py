@@ -1585,6 +1585,39 @@ def _header_paras_have_blip_bg(doc, layout_blocks) -> bool:
     return False
 
 
+_SPACER_LINE_THRESHOLD = 500  # twips; spacer paras above this push content to column bottom
+
+
+def _collapse_oversized_spacer(elem) -> None:
+    """Reduce extreme line-spacing on empty template spacer paragraphs.
+
+    Some templates use a paragraph with w:spacing w:line set to a very large
+    value (e.g. 2541 twips ≈ 127 pt) to push the next section (e.g. AFFILIATIONS)
+    to the bottom of the right column.  When the LLM-rendered content is shorter
+    than the original, this spacer creates a large blank gap.  Reduce it to a
+    minimal line height so AFFILIATIONS follows directly after CONTACT INFORMATION.
+    """
+    pPr = elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        return
+    spacing = pPr.find(f"{{{_W}}}spacing")
+    if spacing is None:
+        return
+    line_val = spacing.get(f"{{{_W}}}line")
+    if line_val is None:
+        return
+    try:
+        line_int = int(line_val)
+    except ValueError:
+        return
+    if line_int > _SPACER_LINE_THRESHOLD:
+        # Only collapse when the paragraph carries no text content
+        has_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
+        if not has_text:
+            spacing.set(f"{{{_W}}}line", "200")
+            spacing.set(f"{{{_W}}}lineRule", "exact")
+
+
 def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn):
     """Render one LayoutParagraphBlock → lxml element (None if empty)."""
     from lxml import etree
@@ -1599,6 +1632,7 @@ def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_i
         _strip_text_wrapping_breaks(elem)
         _set_para_text(elem, pm.text)
         _clear_sdt_placeholder(elem)
+    _collapse_oversized_spacer(elem)
     return elem
 
 
