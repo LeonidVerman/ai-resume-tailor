@@ -500,8 +500,8 @@ def compile_resume_from_pdf(
     ):
         from tailor.compiler.models import ParaModel as _ParaModel  # local import
 
-        def _pdf_col_y_key(pm: "_ParaModel") -> "tuple[int, float]":
-            pp = pm.paragraph_profile
+        def _sec_col_y_key(sec) -> "tuple[int, float]":
+            pp = sec.heading.paragraph_profile
             col_order = (
                 1 if (pp and pp.column_id == "left")
                 else 2 if (pp and pp.column_id == "right")
@@ -509,7 +509,21 @@ def compile_resume_from_pdf(
             )
             return (col_order, pp.y_top_pt if pp else 0.0)
 
-        updated.all_paras.sort(key=_pdf_col_y_key)
+        updated.sections.sort(key=_sec_col_y_key)
+
+        # Rebuild all_paras from the Y-sorted sections, preserving within-section
+        # para order.  A flat all_paras sort by y_top_pt would reorder bullets
+        # within a role because clone bullets inherit the archetype's Y position.
+        new_all: "list[_ParaModel]" = list(updated.header_paras)
+        for sec in updated.sections:
+            new_all.append(sec.heading)
+            new_all.extend(sec.body_paras)
+            for role in sec.roles:
+                new_all.append(role.header)
+                new_all.extend(role.header_extra)
+                new_all.extend(role.meta_lines)
+                new_all.extend(role.bullets)
+        updated.all_paras = new_all
 
     # Clear PDF-extracted text colors from all content paragraphs before rendering.
     # This prevents colors from the original PDF (hyperlink blues, author styling)
