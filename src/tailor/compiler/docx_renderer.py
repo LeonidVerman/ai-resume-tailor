@@ -509,6 +509,26 @@ def _set_para_text(p_elem, text: str) -> None:
         _set_run_text(all_runs[content_indices[0]], text)
         return
 
+    # Tab-column overflow guard: when a paragraph uses pure-tab separator runs
+    # (no <w:t>, only <w:tab/>) as column dividers and the new text is significantly
+    # longer than the original total, proportional distribution would cut words
+    # mid-column.  Put the full text in the first content run and clear the rest so
+    # it wraps within the first column rather than being sliced across columns.
+    # This applies to skills-grid rows when the LLM provides long categorised lines.
+    # It does NOT trigger for round-trip identical text (same length) or when the
+    # text is shorter — those cases use proportional distribution as before.
+    _pure_tab_idx: set[int] = {
+        i for i, r in enumerate(all_runs)
+        if not any((t.text or "") for t in r.findall(f"{{{_W}}}t"))
+        and r.findall(f"{{{_W}}}tab")
+    }
+    if _pure_tab_idx and len(text) > total_orig * 1.1:
+        _first_ci = content_indices[0]
+        _set_run_text(all_runs[_first_ci], text)
+        for ci in content_indices[1:]:
+            _set_run_text(all_runs[ci], "")
+        return
+
     # Distribute new text proportionally across content runs only.
     last_ci = content_indices[-1]
 
@@ -526,15 +546,19 @@ def _set_para_text(p_elem, text: str) -> None:
             assigned = end
         _set_run_text(r, portion)
 
-    # Strip any <w:tab/> elements left over in runs after text distribution.
+    # Strip <w:tab/> elements from runs that also carry text content.
     # Tab-column role headers and bullet paragraphs (e.g. \u25cf + <w:tab/> +
     # text) use tab stops for original alignment.  After setting new LLM text
-    # the alignment comes from the text itself (pipe separators or paragraph
-    # indent), so residual <w:tab/> elements only produce mid-word tab
-    # characters when the paragraph is read back.
+    # the alignment comes from the text itself, so residual <w:tab/> elements
+    # inside text-bearing runs produce mid-word tab characters when read back.
+    # Pure-tab separator runs (no <w:t> text) must be left intact so that
+    # contact-row paragraphs (email <tab> phone <tab> LinkedIn) keep their
+    # even distribution across tab stops.
     for r in all_runs:
-        for tab in list(r.findall(f"{{{_W}}}tab")):
-            r.remove(tab)
+        has_text_content = any((t.text or "") for t in r.findall(f"{{{_W}}}t"))
+        if has_text_content:
+            for tab in list(r.findall(f"{{{_W}}}tab")):
+                r.remove(tab)
 
 
 # ---------------------------------------------------------------------------
