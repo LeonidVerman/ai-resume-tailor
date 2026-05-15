@@ -2264,7 +2264,6 @@ def _render_from_layout_blocks(
     )
     _compress_remaining: int = 0  # count of subsequent empty paras still to compress
     _spacer_followup_remaining: int = 0  # minimize empty paras following an oversized spacer
-    _col_break_followup_remaining: int = 0  # minimize empty paras following a column break
 
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
@@ -2364,24 +2363,6 @@ def _render_from_layout_blocks(
                     else:
                         _spacer_followup_remaining = 0  # hit real content, stop
 
-                # After a column break, minimize the cluster of empty paragraphs
-                # that templates use to pad the start of the new column (e.g. the
-                # 8 empty para_61-68 before PROFESSIONAL OVERVIEW in template 17).
-                _has_col_break = any(
-                    br.get(f"{{{_W}}}type") == "column"
-                    for br in elem.iter(f"{{{_W}}}br")
-                )
-                if _has_col_break:
-                    _col_break_followup_remaining = 20
-                elif _col_break_followup_remaining > 0:
-                    _has_xml_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
-                    _pm_text = (pm.text.strip() if pm else "")
-                    if not _pm_text and not _has_xml_text:
-                        _minimize_empty_para(elem)
-                        _col_break_followup_remaining -= 1
-                        _log.debug("COL_BREAK_FOLLOWUP_MINIMIZED: para_id=%r", block.para_id)
-                    else:
-                        _col_break_followup_remaining = 0  # hit real content, stop
 
             # Post-summary spacer compression: once the summary body anchor para
             # has been rendered, compress the spacing of subsequent empty paras.
