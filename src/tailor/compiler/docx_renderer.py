@@ -2321,6 +2321,7 @@ def _render_from_layout_blocks(
                     if block.para_id:
                         _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)
                     # Structural/orphan paragraph — insert verbatim (original text kept)
+                _collapse_oversized_spacer(elem)
 
             # Post-summary spacer compression: once the summary body anchor para
             # has been rendered, compress the spacing of subsequent empty paras.
