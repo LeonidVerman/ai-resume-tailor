@@ -511,19 +511,25 @@ def compile_resume_from_pdf(
 
         updated.sections.sort(key=_sec_col_y_key)
 
-        # Rebuild all_paras from the Y-sorted sections, preserving within-section
-        # para order.  A flat all_paras sort by y_top_pt would reorder bullets
-        # within a role because clone bullets inherit the archetype's Y position.
-        new_all: "list[_ParaModel]" = list(updated.header_paras)
-        for sec in updated.sections:
-            new_all.append(sec.heading)
-            new_all.extend(sec.body_paras)
+        # Re-order all_paras to reflect the new section order while preserving
+        # each para's existing position within its section.  Rebuilding from
+        # scratch would add body_paras that apply_tailored excluded, causing
+        # duplicate content.  Instead we map each existing para to its section
+        # index (post-sort) and use its original all_paras position as tiebreaker.
+        sec_order: "dict[int, int]" = {}
+        for si, sec in enumerate(updated.sections):
+            sec_order[id(sec.heading)] = si
+            for pm in sec.body_paras:
+                sec_order[id(pm)] = si
             for role in sec.roles:
-                new_all.append(role.header)
-                new_all.extend(role.header_extra)
-                new_all.extend(role.meta_lines)
-                new_all.extend(role.bullets)
-        updated.all_paras = new_all
+                for pm in [role.header, *role.header_extra, *role.meta_lines, *role.bullets]:
+                    sec_order[id(pm)] = si
+
+        orig_pos = {id(pm): i for i, pm in enumerate(updated.all_paras)}
+
+        updated.all_paras.sort(
+            key=lambda pm: (sec_order.get(id(pm), -1), orig_pos.get(id(pm), 0))
+        )
 
     # Clear PDF-extracted text colors from all content paragraphs before rendering.
     # This prevents colors from the original PDF (hyperlink blues, author styling)
