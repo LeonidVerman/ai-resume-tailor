@@ -487,6 +487,30 @@ def compile_resume_from_pdf(
     llm_sections = parse_llm_output(llm_text)
     llm_sections = apply_layout_fitting(template_ir, llm_sections)
     updated = apply_tailored(template_ir, llm_sections, classification=classification)
+
+    # Re-sort all_paras by (column, y_top_pt) for PDF two-column documents.
+    # apply_tailored's extras path reorders sections to follow LLM output order,
+    # which may displace verbatim "other" sections from their original visual Y
+    # position.  Re-sorting by Y restores the template's reading order within
+    # each column so the renderer places each section at the correct position.
+    if (
+        updated.source_kind == "pdf"
+        and updated.layout.column_split_x is not None
+        and not updated.layout.section_row_table
+    ):
+        from tailor.compiler.models import ParaModel as _ParaModel  # local import
+
+        def _pdf_col_y_key(pm: "_ParaModel") -> "tuple[int, float]":
+            pp = pm.paragraph_profile
+            col_order = (
+                1 if (pp and pp.column_id == "left")
+                else 2 if (pp and pp.column_id == "right")
+                else 0
+            )
+            return (col_order, pp.y_top_pt if pp else 0.0)
+
+        updated.all_paras.sort(key=_pdf_col_y_key)
+
     # Clear PDF-extracted text colors from all content paragraphs before rendering.
     # This prevents colors from the original PDF (hyperlink blues, author styling)
     # from bleeding onto LLM-generated replacement content via clone_as archetypes.

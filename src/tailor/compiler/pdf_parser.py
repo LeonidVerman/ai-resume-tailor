@@ -920,6 +920,12 @@ def _extract_paragraphs(
         # When right-column content IS present near the top (sidebar starts at
         # page top with no banner) this is skipped and the normal x-width
         # heuristic applies.
+        #
+        # Extended detection: some templates have a full-width banner whose text
+        # x1 < split_x+20 (e.g. "Lydia Mary" x1=199 on a split_x=276 page),
+        # so the cross-column x1 heuristic cannot detect it.  If the right column
+        # starts meaningfully below the left column's first block (gap > 50 pt),
+        # use the first right-column block's Y as the merged-header boundary.
         _header_band_y = page.rect.height * 0.22 if split_x is not None else 0.0
         _has_right_in_header = split_x is not None and any(
             b.get("type") == 0
@@ -927,8 +933,42 @@ def _extract_paragraphs(
             and b["bbox"][1] < _header_band_y
             for b in blocks
         )
+
+        _first_right_y = (
+            min(
+                (b["bbox"][1] for b in blocks
+                 if b.get("type") == 0 and b["bbox"][0] >= split_x),
+                default=_header_band_y,
+            )
+            if split_x is not None
+            else _header_band_y
+        )
+        # Detect the "narrow-banner" case: right column starts meaningfully below
+        # the topmost left-column block (gap > 50 pt) and is still within the 22%
+        # zone (so the normal _has_right_in_header guard fires).
+        # Minimum gap (pt) required between the left-column header content and
+        # the first right-column block.  This prevents left-column content that
+        # starts at nearly the same Y as the right column (e.g. "About Me" at
+        # y=135.5 vs "Experiences" at y=135.6) from being treated as a merged
+        # header element.
+        _MIN_HEADER_GAP = 15
+
+        _has_left_above_right = (
+            split_x is not None
+            and _has_right_in_header          # right IS in the top zone
+            and _first_right_y > 50           # right col starts meaningfully into page
+            and any(
+                b.get("type") == 0
+                and b["bbox"][0] < split_x    # left-area block
+                and b["bbox"][1] < _first_right_y - _MIN_HEADER_GAP  # clearly above
+                for b in blocks
+            )
+        )
+
         merged_header_band = (
-            _header_band_y if split_x is not None and not _has_right_in_header else 0.0
+            _first_right_y - _MIN_HEADER_GAP if _has_left_above_right
+            else _header_band_y if split_x is not None and not _has_right_in_header
+            else 0.0
         )
 
         # Reset inter-page spacing
@@ -1841,6 +1881,30 @@ def _group_sections(
                 _current_in_sections = True
                 _last_empty_exp = None
                 _last_empty_exp_insert_idx = None
+                continue
+
+            # Extended absorb: for active experience or education sections,
+            # non-known section_headings are role titles / institution names —
+            # absorb them as role_headers rather than creating new sections.
+            # Consecutive role_headers (multi-line title like "RESPONSIBLE FOR
+            # NETWORK / AND SOFTWARE") are merged into the previous one.
+            if (
+                current is not None
+                and current.semantic_type in ("experience", "education")
+                and _htext not in _ALL_HEADING_NAMES_NOSPACE
+            ):
+                if (
+                    current.body_paras
+                    and current.body_paras[-1].semantic == "role_header"
+                ):
+                    # Continuation line of a wrapped role/institution title — merge
+                    last_rh = current.body_paras[-1]
+                    current.body_paras[-1] = last_rh.with_text(
+                        last_rh.text + " " + pm.text.strip()
+                    )
+                else:
+                    pm.semantic = "role_header"
+                    current.body_paras.append(pm)
                 continue
 
             found_section = True
