@@ -697,6 +697,8 @@ _SOCIAL_BARE_RE = re.compile(
     r"^(?:linkedin|github|twitter|instagram|portfolio|website|url)\.?$",
     re.IGNORECASE,
 )
+# Standalone URL lines that the LLM extracts from contact info into the skills section.
+_URL_LINE_RE = re.compile(r"^https?://", re.IGNORECASE)
 
 
 def _sanitize_skills_lines(lines: list[str]) -> list[str]:
@@ -744,6 +746,9 @@ def _sanitize_skills_lines(lines: list[str]) -> list[str]:
             continue
         if _SOCIAL_BARE_RE.match(stripped):
             _log.debug("skills sanitize: dropping bare social name %r", stripped[:80])
+            continue
+        if _URL_LINE_RE.match(stripped):
+            _log.debug("skills sanitize: dropping URL line %r", stripped[:80])
             continue
         # Drop bare single-word/phrase category labels that are already covered by
         # a colon-labeled line (e.g. bare "Communication" when "Communication: ..."
@@ -1606,20 +1611,6 @@ def _inject_skills_into_header(
         n = len(orig_skill_paras)
         packed = "; ".join(llm_lines[n - 1:])
         llm_lines = list(llm_lines[: n - 1]) + [packed]
-
-    # In layout-bound mode: cap each skill line to prevent excessive column
-    # expansion when the original header skill slots are narrow placeholders
-    # (e.g. 'Python', 6 chars).  The cap is max(orig_len * 3, 60) so that
-    # the injected text stays within a reasonable proportion of the original
-    # slot width and does not cause multi-line wrapping that crowds adjacent
-    # header regions.
-    if layout_bound:
-        for j, line in enumerate(llm_lines):
-            orig_len = len(orig_skill_paras[min(j, len(orig_skill_paras) - 1)].text.strip())
-            max_chars = max(orig_len * 3, 60)
-            if len(line) > max_chars:
-                cut = line.rfind(" ", 0, max_chars)
-                llm_lines[j] = line[:cut] if cut > 0 else line[:max_chars]
 
     arch = _clear_left_indent(orig_skill_paras[0])
     new_skill_paras: list[ParaModel] = []
