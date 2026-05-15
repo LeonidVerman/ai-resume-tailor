@@ -107,6 +107,9 @@ _TWO_COLUMN_PDFS: frozenset[str] = frozenset({
     # causing text-position mismatches in the roundtrip text comparison.
     "31-Software-Engineer-Editable-Resume-Template-Download-in-docx-7.pdf",
     "9-Template4.pdf",
+    # Section-row table layout: heading/body pairs rendered into per-section
+    # table rows; DOCX cell traversal order differs from source PDF reading order.
+    "20-Software-Engineer-Editable-Resume-Template-Download-in-docx-5.pdf",
 })
 
 # PDFs with letter-spaced headings that PyMuPDF reads as spaced characters

@@ -45,6 +45,9 @@ class ParagraphProfile:
     # Set by pdf_parser for role headers with non-uniform bold across spans.
     # Not serialised to JSON (runtime-only, like inline_image_bytes).
     text_runs: list | None = None
+    # Absolute Y position of the block top in PDF points (runtime-only; not serialised).
+    # Set by _extract_paragraphs for section-label-column pairing in parse_pdf.
+    y_top_pt: float = 0.0
 
     def to_dict(self) -> dict:
         return {
@@ -289,6 +292,7 @@ class LayoutProfile:
     right_col_width_twips: int | None = None # right column width in twips
     left_col_bg_color: str | None = None     # hex RRGGBB fill for left column
     right_col_bg_color: str | None = None    # hex RRGGBB fill for right column
+    section_row_table: bool = False          # True when left column is section-label only (one row per section)
 
     def to_dict(self) -> dict:
         return {
@@ -305,6 +309,7 @@ class LayoutProfile:
             "right_col_width_twips": self.right_col_width_twips,
             "left_col_bg_color": self.left_col_bg_color,
             "right_col_bg_color": self.right_col_bg_color,
+            "section_row_table": self.section_row_table,
         }
 
     @classmethod
@@ -323,6 +328,7 @@ class LayoutProfile:
             right_col_width_twips=d.get("right_col_width_twips"),
             left_col_bg_color=d.get("left_col_bg_color"),
             right_col_bg_color=d.get("right_col_bg_color"),
+            section_row_table=bool(d.get("section_row_table", False)),
         )
 
 
