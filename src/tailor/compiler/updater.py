@@ -308,6 +308,72 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     )
 
 
+_YEAR_EXTRACT_RE = re.compile(r"\b(19|20)\d{2}\b")
+
+
+def _role_min_year(texts: "list[str]") -> int:
+    """Extract the earliest 4-digit year from a list of text strings.
+
+    Returns 9999 (sentinel for 'no year found') so roles without dates sort
+    to the end regardless of template/LLM order.
+    """
+    years = [int(m.group()) for t in texts for m in _YEAR_EXTRACT_RE.finditer(t)]
+    return min(years) if years else 9999
+
+
+def _reorder_llm_roles_by_date(
+    orig_roles: "list[RoleEntry]",
+    llm_roles: "list[LlmRole]",
+) -> "list[LlmRole]":
+    """Reorder LLM roles so their date order matches the template's date order.
+
+    Handles the common case where the LLM returns roles in reverse-chronological
+    order (newest first) while the source template uses chronological order
+    (oldest first), or vice versa.  Roles are matched by sorting both lists by
+    start year and pairing them positionally; the result is then placed back into
+    the template's original index positions.
+
+    If role counts differ, dates cannot be extracted, or matching is ambiguous,
+    the original LLM order is returned unchanged.
+    """
+    if len(orig_roles) != len(llm_roles) or len(orig_roles) < 2:
+        return llm_roles
+
+    def _tmpl_year(role: "RoleEntry") -> int:
+        texts = [role.header.text] + [m.text for m in role.meta_lines]
+        return _role_min_year(texts)
+
+    def _llm_year(role: "LlmRole") -> int:
+        texts = [str(role.header)] + [str(m) for m in role.meta_lines]
+        return _role_min_year(texts)
+
+    tmpl_years = [_tmpl_year(r) for r in orig_roles]
+    llm_years = [_llm_year(r) for r in llm_roles]
+
+    # If all years are unknown, fall back to positional matching
+    if all(y == 9999 for y in tmpl_years) or all(y == 9999 for y in llm_years):
+        return llm_roles
+
+    # Sort both by start year; pair k-th template (by year) with k-th LLM (by year)
+    tmpl_order = sorted(range(len(orig_roles)), key=lambda i: tmpl_years[i])
+    llm_by_year = sorted(range(len(llm_roles)), key=lambda j: llm_years[j])
+
+    reordered = [None] * len(llm_roles)
+    for rank, tmpl_idx in enumerate(tmpl_order):
+        if rank < len(llm_by_year):
+            reordered[tmpl_idx] = llm_roles[llm_by_year[rank]]
+
+    if any(r is None for r in reordered):
+        return llm_roles  # matching failed — fall back to original order
+
+    _log.debug(
+        "ROLE_DATE_REORDER: section reordered LLM roles by year; "
+        "tmpl_years=%s llm_years=%s",
+        tmpl_years, llm_years,
+    )
+    return reordered  # type: ignore[return-value]
+
+
 def _update_experience_section(
     orig: ResumeSection,
     llm: LlmSection,
@@ -324,11 +390,77 @@ def _update_experience_section(
                     "EXPERIENCE_ROLE_COUNT_MISMATCH: section=%r orig_roles=%d reparsed_roles=%d",
                     orig.title, len(orig.roles), len(reparsed),
                 )
+            # Reorder reparsed roles to match the template's role order by date.
+            # Template role.meta_lines may be empty (dates are in pre-role body_paras);
+            # extract dates from body_paras to build the template year sequence.
+            if len(reparsed) == len(orig.roles):
+                _yr_re = _YEAR_EXTRACT_RE
+                # For each template role, find its year from pre-role body_paras
+                # (body_paras before the role_header carry the date/company lines).
+                tmpl_body_years: list[int] = []
+                rh_positions = [
+                    i for i, p in enumerate(orig.body_paras)
+                    if p.semantic == "role_header"
+                ]
+                prev = 0
+                for rh_pos in rh_positions:
+                    seg_years = [
+                        int(m.group())
+                        for p in orig.body_paras[prev:rh_pos]
+                        for m in _yr_re.finditer(p.text)
+                    ]
+                    tmpl_body_years.append(min(seg_years) if seg_years else 9999)
+                    prev = rh_pos + 1
+                # Pad remaining roles with meta-line years (fallback)
+                while len(tmpl_body_years) < len(orig.roles):
+                    extra_texts = [m.text for m in orig.roles[len(tmpl_body_years)].meta_lines]
+                    extra_years = [int(m.group()) for t in extra_texts for m in _yr_re.finditer(t)]
+                    tmpl_body_years.append(min(extra_years) if extra_years else 9999)
+
+                # Build the enriched _reorder helper with body-derived years
+                if any(y != 9999 for y in tmpl_body_years):
+                    llm_years_ord = sorted(
+                        range(len(reparsed)),
+                        key=lambda j: _role_min_year(
+                            [str(reparsed[j].header)] + [str(m) for m in reparsed[j].meta_lines]
+                        ),
+                    )
+                    tmpl_order = sorted(range(len(orig.roles)), key=lambda i: tmpl_body_years[i])
+                    _reordered: list[None] = [None] * len(reparsed)  # type: ignore[assignment]
+                    for rank, tmpl_idx in enumerate(tmpl_order):
+                        if rank < len(llm_years_ord):
+                            _reordered[tmpl_idx] = reparsed[llm_years_ord[rank]]  # type: ignore[index]
+                    if None not in _reordered:
+                        reparsed = _reordered  # type: ignore[assignment]
+                        _log.debug(
+                            "REPARSED_ROLE_REORDER: using body_paras dates; "
+                            "tmpl_years=%s", tmpl_body_years,
+                        )
+
             updated_roles: list[RoleEntry] = []
+            _dash_company_re = re.compile(r'^(.+?)\s+[–—]\s+.+$')
             for o_role, r_role in zip(orig.roles, reparsed):
-                updated_roles.append(
-                    _update_role_bullets_only(o_role, r_role.bullets, layout_bound=layout_bound)
-                )
+                updated = _update_role_bullets_only(o_role, r_role.bullets, layout_bound=layout_bound)
+                # Inject company name from reparsed role header (em-dash format) when
+                # the template meta has a date line but no company name.  Roles whose
+                # meta is empty already render the company via pre-role orphan body_paras.
+                if o_role.meta_lines:
+                    _cm = _dash_company_re.match(str(r_role.header).strip())
+                    _company = _cm.group(1).strip() if _cm else None
+                    if _company and not any(
+                        _company.lower() in m.text.lower()
+                        for m in updated.meta_lines
+                    ):
+                        _arch = updated.meta_lines[-1] if updated.meta_lines else updated.header
+                        _company_pm = _arch.clone_as(_company, "role_meta")
+                        updated = RoleEntry(
+                            header=updated.header,
+                            header_extra=updated.header_extra,
+                            meta_lines=list(updated.meta_lines) + [_company_pm],
+                            bullets=updated.bullets,
+                            role_id=updated.role_id,
+                        )
+                updated_roles.append(updated)
             # Template roles with no LLM counterpart are kept verbatim
             for o_role in orig.roles[len(reparsed):]:
                 updated_roles.append(o_role)
@@ -373,12 +505,17 @@ def _update_experience_section(
         )
 
     # Normal path: pipe-separated LLM roles matched by position.
+    # Reorder LLM roles to match the template's role order by date so that
+    # reversed-chronological LLM output (newest first) maps correctly to
+    # chronological template layouts (oldest first), and vice versa.
+    reordered_llm_roles = _reorder_llm_roles_by_date(orig.roles, llm.roles)
+
     # In layout-bound mode:
     #   - surplus LLM roles are dropped (no unbound clones)
     #   - unmatched original roles are PRESERVED verbatim (Invariant 3: cardinality)
     updated_roles = [
         _update_role(o, l, layout_bound=layout_bound)
-        for o, l in zip(orig.roles, llm.roles)
+        for o, l in zip(orig.roles, reordered_llm_roles)
     ]
 
     if len(llm.roles) > len(orig.roles) and orig.roles and not layout_bound:

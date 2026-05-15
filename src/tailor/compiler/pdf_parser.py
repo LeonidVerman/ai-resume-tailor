@@ -920,6 +920,12 @@ def _extract_paragraphs(
         # When right-column content IS present near the top (sidebar starts at
         # page top with no banner) this is skipped and the normal x-width
         # heuristic applies.
+        #
+        # Extended detection: some templates have a full-width banner whose text
+        # x1 < split_x+20 (e.g. "Lydia Mary" x1=199 on a split_x=276 page),
+        # so the cross-column x1 heuristic cannot detect it.  If the right column
+        # starts meaningfully below the left column's first block (gap > 50 pt),
+        # use the first right-column block's Y as the merged-header boundary.
         _header_band_y = page.rect.height * 0.22 if split_x is not None else 0.0
         _has_right_in_header = split_x is not None and any(
             b.get("type") == 0
@@ -927,8 +933,42 @@ def _extract_paragraphs(
             and b["bbox"][1] < _header_band_y
             for b in blocks
         )
+
+        _first_right_y = (
+            min(
+                (b["bbox"][1] for b in blocks
+                 if b.get("type") == 0 and b["bbox"][0] >= split_x),
+                default=_header_band_y,
+            )
+            if split_x is not None
+            else _header_band_y
+        )
+        # Detect the "narrow-banner" case: right column starts meaningfully below
+        # the topmost left-column block (gap > 50 pt) and is still within the 22%
+        # zone (so the normal _has_right_in_header guard fires).
+        # Minimum gap (pt) required between the left-column header content and
+        # the first right-column block.  This prevents left-column content that
+        # starts at nearly the same Y as the right column (e.g. "About Me" at
+        # y=135.5 vs "Experiences" at y=135.6) from being treated as a merged
+        # header element.
+        _MIN_HEADER_GAP = 15
+
+        _has_left_above_right = (
+            split_x is not None
+            and _has_right_in_header          # right IS in the top zone
+            and _first_right_y > 50           # right col starts meaningfully into page
+            and any(
+                b.get("type") == 0
+                and b["bbox"][0] < split_x    # left-area block
+                and b["bbox"][1] < _first_right_y - _MIN_HEADER_GAP  # clearly above
+                for b in blocks
+            )
+        )
+
         merged_header_band = (
-            _header_band_y if split_x is not None and not _has_right_in_header else 0.0
+            _first_right_y - _MIN_HEADER_GAP if _has_left_above_right
+            else _header_band_y if split_x is not None and not _has_right_in_header
+            else 0.0
         )
 
         # Reset inter-page spacing
@@ -1592,6 +1632,16 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                         and bool(_txt_init) and _txt_init[0].isupper()
                     )
                 )
+                # Guard: if the very next paragraph is already a role_header,
+                # this paragraph is likely the company / affiliation name that
+                # precedes the role title (e.g. "Ginyard International Co."
+                # before "RESPONSIBLE FOR NETWORK AND SOFTWARE").  Treating it as
+                # a role title would create a spurious empty role.  Buffer it in
+                # pre_header_meta instead so it becomes meta for the real role.
+                _next_is_role_header = _peek(idx + 1) == "role_header"
+                if _can_promote and _next_is_role_header:
+                    _can_promote = False
+
                 if _can_promote:
                     # Separate-line format: this paragraph is the role title.
                     header = pm
@@ -1601,6 +1651,9 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                         pre_header_meta.clear()
                         used_pattern_b = True
                     state = "header"
+                else:
+                    # Not promotable — buffer as pre-role meta so it is not lost.
+                    pre_header_meta.append(pm)
             elif s == "role_meta" and not has_pipe_role_headers:
                 # Pattern B: date appears before the title — buffer it.
                 pre_header_meta.append(pm)
@@ -1660,6 +1713,14 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 if used_pattern_b:
                     # Pattern B continuation: this date starts the next role.
                     _start_pattern_b(pm)
+                elif re.match(
+                    r"^\(\d{4}[-–—](?:\d{4}|now|present|current|today)\)$",
+                    pm.text.strip(), re.IGNORECASE
+                ) or re.match(r"^\d{4}[-–—](?:\d{4}|now|present|current|today)$",
+                    pm.text.strip(), re.IGNORECASE):
+                    # Pure year-range date (e.g. "(2014-Now)", "2010-2013") appearing
+                    # after meta content: this is the next role's date, not a continuation.
+                    _start_pattern_b(pm)
                 else:
                     meta.append(pm)
             elif s == "bullet":
@@ -1704,6 +1765,14 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             elif s == "role_meta":
                 if used_pattern_b:
                     # Pattern B continuation from bullets state.
+                    _start_pattern_b(pm)
+                elif re.match(
+                    r"^\(\d{4}[-–—](?:\d{4}|now|present|current|today)\)$",
+                    pm.text.strip(), re.IGNORECASE
+                ) or re.match(r"^\d{4}[-–—](?:\d{4}|now|present|current|today)$",
+                    pm.text.strip(), re.IGNORECASE):
+                    # Pure year-range date (e.g. "(2014-Now)", "2010-2013") appearing
+                    # after bullets: this is the next role's date.  Start a new role.
                     _start_pattern_b(pm)
                 else:
                     # role_meta can appear mid-bullet-list when a line contains
@@ -1841,6 +1910,30 @@ def _group_sections(
                 _current_in_sections = True
                 _last_empty_exp = None
                 _last_empty_exp_insert_idx = None
+                continue
+
+            # Extended absorb: for active experience or education sections,
+            # non-known section_headings are role titles / institution names —
+            # absorb them as role_headers rather than creating new sections.
+            # Consecutive role_headers (multi-line title like "RESPONSIBLE FOR
+            # NETWORK / AND SOFTWARE") are merged into the previous one.
+            if (
+                current is not None
+                and current.semantic_type in ("experience", "education")
+                and _htext not in _ALL_HEADING_NAMES_NOSPACE
+            ):
+                if (
+                    current.body_paras
+                    and current.body_paras[-1].semantic == "role_header"
+                ):
+                    # Continuation line of a wrapped role/institution title — merge
+                    last_rh = current.body_paras[-1]
+                    current.body_paras[-1] = last_rh.with_text(
+                        last_rh.text + " " + pm.text.strip()
+                    )
+                else:
+                    pm.semantic = "role_header"
+                    current.body_paras.append(pm)
                 continue
 
             found_section = True
@@ -2164,11 +2257,19 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
             # separate-line format resumes there is no role_header in
             # body_paras; skipping the orphan loop avoids duplicating all
             # body content that was already consumed into section.roles.
+            # Paras already absorbed into a role's meta_lines (via pre_header_meta
+            # buffering in _group_roles) are excluded by object-identity check to
+            # prevent them from appearing twice in all_paras.
             if any(bp.semantic == "role_header" for bp in section.body_paras):
+                _consumed_meta_ids = {
+                    id(pm)
+                    for role in section.roles
+                    for pm in role.meta_lines
+                }
                 for bp in section.body_paras:
                     if bp.semantic == "role_header":
                         break
-                    if bp.text.strip():
+                    if bp.text.strip() and id(bp) not in _consumed_meta_ids:
                         all_paras.append(bp)
             for role in section.roles:
                 if role.header_extra and "|" not in role.header.text:

@@ -1002,17 +1002,35 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         if pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
     ]
 
+    # Pre-compute each left para's "section heading indent" so body paras that
+    # are more indented than their section heading can be capped to the heading
+    # level.  This normalises over-indented body items (e.g. skills bullet text
+    # at x=51 in a section whose heading is at x=31) without affecting headings
+    # or items that are already flush with their section heading.
+    _sec_heading_ind_twips: list[int] = []
+    _cur_heading_ind = 0
     for pm in left_paras:
+        pp = pm.paragraph_profile
+        if pm.semantic == "section_heading" and pp is not None:
+            _cur_heading_ind = int(pp.indent_left_pt * 20)
+        _sec_heading_ind_twips.append(_cur_heading_ind)
+
+    for i, pm in enumerate(left_paras):
         p_elem = build_para_element(pm, doc_part=doc_part)
         # Shift all left-cell content right by left_margin_twips so it sits at
         # the same x position as in the source PDF.  paragraph indent_left_pt is
         # measured from the column origin (= page_margin_left), but the left
         # cell starts at the physical page left edge (x=0), so we add the margin.
+        # Body paras more indented than their section heading are capped to the
+        # heading indent to keep visual alignment consistent within each section.
         pPr = p_elem.find(f"{{{_W}}}pPr")
         if pPr is not None:
             ind = pPr.find(f"{{{_W}}}ind")
+            heading_ind = _sec_heading_ind_twips[i]
             if ind is not None:
                 cur = int(ind.get(f"{{{_W}}}left", "0"))
+                if pm.semantic != "section_heading":
+                    cur = min(cur, heading_ind)
                 ind.set(f"{{{_W}}}left", str(cur + left_margin_twips))
             else:
                 new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")

@@ -141,6 +141,10 @@ class ParaModel:
             paragraph_profile=self.paragraph_profile,
         )
         p.para_id = self.para_id
+        # Preserve runtime-only y_top_pt so the PDF two-column Y-sort can place
+        # updated paragraphs at their original template positions.
+        if p.paragraph_profile is not None and self.paragraph_profile is not None:
+            p.paragraph_profile.y_top_pt = self.paragraph_profile.y_top_pt
         return p
 
     def clone_as(self, new_text: str, semantic: str | None = None) -> "ParaModel":
@@ -172,6 +176,10 @@ class ParaModel:
             if self.paragraph_profile is not None
             else None
         )
+        # Preserve runtime-only y_top_pt so the PDF two-column Y-sort places
+        # cloned paragraphs at their archetype's original template position.
+        if pp_clone is not None and self.paragraph_profile is not None:
+            pp_clone.y_top_pt = self.paragraph_profile.y_top_pt
         return ParaModel(
             text=new_text,
             style=cloned,

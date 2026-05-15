@@ -487,6 +487,50 @@ def compile_resume_from_pdf(
     llm_sections = parse_llm_output(llm_text)
     llm_sections = apply_layout_fitting(template_ir, llm_sections)
     updated = apply_tailored(template_ir, llm_sections, classification=classification)
+
+    # Re-sort all_paras by (column, y_top_pt) for PDF two-column documents.
+    # apply_tailored's extras path reorders sections to follow LLM output order,
+    # which may displace verbatim "other" sections from their original visual Y
+    # position.  Re-sorting by Y restores the template's reading order within
+    # each column so the renderer places each section at the correct position.
+    if (
+        updated.source_kind == "pdf"
+        and updated.layout.column_split_x is not None
+        and not updated.layout.section_row_table
+    ):
+        from tailor.compiler.models import ParaModel as _ParaModel  # local import
+
+        def _sec_col_y_key(sec) -> "tuple[int, float]":
+            pp = sec.heading.paragraph_profile
+            col_order = (
+                1 if (pp and pp.column_id == "left")
+                else 2 if (pp and pp.column_id == "right")
+                else 0
+            )
+            return (col_order, pp.y_top_pt if pp else 0.0)
+
+        updated.sections.sort(key=_sec_col_y_key)
+
+        # Re-order all_paras to reflect the new section order while preserving
+        # each para's existing position within its section.  Rebuilding from
+        # scratch would add body_paras that apply_tailored excluded, causing
+        # duplicate content.  Instead we map each existing para to its section
+        # index (post-sort) and use its original all_paras position as tiebreaker.
+        sec_order: "dict[int, int]" = {}
+        for si, sec in enumerate(updated.sections):
+            sec_order[id(sec.heading)] = si
+            for pm in sec.body_paras:
+                sec_order[id(pm)] = si
+            for role in sec.roles:
+                for pm in [role.header, *role.header_extra, *role.meta_lines, *role.bullets]:
+                    sec_order[id(pm)] = si
+
+        orig_pos = {id(pm): i for i, pm in enumerate(updated.all_paras)}
+
+        updated.all_paras.sort(
+            key=lambda pm: (sec_order.get(id(pm), -1), orig_pos.get(id(pm), 0))
+        )
+
     # Clear PDF-extracted text colors from all content paragraphs before rendering.
     # This prevents colors from the original PDF (hyperlink blues, author styling)
     # from bleeding onto LLM-generated replacement content via clone_as archetypes.
