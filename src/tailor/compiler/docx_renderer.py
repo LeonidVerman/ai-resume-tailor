@@ -2027,6 +2027,19 @@ def _render_layout_two_col_table(
                             _parent.remove(_drawing)
                         _modified = True
                 if _modified:
+                    # Fix over-large right indent: the paragraph may carry a
+                    # w:ind w:right value sized for a full-page layout context
+                    # (e.g. right=5840 to leave room for a photo on the right
+                    # side of the page).  Inside a table cell the same indent
+                    # makes the text area negative → one character per line.
+                    # Cap it so the text area is at least 0 twips wide.
+                    _pPr = _pel.find(f"{{{_W}}}pPr")
+                    if _pPr is not None:
+                        _ind = _pPr.find(f"{{{_W}}}ind")
+                        if _ind is not None:
+                            _rv = _ind.get(f"{{{_W}}}right")
+                            if _rv is not None and int(_rv) >= left_w:
+                                _ind.set(f"{{{_W}}}right", "0")
                     # Keep the paragraph (with text, without background drawing)
                     # in the left cell using its updated XML.
                     _left_blocks_filtered.append(LayoutParagraphBlock(
