@@ -1991,15 +1991,22 @@ def _render_layout_two_col_table(
     left_blocks = list(doc.layout_blocks[:col_break_idx])  # type: ignore[index]
     right_blocks = list(doc.layout_blocks[col_break_idx + 1:])  # type: ignore[index]
 
-    # Extract full-page blip backgrounds from left_blocks and insert them as
-    # body-level paragraphs BEFORE the table.  A behindDoc blip inside a table
-    # cell can cause LibreOffice to force the row height to the image extent
-    # (e.g. A4: 11.70 in), making the entire page blank.  As body-level
-    # paragraphs they render behind the table without affecting its height.
-    _blip_pre_blocks: list = []
+    # Extract full-page blip background DRAWINGS from left_blocks and insert them
+    # as a separate body-level paragraph BEFORE the table.  A behindDoc blip
+    # inside a table cell forces LibreOffice to set the row height to the image
+    # extent (e.g. A4: 11.70 in), making the entire page blank.
+    #
+    # Crucially, only the <w:drawing> element is extracted — the surrounding
+    # <w:p> paragraph stays in the left cell with its text content (e.g. the
+    # candidate name "ABIGAIL NAOMI") and formatting intact.  Extracting the
+    # whole paragraph would move the name text out of the table cell, causing it
+    # to render in a body-level context where its font size + column width
+    # constraints produce a letter-per-line vertical display.
+    from copy import deepcopy as _deepcopy
+    _blip_drawings: list = []   # extracted <w:drawing> elements
     _left_blocks_filtered: list = []
     for _blk in left_blocks:
-        _extracted = False
+        _modified = False
         if (
             isinstance(_blk, LayoutParagraphBlock)
             and _blk.xml_proto_xml
@@ -2008,27 +2015,39 @@ def _render_layout_two_col_table(
         ):
             try:
                 _pel = etree.fromstring(_blk.xml_proto_xml)
-                for _anch in _pel.findall(f".//{{{_WP}}}anchor"):
-                    if _is_bg_anchor_any(_anch):
-                        _blip_pre_blocks.append(_blk)
-                        _extracted = True
-                        break
+                # Use descendant search — <w:drawing> is typically nested inside
+                # a <w:r> run, not a direct child of the paragraph.
+                for _drawing in list(_pel.findall(f".//{{{_W}}}drawing")):
+                    _anchor = _drawing.find(f".//{{{_WP}}}anchor")
+                    if _anchor is not None and _is_bg_anchor_any(_anchor):
+                        _blip_drawings.append(_deepcopy(_drawing))
+                        # Remove from its actual parent (could be a <w:r> run)
+                        _parent = _drawing.getparent()
+                        if _parent is not None:
+                            _parent.remove(_drawing)
+                        _modified = True
+                if _modified:
+                    # Keep the paragraph (with text, without background drawing)
+                    # in the left cell using its updated XML.
+                    _left_blocks_filtered.append(LayoutParagraphBlock(
+                        para_id=_blk.para_id,
+                        xml_proto_xml=etree.tostring(_pel).decode(),
+                    ))
             except Exception:
                 pass
-        if not _extracted:
+        if not _modified:
             _left_blocks_filtered.append(_blk)
     left_blocks = _left_blocks_filtered
-    # Insert extracted background paragraphs before the table so they render
-    # as page-level elements while the table occupies the two-column body area.
-    for _bg_blk in _blip_pre_blocks:
-        try:
-            _bg_el = etree.fromstring(_bg_blk.xml_proto_xml)
-            if sectPr is not None:
-                sectPr.addprevious(_bg_el)
-            else:
-                body.append(_bg_el)
-        except Exception:
-            pass
+    # Insert a single body-level paragraph containing the background drawings so
+    # they render as page-level behindDoc elements while the table is on top.
+    if _blip_drawings:
+        _bg_p = etree.Element(f"{{{_W}}}p")
+        for _draw in _blip_drawings:
+            _bg_p.append(_draw)
+        if sectPr is not None:
+            sectPr.addprevious(_bg_p)
+        else:
+            body.append(_bg_p)
 
     # Build tblPr: inherit borders from source table when available (Task 2).
     # When no source table exists, use no visible borders but add an insideV
