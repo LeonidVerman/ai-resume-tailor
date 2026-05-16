@@ -1991,6 +1991,45 @@ def _render_layout_two_col_table(
     left_blocks = list(doc.layout_blocks[:col_break_idx])  # type: ignore[index]
     right_blocks = list(doc.layout_blocks[col_break_idx + 1:])  # type: ignore[index]
 
+    # Extract full-page blip backgrounds from left_blocks and insert them as
+    # body-level paragraphs BEFORE the table.  A behindDoc blip inside a table
+    # cell can cause LibreOffice to force the row height to the image extent
+    # (e.g. A4: 11.70 in), making the entire page blank.  As body-level
+    # paragraphs they render behind the table without affecting its height.
+    _blip_pre_blocks: list = []
+    _left_blocks_filtered: list = []
+    for _blk in left_blocks:
+        _extracted = False
+        if (
+            isinstance(_blk, LayoutParagraphBlock)
+            and _blk.xml_proto_xml
+            and "behindDoc" in _blk.xml_proto_xml
+            and "blip" in _blk.xml_proto_xml
+        ):
+            try:
+                _pel = etree.fromstring(_blk.xml_proto_xml)
+                for _anch in _pel.findall(f".//{{{_WP}}}anchor"):
+                    if _is_bg_anchor_any(_anch):
+                        _blip_pre_blocks.append(_blk)
+                        _extracted = True
+                        break
+            except Exception:
+                pass
+        if not _extracted:
+            _left_blocks_filtered.append(_blk)
+    left_blocks = _left_blocks_filtered
+    # Insert extracted background paragraphs before the table so they render
+    # as page-level elements while the table occupies the two-column body area.
+    for _bg_blk in _blip_pre_blocks:
+        try:
+            _bg_el = etree.fromstring(_bg_blk.xml_proto_xml)
+            if sectPr is not None:
+                sectPr.addprevious(_bg_el)
+            else:
+                body.append(_bg_el)
+        except Exception:
+            pass
+
     # Build tblPr: inherit borders from source table when available (Task 2).
     # When no source table exists, use no visible borders but add an insideV
     # border matching the template's accent color as a column-divider line.
@@ -2214,26 +2253,24 @@ def _render_from_layout_blocks(
         if _col_break_idx is not None:
             _total_blocks = len(doc.layout_blocks)  # type: ignore[arg-type]
             _col_ratio = _col_break_idx / max(_total_blocks - 1, 1)
-            # Skip only when HEADER blocks carry the blip image — those get rendered
-            # as standalone body paragraphs before the table, causing blank middle
-            # pages in LibreOffice (samples 18, 23).  Non-header blip images stay
-            # inside a table cell and do not cause this problem (sample 16).
-            _has_blip = _header_paras_have_blip_bg(doc, doc.layout_blocks)  # type: ignore[arg-type]
-            if _col_ratio <= 0.80 and not _has_blip:
+            # Previously this guard skipped table conversion when a header block
+            # carried a full-page blip image (behindDoc raster), because that image
+            # inside a table cell could force the row height to the image extent
+            # (A4: 11.70 in), producing blank middle pages.
+            # _render_layout_two_col_table now extracts such blip backgrounds from
+            # left_blocks and inserts them as body-level paragraphs before the table,
+            # so the table row height is not affected.  The guard is therefore removed.
+            if _col_ratio <= 0.80:
                 _render_layout_two_col_table(
                     doc, body, sectPr,
                     _col_break_idx,
                     _main_pgSz_w, _main_pgSz_h,
                     _main_is_multicolumn,
                 )
-                # Solid-colour backgrounds only — blip images are composite and
-                # must not be cloned (they contain foreground photo/icon content).
-                _find_and_move_bg_to_start(body, sectPr)
+                # Move/clone background drawings (solid-colour and blip) so they
+                # appear on every overflow page, not just page 1.
+                _find_and_move_bg_to_start(body, sectPr, allow_blip=True)
                 return
-            if _has_blip:
-                _log.debug(
-                    "LAYOUT_TWO_COL_TABLE_SKIPPED: header block has blip bg — using native columns"
-                )
             else:
                 _log.debug(
                     "LAYOUT_TWO_COL_TABLE_SKIPPED: col_break_idx=%d total=%d ratio=%.2f > 0.80",
