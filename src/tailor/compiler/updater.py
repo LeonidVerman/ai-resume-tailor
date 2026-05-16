@@ -826,7 +826,7 @@ def _update_body_section(
             # (e.g. template 23 MY QUALIFICATIONS) store skills as indented list
             # items.  The LLM's categorised skill lines are not list items and should
             # render at normal paragraph indent like the GENERAL INFO section.
-            if _is_skills:
+            if _is_skills and (pm.style.indent_left or 0) > 0:
                 pm = _clear_left_indent(pm)
             updated.append(pm)
             _log.debug("UPDATER_LAYOUT_BOUND_REPLACEMENT: para_id=%r → %r",
