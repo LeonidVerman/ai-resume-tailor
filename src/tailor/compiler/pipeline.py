@@ -13,6 +13,7 @@ pipeline behaves identically to before (fully backward-compatible).
 from __future__ import annotations
 
 import logging
+import re
 from typing import TYPE_CHECKING
 
 from tailor.compiler.docx_parser import parse_docx
@@ -493,6 +494,102 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
     doc.all_paras = new_all
 
 
+_CONTACT_FOOTER_RE = re.compile(
+    r"[@]|\d{3,}|https?://|www\.", re.IGNORECASE
+)
+
+
+def _strip_template_footer_bullets(template_ir: ResumeDocument) -> None:
+    """Remove contact/footer items that ended up as role bullets in template IR.
+
+    Single-page PDFs don't trigger the header/footer deduplication pass, so
+    phone numbers, emails, and addresses at the page bottom can land inside the
+    last role's bullet list.  Keeping them pollutes bullet archetypes for the
+    LLM-generated content (wrong size, indent, and italic).
+    """
+    for sec in template_ir.sections:
+        for role in sec.roles:
+            cleaned = [b for b in role.bullets if not _CONTACT_FOOTER_RE.search(b.text)]
+            if len(cleaned) < len(role.bullets):
+                role.bullets = cleaned
+
+
+def _normalize_bullet_styles(doc: ResumeDocument) -> None:
+    """Make bullet font size and italic consistent within each section.
+
+    For PDF-sourced documents, bullets may have mixed styling depending on
+    which template paragraph was used as the clone archetype:
+    - Roles with original bullets: bullets inherit the template bullet's size/italic.
+    - Roles with NO original bullets: bullets inherit the role-header size (larger)
+      and non-italic, giving them a visually inconsistent appearance.
+
+    Fix: per-section, compute the canonical bullet size (mode of sizes ≤ document
+    default × 1.1) and canonical italic (majority vote among normally-sized bullets),
+    then apply to all bullets in that section.
+    """
+    if doc.source_kind != "pdf":
+        return
+    default_size = (doc.layout.default_font_size_pt if doc.layout else None) or 11.0
+    _size_ceil = default_size * 1.1
+
+    from collections import Counter
+
+    for sec in doc.sections:
+        all_bullets = [b for role in sec.roles for b in role.bullets if b.paragraph_profile]
+        if not all_bullets:
+            continue
+
+        # Canonical size: most common size among normally-sized bullets.
+        normal_sizes = [
+            b.paragraph_profile.font_size_pt for b in all_bullets
+            if b.paragraph_profile.font_size_pt and b.paragraph_profile.font_size_pt <= _size_ceil
+        ]
+        canonical_size = (
+            Counter(normal_sizes).most_common(1)[0][0] if normal_sizes else default_size
+        )
+
+        # Canonical italic: majority vote from normally-sized bullets.
+        normal_italics = [
+            b.paragraph_profile.italic for b in all_bullets
+            if b.paragraph_profile.font_size_pt and b.paragraph_profile.font_size_pt <= _size_ceil
+        ]
+        canonical_italic = (
+            bool(sum(normal_italics) > len(normal_italics) / 2) if normal_italics else False
+        )
+
+        for b in all_bullets:
+            pp = b.paragraph_profile
+            if pp is None:
+                continue
+            if pp.font_size_pt and pp.font_size_pt > _size_ceil:
+                pp.font_size_pt = canonical_size
+            pp.italic = canonical_italic
+
+
+def _apply_heading_case_convention(doc: ResumeDocument) -> None:
+    """Apply the template's section-heading capitalisation style to all sections.
+
+    Detects whether the majority (≥ 50 %) of existing section headings are
+    ALL-CAPS or Title-Case and transforms any outliers to match.  This ensures
+    LLM-injected sections ('Technical Skills', 'Additional') follow the same
+    visual style as template sections ('GENERAL INFO', 'WORK HISTORY').
+    """
+    if doc.source_kind != "pdf":
+        return
+    titles = [s.title.strip() for s in doc.sections if s.title.strip()]
+    if not titles:
+        return
+
+    all_caps = sum(1 for t in titles if t == t.upper())
+    # Only apply a convention when the majority clearly agree.
+    if all_caps / len(titles) >= 0.5:
+        for sec in doc.sections:
+            t = sec.title.strip()
+            if t and t != t.upper():
+                sec.title = t.upper()
+                sec.heading = sec.heading.with_text(t.upper())
+
+
 def compile_resume_from_pdf(
     pdf_path: str,
     llm_text: str,
@@ -508,6 +605,10 @@ def compile_resume_from_pdf(
 
     with open(pdf_path, "rb") as f:
         template_ir = parse_pdf(f.read())
+    # Remove contact/footer items (phone, email) that landed in role bullets on
+    # single-page PDFs — they would otherwise become LLM bullet archetypes and
+    # produce wrong size, indent, and italic on generated bullets.
+    _strip_template_footer_bullets(template_ir)
     llm_sections = parse_llm_output(llm_text)
     llm_sections = apply_layout_fitting(template_ir, llm_sections)
     updated = apply_tailored(template_ir, llm_sections, classification=classification)
@@ -522,6 +623,13 @@ def compile_resume_from_pdf(
     # Move extra LLM sections (e.g. Professional Summary) out of the left sidebar
     # column for two-column PDF templates that have no matching left-column section.
     _fix_extra_left_sections(template_ir, updated)
+    # Normalize bullet font size and italic within each section so all bullets
+    # share the same style regardless of which archetype was used for cloning.
+    _normalize_bullet_styles(updated)
+    # Apply the template's section-heading capitalisation convention to LLM-injected
+    # sections (e.g. 'Technical Skills' → 'TECHNICAL SKILLS' when all template
+    # section headings are ALL-CAPS).
+    _apply_heading_case_convention(updated)
 
     # Re-sort sections by (column, y_top_pt) for PDF two-column documents.
     # Done AFTER _fix_extra_left_sections so LLM-injected extra sections (e.g.
