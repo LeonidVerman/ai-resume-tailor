@@ -2253,14 +2253,31 @@ def _render_from_layout_blocks(
         if _col_break_idx is not None:
             _total_blocks = len(doc.layout_blocks)  # type: ignore[arg-type]
             _col_ratio = _col_break_idx / max(_total_blocks - 1, 1)
-            # Previously this guard skipped table conversion when a header block
-            # carried a full-page blip image (behindDoc raster), because that image
-            # inside a table cell could force the row height to the image extent
-            # (A4: 11.70 in), producing blank middle pages.
-            # _render_layout_two_col_table now extracts such blip backgrounds from
-            # left_blocks and inserts them as body-level paragraphs before the table,
-            # so the table row height is not affected.  The guard is therefore removed.
-            if _col_ratio <= 0.80:
+            # _has_blip guard: skip table conversion for templates with a full-page
+            # raster behindDoc image in a header block.  The image inside a table cell
+            # can force the row height to the image extent (A4: 11.70 in), producing
+            # blank middle pages.  _render_layout_two_col_table now extracts such
+            # backgrounds before building the table — but only override the guard when
+            # the template has CONTACT / REFERENCE sections in the left column that
+            # must not overflow to the right column.  For templates without such
+            # sections (e.g. template 3, 17, 18), native columns work correctly and
+            # the blip guard must be preserved to avoid breaking existing output.
+            _has_blip = _header_paras_have_blip_bg(doc, doc.layout_blocks)  # type: ignore[arg-type]
+            _contact_ref_names: frozenset[str] = frozenset({
+                "contact info", "contact information", "personal references",
+                "personal reference", "references",
+            })
+            _left_para_ids: set[str] = {
+                lb.para_id
+                for lb in doc.layout_blocks[:_col_break_idx]  # type: ignore[index]
+                if isinstance(lb, LayoutParagraphBlock) and lb.para_id
+            }
+            _needs_table_for_contact = any(
+                s.heading and s.heading.para_id in _left_para_ids
+                and s.title.strip().lower() in _contact_ref_names
+                for s in doc.sections
+            )
+            if _col_ratio <= 0.80 and (not _has_blip or _needs_table_for_contact):
                 _render_layout_two_col_table(
                     doc, body, sectPr,
                     _col_break_idx,
