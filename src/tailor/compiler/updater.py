@@ -817,10 +817,18 @@ def _update_body_section(
         )
 
     # Build updated versions of each content para (paired by position with LLM lines).
+    _is_skills = orig.semantic_type == "skills"
     updated: list[ParaModel] = []
     for i, line in enumerate(packed_llm):
         if i < len(content_paras):
-            updated.append(content_paras[i].with_text(line))
+            pm = content_paras[i].with_text(line)
+            # Clear list/bullet indentation from skills body paras: some templates
+            # (e.g. template 23 MY QUALIFICATIONS) store skills as indented list
+            # items.  The LLM's categorised skill lines are not list items and should
+            # render at normal paragraph indent like the GENERAL INFO section.
+            if _is_skills:
+                pm = _clear_left_indent(pm)
+            updated.append(pm)
             _log.debug("UPDATER_LAYOUT_BOUND_REPLACEMENT: para_id=%r → %r",
                        content_paras[i].para_id, line[:60])
         else:
@@ -845,7 +853,13 @@ def _update_body_section(
             new_body.append(updated[content_cursor])
             content_cursor += 1
         elif layout_bound:
-            new_body.append(p)  # keep original so para_id stays bound in layout tree
+            # Keep para_id bound in layout tree but clear text — LLM provided
+            # fewer lines than the template has content slots.  Keeping the
+            # original text would show stale template content (e.g. a split
+            # reference entry appearing twice after the LLM merges it into one
+            # line).  Clearing to empty string makes the slot invisible while
+            # preserving the layout_block para_id reference.
+            new_body.append(p.with_text(""))
         # else (non-layout-bound): LLM produced fewer lines — drop trailing para
 
     # Append any remaining unbound extra paras (LLM content beyond template slots).
