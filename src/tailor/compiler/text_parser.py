@@ -204,6 +204,13 @@ _ALL_KNOWN: frozenset[str] = (
         # "Additional" (bare word) used by some LLMs as a catch-all section after
         # Technical Skills — must be a section boundary, not a body line.
         "additional",
+        # "My Qualifications" / "Personal References" appear in template 23 and
+        # similar.  Treating them as known section boundaries prevents their content
+        # from being absorbed into the preceding section (e.g. GENERAL INFO).
+        # Not added to _SKILLS_NAMES so they stay semantic=other in LLM output —
+        # this lets "TECHNICAL SKILLS" (semantic=skills) match the template's
+        # MY QUALIFICATIONS slot via semantic-type matching in Pass 2.
+        "my qualifications", "personal references", "personal reference",
     })
 )
 

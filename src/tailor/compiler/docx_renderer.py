@@ -1675,6 +1675,22 @@ def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_i
         _strip_text_wrapping_breaks(elem)
         _set_para_text(elem, pm.text)
         _clear_sdt_placeholder(elem)
+        # Sync cleared indent: the updater may have called _clear_left_indent(pm),
+        # setting pm.style.indent_left=None and removing w:left from pm.style.xml_proto.
+        # But the renderer uses block.xml_proto_xml (the original template XML) which
+        # still carries the old w:left attribute.  When the pm has no explicit
+        # indent_left but the elem has an explicit non-zero w:left, the updater
+        # cleared it — remove it from elem to match.
+        if pm.style.indent_left is None:
+            _pPr = elem.find(f"{{{_W}}}pPr")
+            if _pPr is not None:
+                _ind = _pPr.find(f"{{{_W}}}ind")
+                if _ind is not None:
+                    _w_left = _ind.get(f"{{{_W}}}left")
+                    if _w_left is not None and _w_left != "0":
+                        del _ind.attrib[f"{{{_W}}}left"]
+                        if not _ind.attrib:
+                            _pPr.remove(_ind)
     _collapse_oversized_spacer(elem)
     return elem
 
@@ -1991,6 +2007,137 @@ def _render_layout_two_col_table(
     left_blocks = list(doc.layout_blocks[:col_break_idx])  # type: ignore[index]
     right_blocks = list(doc.layout_blocks[col_break_idx + 1:])  # type: ignore[index]
 
+    # Skip leading empty (spacer) blocks at the top of the right column.
+    # In native 2-column templates these empty paragraphs were column-break
+    # follow-up spacers that aligned content relative to the left column.
+    # Inside a table cell they create a blank gap above the first real section
+    # heading.  A block is "empty" when: (a) it is a LayoutParagraphBlock,
+    # (b) its XML proto exists, and (c) neither the XML nor the pm text carries
+    # any visible text content.
+    _para_lookup_for_trim = _build_para_lookup(doc)
+    _rb_start = 0
+    for _i, _blk in enumerate(right_blocks):
+        if not isinstance(_blk, LayoutParagraphBlock) or not _blk.xml_proto_xml:
+            break  # hit a table block or block without XML — stop trimming
+        _pm_trim = _para_lookup_for_trim.get(_blk.para_id) if _blk.para_id else None
+        _pm_text_trim = (_pm_trim.text.strip() if _pm_trim else "")
+        _has_xml_text_trim = "<w:t>" in _blk.xml_proto_xml
+        if _pm_text_trim or _has_xml_text_trim:
+            break  # found real content — stop trimming
+        _rb_start = _i + 1
+    if _rb_start:
+        right_blocks = right_blocks[_rb_start:]
+
+    # Extract full-page blip background DRAWINGS from left_blocks and insert them
+    # as a separate body-level paragraph BEFORE the table.  A behindDoc blip
+    # inside a table cell forces LibreOffice to set the row height to the image
+    # extent (e.g. A4: 11.70 in), making the entire page blank.
+    #
+    # Crucially, only the <w:drawing> element is extracted — the surrounding
+    # <w:p> paragraph stays in the left cell with its text content (e.g. the
+    # candidate name "ABIGAIL NAOMI") and formatting intact.  Extracting the
+    # whole paragraph would move the name text out of the table cell, causing it
+    # to render in a body-level context where its font size + column width
+    # constraints produce a letter-per-line vertical display.
+    from copy import deepcopy as _deepcopy
+    _blip_drawings: list = []   # extracted <w:drawing> elements
+    _left_blocks_filtered: list = []
+    for _blk in left_blocks:
+        _modified = False
+        if (
+            isinstance(_blk, LayoutParagraphBlock)
+            and _blk.xml_proto_xml
+            and "behindDoc" in _blk.xml_proto_xml
+            and "blip" in _blk.xml_proto_xml
+        ):
+            try:
+                _pel = etree.fromstring(_blk.xml_proto_xml)
+                # Use descendant search — <w:drawing> is typically nested inside
+                # a <w:r> run, not a direct child of the paragraph.
+                for _drawing in list(_pel.findall(f".//{{{_W}}}drawing")):
+                    _anchor = _drawing.find(f".//{{{_WP}}}anchor")
+                    if _anchor is not None and _is_bg_anchor_any(_anchor):
+                        _blip_drawings.append(_deepcopy(_drawing))
+                        # Remove from its actual parent (could be a <w:r> run)
+                        _parent = _drawing.getparent()
+                        if _parent is not None:
+                            _parent.remove(_drawing)
+                        _modified = True
+                if _modified:
+                    # Keep the paragraph (with text, without background drawing)
+                    # in its block list using its updated XML.
+                    # NOTE: do NOT cap w:right indent here.  These blocks are
+                    # rendered as body-level paragraphs (full page width) where
+                    # the original right indent (e.g. right=5840) is intentional:
+                    # it positions the name text in the left 43% of the page,
+                    # leaving the right 57% for the circular photo, and forces
+                    # "ABIGAIL" / "NAOMI" to wrap onto separate lines.
+                    # Capping the indent (done in a previous approach) made the
+                    # text use the full page width → single-line display → header
+                    # too short → table starting before the photo's bottom edge.
+                    _left_blocks_filtered.append(LayoutParagraphBlock(
+                        para_id=_blk.para_id,
+                        xml_proto_xml=etree.tostring(_pel).decode(),
+                    ))
+            except Exception:
+                pass
+        if not _modified:
+            _left_blocks_filtered.append(_blk)
+    left_blocks = _left_blocks_filtered
+
+    # Insert a single body-level paragraph containing the background drawings.
+    # Wrap the drawing in a <w:r> run (Word XML spec) and add a zero-height
+    # pPr so the paragraph itself consumes no vertical space.
+    if _blip_drawings:
+        _bg_p = etree.Element(f"{{{_W}}}p")
+        _bg_pPr = etree.SubElement(_bg_p, f"{{{_W}}}pPr")
+        _bg_sp = etree.SubElement(_bg_pPr, f"{{{_W}}}spacing")
+        _bg_sp.set(f"{{{_W}}}before", "0")
+        _bg_sp.set(f"{{{_W}}}after", "0")
+        _bg_sp.set(f"{{{_W}}}line", "1")
+        _bg_sp.set(f"{{{_W}}}lineRule", "exact")
+        _bg_r = etree.SubElement(_bg_p, f"{{{_W}}}r")
+        for _draw in _blip_drawings:
+            _bg_r.append(_draw)
+        if sectPr is not None:
+            sectPr.addprevious(_bg_p)
+        else:
+            body.append(_bg_p)
+
+    # Separate left_blocks into header blocks (to be rendered as full-width
+    # body-level paragraphs BEFORE the table) and section blocks (inside the
+    # left table cell).  This restores the merged header area seen in the
+    # original template: candidate name + title span the full page width while
+    # the 2-column table starts below with section content.
+    #
+    # NOTE: in the original code ALL left blocks went into the left cell to
+    # avoid pushing the table to page 2 (the header consumed too much vertical
+    # space on page 1).  For templates with compact headers (< 2 in of height)
+    # this trade-off reversal is safe.  The _needs_table_for_contact guard that
+    # activates this path ensures we only reach here for such templates.
+    _header_para_ids: frozenset[str] = frozenset(
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    )
+    _header_left_blocks = [
+        blk for blk in left_blocks
+        if isinstance(blk, LayoutParagraphBlock) and blk.para_id in _header_para_ids
+    ]
+    _section_left_blocks = [
+        blk for blk in left_blocks
+        if not (isinstance(blk, LayoutParagraphBlock) and blk.para_id in _header_para_ids)
+    ]
+    # Render header blocks as body-level paragraphs (full page width).
+    for _hblk in _header_left_blocks:
+        _hel = _render_block_into_elem(
+            _hblk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
+        )
+        if _hel is not None:
+            if sectPr is not None:
+                sectPr.addprevious(_hel)
+            else:
+                body.append(_hel)
+    left_blocks = _section_left_blocks
+
     # Build tblPr: inherit borders from source table when available (Task 2).
     # When no source table exists, use no visible borders but add an insideV
     # border matching the template's accent color as a column-divider line.
@@ -2214,26 +2361,44 @@ def _render_from_layout_blocks(
         if _col_break_idx is not None:
             _total_blocks = len(doc.layout_blocks)  # type: ignore[arg-type]
             _col_ratio = _col_break_idx / max(_total_blocks - 1, 1)
-            # Skip only when HEADER blocks carry the blip image — those get rendered
-            # as standalone body paragraphs before the table, causing blank middle
-            # pages in LibreOffice (samples 18, 23).  Non-header blip images stay
-            # inside a table cell and do not cause this problem (sample 16).
+            # _has_blip guard: skip table conversion for templates with a full-page
+            # raster behindDoc image in a header block.  The image inside a table cell
+            # can force the row height to the image extent (A4: 11.70 in), producing
+            # blank middle pages.  _render_layout_two_col_table now extracts such
+            # backgrounds before building the table — but only override the guard when
+            # the template has CONTACT / REFERENCE sections in the left column that
+            # must not overflow to the right column.  For templates without such
+            # sections (e.g. template 3, 17, 18), native columns work correctly and
+            # the blip guard must be preserved to avoid breaking existing output.
             _has_blip = _header_paras_have_blip_bg(doc, doc.layout_blocks)  # type: ignore[arg-type]
-            if _col_ratio <= 0.80 and not _has_blip:
+            _contact_ref_names: frozenset[str] = frozenset({
+                "contact info", "contact information", "personal references",
+                "personal reference", "references",
+            })
+            _left_para_ids: set[str] = {
+                lb.para_id
+                for lb in doc.layout_blocks[:_col_break_idx]  # type: ignore[index]
+                if isinstance(lb, LayoutParagraphBlock) and lb.para_id
+            }
+            _needs_table_for_contact = any(
+                s.heading and s.heading.para_id in _left_para_ids
+                and s.title.strip().lower() in _contact_ref_names
+                for s in doc.sections
+            )
+            if _col_ratio <= 0.80 and (not _has_blip or _needs_table_for_contact):
                 _render_layout_two_col_table(
                     doc, body, sectPr,
                     _col_break_idx,
                     _main_pgSz_w, _main_pgSz_h,
                     _main_is_multicolumn,
                 )
-                # Solid-colour backgrounds only — blip images are composite and
-                # must not be cloned (they contain foreground photo/icon content).
+                # For templates with a blip background extracted to body level
+                # (e.g. template 23), the background is a HEADER element: it
+                # should only appear on page 1 and must NOT be cloned to page 2.
+                # Use default allow_blip=False so the blip is left in place at
+                # body start without being duplicated for overflow pages.
                 _find_and_move_bg_to_start(body, sectPr)
                 return
-            if _has_blip:
-                _log.debug(
-                    "LAYOUT_TWO_COL_TABLE_SKIPPED: header block has blip bg — using native columns"
-                )
             else:
                 _log.debug(
                     "LAYOUT_TWO_COL_TABLE_SKIPPED: col_break_idx=%d total=%d ratio=%.2f > 0.80",

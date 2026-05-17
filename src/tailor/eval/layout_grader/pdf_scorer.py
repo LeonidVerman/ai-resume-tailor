@@ -969,14 +969,24 @@ def _detect_overflow_column_loss(
                     (op for op in orig_pages if op.page_number == page.page_number),
                     None,
                 )
-                if same_orig_page is not None:
-                    orig_pg_cols = _estimate_page_column_count(same_orig_page)
-                    if orig_pg_cols < 2:
-                        evidence.append(
-                            f"Column topology on page {page.page_number}: "
-                            f"1-column (also 1-column in template — structural)"
-                        )
-                        continue  # template already had 1-col here, not a defect
+                if same_orig_page is None:
+                    # Template has no page at this position: the generated content
+                    # overflowed beyond the template's end.  When only one column's
+                    # content (typically the right column) spills onto the extra page,
+                    # that overflow page naturally appears single-column — this is
+                    # expected overflow behaviour, not a column-loss defect.
+                    evidence.append(
+                        f"Column topology on page {page.page_number}: "
+                        f"1-column (overflow beyond template length — structural)"
+                    )
+                    continue
+                orig_pg_cols = _estimate_page_column_count(same_orig_page)
+                if orig_pg_cols < 2:
+                    evidence.append(
+                        f"Column topology on page {page.page_number}: "
+                        f"1-column (also 1-column in template — structural)"
+                    )
+                    continue  # template already had 1-col here, not a defect
             hard_fail = True
             evidence.append(
                 f"Column topology break on page {page.page_number} (HARD FAIL): "

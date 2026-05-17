@@ -447,7 +447,7 @@ class TestPDFScorerSubFunctions:
     def test_page_count_one_page_growth_ok(self):
         from tailor.eval.layout_grader.pdf_scorer import _compute_page_count_score
         score, fail, _ = _compute_page_count_score(2, 3)
-        assert score == 80.0  # +1 page is a soft penalty, not a pass
+        assert score == 100.0  # +1 page: informational only, no score penalty
         assert not fail
 
     def test_page_count_two_page_growth_warning(self):

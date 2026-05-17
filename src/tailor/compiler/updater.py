@@ -110,12 +110,20 @@ def _match_sections(
     used_orig: set[int] = set()
     pairs: list[tuple[int, int]] = []   # (orig_idx, llm_idx)
 
-    # Pass 1: exact heading match (case-insensitive)
+    # Pass 1: exact heading match (case-insensitive).
+    # Guard: skip when the LLM section is semantic=other but the template section
+    # is a generated content type (skills/experience/education/certifications).
+    # This prevents a verbatim LLM "MY QUALIFICATIONS" (other) from consuming the
+    # template's "MY QUALIFICATIONS" (skills) slot before the actual LLM skills
+    # section ("TECHNICAL SKILLS", semantic=skills) can match via Pass 2.
+    _GENERATED_TYPES: frozenset[str] = frozenset({"skills", "experience", "education", "certifications"})
     for li, ls in enumerate(llm):
         for oi, os_ in enumerate(orig):
             if oi in used_orig:
                 continue
             if os_.title.lower() == ls.heading.lower():
+                if ls.semantic_type == "other" and os_.semantic_type in _GENERATED_TYPES:
+                    continue  # let Pass 2 semantic match take priority
                 pairs.append((oi, li))
                 used_orig.add(oi)
                 used_llm.add(li)
@@ -176,9 +184,18 @@ def _match_sections(
         # All content originals matched — extras are new sections added by the LLM.
         # Drop extras that belong to locked types (e.g. Education, Certifications):
         # these are verbatim in the template and LLM output of them should be ignored.
+        # Also suppress LLM "other" sections whose heading text matches a template
+        # section that was already matched to a different LLM section — e.g. a
+        # verbatim "MY QUALIFICATIONS" (other) when the template's MY QUALIFICATIONS
+        # was matched to "TECHNICAL SKILLS" via semantic type in Pass 2.
+        _matched_orig_titles: set[str] = {orig[oi].title.lower() for oi in used_orig}
         extras = [
             llm[li] for li in unmatched_llm
             if llm[li].semantic_type not in _LOCKED_SEMANTIC_TYPES
+            and not (
+                llm[li].semantic_type == "other"
+                and llm[li].heading.lower() in _matched_orig_titles
+            )
         ]
     else:
         extras = []
@@ -800,10 +817,18 @@ def _update_body_section(
         )
 
     # Build updated versions of each content para (paired by position with LLM lines).
+    _is_skills = orig.semantic_type == "skills"
     updated: list[ParaModel] = []
     for i, line in enumerate(packed_llm):
         if i < len(content_paras):
-            updated.append(content_paras[i].with_text(line))
+            pm = content_paras[i].with_text(line)
+            # Clear list/bullet indentation from skills body paras: some templates
+            # (e.g. template 23 MY QUALIFICATIONS) store skills as indented list
+            # items.  The LLM's categorised skill lines are not list items and should
+            # render at normal paragraph indent like the GENERAL INFO section.
+            if _is_skills and (pm.style.indent_left or 0) > 0:
+                pm = _clear_left_indent(pm)
+            updated.append(pm)
             _log.debug("UPDATER_LAYOUT_BOUND_REPLACEMENT: para_id=%r → %r",
                        content_paras[i].para_id, line[:60])
         else:
@@ -828,7 +853,13 @@ def _update_body_section(
             new_body.append(updated[content_cursor])
             content_cursor += 1
         elif layout_bound:
-            new_body.append(p)  # keep original so para_id stays bound in layout tree
+            # Keep para_id bound in layout tree but clear text — LLM provided
+            # fewer lines than the template has content slots.  Keeping the
+            # original text would show stale template content (e.g. a split
+            # reference entry appearing twice after the LLM merges it into one
+            # line).  Clearing to empty string makes the slot invisible while
+            # preserving the layout_block para_id reference.
+            new_body.append(p.with_text(""))
         # else (non-layout-bound): LLM produced fewer lines — drop trailing para
 
     # Append any remaining unbound extra paras (LLM content beyond template slots).
