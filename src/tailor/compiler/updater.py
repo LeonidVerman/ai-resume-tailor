@@ -242,8 +242,11 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     # Extracting only the first pipe segment restores the 1-line title format
     # so the company and date (already in their own body_para/meta slots) are
     # not duplicated and the section footprint matches the original template.
+    _header_rest: list[str] = []   # pipe segments beyond the title (company, date)
     if layout_bound and "|" not in orig.header.text.strip() and "|" in llm.header:
-        _header_text = llm.header.split("|")[0].strip()
+        _parts = [p.strip() for p in llm.header.split("|")]
+        _header_text = _parts[0]
+        _header_rest = _parts[1:]
         _log.debug(
             "ROLE_HEADER_FORMAT_PRESERVED: title-only original; extracted %r from %r",
             _header_text, llm.header[:60],
@@ -258,6 +261,25 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     # a header_extra fragment so it doesn't appear in the rendered output.
     header_extra_texts = {pm.text.strip().lower() for pm in orig.header_extra}
     llm_meta = [m for m in llm.meta_lines if m.strip().lower() not in header_extra_texts]
+
+    # When the header-only split was applied and the LLM provided no separate meta
+    # lines, the remaining pipe segments (company, date) would otherwise be silently
+    # discarded.  Recover them as a synthetic meta entry but ONLY when the template's
+    # single meta is date-only (starts with a digit), meaning it has no company slot.
+    # Templates whose meta already includes the company name are left unchanged so
+    # we don't overwrite a correct template value with the LLM's formatting.
+    if (
+        not llm_meta
+        and _header_rest
+        and orig.meta_lines
+        and orig.meta_lines[0].text.strip()[:1].isdigit()
+    ):
+        _synthetic = " | ".join(_header_rest)
+        llm_meta = [_synthetic]
+        _log.debug(
+            "ROLE_HEADER_REST_RECOVERED: date-only meta slot; injecting %r",
+            _synthetic[:60],
+        )
 
     # Meta lines: reuse original protos; in layout-bound mode drop extras.
     # When the LLM provides no meta lines (e.g. experience dates used "20XX"
