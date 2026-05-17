@@ -2027,21 +2027,17 @@ def _render_layout_two_col_table(
                             _parent.remove(_drawing)
                         _modified = True
                 if _modified:
-                    # Fix over-large right indent: the paragraph may carry a
-                    # w:ind w:right value sized for a full-page layout context
-                    # (e.g. right=5840 to leave room for a photo on the right
-                    # side of the page).  Inside a table cell the same indent
-                    # makes the text area negative → one character per line.
-                    # Cap it so the text area is at least 0 twips wide.
-                    _pPr = _pel.find(f"{{{_W}}}pPr")
-                    if _pPr is not None:
-                        _ind = _pPr.find(f"{{{_W}}}ind")
-                        if _ind is not None:
-                            _rv = _ind.get(f"{{{_W}}}right")
-                            if _rv is not None and int(_rv) >= left_w:
-                                _ind.set(f"{{{_W}}}right", "0")
                     # Keep the paragraph (with text, without background drawing)
-                    # in the left cell using its updated XML.
+                    # in its block list using its updated XML.
+                    # NOTE: do NOT cap w:right indent here.  These blocks are
+                    # rendered as body-level paragraphs (full page width) where
+                    # the original right indent (e.g. right=5840) is intentional:
+                    # it positions the name text in the left 43% of the page,
+                    # leaving the right 57% for the circular photo, and forces
+                    # "ABIGAIL" / "NAOMI" to wrap onto separate lines.
+                    # Capping the indent (done in a previous approach) made the
+                    # text use the full page width → single-line display → header
+                    # too short → table starting before the photo's bottom edge.
                     _left_blocks_filtered.append(LayoutParagraphBlock(
                         para_id=_blk.para_id,
                         xml_proto_xml=etree.tostring(_pel).decode(),
@@ -2359,9 +2355,12 @@ def _render_from_layout_blocks(
                     _main_pgSz_w, _main_pgSz_h,
                     _main_is_multicolumn,
                 )
-                # Move/clone background drawings (solid-colour and blip) so they
-                # appear on every overflow page, not just page 1.
-                _find_and_move_bg_to_start(body, sectPr, allow_blip=True)
+                # For templates with a blip background extracted to body level
+                # (e.g. template 23), the background is a HEADER element: it
+                # should only appear on page 1 and must NOT be cloned to page 2.
+                # Use default allow_blip=False so the blip is left in place at
+                # body start without being duplicated for overflow pages.
+                _find_and_move_bg_to_start(body, sectPr)
                 return
             else:
                 _log.debug(
