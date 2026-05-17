@@ -1557,6 +1557,256 @@ def _find_single_col_break_idx(layout_blocks) -> "int | None":
     return breaks[0] if len(breaks) == 1 else None
 
 
+def _is_docx_section_header_left_layout(doc, left_blocks) -> bool:
+    """Return True when the left column contains ONLY section-heading + spacer blocks.
+
+    This pattern appears in templates like sample 20 where the native 2-column
+    layout has a narrow left column that holds only section labels (Summary, Work
+    Experience, …) separated by blank spacers, while all body content lives in the
+    wide right column.  Unlike the independent-column layout these sections are
+    logically paired: each label belongs with the body content beside it.
+
+    Detection: every layout block in the left column that carries `<w:t>` text
+    content must be the heading of one of doc.sections (excluding the first
+    'other' section, which is the header-table content).  The presence of a
+    TableBlock (the name/contact header table) is expected and allowed.
+    """
+    # Collect heading para_ids for sections[1:] (skip sections[0] = header table)
+    heading_pids: set[str] = set()
+    for sec in doc.sections[1:]:
+        if sec.heading and sec.heading.para_id:
+            heading_pids.add(sec.heading.para_id)
+
+    if len(heading_pids) < 2:
+        return False  # need at least 2 sections
+
+    for blk in left_blocks:
+        if isinstance(blk, LayoutTableBlock):
+            continue  # header table is fine
+        if not isinstance(blk, LayoutParagraphBlock):
+            continue
+        # A block with visible text that is NOT a section heading → body content
+        if blk.para_id and "<w:t>" in (blk.xml_proto_xml or ""):
+            if blk.para_id not in heading_pids:
+                return False
+
+    return True
+
+
+def _render_docx_section_row_table(
+    doc,
+    body,
+    sectPr,
+    col_break_idx: int,
+    main_pgSz_w,
+    main_pgSz_h,
+    main_is_multicolumn: bool,
+) -> None:
+    """Render a section-header-left DOCX template as a multi-row section table.
+
+    Used for templates like sample 20 where the native 2-column layout places
+    section labels (Summary, Work Experience, …) in the narrow left column and
+    all body content in the wide right column.  Unlike the single-row 2-cell
+    table produced by _render_layout_two_col_table, this function creates ONE
+    TABLE ROW PER SECTION so that each label stays vertically aligned with its
+    corresponding body content regardless of how much the content grows.
+
+    Column widths are read from the template's w:cols spec.  A thin top border
+    on every cell replicates the horizontal divider line that the original
+    template renders via absolutely-positioned image shapes.
+    """
+    from copy import deepcopy
+    from lxml import etree
+
+    para_lookup = _build_para_lookup(doc)
+
+    # ── Column geometry ──────────────────────────────────────────────────────
+    _pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
+    _pgMar = sectPr.find(f"{{{_W}}}pgMar") if sectPr is not None else None
+    _page_w = int(_pgSz.get(f"{{{_W}}}w", "12240")) if _pgSz is not None else 12240
+    _mar_left = int(_pgMar.get(f"{{{_W}}}left", "0")) if _pgMar is not None else 0
+    _mar_right = int(_pgMar.get(f"{{{_W}}}right", "0")) if _pgMar is not None else 0
+    _text_area = max(_page_w - _mar_left - _mar_right, 1)
+
+    left_w = right_w = 0
+    if sectPr is not None:
+        cols_elem = sectPr.find(f"{{{_W}}}cols")
+        if cols_elem is not None:
+            col_elems = cols_elem.findall(f"{{{_W}}}col")
+            if len(col_elems) >= 2:
+                try:
+                    left_w = int(col_elems[0].get(f"{{{_W}}}w", "0"))
+                    right_w = int(col_elems[1].get(f"{{{_W}}}w", "0"))
+                except ValueError:
+                    pass
+    if left_w == 0 or right_w == 0:
+        left_w = _text_area // 3
+        right_w = _text_area - left_w
+
+    # Remove w:cols so LibreOffice uses table layout, not native column flow.
+    if sectPr is not None:
+        cols_to_remove = sectPr.find(f"{{{_W}}}cols")
+        if cols_to_remove is not None:
+            sectPr.remove(cols_to_remove)
+
+    left_blocks = list(doc.layout_blocks[:col_break_idx])   # type: ignore[index]
+    right_blocks = list(doc.layout_blocks[col_break_idx + 1:])  # type: ignore[index]
+
+    # ── Section heading para_id mappings ────────────────────────────────────
+    # sections[0] is the "other" section whose content lives in the header table
+    # (name, title, license).  We start section rows from sections[1].
+    heading_pid_to_si: dict[str, int] = {}
+    for si, sec in enumerate(doc.sections):
+        if si == 0:
+            continue
+        if sec.heading and sec.heading.para_id:
+            heading_pid_to_si[sec.heading.para_id] = si
+
+    # ── para_id → section_index for right-column content ────────────────────
+    para_to_si: dict[str, int] = {}
+    for si, sec in enumerate(doc.sections):
+        if si == 0:
+            continue
+        for pm in sec.body_paras:
+            if pm.para_id:
+                para_to_si[pm.para_id] = si
+        for role in sec.roles:
+            for pm in ([role.header]
+                       + list(role.header_extra)
+                       + list(role.meta_lines)
+                       + list(role.bullets)):
+                if pm and pm.para_id:
+                    para_to_si[pm.para_id] = si
+
+    # ── Split right_blocks into per-section buckets ──────────────────────────
+    n_sections = len(doc.sections)
+    section_right_blocks: list[list] = [[] for _ in range(n_sections)]
+    last_si = 1  # fallback section for unrecognised blocks
+    for blk in right_blocks:
+        if isinstance(blk, LayoutParagraphBlock):
+            if blk.para_id:
+                si = para_to_si.get(blk.para_id)
+                if si is not None:
+                    last_si = si
+                    section_right_blocks[si].append(blk)
+                # else: spacer/orphan — skip
+            # else: unbound block (para_id="") — skip; handled via all_paras below
+
+    # ── Find heading blocks in left_blocks ───────────────────────────────────
+    heading_block_for_si: dict[int, LayoutParagraphBlock] = {}
+    for blk in left_blocks:
+        if isinstance(blk, LayoutParagraphBlock) and blk.para_id in heading_pid_to_si:
+            si = heading_pid_to_si[blk.para_id]
+            heading_block_for_si[si] = blk
+
+    # ── Render the header TableBlock at body level first ─────────────────────
+    for blk in left_blocks:
+        if isinstance(blk, LayoutTableBlock) and blk.xml_proto_xml:
+            tbl_elem = etree.fromstring(blk.xml_proto_xml)
+            all_p = tbl_elem.findall(f".//{{{_W}}}p")
+            for para_id, p_elem in zip(blk.para_ids, all_p):
+                pm = para_lookup.get(para_id)
+                if pm is not None:
+                    _strip_text_wrapping_breaks(p_elem)
+                    _set_para_text(p_elem, pm.text)
+                    _clear_sdt_placeholder(p_elem)
+            if sectPr is not None:
+                sectPr.addprevious(tbl_elem)
+            else:
+                body.append(tbl_elem)
+            break  # only one header table expected
+
+    # ── Build the section-row table ──────────────────────────────────────────
+    tbl = etree.Element(f"{{{_W}}}tbl")
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW_el.set(f"{{{_W}}}w", str(left_w + right_w))
+    tblW_el.set(f"{{{_W}}}type", "dxa")
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+    _add_tbl_no_borders(tblPr)
+    _add_tbl_zero_cell_margins(tblPr)
+
+    def _add_divider_border(tcPr_elem) -> None:
+        """Add a thin black top border to replicate the section divider line."""
+        tc_brd = etree.SubElement(tcPr_elem, f"{{{_W}}}tcBorders")
+        top = etree.SubElement(tc_brd, f"{{{_W}}}top")
+        top.set(f"{{{_W}}}val", "single")
+        top.set(f"{{{_W}}}sz", "6")
+        top.set(f"{{{_W}}}color", "000000")
+
+    def _make_tc(tr_elem, w_twips: int, add_border: bool) -> "Any":
+        """Create a table cell with given width and optional top divider border."""
+        tc = etree.SubElement(tr_elem, f"{{{_W}}}tc")
+        tcPr = etree.SubElement(tc, f"{{{_W}}}tcPr")
+        tcW = etree.SubElement(tcPr, f"{{{_W}}}tcW")
+        tcW.set(f"{{{_W}}}w", str(w_twips))
+        tcW.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+        if add_border:
+            _add_divider_border(tcPr)
+        return tc
+
+    last_right_tc = None
+    for si, sec in enumerate(doc.sections):
+        if si == 0:
+            continue  # header-table section — already rendered above
+
+        tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+        # Left cell: section heading
+        left_tc = _make_tc(tr, left_w, add_border=True)
+        h_blk = heading_block_for_si.get(si)
+        if h_blk is not None:
+            h_elem = _render_block_into_elem(
+                h_blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
+            )
+            if h_elem is not None:
+                # Strip absolutely-positioned drawings from the heading paragraph
+                # (the original template embeds them here as divider-line anchors;
+                # we use the table top-border instead so positioning stays correct).
+                for drawing in list(h_elem.findall(f".//{{{_W}}}drawing")):
+                    parent = drawing.getparent()
+                    if parent is not None:
+                        parent.remove(drawing)
+                left_tc.append(h_elem)
+        if not left_tc.findall(f"{{{_W}}}p"):
+            etree.SubElement(left_tc, f"{{{_W}}}p")
+
+        # Right cell: section body content
+        right_tc = _make_tc(tr, right_w, add_border=True)
+        last_right_tc = right_tc
+
+        for blk in section_right_blocks[si]:
+            r_elem = _render_block_into_elem(
+                blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
+            )
+            if r_elem is not None:
+                right_tc.append(r_elem)
+
+        if not right_tc.findall(f"{{{_W}}}p"):
+            etree.SubElement(right_tc, f"{{{_W}}}p")
+
+    # Append unbound extra paras (LLM overflow with no para_id) to last right cell.
+    if last_right_tc is not None:
+        for pm in (doc.all_paras or []):
+            if not pm.para_id and pm.text.strip():
+                if pm.style.xml_proto is not None:
+                    from copy import deepcopy as _dc
+                    p_elem = _dc(pm.style.xml_proto)
+                    _set_para_text(p_elem, pm.text)
+                    last_right_tc.append(p_elem)
+                elif pm.paragraph_profile is not None:
+                    from tailor.compiler.para_builder import build_para_element
+                    last_right_tc.append(build_para_element(pm))
+
+    # Insert the section-row table into the body.
+    if sectPr is not None:
+        sectPr.addprevious(tbl)
+    else:
+        body.append(tbl)
+
+
 def _header_paras_have_blip_bg(doc, layout_blocks) -> bool:
     """True if any HEADER-PARA block contains a full-page behindDoc image drawing.
 
@@ -2386,6 +2636,21 @@ def _render_from_layout_blocks(
                 for s in doc.sections
             )
             if _col_ratio <= 0.80 and (not _has_blip or _needs_table_for_contact):
+                # Section-header-left layout (e.g. sample 20): the narrow left
+                # column contains ONLY section headings; all body content is in
+                # the wide right column.  Use a multi-row table (one row per
+                # section) so each heading stays vertically aligned with its
+                # corresponding body content regardless of content size changes.
+                _left_blocks_for_detect = list(doc.layout_blocks[:_col_break_idx])  # type: ignore[index]
+                if _is_docx_section_header_left_layout(doc, _left_blocks_for_detect):
+                    _render_docx_section_row_table(
+                        doc, body, sectPr,
+                        _col_break_idx,
+                        _main_pgSz_w, _main_pgSz_h,
+                        _main_is_multicolumn,
+                    )
+                    return
+
                 _render_layout_two_col_table(
                     doc, body, sectPr,
                     _col_break_idx,
