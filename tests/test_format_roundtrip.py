@@ -110,6 +110,10 @@ _TWO_COLUMN_PDFS: frozenset[str] = frozenset({
     # Section-row table layout: heading/body pairs rendered into per-section
     # table rows; DOCX cell traversal order differs from source PDF reading order.
     "20-Software-Engineer-Editable-Resume-Template-Download-in-docx-5.pdf",
+    # Section-row table with non-bulleted experience descriptions: source PDF has
+    # 0 bullets but the LLM text serialiser wraps experience body paras as bullets,
+    # producing a bullet-count mismatch on roundtrip.
+    "28-Engineer-Editable-Resume-Template-Download-in-docx.pdf",
 })
 
 # PDFs with letter-spaced headings that PyMuPDF reads as spaced characters
