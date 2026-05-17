@@ -1675,6 +1675,22 @@ def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_i
         _strip_text_wrapping_breaks(elem)
         _set_para_text(elem, pm.text)
         _clear_sdt_placeholder(elem)
+        # Sync cleared indent: the updater may have called _clear_left_indent(pm),
+        # setting pm.style.indent_left=None and removing w:left from pm.style.xml_proto.
+        # But the renderer uses block.xml_proto_xml (the original template XML) which
+        # still carries the old w:left attribute.  When the pm has no explicit
+        # indent_left but the elem has an explicit non-zero w:left, the updater
+        # cleared it — remove it from elem to match.
+        if pm.style.indent_left is None:
+            _pPr = elem.find(f"{{{_W}}}pPr")
+            if _pPr is not None:
+                _ind = _pPr.find(f"{{{_W}}}ind")
+                if _ind is not None:
+                    _w_left = _ind.get(f"{{{_W}}}left")
+                    if _w_left is not None and _w_left != "0":
+                        del _ind.attrib[f"{{{_W}}}left"]
+                        if not _ind.attrib:
+                            _pPr.remove(_ind)
     _collapse_oversized_spacer(elem)
     return elem
 
@@ -1990,6 +2006,27 @@ def _render_layout_two_col_table(
     # page 2 begins only after those paragraphs — they do NOT repeat on page 2.
     left_blocks = list(doc.layout_blocks[:col_break_idx])  # type: ignore[index]
     right_blocks = list(doc.layout_blocks[col_break_idx + 1:])  # type: ignore[index]
+
+    # Skip leading empty (spacer) blocks at the top of the right column.
+    # In native 2-column templates these empty paragraphs were column-break
+    # follow-up spacers that aligned content relative to the left column.
+    # Inside a table cell they create a blank gap above the first real section
+    # heading.  A block is "empty" when: (a) it is a LayoutParagraphBlock,
+    # (b) its XML proto exists, and (c) neither the XML nor the pm text carries
+    # any visible text content.
+    _para_lookup_for_trim = _build_para_lookup(doc)
+    _rb_start = 0
+    for _i, _blk in enumerate(right_blocks):
+        if not isinstance(_blk, LayoutParagraphBlock) or not _blk.xml_proto_xml:
+            break  # hit a table block or block without XML — stop trimming
+        _pm_trim = _para_lookup_for_trim.get(_blk.para_id) if _blk.para_id else None
+        _pm_text_trim = (_pm_trim.text.strip() if _pm_trim else "")
+        _has_xml_text_trim = "<w:t>" in _blk.xml_proto_xml
+        if _pm_text_trim or _has_xml_text_trim:
+            break  # found real content — stop trimming
+        _rb_start = _i + 1
+    if _rb_start:
+        right_blocks = right_blocks[_rb_start:]
 
     # Extract full-page blip background DRAWINGS from left_blocks and insert them
     # as a separate body-level paragraph BEFORE the table.  A behindDoc blip

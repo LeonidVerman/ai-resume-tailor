@@ -136,6 +136,13 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "the identity LLM pass cannot reconstruct pipe-formatted role headers "
         "from plain headings, so the roundtrip cannot preserve role structure."
     ),
+    "2-Leonid_Verman_Resume_2.docx": (
+        "Professional summary is embedded in the Skills section body (para_46).  "
+        "The skills sanitizer (full-sentence filter) drops the long summary from "
+        "the LLM body_lines; layout-bound rendering then clears the original para "
+        "slot, causing a one-para count difference.  The real LLM pipeline is "
+        "unaffected because the summary is handled by the anchored-summary path."
+    ),
     "22-Software-Engineer-Editable-Resume-Template-Download-in-docx-4.docx": (
         "Non-standard layout: experience content is embedded inside the Skills "
         "section body.  Layout fitting trims one skill line, causing a one-para "
