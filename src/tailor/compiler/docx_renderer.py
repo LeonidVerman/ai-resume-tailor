@@ -2051,16 +2051,59 @@ def _render_layout_two_col_table(
         if not _modified:
             _left_blocks_filtered.append(_blk)
     left_blocks = _left_blocks_filtered
-    # Insert a single body-level paragraph containing the background drawings so
-    # they render as page-level behindDoc elements while the table is on top.
+
+    # Insert a single body-level paragraph containing the background drawings.
+    # Wrap the drawing in a <w:r> run (Word XML spec) and add a zero-height
+    # pPr so the paragraph itself consumes no vertical space.
     if _blip_drawings:
         _bg_p = etree.Element(f"{{{_W}}}p")
+        _bg_pPr = etree.SubElement(_bg_p, f"{{{_W}}}pPr")
+        _bg_sp = etree.SubElement(_bg_pPr, f"{{{_W}}}spacing")
+        _bg_sp.set(f"{{{_W}}}before", "0")
+        _bg_sp.set(f"{{{_W}}}after", "0")
+        _bg_sp.set(f"{{{_W}}}line", "1")
+        _bg_sp.set(f"{{{_W}}}lineRule", "exact")
+        _bg_r = etree.SubElement(_bg_p, f"{{{_W}}}r")
         for _draw in _blip_drawings:
-            _bg_p.append(_draw)
+            _bg_r.append(_draw)
         if sectPr is not None:
             sectPr.addprevious(_bg_p)
         else:
             body.append(_bg_p)
+
+    # Separate left_blocks into header blocks (to be rendered as full-width
+    # body-level paragraphs BEFORE the table) and section blocks (inside the
+    # left table cell).  This restores the merged header area seen in the
+    # original template: candidate name + title span the full page width while
+    # the 2-column table starts below with section content.
+    #
+    # NOTE: in the original code ALL left blocks went into the left cell to
+    # avoid pushing the table to page 2 (the header consumed too much vertical
+    # space on page 1).  For templates with compact headers (< 2 in of height)
+    # this trade-off reversal is safe.  The _needs_table_for_contact guard that
+    # activates this path ensures we only reach here for such templates.
+    _header_para_ids: frozenset[str] = frozenset(
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    )
+    _header_left_blocks = [
+        blk for blk in left_blocks
+        if isinstance(blk, LayoutParagraphBlock) and blk.para_id in _header_para_ids
+    ]
+    _section_left_blocks = [
+        blk for blk in left_blocks
+        if not (isinstance(blk, LayoutParagraphBlock) and blk.para_id in _header_para_ids)
+    ]
+    # Render header blocks as body-level paragraphs (full page width).
+    for _hblk in _header_left_blocks:
+        _hel = _render_block_into_elem(
+            _hblk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
+        )
+        if _hel is not None:
+            if sectPr is not None:
+                sectPr.addprevious(_hel)
+            else:
+                body.append(_hel)
+    left_blocks = _section_left_blocks
 
     # Build tblPr: inherit borders from source table when available (Task 2).
     # When no source table exists, use no visible borders but add an insideV
