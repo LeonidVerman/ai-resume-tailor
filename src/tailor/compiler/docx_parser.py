@@ -83,6 +83,10 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         # of the preceding "other" section rather than starting a new section.
         "contact info", "contact information",
         "personal references", "personal reference",
+        # Achievement/accomplishment sections (e.g. sample 32 "Accomplishments")
+        # and combined skills headings ("Skills and Abilities").
+        "accomplishments", "achievement", "achievements",
+        "skills and abilities",
     })
 )
 
@@ -1543,9 +1547,21 @@ def _apply_multicolumn_newspaper_fix(
 
     body_children = list(body)
 
-    # Skills-column guard: only trigger when a tab-split heading has a skills-type
-    # section on one side — prevents false positives on Experience|Education splits.
-    has_skills_col_split = False
+    # Tab-split column guard: only trigger when a tab-split heading indicates a
+    # genuine two-column layout where content flows into separate visual columns
+    # that need reordering.  Two patterns are accepted:
+    #
+    # 1. Skills-column split: one side is a skills-type section name (the common
+    #    case for sidebar templates where skills appear on the right).
+    #
+    # 2. Experience|Education split: the document uses a single paragraph with a
+    #    tab stop to label both columns simultaneously (e.g. sample 32 where
+    #    "Experience" labels the left column and "Education" labels the right column).
+    #    In this case the content in both columns genuinely needs reordering so the
+    #    section grouper sees left-column content before right-column content.
+    _EDUCATION_LOWER: frozenset[str] = frozenset(t.lower() for t in _EDUCATION_NAMES)
+    _EXPERIENCE_LOWER: frozenset[str] = frozenset(t.lower() for t in _EXPERIENCE_NAMES)
+    has_col_split = False
     for child in body_children:
         local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
         if local != "p":
@@ -1554,14 +1570,21 @@ def _apply_multicolumn_newspaper_fix(
         if res is None:
             continue
         lt, rt = res
-        if (
-            lt.lower() in _KNOWN_SECTION_NAMES_LOWER
-            and rt.lower() in _KNOWN_SECTION_NAMES_LOWER
-            and (lt.lower() in _SKILLS_COLUMN_NAMES or rt.lower() in _SKILLS_COLUMN_NAMES)
-        ):
-            has_skills_col_split = True
+        lt_lo, rt_lo = lt.lower(), rt.lower()
+        if lt_lo not in _KNOWN_SECTION_NAMES_LOWER or rt_lo not in _KNOWN_SECTION_NAMES_LOWER:
+            continue
+        # Pattern 1: skills column
+        if lt_lo in _SKILLS_COLUMN_NAMES or rt_lo in _SKILLS_COLUMN_NAMES:
+            has_col_split = True
             break
-    if not has_skills_col_split:
+        # Pattern 2: experience | education column pair
+        if (
+            (lt_lo in _EXPERIENCE_LOWER and rt_lo in _EDUCATION_LOWER)
+            or (lt_lo in _EDUCATION_LOWER and rt_lo in _EXPERIENCE_LOWER)
+        ):
+            has_col_split = True
+            break
+    if not has_col_split:
         return all_paras, False, {}
 
     # Only handles documents with no tables (p_child_indices count must match all_paras)

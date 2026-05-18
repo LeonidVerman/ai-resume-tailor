@@ -15,8 +15,6 @@ _NON_TRIGGER_TEMPLATES = [
     "1-Leonid_Verman_Resume_Template.docx",
     "6-Template1.docx",
     "9-Template4.docx",
-    "32-Software-Engineer-Editable-Resume-Template-Download-in-docx-1-1.docx",
-    "29-Programmer-Editable-Resume-Template-Download-in-docx.docx",
     "20-Software-Engineer-Editable-Resume-Template-Download-in-docx-5.docx",
 ]
 

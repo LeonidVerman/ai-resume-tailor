@@ -211,6 +211,10 @@ _ALL_KNOWN: frozenset[str] = (
         # this lets "TECHNICAL SKILLS" (semantic=skills) match the template's
         # MY QUALIFICATIONS slot via semantic-type matching in Pass 2.
         "my qualifications", "personal references", "personal reference",
+        # Accomplishment / achievement sections (e.g. sample 32 "Accomplishments")
+        # and combined skills headings ("Skills and Abilities").
+        "accomplishments", "achievement", "achievements",
+        "skills and abilities",
     })
 )
 
