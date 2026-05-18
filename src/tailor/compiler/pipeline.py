@@ -565,6 +565,20 @@ def _normalize_bullet_styles(doc: ResumeDocument) -> None:
                 pp.font_size_pt = canonical_size
             pp.italic = canonical_italic
 
+        # Per-role bullet indent normalization: align each role's bullets to
+        # that role's own header indent.  Template roles may have bullets at
+        # different x-positions in the source PDF (e.g. one role at 27 pt,
+        # another at 43 pt), causing visual inconsistency after cloning.
+        for role in sec.roles:
+            header_pp = role.header.paragraph_profile
+            if header_pp is None:
+                continue
+            target_indent = header_pp.indent_left_pt
+            for b in role.bullets:
+                bpp = b.paragraph_profile
+                if bpp is not None and abs(bpp.indent_left_pt - target_indent) > 2.0:
+                    bpp.indent_left_pt = target_indent
+
 
 def _apply_heading_case_convention(doc: ResumeDocument) -> None:
     """Apply the template's section-heading capitalisation style to all sections.
