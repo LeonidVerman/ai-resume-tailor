@@ -1557,6 +1557,90 @@ def _find_single_col_break_idx(layout_blocks) -> "int | None":
     return breaks[0] if len(breaks) == 1 else None
 
 
+_WP_NS = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+_BULLET_MARKER_MAX_EMU = 100_000   # cx/cy ≤ this → small bullet dot, not a line
+
+
+def _strip_column_bullet_drawings(tc_elem) -> None:
+    """Remove small absolutely-positioned bullet-marker drawings from a table cell.
+
+    Templates like sample 20 use absolutely-positioned tiny shapes (cx≈38100 EMU,
+    relativeFrom='column') as bullet markers.  Inside a table cell these cannot use
+    the native 'column' reference (which points to the original narrow left column,
+    not the wide right cell), so LibreOffice renders them in the wrong column.
+
+    This function:
+    1. Scans every <w:p> in the cell for small anchor drawings (cx ≤ 100k EMU).
+    2. For each such paragraph (always an empty spacer after the bullet text),
+       identifies the immediately preceding non-empty text paragraph as the
+       intended bullet target.
+    3. Removes the drawing paragraph.
+    4. Injects a '• ' prefix run into the identified bullet text paragraph so the
+       bullet marker appears inline at the correct position.
+    """
+    paras = list(tc_elem.findall(f"{{{_W}}}p"))
+    to_remove: list = []
+    to_bullet: list = []
+    prev_text_p = None
+
+    for p_elem in paras:
+        drawings = p_elem.findall(f".//{{{_W}}}drawing")
+        is_bullet_marker = False
+        for d in drawings:
+            for anc in d.findall(f".//{{{_WP_NS}}}anchor"):
+                ext = anc.find(f"{{{_WP_NS}}}extent")
+                if ext is None:
+                    continue
+                try:
+                    cx = int(ext.get("cx", "0"))
+                    cy = int(ext.get("cy", "0"))
+                except ValueError:
+                    continue
+                if cx <= _BULLET_MARKER_MAX_EMU and cy <= _BULLET_MARKER_MAX_EMU:
+                    is_bullet_marker = True
+                    break
+            if is_bullet_marker:
+                break
+
+        if is_bullet_marker:
+            to_remove.append(p_elem)
+            if prev_text_p is not None:
+                to_bullet.append(prev_text_p)
+            prev_text_p = None  # consumed — reset so we don't double-bullet
+        else:
+            ts = p_elem.findall(f".//{{{_W}}}t")
+            if any(t.text and t.text.strip() for t in ts):
+                prev_text_p = p_elem
+            # empty paras don't reset prev_text_p
+
+    for p_elem in to_remove:
+        parent = p_elem.getparent()
+        if parent is not None:
+            parent.remove(p_elem)
+
+    for p_elem in to_bullet:
+        runs = p_elem.findall(f"{{{_W}}}r")
+        if runs:
+            # Prepend bullet character to first run's text
+            first_t = runs[0].find(f"{{{_W}}}t")
+            if first_t is not None:
+                existing = first_t.text or ""
+                first_t.text = "• " + existing
+                first_t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+        else:
+            # No runs — add a minimal run with bullet char before any existing runs
+            from lxml import etree as _et
+            new_r = _et.Element(f"{{{_W}}}r")
+            new_t = _et.SubElement(new_r, f"{{{_W}}}t")
+            new_t.text = "• "
+            new_t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+            pPr = p_elem.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                pPr.addnext(new_r)
+            else:
+                p_elem.insert(0, new_r)
+
+
 def _is_docx_section_header_left_layout(doc, left_blocks) -> bool:
     """Return True when the left column contains ONLY section-heading + spacer blocks.
 
@@ -1783,6 +1867,10 @@ def _render_docx_section_row_table(
             )
             if r_elem is not None:
                 right_tc.append(r_elem)
+
+        # Strip absolutely-positioned bullet-marker drawings and inject '• ' text so
+        # bullets appear inline in the right cell instead of bleeding into the left.
+        _strip_column_bullet_drawings(right_tc)
 
         if not right_tc.findall(f"{{{_W}}}p"):
             etree.SubElement(right_tc, f"{{{_W}}}p")
