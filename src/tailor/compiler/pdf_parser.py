@@ -1412,6 +1412,11 @@ _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical expertise", "expertise", "key skills", "areas of expertise",
     "technologies", "tech stack", "relevant skills", "skills & abilities",
     "skill summary", "professional skills",
+    # Non-standard names used by some templates; kept out of text_parser._SKILLS_NAMES
+    # so LLM output stays sem=other, allowing the updater guard (Pass 1) to skip the
+    # title match and let the standard skills section ("TECHNICAL SKILLS") match via
+    # semantic type in Pass 2.
+    "my qualifications", "qualifications",
 })
 _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
