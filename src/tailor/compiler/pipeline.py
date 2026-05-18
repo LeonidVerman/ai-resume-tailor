@@ -286,6 +286,8 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             return False
         if "@" in t:                                          # email address
             return False
+        if re.match(r"^\d", t):                               # street address (house number)
+            return False
         if re.search(r"\d[\d\s.()\-]{5,}", t):               # phone-like digit run
             return False
         if re.search(r"\b\d{4}\b", t):                       # 4-digit year/zip/id
@@ -581,27 +583,40 @@ def _normalize_bullet_styles(doc: ResumeDocument) -> None:
 
 
 def _apply_heading_case_convention(doc: ResumeDocument) -> None:
-    """Apply the template's section-heading capitalisation style to all sections.
+    """Apply the template's section-heading capitalisation style to LLM-injected sections.
 
-    Detects whether the majority (≥ 50 %) of existing section headings are
-    ALL-CAPS or Title-Case and transforms any outliers to match.  This ensures
-    LLM-injected sections ('Technical Skills', 'Additional') follow the same
-    visual style as template sections ('GENERAL INFO', 'WORK HISTORY').
+    For two-column PDF layouts, the convention is determined from the left-column
+    (template) sections and applied only to right-column (LLM-injected) sections.
+    This prevents verbatim template sub-entries (e.g. 'Samira Hadid' in REFERENCES)
+    from being incorrectly uppercased while still normalising extra LLM sections
+    ('Technical Skills' → 'TECHNICAL SKILLS', 'Additional' → 'ADDITIONAL').
     """
     if doc.source_kind != "pdf":
         return
-    titles = [s.title.strip() for s in doc.sections if s.title.strip()]
-    if not titles:
+    if doc.layout.column_split_x is None:
+        return  # only meaningful for two-column PDF layouts
+
+    def _col(sec) -> "str | None":
+        pp = sec.heading.paragraph_profile
+        return pp.column_id if pp else None
+
+    # Determine convention from left-column (template) section headings.
+    left_titles = [s.title.strip() for s in doc.sections if _col(s) == "left" and s.title.strip()]
+    if not left_titles:
         return
 
-    all_caps = sum(1 for t in titles if t == t.upper())
-    # Only apply a convention when the majority clearly agree.
-    if all_caps / len(titles) >= 0.5:
-        for sec in doc.sections:
-            t = sec.title.strip()
-            if t and t != t.upper():
-                sec.title = t.upper()
-                sec.heading = sec.heading.with_text(t.upper())
+    all_caps = sum(1 for t in left_titles if t == t.upper())
+    if all_caps / len(left_titles) < 0.5:
+        return
+
+    # Apply ONLY to right-column (LLM-injected extra) sections.
+    for sec in doc.sections:
+        if _col(sec) != "right":
+            continue
+        t = sec.title.strip()
+        if t and t != t.upper():
+            sec.title = t.upper()
+            sec.heading = sec.heading.with_text(t.upper())
 
 
 def compile_resume_from_pdf(
