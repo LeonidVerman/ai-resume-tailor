@@ -332,6 +332,13 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "pipe-separated string, changing paragraph text.  Real LLM pipeline "
         "unaffected."
     ),
+    "30-Software-Engineer-Editable-Resume-Template-Download-in-docx-1.docx": (
+        "Newspaper 2-column layout: the tab-normalisation fix converts inline "
+        "'<w:tab/>' characters to spaces for heading detection (e.g. 'SOFTWARE "
+        "ENGINEER<tab>www.techguruplus.com').  The XML proto still carries the tab "
+        "element, so the rendered paragraph gets a double-space when re-parsed.  "
+        "Real LLM pipeline unaffected (contact header is not modified)."
+    ),
     "27-Engineer-Editable-Resume-Template-Download-in-docx-3.docx": (
         "Two-column layout converted to a 2-cell table by the renderer to keep "
         "right-column overflow in the right column (Task 3: same-lane continuation). "

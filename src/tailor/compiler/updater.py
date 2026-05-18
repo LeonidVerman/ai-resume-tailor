@@ -1756,10 +1756,49 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
                 continue
             if text[0] in ("-", "•", "·", "–", "*"):
                 continue
+            # Reject keyword lists that use '•' as an inline separator
+            # (e.g. "Senior Architect • Principal Developer • Senior App Developer").
+            # More than 1 bullet in the middle indicates a skills keyword list, not prose.
+            if text.count("•") > 1:
+                continue
             comma_density = text.count(",") / max(1, len(text))
             if comma_density >= 0.10:
                 continue
             return p
+
+    # Also search header_paras for intro-prose paragraphs (e.g. sample 24 where
+    # the original summary placeholder "I enjoy learning..." is in header_paras
+    # rather than in any section body).  Only search the tail of header_paras
+    # (after the name/title/contact block) to avoid replacing contact info.
+    _CONTACT_SIGNALS: frozenset[str] = frozenset({"@", "://"})
+    _hp = original.header_paras
+    # Find where the contact block ends: walk backwards past trailing empties to
+    # the last long content paragraph, then search only from there onward.
+    _hp_start = 0
+    for _j in range(len(_hp) - 1, -1, -1):
+        _ht = _hp[_j].text.strip()
+        if len(_ht) > 15 and not any(s in _ht for s in _CONTACT_SIGNALS):
+            _hp_start = _j
+            break
+    for p in _hp[_hp_start:]:
+        text = p.text.strip()
+        if len(text) < _INTRO_PROSE_MIN_LEN:
+            continue
+        if p.semantic in ("role_header", "role_meta", "section_heading"):
+            continue
+        if "|" in text or "://" in text or "@" in text:
+            continue
+        if " " not in text:
+            continue
+        if text[0] in ("-", "•", "·", "–", "*"):
+            continue
+        if text.count("•") > 1:
+            continue
+        comma_density = text.count(",") / max(1, len(text))
+        if comma_density >= 0.10:
+            continue
+        return p
+
     return None
 
 

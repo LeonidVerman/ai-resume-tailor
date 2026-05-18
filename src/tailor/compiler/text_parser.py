@@ -215,6 +215,8 @@ _ALL_KNOWN: frozenset[str] = (
         # and combined skills headings ("Skills and Abilities").
         "accomplishments", "achievement", "achievements",
         "skills and abilities",
+        # Generic intro/about section (e.g. sample 30 "About" heading).
+        "about",
     })
 )
 

@@ -87,6 +87,8 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         # and combined skills headings ("Skills and Abilities").
         "accomplishments", "achievement", "achievements",
         "skills and abilities",
+        # Generic intro/about section (e.g. sample 30 "About" heading).
+        "about",
     })
 )
 
@@ -166,12 +168,46 @@ def _classify_section(heading_text: str) -> str:
 # ---------------------------------------------------------------------------
 
 def _get_para_text(p_elem) -> str:
-    parts: list[str] = []
+    # Collect (kind, value) tokens: "t" for text, "br" for newline, "tab" for tab.
+    # Tab is a run-level <w:tab/> element (direct child of <w:r>).
+    tokens: list[tuple[str, str]] = []
     for elem in p_elem.iter():
         if elem.tag == f"{{{_W}}}t":
-            parts.append(elem.text or "")
+            tokens.append(("t", elem.text or ""))
         elif elem.tag == f"{{{_W}}}br":
-            parts.append("\n")
+            tokens.append(("br", "\n"))
+        elif elem.tag == f"{{{_W}}}tab":
+            parent_local = (
+                elem.getparent().tag.split("}")[-1]
+                if elem.getparent() is not None else ""
+            )
+            if parent_local == "r":
+                tokens.append(("tab", ""))
+
+    # Emit tokens, inserting a space for a "tab" token only when the surrounding
+    # text has no space on either side.  This converts "GENERAL<tab>INFO" →
+    # "GENERAL INFO" (enabling heading detection for label-column templates like
+    # sample 27) without adding double-spaces to bullet paragraphs that already
+    # have a space after the tab (e.g. "•<tab> Content").
+    parts: list[str] = []
+    for i, (kind, val) in enumerate(tokens):
+        if kind != "tab":
+            parts.append(val)
+            continue
+        # Find previous and next text characters around this tab.
+        prev_char = ""
+        for j in range(i - 1, -1, -1):
+            if tokens[j][0] in ("t", "br"):
+                prev_char = tokens[j][1][-1:] if tokens[j][1] else ""
+                break
+        next_char = ""
+        for j in range(i + 1, len(tokens)):
+            if tokens[j][0] in ("t", "br"):
+                next_char = tokens[j][1][:1] if tokens[j][1] else ""
+                break
+        # Only insert a space when neither side already has one.
+        if prev_char and not prev_char.isspace() and next_char and not next_char.isspace():
+            parts.append(" ")
     return "".join(parts)
 
 
@@ -676,6 +712,65 @@ def _extract_layout(doc) -> LayoutProfile:
 
 
 # ---------------------------------------------------------------------------
+# Multi-variant template deduplication
+# ---------------------------------------------------------------------------
+
+def _dedup_multivariant_sections(
+    sections: "list[ResumeSection]",
+    header_paras: "list[ParaModel]",
+    all_paras: "list[ParaModel]",
+) -> "tuple[list[ResumeSection], list[ParaModel]]":
+    """Detect and remove duplicate section copies in multi-variant templates.
+
+    Some templates ship N identical copies of the same resume layout in
+    different color schemes (e.g. 3 tables with red/blue/green accents).
+    The parser ingests all copies, producing N × period sections.
+
+    Algorithm: find the shortest period P (≥ 2) such that N = len(sections)/P
+    is an integer ≥ 2 and sections[i].title == sections[i+P].title for all i
+    in 0..len(sections)-P-1.  Keep only sections[:P] and filter all_paras to
+    header_paras + paras from the first copy.
+    """
+    n = len(sections)
+    if n < 4:
+        return sections, all_paras
+
+    titles = [s.title.strip().lower() for s in sections]
+
+    for period in range(2, n // 2 + 1):
+        if n % period != 0:
+            continue
+        copies = n // period
+        if copies < 2:
+            continue
+        chunk = titles[:period]
+        if all(titles[i * period:(i + 1) * period] == chunk for i in range(copies)):
+            # Truncate to first copy
+            first_sections = sections[:period]
+            # Collect all ParaModel objects that belong to the first copy.
+            kept: set[int] = set()
+            for hp in header_paras:
+                kept.add(id(hp))
+            for sec in first_sections:
+                kept.add(id(sec.heading))
+                for p in sec.body_paras:
+                    kept.add(id(p))
+                for role in sec.roles:
+                    kept.add(id(role.header))
+                    for p in (*role.header_extra, *role.meta_lines, *role.bullets):
+                        kept.add(id(p))
+            first_paras = [p for p in all_paras if id(p) in kept]
+            import logging as _logging
+            _logging.getLogger(__name__).debug(
+                "MULTIVARIANT_DEDUP: %d sections → %d (period=%d, copies=%d)",
+                n, period, period, copies,
+            )
+            return first_sections, first_paras
+
+    return sections, all_paras
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -699,6 +794,19 @@ def parse_docx(path: str) -> ResumeDocument:
         local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
         if local == "p":
             text = _get_para_text(child)
+            # Label-column tab-split guard: when the LEFT side of a tab-split is a
+            # known section name but the RIGHT side is not (e.g. sample 28's
+            # "SUMMARY\tMaster Degree of Project Engineering"), extract only the left
+            # side so the paragraph is classified as a clean section heading rather
+            # than a garbled label+content blob.
+            _tsplit = _tab_split_texts(child)
+            if _tsplit is not None:
+                _lt, _rt = _tsplit
+                if (
+                    _lt.strip().lower() in _KNOWN_SECTION_NAMES_LOWER
+                    and _rt.strip().lower() not in _KNOWN_SECTION_NAMES_LOWER
+                ):
+                    text = _lt.strip()
             style = _parse_para_style(child, style_map)
             pm = ParaModel(text=text, style=style, semantic="")
             pm.semantic = _infer_semantic(pm)
@@ -847,6 +955,12 @@ def parse_docx(path: str) -> ResumeDocument:
     # that title each job role as a section heading ("Software Engineer", "Software
     # Engineer Intern") without a containing "Work Experience" / "Experience" header.
     sections = _consolidate_job_entry_sections(sections)
+
+    # Multi-variant template deduplication: some templates ship N identical copies of
+    # the same resume layout in different color schemes (e.g. sample 9 with 3 tables
+    # using red/blue/green accent colors).  Detect when the section title sequence is
+    # exactly N copies of a shorter period and truncate to the first copy.
+    sections, all_paras = _dedup_multivariant_sections(sections, header_paras, all_paras)
 
     doc = ResumeDocument(
         header_paras=header_paras,
@@ -1549,7 +1663,7 @@ def _apply_multicolumn_newspaper_fix(
 
     # Tab-split column guard: only trigger when a tab-split heading indicates a
     # genuine two-column layout where content flows into separate visual columns
-    # that need reordering.  Two patterns are accepted:
+    # that need reordering.  Three patterns are accepted:
     #
     # 1. Skills-column split: one side is a skills-type section name (the common
     #    case for sidebar templates where skills appear on the right).
@@ -1559,6 +1673,12 @@ def _apply_multicolumn_newspaper_fix(
     #    "Experience" labels the left column and "Education" labels the right column).
     #    In this case the content in both columns genuinely needs reordering so the
     #    section grouper sees left-column content before right-column content.
+    #
+    # 3. Column-break paragraphs: the document has explicit column-break (<w:br
+    #    type="column"/>) paragraphs inside a multi-column section.  These signal
+    #    that content genuinely flows across visual columns and reordering is needed
+    #    (e.g. sample 30 where Experience content is in the left column and
+    #    Certifications are in the right column).
     _EDUCATION_LOWER: frozenset[str] = frozenset(t.lower() for t in _EDUCATION_NAMES)
     _EXPERIENCE_LOWER: frozenset[str] = frozenset(t.lower() for t in _EXPERIENCE_NAMES)
     has_col_split = False
@@ -1568,6 +1688,10 @@ def _apply_multicolumn_newspaper_fix(
             continue
         res = _tab_split_texts(child)
         if res is None:
+            # Pattern 3: column-break paragraph (no tab-split needed)
+            if _has_column_break(child):
+                has_col_split = True
+                break
             continue
         lt, rt = res
         lt_lo, rt_lo = lt.lower(), rt.lower()
