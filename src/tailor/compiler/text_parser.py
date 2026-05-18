@@ -161,6 +161,8 @@ _SUMMARY_NAMES: frozenset[str] = frozenset({
     "executive summary",
     # Non-canonical labels used in resume templates as summary containers:
     "professional overview", "general info", "general information",
+    # Generic intro section names:
+    "about",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "skill", "core competencies", "competencies",
@@ -215,8 +217,6 @@ _ALL_KNOWN: frozenset[str] = (
         # and combined skills headings ("Skills and Abilities").
         "accomplishments", "achievement", "achievements",
         "skills and abilities",
-        # Generic intro/about section (e.g. sample 30 "About" heading).
-        "about",
     })
 )
 

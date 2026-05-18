@@ -881,7 +881,17 @@ def _update_body_section(
             # reference entry appearing twice after the LLM merges it into one
             # line).  Clearing to empty string makes the slot invisible while
             # preserving the layout_block para_id reference.
-            new_body.append(p.with_text(""))
+            #
+            # Exception: in a skills section, non-bullet paragraph-type paras
+            # (e.g. a candidate name or intro-prose summary that sits in a
+            # different visual column of the same table cell) must be preserved
+            # verbatim — they carry either the original design element text
+            # (e.g. 'Leonid Verman') or the LLM summary text injected earlier
+            # by _find_intro_prose_para.  Clearing them erases the name/summary.
+            if _is_skills and p.semantic == "paragraph":
+                new_body.append(p)  # preserve name / summary / non-skill para
+            else:
+                new_body.append(p.with_text(""))
         # else (non-layout-bound): LLM produced fewer lines — drop trailing para
 
     # Append any remaining unbound extra paras (LLM content beyond template slots).
@@ -3812,10 +3822,11 @@ def apply_tailored(
                     )
                 elif llm_s.semantic_type == "skills":
                     # Try to inject skills into the left column (the column that contains
-                    # 'other'-type sections before the first education/experience section).
-                    # Find the boundary: first section of type education/experience marks
-                    # the start of the right/content column.
-                    _CONTENT_BOUNDARY_TYPES = frozenset({"education", "experience"})
+                    # sidebar sections before the first experience section).
+                    # Use only "experience" as the boundary — education can legitimately
+                    # appear in the left sidebar column (e.g. sample 12 has Education
+                    # in the left column before Communication and Leadership).
+                    _CONTENT_BOUNDARY_TYPES = frozenset({"experience"})
                     _left_col_end = next(
                         (i for i, s in enumerate(original.sections)
                          if s.semantic_type in _CONTENT_BOUNDARY_TYPES),

@@ -43,6 +43,8 @@ _SUMMARY_NAMES: frozenset[str] = frozenset({
     "executive summary", "overview",
     # Non-canonical labels used in resume templates as summary containers:
     "professional overview", "general info", "general information",
+    # Generic intro section names (e.g. sample 30 "About" heading).
+    "about",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "skill", "core competencies", "competencies",
@@ -87,8 +89,6 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         # and combined skills headings ("Skills and Abilities").
         "accomplishments", "achievement", "achievements",
         "skills and abilities",
-        # Generic intro/about section (e.g. sample 30 "About" heading).
-        "about",
     })
 )
 
@@ -719,7 +719,8 @@ def _dedup_multivariant_sections(
     sections: "list[ResumeSection]",
     header_paras: "list[ParaModel]",
     all_paras: "list[ParaModel]",
-) -> "tuple[list[ResumeSection], list[ParaModel]]":
+    body_items: "list",
+) -> "tuple[list[ResumeSection], list[ParaModel], list]":
     """Detect and remove duplicate section copies in multi-variant templates.
 
     Some templates ship N identical copies of the same resume layout in
@@ -728,12 +729,12 @@ def _dedup_multivariant_sections(
 
     Algorithm: find the shortest period P (≥ 2) such that N = len(sections)/P
     is an integer ≥ 2 and sections[i].title == sections[i+P].title for all i
-    in 0..len(sections)-P-1.  Keep only sections[:P] and filter all_paras to
-    header_paras + paras from the first copy.
+    in 0..len(sections)-P-1.  Keep only sections[:P] and filter all_paras and
+    body_items to the first copy.
     """
     n = len(sections)
     if n < 4:
-        return sections, all_paras
+        return sections, all_paras, body_items
 
     titles = [s.title.strip().lower() for s in sections]
 
@@ -760,14 +761,37 @@ def _dedup_multivariant_sections(
                     for p in (*role.header_extra, *role.meta_lines, *role.bullets):
                         kept.add(id(p))
             first_paras = [p for p in all_paras if id(p) in kept]
+
+            # Truncate body_items: keep only the items that form the first copy.
+            # For multi-table templates, "first copy" = the first TableBlock plus
+            # any preceding non-table items and any immediately following empty
+            # paragraphs (sectPr carriers needed for document structure).
+            # We do NOT use the `kept` set here because absorbed section content
+            # from later tables can pollute it (e.g. the second table's JACOB HANCOCK
+            # header para gets absorbed into the first table's last section body).
+            # Instead, find the SECOND distinct TableBlock and stop just before it.
+            first_body: list = []
+            table_count = 0
+            for bi in body_items:
+                if isinstance(bi, TableBlock):
+                    table_count += 1
+                    if table_count == 1:
+                        first_body.append(bi)  # first table: keep
+                    else:
+                        break  # second table encountered: stop
+                else:
+                    # ParaModel: keep unconditionally until the second table.
+                    first_body.append(bi)
+
             import logging as _logging
             _logging.getLogger(__name__).debug(
-                "MULTIVARIANT_DEDUP: %d sections → %d (period=%d, copies=%d)",
-                n, period, period, copies,
+                "MULTIVARIANT_DEDUP: %d sections → %d (period=%d, copies=%d); "
+                "body_items %d → %d",
+                n, period, period, copies, len(body_items), len(first_body),
             )
-            return first_sections, first_paras
+            return first_sections, first_paras, first_body or body_items
 
-    return sections, all_paras
+    return sections, all_paras, body_items
 
 
 # ---------------------------------------------------------------------------
@@ -960,7 +984,10 @@ def parse_docx(path: str) -> ResumeDocument:
     # the same resume layout in different color schemes (e.g. sample 9 with 3 tables
     # using red/blue/green accent colors).  Detect when the section title sequence is
     # exactly N copies of a shorter period and truncate to the first copy.
-    sections, all_paras = _dedup_multivariant_sections(sections, header_paras, all_paras)
+    # body_items is also truncated so the renderer only processes the first copy.
+    sections, all_paras, body_items = _dedup_multivariant_sections(
+        sections, header_paras, all_paras, body_items
+    )
 
     doc = ResumeDocument(
         header_paras=header_paras,
