@@ -3824,19 +3824,37 @@ def apply_tailored(
                     _skills_injected = False
                     if _left_col_end is not None and _left_col_end > 0:
                         # Find the last 'other' section before the content boundary
-                        # that has a non-empty body_para with a para_id (anchor point).
-                        _left_sec = next(
-                            (s for s in reversed(original.sections[:_left_col_end])
-                             if s.semantic_type not in _LOCKED_SEMANTIC_TYPES
-                             and any(p.para_id and p.text.strip() for p in s.body_paras)),
-                            None,
-                        )
-                        if _left_sec is not None:
-                            _anchor_bp = next(
-                                (p for p in reversed(_left_sec.body_paras)
-                                 if p.para_id and p.text.strip()),
+                        # that has a valid anchor paragraph (non-contact, non-empty).
+                        # Contact-info guard: reject paragraphs with URLs, email,
+                        # phone, or ZIP codes — these belong to contact sections.
+                        _CONTACT_MARKS = ("@", "www.", "http://", "https://")
+                        _phone_re_anchor = re.compile(r"^\+?[\d\s\-\.\(\)]{7,}$")
+                        _zip_re_anchor = re.compile(r"^\d{4,6}$")
+
+                        def _valid_anchor(p: "ParaModel") -> bool:
+                            t = p.text.strip()
+                            if not p.para_id or not t or len(t) < 3:
+                                return False
+                            if any(m in p.text for m in _CONTACT_MARKS):
+                                return False
+                            if _phone_re_anchor.match(t) or _zip_re_anchor.match(t):
+                                return False
+                            return True
+
+                        _left_sec = None
+                        _anchor_bp = None
+                        for _cand_sec in reversed(original.sections[:_left_col_end]):
+                            if _cand_sec.semantic_type in _LOCKED_SEMANTIC_TYPES:
+                                continue
+                            _candidate_anchor = next(
+                                (p for p in reversed(_cand_sec.body_paras) if _valid_anchor(p)),
                                 None,
                             )
+                            if _candidate_anchor is not None:
+                                _left_sec = _cand_sec
+                                _anchor_bp = _candidate_anchor
+                                break
+                        if _left_sec is not None:
                             if _anchor_bp is not None:
                                 _skill_lines = _sanitize_skills_lines(
                                     [l for l in llm_s.body_lines if l.strip()]

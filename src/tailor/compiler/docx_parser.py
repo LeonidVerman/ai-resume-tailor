@@ -1470,8 +1470,22 @@ def _tab_split_texts(p_elem) -> tuple[str, str] | None:
 
 
 def _detect_newspaper_multicolumn(body) -> bool:
-    """Return True when body has mid-document sectPr with 2+ columns AND column-break paras."""
+    """Return True when body uses a 2+ column layout AND column-break paras exist.
+
+    Two layout patterns are accepted:
+
+    1. Mid-document sectPr (inside a paragraph's pPr) that defines ≥2 columns via
+       individual <w:col> elements.  This is the classic newspaper-column pattern
+       where the document switches between single-column (header) and multi-column
+       (body) sections within the same document.
+
+    2. Body sectPr (the terminal <w:sectPr> directly inside <w:body>) that defines
+       ≥2 columns via <w:col> elements AND no mid-document sectPr exists.  This
+       covers templates where the ENTIRE document body is 2-column, e.g. sample 16
+       where a 2-column body-sectPr defines the layout without any embedded sectPr.
+    """
     has_midoc_multicol = False
+    has_midoc_sectPr = False
     for p_elem in body.findall(f".//{{{_W}}}p"):
         pPr = p_elem.find(f"{{{_W}}}pPr")
         if pPr is None:
@@ -1479,6 +1493,7 @@ def _detect_newspaper_multicolumn(body) -> bool:
         sectPr = pPr.find(f"{{{_W}}}sectPr")
         if sectPr is None:
             continue
+        has_midoc_sectPr = True
         cols_elem = sectPr.find(f"{{{_W}}}cols")
         if cols_elem is None:
             continue
@@ -1487,7 +1502,15 @@ def _detect_newspaper_multicolumn(body) -> bool:
             break
 
     if not has_midoc_multicol:
-        return False
+        # Pattern 2: body-sectPr-only layout (no mid-doc sectPr at all).
+        if not has_midoc_sectPr:
+            body_sectPr = body.find(f"{{{_W}}}sectPr")
+            if body_sectPr is not None:
+                cols_elem = body_sectPr.find(f"{{{_W}}}cols")
+                if cols_elem is not None and len(cols_elem.findall(f"{{{_W}}}col")) >= 2:
+                    has_midoc_multicol = True
+        if not has_midoc_multicol:
+            return False
 
     return any(_has_column_break(p) for p in body.findall(f".//{{{_W}}}p"))
 
@@ -1729,9 +1752,19 @@ def _apply_multicolumn_newspaper_fix(
                 return si
         return section_infos[-1]
 
-    # The first Word section (section_infos[0]) is the document header (name/contact).
+    # The first Word section (section_infos[0]) is normally the document header
+    # (name/contact, single-column) before the multi-column body starts.
     # Keep all its paragraphs in their original document order.
-    first_sec_end = section_infos[0]["end_idx"]
+    #
+    # Edge case: when there is only ONE Word section (no mid-doc sectPr) and it is
+    # multi-column (e.g. the entire body is 2-column), the first section spans the
+    # whole document, so all paragraphs would be classified as "header" and no
+    # column reordering would happen.  In this case treat the "header" as empty
+    # (first_sec_end = -1) so all paragraphs participate in column splitting.
+    _first_sec_is_only = (
+        len(section_infos) == 1 and section_infos[0]["col_count"] >= 2
+    )
+    first_sec_end = -1 if _first_sec_is_only else section_infos[0]["end_idx"]
     header_end_para_idx = sum(1 for ci in p_child_indices if ci <= first_sec_end)
 
     # Per-section, per-column paragraph lists
