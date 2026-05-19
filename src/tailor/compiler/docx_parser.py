@@ -771,17 +771,21 @@ def _dedup_multivariant_sections(
             # header para gets absorbed into the first table's last section body).
             # Instead, find the SECOND distinct TableBlock and stop just before it.
             first_body: list = []
-            table_count = 0
+            found_first_table = False
             for bi in body_items:
                 if isinstance(bi, TableBlock):
-                    table_count += 1
-                    if table_count == 1:
+                    if not found_first_table:
                         first_body.append(bi)  # first table: keep
+                        found_first_table = True
                     else:
                         break  # second table encountered: stop
-                else:
-                    # ParaModel: keep unconditionally until the second table.
+                elif not found_first_table:
+                    # ParaModel before the first table: keep (e.g. decorative
+                    # elements that belong to the first color variant).
                     first_body.append(bi)
+                # ParaModel AFTER the first table: skip entirely.
+                # These carry decorative drawings (circles, shapes) for subsequent
+                # color variants and would create extra blank pages if kept.
 
             import logging as _logging
             _logging.getLogger(__name__).debug(

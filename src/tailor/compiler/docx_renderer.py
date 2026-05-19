@@ -2464,6 +2464,14 @@ def _render_layout_two_col_table(
         blk for blk in left_blocks
         if not (isinstance(blk, LayoutParagraphBlock) and blk.para_id in _header_para_ids)
     ]
+    # Safety: if all left blocks are header blocks (nothing left for the left cell),
+    # keep them all in the left cell instead of rendering at full page width.
+    # This handles templates like sample 3 where the entire left column (contact,
+    # education, skills) is in header_paras — the header separation was designed
+    # for compact 2-3 line headers, not 22-block left sidebars.
+    if not _section_left_blocks and _header_left_blocks:
+        _section_left_blocks = _header_left_blocks
+        _header_left_blocks = []
     # Render header blocks as body-level paragraphs (full page width).
     for _hblk in _header_left_blocks:
         _hel = _render_block_into_elem(
@@ -2699,16 +2707,18 @@ def _render_from_layout_blocks(
         if _col_break_idx is not None:
             _total_blocks = len(doc.layout_blocks)  # type: ignore[arg-type]
             _col_ratio = _col_break_idx / max(_total_blocks - 1, 1)
-            # _has_blip guard: skip table conversion for templates with a full-page
-            # raster behindDoc image in a header block.  The image inside a table cell
-            # can force the row height to the image extent (A4: 11.70 in), producing
-            # blank middle pages.  _render_layout_two_col_table now extracts such
-            # backgrounds before building the table — but only override the guard when
-            # the template has CONTACT / REFERENCE sections in the left column that
-            # must not overflow to the right column.  For templates without such
-            # sections (e.g. template 3, 17, 18), native columns work correctly and
-            # the blip guard must be preserved to avoid breaking existing output.
-            _has_blip = _header_paras_have_blip_bg(doc, doc.layout_blocks)  # type: ignore[arg-type]
+            # _has_blip guard: skip table conversion when the RIGHT column contains a
+            # full-page raster behindDoc image in a header block.  Only RIGHT-side
+            # blips cause blank middle pages — when the background paragraph is
+            # extracted to body level before the table it creates a full-page element
+            # that pushes the table to page 2.  LEFT-side blips (e.g. sample 3 where
+            # the background is in the left column) stay inside the left cell and are
+            # handled correctly as absolute-positioned drawings without forcing row height.
+            _right_blocks = (
+                list(doc.layout_blocks)[_col_break_idx + 1:]  # type: ignore[index]
+                if _col_break_idx is not None else []
+            )
+            _has_blip = _header_paras_have_blip_bg(doc, _right_blocks)  # type: ignore[arg-type]
             _contact_ref_names: frozenset[str] = frozenset({
                 "contact info", "contact information", "personal references",
                 "personal reference", "references",
