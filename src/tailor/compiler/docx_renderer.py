@@ -487,6 +487,34 @@ def _set_para_text(p_elem, text: str) -> None:
     elif vml_text_str and text.startswith(vml_text_str):
         text = text[len(vml_text_str):]
 
+    # Pre-compute pure-tab separator run indices BEFORE clearing so we can save
+    # the original text of post-tab content runs.  Pure-tab runs have <w:tab/>
+    # but NO <w:t> children; content runs have <w:t> but typically no <w:tab/>.
+    _pure_tab_idx_pre: set[int] = {
+        i for i, r in enumerate(all_runs)
+        if not r.findall(f"{{{_W}}}t") and r.findall(f"{{{_W}}}tab")
+    }
+    # When pure-tab separators exist and new text has no tab, we need to preserve
+    # post-tab content runs unchanged (they contain right-column data such as
+    # "Really Great University (2012-2014)").  Save their original text now.
+    #
+    # Guard: only save when the new text is a label-only update (new text is
+    # significantly shorter than the original total).  When the new text is as
+    # long as the original, it already incorporates both sides and restoring
+    # post-tab runs would duplicate content (e.g. letter-spaced skills headings).
+    _post_tab_preserve: dict[int, str] = {}
+    if _pure_tab_idx_pre and "\t" not in text and total_orig > 0:
+        _first_pre_tab = min(_pure_tab_idx_pre)
+        # Only restore if new text is less than half the total original length.
+        # Label-only updates (e.g. "EDUCATION" replacing "EDUCATION\tUniversity…")
+        # have len(text) << total_orig.  Full replacements have len(text) ≈ total_orig.
+        if len(text) < total_orig * 0.55:
+            for i, r in enumerate(all_runs):
+                if i > _first_pre_tab and i not in ws_text and i not in vml_indices:
+                    _t_elems = r.findall(f"{{{_W}}}t")
+                    if _t_elems:
+                        _post_tab_preserve[i] = "".join(t.text or "" for t in _t_elems)
+
     # Clear text from all runs (direct w:t children only; VML content is untouched).
     for r in all_runs:
         for t in r.findall(f"{{{_W}}}t"):
@@ -531,17 +559,23 @@ def _set_para_text(p_elem, text: str) -> None:
 
     # Tab-split label fix: when the paragraph has pure-tab separator runs (column
     # dividers) and the new text contains no tab characters, place ALL text in the
-    # first content run before the tab and clear post-tab content runs.  This
-    # prevents label-column headings like "EDUCATION\t<right-col-text>" from
-    # distributing "EDUCATION" proportionally as "ED" (pre-tab) + "UCATION"
-    # (post-tab), which renders as a visually split word across columns.
+    # first content run before the tab.  Post-tab content runs (which hold right-
+    # column data like "Really Great University (2012-2014)") are RESTORED to their
+    # original text so they are not lost.  This prevents label-column headings like
+    # "EDUCATION\t<right-col-text>" from distributing "EDUCATION" proportionally as
+    # "ED" (pre-tab) + "UCATION" (post-tab), which splits the word across columns.
     if _pure_tab_idx and "\t" not in text:
         _first_tab_run = min(_pure_tab_idx)
         _pre_tab_ci = [ci for ci in content_indices if ci < _first_tab_run]
         if _pre_tab_ci:
             _set_run_text(all_runs[_pre_tab_ci[0]], text)
             for ci in content_indices:
-                if ci != _pre_tab_ci[0]:
+                if ci == _pre_tab_ci[0]:
+                    continue
+                elif ci in _post_tab_preserve:
+                    # Restore original right-column content (e.g. institution name)
+                    _set_run_text(all_runs[ci], _post_tab_preserve[ci])
+                else:
                     _set_run_text(all_runs[ci], "")
             return
 
@@ -2469,9 +2503,21 @@ def _render_layout_two_col_table(
     # space on page 1).  For templates with compact headers (< 2 in of height)
     # this trade-off reversal is safe.  The _needs_table_for_contact guard that
     # activates this path ensures we only reach here for such templates.
-    _header_para_ids: frozenset[str] = frozenset(
+    _header_para_ids_set: set[str] = {
         pm.para_id for pm in (doc.header_paras or []) if pm.para_id
-    )
+    }
+    # Also include para_ids from any injected summary section (sec_summary_inserted).
+    # _find_summary_anchors consumes empty header_para slots to create this section,
+    # removing them from doc.header_paras.  Without this guard those paras stay in
+    # the left table cell and appear alongside (not above) the right column content.
+    for _sec in (doc.sections or []):
+        if getattr(_sec, "section_id", None) == "sec_summary_inserted":
+            if _sec.heading and _sec.heading.para_id:
+                _header_para_ids_set.add(_sec.heading.para_id)
+            for _bp in _sec.body_paras:
+                if _bp.para_id:
+                    _header_para_ids_set.add(_bp.para_id)
+    _header_para_ids: frozenset[str] = frozenset(_header_para_ids_set)
     _header_left_blocks = [
         blk for blk in left_blocks
         if isinstance(blk, LayoutParagraphBlock) and blk.para_id in _header_para_ids
