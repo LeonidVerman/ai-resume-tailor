@@ -647,23 +647,43 @@ def _extract_layout(doc) -> LayoutProfile:
         col_boundary = visual_split_x if visual_split_x is not None else split_x
         # Validate: a detected split with no background colour and no visual
         # separator may be a false positive caused by heading indentation rather
-        # than a true sidebar layout.  For true two-column layouts the "right
-        # column" body content spans a wide range of x positions (diverse indent
-        # levels, section headings + body text + bullets).  For a false-positive
-        # (heading-indentation split) the right zone has only section headings
-        # all at nearly the same x, so the x-range is negligible.
+        # than a true sidebar layout.
+        #
+        # Heuristic: when the "right column" has very few characters (< 200)
+        # AND the "left column" has proportionally far more content AND the
+        # right zone x-span is narrow (< 100 pt), the split is likely an
+        # indentation gap (section headings further right than body text) rather
+        # than a true sidebar.
+        #
+        # True two-column sidebars either have a background/separator color or
+        # their right zone contains substantial text (> 200 chars) or spans a
+        # wide x-range (≥ 100 pt, because body text, role headers, and bullets
+        # occupy different x positions in the main column).
         _suppress = False
         if left_bg is None and right_bg is None and visual_split_x is None:
             _top_cut = rect.height * 0.24 if rect.height > 0 else 0.0
-            _right_xs = [
-                b["bbox"][0] for b in blocks
-                if b.get("type") == 0
-                and b["bbox"][0] >= split_x
-                and b["bbox"][1] >= _top_cut
-            ]
-            # Right zone x0 range < 20pt means only one x cluster (typically just
-            # section heading indentation), indicating a false positive.
-            if not _right_xs or (max(_right_xs) - min(_right_xs)) < 20:
+
+            def _block_chars(b):
+                return len("".join(
+                    s.get("text", "") for l in b.get("lines", [])
+                    for s in l.get("spans", [])
+                ).strip())
+
+            _right_xs = [b["bbox"][0] for b in blocks
+                         if b.get("type") == 0 and b["bbox"][0] >= split_x and b["bbox"][1] >= _top_cut]
+            _right_chars = sum(_block_chars(b) for b in blocks
+                               if b.get("type") == 0 and b["bbox"][0] >= split_x and b["bbox"][1] >= _top_cut)
+            _left_chars  = sum(_block_chars(b) for b in blocks
+                               if b.get("type") == 0 and b["bbox"][0] < split_x  and b["bbox"][1] >= _top_cut)
+            _right_range = (max(_right_xs) - min(_right_xs)) if len(_right_xs) > 1 else 0
+
+            # Suppress when right zone is thin: few chars, narrow x-span, and
+            # left zone dominates in character count.
+            if (
+                _right_chars < 200
+                and _right_range < 100
+                and _left_chars > _right_chars * 2.5
+            ):
                 _suppress = True
 
         if _suppress:
@@ -929,10 +949,18 @@ def _extract_paragraphs(
         # top-to-bottom across ALL columns, interleaving sidebar content with
         # main content.  Column-aware reordering restores correct reading order.
         # split_x (gap midpoint) is used for block classification (left vs right).
-        split_x = _detect_column_split(blocks, page.rect.width, page.rect.height)
-        # Prefer the layout's split_x (computed on page 1) for consistency.
-        if split_x is None and layout_split_x is not None:
-            split_x = layout_split_x
+        # Use the layout's authoritative split_x.  When the layout suppressed
+        # the split (layout_split_x=None after false-positive validation), use
+        # None for all pages so that blocks are never mis-split into left/right
+        # columns.  When the layout detected a real two-column boundary, prefer
+        # it for consistency (avoids per-page drift); fall back to per-page
+        # detection for pages whose content shifts the split slightly.
+        if layout_split_x is None:
+            split_x = None   # layout decided single-column; don't re-detect
+        else:
+            split_x = _detect_column_split(blocks, page.rect.width, page.rect.height)
+            if split_x is None:
+                split_x = layout_split_x
         # right_col_origin: indent is measured from the visual sidebar edge
         # (layout_split_x), which is more accurate than the gap midpoint.
         right_col_origin = layout_split_x if layout_split_x is not None else split_x
@@ -1002,9 +1030,17 @@ def _extract_paragraphs(
             )
         )
 
+        # Merged-header-band forcing is only valid for page 0 (the first page
+        # that has the candidate's name, title, summary at the very top).
+        # On continuation pages (page.number > 0) the top zone is simply the
+        # next paragraph of content; forcing it to col=None would place old
+        # template experience/education entries above the two-column table.
         merged_header_band = (
             _first_right_y - _MIN_HEADER_GAP if _has_left_above_right
-            else _header_band_y if split_x is not None and not _has_right_in_header
+            else _header_band_y if (
+                split_x is not None and not _has_right_in_header
+                and page.number == 0
+            )
             else 0.0
         )
 

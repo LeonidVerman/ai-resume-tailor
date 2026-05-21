@@ -236,6 +236,23 @@ def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocumen
             pp.column_id = "right"
             pp.indent_left_pt = indent
 
+    # Semantic types that belong in the sidebar (left column) are only kept
+    # there when the template ITSELF already has sidebar-type (non-main-content)
+    # sections in the left column.  If the left column holds main content
+    # (experience, education) rather than a sidebar, skills-type extras are
+    # moved to the right column just like other unmatched extras.
+    _template_has_left_sidebar = any(
+        sec.semantic_type in ("skills", "other", "certifications", "languages")
+        for sec in template_ir.sections
+        if sec.heading.paragraph_profile
+        and sec.heading.paragraph_profile.column_id == "left"
+    )
+    _SIDEBAR_SEMANTIC_TYPES = (
+        frozenset({"skills", "certifications", "languages"})
+        if _template_has_left_sidebar
+        else frozenset()
+    )
+
     for sec in updated.sections:
         h_pp = sec.heading.paragraph_profile
         if not (h_pp and h_pp.column_id == "left"):
@@ -244,6 +261,8 @@ def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocumen
             continue
         if sec.section_id and sec.section_id in template_left_section_ids:
             continue  # originally a left-column section — keep it there
+        if sec.semantic_type in _SIDEBAR_SEMANTIC_TYPES:
+            continue  # sidebar content type — always stays in left column
         _move(sec.heading, right_heading_indent)
         for bp in sec.body_paras:
             _move(bp, right_body_indent)
@@ -319,39 +338,65 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             return False
         return True
 
-    summary_indices = {
+    # Build column-aware summary index sets.  For sidebar layouts the original
+    # summary text lives in the left column; for merged-header layouts it lives
+    # in the right column (below the candidate name).  Prefer the left-column
+    # match so that sidebar templates (e.g. sample 25) inject the LLM summary
+    # into the sidebar and clean up old template placeholder text there, rather
+    # than mixing left and right columns and producing an ambiguous target_col.
+    _sum_left = {
         j for j, hp in enumerate(doc.header_paras)
-        if _is_original_summary_line(hp.text)
+        if hp.paragraph_profile and hp.paragraph_profile.column_id == "left"
+        and _is_original_summary_line(hp.text)
     }
+    _sum_right = {
+        j for j, hp in enumerate(doc.header_paras)
+        if hp.paragraph_profile and hp.paragraph_profile.column_id == "right"
+        and _is_original_summary_line(hp.text)
+    }
+
+    if _sum_left:
+        summary_indices: set[int] = _sum_left
+        _target_col: "str | None" = "left"
+    elif _sum_right:
+        summary_indices = _sum_right
+        _target_col = "right"
+    else:
+        summary_indices = set()
+        _target_col = None  # determined below
 
     summary_sec = doc.sections[summary_idx]
 
     if not summary_indices:
         # No original summary lines to replace.  When the template has a
         # combined header (name + title in header_paras) with no pre-existing
-        # summary text, append the LLM summary BELOW the name/title block so
-        # it appears in the merged header above the two-column body.
-        # Only do this when header_paras is non-empty (name present) — if the
-        # header is empty there is nowhere useful to put the summary.
+        # summary text, append the LLM summary BELOW the name/title block.
+        # Only do this when header_paras is non-empty (name present).
         if not doc.header_paras:
             return
+        # Inherit the column from existing header content so the summary lands
+        # in the right cell when the name/title are in the right column (e.g.
+        # sidebar templates where name is right-aligned, like sample 2 & 3),
+        # or above the table when the header is truly full-width (like sample 14).
+        _existing_cols = [
+            hp.paragraph_profile.column_id
+            for hp in doc.header_paras
+            if hp.paragraph_profile and hp.paragraph_profile.column_id in ("left", "right")
+        ]
+        if "right" in _existing_cols:
+            _target_col = "right"
+        elif "left" in _existing_cols:
+            _target_col = "left"
+        else:
+            _target_col = None  # place above the two-column table
+
         for bp in summary_sec.body_paras:
             if bp.paragraph_profile:
-                bp.paragraph_profile.column_id = None
+                bp.paragraph_profile.column_id = _target_col
                 bp.paragraph_profile.bold = False
         doc.header_paras = list(doc.header_paras) + list(summary_sec.body_paras)
         doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
     else:
-        # Determine the column_id to assign the replacement paragraphs.
-        # If the original summary lines were in the left sidebar (column_id='left'),
-        # keep the replacement there so the sidebar layout is preserved (sample 25).
-        # Otherwise place it above the two-column table (column_id=None).
-        _orig_col_ids = {
-            doc.header_paras[j].paragraph_profile.column_id
-            for j in summary_indices
-            if doc.header_paras[j].paragraph_profile
-        }
-        _target_col = "left" if _orig_col_ids == {"left"} else None
 
         # Lift LLM summary body paragraphs into the header area.
         for bp in summary_sec.body_paras:
@@ -359,10 +404,27 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
                 bp.paragraph_profile.column_id = _target_col
                 bp.paragraph_profile.bold = False  # summary text is never bold
 
-        doc.header_paras = (
-            [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
-            + list(summary_sec.body_paras)
-        )
+        if _target_col == "left":
+            # Sidebar layout: the summary replaces the original profile text in the
+            # left column.  Also remove any remaining original left-column header
+            # items (dates, old section headings, experience fragments) that are
+            # template placeholders — they would otherwise clutter the sidebar
+            # alongside the new summary content.  Items with para_id set are from
+            # the original template; items with para_id='' were LLM-generated.
+            doc.header_paras = [
+                hp for j, hp in enumerate(doc.header_paras)
+                if j not in summary_indices
+                and not (
+                    hp.paragraph_profile
+                    and hp.paragraph_profile.column_id == "left"
+                    and hp.para_id  # original template item, not LLM-generated
+                )
+            ] + list(summary_sec.body_paras)
+        else:
+            doc.header_paras = (
+                [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
+                + list(summary_sec.body_paras)
+            )
         doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
 
     # Rebuild all_paras so the renderer sees the updated structure.
