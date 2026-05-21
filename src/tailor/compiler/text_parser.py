@@ -161,6 +161,8 @@ _SUMMARY_NAMES: frozenset[str] = frozenset({
     "executive summary",
     # Non-canonical labels used in resume templates as summary containers:
     "professional overview", "general info", "general information",
+    # Generic intro section names:
+    "about",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "skill", "core competencies", "competencies",
@@ -211,6 +213,15 @@ _ALL_KNOWN: frozenset[str] = (
         # this lets "TECHNICAL SKILLS" (semantic=skills) match the template's
         # MY QUALIFICATIONS slot via semantic-type matching in Pass 2.
         "my qualifications", "personal references", "personal reference",
+        # Accomplishment / achievement sections (e.g. sample 32 "Accomplishments")
+        # and combined skills headings ("Skills and Abilities").
+        "accomplishments", "achievement", "achievements",
+        "skills and abilities",
+        # "Education Summary" appears as a section heading in some templates (e.g.
+        # sample 26) and LLMs sometimes copy it verbatim inside other sections.
+        # Treating it as a known boundary prevents it from being absorbed as body
+        # content of the preceding section (e.g. General Info).
+        "education summary",
     })
 )
 
