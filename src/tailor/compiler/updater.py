@@ -4006,11 +4006,38 @@ def apply_tailored(
                 else:
                     new_sections = verbatim_sections + llm_order_sections
             else:
-                # Append verbatim sections at the END so they appear after all
-                # LLM-ordered matched sections.  Verbatim "other" sections (e.g.
-                # Affiliations & Awards) naturally belong at the end of a resume;
-                # prepending them would displace Summary / Experience to the bottom.
-                new_sections = llm_order_sections + verbatim_sections
+                # Template already has a summary section → its section order is
+                # well-defined.  Follow TEMPLATE order for all matched sections so
+                # the physical layout (y-position, column assignments) is preserved.
+                # Extras (new sections added by the LLM that had no template match)
+                # are appended at the end in LLM output order; verbatim "other"
+                # sections follow them.
+                #
+                # Previously this path followed LLM output order, which caused
+                # sections to render in the wrong sequence (e.g. Professional
+                # Experience before Technical Skills in sample 4 even though the
+                # template places Technical Skills first).
+                _matched_section_ids = {
+                    id(heading_to_section[llm_s.heading.lower()])
+                    for llm_s in llm_sections
+                    if llm_s.heading.lower() in heading_to_section
+                }
+                template_ordered: list[ResumeSection] = []
+                for orig_section, llm_section in match.pairs:
+                    if llm_section is None:
+                        template_ordered.append(orig_section)
+                    else:
+                        key = llm_section.heading.lower()
+                        template_ordered.append(
+                            heading_to_section.get(key, orig_section)
+                        )
+                # Extras are sections in llm_order_sections that are NOT in the
+                # template-ordered set (i.e. newly created sections, not updates).
+                extra_only = [
+                    s for s in llm_order_sections
+                    if id(s) not in _matched_section_ids
+                ]
+                new_sections = template_ordered + extra_only + verbatim_sections
 
     # Fragmented-experience injection: LLM had experience roles but no original
     # experience section existed to match them.  Inject into role-like 'other'

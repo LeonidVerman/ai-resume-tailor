@@ -150,6 +150,11 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
                 continue
             if pm.semantic in ("section_heading", "role_header"):
                 continue  # keep template accent colors on structural headings
+            # Keep text_color for paragraphs on a dark background (e.g. white text
+            # on the header band) — stripping it would make the text invisible.
+            bg = pp.background_color
+            if bg and bg not in ("ffffff", "fefefe", "f8f8f8"):
+                continue
             # Strip color from LLM-replaced content (bullets, body paragraphs, meta).
             # PDF-extracted colors bleed onto new content via clone_as; clearing them
             # ensures body text renders in the default DOCX color.
@@ -399,32 +404,70 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     else:
 
         # Lift LLM summary body paragraphs into the header area.
+        # When placing in the right column, normalise indent_left_pt to 0 so the
+        # summary starts flush with the right-column content below it (matching the
+        # indentation of WORK EXPERIENCE body text) rather than inheriting a deeper
+        # indent from the heading archetype used to clone the body paragraphs.
         for bp in summary_sec.body_paras:
             if bp.paragraph_profile:
                 bp.paragraph_profile.column_id = _target_col
                 bp.paragraph_profile.bold = False  # summary text is never bold
+                if _target_col == "right":
+                    bp.paragraph_profile.indent_left_pt = 0.0
 
         if _target_col == "left":
             # Sidebar layout: the summary replaces the original profile text in the
-            # left column.  Also remove any remaining original left-column header
-            # items (dates, old section headings, experience fragments) that are
-            # template placeholders — they would otherwise clutter the sidebar
-            # alongside the new summary content.  Items with para_id set are from
-            # the original template; items with para_id='' were LLM-generated.
-            doc.header_paras = [
-                hp for j, hp in enumerate(doc.header_paras)
-                if j not in summary_indices
-                and not (
-                    hp.paragraph_profile
-                    and hp.paragraph_profile.column_id == "left"
-                    and hp.para_id  # original template item, not LLM-generated
-                )
-            ] + list(summary_sec.body_paras)
+            # left column.  Also remove any remaining original left-column AND
+            # right-column header items that are template placeholders — dates,
+            # old section headings, experience fragments.  Items with para_id set
+            # are from the original template; items with para_id='' were created
+            # by apply_tailored and must be kept.
+            # Exception: preserve original items that are clearly the candidate
+            # name/title (large font ≥ 20pt, or above-table col=None items).
+            # These must appear in the rendered output regardless of column.
+            # All other original col=left/right template placeholders are dropped
+            # (dates, old education fragments, experience descriptions).
+            _kept = []
+            for j, hp in enumerate(doc.header_paras):
+                if j in summary_indices:
+                    continue
+                pp = hp.paragraph_profile
+                col = pp.column_id if pp else None
+                if pp and hp.para_id and col in ("left", "right"):
+                    # Keep only very large items (name, full-page title).
+                    # 20pt threshold separates names (~24-40pt) from body text.
+                    pp_size = pp.font_size_pt or 0.0
+                    if pp_size >= 20.0 and hp.text.strip():
+                        _kept.append(hp)
+                    # else: original placeholder — drop
+                else:
+                    # col=None (above-table) items always kept; LLM items (para_id='') kept
+                    _kept.append(hp)
+            doc.header_paras = _kept + list(summary_sec.body_paras)
         else:
-            doc.header_paras = (
-                [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
-                + list(summary_sec.body_paras)
-            )
+            # Right-column or above-table injection.
+            # After removing the matched summary lines, also drop any remaining
+            # col=right original items that are very short and look like leftover
+            # sentence fragments from the template summary (e.g. "experiences.").
+            # Keep: the first non-empty col=right item (the candidate name) and
+            # any item that is col=None (above-table) or LLM-generated (para_id='').
+            _first_right_kept = False
+            kept: list = []
+            for j, hp in enumerate(doc.header_paras):
+                if j in summary_indices:
+                    continue
+                pp = hp.paragraph_profile
+                col = pp.column_id if pp else None
+                if col == "right" and hp.para_id:
+                    if not _first_right_kept and hp.text.strip():
+                        _first_right_kept = True
+                        kept.append(hp)
+                    elif len(hp.text.strip()) >= 25:
+                        kept.append(hp)
+                    # else: short col=right original fragment — drop (leftover)
+                else:
+                    kept.append(hp)
+            doc.header_paras = kept + list(summary_sec.body_paras)
         doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
 
     # Rebuild all_paras so the renderer sees the updated structure.
@@ -725,6 +768,89 @@ def _apply_heading_case_convention(doc: ResumeDocument) -> None:
             sec.heading = sec.heading.with_text(t.upper())
 
 
+def _inject_skills_into_section_body(doc: ResumeDocument) -> None:
+    """Replace a skills sub-block inside a section's body_paras with LLM skills.
+
+    Some templates embed a "SKILLS & ABILITIES" sub-section inside another
+    section's body (e.g. within a CONTACT section).  The PDF parser cannot split
+    it off as a standalone section because there is no clear section break, so the
+    skills content lands in the parent section's body_paras.
+
+    When apply_tailored creates a separate extra "Technical Skills" section because
+    there is no top-level skills section to match, the result is a redundant heading
+    ("TECHNICAL SKILLS") appearing in the rendered output AND the original SKILLS &
+    ABILITIES content remaining unchanged in the parent section body.
+
+    This function detects that pattern and:
+    1. Finds a body section with a skills-like sub-heading inside its body_paras.
+    2. Finds the extra skills section added by the LLM.
+    3. Replaces the original skills bullets with the LLM skill lines.
+    4. Removes the extra skills section so its heading doesn't render separately.
+    """
+    if doc.layout.column_split_x is None:
+        return
+
+    # Find the extra skills section (has section_id absent from any template
+    # section, meaning it's a new/extra section without an original counterpart).
+    extra_skills: "ResumeSection | None" = None
+    extra_skills_idx: int | None = None
+    for i, sec in enumerate(doc.sections):
+        if sec.semantic_type == "skills" and not sec.section_id:
+            extra_skills = sec
+            extra_skills_idx = i
+            break
+    if extra_skills is None:
+        return
+
+    # Find a parent section whose body_paras contain a skills sub-heading.
+    _SKILL_KEYWORDS = ("skill", "abilit", "competenc", "expertise")
+    parent_sec = None
+    skill_start_idx: int | None = None
+    for sec in doc.sections:
+        for j, bp in enumerate(sec.body_paras):
+            txt_lower = bp.text.lower()
+            if any(k in txt_lower for k in _SKILL_KEYWORDS) and len(bp.text) < 30:
+                parent_sec = sec
+                skill_start_idx = j
+                break
+        if parent_sec is not None:
+            break
+
+    if parent_sec is None or skill_start_idx is None:
+        return
+
+    # Replace body_paras from skill_start_idx onwards with the LLM skill lines.
+    # Keep the heading paragraph (the sub-section label like "SKILLS &", "ABILITIES")
+    # and any immediately following paragraph that is also part of the heading.
+    heading_end = skill_start_idx + 1
+    while heading_end < len(parent_sec.body_paras):
+        bp = parent_sec.body_paras[heading_end]
+        txt = bp.text.strip().lower()
+        if any(k in txt for k in _SKILL_KEYWORDS) and len(bp.text) < 15:
+            heading_end += 1  # multi-line heading (e.g. "SKILLS &" + "ABILITIES")
+        else:
+            break
+
+    # Use the first non-heading body_para as clone archetype for the skill lines.
+    archetype = (
+        parent_sec.body_paras[heading_end]
+        if heading_end < len(parent_sec.body_paras)
+        else parent_sec.body_paras[skill_start_idx]
+    )
+
+    skill_lines = [line for line in extra_skills.body_paras if line.text.strip()]
+    new_skill_paras = [
+        archetype.clone_as(line.text, "paragraph") for line in skill_lines
+    ]
+
+    parent_sec.body_paras = (
+        list(parent_sec.body_paras[:heading_end]) + new_skill_paras
+    )
+
+    # Remove the extra skills section so its heading doesn't appear twice.
+    doc.sections = [s for i, s in enumerate(doc.sections) if i != extra_skills_idx]
+
+
 def compile_resume_from_pdf(
     pdf_path: str,
     llm_text: str,
@@ -753,6 +879,10 @@ def compile_resume_from_pdf(
     # For two-column templates with a full-width header: move the LLM-injected
     # Professional Summary body into header_paras so it renders above the table.
     _inject_llm_summary_into_header(updated)
+    # Merge extra LLM skills section into an existing section's skills sub-block
+    # (e.g. "SKILLS & ABILITIES" inside a CONTACT section body) so the skills
+    # content appears in the correct place rather than as a separate banner.
+    _inject_skills_into_section_body(updated)
     # Remove orphan sections and clear stale body_paras for sections with roles.
     _remove_orphan_subsections(updated)
     # Move extra LLM sections (e.g. Professional Summary) out of the left sidebar

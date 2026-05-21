@@ -371,6 +371,48 @@ def _dominant_text_color(spans: list[dict]) -> str | None:
     return _fitz_color_to_hex(counter.most_common(1)[0][0])
 
 
+def _extract_header_bg(page) -> tuple[str | None, float]:
+    """Detect a full-width dark header rectangle on page 0.
+
+    Returns (hex_bg_color, y_bottom) for the topmost large full-width filled
+    rectangle (width ≥ 80 % of page, height > 8 pt, fill not white/near-white).
+    Used to apply dark background colors to header_paras whose text would
+    otherwise be invisible (white-on-dark templates like sample 3 and 25).
+
+    Returns (None, 0.0) when no such rectangle exists.
+    """
+    try:
+        drawings = page.get_drawings()
+    except Exception:
+        return None, 0.0
+
+    pw = page.rect.width
+    best_color: str | None = None
+    best_y1 = 0.0
+
+    for d in drawings:
+        fill = d.get("fill")
+        if fill is None:
+            continue
+        rect = d.get("rect")
+        if rect is None:
+            continue
+        x0, y0, x1, y1 = rect
+        if (x1 - x0) < pw * 0.80:
+            continue  # not full-width
+        if (y1 - y0) < 8.0:
+            continue  # too thin
+        hex_color = _fitz_color_to_hex(fill)
+        if hex_color is None or hex_color in ("ffffff", "fefefe"):
+            continue  # skip white
+        # Take the topmost large rectangle
+        if best_color is None or y0 < best_y1:
+            best_color = hex_color
+            best_y1 = y1
+
+    return best_color, best_y1
+
+
 def _extract_col_info(
     page, gap_midpoint: float | None
 ) -> tuple[str | None, str | None, float | None]:
@@ -2406,17 +2448,41 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     else:
         header_paras, sections = _group_sections(raw_paras)
 
+    # Detect full-width dark header rectangle on page 0 and apply its background
+    # color to header_paras that fall within the rectangle's y-range.  This
+    # restores the dark-header appearance (e.g. sample 3: dark bar with white
+    # text "CHARLES MCTURLAND") which is drawn as a vector rectangle rather than
+    # a paragraph fill, so the PDF parser would otherwise not capture it.
+    _hdr_bg_color, _hdr_y1 = _extract_header_bg(doc[0])
+    if _hdr_bg_color:
+        for _pm in header_paras:
+            _pp = _pm.paragraph_profile
+            if _pp is None:
+                continue
+            # Apply to paragraphs whose y-position falls within the header band.
+            # y_top_pt is the raw y0 from the PDF block; it's runtime-only but still
+            # present after _extract_paragraphs.
+            if _pp.y_top_pt < _hdr_y1:
+                _pp.background_color = _hdr_bg_color
+
     # Final color cleanup: _group_sections may reclassify paragraphs (e.g.
     # section_heading → role_header) after _extract_paragraphs already ran its
     # per-semantic clearing.  Sweep all paragraphs one more time so that any
     # reclassified paragraph does not retain a PDF-extracted text_color that
     # would bleed onto LLM-generated replacement content via clone_as.
-    # Only section_heading paragraphs may keep their accent color (template design).
+    # Exception: paragraphs on a dark background (background_color set to a
+    # non-white value) keep their text_color so white-on-dark text remains
+    # visible after rendering.
     def _clear_content_colors(paras: "list[ParaModel]") -> None:
         for pm in paras:
             if pm.semantic in ("section_heading", "role_header") and pm.paragraph_profile:
                 continue  # keep accent colors on structural headings
             if pm.paragraph_profile:
+                # Keep text_color on dark-background paragraphs (e.g. white text
+                # on the header band) so the text is visible after rendering.
+                bg = pm.paragraph_profile.background_color
+                if bg and bg not in ("ffffff", "fefefe", "f8f8f8"):
+                    continue
                 pm.paragraph_profile.text_color = None
 
     _clear_content_colors(header_paras)
