@@ -209,7 +209,7 @@ def _deduplicate_page_indices(doc) -> set[int]:
     return skip
 
 
-def _detect_header_footer_texts(doc) -> set[str]:
+def _detect_header_footer_texts(doc, skip_pages: "set[int] | None" = None) -> set[str]:
     """Return text strings that appear as page headers/footers.
 
     Two strategies:
@@ -220,13 +220,21 @@ def _detect_header_footer_texts(doc) -> set[str]:
        2 of 2").
     3. Pages 2+ absolute: any block in the top/bottom 8% zone on page 2 or
        later is unconditionally excluded (page numbers, running heads).
+
+    *skip_pages* is the set of duplicate page indices returned by
+    _deduplicate_page_indices.  Skipping those pages prevents content that
+    appears on every page of a multi-page identical template (e.g. the
+    candidate name on a 3-copy gallery PDF) from being incorrectly classified
+    as a running header/footer.
     """
+    _skip = skip_pages or set()
     n_pages = len(doc)
-    if n_pages < 2:
+    n_active = sum(1 for i in range(n_pages) if i not in _skip)
+    if n_active < 2:
         return set()
 
     hf_texts: set[str] = set()
-    min_appearances = max(2, n_pages // 2)
+    min_appearances = max(2, n_active // 2)
 
     # Maps: y-bucket → list of (page_idx, text) tuples
     bucket_entries: dict[float, list[tuple[int, str]]] = {}
@@ -234,6 +242,9 @@ def _detect_header_footer_texts(doc) -> set[str]:
     page_zone_texts: list[set[str]] = []  # one set per page, zone texts only
 
     for page_idx, page in enumerate(doc):
+        if page_idx in _skip:
+            page_zone_texts.append(set())
+            continue
         h = page.rect.height
         top_zone = h * _HF_TOP_ZONE
         bot_zone = h * _HF_BOT_ZONE
@@ -634,8 +645,34 @@ def _extract_layout(doc) -> LayoutProfile:
         # Use the visual sidebar edge (drawing right-edge) when available;
         # it is more accurate than the text-block gap midpoint for column widths.
         col_boundary = visual_split_x if visual_split_x is not None else split_x
-        left_col_width_twips = int(col_boundary * 20)
-        right_col_width_twips = int((rect.width - col_boundary) * 20)
+        # Validate: a detected split with no background colour and no visual
+        # separator may be a false positive caused by heading indentation rather
+        # than a true sidebar layout.  For true two-column layouts the "right
+        # column" body content spans a wide range of x positions (diverse indent
+        # levels, section headings + body text + bullets).  For a false-positive
+        # (heading-indentation split) the right zone has only section headings
+        # all at nearly the same x, so the x-range is negligible.
+        _suppress = False
+        if left_bg is None and right_bg is None and visual_split_x is None:
+            _top_cut = rect.height * 0.24 if rect.height > 0 else 0.0
+            _right_xs = [
+                b["bbox"][0] for b in blocks
+                if b.get("type") == 0
+                and b["bbox"][0] >= split_x
+                and b["bbox"][1] >= _top_cut
+            ]
+            # Right zone x0 range < 20pt means only one x cluster (typically just
+            # section heading indentation), indicating a false positive.
+            if not _right_xs or (max(_right_xs) - min(_right_xs)) < 20:
+                _suppress = True
+
+        if _suppress:
+            col_boundary = None
+            left_col_width_twips = None
+            right_col_width_twips = None
+        else:
+            left_col_width_twips = int(col_boundary * 20)
+            right_col_width_twips = int((rect.width - col_boundary) * 20)
     else:
         left_bg = right_bg = None
         col_boundary = None
@@ -2290,7 +2327,7 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
 
     layout = _extract_layout(doc)
     skip_pages = _deduplicate_page_indices(doc)
-    hf_texts = _detect_header_footer_texts(doc)
+    hf_texts = _detect_header_footer_texts(doc, skip_pages=skip_pages)
     raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt, layout, skip_pages)
 
     # Two-column documents: run section grouping independently for each column

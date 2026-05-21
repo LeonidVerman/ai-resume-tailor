@@ -148,12 +148,11 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
             pp = pm.paragraph_profile
             if pp is None:
                 continue
-            # Strip PDF-extracted text colors from ALL paragraphs (including
-            # section_heading and role_header).  LibreOffice has a rendering defect
-            # where a paragraph with both an explicit w:color and w:ind inside a table
-            # cell is not rendered — the text becomes invisible.  Since the PDF template
-            # background image is not carried over, the original accent colors are
-            # meaningless in the DOCX context anyway; all headings render in black.
+            if pm.semantic in ("section_heading", "role_header"):
+                continue  # keep template accent colors on structural headings
+            # Strip color from LLM-replaced content (bullets, body paragraphs, meta).
+            # PDF-extracted colors bleed onto new content via clone_as; clearing them
+            # ensures body text renders in the default DOCX color.
             pp.text_color = None
             if pm.semantic == "bullet":
                 # Bullets are never bold — clear unconditionally (fixes role-header
@@ -201,6 +200,18 @@ def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocumen
         if sec.heading.paragraph_profile
         and sec.heading.paragraph_profile.column_id == "left"
     }
+    # Also keep sections that were originally left-column by section_id even
+    # when apply_tailored changed the heading title (e.g. "Skill" → "Technical
+    # Skills").  Without this, _fix_extra_left_sections would move the updated
+    # left-column section to the right because its new title is not in
+    # template_left_titles.
+    template_left_section_ids = {
+        sec.section_id
+        for sec in template_ir.sections
+        if sec.heading.paragraph_profile
+        and sec.heading.paragraph_profile.column_id == "left"
+        and sec.section_id
+    }
 
     # Reference indents from the template's first right-column section.
     right_heading_indent = 0.0
@@ -231,6 +242,8 @@ def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocumen
             continue
         if _norm(sec.title) in template_left_titles:
             continue
+        if sec.section_id and sec.section_id in template_left_section_ids:
+            continue  # originally a left-column section — keep it there
         _move(sec.heading, right_heading_indent)
         for bp in sec.body_paras:
             _move(bp, right_body_indent)
@@ -264,10 +277,16 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     if doc.layout.column_split_x is None:
         return
 
-    SUMMARY_TITLES = frozenset({"professional summary", "summary", "profile", "objective"})
+    # Match by semantic_type first so section titles like "GENERAL INFO" that
+    # carry semantic_type="summary" are found even when not in SUMMARY_TITLES.
+    _SUMMARY_TITLES = frozenset({"professional summary", "summary", "profile", "objective"})
     summary_idx: int | None = None
     for i, sec in enumerate(doc.sections):
-        if sec.title.lower().strip() in SUMMARY_TITLES and sec.body_paras:
+        is_summary = (
+            sec.semantic_type == "summary"
+            or sec.title.lower().strip() in _SUMMARY_TITLES
+        )
+        if is_summary and sec.body_paras:
             summary_idx = i
             break
     if summary_idx is None:
@@ -304,22 +323,47 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
         j for j, hp in enumerate(doc.header_paras)
         if _is_original_summary_line(hp.text)
     }
-    if not summary_indices:
-        return  # no original summary lines to replace
 
     summary_sec = doc.sections[summary_idx]
 
-    # Lift LLM summary body paragraphs into the above-table header area.
-    for bp in summary_sec.body_paras:
-        if bp.paragraph_profile:
-            bp.paragraph_profile.column_id = None
-            bp.paragraph_profile.bold = False  # summary text is never bold
+    if not summary_indices:
+        # No original summary lines to replace.  When the template has a
+        # combined header (name + title in header_paras) with no pre-existing
+        # summary text, append the LLM summary BELOW the name/title block so
+        # it appears in the merged header above the two-column body.
+        # Only do this when header_paras is non-empty (name present) — if the
+        # header is empty there is nowhere useful to put the summary.
+        if not doc.header_paras:
+            return
+        for bp in summary_sec.body_paras:
+            if bp.paragraph_profile:
+                bp.paragraph_profile.column_id = None
+                bp.paragraph_profile.bold = False
+        doc.header_paras = list(doc.header_paras) + list(summary_sec.body_paras)
+        doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+    else:
+        # Determine the column_id to assign the replacement paragraphs.
+        # If the original summary lines were in the left sidebar (column_id='left'),
+        # keep the replacement there so the sidebar layout is preserved (sample 25).
+        # Otherwise place it above the two-column table (column_id=None).
+        _orig_col_ids = {
+            doc.header_paras[j].paragraph_profile.column_id
+            for j in summary_indices
+            if doc.header_paras[j].paragraph_profile
+        }
+        _target_col = "left" if _orig_col_ids == {"left"} else None
 
-    doc.header_paras = (
-        [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
-        + list(summary_sec.body_paras)
-    )
-    doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+        # Lift LLM summary body paragraphs into the header area.
+        for bp in summary_sec.body_paras:
+            if bp.paragraph_profile:
+                bp.paragraph_profile.column_id = _target_col
+                bp.paragraph_profile.bold = False  # summary text is never bold
+
+        doc.header_paras = (
+            [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
+            + list(summary_sec.body_paras)
+        )
+        doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
 
     # Rebuild all_paras so the renderer sees the updated structure.
     from tailor.compiler.models import ParaModel

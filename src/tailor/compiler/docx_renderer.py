@@ -3340,6 +3340,15 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     # source PDF's paper size and margins so the round-trip page count is stable.
     if doc.source_kind == "pdf" and sectPr is not None:
         _apply_pdf_page_geometry(sectPr, doc.layout)
+        # Strip native word-processor column layout from the style template.
+        # For single-column PDFs the column layout is derived from the IR, not
+        # from the DOCX style template.  If the style template carries w:cols
+        # (e.g. a two-column DOCX used as a style donor), paragraphs would flow
+        # through those columns and cause visual column overlap or spillover.
+        if doc.layout.column_split_x is None:
+            _cols = sectPr.find(f"{{{_W}}}cols")
+            if _cols is not None:
+                sectPr.remove(_cols)
 
     # PDF sources with a detected two-column layout: render as a borderless
     # two-cell table so that sidebar and main content are placed in separate
