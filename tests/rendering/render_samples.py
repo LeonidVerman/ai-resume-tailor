@@ -59,6 +59,9 @@ _OUT_REND_PDF  = _REPO / "tmp" / "artefacts" / "rendering" / "pdf"
 # (which causes PermissionError [WinError 32] on Windows).
 _OUT_STAGE_PDF = _OUT_REND_PDF / "_stage"
 
+_OUT_SS_DOCX = _OUT_REND_DOCX / "screenshots"
+_OUT_SS_PDF  = _OUT_REND_PDF  / "screenshots"
+
 _NUM_RE = re.compile(r"^(\d+)-")
 
 
@@ -212,10 +215,39 @@ def discover(filter_arg: Optional[str] = None) -> tuple[list[SamplePair], list[s
 
 
 # ---------------------------------------------------------------------------
+# Screenshot helper
+# ---------------------------------------------------------------------------
+
+def _generate_screenshot(
+    original_path: Path,
+    rendered_path: Path,
+    out_path: Path,
+    zoom: float = 2.0,
+    verbose: bool = True,
+    tag: str = "",
+) -> None:
+    """Generate a side-by-side comparison screenshot (non-fatal on failure)."""
+    try:
+        sys.path.insert(0, str(_REPO / "scripts"))
+        from render_screenshot import make_comparison
+        make_comparison(
+            original_path=original_path,
+            rendered_path=rendered_path,
+            out_path=out_path,
+            zoom=zoom,
+        )
+        if verbose:
+            print(f"  SS    -> {out_path.relative_to(_REPO)}")
+    except Exception as exc:
+        print(f"{tag} WARN [stage=screenshot] {type(exc).__name__}: {exc}")
+
+
+# ---------------------------------------------------------------------------
 # Rendering
 # ---------------------------------------------------------------------------
 
-def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
+def render_sample(pair: SamplePair, verbose: bool = True, screenshots: bool = True,
+                  screenshot_zoom: float = 2.0) -> bool:
     """Run the full pipeline for one sample.  Returns True on success."""
     tag = f"[{pair.prefix}/{pair.source_kind.upper()}]"
 
@@ -354,6 +386,30 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
     if verbose:
         print(f"  PDF   -> {grader_pdf.relative_to(_REPO)}")
 
+    # ── Stage 6: side-by-side screenshot ──────────────────────────────────
+    if screenshots:
+        if pair.source_kind == "docx":
+            ss_dir = _OUT_SS_DOCX
+            # Compare original DOCX template → rendered PDF (best visual fidelity)
+            _generate_screenshot(
+                original_path=pair.resume_path,
+                rendered_path=grader_pdf,
+                out_path=ss_dir / f"{stem}.png",
+                zoom=screenshot_zoom,
+                verbose=verbose,
+                tag=tag,
+            )
+        else:
+            ss_dir = _OUT_SS_PDF
+            _generate_screenshot(
+                original_path=pair.resume_path,
+                rendered_path=grader_pdf,
+                out_path=ss_dir / f"{stem}.png",
+                zoom=screenshot_zoom,
+                verbose=verbose,
+                tag=tag,
+            )
+
     if verbose:
         print(f"{tag} OK")
 
@@ -365,12 +421,37 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
 # ---------------------------------------------------------------------------
 
 def main(argv: list[str] | None = None) -> int:
-    args = argv if argv is not None else sys.argv[1:]
-    filter_arg = args[0] if args else None
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="Deterministic rendering test for matched samples.",
+        add_help=False,
+    )
+    parser.add_argument("filter", nargs="?", default=None,
+                        help="Numeric prefix or filename fragment to filter samples.")
+    parser.add_argument("--screenshots", dest="screenshots", action="store_true",
+                        default=True, help="Generate comparison screenshots (default).")
+    parser.add_argument("--no-screenshots", dest="screenshots", action="store_false",
+                        help="Disable screenshot generation.")
+    parser.add_argument("--strict-screenshots", action="store_true", default=False,
+                        help="Fail the run if any screenshot fails (default: warnings only).")
+    parser.add_argument("--screenshot-zoom", type=float, default=2.0, metavar="ZOOM",
+                        help="PyMuPDF rendering zoom factor (default 2.0).")
+    parser.add_argument("-h", "--help", action="help",
+                        help="Show this help message and exit.")
+
+    # Support legacy positional-only usage: render_samples.py <filter>
+    args = parser.parse_args(argv if argv is not None else sys.argv[1:])
+    filter_arg = args.filter
+    screenshots = args.screenshots
+    zoom = args.screenshot_zoom
 
     print("=" * 60)
     print("  render_samples.py - deterministic rendering test")
     print("=" * 60)
+    if screenshots:
+        print(f"  Screenshots: ON (zoom={zoom}x)")
+    else:
+        print("  Screenshots: OFF")
 
     try:
         pairs, skips = discover(filter_arg)
@@ -397,7 +478,8 @@ def main(argv: list[str] | None = None) -> int:
 
     n_ok = n_fail = 0
     for pair in pairs:
-        if render_sample(pair, verbose=True):
+        if render_sample(pair, verbose=True, screenshots=screenshots,
+                         screenshot_zoom=zoom):
             n_ok += 1
         else:
             n_fail += 1
@@ -413,6 +495,14 @@ def main(argv: list[str] | None = None) -> int:
                 files = sorted(d.iterdir())
                 if files:
                     print(f"  {d.relative_to(_REPO)}/  ({len(files)} files)")
+
+    if screenshots:
+        print("\nScreenshots:")
+        for ss_dir in (_OUT_SS_DOCX, _OUT_SS_PDF):
+            if ss_dir.exists():
+                pngs = sorted(ss_dir.glob("*.png"))
+                if pngs:
+                    print(f"  {ss_dir.relative_to(_REPO)}/  ({len(pngs)} files)")
 
     return 1 if n_fail else 0
 
