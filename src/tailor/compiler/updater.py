@@ -3857,6 +3857,10 @@ def apply_tailored(
                         for _cand_sec in reversed(original.sections[:_left_col_end]):
                             if _cand_sec.semantic_type in _LOCKED_SEMANTIC_TYPES:
                                 continue
+                            # Never inject skills into a summary section — its body paras
+                            # are summary text, not a sidebar anchor slot.
+                            if _cand_sec.semantic_type == "summary":
+                                continue
                             _candidate_anchor = next(
                                 (p for p in reversed(_cand_sec.body_paras) if _valid_anchor(p)),
                                 None,

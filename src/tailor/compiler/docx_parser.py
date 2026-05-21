@@ -89,6 +89,10 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         # and combined skills headings ("Skills and Abilities").
         "accomplishments", "achievement", "achievements",
         "skills and abilities",
+        # "Education Summary" is used as a section heading in some templates
+        # (e.g. sample 26) to label the education subsection.  Must stay in sync
+        # with _ALL_KNOWN in text_parser.py.
+        "education summary",
     })
 )
 

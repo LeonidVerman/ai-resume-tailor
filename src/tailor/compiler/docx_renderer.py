@@ -529,6 +529,22 @@ def _set_para_text(p_elem, text: str) -> None:
             _set_run_text(all_runs[ci], "")
         return
 
+    # Tab-split label fix: when the paragraph has pure-tab separator runs (column
+    # dividers) and the new text contains no tab characters, place ALL text in the
+    # first content run before the tab and clear post-tab content runs.  This
+    # prevents label-column headings like "EDUCATION\t<right-col-text>" from
+    # distributing "EDUCATION" proportionally as "ED" (pre-tab) + "UCATION"
+    # (post-tab), which renders as a visually split word across columns.
+    if _pure_tab_idx and "\t" not in text:
+        _first_tab_run = min(_pure_tab_idx)
+        _pre_tab_ci = [ci for ci in content_indices if ci < _first_tab_run]
+        if _pre_tab_ci:
+            _set_run_text(all_runs[_pre_tab_ci[0]], text)
+            for ci in content_indices:
+                if ci != _pre_tab_ci[0]:
+                    _set_run_text(all_runs[ci], "")
+            return
+
     # Distribute new text proportionally across content runs only.
     last_ci = content_indices[-1]
 
@@ -2472,6 +2488,28 @@ def _render_layout_two_col_table(
     if not _section_left_blocks and _header_left_blocks:
         _section_left_blocks = _header_left_blocks
         _header_left_blocks = []
+
+    # Right-column-name guard: when the right column starts with candidate name/title
+    # content (non-section-heading paragraph), the template uses a split-header layout
+    # where the left contact block and right name sit at the same vertical level.
+    # Extracting left header blocks to the body would push them ABOVE the right-column
+    # name, breaking visual alignment.  Keep all left blocks in the left cell instead.
+    # Example: sample 16 where left=contact-info and right=HARPER RUSSO / DEVOPS.
+    if _header_left_blocks:
+        _first_right_pm = None
+        for _rblk in right_blocks:
+            if isinstance(_rblk, LayoutParagraphBlock) and _rblk.para_id:
+                _rblk_pm = para_lookup.get(_rblk.para_id)
+                if _rblk_pm and _rblk_pm.text.strip():
+                    _first_right_pm = _rblk_pm
+                    break
+        if _first_right_pm is not None and _first_right_pm.semantic not in {
+            "section_heading", "empty"
+        }:
+            # Right column starts with name/title — keep contact/header in left cell.
+            _section_left_blocks = _header_left_blocks + _section_left_blocks
+            _header_left_blocks = []
+
     # Render header blocks as body-level paragraphs (full page width).
     for _hblk in _header_left_blocks:
         _hel = _render_block_into_elem(

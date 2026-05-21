@@ -217,6 +217,11 @@ _ALL_KNOWN: frozenset[str] = (
         # and combined skills headings ("Skills and Abilities").
         "accomplishments", "achievement", "achievements",
         "skills and abilities",
+        # "Education Summary" appears as a section heading in some templates (e.g.
+        # sample 26) and LLMs sometimes copy it verbatim inside other sections.
+        # Treating it as a known boundary prevents it from being absorbed as body
+        # content of the preceding section (e.g. General Info).
+        "education summary",
     })
 )
 
