@@ -28,6 +28,8 @@ HARD FAIL triggers:
 HARD FAIL triggers (semantic / IR fallback — work without PDF extraction):
   SUMMARY_IN_WRONG_SECTION    LLM Professional Summary text found in a non-summary
                               IR section (e.g., Contact/sidebar table cell).
+  SUMMARY_MISSING             LLM output had a Professional Summary (≥60 chars) but
+                              the rendered IR contains no summary-like prose content.
   OVERFLOW_COLUMN_LOSS        Overflow page drops from ≥2 column layout (page 1)
                               to 1-column layout — reading topology breaks.
 
@@ -129,7 +131,7 @@ def _check_ir_summary_missing(
     """Detect when the LLM output contained a Professional Summary but the IR lacks one.
 
     Returns (triggered, evidence_list).
-    triggered=True is a WARNING signal (C_SUMMARY_MISSING_WHEN_SAFE_ANCHOR_EXISTS).
+    triggered=True is a HARD FAIL signal (C_SUMMARY_MISSING / SUMMARY_MISSING).
 
     Algorithm
     ---------
@@ -565,8 +567,12 @@ def grade_sample(
                 # ── IR-based summary missing check ────────────────────────────
                 # Detect when LLM had a Professional Summary but the rendered IR
                 # has no summary-like prose — the summary was dropped/not anchored.
+                # This is a HARD FAIL: the LLM explicitly produced a summary and
+                # it must appear in the rendered output.
                 sm_triggered, sm_ev = _check_ir_summary_missing(ir, llm_text)
                 if sm_triggered:
+                    hard_fail = True
+                    hard_fail_reasons.append("SUMMARY_MISSING")
                     if "C_SUMMARY_MISSING" not in failure_classes:
                         failure_classes.append("C_SUMMARY_MISSING")
                 evidence.extend(sm_ev)

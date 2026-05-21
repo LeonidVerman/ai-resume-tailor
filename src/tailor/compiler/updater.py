@@ -881,7 +881,17 @@ def _update_body_section(
             # reference entry appearing twice after the LLM merges it into one
             # line).  Clearing to empty string makes the slot invisible while
             # preserving the layout_block para_id reference.
-            new_body.append(p.with_text(""))
+            #
+            # Exception: in a skills section, non-bullet paragraph-type paras
+            # (e.g. a candidate name or intro-prose summary that sits in a
+            # different visual column of the same table cell) must be preserved
+            # verbatim — they carry either the original design element text
+            # (e.g. 'Leonid Verman') or the LLM summary text injected earlier
+            # by _find_intro_prose_para.  Clearing them erases the name/summary.
+            if _is_skills and p.semantic == "paragraph":
+                new_body.append(p)  # preserve name / summary / non-skill para
+            else:
+                new_body.append(p.with_text(""))
         # else (non-layout-bound): LLM produced fewer lines — drop trailing para
 
     # Append any remaining unbound extra paras (LLM content beyond template slots).
@@ -1756,10 +1766,49 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
                 continue
             if text[0] in ("-", "•", "·", "–", "*"):
                 continue
+            # Reject keyword lists that use '•' as an inline separator
+            # (e.g. "Senior Architect • Principal Developer • Senior App Developer").
+            # More than 1 bullet in the middle indicates a skills keyword list, not prose.
+            if text.count("•") > 1:
+                continue
             comma_density = text.count(",") / max(1, len(text))
             if comma_density >= 0.10:
                 continue
             return p
+
+    # Also search header_paras for intro-prose paragraphs (e.g. sample 24 where
+    # the original summary placeholder "I enjoy learning..." is in header_paras
+    # rather than in any section body).  Only search the tail of header_paras
+    # (after the name/title/contact block) to avoid replacing contact info.
+    _CONTACT_SIGNALS: frozenset[str] = frozenset({"@", "://"})
+    _hp = original.header_paras
+    # Find where the contact block ends: walk backwards past trailing empties to
+    # the last long content paragraph, then search only from there onward.
+    _hp_start = 0
+    for _j in range(len(_hp) - 1, -1, -1):
+        _ht = _hp[_j].text.strip()
+        if len(_ht) > 15 and not any(s in _ht for s in _CONTACT_SIGNALS):
+            _hp_start = _j
+            break
+    for p in _hp[_hp_start:]:
+        text = p.text.strip()
+        if len(text) < _INTRO_PROSE_MIN_LEN:
+            continue
+        if p.semantic in ("role_header", "role_meta", "section_heading"):
+            continue
+        if "|" in text or "://" in text or "@" in text:
+            continue
+        if " " not in text:
+            continue
+        if text[0] in ("-", "•", "·", "–", "*"):
+            continue
+        if text.count("•") > 1:
+            continue
+        comma_density = text.count(",") / max(1, len(text))
+        if comma_density >= 0.10:
+            continue
+        return p
+
     return None
 
 
@@ -3773,10 +3822,11 @@ def apply_tailored(
                     )
                 elif llm_s.semantic_type == "skills":
                     # Try to inject skills into the left column (the column that contains
-                    # 'other'-type sections before the first education/experience section).
-                    # Find the boundary: first section of type education/experience marks
-                    # the start of the right/content column.
-                    _CONTENT_BOUNDARY_TYPES = frozenset({"education", "experience"})
+                    # sidebar sections before the first experience section).
+                    # Use only "experience" as the boundary — education can legitimately
+                    # appear in the left sidebar column (e.g. sample 12 has Education
+                    # in the left column before Communication and Leadership).
+                    _CONTENT_BOUNDARY_TYPES = frozenset({"experience"})
                     _left_col_end = next(
                         (i for i, s in enumerate(original.sections)
                          if s.semantic_type in _CONTENT_BOUNDARY_TYPES),
@@ -3785,19 +3835,41 @@ def apply_tailored(
                     _skills_injected = False
                     if _left_col_end is not None and _left_col_end > 0:
                         # Find the last 'other' section before the content boundary
-                        # that has a non-empty body_para with a para_id (anchor point).
-                        _left_sec = next(
-                            (s for s in reversed(original.sections[:_left_col_end])
-                             if s.semantic_type not in _LOCKED_SEMANTIC_TYPES
-                             and any(p.para_id and p.text.strip() for p in s.body_paras)),
-                            None,
-                        )
-                        if _left_sec is not None:
-                            _anchor_bp = next(
-                                (p for p in reversed(_left_sec.body_paras)
-                                 if p.para_id and p.text.strip()),
+                        # that has a valid anchor paragraph (non-contact, non-empty).
+                        # Contact-info guard: reject paragraphs with URLs, email,
+                        # phone, or ZIP codes — these belong to contact sections.
+                        _CONTACT_MARKS = ("@", "www.", "http://", "https://")
+                        _phone_re_anchor = re.compile(r"^\+?[\d\s\-\.\(\)]{7,}$")
+                        _zip_re_anchor = re.compile(r"^\d{4,6}$")
+
+                        def _valid_anchor(p: "ParaModel") -> bool:
+                            t = p.text.strip()
+                            if not p.para_id or not t or len(t) < 3:
+                                return False
+                            if any(m in p.text for m in _CONTACT_MARKS):
+                                return False
+                            if _phone_re_anchor.match(t) or _zip_re_anchor.match(t):
+                                return False
+                            return True
+
+                        _left_sec = None
+                        _anchor_bp = None
+                        for _cand_sec in reversed(original.sections[:_left_col_end]):
+                            if _cand_sec.semantic_type in _LOCKED_SEMANTIC_TYPES:
+                                continue
+                            # Never inject skills into a summary section — its body paras
+                            # are summary text, not a sidebar anchor slot.
+                            if _cand_sec.semantic_type == "summary":
+                                continue
+                            _candidate_anchor = next(
+                                (p for p in reversed(_cand_sec.body_paras) if _valid_anchor(p)),
                                 None,
                             )
+                            if _candidate_anchor is not None:
+                                _left_sec = _cand_sec
+                                _anchor_bp = _candidate_anchor
+                                break
+                        if _left_sec is not None:
                             if _anchor_bp is not None:
                                 _skill_lines = _sanitize_skills_lines(
                                     [l for l in llm_s.body_lines if l.strip()]

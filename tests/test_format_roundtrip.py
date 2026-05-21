@@ -289,10 +289,16 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "(updates via date-first experience path)."
     ),
     "29-Programmer-Editable-Resume-Template-Download-in-docx.docx": (
-        "Newspaper 2-column layout with separate section-label column: the label "
-        "column fix reorders paragraphs for semantic grouping, causing the identity "
-        "roundtrip to produce a different paragraph sequence.  Real LLM pipeline "
-        "unaffected (operates on the reordered semantic model)."
+        "Newspaper 2-column layout: 'Work Experience\\tEducation' tab-split heading "
+        "triggers the newspaper fix which reorders paragraphs for semantic grouping, "
+        "causing the identity roundtrip to produce a different paragraph sequence.  "
+        "Real LLM pipeline unaffected (operates on the reordered semantic model)."
+    ),
+    "32-Software-Engineer-Editable-Resume-Template-Download-in-docx-1-1.docx": (
+        "Newspaper 2-column layout: 'Experience\\tEducation' tab-split heading triggers "
+        "the newspaper fix which reorders paragraphs into left (experience) and right "
+        "(education) streams.  The identity roundtrip sees a different paragraph order "
+        "than the original template.  Real LLM pipeline unaffected."
     ),
     "7-Template2.docx": (
         "Placeholder-year role format ('January 20xx - Current'): date lines use "
@@ -325,6 +331,13 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "(e.g. 'SOFTWARE ENGINEER') with header_extra (company name) into a "
         "pipe-separated string, changing paragraph text.  Real LLM pipeline "
         "unaffected."
+    ),
+    "30-Software-Engineer-Editable-Resume-Template-Download-in-docx-1.docx": (
+        "Newspaper 2-column layout: the tab-normalisation fix converts inline "
+        "'<w:tab/>' characters to spaces for heading detection (e.g. 'SOFTWARE "
+        "ENGINEER<tab>www.techguruplus.com').  The XML proto still carries the tab "
+        "element, so the rendered paragraph gets a double-space when re-parsed.  "
+        "Real LLM pipeline unaffected (contact header is not modified)."
     ),
     "27-Engineer-Editable-Resume-Template-Download-in-docx-3.docx": (
         "Two-column layout converted to a 2-cell table by the renderer to keep "
