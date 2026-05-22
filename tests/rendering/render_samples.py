@@ -226,7 +226,15 @@ def _generate_screenshot(
     verbose: bool = True,
     tag: str = "",
 ) -> None:
-    """Generate a side-by-side comparison screenshot (non-fatal on failure)."""
+    """Generate a side-by-side comparison screenshot (non-fatal on failure).
+
+    Always deletes the existing PNG first so a stale screenshot never survives
+    a failed regeneration — if generation fails, the file is absent rather than
+    showing outdated content.
+    """
+    # Remove old file unconditionally so a failed regeneration leaves no stale PNG.
+    if out_path.exists():
+        out_path.unlink()
     try:
         sys.path.insert(0, str(_REPO / "scripts"))
         from render_screenshot import make_comparison
