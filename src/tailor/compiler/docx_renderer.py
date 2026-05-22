@@ -1088,6 +1088,167 @@ def _make_full_width_dark_band(
     return tbl
 
 
+def _detect_same_level_section_groups(sections) -> "list[list[int]]":
+    """Return groups (lists of section indices) where headings share the same y_top (±5 pt).
+
+    Sections at the same vertical position in the source PDF were laid out as
+    side-by-side columns (e.g. Education | Skills | Interests across the bottom
+    row of a template).  Grouping them lets the renderer create an N-column
+    table so they appear horizontally aligned in the output.
+    """
+    from collections import defaultdict
+    if not sections:
+        return []
+    y_groups: "dict[int, list[int]]" = defaultdict(list)
+    for i, sec in enumerate(sections):
+        pp = sec.heading.paragraph_profile
+        # Only group original template sections (non-empty para_id).
+        # LLM-added extra sections inherit y_top from their archetype, which
+        # would cause false same-level grouping with unrelated template sections.
+        if pp and pp.y_top_pt > 0 and sec.heading.para_id:
+            bucket = round(pp.y_top_pt / 5) * 5  # snap to 5 pt grid
+            y_groups[bucket].append(i)
+    return [sorted(idxs) for idxs in y_groups.values() if len(idxs) >= 2]
+
+
+def _render_pdf_single_col_with_groups(
+    doc: "ResumeDocument",
+    body,
+    sectPr,
+    doc_part,
+    groups: "list[list[int]]",
+    text_area_w_twips: int,
+) -> None:
+    """Render a single-column PDF that has same-level (multi-column) section groups.
+
+    Sections NOT in any group are rendered as regular paragraphs.
+    Sections in the same group are rendered as a single-row N-column table,
+    matching the original side-by-side layout from the source PDF.
+    """
+    from lxml import etree
+    from tailor.compiler.para_builder import build_para_element
+
+    grouped_idxs: "set[int]" = {idx for grp in groups for idx in grp}
+    rendered_group_keys: "set[tuple[int, ...]]" = set()
+
+    def _add(elem) -> None:
+        if sectPr is not None:
+            sectPr.addprevious(elem)
+        else:
+            body.append(elem)
+
+    def _section_min_indent_twips(sec) -> int:
+        """Return the minimum indent_left_pt (in twips) across all paras in a section."""
+        vals = []
+        for pm in [sec.heading] + list(sec.body_paras):
+            pp = pm.paragraph_profile
+            if pp and pp.indent_left_pt > 0:
+                vals.append(int(pp.indent_left_pt * 20))
+        for role in sec.roles:
+            for pm in [role.header] + list(role.meta_lines) + list(role.bullets):
+                pp = pm.paragraph_profile
+                if pp and pp.indent_left_pt > 0:
+                    vals.append(int(pp.indent_left_pt * 20))
+        return min(vals) if vals else 0
+
+    def _shift_indent(p_elem, delta_twips: int) -> None:
+        """Subtract delta_twips from w:ind w:left (floor at 0) inside a w:p element."""
+        if delta_twips <= 0:
+            return
+        pPr = p_elem.find(f"{{{_W}}}pPr")
+        if pPr is None:
+            return
+        ind = pPr.find(f"{{{_W}}}ind")
+        if ind is not None:
+            cur = int(ind.get(f"{{{_W}}}left", "0"))
+            ind.set(f"{{{_W}}}left", str(max(0, cur - delta_twips)))
+
+    def _build_section_paras_for_cell(sec, min_indent: int) -> "list":
+        """Build paragraph elements for a table cell, normalizing indent to cell origin."""
+        elems = []
+        for pm in [sec.heading] + list(sec.body_paras):
+            elem = build_para_element(pm, doc_part)
+            _shift_indent(elem, min_indent)
+            elems.append(elem)
+        for role in sec.roles:
+            for pm in [role.header] + list(role.meta_lines) + list(role.bullets):
+                elem = build_para_element(pm, doc_part)
+                _shift_indent(elem, min_indent)
+                elems.append(elem)
+        return elems
+
+    def _build_section_paras(sec) -> "list":
+        elems: list = [build_para_element(sec.heading, doc_part)]
+        for pm in sec.body_paras:
+            elems.append(build_para_element(pm, doc_part))
+        for role in sec.roles:
+            elems.append(build_para_element(role.header, doc_part))
+            for m in role.meta_lines:
+                elems.append(build_para_element(m, doc_part))
+            for b in role.bullets:
+                elems.append(build_para_element(b, doc_part))
+        return elems
+
+    # Header paragraphs first
+    for pm in doc.header_paras:
+        _add(build_para_element(pm, doc_part))
+
+    for i, sec in enumerate(doc.sections):
+        if i not in grouped_idxs:
+            # Render normally
+            for elem in _build_section_paras(sec):
+                _add(elem)
+        else:
+            # Find which group this section belongs to
+            grp = next((g for g in groups if i in g), None)
+            if grp is None:
+                for elem in _build_section_paras(sec):
+                    _add(elem)
+                continue
+            key = tuple(grp)
+            if key in rendered_group_keys:
+                continue  # already rendered as a table
+            rendered_group_keys.add(key)
+
+            n = len(grp)
+            col_w = text_area_w_twips // n
+
+            # Build N-column borderless table
+            tbl = etree.Element(f"{{{_W}}}tbl")
+            tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+            tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+            tblW_el.set(f"{{{_W}}}w", str(col_w * n))
+            tblW_el.set(f"{{{_W}}}type", "dxa")
+            tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+            tblLayout.set(f"{{{_W}}}type", "fixed")
+            tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+            for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+                brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+                brd.set(f"{{{_W}}}val", "none")
+            tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+            for side in ("top", "left", "bottom", "right"):
+                m_el = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+                m_el.set(f"{{{_W}}}w", "0")
+                m_el.set(f"{{{_W}}}type", "dxa")
+
+            tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+            for sec_idx in grp:
+                grp_sec = doc.sections[sec_idx]
+                min_ind = _section_min_indent_twips(grp_sec)
+                tc = etree.SubElement(tr, f"{{{_W}}}tc")
+                tcPr = etree.SubElement(tc, f"{{{_W}}}tcPr")
+                tcW = etree.SubElement(tcPr, f"{{{_W}}}tcW")
+                tcW.set(f"{{{_W}}}w", str(col_w))
+                tcW.set(f"{{{_W}}}type", "dxa")
+                etree.SubElement(tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+                for elem in _build_section_paras_for_cell(grp_sec, min_ind):
+                    tc.append(elem)
+                if not tc.findall(f"{{{_W}}}p"):
+                    etree.SubElement(tc, f"{{{_W}}}p")
+
+            _add(tbl)
+
+
 def _render_pdf_single_col_dark_header(doc: "ResumeDocument", body, sectPr, doc_part=None) -> None:
     """Render a single-column PDF with full-width dark header (and optional footer) bands.
 
@@ -3672,6 +3833,38 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         _render_pdf_single_col_dark_header(doc, body, sectPr, doc_part=d.part)
         d.save(output_path)
         return
+
+    # Single-column PDF: detect same-level section groups (e.g. three sections
+    # sharing the same y_top, rendered as a multi-column table row).
+    if doc.source_kind == "pdf" and doc.layout.column_split_x is None and not doc.layout.header_bg_color:
+        _same_level_groups = _detect_same_level_section_groups(doc.sections)
+        if _same_level_groups:
+            shutil.copy(template_path, output_path)
+            _d_grp = Document(output_path)
+            _patch_bullet_numbering(_d_grp)
+            _body_grp = _d_grp.element.body
+            _sectPr_grp = _body_grp.find(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}sectPr")
+            for _child in list(_body_grp):
+                _body_grp.remove(_child)
+            if _sectPr_grp is not None:
+                _body_grp.append(_sectPr_grp)
+            _apply_pdf_page_geometry(_sectPr_grp, doc.layout)
+            if _sectPr_grp is not None:
+                _cols_grp = _sectPr_grp.find(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}cols")
+                if _cols_grp is not None:
+                    _sectPr_grp.remove(_cols_grp)
+            _pgSz_g = _sectPr_grp.find(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}pgSz") if _sectPr_grp is not None else None
+            _pgMar_g = _sectPr_grp.find(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}pgMar") if _sectPr_grp is not None else None
+            _pw_g = int(_pgSz_g.get(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}w", "12240")) if _pgSz_g is not None else 12240
+            _lm_g = int(_pgMar_g.get(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}left", "1440")) if _pgMar_g is not None else 1440
+            _rm_g = int(_pgMar_g.get(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}right", "1440")) if _pgMar_g is not None else 1440
+            _text_w_g = _pw_g - _lm_g - _rm_g
+            _render_pdf_single_col_with_groups(
+                doc, _body_grp, _sectPr_grp, _d_grp.part,
+                _same_level_groups, _text_w_g,
+            )
+            _d_grp.save(output_path)
+            return
 
     shutil.copy(template_path, output_path)
     d = Document(output_path)

@@ -164,14 +164,17 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
                 # bold bleed when the role header is the only archetype available).
                 pp.bold = False
             elif pm.semantic == "paragraph":
-                # Normalize heading-style bleed: bold body content means this
-                # paragraph was cloned from a heading or all-bold archetype.
-                # Clear bold unconditionally — body paragraphs in PDF templates
-                # are never legitimately bold in injected LLM content.
-                if pp.bold:
+                # Normalize heading-style bleed: bold + oversized font on
+                # LLM-injected body content (para_id="") means the paragraph
+                # was cloned from a heading or all-bold archetype.
+                # Original template paragraphs (non-empty para_id) keep their
+                # font so that candidate names (e.g. 42pt "Alexander") are
+                # not reduced to body-text size.
+                if not pm.para_id:
+                    # LLM-injected: clear bold unconditionally
                     pp.bold = False
-                if pp.font_size_pt and pp.font_size_pt > default_size * 1.1:
-                    pp.font_size_pt = default_size
+                    if pp.font_size_pt and pp.font_size_pt > default_size * 1.1:
+                        pp.font_size_pt = default_size
 
     _fix(doc.header_paras)
     _fix(doc.all_paras)
