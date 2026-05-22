@@ -868,7 +868,19 @@ def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=
         left_tcW.set(f"{{{_W}}}type", "dxa")
         _add_top_border(left_tcPr)
 
-        heading_elem = build_para_element(section.heading, doc_part=doc_part)
+        # Apply cell-level background shading when the section heading carries a
+        # background color (e.g. sample 14's peach section bands).  Cell-level
+        # shading spans the full cell width whereas paragraph-level shading only
+        # covers the text area, giving partial/striped blocks.
+        _hd_bg = (section.heading.paragraph_profile.background_color
+                  if section.heading.paragraph_profile else None)
+        if _hd_bg:
+            _hd_shd = etree.SubElement(left_tcPr, f"{{{_W}}}shd")
+            _hd_shd.set(f"{{{_W}}}val", "clear")
+            _hd_shd.set(f"{{{_W}}}color", "auto")
+            _hd_shd.set(f"{{{_W}}}fill", _hd_bg)
+
+        heading_elem = build_para_element(section.heading, doc_part=doc_part, skip_bg_shd=bool(_hd_bg))
         pPr = heading_elem.find(f"{{{_W}}}pPr")
         if pPr is not None:
             ind = pPr.find(f"{{{_W}}}ind")
@@ -888,10 +900,19 @@ def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=
         right_tcW.set(f"{{{_W}}}type", "dxa")
         _add_top_border(right_tcPr)
 
+        # Apply cell-level background shading to the right cell as well when the
+        # heading carries a background colour (so the row looks like a full band).
+        if _hd_bg:
+            _rt_shd = etree.SubElement(right_tcPr, f"{{{_W}}}shd")
+            _rt_shd.set(f"{{{_W}}}val", "clear")
+            _rt_shd.set(f"{{{_W}}}color", "auto")
+            _rt_shd.set(f"{{{_W}}}fill", _hd_bg)
+
         def _append(pm, combined_text=None):
             """Build and append a para element with normalised indent."""
             src = pm.with_text(combined_text) if combined_text else pm
-            p_elem = build_para_element(src, doc_part=doc_part)
+            # Skip paragraph-level bg shading when the cell carries cell shading.
+            p_elem = build_para_element(src, doc_part=doc_part, skip_bg_shd=bool(_hd_bg))
             _shift_para_indent(p_elem, sec_min_ind)
             right_tc.append(p_elem)
 
@@ -1032,23 +1053,47 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         shd.set(f"{{{_W}}}color", "auto")
         shd.set(f"{{{_W}}}fill", layout.right_col_bg_color)
 
-    # Sort ALL paragraphs purely by column_id so that the cell contents match
-    # the source PDF columns regardless of how _group_sections classified them.
-    # Paragraphs with no column_id (column_id is None) did not belong to either
-    # column and are rendered as full-width elements ABOVE the two-column table.
-    # Using column_id directly prevents the header_paras heuristic from placing
-    # left-column employment sections above the table when their section names
-    # are not in the known-headings vocabulary.
+    # Separate doc.header_paras into:
+    #   above_paras  — full-width above-table items (dark-background name/title,
+    #                  or items with no column assignment)
+    #   hdr_left/right — light-background header items that belong in a cell
+    #                    (e.g. LLM-injected summary placed in the right column)
+    # This handles templates where the dark header band contains name+title
+    # whose column_id was set to "right" by the PDF parser (text past the
+    # sidebar boundary) while the LLM summary should land in the right cell.
+    _header_ids: frozenset[int] = frozenset(id(pm) for pm in doc.header_paras)
+    _LIGHT_BG = frozenset(("ffffff", "fefefe", "f8f8f8"))
+
+    def _is_dark_bg(pm) -> bool:
+        pp = pm.paragraph_profile
+        if pp is None:
+            return False
+        bg = pp.background_color
+        return bool(bg) and bg not in _LIGHT_BG
+
     above_paras = [
-        pm for pm in doc.all_paras
-        if not (pm.paragraph_profile and pm.paragraph_profile.column_id in ("left", "right"))
+        pm for pm in doc.header_paras
+        if _is_dark_bg(pm)
+        or not (pm.paragraph_profile and pm.paragraph_profile.column_id in ("left", "right"))
     ]
-    left_paras = [
-        pm for pm in doc.all_paras
+    _above_ids = frozenset(id(pm) for pm in above_paras)
+    _hdr_left = [
+        pm for pm in doc.header_paras
+        if id(pm) not in _above_ids
+        and pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
+    ]
+    _hdr_right = [
+        pm for pm in doc.header_paras
+        if id(pm) not in _above_ids
+        and pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
+    ]
+    body_paras = [pm for pm in doc.all_paras if id(pm) not in _header_ids]
+    left_paras = _hdr_left + [
+        pm for pm in body_paras
         if pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
     ]
-    right_paras = [
-        pm for pm in doc.all_paras
+    right_paras = _hdr_right + [
+        pm for pm in body_paras
         if pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
     ]
 
@@ -1105,6 +1150,15 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         None,
     )
     if header_bg and above_paras:
+        # Dark header band: zero the top page margin so the header table
+        # starts at the physical page top (y=0), matching the source PDF where
+        # the dark rectangle starts at y=0 above the text area margin.
+        if sectPr is not None:
+            pgMar = sectPr.find(f"{{{_W}}}pgMar")
+            if pgMar is not None:
+                pgMar.set(f"{{{_W}}}top", "0")
+                pgMar.set(f"{{{_W}}}header", "0")
+
         hdr_tbl = etree.Element(f"{{{_W}}}tbl")
         hdr_tblPr = etree.SubElement(hdr_tbl, f"{{{_W}}}tblPr")
         hdr_tblW = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblW")
@@ -1135,7 +1189,11 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         hdr_shd.set(f"{{{_W}}}color", "auto")
         hdr_shd.set(f"{{{_W}}}fill", header_bg)
         for pm in above_paras:
-            hdr_tc.append(build_para_element(pm, doc_part=doc_part, skip_bg_shd=True))
+            # Do NOT skip paragraph-level shading (skip_bg_shd=False).
+            # LibreOffice does not render w:tc shd reliably but DOES render
+            # w:pPr/w:shd paragraph shading.  Keeping both cell AND para shading
+            # ensures the dark background is visible in the PDF output.
+            hdr_tc.append(build_para_element(pm, doc_part=doc_part, skip_bg_shd=False))
         header_elements = [hdr_tbl]
     else:
         header_elements = [build_para_element(pm, doc_part=doc_part) for pm in above_paras]

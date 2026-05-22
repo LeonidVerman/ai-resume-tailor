@@ -107,6 +107,9 @@ _TWO_COLUMN_PDFS: frozenset[str] = frozenset({
     # causing text-position mismatches in the roundtrip text comparison.
     "31-Software-Engineer-Editable-Resume-Template-Download-in-docx-7.pdf",
     "9-Template4.pdf",
+    # Dark-header two-column: "SOFTWARE ENGINEER" subtitle moved from right cell
+    # to the full-width header table (dark bg detection), reordering para sequence.
+    "3-software-engineer-doc-resume-template.pdf",
     # Section-row table layout: heading/body pairs rendered into per-section
     # table rows; DOCX cell traversal order differs from source PDF reading order.
     "20-Software-Engineer-Editable-Resume-Template-Download-in-docx-5.pdf",

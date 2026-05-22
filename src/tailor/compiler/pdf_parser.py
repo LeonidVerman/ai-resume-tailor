@@ -410,6 +410,37 @@ def _extract_header_bg(page) -> tuple[str | None, float]:
             best_color = hex_color
             best_y1 = y1
 
+    # Fallback: pixel-sample the centre column when no large drawing rectangle
+    # was found (some PDFs render the header band via a form XObject or raw
+    # content-stream operators that get_drawings() does not capture).
+    if best_color is None:
+        try:
+            import fitz as _fitz
+            ph = page.rect.height
+            mat = _fitz.Matrix(1, 1)
+            _cx = pw / 2.0
+            # Sample the topmost pixel row to detect dark background
+            _pix0 = page.get_pixmap(matrix=mat, clip=_fitz.Rect(_cx - 1, 0, _cx + 1, 4))
+            _top_px = _pix0.pixel(0, 0)
+            _lum = (_top_px[0] + _top_px[1] + _top_px[2]) / 3.0
+            if _lum < 100:  # dark background at page top
+                # Scan downward to find where the dark band ends
+                _hdr_y1_px = 0.0
+                for _y in range(0, min(350, int(ph)), 4):
+                    _clip = _fitz.Rect(_cx - 1, _y, _cx + 1, _y + 4)
+                    _px = page.get_pixmap(matrix=mat, clip=_clip).pixel(0, 0)
+                    if (_px[0] + _px[1] + _px[2]) / 3.0 > 150:
+                        _hdr_y1_px = float(_y)
+                        break
+                else:
+                    _hdr_y1_px = 200.0
+                if _hdr_y1_px > 12.0:
+                    r, g, b = _top_px[0], _top_px[1], _top_px[2]
+                    best_color = f"{r:02x}{g:02x}{b:02x}"
+                    best_y1 = _hdr_y1_px
+        except Exception:
+            pass
+
     return best_color, best_y1
 
 
@@ -2461,9 +2492,14 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
                 continue
             # Apply to paragraphs whose y-position falls within the header band.
             # y_top_pt is the raw y0 from the PDF block; it's runtime-only but still
-            # present after _extract_paragraphs.
-            if _pp.y_top_pt < _hdr_y1:
+            # present after _extract_paragraphs.  If y_top_pt is None, apply to all
+            # header_paras (they are all in the header area by definition).
+            if _pp.y_top_pt is None or _pp.y_top_pt < _hdr_y1:
                 _pp.background_color = _hdr_bg_color
+                # Text on dark background must be white for visibility.
+                # If no explicit text_color was captured from the PDF, default to white.
+                if not _pp.text_color:
+                    _pp.text_color = "ffffff"
 
     # Final color cleanup: _group_sections may reclassify paragraphs (e.g.
     # section_heading → role_header) after _extract_paragraphs already ran its

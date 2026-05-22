@@ -172,6 +172,17 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
 
     _fix(doc.header_paras)
     _fix(doc.all_paras)
+
+    # Apply center alignment to large-font header paragraphs on a dark background
+    # (e.g. "CHARLES MCTURLAND" on the dark header bar in sample 3).  These
+    # typically appear centred in the original template but alignment is not
+    # reliably extracted from PDF spans.  Threshold: 20pt+ font AND dark fill.
+    for _pm in doc.header_paras:
+        _pp = _pm.paragraph_profile
+        if _pp and _pp.background_color and _pp.background_color not in ("ffffff", "fefefe", "f8f8f8"):
+            if _pp.font_size_pt and _pp.font_size_pt >= 20.0:
+                _pp.alignment = "center"
+
     for sec in doc.sections:
         _fix(sec.body_paras)
         for role in sec.roles:
@@ -413,7 +424,10 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
                 bp.paragraph_profile.column_id = _target_col
                 bp.paragraph_profile.bold = False  # summary text is never bold
                 if _target_col == "right":
+                    # Flush with the right-column content and centre-align to
+                    # match the typical template style for summary paragraphs.
                     bp.paragraph_profile.indent_left_pt = 0.0
+                    bp.paragraph_profile.alignment = "center"
 
         if _target_col == "left":
             # Sidebar layout: the summary replaces the original profile text in the
@@ -896,26 +910,32 @@ def compile_resume_from_pdf(
     # section headings are ALL-CAPS).
     _apply_heading_case_convention(updated)
 
-    # Re-sort sections by (column, y_top_pt) for PDF two-column documents.
+    # Re-sort sections by column for PDF two-column documents.
     # Done AFTER _fix_extra_left_sections so LLM-injected extra sections (e.g.
     # Technical Skills) already have col_id="right" and sort correctly after
     # the template's left-column sections rather than interleaving with them.
+    #
+    # We use a STABLE sort on col_order only (left=1 before right=2) so that
+    # the within-column order from apply_tailored is preserved.  Sorting by
+    # y_top_pt was incorrect for multi-page PDFs where page-relative y values
+    # are not monotone across the full document (a section at the top of page 2
+    # has a smaller y than a section at the bottom of page 1, causing page 2
+    # sections to sort before page 1 sections in the same column).
     if (
         updated.source_kind == "pdf"
         and updated.layout.column_split_x is not None
     ):
         from tailor.compiler.models import ParaModel as _ParaModel  # local import
 
-        def _sec_col_y_key(sec) -> "tuple[int, float]":
+        def _sec_col_key(sec) -> int:
             pp = sec.heading.paragraph_profile
-            col_order = (
+            return (
                 1 if (pp and pp.column_id == "left")
                 else 2 if (pp and pp.column_id == "right")
                 else 0
             )
-            return (col_order, pp.y_top_pt if pp else 0.0)
 
-        updated.sections.sort(key=_sec_col_y_key)
+        updated.sections.sort(key=_sec_col_key)  # Python sort is stable
 
         if not updated.layout.section_row_table:
             # Re-order all_paras to reflect the new section order while preserving

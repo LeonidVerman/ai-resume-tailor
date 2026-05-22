@@ -193,22 +193,33 @@ def discover(filter_arg: Optional[str] = None) -> tuple[list[SamplePair], list[s
             f"[{', '.join(unmatched_cls)}] skip - classification exists but no generation file"
         )
 
-    # Filter by user argument
+    # Filter by user argument(s).  Multiple numeric prefixes may be passed
+    # (e.g. "2 3 4 14 25") and are treated as an OR filter: any sample whose
+    # numeric prefix matches one of the supplied values is included.
     if filter_arg:
-        # Try numeric prefix first
-        num_match = _num_prefix(filter_arg + "-dummy")
-        if num_match is None:
-            num_match = filter_arg.split("-")[0] if filter_arg[0].isdigit() else None
-        if num_match:
-            pairs = [p for p in pairs if p.prefix == num_match]
-            skips = [s for s in skips if f"[{num_match}]" in s]
-        else:
-            # Match by filename fragment
-            fragment = filter_arg.lower()
+        # Support space-separated or comma-separated multiple numeric prefixes
+        # that may have been joined into a single string by the caller.
+        _tokens = [t.strip() for t in filter_arg.replace(",", " ").split() if t.strip()]
+        _num_matches: set[str] = set()
+        _fragments: list[str] = []
+        for tok in _tokens:
+            nm = _num_prefix(tok + "-dummy")
+            if nm is None:
+                nm = tok.split("-")[0] if tok and tok[0].isdigit() else None
+            if nm:
+                _num_matches.add(nm)
+            else:
+                _fragments.append(tok.lower())
+
+        if _num_matches:
+            pairs = [p for p in pairs if p.prefix in _num_matches]
+            skips = [s for s in skips if any(f"[{nm}]" in s for nm in _num_matches)]
+        elif _fragments:
             pairs = [p for p in pairs
-                     if fragment in p.cls_path.name.lower()
-                     or fragment in p.gen_path.name.lower()
-                     or fragment in p.resume_path.name.lower()]
+                     if any(frag in p.cls_path.name.lower()
+                            or frag in p.gen_path.name.lower()
+                            or frag in p.resume_path.name.lower()
+                            for frag in _fragments)]
             skips = []
 
     return pairs, skips
@@ -426,8 +437,9 @@ def main(argv: list[str] | None = None) -> int:
         description="Deterministic rendering test for matched samples.",
         add_help=False,
     )
-    parser.add_argument("filter", nargs="?", default=None,
-                        help="Numeric prefix or filename fragment to filter samples.")
+    parser.add_argument("filter", nargs="*", default=None,
+                        help="Numeric prefix(es) or filename fragment to filter samples. "
+                             "Multiple values are accepted: render_samples.py 2 3 4 14")
     parser.add_argument("--screenshots", dest="screenshots", action="store_true",
                         default=True, help="Generate comparison screenshots (default).")
     parser.add_argument("--no-screenshots", dest="screenshots", action="store_false",
@@ -439,9 +451,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("-h", "--help", action="help",
                         help="Show this help message and exit.")
 
-    # Support legacy positional-only usage: render_samples.py <filter>
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
-    filter_arg = args.filter
+    # Join multiple positional args: "2 3 4" → "2 3 4" so discover() can split them.
+    filter_arg = " ".join(args.filter) if args.filter else None
     screenshots = args.screenshots
     zoom = args.screenshot_zoom
 

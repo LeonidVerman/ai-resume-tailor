@@ -3999,12 +3999,24 @@ def apply_tailored(
                 s.semantic_type == "summary" for s in original.sections
             )
             if not template_has_summary:
-                summary_extras = [s for s in llm_order_sections if s.semantic_type == "summary"]
-                other_llm = [s for s in llm_order_sections if s.semantic_type != "summary"]
-                if summary_extras:
-                    new_sections = summary_extras + verbatim_sections + other_llm
-                else:
-                    new_sections = verbatim_sections + llm_order_sections
+                # Use template order so verbatim sections (Languages, Certifications, etc.)
+                # stay in their original positions relative to matched sections.
+                _matched_ids_ns = {
+                    id(heading_to_section[llm_s.heading.lower()])
+                    for llm_s in llm_sections
+                    if llm_s.heading.lower() in heading_to_section
+                }
+                _tpl_ordered_ns: list[ResumeSection] = []
+                for _orig_s, _llm_s in match.pairs:
+                    if _llm_s is None:
+                        _tpl_ordered_ns.append(_orig_s)
+                    else:
+                        _k = _llm_s.heading.lower()
+                        _tpl_ordered_ns.append(heading_to_section.get(_k, _orig_s))
+                _extra_ns = [s for s in llm_order_sections if id(s) not in _matched_ids_ns]
+                _sum_ns = [s for s in _extra_ns if s.semantic_type == "summary"]
+                _oth_ns = [s for s in _extra_ns if s.semantic_type != "summary"]
+                new_sections = _sum_ns + _tpl_ordered_ns + _oth_ns
             else:
                 # Template already has a summary section → its section order is
                 # well-defined.  Follow TEMPLATE order for all matched sections so
