@@ -3888,6 +3888,14 @@ def apply_tailored(
                                 _left_sec = _cand_sec
                                 _anchor_bp = _candidate_anchor
                                 break
+                        # Guard: if there are template sections AFTER the first
+                        # experience section (e.g. References), technical skills
+                        # belong at the document end (right column, after References),
+                        # not crowded into the left sidebar alongside narrative
+                        # sections like Communication / Leadership (sample 12).
+                        _post_exp_sections = original.sections[_left_col_end + 1:]
+                        if _post_exp_sections and _left_sec is not None:
+                            _left_sec = None  # fall back to document-end placement
                         if _left_sec is not None:
                             if _anchor_bp is not None:
                                 _skill_lines = _sanitize_skills_lines(
