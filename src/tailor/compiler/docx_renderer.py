@@ -956,6 +956,142 @@ def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=
         body.append(tbl)
 
 
+def _make_full_width_dark_band(
+    bg_hex: str, page_w_twips: int, left_margin_twips: int,
+    paras: list, doc_part=None, *, center_text: bool = False,
+) -> "Any":
+    """Return a full-page-width w:tbl element with *bg_hex* cell shading.
+
+    Used to render full-width dark header/footer bands (e.g. sample 25).
+    The table is pushed to the physical page left edge via tblInd=-left_margin.
+    Each ParaModel in *paras* is appended to the single cell with skip_bg_shd=False.
+    When *center_text* is True, each paragraph's indent is offset by left_margin_twips
+    so the content aligns correctly within the full-width cell.
+    """
+    from lxml import etree
+    from tailor.compiler.para_builder import build_para_element
+
+    tbl = etree.Element(f"{{{_W}}}tbl")
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW.set(f"{{{_W}}}w", str(page_w_twips))
+    tblW.set(f"{{{_W}}}type", "dxa")
+    tblInd = etree.SubElement(tblPr, f"{{{_W}}}tblInd")
+    tblInd.set(f"{{{_W}}}w", str(-left_margin_twips))
+    tblInd.set(f"{{{_W}}}type", "dxa")
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+        brd.set(f"{{{_W}}}val", "none")
+    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        m = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+        m.set(f"{{{_W}}}w", "0")
+        m.set(f"{{{_W}}}type", "dxa")
+    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+    tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    tcPr = etree.SubElement(tc, f"{{{_W}}}tcPr")
+    tcW = etree.SubElement(tcPr, f"{{{_W}}}tcW")
+    tcW.set(f"{{{_W}}}w", str(page_w_twips))
+    tcW.set(f"{{{_W}}}type", "dxa")
+    shd = etree.SubElement(tcPr, f"{{{_W}}}shd")
+    shd.set(f"{{{_W}}}val", "clear")
+    shd.set(f"{{{_W}}}color", "auto")
+    shd.set(f"{{{_W}}}fill", bg_hex)
+    for pm in paras:
+        p_elem = build_para_element(pm, doc_part=doc_part, skip_bg_shd=False)
+        if center_text:
+            pPr = p_elem.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                ind = pPr.find(f"{{{_W}}}ind")
+                if ind is not None:
+                    cur = int(ind.get(f"{{{_W}}}left", "0"))
+                    ind.set(f"{{{_W}}}left", str(cur + left_margin_twips))
+                else:
+                    new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
+                    new_ind.set(f"{{{_W}}}left", str(left_margin_twips))
+        tc.append(p_elem)
+    if not paras:
+        etree.SubElement(tc, f"{{{_W}}}p")
+    return tbl
+
+
+def _render_pdf_single_col_dark_header(doc: "ResumeDocument", body, sectPr, doc_part=None) -> None:
+    """Render a single-column PDF with full-width dark header (and optional footer) bands.
+
+    Used when layout.column_split_x is None but layout.header_bg_color is set
+    (dark header detected via pixel sampling rather than vector rectangle).
+    Creates a full-page-width header table with dark shading at the very top of the
+    page (top margin = 0), renders all body paragraphs in single-column below it,
+    then optionally appends a dark footer table for contact strips.
+    """
+    from lxml import etree
+    from tailor.compiler.para_builder import build_para_element
+
+    layout = doc.layout
+    pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
+    pgMar = sectPr.find(f"{{{_W}}}pgMar") if sectPr is not None else None
+    page_w_twips = int(pgSz.get(f"{{{_W}}}w", "12240")) if pgSz is not None else 12240
+    left_margin_twips = int(pgMar.get(f"{{{_W}}}left", "1440")) if pgMar is not None else 1440
+
+    # Zero top margin so the dark header band starts at the physical page top
+    if pgMar is not None:
+        pgMar.set(f"{{{_W}}}top", "0")
+        pgMar.set(f"{{{_W}}}header", "0")
+
+    # Build the full-width header band table
+    hdr_tbl = _make_full_width_dark_band(
+        layout.header_bg_color, page_w_twips, left_margin_twips,
+        doc.header_paras, doc_part=doc_part, center_text=True,
+    )
+
+    # Collect body paragraphs (all_paras minus header_paras)
+    _header_ids = frozenset(id(pm) for pm in doc.header_paras)
+    main_paras = [pm for pm in doc.all_paras if id(pm) not in _header_ids]
+
+    # Footer paragraphs are stored separately in doc.footer_paras (preserved by
+    # compile_resume_from_pdf before apply_tailored replaces section content).
+    # Multiple footer paras (phone / email / address on separate fitz blocks) are
+    # merged into a SINGLE paragraph joined by "    " (spaces) so the footer band
+    # occupies one line height instead of three, preventing page overflow.
+    _raw_footer = list(doc.footer_paras) if doc.footer_paras else []
+
+    ftr_tbl = None
+    if _raw_footer and layout.footer_bg_color:
+        if len(_raw_footer) > 1:
+            from tailor.compiler.models import ParaModel as _PM
+            _merged_text = "     ".join(pm.text.strip() for pm in _raw_footer if pm.text.strip())
+            _arch = _raw_footer[0]
+            _merged_pm = _arch.with_text(_merged_text)
+            _mpp = _merged_pm.paragraph_profile
+            if _mpp:
+                _mpp.alignment = "center"
+                _mpp.space_before_pt = 4.0
+                _mpp.space_after_pt = 4.0
+            footer_paras_render = [_merged_pm]
+        else:
+            footer_paras_render = _raw_footer
+        ftr_tbl = _make_full_width_dark_band(
+            layout.footer_bg_color, page_w_twips, left_margin_twips,
+            footer_paras_render, doc_part=doc_part, center_text=True,
+        )
+
+    # Insert everything before sectPr
+    def _add(elem):
+        if sectPr is not None:
+            sectPr.addprevious(elem)
+        else:
+            body.append(elem)
+
+    _add(hdr_tbl)
+    for pm in main_paras:
+        _add(build_para_element(pm, doc_part=doc_part))
+    if ftr_tbl is not None:
+        _add(ftr_tbl)
+
+
 def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> None:
     """Render a two-column PDF-sourced document as a borderless DOCX table.
 
@@ -1159,41 +1295,13 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 pgMar.set(f"{{{_W}}}top", "0")
                 pgMar.set(f"{{{_W}}}header", "0")
 
-        hdr_tbl = etree.Element(f"{{{_W}}}tbl")
-        hdr_tblPr = etree.SubElement(hdr_tbl, f"{{{_W}}}tblPr")
-        hdr_tblW = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblW")
-        hdr_tblW.set(f"{{{_W}}}w", str(total_w))
-        hdr_tblW.set(f"{{{_W}}}type", "dxa")
-        hdr_tblInd = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblInd")
-        hdr_tblInd.set(f"{{{_W}}}w", str(-left_margin_twips))
-        hdr_tblInd.set(f"{{{_W}}}type", "dxa")
-        hdr_tblLayout = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblLayout")
-        hdr_tblLayout.set(f"{{{_W}}}type", "fixed")
-        hdr_borders = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblBorders")
-        for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
-            brd = etree.SubElement(hdr_borders, f"{{{_W}}}{side}")
-            brd.set(f"{{{_W}}}val", "none")
-        hdr_cellMar = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblCellMar")
-        for side in ("top", "left", "bottom", "right"):
-            m = etree.SubElement(hdr_cellMar, f"{{{_W}}}{side}")
-            m.set(f"{{{_W}}}w", "0")
-            m.set(f"{{{_W}}}type", "dxa")
-        hdr_tr = etree.SubElement(hdr_tbl, f"{{{_W}}}tr")
-        hdr_tc = etree.SubElement(hdr_tr, f"{{{_W}}}tc")
-        hdr_tcPr = etree.SubElement(hdr_tc, f"{{{_W}}}tcPr")
-        hdr_tcW = etree.SubElement(hdr_tcPr, f"{{{_W}}}tcW")
-        hdr_tcW.set(f"{{{_W}}}w", str(total_w))
-        hdr_tcW.set(f"{{{_W}}}type", "dxa")
-        hdr_shd = etree.SubElement(hdr_tcPr, f"{{{_W}}}shd")
-        hdr_shd.set(f"{{{_W}}}val", "clear")
-        hdr_shd.set(f"{{{_W}}}color", "auto")
-        hdr_shd.set(f"{{{_W}}}fill", header_bg)
-        for pm in above_paras:
-            # Do NOT skip paragraph-level shading (skip_bg_shd=False).
-            # LibreOffice does not render w:tc shd reliably but DOES render
-            # w:pPr/w:shd paragraph shading.  Keeping both cell AND para shading
-            # ensures the dark background is visible in the PDF output.
-            hdr_tc.append(build_para_element(pm, doc_part=doc_part, skip_bg_shd=False))
+        # Header table spans the FULL page width (including right margin) so the
+        # dark band reaches both page edges.  Body table uses total_w which
+        # respects the right margin; header overrides this with page_w_twips.
+        hdr_tbl = _make_full_width_dark_band(
+            header_bg, page_w_twips, left_margin_twips,
+            above_paras, doc_part=doc_part, center_text=False,
+        )
         header_elements = [hdr_tbl]
     else:
         header_elements = [build_para_element(pm, doc_part=doc_part) for pm in above_paras]
@@ -3433,6 +3541,19 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
             _render_pdf_section_row_table(doc, body, sectPr, doc_part=d.part)
         else:
             _render_pdf_two_col(doc, body, sectPr, doc_part=d.part)
+        d.save(output_path)
+        return
+
+    # Single-column PDF with a detected full-width dark header band: use a fresh
+    # minimal DOCX (no style template compat settings) and render the dark header
+    # as a full-page-width table that starts at the physical page top (margin=0).
+    if doc.source_kind == "pdf" and doc.layout.header_bg_color:
+        d = Document()
+        _patch_bullet_numbering(d)
+        body = d.element.body
+        sectPr = body.find(f"{{{_W}}}sectPr")
+        _apply_pdf_page_geometry(sectPr, doc.layout)
+        _render_pdf_single_col_dark_header(doc, body, sectPr, doc_part=d.part)
         d.save(output_path)
         return
 

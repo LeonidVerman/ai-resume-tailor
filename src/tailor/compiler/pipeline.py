@@ -884,9 +884,29 @@ def compile_resume_from_pdf(
     # single-page PDFs — they would otherwise become LLM bullet archetypes and
     # produce wrong size, indent, and italic on generated bullets.
     _strip_template_footer_bullets(template_ir)
+
+    # Capture footer paras BEFORE apply_tailored replaces section content.
+    # These are body paragraphs that carry a dark background_color (detected as
+    # a footer band via pixel sampling in parse_pdf).  apply_tailored replaces
+    # section body content with LLM output, so footer paras would otherwise be lost.
+    _footer_bg = template_ir.layout.footer_bg_color
+    if _footer_bg:
+        _LIGHT = frozenset(("ffffff", "fefefe", "f8f8f8"))
+        _footer_paras = []
+        for _sec in template_ir.sections:
+            for _pm in _sec.body_paras:
+                _pp = _pm.paragraph_profile
+                if _pp and _pp.background_color and _pp.background_color not in _LIGHT:
+                    _footer_paras.append(_pm)
+        template_ir.footer_paras = _footer_paras
+
     llm_sections = parse_llm_output(llm_text)
     llm_sections = apply_layout_fitting(template_ir, llm_sections)
     updated = apply_tailored(template_ir, llm_sections, classification=classification)
+
+    # Re-inject footer paras if they were lost during apply_tailored
+    if template_ir.footer_paras and not updated.footer_paras:
+        updated.footer_paras = list(template_ir.footer_paras)
 
     # Clear PDF-extracted text colors from all content paragraphs before rendering.
     _clear_pdf_content_colors(updated)

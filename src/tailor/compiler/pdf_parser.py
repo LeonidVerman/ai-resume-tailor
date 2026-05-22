@@ -951,11 +951,13 @@ def _detect_column_split(
                 # x0=60 x1=530 does not inflate max_left_x1 to 530 and prevent
                 # the refinement from kicking in on the real body gap.
                 x0_mid = (x0s[i] + x0s[i + 1]) / 2.0
+                _body_bot_lbs = page_height * 0.90 if page_height > 0 else float("inf")
                 left_body_x1s = [
                     b["bbox"][2] for b in blocks
                     if b.get("type") == 0
                     and round(b["bbox"][0]) <= x0s[i]  # round() matches how x0s was built
                     and b["bbox"][1] >= top_cutoff
+                    and b["bbox"][3] <= _body_bot_lbs  # exclude footer blocks
                     and (b["bbox"][2] - b["bbox"][0]) < wide_block_min
                 ]
                 if left_body_x1s:
@@ -963,7 +965,9 @@ def _detect_column_split(
                     if max_left_x1 < right_edge:
                         content_mid = (max_left_x1 + right_edge) / 2.0
                         return max(x0_mid, content_mid)
-                return x0_mid
+                    return x0_mid
+                # No non-wide, non-footer content left of the gap: only full-width
+                # blocks or footer items on the left — not a real sidebar column.
     return None
 
 
@@ -2486,6 +2490,9 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     # a paragraph fill, so the PDF parser would otherwise not capture it.
     _hdr_bg_color, _hdr_y1 = _extract_header_bg(doc[0])
     if _hdr_bg_color:
+        # Store on layout so the renderer can create a full-width header band
+        # even for single-column PDFs (column_split_x=None).
+        layout.header_bg_color = _hdr_bg_color
         for _pm in header_paras:
             _pp = _pm.paragraph_profile
             if _pp is None:
@@ -2500,6 +2507,78 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
                 # If no explicit text_color was captured from the PDF, default to white.
                 if not _pp.text_color:
                     _pp.text_color = "ffffff"
+
+    # Detect full-width dark footer band (same idea as header, but at bottom).
+    # Sample 25 has a thin dark strip at y≈780 with white contact info text.
+    # The bottom margin area (y > 810) is white, so we probe at y≈95% of page
+    # height where the dark footer band lives, not at the very bottom edge.
+    if layout.column_split_x is None:
+        try:
+            _page0 = doc[0]
+            _ph = _page0.rect.height
+            _pw = _page0.rect.width
+            import fitz as _fitz
+            _mat = _fitz.Matrix(1, 1)
+            _cx = _pw / 2.0
+            # Probe at 95% of page height (inside any footer band, above page-bottom margin)
+            _probe_y = _ph * 0.95
+            _pix_b = _page0.get_pixmap(matrix=_mat, clip=_fitz.Rect(_cx - 1, _probe_y, _cx + 1, _probe_y + 4))
+            _bot_px = _pix_b.pixel(0, 0)
+            _bot_lum = (_bot_px[0] + _bot_px[1] + _bot_px[2]) / 3.0
+            if _bot_lum < 100:  # dark footer found
+                # Scan upward from the probe point to find where the band starts
+                _ftr_y0 = _probe_y
+                for _y in range(int(_probe_y), max(0, int(_probe_y) - 120), -2):
+                    _clip = _fitz.Rect(_cx - 1, _y - 2, _cx + 1, _y)
+                    _px = _page0.get_pixmap(matrix=_mat, clip=_clip).pixel(0, 0)
+                    if (_px[0] + _px[1] + _px[2]) / 3.0 > 220:
+                        _ftr_y0 = float(_y)
+                        break
+                r, g, b = _bot_px[0], _bot_px[1], _bot_px[2]
+                layout.footer_bg_color = f"{r:02x}{g:02x}{b:02x}"
+                # Apply footer background to any paragraph whose top y falls
+                # within the detected footer band.  text_color is already cleared
+                # by _extract_paragraphs for non-heading paragraphs so we cannot
+                # use it as a signal; use y_top_pt alone.
+                _all_p = list(header_paras)
+                for _sec in sections:
+                    _all_p.extend(_sec.body_paras)
+                    for _role in _sec.roles:
+                        _all_p.extend(_role.bullets)
+                for _pm in _all_p:
+                    _pp = _pm.paragraph_profile
+                    if _pp and not _pp.background_color:
+                        if _pp.y_top_pt is not None and _pp.y_top_pt >= _ftr_y0:
+                            _pp.background_color = layout.footer_bg_color
+                            if not _pp.text_color:
+                                _pp.text_color = "ffffff"
+        except Exception:
+            pass
+
+    # Set header spacing to reproduce the dark header band's exact height from
+    # the source PDF.  space_before on the first dark-bg header para controls the
+    # gap from the band top to the name; space_after on the last dark-bg header
+    # para controls the gap from the title to the band bottom (_hdr_y1).
+    # y_top_pt is available here (set by _extract_paragraphs) but is runtime-only
+    # and not persisted to the IR JSON.
+    if _hdr_bg_color and header_paras:
+        _dark_hdrs = [
+            _pm for _pm in header_paras
+            if _pm.paragraph_profile and _pm.paragraph_profile.background_color == _hdr_bg_color
+        ]
+        if _dark_hdrs:
+            _first_dhdr = _dark_hdrs[0]
+            _first_pp = _first_dhdr.paragraph_profile
+            if _first_pp and _first_pp.y_top_pt is not None and _first_pp.space_before_pt == 0:
+                _first_pp.space_before_pt = max(0.0, _first_pp.y_top_pt)
+            _last_dhdr = _dark_hdrs[-1]
+            _last_pp = _last_dhdr.paragraph_profile
+            if _last_pp and _last_pp.y_top_pt is not None:
+                _approx_bottom = _last_pp.y_top_pt + (_last_pp.font_size_pt or 12.0)
+                # Cap space_after to avoid overflowing a single page when the body
+                # content is taller than the original (e.g. fitz merges two-column
+                # body into single-column, doubling line count).
+                _last_pp.space_after_pt = min(30.0, max(0.0, _hdr_y1 - _approx_bottom))
 
     # Final color cleanup: _group_sections may reclassify paragraphs (e.g.
     # section_heading → role_header) after _extract_paragraphs already ran its
