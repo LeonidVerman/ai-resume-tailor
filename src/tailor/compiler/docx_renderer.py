@@ -162,7 +162,7 @@ def _strip_column_break(p_elem) -> None:
                 r_elem.remove(br)
 
 
-def _strip_text_wrapping_breaks(p_elem) -> None:
+def _strip_text_wrapping_breaks(p_elem, new_text: str = "") -> None:
     """Remove w:br type='textWrapping' elements from runs in a paragraph.
 
     Template paragraphs sometimes encode multi-line content using soft-return
@@ -176,7 +176,14 @@ def _strip_text_wrapping_breaks(p_elem) -> None:
 
     Only called when content is being actively replaced (pm is not None), so
     verbatim-preserved paragraphs keep their original break structure.
+
+    Guard: when *new_text* contains '\\n', the line breaks are intentional
+    (e.g. multi-subsection skills paragraphs like sample 34 CORE COMPETENCIES).
+    In that case the textWrapping br elements are preserved so _set_para_text
+    can distribute text segments to the correct run groups.
     """
+    if "\n" in new_text:
+        return  # preserve intentional line breaks
     for r_elem in list(p_elem.findall(f"{{{_W}}}r")):
         for br in list(r_elem.findall(f"{{{_W}}}br")):
             if br.get(f"{{{_W}}}type") == "textWrapping":
@@ -408,6 +415,8 @@ def _set_para_text(p_elem, text: str) -> None:
     breaks.  Strip any '\\n' characters from *text* before distributing so
     that the line break is not written twice (once into w:t and once via w:br).
     """
+    # Preserve original text for multi-line distribution check (before stripping \n).
+    _text_has_newlines = "\n" in text
     # w:br elements provide the line break; avoid doubling by stripping \n from text.
     text = text.replace("\n", "")
     all_runs: list = []
@@ -578,6 +587,67 @@ def _set_para_text(p_elem, text: str) -> None:
                 else:
                     _set_run_text(all_runs[ci], "")
             return
+
+    # Multi-line paragraph distribution: when the original text had \n (line breaks
+    # correspond to <w:br type="textWrapping"/> elements) and the paragraph still
+    # has those br elements (i.e. _strip_text_wrapping_breaks was skipped), distribute
+    # each line segment to its corresponding run group instead of proportionally
+    # across all runs.  This preserves paragraph-internal line breaks for templates
+    # like multi-category skills sections (e.g. sample 34 CORE COMPETENCIES).
+    if _text_has_newlines and not _pure_tab_idx and not vml_indices:
+        _tw_br_run_indices: set[int] = {
+            i for i, r in enumerate(all_runs)
+            if r.findall(f"{{{_W}}}br")
+            and not any((t.text or "") for t in r.findall(f"{{{_W}}}t"))
+        }
+        if _tw_br_run_indices:
+            # Group content run indices by br-separator runs.
+            # Each group receives one \n-split text segment.
+            _segs = (text or "").split("\n") if "\n" in (text or "") else [text]
+            # Rebuild from original text (before \n was stripped) using known segments
+            # Actually text already has \n stripped → use original segments from
+            # _text_has_newlines. We must re-derive segments from the pre-strip text.
+            # Re-examine: text was already stripped; we need the segment list.
+            # Use the run-group structure: groups separated by br-only runs.
+            _run_groups: list[list[int]] = [[]]
+            for _ri, _r in enumerate(all_runs):
+                if _ri in ws_text:
+                    continue
+                _is_sep = (
+                    _r.findall(f"{{{_W}}}br")
+                    and not any((t.text or "") for t in _r.findall(f"{{{_W}}}t"))
+                )
+                if _is_sep:
+                    _run_groups.append([])
+                else:
+                    _run_groups[-1].append(_ri)
+            # Remove empty trailing group
+            while _run_groups and not _run_groups[-1]:
+                _run_groups.pop()
+            # The stripped text is a single string; we can't reconstruct segments.
+            # Fall through to proportional distribution if segments mismatch.
+            if len(_run_groups) > 1:
+                # Distribute text across groups by their original length proportion.
+                _group_orig_lens = [
+                    sum(orig_lens[ci] for ci in grp if ci < len(orig_lens))
+                    for grp in _run_groups
+                ]
+                _total_grp_len = sum(_group_orig_lens) or 1
+                _assigned = 0
+                for _gi, (_grp, _glen) in enumerate(zip(_run_groups, _group_orig_lens)):
+                    if not _grp:
+                        continue
+                    if _gi == len(_run_groups) - 1:
+                        _seg = text[_assigned:]
+                    else:
+                        _seg_end = round(len(text) * sum(_group_orig_lens[:_gi+1]) / _total_grp_len)
+                        _seg = text[_assigned:_seg_end]
+                        _assigned = _seg_end
+                    # Write segment to first run of group; clear the rest.
+                    _set_run_text(all_runs[_grp[0]], _seg)
+                    for _ci in _grp[1:]:
+                        _set_run_text(all_runs[_ci], "")
+                return
 
     # Distribute new text proportionally across content runs only.
     last_ci = content_indices[-1]
@@ -1841,7 +1911,7 @@ def _render_docx_section_row_table(
             for para_id, p_elem in zip(blk.para_ids, all_p):
                 pm = para_lookup.get(para_id)
                 if pm is not None:
-                    _strip_text_wrapping_breaks(p_elem)
+                    _strip_text_wrapping_breaks(p_elem, pm.text)
                     _set_para_text(p_elem, pm.text)
                     _clear_sdt_placeholder(p_elem)
             if sectPr is not None:
@@ -2060,7 +2130,7 @@ def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_i
     _strip_column_break(elem)
     pm = para_lookup.get(block.para_id) if block.para_id else None
     if pm is not None:
-        _strip_text_wrapping_breaks(elem)
+        _strip_text_wrapping_breaks(elem, pm.text)
         _set_para_text(elem, pm.text)
         _clear_sdt_placeholder(elem)
         # Sync cleared indent: the updater may have called _clear_left_indent(pm),
@@ -2907,7 +2977,7 @@ def _render_from_layout_blocks(
                     pid_to_pelem[para_id] = p_elem
                 pm = para_lookup.get(para_id)
                 if pm is not None:
-                    _strip_text_wrapping_breaks(p_elem)
+                    _strip_text_wrapping_breaks(p_elem, pm.text)
                     _set_para_text(p_elem, pm.text)
                     _clear_sdt_placeholder(p_elem)
                     patched += 1
@@ -2945,7 +3015,7 @@ def _render_from_layout_blocks(
                     from copy import deepcopy
                     elem = deepcopy(pm.style.xml_proto)
                     _strip_last_rendered_page_breaks(elem)
-                    _strip_text_wrapping_breaks(elem)
+                    _strip_text_wrapping_breaks(elem, pm.text)
                     _set_para_text(elem, pm.text)
                     _clear_sdt_placeholder(elem)
                 elif pm.paragraph_profile is not None:
@@ -2969,7 +3039,7 @@ def _render_from_layout_blocks(
                 )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
                 if pm is not None:
-                    _strip_text_wrapping_breaks(elem)
+                    _strip_text_wrapping_breaks(elem, pm.text)
                     _set_para_text(elem, pm.text)
                     _clear_sdt_placeholder(elem)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)

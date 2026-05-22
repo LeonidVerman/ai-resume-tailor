@@ -3058,12 +3058,14 @@ def _build_anchored_summary_section(
         body_text = _clean_summary_text(llm_section.body_lines)
 
     if heading_anchor is not None:
-        new_heading = heading_anchor.with_text("PROFESSIONAL SUMMARY")
+        # Keep the heading slot empty — templates that lack a dedicated summary
+        # section should receive only the body text, not a synthetic
+        # "PROFESSIONAL SUMMARY" label that was never in the original design.
         new_heading_pm = ParaModel(
-            text=new_heading.text,
-            style=new_heading.style,
+            text="",
+            style=heading_anchor.style,
             semantic="section_heading",
-            paragraph_profile=new_heading.paragraph_profile,
+            paragraph_profile=heading_anchor.paragraph_profile,
         )
         new_heading_pm.para_id = heading_anchor.para_id
     else:
