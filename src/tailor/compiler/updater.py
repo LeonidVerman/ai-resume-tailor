@@ -1603,6 +1603,17 @@ def _find_header_skills_block(
         if _phone_re.match(_t):
             return None
 
+    # Guard: single-word or two-word blocks are title/subtitle/department labels
+    # (e.g. "ENGINEERING", "Phlebotomist"), not skills blocks.  Skills blocks
+    # have comma- or semicolon-separated lists with several terms.
+    _candidate_word_count = sum(
+        len(header_paras[_i].text.strip().split())
+        for _i in range(start, end + 1)
+        if header_paras[_i].text.strip()
+    )
+    if _candidate_word_count < 3:
+        return None
+
     return (start, end + 1)
 
 
