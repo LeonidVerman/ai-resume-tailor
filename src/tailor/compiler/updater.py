@@ -3599,6 +3599,7 @@ def apply_tailored(
     # like "registered nurse").  The renderer inserts a new paragraph directly
     # after this para_id in the table XML.
     _inline_summary: "tuple[str, str] | None" = None  # (target_pid, summary_text)
+    _right_col_summary: "str | None" = None  # summary text for right-column injection (newspaper-column templates)
 
     if not match.extras:
         # ---- Fast path: no extras, keep original section order ----
@@ -3760,6 +3761,29 @@ def apply_tailored(
                     if original.layout_blocks is not None:
                         _stext = _clean_summary_text(llm_s.body_lines)
                         if _stext:
+                            # Highest priority for newspaper-column templates:
+                            # if a column break exists and this is a summary section,
+                            # inject the summary at the top of the right column.
+                            # This must run BEFORE intro-prose search to prevent the
+                            # summary from being placed in left-column skills/other slots
+                            # (e.g. para_22 in sample 3) that pass the prose heuristic
+                            # but belong to the sidebar, not the main content area.
+                            if (
+                                not _body_injected
+                                and not _has_table_lb
+                                and llm_s.semantic_type == "summary"
+                            ):
+                                _has_col_break = any(
+                                    'type="column"' in (getattr(lb, "xml_proto_xml", "") or "")
+                                    for lb in (original.layout_blocks or [])
+                                )
+                                if _has_col_break:
+                                    _right_col_summary = _stext
+                                    _body_injected = True
+                                    _log.debug(
+                                        "SUMMARY_RIGHT_COL_PENDING: newspaper-column "
+                                        "template, summary injected at top of right column"
+                                    )
                             # First priority (all templates): replace the intro-prose
                             # paragraph if present.  Replacing existing text is safe
                             # for both paragraph-only and table templates — it does not
@@ -3770,14 +3794,15 @@ def apply_tailored(
                             # section).  Replacing them keeps the summary in the correct
                             # visual position and avoids injecting into an empty slot that
                             # may be in the wrong column (e.g. samples 7, 19).
-                            _intro_para = _find_intro_prose_para(original)
-                            if _intro_para is not None:
-                                _intro_para.text = _stext
-                                _body_injected = True
-                                _log.debug(
-                                    "SUMMARY_INTRO_PROSE_REPLACED: para_id=%r len=%d",
-                                    _intro_para.para_id, len(_stext),
-                                )
+                            if not _body_injected:
+                                _intro_para = _find_intro_prose_para(original)
+                                if _intro_para is not None:
+                                    _intro_para.text = _stext
+                                    _body_injected = True
+                                    _log.debug(
+                                        "SUMMARY_INTRO_PROSE_REPLACED: para_id=%r len=%d",
+                                        _intro_para.para_id, len(_stext),
+                                    )
                             # Second priority (paragraph-only templates only): inject
                             # into the first empty body_para of an eligible section.
                             # Guarded by _has_table_lb because inserting text into an
@@ -3835,6 +3860,7 @@ def apply_tailored(
                                 "SUMMARY_INLINE_AFTER_TITLE: para_id=%r title=%r",
                                 _last_title_para.para_id, _last_title_para.text[:30],
                             )
+                    pass  # right-column summary injection is handled above (before intro-prose)
                     _log.debug(
                         "SUMMARY_INSERTION_SKIPPED_NO_ANCHORS: %r (body_injected=%s)",
                         llm_s.heading, _body_injected,
@@ -4815,5 +4841,8 @@ def apply_tailored(
     # new paragraph in the table XML after the identity title para (sample 11 case).
     if _inline_summary:
         _result._inline_summary_pid, _result._inline_summary_text = _inline_summary  # type: ignore[attr-defined]
+
+    if _right_col_summary:
+        _result._right_col_summary_text = _right_col_summary  # type: ignore[attr-defined]
 
     return _result

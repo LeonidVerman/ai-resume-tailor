@@ -2763,6 +2763,25 @@ def _render_layout_two_col_table(
         right_tcMar_left.set(f"{{{_W}}}w", str(_right_col_gap))
         right_tcMar_left.set(f"{{{_W}}}type", "dxa")
     etree.SubElement(right_tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+
+    # Right-column summary injection: for newspaper-column templates where
+    # all left-column header slots are occupied (e.g. contact/education/skills),
+    # the summary must be prepended at the TOP of the right cell before experience.
+    _right_col_summary_text = getattr(doc, "_right_col_summary_text", None)
+    if _right_col_summary_text and right_blocks:
+        _first_right_blk = next(
+            (b for b in right_blocks
+             if isinstance(b, LayoutParagraphBlock) and b.xml_proto_xml),
+            None,
+        )
+        if _first_right_blk:
+            _sum_ref = etree.fromstring(_first_right_blk.xml_proto_xml)
+            _sum_p = _make_inline_summary_para(_sum_ref, _right_col_summary_text)
+            right_tc.append(_sum_p)
+            _log.debug(
+                "RIGHT_COL_SUMMARY_INJECTED: len=%d chars", len(_right_col_summary_text)
+            )
+
     _unbound_extra = [pm for pm in (doc.all_paras or []) if not pm.para_id and pm.text.strip()]
     _fill_cell(right_tc, right_blocks, _right_col_x_emu, extra_paras=_unbound_extra if _unbound_extra else None)
 
