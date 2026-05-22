@@ -1436,7 +1436,19 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         if pp is None:
             return False
         bg = pp.background_color
-        return bool(bg) and bg not in _LIGHT_BG
+        if not bg:
+            return False
+        # Use luminance threshold: dark = average channel < 128.
+        # This correctly classifies near-white light backgrounds (e.g. fdf3eb peach,
+        # fafafa light gray) as NOT dark, preventing them from triggering the
+        # full-width dark-header-band rendering that is only for truly dark bands.
+        try:
+            r = int(bg[0:2], 16)
+            g = int(bg[2:4], 16)
+            b = int(bg[4:6], 16)
+            return (r + g + b) / 3 < 128
+        except (ValueError, IndexError):
+            return False
 
     above_paras = [
         pm for pm in doc.header_paras
