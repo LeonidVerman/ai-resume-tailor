@@ -905,9 +905,15 @@ def _update_body_section(
             _body_extra_injections.setdefault(_anchor_pid, []).append(extra_pm)
         new_body.append(extra_pm)
 
+    # Defensive copy of the heading ParaModel so that any later in-place
+    # mutation of orig.heading.text (e.g. by apply_tailored's extras path
+    # when a "summary" LLM section is injected into header_paras) does not
+    # propagate back to this section's heading — preserving the original
+    # template heading text (e.g. "GENERAL INFO" instead of "Professional Summary").
+    _heading_copy = orig.heading.with_text(orig.heading.text)
     result = ResumeSection(
         title=orig.title,
-        heading=orig.heading,
+        heading=_heading_copy,
         semantic_type=orig.semantic_type,
         body_paras=new_body,
         roles=[],
