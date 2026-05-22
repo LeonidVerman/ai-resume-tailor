@@ -3108,18 +3108,48 @@ def _render_from_layout_blocks(
                 "TABLE_BLOCK_XML_PATCHED: table_id=%r  patched=%d/%d",
                 block.table_id, patched, len(block.para_ids),
             )
-            # Inline summary injection: insert new paragraph after the target
-            # para in the table XML (for templates where the title is the last
-            # header_para and there are no trailing empty slots, e.g. sample 11).
+            # Inline summary injection: insert the summary paragraph into the
+            # table.  When the anchor para is in the header row (row 0), placing
+            # the summary there makes the row very tall and pushes body content
+            # (left sidebar: CONTACT, COMMUNICATION, etc.) to page 2.  Instead,
+            # try to insert the summary as the FIRST paragraph of the next row's
+            # main (rightmost) cell so the header row stays compact.  Fall back
+            # to the original addnext approach when no next row is found.
             if _inline_pid and _inline_text and _inline_pid in pid_to_pelem:
                 _ref_p = pid_to_pelem[_inline_pid]
                 _new_p = _make_inline_summary_para(_ref_p, _inline_text)
-                _ref_p.addnext(_new_p)
+                _placed_in_next_row = False
+                _ref_tc = _ref_p.getparent()
+                if _ref_tc is not None and _ref_tc.tag == f"{{{_W}}}tc":
+                    _ref_tr = _ref_tc.getparent()
+                    if _ref_tr is not None and _ref_tr.tag == f"{{{_W}}}tr":
+                        _ref_tbl_el = _ref_tr.getparent()
+                        if _ref_tbl_el is not None:
+                            _all_rows = _ref_tbl_el.findall(f"{{{_W}}}tr")
+                            try:
+                                _this_ri = _all_rows.index(_ref_tr)
+                            except ValueError:
+                                _this_ri = -1
+                            if 0 <= _this_ri and _this_ri + 1 < len(_all_rows):
+                                _next_row = _all_rows[_this_ri + 1]
+                                _next_cells = _next_row.findall(f"{{{_W}}}tc")
+                                _target_cell = _next_cells[-1] if len(_next_cells) > 1 else (_next_cells[0] if _next_cells else None)
+                                if _target_cell is not None:
+                                    _cell_paras = _target_cell.findall(f"{{{_W}}}p")
+                                    if _cell_paras:
+                                        _cell_paras[0].addprevious(_new_p)
+                                        _placed_in_next_row = True
+                                        _log.debug(
+                                            "INLINE_SUMMARY_MOVED_TO_BODY_ROW: anchor_para=%r",
+                                            getattr(doc, "_inline_summary_pid", "?"),
+                                        )
+                if not _placed_in_next_row:
+                    _ref_p.addnext(_new_p)
+                    _log.debug(
+                        "INLINE_SUMMARY_INJECTED: new para after para_id=%r (fallback)",
+                        getattr(doc, "_inline_summary_pid", "?"),
+                    )
                 _inline_pid = None  # consume once
-                _log.debug(
-                    "INLINE_SUMMARY_INJECTED: new para inserted after para_id=%r",
-                    getattr(doc, "_inline_summary_pid", "?"),
-                )
             # Once we hit a table block, stop compressing spacers (table started).
             _compress_remaining = 0
             elem: Any = tbl_elem
