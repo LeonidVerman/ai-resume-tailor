@@ -811,6 +811,54 @@ def _apply_heading_case_convention(doc: ResumeDocument) -> None:
             sec.heading = sec.heading.with_text(t.upper())
 
 
+def _apply_role_header_case_convention(
+    template_ir: ResumeDocument, doc: ResumeDocument
+) -> None:
+    """Apply the template's role-header capitalisation to LLM-updated role entries.
+
+    Detects whether the original template uses ALL CAPS for role headers
+    (e.g. "RESTAURANT MANAGER | COMPANY | DATE") and if so, uppercases the
+    LLM-provided role header text.  This reproduces the visual style of
+    templates like sample 8 (May Riley) where every role title is in ALL CAPS.
+
+    Only applies to PDF-sourced documents.  Looks at the ORIGINAL template's
+    role headers to detect the convention (updated headers may already be mixed
+    case due to the LLM output).
+    """
+    if doc.source_kind != "pdf":
+        return
+
+    # Collect original template role header texts (before LLM updates).
+    orig_role_headers: list[str] = [
+        role.header.text.strip()
+        for sec in template_ir.sections
+        if sec.semantic_type == "experience"
+        for role in sec.roles
+        if role.header.text.strip()
+    ]
+    if not orig_role_headers:
+        return
+
+    # Check if ALL CAPS is the predominant convention.
+    all_caps_count = sum(
+        1 for t in orig_role_headers
+        if t and t.replace("|", "").replace(" ", "").isupper() and any(c.isalpha() for c in t)
+    )
+    if all_caps_count < len(orig_role_headers) * 0.6:
+        return  # not predominantly ALL CAPS
+
+    # Apply ALL CAPS to updated role headers.
+    # Mutate .text in-place so the same ParaModel object referenced in all_paras
+    # reflects the change (with_text() creates a new object that all_paras won't see).
+    for sec in doc.sections:
+        if sec.semantic_type != "experience":
+            continue
+        for role in sec.roles:
+            t = role.header.text.strip()
+            if t and t != t.upper():
+                role.header.text = t.upper()
+
+
 def _inject_skills_into_section_body(doc: ResumeDocument) -> None:
     """Replace a skills sub-block inside a section's body_paras with LLM skills.
 
@@ -958,6 +1006,9 @@ def compile_resume_from_pdf(
     # sections (e.g. 'Technical Skills' → 'TECHNICAL SKILLS' when all template
     # section headings are ALL-CAPS).
     _apply_heading_case_convention(updated)
+    # Apply the template's role-header capitalisation to LLM-updated role entries
+    # (e.g. if template uses ALL CAPS roles, keep that convention in the output).
+    _apply_role_header_case_convention(template_ir, updated)
 
     # Re-sort sections by column for PDF two-column documents.
     # Done AFTER _fix_extra_left_sections so LLM-injected extra sections (e.g.
