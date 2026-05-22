@@ -179,15 +179,23 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
     _fix(doc.header_paras)
     _fix(doc.all_paras)
 
+    _LIGHT_BG_SET = frozenset(("ffffff", "fefefe", "f8f8f8"))
+
     # Apply center alignment to large-font header paragraphs on a dark background
     # (e.g. "CHARLES MCTURLAND" on the dark header bar in sample 3).  These
     # typically appear centred in the original template but alignment is not
     # reliably extracted from PDF spans.  Threshold: 20pt+ font AND dark fill.
+    # Also ensure white text color on dark backgrounds: PDF parsers often fail to
+    # extract the white color for dark-background text, leaving text_color=None
+    # which renders as default (black) — invisible on a dark band.
     for _pm in doc.header_paras:
         _pp = _pm.paragraph_profile
-        if _pp and _pp.background_color and _pp.background_color not in ("ffffff", "fefefe", "f8f8f8"):
+        if _pp and _pp.background_color and _pp.background_color not in _LIGHT_BG_SET:
             if _pp.font_size_pt and _pp.font_size_pt >= 20.0:
                 _pp.alignment = "center"
+            # Set white text on dark background when no color was extracted
+            if _pp.text_color is None:
+                _pp.text_color = "ffffff"
 
     for sec in doc.sections:
         _fix(sec.body_paras)
