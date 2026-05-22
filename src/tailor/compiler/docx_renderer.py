@@ -2119,6 +2119,28 @@ def _minimize_empty_para(elem) -> None:
     spacing.set(f"{{{_W}}}lineRule", "exact")
 
 
+def _cap_para_font_size(elem, max_halfpts: int = 36) -> None:
+    """Cap run-level sz/szCs values that exceed max_halfpts (half-points = pt*2).
+
+    Called on _ext_ blocks that clone their XML proto from a large-font heading
+    paragraph (e.g. name heading with sz=64 = 32pt).  Without this cap, body
+    bullets set into such paragraphs render in oversized font (sample 27).
+    Default max 18pt (sz=36) preserves all normal body/title fonts while
+    preventing name-heading sizes from bleeding into injected body content.
+    """
+    for rPr in elem.iter(f"{{{_W}}}rPr"):
+        for tag in (f"{{{_W}}}sz", f"{{{_W}}}szCs"):
+            sz_el = rPr.find(tag)
+            if sz_el is not None:
+                val_str = sz_el.get(f"{{{_W}}}val")
+                if val_str is not None:
+                    try:
+                        if int(val_str) > max_halfpts:
+                            sz_el.set(f"{{{_W}}}val", str(max_halfpts))
+                    except ValueError:
+                        pass
+
+
 def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn):
     """Render one LayoutParagraphBlock → lxml element (None if empty)."""
     from lxml import etree
@@ -2133,6 +2155,9 @@ def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_i
         _strip_text_wrapping_breaks(elem, pm.text)
         _set_para_text(elem, pm.text)
         _clear_sdt_placeholder(elem)
+        # Cap oversized font in _ext_ blocks cloned from large-font heading protos.
+        if block.para_id and "_ext_" in block.para_id and pm.semantic != "section_heading":
+            _cap_para_font_size(elem)
         # Sync cleared indent: the updater may have called _clear_left_indent(pm),
         # setting pm.style.indent_left=None and removing w:left from pm.style.xml_proto.
         # But the renderer uses block.xml_proto_xml (the original template XML) which
@@ -3042,6 +3067,8 @@ def _render_from_layout_blocks(
                     _strip_text_wrapping_breaks(elem, pm.text)
                     _set_para_text(elem, pm.text)
                     _clear_sdt_placeholder(elem)
+                    if block.para_id and "_ext_" in block.para_id and pm.semantic != "section_heading":
+                        _cap_para_font_size(elem)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
                 else:
                     if block.para_id:
