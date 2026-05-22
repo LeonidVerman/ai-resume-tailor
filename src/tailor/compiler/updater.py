@@ -905,9 +905,15 @@ def _update_body_section(
             _body_extra_injections.setdefault(_anchor_pid, []).append(extra_pm)
         new_body.append(extra_pm)
 
+    # Defensive copy of the heading ParaModel so that any later in-place
+    # mutation of orig.heading.text (e.g. by apply_tailored's extras path
+    # when a "summary" LLM section is injected into header_paras) does not
+    # propagate back to this section's heading — preserving the original
+    # template heading text (e.g. "GENERAL INFO" instead of "Professional Summary").
+    _heading_copy = orig.heading.with_text(orig.heading.text)
     result = ResumeSection(
         title=orig.title,
-        heading=orig.heading,
+        heading=_heading_copy,
         semantic_type=orig.semantic_type,
         body_paras=new_body,
         roles=[],
@@ -1596,6 +1602,17 @@ def _find_header_skills_block(
             return None
         if _phone_re.match(_t):
             return None
+
+    # Guard: single-word or two-word blocks are title/subtitle/department labels
+    # (e.g. "ENGINEERING", "Phlebotomist"), not skills blocks.  Skills blocks
+    # have comma- or semicolon-separated lists with several terms.
+    _candidate_word_count = sum(
+        len(header_paras[_i].text.strip().split())
+        for _i in range(start, end + 1)
+        if header_paras[_i].text.strip()
+    )
+    if _candidate_word_count < 3:
+        return None
 
     return (start, end + 1)
 
@@ -3058,12 +3075,14 @@ def _build_anchored_summary_section(
         body_text = _clean_summary_text(llm_section.body_lines)
 
     if heading_anchor is not None:
-        new_heading = heading_anchor.with_text("PROFESSIONAL SUMMARY")
+        # Keep the heading slot empty — templates that lack a dedicated summary
+        # section should receive only the body text, not a synthetic
+        # "PROFESSIONAL SUMMARY" label that was never in the original design.
         new_heading_pm = ParaModel(
-            text=new_heading.text,
-            style=new_heading.style,
+            text="",
+            style=heading_anchor.style,
             semantic="section_heading",
-            paragraph_profile=new_heading.paragraph_profile,
+            paragraph_profile=heading_anchor.paragraph_profile,
         )
         new_heading_pm.para_id = heading_anchor.para_id
     else:
@@ -3580,6 +3599,7 @@ def apply_tailored(
     # like "registered nurse").  The renderer inserts a new paragraph directly
     # after this para_id in the table XML.
     _inline_summary: "tuple[str, str] | None" = None  # (target_pid, summary_text)
+    _right_col_summary: "str | None" = None  # summary text for right-column injection (newspaper-column templates)
 
     if not match.extras:
         # ---- Fast path: no extras, keep original section order ----
@@ -3741,6 +3761,29 @@ def apply_tailored(
                     if original.layout_blocks is not None:
                         _stext = _clean_summary_text(llm_s.body_lines)
                         if _stext:
+                            # Highest priority for newspaper-column templates:
+                            # if a column break exists and this is a summary section,
+                            # inject the summary at the top of the right column.
+                            # This must run BEFORE intro-prose search to prevent the
+                            # summary from being placed in left-column skills/other slots
+                            # (e.g. para_22 in sample 3) that pass the prose heuristic
+                            # but belong to the sidebar, not the main content area.
+                            if (
+                                not _body_injected
+                                and not _has_table_lb
+                                and llm_s.semantic_type == "summary"
+                            ):
+                                _has_col_break = any(
+                                    'type="column"' in (getattr(lb, "xml_proto_xml", "") or "")
+                                    for lb in (original.layout_blocks or [])
+                                )
+                                if _has_col_break:
+                                    _right_col_summary = _stext
+                                    _body_injected = True
+                                    _log.debug(
+                                        "SUMMARY_RIGHT_COL_PENDING: newspaper-column "
+                                        "template, summary injected at top of right column"
+                                    )
                             # First priority (all templates): replace the intro-prose
                             # paragraph if present.  Replacing existing text is safe
                             # for both paragraph-only and table templates — it does not
@@ -3751,14 +3794,15 @@ def apply_tailored(
                             # section).  Replacing them keeps the summary in the correct
                             # visual position and avoids injecting into an empty slot that
                             # may be in the wrong column (e.g. samples 7, 19).
-                            _intro_para = _find_intro_prose_para(original)
-                            if _intro_para is not None:
-                                _intro_para.text = _stext
-                                _body_injected = True
-                                _log.debug(
-                                    "SUMMARY_INTRO_PROSE_REPLACED: para_id=%r len=%d",
-                                    _intro_para.para_id, len(_stext),
-                                )
+                            if not _body_injected:
+                                _intro_para = _find_intro_prose_para(original)
+                                if _intro_para is not None:
+                                    _intro_para.text = _stext
+                                    _body_injected = True
+                                    _log.debug(
+                                        "SUMMARY_INTRO_PROSE_REPLACED: para_id=%r len=%d",
+                                        _intro_para.para_id, len(_stext),
+                                    )
                             # Second priority (paragraph-only templates only): inject
                             # into the first empty body_para of an eligible section.
                             # Guarded by _has_table_lb because inserting text into an
@@ -3816,6 +3860,7 @@ def apply_tailored(
                                 "SUMMARY_INLINE_AFTER_TITLE: para_id=%r title=%r",
                                 _last_title_para.para_id, _last_title_para.text[:30],
                             )
+                    pass  # right-column summary injection is handled above (before intro-prose)
                     _log.debug(
                         "SUMMARY_INSERTION_SKIPPED_NO_ANCHORS: %r (body_injected=%s)",
                         llm_s.heading, _body_injected,
@@ -3869,6 +3914,14 @@ def apply_tailored(
                                 _left_sec = _cand_sec
                                 _anchor_bp = _candidate_anchor
                                 break
+                        # Guard: if there are template sections AFTER the first
+                        # experience section (e.g. References), technical skills
+                        # belong at the document end (right column, after References),
+                        # not crowded into the left sidebar alongside narrative
+                        # sections like Communication / Leadership (sample 12).
+                        _post_exp_sections = original.sections[_left_col_end + 1:]
+                        if _post_exp_sections and _left_sec is not None:
+                            _left_sec = None  # fall back to document-end placement
                         if _left_sec is not None:
                             if _anchor_bp is not None:
                                 _skill_lines = _sanitize_skills_lines(
@@ -4827,5 +4880,8 @@ def apply_tailored(
     # new paragraph in the table XML after the identity title para (sample 11 case).
     if _inline_summary:
         _result._inline_summary_pid, _result._inline_summary_text = _inline_summary  # type: ignore[attr-defined]
+
+    if _right_col_summary:
+        _result._right_col_summary_text = _right_col_summary  # type: ignore[attr-defined]
 
     return _result
