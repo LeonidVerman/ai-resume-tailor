@@ -1244,9 +1244,11 @@ def _zero_para_spacing(p_elem) -> None:
     """Strip vertical spacing from an empty spacer paragraph.
 
     Applied to empty paragraphs that follow the summary body anchor and precede
-    the main table content (samples 13/14).  Zeroing space_before + space_after
-    compresses the whitespace gap between the header summary and the table,
-    allowing the table to start on page 1 rather than being pushed to page 2.
+    the main table content (samples 13/14).  Zeroing all spacing (before, after,
+    and line-height) compresses the whitespace gap between the header summary
+    and the table, allowing the table to start on page 1 rather than being
+    pushed to page 2.  Uses exact line-height=1 (near-zero) so that LibreOffice
+    renders the paragraph as a hairline rather than a full line-height gap.
     """
     from lxml import etree as _etree
     pPr = p_elem.find(f"{{{_W}}}pPr")
@@ -1258,8 +1260,8 @@ def _zero_para_spacing(p_elem) -> None:
         spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
     spacing.set(f"{{{_W}}}before", "0")
     spacing.set(f"{{{_W}}}after", "0")
-    spacing.set(f"{{{_W}}}line", "240")
-    spacing.set(f"{{{_W}}}lineRule", "auto")
+    spacing.set(f"{{{_W}}}line", "1")
+    spacing.set(f"{{{_W}}}lineRule", "exact")
 
 
 def _make_inline_summary_para(reference_p_elem, text: str):
@@ -2155,9 +2157,51 @@ def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_i
         _strip_text_wrapping_breaks(elem, pm.text)
         _set_para_text(elem, pm.text)
         _clear_sdt_placeholder(elem)
-        # Cap oversized font in _ext_ blocks cloned from large-font heading protos.
-        if block.para_id and "_ext_" in block.para_id and pm.semantic != "section_heading":
-            _cap_para_font_size(elem)
+        # Cap oversized font when:
+        #   (a) _ext_ blocks cloned from large-font heading protos (original guard), OR
+        #   (b) any non-heading block whose XML proto carries run-level sz > 36 (18pt)
+        #       but whose semantic indicates body content — handles the case where a
+        #       name-heading slot (sz=64) is reused for a body paragraph by the updater
+        #       (e.g. sample 27 right-column: MATTHEW TURNER proto used for bullets).
+        _HEADING_SEMANTICS = frozenset({"section_heading", "role_header"})
+        _needs_font_cap = (
+            bool(block.para_id and "_ext_" in block.para_id)
+            and pm.semantic not in _HEADING_SEMANTICS
+        )
+        _proto_run_font_cap: int = 36  # default cap (18pt)
+        if not _needs_font_cap and pm.semantic not in _HEADING_SEMANTICS:
+            # Detect run-level rPr with sz > 36 (18pt).  Run rPr is a direct child
+            # of w:r; paragraph-default rPr (pPr/rPr) is a direct child of w:pPr.
+            for _rPr in elem.iter(f"{{{_W}}}rPr"):
+                _parent = _rPr.getparent()
+                if _parent is not None and _parent.tag == f"{{{_W}}}r":
+                    _sz_el = _rPr.find(f"{{{_W}}}sz")
+                    if _sz_el is not None:
+                        try:
+                            if int(_sz_el.get(f"{{{_W}}}val", "0")) > 36:
+                                _needs_font_cap = True
+                                break
+                        except ValueError:
+                            pass
+            if _needs_font_cap:
+                # Use the paragraph-default rPr sz (pPr/rPr/sz) as the cap
+                # when it is smaller than the global default — this restores the
+                # body font size rather than capping at 18pt (e.g. sample 27
+                # MATTHEW TURNER slot has pPr/rPr/sz=20=10pt which is correct).
+                _pPr_cap = elem.find(f"{{{_W}}}pPr")
+                if _pPr_cap is not None:
+                    _rPr_cap = _pPr_cap.find(f"{{{_W}}}rPr")
+                    if _rPr_cap is not None:
+                        _sz_cap = _rPr_cap.find(f"{{{_W}}}sz")
+                        if _sz_cap is not None:
+                            try:
+                                _ppr_sz = int(_sz_cap.get(f"{{{_W}}}val", "0"))
+                                if 0 < _ppr_sz < _proto_run_font_cap:
+                                    _proto_run_font_cap = _ppr_sz
+                            except ValueError:
+                                pass
+        if _needs_font_cap:
+            _cap_para_font_size(elem, max_halfpts=_proto_run_font_cap)
         # Sync cleared indent: the updater may have called _clear_left_indent(pm),
         # setting pm.style.indent_left=None and removing w:left from pm.style.xml_proto.
         # But the renderer uses block.xml_proto_xml (the original template XML) which
@@ -3086,8 +3130,42 @@ def _render_from_layout_blocks(
                     _strip_text_wrapping_breaks(elem, pm.text)
                     _set_para_text(elem, pm.text)
                     _clear_sdt_placeholder(elem)
-                    if block.para_id and "_ext_" in block.para_id and pm.semantic != "section_heading":
-                        _cap_para_font_size(elem)
+                    # Reuse the expanded font-cap logic from _render_block_into_elem.
+                    # The check covers both _ext_ blocks and any block where the XML
+                    # proto carries large run-level fonts but pm.semantic is body content.
+                    _HEADING_SEMANTICS_LB = frozenset({"section_heading", "role_header"})
+                    _needs_cap_lb = (
+                        bool(block.para_id and "_ext_" in block.para_id)
+                        and pm.semantic not in _HEADING_SEMANTICS_LB
+                    )
+                    _cap_lb: int = 36
+                    if not _needs_cap_lb and pm.semantic not in _HEADING_SEMANTICS_LB:
+                        for _rPr_lb in elem.iter(f"{{{_W}}}rPr"):
+                            _parent_lb = _rPr_lb.getparent()
+                            if _parent_lb is not None and _parent_lb.tag == f"{{{_W}}}r":
+                                _sz_lb = _rPr_lb.find(f"{{{_W}}}sz")
+                                if _sz_lb is not None:
+                                    try:
+                                        if int(_sz_lb.get(f"{{{_W}}}val", "0")) > 36:
+                                            _needs_cap_lb = True
+                                            break
+                                    except ValueError:
+                                        pass
+                        if _needs_cap_lb:
+                            _pPr_lb = elem.find(f"{{{_W}}}pPr")
+                            if _pPr_lb is not None:
+                                _rPr_lb2 = _pPr_lb.find(f"{{{_W}}}rPr")
+                                if _rPr_lb2 is not None:
+                                    _sz_lb2 = _rPr_lb2.find(f"{{{_W}}}sz")
+                                    if _sz_lb2 is not None:
+                                        try:
+                                            _ppr_sz_lb = int(_sz_lb2.get(f"{{{_W}}}val", "0"))
+                                            if 0 < _ppr_sz_lb < _cap_lb:
+                                                _cap_lb = _ppr_sz_lb
+                                        except ValueError:
+                                            pass
+                    if _needs_cap_lb:
+                        _cap_para_font_size(elem, max_halfpts=_cap_lb)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
                 else:
                     if block.para_id:
