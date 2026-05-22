@@ -2808,6 +2808,38 @@ def _render_layout_two_col_table(
         right_tcMar_left.set(f"{{{_W}}}type", "dxa")
     etree.SubElement(right_tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
 
+    # Restore right-column paragraphs whose large-font proto was hijacked as a
+    # bullet slot by the updater (e.g. sample 27: "MATTHEW TURNER" at sz=64 gets
+    # assigned bullet text because the parser included it in the WORK HISTORY role).
+    # A heading/name paragraph in the right column must keep its original text.
+    _BODY_SEM_RC = frozenset({"bullet", "paragraph"})
+    for _rc_blk in right_blocks:
+        if not isinstance(_rc_blk, LayoutParagraphBlock) or not _rc_blk.xml_proto_xml:
+            continue
+        if not _rc_blk.para_id:
+            continue
+        _rc_pm = para_lookup.get(_rc_blk.para_id)
+        if _rc_pm is None or _rc_pm.semantic not in _BODY_SEM_RC or not _rc_pm.text.strip():
+            continue
+        try:
+            _rc_proto = etree.fromstring(_rc_blk.xml_proto_xml)
+            _has_large_rc = any(
+                int(_sz.get(f"{{{_W}}}val", "0")) > 36
+                for _sz in _rc_proto.findall(f".//{{{_W}}}sz")
+            )
+            if _has_large_rc:
+                _orig_text_rc = "".join(
+                    t.text or "" for t in _rc_proto.findall(f".//{{{_W}}}t")
+                )
+                if _orig_text_rc.strip():
+                    para_lookup[_rc_blk.para_id] = _rc_pm.with_text(_orig_text_rc)
+                    _log.debug(
+                        "RIGHT_COL_HEADING_RESTORED: para_id=%r hijacked=%r → original=%r",
+                        _rc_blk.para_id, _rc_pm.text[:40], _orig_text_rc[:40],
+                    )
+        except Exception:
+            pass
+
     # Right-column summary injection: for newspaper-column templates where
     # all left-column header slots are occupied (e.g. contact/education/skills),
     # the summary must be prepended at the TOP of the right cell before experience.
