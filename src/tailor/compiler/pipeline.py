@@ -164,10 +164,13 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
                 # bold bleed when the role header is the only archetype available).
                 pp.bold = False
             elif pm.semantic == "paragraph":
-                # Normalize heading-style bleed: bold + oversized font on body
-                # content means this paragraph was cloned from a heading archetype.
-                if pp.bold and pp.font_size_pt and pp.font_size_pt > default_size * 1.1:
+                # Normalize heading-style bleed: bold body content means this
+                # paragraph was cloned from a heading or all-bold archetype.
+                # Clear bold unconditionally — body paragraphs in PDF templates
+                # are never legitimately bold in injected LLM content.
+                if pp.bold:
                     pp.bold = False
+                if pp.font_size_pt and pp.font_size_pt > default_size * 1.1:
                     pp.font_size_pt = default_size
 
     _fix(doc.header_paras)
@@ -309,9 +312,6 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     """
     import re
 
-    if doc.layout.column_split_x is None:
-        return
-
     # Match by semantic_type first so section titles like "GENERAL INFO" that
     # carry semantic_type="summary" are found even when not in SUMMARY_TITLES.
     _SUMMARY_TITLES = frozenset({"professional summary", "summary", "profile", "objective"})
@@ -370,6 +370,13 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
         if hp.paragraph_profile and hp.paragraph_profile.column_id == "right"
         and _is_original_summary_line(hp.text)
     }
+    # Also detect full-width (col=None) original summary lines that appear in
+    # templates where the header is above the two-column body or single-column.
+    _sum_none = {
+        j for j, hp in enumerate(doc.header_paras)
+        if hp.paragraph_profile and hp.paragraph_profile.column_id is None
+        and _is_original_summary_line(hp.text)
+    }
 
     if _sum_left:
         summary_indices: set[int] = _sum_left
@@ -377,6 +384,9 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     elif _sum_right:
         summary_indices = _sum_right
         _target_col = "right"
+    elif _sum_none:
+        summary_indices = _sum_none
+        _target_col = None  # full-width above table or single-column
     else:
         summary_indices = set()
         _target_col = None  # determined below
@@ -384,10 +394,12 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     summary_sec = doc.sections[summary_idx]
 
     if not summary_indices:
-        # No original summary lines to replace.  When the template has a
-        # combined header (name + title in header_paras) with no pre-existing
-        # summary text, append the LLM summary BELOW the name/title block.
-        # Only do this when header_paras is non-empty (name present).
+        # No original summary lines to replace.  For single-column templates
+        # keep the LLM summary as a body section (no header injection needed).
+        if doc.layout.column_split_x is None:
+            return
+        # Two-column: no pre-existing summary → append LLM summary BELOW the
+        # name/title block so it renders above the two-column table.
         if not doc.header_paras:
             return
         # Inherit the column from existing header content so the summary lands
@@ -458,8 +470,9 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
                     # col=None (above-table) items always kept; LLM items (para_id='') kept
                     _kept.append(hp)
             doc.header_paras = _kept + list(summary_sec.body_paras)
-        else:
-            # Right-column or above-table injection.
+            doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+        elif _target_col == "right":
+            # Right-column injection.
             # After removing the matched summary lines, also drop any remaining
             # col=right original items that are very short and look like leftover
             # sentence fragments from the template summary (e.g. "experiences.").
@@ -482,7 +495,20 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
                 else:
                     kept.append(hp)
             doc.header_paras = kept + list(summary_sec.body_paras)
-        doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+            doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+        else:
+            # _target_col is None: full-width header above the two-column body
+            # (samples 18, 38) or single-column template (sample 33).
+            # Remove the original summary lines from header_paras; keep name/title.
+            kept = [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
+            if doc.layout.column_split_x is not None:
+                # Two-column: inject LLM summary above the table (col=None = full-width)
+                doc.header_paras = kept + list(summary_sec.body_paras)
+                doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+            else:
+                # Single-column: just remove original summary — keep the LLM
+                # summary section in doc.sections so it renders in the body.
+                doc.header_paras = kept
 
     # Rebuild all_paras so the renderer sees the updated structure.
     from tailor.compiler.models import ParaModel

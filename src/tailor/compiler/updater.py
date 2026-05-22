@@ -1047,7 +1047,10 @@ def _make_extra_section(
     # injected section body text renders as regular weight.
     def _normalise_body_pm(pm: "ParaModel") -> "ParaModel":
         sn = (pm.style.style_name or "").lower()
-        if not sn.startswith("heading") and not pm.style.bold:
+        # Also check paragraph_profile.bold for PDF-sourced paragraphs whose
+        # style.bold is None even when the paragraph is visually bold.
+        _pp_bold = pm.paragraph_profile.bold if pm.paragraph_profile else False
+        if not sn.startswith("heading") and not pm.style.bold and not _pp_bold:
             return pm
         from dataclasses import replace as _dc_replace
         from copy import deepcopy as _deepcopy
@@ -4102,7 +4105,10 @@ def apply_tailored(
                     s for s in llm_order_sections
                     if id(s) not in _matched_section_ids
                 ]
-                new_sections = template_ordered + extra_only + verbatim_sections
+                # verbatim_sections are already included in template_ordered
+                # (both built from match.pairs where llm_section is None).
+                # Appending them again would duplicate those sections in the output.
+                new_sections = template_ordered + extra_only
 
     # Fragmented-experience injection: LLM had experience roles but no original
     # experience section existed to match them.  Inject into role-like 'other'

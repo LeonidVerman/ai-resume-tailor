@@ -403,8 +403,19 @@ def _extract_header_bg(page) -> tuple[str | None, float]:
         if (y1 - y0) < 8.0:
             continue  # too thin
         hex_color = _fitz_color_to_hex(fill)
-        if hex_color is None or hex_color in ("ffffff", "fefefe"):
-            continue  # skip white
+        if hex_color is None:
+            continue
+        # Skip white and near-white fills (luminance > 210/255 = 82%).
+        # fafafa (250,250,250) and similar light grays must not be treated as
+        # dark header bands — they produce invisible white-on-light rendering.
+        try:
+            _r = int(hex_color[0:2], 16)
+            _g = int(hex_color[2:4], 16)
+            _b = int(hex_color[4:6], 16)
+            if (_r + _g + _b) / 3 > 210:
+                continue  # too light to be a dark header band
+        except (ValueError, IndexError):
+            continue
         # Take the topmost large rectangle
         if best_color is None or y0 < best_y1:
             best_color = hex_color
