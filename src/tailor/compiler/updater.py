@@ -3001,14 +3001,26 @@ def _find_summary_anchors(
     if not trailing:
         return None
 
+    def _is_divider_style(pm: "ParaModel") -> bool:
+        """True if the paragraph uses a separator / divider-line style."""
+        sn = (pm.style.style_name or "") if pm.style else ""
+        return "divid" in sn.lower() or "line" in sn.lower()
 
     # Two or more empty slots: use the FIRST two (heading_anchor, body_anchor).
     # Using the first two slots (immediately after name/title) places the summary
     # right below the candidate's name, minimising vertical whitespace between
     # the name and the summary.  The remaining empty slots act as natural spacers
     # before the table/body that follows — giving a visually tight header block.
+    # Skip divider-line slots as body_anchor: those styles carry negative indents
+    # that push the summary text flush to the left margin (sample 15 regression).
     if len(trailing) >= 2:
-        return trailing[0], trailing[1]
+        heading_anchor = trailing[0]
+        # Prefer the first non-divider slot as body_anchor; fall back to trailing[1]
+        body_anchor = next(
+            (p for p in trailing[1:] if not _is_divider_style(p)),
+            trailing[1],
+        )
+        return heading_anchor, body_anchor
 
     # Single empty slot only (no preceding prose para found above).
     _log.debug(
