@@ -3838,6 +3838,135 @@ def _clear_docx_glossary(docx_path: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Post-processing: split oversized single-row tables
+# ---------------------------------------------------------------------------
+
+_OVERSIZED_ROW_PARA_THRESHOLD = 14  # trigger row split when any cell exceeds this
+
+
+def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
+    """Split table rows whose cells contain too many paragraphs.
+
+    LibreOffice cannot split a table row across pages even with cantSplit='0'.
+    This pass scans every row in every table in the body.  Rows whose tallest
+    cell exceeds _OVERSIZED_ROW_PARA_THRESHOLD paragraphs are physically split
+    at Heading2-style paragraph boundaries (or the midpoint when none are found),
+    allowing LibreOffice to paginate the content naturally across pages.
+
+    keepNext/keepLines are suppressed on all paragraphs in the new rows so that
+    Heading-style properties do not chain rows together and force the whole table
+    to the next page.
+    """
+    from copy import deepcopy
+    from lxml import etree as _et
+
+    for tbl_elem in list(body.findall(f"{{{_W}}}tbl")):
+        # Snapshot: may insert rows during iteration, process originals only
+        for row in list(tbl_elem.findall(f"{{{_W}}}tr")):
+            cells = row.findall(f"{{{_W}}}tc")
+            if not cells:
+                continue
+
+            cell_paras = [tc.findall(f"{{{_W}}}p") for tc in cells]
+            max_paras = max(len(ps) for ps in cell_paras)
+            if max_paras <= _OVERSIZED_ROW_PARA_THRESHOLD:
+                continue
+
+            tallest_idx = max(range(len(cells)), key=lambda i: len(cell_paras[i]))
+            tallest_paras = cell_paras[tallest_idx]
+            n = len(tallest_paras)
+
+            # Split only at Heading2 boundaries (major sections), not Heading3.
+            # Too many tiny rows cause keepNext chains that force the table to
+            # the next page; fewer, larger rows allow natural pagination.
+            split_indices: list[int] = []
+            for i, p in enumerate(tallest_paras):
+                if i == 0:
+                    continue
+                pPr = p.find(f"{{{_W}}}pPr")
+                if pPr is not None:
+                    pStyle = pPr.find(f"{{{_W}}}pStyle")
+                    if pStyle is not None:
+                        sv = pStyle.get(f"{{{_W}}}val", "").lower().replace(" ", "")
+                        if sv in ("heading2", "heading1"):
+                            split_indices.append(i)
+
+            if not split_indices:
+                split_indices = [n // 2]
+
+            boundaries = [0] + split_indices + [n]
+            tallest_slices = [
+                (boundaries[i], boundaries[i + 1])
+                for i in range(len(boundaries) - 1)
+                if boundaries[i] < boundaries[i + 1]
+            ]
+            if len(tallest_slices) <= 1:
+                continue
+
+            _log.debug(
+                "SPLIT_OVERSIZED_ROW: max_paras=%d → %d rows at indices %r",
+                max_paras, len(tallest_slices), split_indices,
+            )
+
+            new_rows: list[Any] = []
+            for slice_start, slice_end in tallest_slices:
+                new_row = deepcopy(row)
+                new_cells_elem = new_row.findall(f"{{{_W}}}tc")
+
+                # Remove trHeight so LibreOffice sizes each new row naturally
+                trPr = new_row.find(f"{{{_W}}}trPr")
+                if trPr is not None:
+                    for trH in list(trPr.findall(f"{{{_W}}}trHeight")):
+                        trPr.remove(trH)
+
+                for ci, new_tc in enumerate(new_cells_elem):
+                    for p in list(new_tc.findall(f"{{{_W}}}p")):
+                        new_tc.remove(p)
+
+                    orig_ps = cell_paras[ci]
+                    c_n = len(orig_ps)
+
+                    if ci == tallest_idx:
+                        para_slice = orig_ps[slice_start:slice_end]
+                    else:
+                        if c_n == 0:
+                            para_slice = []
+                        else:
+                            c_start = round(slice_start * c_n / n)
+                            c_end = round(slice_end * c_n / n)
+                            c_start = min(c_start, c_n - 1)
+                            c_end = max(c_end, c_start + 1)
+                            c_end = min(c_end, c_n)
+                            para_slice = orig_ps[c_start:c_end]
+
+                    if not para_slice and orig_ps:
+                        para_slice = [orig_ps[-1]]
+
+                    for p in para_slice:
+                        new_tc.append(deepcopy(p))
+
+                    # Suppress keepNext/keepLines on all paras so LibreOffice
+                    # can paginate between rows without the heading style chain.
+                    for cell_p in new_tc.findall(f"{{{_W}}}p"):
+                        cell_pPr = cell_p.find(f"{{{_W}}}pPr")
+                        if cell_pPr is None:
+                            cell_pPr = _et.SubElement(cell_p, f"{{{_W}}}pPr")
+                            cell_p.insert(0, cell_pPr)
+                        for prop_tag in (f"{{{_W}}}keepNext", f"{{{_W}}}keepLines"):
+                            prop = cell_pPr.find(prop_tag)
+                            if prop is None:
+                                prop = _et.SubElement(cell_pPr, prop_tag)
+                            prop.set(f"{{{_W}}}val", "0")
+
+                new_rows.append(new_row)
+
+            row_idx = list(tbl_elem).index(row)
+            tbl_elem.remove(row)
+            for offset, new_row in enumerate(new_rows):
+                tbl_elem.insert(row_idx + offset, new_row)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -3910,6 +4039,9 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         _use_lb = USE_LAYOUT_BLOCK_RENDERER or not _has_runtime_xml
         if _use_lb:
             _render_from_layout_blocks(doc, body, sectPr)
+            # Split single-row tables that exceed page height so LibreOffice
+            # can paginate them naturally (cantSplit='0' alone is insufficient).
+            _split_oversized_table_rows(body, sectPr)
             # Inherit page background color for overflow pages.  Extracts the
             # dominant edge-pixel color from any behindDoc blip background and
             # inserts a solid-fill rectangle (no image, no text, no foreground
