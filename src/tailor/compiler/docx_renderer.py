@@ -1674,6 +1674,84 @@ def _find_and_move_bg_to_start(body, sectPr, allow_blip: bool = False) -> None:
     )
 
 
+def _promote_cell_bg_drawings_to_body(body, sectPr) -> None:
+    """Move page-relative behind-doc drawings from table cells to body level.
+
+    When a two-column table is built, any behind-doc drawing in the left cell
+    that uses relativeFrom="page" positioning is rendered by LibreOffice relative
+    to the cell origin instead of the page origin.  This causes full-page
+    background drawings (e.g. the dark header in sample 3) to disappear or
+    render at the wrong position.
+
+    Fix: extract the containing paragraph from the cell and insert it as a
+    direct body child BEFORE the table.  The drawing's page-relative position
+    then works correctly against the page top-left corner.
+
+    Only extracts paragraphs whose ONLY content is the behind-doc drawing
+    (no other runs or text) to avoid breaking cells that mix drawing+text.
+    """
+    from copy import deepcopy as _dc
+
+    _W_NS = f"{{{_W}}}"
+    _WP_NS = f"{{{_WP}}}"
+
+    # Find the first table in body (the two-col table just built)
+    tbl = next((c for c in body if c.tag == f"{_W_NS}tbl"), None)
+    if tbl is None:
+        return
+
+    # Collect all paragraphs in ALL cells
+    cells_paras: list = []
+    for tc in tbl.findall(f".//{_W_NS}tc"):
+        for p in tc.findall(f"{_W_NS}p"):
+            cells_paras.append((tc, p))
+
+    extracted: list = []
+    for tc, p in cells_paras:
+        # Check if this para has a behind-doc anchor with relativeFrom=page
+        has_bg_anchor = False
+        for anchor in p.findall(f".//{_WP_NS}anchor"):
+            if anchor.get("behindDoc") != "1":
+                continue
+            posH = anchor.find(f"{_WP_NS}positionH")
+            posV = anchor.find(f"{_WP_NS}positionV")
+            h_page = posH is not None and posH.get("relativeFrom") == "page"
+            v_page = posV is not None and posV.get("relativeFrom") == "page"
+            if h_page and v_page:
+                has_bg_anchor = True
+                break
+        if not has_bg_anchor:
+            continue
+        # Only extract if para has no non-whitespace text (drawing-only para)
+        text_content = "".join(t.text or "" for t in p.findall(f".//{_W_NS}t")).strip()
+        if text_content:
+            continue  # has text — leave in cell to avoid disrupting layout
+        # Replace with an empty spacer para in the cell
+        spacer = _dc(p)
+        # Strip drawings from the spacer
+        for d in spacer.findall(f".//{_W_NS}drawing"):
+            parent = d.getparent()
+            if parent is not None:
+                parent.remove(d)
+        idx_in_tc = list(tc).index(p)
+        tc.remove(p)
+        tc.insert(idx_in_tc, spacer)
+        extracted.append(p)
+
+    if not extracted:
+        return
+
+    # Insert extracted paragraphs BEFORE the table (at start of body or after
+    # any preceding body paragraphs).
+    tbl_idx = list(body).index(tbl)
+    for offset, p_elem in enumerate(extracted):
+        body.insert(tbl_idx + offset, p_elem)
+    _log.debug(
+        "CELL_BG_PROMOTED_TO_BODY: moved %d behind-doc para(s) before table",
+        len(extracted),
+    )
+
+
 def _find_single_col_break_idx(layout_blocks) -> "int | None":
     """Return index of the sole column-break paragraph block, or None.
 
@@ -2153,8 +2231,15 @@ def _cap_para_font_size(elem, max_halfpts: int = 36) -> None:
                         pass
 
 
-def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn):
-    """Render one LayoutParagraphBlock → lxml element (None if empty)."""
+def _render_block_into_elem(
+    block, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn,
+    exempt_font_cap_ids: "frozenset[str] | None" = None,
+):
+    """Render one LayoutParagraphBlock → lxml element (None if empty).
+
+    *exempt_font_cap_ids*: para_ids whose large run-level fonts must NOT be
+    capped even when semantic is non-heading (e.g. header name paragraphs).
+    """
     from lxml import etree
     if not block.xml_proto_xml:
         return None
@@ -2174,12 +2259,18 @@ def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_i
         #       name-heading slot (sz=64) is reused for a body paragraph by the updater
         #       (e.g. sample 27 right-column: MATTHEW TURNER proto used for bullets).
         _HEADING_SEMANTICS = frozenset({"section_heading", "role_header"})
+        _is_exempt_font = (
+            exempt_font_cap_ids is not None
+            and block.para_id is not None
+            and block.para_id in exempt_font_cap_ids
+        )
         _needs_font_cap = (
             bool(block.para_id and "_ext_" in block.para_id)
             and pm.semantic not in _HEADING_SEMANTICS
+            and not _is_exempt_font
         )
         _proto_run_font_cap: int = 36  # default cap (18pt)
-        if not _needs_font_cap and pm.semantic not in _HEADING_SEMANTICS:
+        if not _needs_font_cap and pm.semantic not in _HEADING_SEMANTICS and not _is_exempt_font:
             # Detect run-level rPr with sz > 36 (18pt).  Run rPr is a direct child
             # of w:r; paragraph-default rPr (pPr/rPr) is a direct child of w:pPr.
             for _rPr in elem.iter(f"{{{_W}}}rPr"):
@@ -2706,9 +2797,12 @@ def _render_layout_two_col_table(
             _header_left_blocks = []
 
     # Render header blocks as body-level paragraphs (full page width).
+    # Exempt header paragraphs from font capping so name/title keep their
+    # large template font sizes (e.g. sample 22 "Lydia Mary" at 35pt).
     for _hblk in _header_left_blocks:
         _hel = _render_block_into_elem(
-            _hblk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
+            _hblk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn,
+            exempt_font_cap_ids=_header_para_ids,
         )
         if _hel is not None:
             if sectPr is not None:
@@ -3039,6 +3133,12 @@ def _render_from_layout_blocks(
                     _main_pgSz_w, _main_pgSz_h,
                     _main_is_multicolumn,
                 )
+                # Promote page-relative behind-doc drawings from inside table cells
+                # to body level so LibreOffice renders them against the page origin
+                # instead of the cell origin.  This restores the dark background in
+                # templates like sample 3 where a full-page "Group 1" wpg:wgp shape
+                # provides the header background.
+                _promote_cell_bg_drawings_to_body(body, sectPr)
                 # For templates with a blip background extracted to body level
                 # (e.g. template 23), the background is a HEADER element: it
                 # should only appear on page 1 and must NOT be cloned to page 2.
@@ -3059,6 +3159,12 @@ def _render_from_layout_blocks(
             lb_para_ids.update(pid for pid in block.para_ids if pid)
         elif isinstance(block, LayoutParagraphBlock) and block.para_id:
             lb_para_ids.add(block.para_id)
+
+    # Header paragraph ids: name/title paragraphs that should NOT have their
+    # fonts capped even when they carry large run-level font sizes.
+    _header_para_ids: frozenset[str] = frozenset(
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    )
 
     # Detect unbound content: paragraphs in all_paras not captured by layout_blocks.
     # Two cases:
@@ -3206,13 +3312,22 @@ def _render_from_layout_blocks(
                     # Reuse the expanded font-cap logic from _render_block_into_elem.
                     # The check covers both _ext_ blocks and any block where the XML
                     # proto carries large run-level fonts but pm.semantic is body content.
+                    # Header paragraphs (name/title) are exempt: they are allowed to keep
+                    # their original large font to preserve the resume branding.
                     _HEADING_SEMANTICS_LB = frozenset({"section_heading", "role_header"})
+                    _is_header_para_lb = (
+                        block.para_id is not None
+                        and block.para_id in _header_para_ids
+                    )
                     _needs_cap_lb = (
                         bool(block.para_id and "_ext_" in block.para_id)
                         and pm.semantic not in _HEADING_SEMANTICS_LB
+                        and not _is_header_para_lb
                     )
                     _cap_lb: int = 36
-                    if not _needs_cap_lb and pm.semantic not in _HEADING_SEMANTICS_LB:
+                    if (not _needs_cap_lb
+                            and pm.semantic not in _HEADING_SEMANTICS_LB
+                            and not _is_header_para_lb):
                         for _rPr_lb in elem.iter(f"{{{_W}}}rPr"):
                             _parent_lb = _rPr_lb.getparent()
                             if _parent_lb is not None and _parent_lb.tag == f"{{{_W}}}r":
