@@ -1681,22 +1681,23 @@ def _find_and_move_bg_to_start(body, sectPr, allow_blip: bool = False) -> None:
 
 
 def _promote_cell_bg_drawings_to_body(body, sectPr) -> None:
-    """Move page-relative behind-doc drawings from table cells to body level.
+    """Promote page-relative behind-doc drawings from table cells to body level.
 
-    When a two-column table is built, any behind-doc drawing in the left cell
-    that uses relativeFrom="page" positioning is rendered by LibreOffice relative
-    to the cell origin instead of the page origin.  This causes full-page
-    background drawings (e.g. the dark header in sample 3) to disappear or
-    render at the wrong position.
+    When a two-column table is built, behindDoc anchors with
+    relativeFrom="page" (both H and V) inside table cells are rendered by
+    LibreOffice relative to the cell origin instead of the page origin.  This
+    causes full-page background drawings (e.g. the dark header in sample 3)
+    to disappear or render at the wrong position.
 
-    Fix: extract the containing paragraph from the cell and insert it as a
-    direct body child BEFORE the table.  The drawing's page-relative position
-    then works correctly against the page top-left corner.
-
-    Only extracts paragraphs whose ONLY content is the behind-doc drawing
-    (no other runs or text) to avoid breaking cells that mix drawing+text.
+    Fix: extract just the <w:drawing> element (NOT the whole paragraph) from
+    each cell paragraph that contains such an anchor.  The drawing is placed
+    in a zero-height body paragraph BEFORE the table; the original paragraph
+    stays in the cell with its text content intact.  This works for both
+    drawing-only paragraphs and mixed drawing+text paragraphs (e.g. the
+    contact-email paragraph in sample 3 that doubles as the anchor host).
     """
     from copy import deepcopy as _dc
+    from lxml import etree as _et
 
     _W_NS = f"{{{_W}}}"
     _WP_NS = f"{{{_WP}}}"
@@ -1706,55 +1707,53 @@ def _promote_cell_bg_drawings_to_body(body, sectPr) -> None:
     if tbl is None:
         return
 
-    # Collect all paragraphs in ALL cells
-    cells_paras: list = []
+    extracted_drawings: list = []
     for tc in tbl.findall(f".//{_W_NS}tc"):
         for p in tc.findall(f"{_W_NS}p"):
-            cells_paras.append((tc, p))
+            for anchor in list(p.findall(f".//{_WP_NS}anchor")):
+                if anchor.get("behindDoc") != "1":
+                    continue
+                posH = anchor.find(f"{_WP_NS}positionH")
+                posV = anchor.find(f"{_WP_NS}positionV")
+                h_page = posH is not None and posH.get("relativeFrom") == "page"
+                v_page = posV is not None and posV.get("relativeFrom") == "page"
+                if not (h_page and v_page):
+                    continue
+                # Find the <w:drawing> parent of this anchor
+                drawing = anchor.getparent()
+                if drawing is None or drawing.tag != f"{_W_NS}drawing":
+                    continue
+                dc_drawing = _dc(drawing)
+                # Set layoutInCell='0' on any anchor in the extracted drawing
+                # so LibreOffice treats it as page-relative even at body level.
+                for _extr_anchor in dc_drawing.findall(f".//{_WP_NS}anchor"):
+                    _extr_anchor.set("layoutInCell", "0")
+                extracted_drawings.append(dc_drawing)
+                drawing_parent = drawing.getparent()
+                if drawing_parent is not None:
+                    drawing_parent.remove(drawing)
 
-    extracted: list = []
-    for tc, p in cells_paras:
-        # Check if this para has a behind-doc anchor with relativeFrom=page
-        has_bg_anchor = False
-        for anchor in p.findall(f".//{_WP_NS}anchor"):
-            if anchor.get("behindDoc") != "1":
-                continue
-            posH = anchor.find(f"{_WP_NS}positionH")
-            posV = anchor.find(f"{_WP_NS}positionV")
-            h_page = posH is not None and posH.get("relativeFrom") == "page"
-            v_page = posV is not None and posV.get("relativeFrom") == "page"
-            if h_page and v_page:
-                has_bg_anchor = True
-                break
-        if not has_bg_anchor:
-            continue
-        # Only extract if para has no non-whitespace text (drawing-only para)
-        text_content = "".join(t.text or "" for t in p.findall(f".//{_W_NS}t")).strip()
-        if text_content:
-            continue  # has text — leave in cell to avoid disrupting layout
-        # Replace with an empty spacer para in the cell
-        spacer = _dc(p)
-        # Strip drawings from the spacer
-        for d in spacer.findall(f".//{_W_NS}drawing"):
-            parent = d.getparent()
-            if parent is not None:
-                parent.remove(d)
-        idx_in_tc = list(tc).index(p)
-        tc.remove(p)
-        tc.insert(idx_in_tc, spacer)
-        extracted.append(p)
-
-    if not extracted:
+    if not extracted_drawings:
         return
 
-    # Insert extracted paragraphs BEFORE the table (at start of body or after
-    # any preceding body paragraphs).
+    # Create zero-height body paragraphs containing the drawings and insert
+    # them BEFORE the table so they render at page coordinates.
     tbl_idx = list(body).index(tbl)
-    for offset, p_elem in enumerate(extracted):
-        body.insert(tbl_idx + offset, p_elem)
+    for offset, drawing in enumerate(extracted_drawings):
+        bg_p = _et.Element(f"{_W_NS}p")
+        bg_pPr = _et.SubElement(bg_p, f"{_W_NS}pPr")
+        bg_sp = _et.SubElement(bg_pPr, f"{_W_NS}spacing")
+        bg_sp.set(f"{_W_NS}before", "0")
+        bg_sp.set(f"{_W_NS}after", "0")
+        bg_sp.set(f"{_W_NS}line", "1")
+        bg_sp.set(f"{_W_NS}lineRule", "exact")
+        bg_r = _et.SubElement(bg_p, f"{_W_NS}r")
+        bg_r.append(drawing)
+        body.insert(tbl_idx + offset, bg_p)
+
     _log.debug(
-        "CELL_BG_PROMOTED_TO_BODY: moved %d behind-doc para(s) before table",
-        len(extracted),
+        "CELL_BG_PROMOTED_TO_BODY: extracted %d behind-doc drawing(s) before table",
+        len(extracted_drawings),
     )
 
 
@@ -2773,13 +2772,45 @@ def _render_layout_two_col_table(
         if not (isinstance(blk, LayoutParagraphBlock) and blk.para_id in _header_para_ids)
     ]
     # Safety: if all left blocks are header blocks (nothing left for the left cell),
-    # keep them all in the left cell instead of rendering at full page width.
-    # This handles templates like sample 3 where the entire left column (contact,
-    # education, skills) is in header_paras — the header separation was designed
-    # for compact 2-3 line headers, not 22-block left sidebars.
+    # try to split at the first dark-text non-empty paragraph to separate the
+    # truly full-width header (name/title with white text on dark background) from
+    # the left-column content (contact/education/skills with dark text).
+    # Example: sample 3 has para_1='CHARLES MCTURLAND' (white, sz=66) and
+    # para_2='SOFTWARE ENGINEER' (white, sz=31) as the header, while para_7+
+    # (contact info, dark color=202529) belongs in the left cell.
+    # If no white-to-dark transition is found, fall back: all into left cell.
     if not _section_left_blocks and _header_left_blocks:
-        _section_left_blocks = _header_left_blocks
-        _header_left_blocks = []
+        _split_at: int | None = None
+        for _hi, _hblk in enumerate(_header_left_blocks):
+            if not isinstance(_hblk, LayoutParagraphBlock) or not _hblk.xml_proto_xml:
+                continue
+            _hblk_xml = etree.fromstring(_hblk.xml_proto_xml)
+            _hblk_text = "".join(
+                t.text or "" for t in _hblk_xml.findall(f".//{{{_W}}}t")
+            ).strip()
+            if not _hblk_text:
+                continue  # empty spacer — skip for split detection
+            _has_white = any(
+                c.get(f"{{{_W}}}val", "").upper() == "FFFFFF"
+                for c in _hblk_xml.findall(f".//{{{_W}}}color")
+            )
+            if not _has_white:
+                # First non-empty paragraph WITHOUT white text = start of left-col content
+                _split_at = _hi
+                break
+        if _split_at is not None and _split_at > 0:
+            # White-text blocks (name/title) → full-width before table
+            # Dark-text blocks (contact/edu/skills) → left cell
+            _section_left_blocks = _header_left_blocks[_split_at:]
+            _header_left_blocks = _header_left_blocks[:_split_at]
+            _white_text_split_applied = True
+        else:
+            # No clear split: all into left cell (original safe fallback)
+            _section_left_blocks = _header_left_blocks
+            _header_left_blocks = []
+            _white_text_split_applied = False
+    else:
+        _white_text_split_applied = False
 
     # Right-column-name guard: when the right column starts with candidate name/title
     # content (non-section-heading paragraph), the template uses a split-header layout
@@ -2787,7 +2818,9 @@ def _render_layout_two_col_table(
     # Extracting left header blocks to the body would push them ABOVE the right-column
     # name, breaking visual alignment.  Keep all left blocks in the left cell instead.
     # Example: sample 16 where left=contact-info and right=HARPER RUSSO / DEVOPS.
-    if _header_left_blocks:
+    # Skip when _white_text_split_applied: the white-text heuristic already correctly
+    # determined which blocks are the full-width header vs. left-column content.
+    if _header_left_blocks and not _white_text_split_applied:
         _first_right_pm = None
         for _rblk in right_blocks:
             if isinstance(_rblk, LayoutParagraphBlock) and _rblk.para_id:
