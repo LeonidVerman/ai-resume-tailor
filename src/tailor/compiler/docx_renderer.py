@@ -1358,9 +1358,16 @@ _WPS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 def _fix_anchor_layout_in_cell(cell_elem) -> None:
     """Selectively apply layoutInCell to anchored drawings inside a table cell.
 
-    Full-page behindDoc backgrounds (cx ≥ 7 M EMU, cy ≥ 10 M EMU) get
-    layoutInCell='0' so they use page-level coordinates and cover the full
-    page regardless of cell boundaries.
+    behindDoc anchors whose height covers the full page (cy ≥ 10 M EMU,
+    roughly 11 inches) get layoutInCell='0' so they use page-level
+    coordinates and do NOT force the table row to match their height.
+
+    This covers both full-page-width backgrounds (cx ≥ 7 M EMU) and
+    narrow-column sidebar backgrounds (e.g. sample 11 blue left sidebar at
+    cx ≈ 2.85 M EMU but cy = 11 in).  If a background is tall enough to
+    span the page it must always be page-relative; letting it be
+    cell-relative forces the containing table row to be 11 inches tall,
+    pushing all body rows to page 2.
 
     All other anchors are left UNCHANGED.  Foreground drawings (photo, contact
     icons, etc.) must keep their original layoutInCell value so they appear
@@ -1374,11 +1381,10 @@ def _fix_anchor_layout_in_cell(cell_elem) -> None:
         if ext is None:
             continue
         try:
-            cx = int(ext.get("cx", "0"))
             cy = int(ext.get("cy", "0"))
         except ValueError:
             continue
-        if cx >= 7_000_000 and cy >= 10_000_000:
+        if cy >= 10_000_000:
             anchor.set("layoutInCell", "0")
 
 
@@ -3200,6 +3206,7 @@ def _render_from_layout_blocks(
     )
     _compress_remaining: int = 0  # count of subsequent empty paras still to compress
     _spacer_followup_remaining: int = 0  # minimize empty paras following an oversized spacer
+    _pending_bg_drawings: list = []  # extracted full-height behindDoc drawings awaiting emit
 
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
@@ -3267,9 +3274,66 @@ def _render_from_layout_blocks(
                         getattr(doc, "_inline_summary_pid", "?"),
                     )
                 _inline_pid = None  # consume once
+            # Remove explicit trHeight and enable row splitting on all rows.
+            # Original template heights were sized for short placeholder text.
+            # After LLM injection content grows and locked trHeight values can
+            # push the body row to page 2.  Also, LibreOffice defaults to
+            # NOT splitting table rows (unlike Word), so rows that are taller
+            # than the remaining page space go entirely to page 2 rather than
+            # splitting.  Explicitly setting cantSplit='0' overrides this.
+            for _tr_h_elem in tbl_elem.findall(f"{{{_W}}}tr"):
+                _trPr_h = _tr_h_elem.find(f"{{{_W}}}trPr")
+                if _trPr_h is None:
+                    _trPr_h = etree.SubElement(_tr_h_elem, f"{{{_W}}}trPr")
+                    _tr_h_elem.insert(0, _trPr_h)
+                # Remove locked height
+                for _trH in list(_trPr_h.findall(f"{{{_W}}}trHeight")):
+                    _trPr_h.remove(_trH)
+                # Explicitly allow row splitting across pages
+                _csplit = _trPr_h.find(f"{{{_W}}}cantSplit")
+                if _csplit is None:
+                    _csplit = etree.SubElement(_trPr_h, f"{{{_W}}}cantSplit")
+                _csplit.set(f"{{{_W}}}val", "0")
+            # Extract full-height behindDoc anchors from table cells to
+            # body-level paragraphs placed BEFORE the table.  A behindDoc
+            # anchor with cy ≥ 10 M EMU (≈ 11 in) inside a table cell
+            # forces LibreOffice to size the containing row to match the
+            # drawing height, filling page 1 and pushing body rows to page 2
+            # (e.g. sample 11 blue sidebar background at cy=11in).
+            # Extracting the <w:drawing> element (keeping the paragraph in
+            # the cell) and placing it in a zero-height body paragraph
+            # preserves the background appearance while fixing row height.
+            _extracted_bg_drawings: list = []
+            for _bg_drawing in list(tbl_elem.findall(f".//{{{_W}}}drawing")):
+                _bg_anchor = _bg_drawing.find(f".//{{{_WP}}}anchor")
+                if _bg_anchor is None or _bg_anchor.get("behindDoc") != "1":
+                    continue
+                _bg_ext = _bg_anchor.find(f"{{{_WP}}}extent")
+                if _bg_ext is None:
+                    continue
+                try:
+                    _bg_cy = int(_bg_ext.get("cy", "0"))
+                except ValueError:
+                    continue
+                if _bg_cy >= 10_000_000:
+                    from copy import deepcopy as _dc_bg
+                    _extracted_bg_drawings.append(_dc_bg(_bg_drawing))
+                    _bg_parent = _bg_drawing.getparent()
+                    if _bg_parent is not None:
+                        _bg_parent.remove(_bg_drawing)
+                    _log.debug(
+                        "TABLE_BLOCK_BG_EXTRACTED: cy=%d (%.1fin) from tbl",
+                        _bg_cy, _bg_cy / 914400,
+                    )
+            # Apply layoutInCell='0' to remaining anchors for safety.
+            for _tc in tbl_elem.findall(f".//{{{_W}}}tc"):
+                _fix_anchor_layout_in_cell(_tc)
             # Once we hit a table block, stop compressing spacers (table started).
             _compress_remaining = 0
             elem: Any = tbl_elem
+            # Schedule background drawings to be inserted before the table.
+            # They are emitted in the elem-insertion block below.
+            _pending_bg_drawings = _extracted_bg_drawings
 
         else:
             # LayoutParagraphBlock
@@ -3394,6 +3458,26 @@ def _render_from_layout_blocks(
                     )
                 else:
                     _compress_remaining = 0  # non-empty para: stop compressing
+
+        # Emit extracted background drawings as zero-height body paragraphs
+        # immediately before their table so they render at page coordinates
+        # (layoutInCell='0') without forcing table row heights.
+        if _pending_bg_drawings:
+            for _bg_draw in _pending_bg_drawings:
+                _bg_p = etree.Element(f"{{{_W}}}p")
+                _bg_pPr = etree.SubElement(_bg_p, f"{{{_W}}}pPr")
+                _bg_sp = etree.SubElement(_bg_pPr, f"{{{_W}}}spacing")
+                _bg_sp.set(f"{{{_W}}}before", "0")
+                _bg_sp.set(f"{{{_W}}}after", "0")
+                _bg_sp.set(f"{{{_W}}}line", "1")
+                _bg_sp.set(f"{{{_W}}}lineRule", "exact")
+                _bg_r = etree.SubElement(_bg_p, f"{{{_W}}}r")
+                _bg_r.append(_bg_draw)
+                if sectPr is not None:
+                    sectPr.addprevious(_bg_p)
+                else:
+                    body.append(_bg_p)
+            _pending_bg_drawings = []
 
         if sectPr is not None:
             sectPr.addprevious(elem)
