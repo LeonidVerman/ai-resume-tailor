@@ -448,10 +448,11 @@ _KNOWN_BAD_PDFS: dict[str, str] = {
         "with header_extra, causing DOCX-of-DOCX text differences."
     ),
     "6-Template1.pdf": (
-        "Pattern B (date-before-title): parser now detects 3 roles correctly, "
-        "but the DOCX renderer emits meta (date) after the role header (title), "
-        "reversing the original PDF order.  Role detection works; rendering "
-        "order mismatch is a known limitation of the standard DOCX format."
+        "Two-column role layout: each role is now rendered as a 2-cell table "
+        "(left=date, right=title+bullets).  The DOCX-of-DOCX roundtrip sees "
+        "table cells instead of flat paragraphs, so para ordering and count "
+        "differ from the identity pass.  Real LLM pipeline improved (left/right "
+        "column structure now matches the original PDF template)."
     ),
     "7-Template2.pdf": (
         "Placeholder-year role format: the rendered DOCX uses Pattern B "

@@ -1235,12 +1235,103 @@ def _render_pdf_single_col_with_groups(
             return role.header.with_text(combined)
         return role.header
 
+    def _role_two_col_date(role) -> bool:
+        """True when date meta is in the left column and role title is in the right column.
+
+        Detects the 'parallel columns' experience layout where the date appears at
+        x≈0 and the role title is indented far to the right (e.g. sample 6).
+        Both date and title share the same y_top (they are side-by-side).
+        """
+        if not role.meta_lines:
+            return False
+        m0_pp = role.meta_lines[0].paragraph_profile
+        h_pp = role.header.paragraph_profile
+        if m0_pp is None or h_pp is None:
+            return False
+        date_x = m0_pp.indent_left_pt
+        role_x = h_pp.indent_left_pt
+        if date_x is None or role_x is None or role_x - date_x < 100:
+            return False
+        date_y = m0_pp.y_top_pt
+        role_y = h_pp.y_top_pt
+        if date_y is None or role_y is None:
+            return False
+        return abs(date_y - role_y) < 5
+
+    def _build_role_two_col_table(role, hdr_pm, min_indent: int = 0):
+        """Build a 2-column role sub-table: left=date, right=title+bullets.
+
+        Used when the date and role title are side-by-side in the source PDF
+        (two-column experience layout).  min_indent is subtracted from all indents
+        when the role is inside an outer table cell.
+        """
+        h_pp = role.header.paragraph_profile
+        left_col_w = max(0, int(h_pp.indent_left_pt * 20) - min_indent) if h_pp and h_pp.indent_left_pt else 0
+        right_col_w = max(100, text_area_w_twips - min_indent - left_col_w)
+
+        tbl = etree.Element(f"{{{_W}}}tbl")
+        tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+        tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+        tblW_el.set(f"{{{_W}}}w", str(left_col_w + right_col_w))
+        tblW_el.set(f"{{{_W}}}type", "dxa")
+        tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+        tblLayout.set(f"{{{_W}}}type", "fixed")
+        tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+        for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+            brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+            brd.set(f"{{{_W}}}val", "none")
+        tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+        for side in ("top", "left", "bottom", "right"):
+            m_el = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+            m_el.set(f"{{{_W}}}w", "0")
+            m_el.set(f"{{{_W}}}type", "dxa")
+
+        tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+        # Left cell: date
+        tc_l = etree.SubElement(tr, f"{{{_W}}}tc")
+        tcPr_l = etree.SubElement(tc_l, f"{{{_W}}}tcPr")
+        tcW_l = etree.SubElement(tcPr_l, f"{{{_W}}}tcW")
+        tcW_l.set(f"{{{_W}}}w", str(left_col_w))
+        tcW_l.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr_l, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+        date_elem = build_para_element(role.meta_lines[0], doc_part)
+        _shift_indent(date_elem, min_indent)
+        tc_l.append(date_elem)
+
+        # Right cell: role header + remaining meta + bullets
+        tc_r = etree.SubElement(tr, f"{{{_W}}}tc")
+        tcPr_r = etree.SubElement(tc_r, f"{{{_W}}}tcPr")
+        tcW_r = etree.SubElement(tcPr_r, f"{{{_W}}}tcW")
+        tcW_r.set(f"{{{_W}}}w", str(right_col_w))
+        tcW_r.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr_r, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+        shift = min_indent + left_col_w
+        hdr_elem = build_para_element(hdr_pm, doc_part)
+        _shift_indent(hdr_elem, shift)
+        tc_r.append(hdr_elem)
+        for m in role.meta_lines[1:]:
+            m_elem = build_para_element(m, doc_part)
+            _shift_indent(m_elem, shift)
+            tc_r.append(m_elem)
+        for b in role.bullets:
+            b_elem = build_para_element(b, doc_part)
+            _shift_indent(b_elem, shift)
+            tc_r.append(b_elem)
+        if not tc_r.findall(f"{{{_W}}}p"):
+            etree.SubElement(tc_r, f"{{{_W}}}p")
+
+        return tbl
+
     def _emit_role_elems_shifted(role, min_indent: int) -> "list":
         """Build shifted paragraph elements for a role (used inside table cells)."""
         result = []
         hdr_pm = _role_header_pm(role)
         date_first = _role_date_first(role)
-        if date_first:
+        two_col = _role_two_col_date(role)
+        if two_col:
+            result.append(_build_role_two_col_table(role, hdr_pm, min_indent))
+        elif date_first:
             elem = build_para_element(role.meta_lines[0], doc_part)
             _shift_indent(elem, min_indent)
             result.append(elem)
@@ -1259,10 +1350,11 @@ def _render_pdf_single_col_with_groups(
                 elem = build_para_element(m, doc_part)
                 _shift_indent(elem, min_indent)
                 result.append(elem)
-        for b in role.bullets:
-            elem = build_para_element(b, doc_part)
-            _shift_indent(elem, min_indent)
-            result.append(elem)
+        if not two_col:
+            for b in role.bullets:
+                elem = build_para_element(b, doc_part)
+                _shift_indent(elem, min_indent)
+                result.append(elem)
         return result
 
     def _emit_role_elems(role) -> "list":
@@ -1270,17 +1362,22 @@ def _render_pdf_single_col_with_groups(
         result = []
         hdr_pm = _role_header_pm(role)
         date_first = _role_date_first(role)
-        if date_first:
+        two_col = _role_two_col_date(role)
+        if two_col:
+            result.append(_build_role_two_col_table(role, hdr_pm))
+        elif date_first:
             result.append(build_para_element(role.meta_lines[0], doc_part))
             result.append(build_para_element(hdr_pm, doc_part))
             for m in role.meta_lines[1:]:
                 result.append(build_para_element(m, doc_part))
+            for b in role.bullets:
+                result.append(build_para_element(b, doc_part))
         else:
             result.append(build_para_element(hdr_pm, doc_part))
             for m in role.meta_lines:
                 result.append(build_para_element(m, doc_part))
-        for b in role.bullets:
-            result.append(build_para_element(b, doc_part))
+            for b in role.bullets:
+                result.append(build_para_element(b, doc_part))
         return result
 
     def _build_section_paras_for_cell(sec, min_indent: int) -> "list":
