@@ -2693,9 +2693,17 @@ def _render_layout_two_col_table(
     # _render_block_into_elem skips them.  These slots are identity paragraphs
     # (name, title) that must render at their original large size even when the
     # updater assigned body-semantic text to the slot.  Only inspect the first 3
-    # right-column blocks to avoid flagging actual body content.
+    # right-column blocks that have visible text content to avoid flagging actual
+    # body content.  Skip leading empty spacer paragraphs (which the 700t-threshold
+    # heuristic now preserves before the name paragraph, e.g. sample 27).
+    _rne_candidates = [
+        _b for _b in right_blocks[:8]
+        if isinstance(_b, LayoutParagraphBlock)
+        and _b.xml_proto_xml
+        and "<w:t>" in _b.xml_proto_xml
+    ][:3]
     _right_name_exempt: set[str] = set()
-    for _rne_blk in right_blocks[:3]:
+    for _rne_blk in _rne_candidates:
         if not isinstance(_rne_blk, LayoutParagraphBlock) or not _rne_blk.para_id or not _rne_blk.xml_proto_xml:
             continue
         try:
