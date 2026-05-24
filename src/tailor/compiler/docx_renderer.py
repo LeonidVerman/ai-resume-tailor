@@ -2638,7 +2638,14 @@ def _render_layout_two_col_table(
     # they appear at the TOP of the right cell on page 1, and the overflow on
     # page 2 begins only after those paragraphs — they do NOT repeat on page 2.
     left_blocks = list(doc.layout_blocks[:col_break_idx])  # type: ignore[index]
-    right_blocks = list(doc.layout_blocks[col_break_idx + 1:])  # type: ignore[index]
+    # Include the col-break paragraph itself in the right column.  For templates
+    # where the column-break is embedded inside the first right-column heading
+    # (e.g. sample 3 "Software Engineer" Heading1), dropping it caused the heading
+    # to be lost.  _render_block_into_elem → _strip_column_break removes the
+    # break character so the paragraph is rendered normally in the table cell.
+    # For templates with a standalone empty col-break paragraph (e.g. sample 27),
+    # the leading-empty-trim below discards it harmlessly.
+    right_blocks = list(doc.layout_blocks[col_break_idx:])  # type: ignore[index]
 
     # Skip leading empty (spacer) blocks at the top of the right column.
     # In native 2-column templates these empty paragraphs were column-break
@@ -2660,6 +2667,28 @@ def _render_layout_two_col_table(
         _rb_start = _i + 1
     if _rb_start:
         right_blocks = right_blocks[_rb_start:]
+
+    # Collect para_ids of right-column name/title paragraphs whose run-level
+    # font size is large (> 36 half-pts = 18pt) so the font-cap logic in
+    # _render_block_into_elem skips them.  These slots are identity paragraphs
+    # (name, title) that must render at their original large size even when the
+    # updater assigned body-semantic text to the slot.  Only inspect the first 3
+    # right-column blocks to avoid flagging actual body content.
+    _right_name_exempt: set[str] = set()
+    for _rne_blk in right_blocks[:3]:
+        if not isinstance(_rne_blk, LayoutParagraphBlock) or not _rne_blk.para_id or not _rne_blk.xml_proto_xml:
+            continue
+        try:
+            _rne_proto = etree.fromstring(_rne_blk.xml_proto_xml)
+            if any(
+                int(_sz.get(f"{{{_W}}}val", "0")) > 36
+                for _rPr in _rne_proto.iter(f"{{{_W}}}rPr")
+                if _rPr.getparent() is not None and _rPr.getparent().tag == f"{{{_W}}}r"
+                for _sz in _rPr.findall(f"{{{_W}}}sz")
+            ):
+                _right_name_exempt.add(_rne_blk.para_id)
+        except Exception:
+            pass
 
     # Extract full-page blip background DRAWINGS from left_blocks and insert them
     # as a separate body-level paragraph BEFORE the table.  A behindDoc blip
@@ -2891,7 +2920,7 @@ def _render_layout_two_col_table(
 
     tr = etree.SubElement(tbl, f"{{{_W}}}tr")
 
-    def _fill_cell(tc, blocks, col_x_emu: int, extra_paras=None) -> None:
+    def _fill_cell(tc, blocks, col_x_emu: int, extra_paras=None, exempt_font_cap_ids=None) -> None:
         for blk in blocks:
             if isinstance(blk, LayoutTableBlock):
                 tbl_el = etree.fromstring(blk.xml_proto_xml)
@@ -2903,7 +2932,8 @@ def _render_layout_two_col_table(
                 tc.append(tbl_el)
             else:
                 el = _render_block_into_elem(
-                    blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
+                    blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn,
+                    exempt_font_cap_ids=exempt_font_cap_ids,
                 )
                 if el is not None:
                     # Convert column-relative background anchor positions to page-relative
@@ -3002,7 +3032,11 @@ def _render_layout_two_col_table(
             )
 
     _unbound_extra = [pm for pm in (doc.all_paras or []) if not pm.para_id and pm.text.strip()]
-    _fill_cell(right_tc, right_blocks, _right_col_x_emu, extra_paras=_unbound_extra if _unbound_extra else None)
+    _fill_cell(
+        right_tc, right_blocks, _right_col_x_emu,
+        extra_paras=_unbound_extra if _unbound_extra else None,
+        exempt_font_cap_ids=frozenset(_right_name_exempt) if _right_name_exempt else None,
+    )
 
     if sectPr is not None:
         sectPr.addprevious(tbl)
