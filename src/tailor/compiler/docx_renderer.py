@@ -3844,6 +3844,39 @@ def _clear_docx_glossary(docx_path: str) -> None:
 _OVERSIZED_ROW_PARA_THRESHOLD = 14  # trigger row split when any cell exceeds this
 
 
+def _trim_trailing_cell_paras(body: Any) -> None:
+    """Remove excess trailing empty paragraphs from table cells.
+
+    Template cells often carry multiple trailing empty paragraphs as spacing
+    artefacts.  Extra trailing empties inflate the row's rendered height and
+    create visible gaps in the opposite (shorter) cell.  We keep exactly one
+    mandatory terminal paragraph per cell (required by OOXML) and strip the
+    rest so LibreOffice can size each row to its actual content.
+    """
+    for tbl_elem in body.findall(f"{{{_W}}}tbl"):
+        for row in tbl_elem.findall(f"{{{_W}}}tr"):
+            for cell in row.findall(f"{{{_W}}}tc"):
+                paras = cell.findall(f"{{{_W}}}p")
+                if len(paras) <= 1:
+                    continue
+                trailing: list[Any] = []
+                for p in reversed(paras):
+                    runs = p.findall(f"{{{_W}}}r")
+                    text = "".join(
+                        (t.text or "")
+                        for r in runs
+                        for t in r.findall(f"{{{_W}}}t")
+                    )
+                    if not text.strip():
+                        trailing.append(p)
+                    else:
+                        break
+                # Keep trailing[0] (the mandatory OOXML terminal paragraph);
+                # remove the extra empty paragraphs before it.
+                for p in trailing[1:]:
+                    cell.remove(p)
+
+
 def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
     """Split table rows whose cells contain too many paragraphs.
 
@@ -3861,7 +3894,7 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
     from lxml import etree as _et
 
     for tbl_elem in list(body.findall(f"{{{_W}}}tbl")):
-        # Snapshot: may insert rows during iteration, process originals only
+        # Snapshot: newly inserted rows are NOT re-processed in the same pass.
         for row in list(tbl_elem.findall(f"{{{_W}}}tr")):
             cells = row.findall(f"{{{_W}}}tc")
             if not cells:
@@ -3908,8 +3941,30 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                 max_paras, len(tallest_slices), split_indices,
             )
 
+            # Pre-compute Heading2 boundaries for non-tallest cells.
+            # When the boundary count matches the slice count, use semantic
+            # heading-based split instead of proportional so section headings
+            # are never separated from their content across rows.
+            cell_h2_boundaries: list[list[int]] = []
+            for ci_h2, ps_h2 in enumerate(cell_paras):
+                if ci_h2 == tallest_idx:
+                    cell_h2_boundaries.append([])
+                    continue
+                h2_idx: list[int] = []
+                for i, p in enumerate(ps_h2):
+                    if i == 0:
+                        continue
+                    pPr = p.find(f"{{{_W}}}pPr")
+                    if pPr is not None:
+                        pStyle = pPr.find(f"{{{_W}}}pStyle")
+                        if pStyle is not None:
+                            sv = pStyle.get(f"{{{_W}}}val", "").lower().replace(" ", "")
+                            if sv in ("heading2", "heading1"):
+                                h2_idx.append(i)
+                cell_h2_boundaries.append(h2_idx)
+
             new_rows: list[Any] = []
-            for slice_start, slice_end in tallest_slices:
+            for slice_num, (slice_start, slice_end) in enumerate(tallest_slices):
                 new_row = deepcopy(row)
                 new_cells_elem = new_row.findall(f"{{{_W}}}tc")
 
@@ -3928,16 +3983,24 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
 
                     if ci == tallest_idx:
                         para_slice = orig_ps[slice_start:slice_end]
+                    elif c_n == 0:
+                        para_slice = []
                     else:
-                        if c_n == 0:
-                            para_slice = []
+                        h2_idx = cell_h2_boundaries[ci]
+                        if len(h2_idx) == len(tallest_slices) - 1:
+                            # Cell has the same number of sections as tallest —
+                            # use its own Heading2 boundaries for a semantic split.
+                            cell_bounds = [0] + h2_idx + [c_n]
+                            c_start = cell_bounds[slice_num]
+                            c_end = cell_bounds[slice_num + 1]
                         else:
+                            # Fall back to proportional split.
                             c_start = round(slice_start * c_n / n)
                             c_end = round(slice_end * c_n / n)
                             c_start = min(c_start, c_n - 1)
                             c_end = max(c_end, c_start + 1)
                             c_end = min(c_end, c_n)
-                            para_slice = orig_ps[c_start:c_end]
+                        para_slice = orig_ps[c_start:c_end]
 
                     if not para_slice and orig_ps:
                         para_slice = [orig_ps[-1]]
@@ -4042,6 +4105,10 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
             # Split single-row tables that exceed page height so LibreOffice
             # can paginate them naturally (cantSplit='0' alone is insufficient).
             _split_oversized_table_rows(body, sectPr)
+            # The split leaves trailing empty paragraphs at the end of each
+            # sub-row's cells (template spacing paragraphs that fell between
+            # sections).  Strip them here so rows size to actual content.
+            _trim_trailing_cell_paras(body)
             # Inherit page background color for overflow pages.  Extracts the
             # dominant edge-pixel color from any behindDoc blip background and
             # inserts a solid-fill rectangle (no image, no text, no foreground
