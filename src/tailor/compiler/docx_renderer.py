@@ -2654,17 +2654,37 @@ def _render_layout_two_col_table(
     # heading.  A block is "empty" when: (a) it is a LayoutParagraphBlock,
     # (b) its XML proto exists, and (c) neither the XML nor the pm text carries
     # any visible text content.
+    #
+    # Exception: when the total leading space is small (≤ 700 twips = 35pt),
+    # the spacers are intentional vertical positioning — e.g. sample 27 has
+    # 596 twips before MATTHEW TURNER to align it with the original header
+    # geometry.  Trimming them would move the name too high.  Templates with
+    # large cumulative leading space (e.g. 1000+ twips) have column-alignment
+    # spacers that do not belong in a table cell and should be removed.
     _para_lookup_for_trim = _build_para_lookup(doc)
+    _rb_leading_twips = 0
+    for _scan_blk in right_blocks:
+        if not isinstance(_scan_blk, LayoutParagraphBlock) or not _scan_blk.xml_proto_xml:
+            break
+        _pm_s = _para_lookup_for_trim.get(_scan_blk.para_id) if _scan_blk.para_id else None
+        if (_pm_s and _pm_s.text.strip()) or "<w:t>" in _scan_blk.xml_proto_xml:
+            break
+        try:
+            _sp_el = etree.fromstring(_scan_blk.xml_proto_xml).find(f".//{{{_W}}}spacing")
+            _rb_leading_twips += int(_sp_el.get(f"{{{_W}}}line", "0")) if _sp_el is not None else 0
+        except Exception:
+            pass
     _rb_start = 0
-    for _i, _blk in enumerate(right_blocks):
-        if not isinstance(_blk, LayoutParagraphBlock) or not _blk.xml_proto_xml:
-            break  # hit a table block or block without XML — stop trimming
-        _pm_trim = _para_lookup_for_trim.get(_blk.para_id) if _blk.para_id else None
-        _pm_text_trim = (_pm_trim.text.strip() if _pm_trim else "")
-        _has_xml_text_trim = "<w:t>" in _blk.xml_proto_xml
-        if _pm_text_trim or _has_xml_text_trim:
-            break  # found real content — stop trimming
-        _rb_start = _i + 1
+    if _rb_leading_twips > 700:
+        for _i, _blk in enumerate(right_blocks):
+            if not isinstance(_blk, LayoutParagraphBlock) or not _blk.xml_proto_xml:
+                break  # hit a table block or block without XML — stop trimming
+            _pm_trim = _para_lookup_for_trim.get(_blk.para_id) if _blk.para_id else None
+            _pm_text_trim = (_pm_trim.text.strip() if _pm_trim else "")
+            _has_xml_text_trim = "<w:t>" in _blk.xml_proto_xml
+            if _pm_text_trim or _has_xml_text_trim:
+                break  # found real content — stop trimming
+            _rb_start = _i + 1
     if _rb_start:
         right_blocks = right_blocks[_rb_start:]
 
