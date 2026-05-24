@@ -4135,6 +4135,14 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                 for ci, new_tc in enumerate(new_cells_elem):
                     for p in list(new_tc.findall(f"{{{_W}}}p")):
                         new_tc.remove(p)
+                    # Non-first split rows: remove subtables (nested w:tbl elements).
+                    # deepcopy copies all content including nested tables; keeping
+                    # them in every split row duplicates header/contact sub-tables
+                    # (e.g. sample 19 LICENSE NO. appearing twice).  Only the first
+                    # split row keeps them since they belong at the top of the cell.
+                    if slice_num > 0:
+                        for _sub_tbl in list(new_tc.findall(f"{{{_W}}}tbl")):
+                            new_tc.remove(_sub_tbl)
 
                     orig_ps = cell_paras[ci]
                     c_n = len(orig_ps)
