@@ -1519,12 +1519,38 @@ def _update_role_bullets_only(
                 new_bullets.append(arch.clone_as(text, "bullet"))
             else:
                 _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra bullet %r", text[:60])
+    # When the template role had no bullet slots but the LLM now provides bullets,
+    # strip meta_lines that look like description sentences (not dates/company/location).
+    # These are plain-text descriptions that the PDF parser placed in meta_lines
+    # because no explicit bullet markers were detected; keeping them alongside the
+    # new LLM bullets would duplicate the content.  A line is treated as a
+    # description (not a date/location) when it ends with a sentence-closing mark
+    # ('. ', '? ', '! ') or a plain period at end-of-string AND is not a date-like
+    # string.
+    kept_meta = list(orig.meta_lines)
+    if not orig.bullets and new_bullets and orig.meta_lines:
+        import re as _re
+        _DATE_HINT = _re.compile(r"\b\d{4}\b|\bPresent\b|\bCurrent\b|\bNow\b", _re.IGNORECASE)
+        _SENTENCE_END = _re.compile(r"[.!?]\s*$")
+        cleaned = []
+        for m in orig.meta_lines:
+            t = m.text.strip()
+            if _SENTENCE_END.search(t) and not _DATE_HINT.search(t):
+                _log.debug(
+                    "ROLE_META_DESCRIPTION_STRIP: stripped description-like meta %r",
+                    t[:60],
+                )
+            else:
+                cleaned.append(m)
+        if cleaned != orig.meta_lines:
+            kept_meta = cleaned
+
     return RoleEntry(
         # Strip any column break from the role header — the section heading
         # (or Summary heading) handles right-column placement; a second break
         # on the first role header would cause a spurious column jump.
         header=_strip_col_break_para(orig.header),
-        meta_lines=orig.meta_lines,
+        meta_lines=kept_meta,
         bullets=new_bullets,
         role_id=orig.role_id,
     )
