@@ -1560,7 +1560,7 @@ def _infer_semantic(pm: ParaModel) -> str:
 _EXPERIENCE_NAMES: frozenset[str] = frozenset({
     "experience", "experiences", "work experience", "professional experience",
     "employment history", "employment", "career history",
-    "work history", "professional background",
+    "work history", "professional background", "employment summary",
 })
 _SUMMARY_NAMES: frozenset[str] = frozenset({
     "professional summary", "summary", "objective", "career objective",

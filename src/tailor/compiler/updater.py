@@ -4264,10 +4264,13 @@ def apply_tailored(
             # body_paras; skipping the orphan loop avoids duplicating content
             # that was already consumed into section.roles by _group_roles.
             if any(bp.semantic == "role_header" for bp in section.body_paras):
+                # Skip body_paras already claimed by role meta_lines (Pattern B:
+                # the date paragraph appears in both body_paras and meta_lines).
+                _claimed = {id(pm) for role in section.roles for pm in role.meta_lines}
                 for bp in section.body_paras:
                     if bp.semantic == "role_header":
                         break  # reached first role; stop collecting orphans
-                    if bp.text.strip():
+                    if bp.text.strip() and id(bp) not in _claimed:
                         all_paras.append(bp)
             for role in section.roles:
                 all_paras.append(role.header)
@@ -4295,10 +4298,11 @@ def apply_tailored(
                 all_paras.append(section.heading)
                 if section.semantic_type == "experience" and section.roles:
                     if any(bp.semantic == "role_header" for bp in section.body_paras):
+                        _claimed2 = {id(pm) for role in section.roles for pm in role.meta_lines}
                         for bp in section.body_paras:
                             if bp.semantic == "role_header":
                                 break
-                            if bp.text.strip():
+                            if bp.text.strip() and id(bp) not in _claimed2:
                                 all_paras.append(bp)
                     for role in section.roles:
                         all_paras.append(role.header)

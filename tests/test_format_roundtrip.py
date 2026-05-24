@@ -527,10 +527,11 @@ _KNOWN_BAD_PDFS: dict[str, str] = {
         "Real LLM pipeline is unaffected."
     ),
     "17-Mechanical-Engineer-Editable-Resume-Template-Download-in-docx.pdf": (
-        "Two-column layout: PDF→DOCX pass is clean (49→49 paras), but DOCX-of-DOCX "
-        "stability check fails with 24 text diffs due to table-cell traversal order "
-        "changing between the first and second render passes.  "
-        "Real LLM pipeline is unaffected."
+        "Two-column layout: PDF→DOCX pass is clean (46→46 paras), EMPLOYMENT SUMMARY "
+        "now correctly parsed as experience section.  DOCX-of-DOCX stability check "
+        "fails with 22 text diffs due to table-cell traversal order changing between "
+        "the first and second render passes.  Real LLM pipeline improved (experience "
+        "section now matched)."
     ),
     "27-Engineer-Editable-Resume-Template-Download-in-docx-3.pdf": (
         "Two-column layout: PDF→DOCX pass is clean (50→50 paras), but DOCX-of-DOCX "

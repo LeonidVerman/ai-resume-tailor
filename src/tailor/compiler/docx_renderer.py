@@ -1173,15 +1173,98 @@ def _render_pdf_single_col_with_groups(
             cur = int(ind.get(f"{{{_W}}}left", "0"))
             ind.set(f"{{{_W}}}left", str(max(0, cur - delta_twips)))
 
+    def _role_date_first(role) -> bool:
+        """True when the first meta_line is physically above the role header (date-first layout)."""
+        if not role.meta_lines:
+            return False
+        m0_pp = role.meta_lines[0].paragraph_profile
+        h_pp = role.header.paragraph_profile
+        if m0_pp is None or h_pp is None:
+            return False
+        m0_y = m0_pp.y_top_pt
+        h_y = h_pp.y_top_pt
+        if m0_y is None or h_y is None:
+            return False
+        return m0_y < h_y
+
+    def _role_header_pm(role):
+        """Return a ParaModel for the role header, combining header_extra when present."""
+        if role.header_extra and "|" not in role.header.text:
+            combined = role.header.text.strip() + " | " + " | ".join(
+                he.text.strip() for he in role.header_extra if he.text.strip()
+            )
+            return role.header.with_text(combined)
+        return role.header
+
+    def _emit_role_elems_shifted(role, min_indent: int) -> "list":
+        """Build shifted paragraph elements for a role (used inside table cells)."""
+        result = []
+        hdr_pm = _role_header_pm(role)
+        date_first = _role_date_first(role)
+        if date_first:
+            elem = build_para_element(role.meta_lines[0], doc_part)
+            _shift_indent(elem, min_indent)
+            result.append(elem)
+            elem = build_para_element(hdr_pm, doc_part)
+            _shift_indent(elem, min_indent)
+            result.append(elem)
+            for m in role.meta_lines[1:]:
+                elem = build_para_element(m, doc_part)
+                _shift_indent(elem, min_indent)
+                result.append(elem)
+        else:
+            elem = build_para_element(hdr_pm, doc_part)
+            _shift_indent(elem, min_indent)
+            result.append(elem)
+            for m in role.meta_lines:
+                elem = build_para_element(m, doc_part)
+                _shift_indent(elem, min_indent)
+                result.append(elem)
+        for b in role.bullets:
+            elem = build_para_element(b, doc_part)
+            _shift_indent(elem, min_indent)
+            result.append(elem)
+        return result
+
+    def _emit_role_elems(role) -> "list":
+        """Build paragraph elements for a role (used outside table cells)."""
+        result = []
+        hdr_pm = _role_header_pm(role)
+        date_first = _role_date_first(role)
+        if date_first:
+            result.append(build_para_element(role.meta_lines[0], doc_part))
+            result.append(build_para_element(hdr_pm, doc_part))
+            for m in role.meta_lines[1:]:
+                result.append(build_para_element(m, doc_part))
+        else:
+            result.append(build_para_element(hdr_pm, doc_part))
+            for m in role.meta_lines:
+                result.append(build_para_element(m, doc_part))
+        for b in role.bullets:
+            result.append(build_para_element(b, doc_part))
+        return result
+
     def _build_section_paras_for_cell(sec, min_indent: int) -> "list":
         """Build paragraph elements for a table cell, normalizing indent to cell origin."""
         elems = []
-        for pm in [sec.heading] + list(sec.body_paras):
-            elem = build_para_element(pm, doc_part)
-            _shift_indent(elem, min_indent)
-            elems.append(elem)
-        for role in sec.roles:
-            for pm in [role.header] + list(role.meta_lines) + list(role.bullets):
+        heading_elem = build_para_element(sec.heading, doc_part)
+        _shift_indent(heading_elem, min_indent)
+        elems.append(heading_elem)
+        if sec.semantic_type == "experience" and sec.roles:
+            _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
+            if _has_orphan:
+                _claimed = {id(pm) for role in sec.roles for pm in role.meta_lines}
+                for bp in sec.body_paras:
+                    if bp.semantic == "role_header":
+                        break
+                    if bp.text.strip() and id(bp) not in _claimed:
+                        elem = build_para_element(bp, doc_part)
+                        _shift_indent(elem, min_indent)
+                        elems.append(elem)
+            for role in sec.roles:
+                elems.extend(_emit_role_elems_shifted(role, min_indent))
+        else:
+            for pm in sec.body_paras:
                 elem = build_para_element(pm, doc_part)
                 _shift_indent(elem, min_indent)
                 elems.append(elem)
@@ -1189,14 +1272,22 @@ def _render_pdf_single_col_with_groups(
 
     def _build_section_paras(sec) -> "list":
         elems: list = [build_para_element(sec.heading, doc_part)]
-        for pm in sec.body_paras:
-            elems.append(build_para_element(pm, doc_part))
-        for role in sec.roles:
-            elems.append(build_para_element(role.header, doc_part))
-            for m in role.meta_lines:
-                elems.append(build_para_element(m, doc_part))
-            for b in role.bullets:
-                elems.append(build_para_element(b, doc_part))
+        if sec.semantic_type == "experience" and sec.roles:
+            _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
+            if _has_orphan:
+                # Skip body_paras that are already claimed by role meta_lines
+                # (Pattern B: date appears in both body_paras and role.meta_lines)
+                _claimed = {id(pm) for role in sec.roles for pm in role.meta_lines}
+                for bp in sec.body_paras:
+                    if bp.semantic == "role_header":
+                        break
+                    if bp.text.strip() and id(bp) not in _claimed:
+                        elems.append(build_para_element(bp, doc_part))
+            for role in sec.roles:
+                elems.extend(_emit_role_elems(role))
+        else:
+            for pm in sec.body_paras:
+                elems.append(build_para_element(pm, doc_part))
         return elems
 
     # Header paragraphs first

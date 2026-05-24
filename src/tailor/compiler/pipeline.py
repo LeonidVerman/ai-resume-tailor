@@ -332,7 +332,10 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             sec.semantic_type == "summary"
             or sec.title.lower().strip() in _SUMMARY_TITLES
         )
-        if is_summary and sec.body_paras:
+        # Only inject LLM-extra sections (no section_id).  Original template
+        # sections (section_id set) already occupy their correct body position
+        # and must not be promoted into the header band.
+        if is_summary and sec.body_paras and not sec.section_id:
             summary_idx = i
             break
     if summary_idx is None:
