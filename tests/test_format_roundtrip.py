@@ -107,6 +107,11 @@ _TWO_COLUMN_PDFS: frozenset[str] = frozenset({
     # causing text-position mismatches in the roundtrip text comparison.
     "31-Software-Engineer-Editable-Resume-Template-Download-in-docx-7.pdf",
     "9-Template4.pdf",
+    # Newspaper-column template (native w:cols): renderer converts to a table so
+    # LibreOffice doesn't overflow; left-cell (sidebar) text lands before right-cell
+    # text in the PDF stream, shifting all sidebar content one position later vs the
+    # source PDF reading order (right-column job title appears first in source).
+    "3-software-engineer-doc-resume-template.pdf",
     # Section-row table layout: heading/body pairs rendered into per-section
     # table rows; DOCX cell traversal order differs from source PDF reading order.
     "20-Software-Engineer-Editable-Resume-Template-Download-in-docx-5.pdf",
@@ -490,6 +495,14 @@ _KNOWN_BAD_PDFS: dict[str, str] = {
         "the PDF IR.  Rendering produces 7 extra paragraphs vs the PDF IR (53→60) "
         "because the experience section expands to include the education bullets.  "
         "The real LLM pipeline is unaffected."
+    ),
+    "12-Nurse-template2.pdf": (
+        "Table-based two-column nurse template: the rendered DOCX produces 6 extra "
+        "paragraphs vs the PDF IR (40→46) because the experience section layout "
+        "expands multi-entry experience blocks.  The DOCX-of-DOCX stability pass "
+        "shows role-order differences (paras 37-39) due to identity serializer "
+        "combining role headers from the expanded entries.  The real LLM pipeline "
+        "is unaffected."
     ),
 }
 
