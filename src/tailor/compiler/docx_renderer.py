@@ -1098,6 +1098,45 @@ def _make_full_width_dark_band(
     return tbl
 
 
+def _detect_body_two_col(body_paras) -> "list[tuple] | None":
+    """Return (left_pm, right_pm) row pairs if body_paras form a 2-column grid, else None.
+
+    Detection criteria:
+    - Exactly 2 distinct indent_left_pt values across all body_paras.
+    - Every y_top_pt bucket has at most one para from each indent group.
+    This catches contact-info sub-tables (address on left, phone/email on right)
+    that appear side-by-side in the source PDF but land in the same section body.
+    """
+    if len(body_paras) < 2:
+        return None
+    indents = []
+    for pm in body_paras:
+        pp = pm.paragraph_profile
+        if pp is None or pp.indent_left_pt is None:
+            return None
+        indents.append(pp.indent_left_pt)
+    unique_indents = sorted({round(x) for x in indents})
+    if len(unique_indents) != 2:
+        return None
+    left_ind, right_ind = unique_indents
+    by_y: "dict" = {}
+    for pm in body_paras:
+        pp = pm.paragraph_profile
+        if pp.y_top_pt is None:
+            return None
+        y = round(pp.y_top_pt, 1)
+        ind = round(pp.indent_left_pt)
+        slot = by_y.setdefault(y, {})
+        if ind in slot:
+            return None  # duplicate: not a clean grid
+        slot[ind] = pm
+    rows = []
+    for y in sorted(by_y):
+        row = by_y[y]
+        rows.append((row.get(left_ind), row.get(right_ind)))
+    return rows if rows else None
+
+
 def _detect_same_level_section_groups(sections) -> "list[list[int]]":
     """Return groups (lists of section indices) where headings share the same y_top (±5 pt).
 
@@ -1286,8 +1325,42 @@ def _render_pdf_single_col_with_groups(
             for role in sec.roles:
                 elems.extend(_emit_role_elems(role))
         else:
-            for pm in sec.body_paras:
-                elems.append(build_para_element(pm, doc_part))
+            two_col_rows = _detect_body_two_col(sec.body_paras)
+            if two_col_rows:
+                col_w = text_area_w_twips // 2
+                tbl = etree.Element(f"{{{_W}}}tbl")
+                tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+                tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+                tblW_el.set(f"{{{_W}}}w", str(col_w * 2))
+                tblW_el.set(f"{{{_W}}}type", "dxa")
+                tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+                tblLayout.set(f"{{{_W}}}type", "fixed")
+                tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+                for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+                    brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+                    brd.set(f"{{{_W}}}val", "none")
+                tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+                for side in ("top", "left", "bottom", "right"):
+                    m_el = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+                    m_el.set(f"{{{_W}}}w", "0")
+                    m_el.set(f"{{{_W}}}type", "dxa")
+                for left_pm, right_pm in two_col_rows:
+                    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+                    for pm in (left_pm, right_pm):
+                        tc = etree.SubElement(tr, f"{{{_W}}}tc")
+                        tcPr = etree.SubElement(tc, f"{{{_W}}}tcPr")
+                        tcW = etree.SubElement(tcPr, f"{{{_W}}}tcW")
+                        tcW.set(f"{{{_W}}}w", str(col_w))
+                        tcW.set(f"{{{_W}}}type", "dxa")
+                        etree.SubElement(tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+                        if pm is not None:
+                            tc.append(build_para_element(pm, doc_part))
+                        else:
+                            etree.SubElement(tc, f"{{{_W}}}p")
+                elems.append(tbl)
+            else:
+                for pm in sec.body_paras:
+                    elems.append(build_para_element(pm, doc_part))
         return elems
 
     # Header paragraphs first

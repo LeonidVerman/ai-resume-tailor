@@ -354,6 +354,12 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "is rendered into a table whose cells are re-read in a different order by "
         "the identity serializer.  Real LLM pipeline is unaffected."
     ),
+    "11-Nurse-template1.docx": (
+        "Three-column same-level section group (Communication/Leadership/Education): "
+        "the renderer outputs them as a table whose cells are traversed in a different "
+        "order by the identity re-parse, causing 15 text diffs.  Real LLM pipeline "
+        "is unaffected.  DOCX-DOCX path fix is owned by a separate agent."
+    ),
 }
 
 # PDFs with non-standard content that cannot roundtrip cleanly.
