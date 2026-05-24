@@ -4146,6 +4146,16 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
 
                     orig_ps = cell_paras[ci]
                     c_n = len(orig_ps)
+                    # Detect drawing-only separator cells (no text in any para).
+                    # These are typically vertical dividers sized to the full original
+                    # row height (e.g. sample 14 center divider line at 5 in).
+                    # Cloning them into every split row forces each row to the drawing
+                    # height, producing one page per split row.  Strip the drawings so
+                    # each split row sizes to its actual content.
+                    _cell_has_text = any(
+                        any(t.text for t in p.findall(f".//{{{_W}}}t"))
+                        for p in orig_ps
+                    )
 
                     if ci == tallest_idx:
                         para_slice = orig_ps[slice_start:slice_end]
@@ -4172,7 +4182,15 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                         para_slice = [orig_ps[-1]]
 
                     for p in para_slice:
-                        new_tc.append(deepcopy(p))
+                        new_p = deepcopy(p)
+                        if not _cell_has_text:
+                            # Remove drawings from separator cells so they don't
+                            # force the split row to the drawing's height.
+                            for _dw in list(new_p.findall(f".//{{{_W}}}drawing")):
+                                _dw_parent = _dw.getparent()
+                                if _dw_parent is not None:
+                                    _dw_parent.remove(_dw)
+                        new_tc.append(new_p)
 
                     # Suppress keepNext/keepLines on all paras so LibreOffice
                     # can paginate between rows without the heading style chain.
