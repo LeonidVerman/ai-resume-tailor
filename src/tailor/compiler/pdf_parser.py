@@ -2057,6 +2057,26 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
         pp = header.paragraph_profile if header else None
         return pp.indent_left_pt if pp else 0.0
 
+    def _is_implicit_role_title(pm: ParaModel) -> bool:
+        """True when pm looks like a role title that was mis-classified as paragraph.
+
+        Targets bold ALL-CAPS short paragraphs in two-column layouts whose
+        space_before=0 because they were non-first lines in a cross-column block,
+        preventing _infer_semantic from detecting the Y-gap.
+        """
+        _pp = pm.paragraph_profile
+        if _pp is None or not _pp.bold:
+            return False
+        if _pp.column_id not in ("left", "right"):
+            return False
+        _txt = pm.text.strip()
+        _alpha = re.sub(r"[^a-zA-Z]", "", _txt)
+        if not _alpha or _alpha != _alpha.upper():
+            return False
+        if len(_txt.split()) > 6 or len(_txt) > 50:
+            return False
+        return _pp.indent_left_pt <= _hdr_indent() + 6.0
+
     def _has_list_indent(pm: ParaModel) -> bool:
         """True when pm is indented ≥8 pt more than the role header.
 
@@ -2292,6 +2312,16 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                     _flush()
                     header = pm
                     state = "header"
+                elif _is_implicit_role_title(pm) and (meta or bullets):
+                    # Bold ALL-CAPS short paragraph at header indent inside a
+                    # two-column experience section — likely a role title whose
+                    # space_before was 0 because it was a non-first line in a
+                    # cross-column text block (so _infer_semantic couldn't detect
+                    # the Y-gap and classify it as section_heading).
+                    _flush()
+                    pm.semantic = "role_header"
+                    header = pm
+                    state = "header"
                 else:
                     # Non-indented paragraph → flush pending to meta, keep as meta.
                     meta.extend(pending)
@@ -2358,6 +2388,14 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 ):
                     # Pattern A new-role from bullets state (title→date format).
                     _flush()
+                    header = pm
+                    state = "header"
+                elif _is_implicit_role_title(pm):
+                    # Bold ALL-CAPS short paragraph at header indent in a two-column
+                    # layout — likely a role title mis-classified as paragraph due
+                    # to space_before=0 from cross-column block line position.
+                    _flush()
+                    pm.semantic = "role_header"
                     header = pm
                     state = "header"
                 elif len(bullets) >= 2:
