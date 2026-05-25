@@ -611,6 +611,73 @@ def _extract_section_bg_rects(
     return result
 
 
+def _pixel_sample_section_bands(
+    page, split_x: float, col_bg_hex: str
+) -> list[tuple[float, float, float, float, str]]:
+    """Detect colored horizontal bands in the left column via pixel sampling.
+
+    Fallback for raster-background PDFs where get_drawings() returns nothing.
+    Samples the left column center at 2pt intervals and groups consecutive
+    rows whose luminance differs significantly from the column background.
+
+    Returns list of (x0, y0, x1, y1, hex_color) matching the section_bg_rects
+    format so they can be used directly for background_color assignment.
+    """
+    try:
+        import fitz as _fitz
+        ph = page.rect.height
+        sample_x = split_x * 0.5
+        mat = _fitz.Matrix(1, 1)
+
+        col_r = int(col_bg_hex[0:2], 16)
+        col_g = int(col_bg_hex[2:4], 16)
+        col_b = int(col_bg_hex[4:6], 16)
+        col_lum = (col_r + col_g + col_b) / 3
+
+        samples: list[tuple[float, int, int, int]] = []
+        y = 0.0
+        while y < ph:
+            clip = _fitz.Rect(sample_x - 1, y, sample_x + 1, y + 1)
+            pix = page.get_pixmap(matrix=mat, clip=clip, alpha=False)
+            if pix.samples and pix.n >= 3:
+                r, g, b = pix.samples[0], pix.samples[1], pix.samples[2]
+                samples.append((y, r, g, b))
+            y += 2.0
+
+        MIN_BAND_H = 8.0
+        LUM_THRESH = 40.0  # min luminance difference from col_bg to qualify
+
+        bands: list[tuple[float, float, float, float, str]] = []
+        band_start: float | None = None
+        band_color: str | None = None
+
+        for y_pos, r, g, b in samples:
+            lum = (r + g + b) / 3
+            lum_diff = abs(lum - col_lum)
+            is_band_pixel = lum_diff > LUM_THRESH and lum < 245
+            hex_c = f"{r:02x}{g:02x}{b:02x}" if is_band_pixel else None
+
+            if is_band_pixel:
+                if band_start is None or hex_c != band_color:
+                    if band_start is not None and (y_pos - band_start) >= MIN_BAND_H:
+                        bands.append((0.0, band_start, split_x, y_pos, band_color))  # type: ignore[arg-type]
+                    band_start = y_pos
+                    band_color = hex_c
+            else:
+                if band_start is not None:
+                    if (y_pos - band_start) >= MIN_BAND_H:
+                        bands.append((0.0, band_start, split_x, y_pos, band_color))  # type: ignore[arg-type]
+                    band_start = None
+                    band_color = None
+
+        if band_start is not None and (ph - band_start) >= MIN_BAND_H:
+            bands.append((0.0, band_start, split_x, ph, band_color))  # type: ignore[arg-type]
+
+        return bands
+    except Exception:
+        return []
+
+
 def _extract_icon_map(
     page, split_x: float | None
 ) -> dict[tuple[int, int], bytes]:
@@ -2743,6 +2810,40 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     skip_pages = _deduplicate_page_indices(doc)
     hf_texts = _detect_header_footer_texts(doc, skip_pages=skip_pages)
     raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt, layout, skip_pages)
+
+    # For raster-background two-column PDFs (where get_drawings() returns nothing and
+    # section_bg_rects stays empty), section headings may sit on colored raster bands
+    # that can only be detected via pixel sampling at the exact paragraph y-position.
+    # Apply this fallback only for left-column paras with no background_color detected.
+    if layout.column_split_x is not None and layout.left_col_bg_color:
+        try:
+            import fitz as _fitz
+            _page0 = doc[0]
+            _mat_1 = _fitz.Matrix(1, 1)
+            _sample_x = layout.column_split_x * 0.5
+            _c_lum = sum(
+                int(layout.left_col_bg_color[i * 2: i * 2 + 2], 16) for i in range(3)
+            ) / 3
+            for _pm in raw_paras:
+                _pp = _pm.paragraph_profile
+                if (
+                    _pp is None
+                    or _pp.column_id != "left"
+                    or _pp.background_color is not None
+                    or _pp.y_top_pt is None
+                ):
+                    continue
+                _y = _pp.y_top_pt
+                _fs = _pp.font_size_pt or 12.0
+                _clip = _fitz.Rect(_sample_x - 1, _y, _sample_x + 1, _y + _fs * 0.6)
+                _pix = _page0.get_pixmap(matrix=_mat_1, clip=_clip, alpha=False)
+                if _pix.samples and _pix.n >= 3:
+                    _r, _g, _b = _pix.samples[0], _pix.samples[1], _pix.samples[2]
+                    _lum = (_r + _g + _b) / 3
+                    if abs(_lum - _c_lum) > 40 and _lum < 245:
+                        _pp.background_color = f"{_r:02x}{_g:02x}{_b:02x}"
+        except Exception:
+            pass
 
     # Two-column documents: run section grouping independently for each column
     # so that left-column section headings (e.g. "CONTACT") do not trigger
