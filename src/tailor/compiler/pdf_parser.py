@@ -1790,12 +1790,16 @@ def _extract_paragraphs(
                 # 6 pt + 11 pt line height = 17 pt clears the threshold),
                 # and cap maximum to prevent PDF absolute-position gaps from
                 # inflating DOCX flow-layout height.
+                # Cap raised to 10 pt (was 6 pt): with Priority 1 bullet
+                # compaction in place, templates with generous inter-section
+                # spacing (8–10 pt) no longer risk overflow, and the extra
+                # breathing faithfully reproduces the original visual rhythm.
                 if pm.semantic == "section_heading" and pm.paragraph_profile:
-                    _heading_sb = min(_per_line_sb, 6.0)
+                    _heading_sb = min(_per_line_sb, 10.0)
                     if _heading_sb > pm.paragraph_profile.space_before_pt:
                         pm.paragraph_profile.space_before_pt = _heading_sb
-                    elif pm.paragraph_profile.space_before_pt > 6.0:
-                        pm.paragraph_profile.space_before_pt = 6.0
+                    elif pm.paragraph_profile.space_before_pt > 10.0:
+                        pm.paragraph_profile.space_before_pt = 10.0
                     # Preserve the left-column heading indent so it aligns
                     # with the original PDF position.  The renderer adds the
                     # page left-margin offset on top, placing the heading at
@@ -1804,7 +1808,9 @@ def _extract_paragraphs(
                     # the fresh-Document rendering path avoids that concern.
                 # Global cap: PDF absolute-position inter-block gaps inflate
                 # DOCX flow-layout height.  Apply per-type limits:
-                #   role_header: 4 pt max (block-level gap, needs some spacing)
+                #   role_header: 6 pt max (was 4 pt — with bullet compaction,
+                #     inter-role spacing can faithfully reflect the original)
+                #   two-col role_header: same 6 pt cap
                 #   single-column body paras (paragraph, role_meta, …): 1 pt max
                 #     to avoid source PDF body-text gaps (often 2–4 pt) from
                 #     accumulating across 30–50 paragraphs and overflowing the
@@ -1817,8 +1823,8 @@ def _extract_paragraphs(
                     sb = pm.paragraph_profile.space_before_pt
                     _is_two_col = pm.paragraph_profile.column_id in ("left", "right")
                     if pm.semantic == "role_header":
-                        if sb > 4.0:
-                            pm.paragraph_profile.space_before_pt = 4.0
+                        if sb > 6.0:
+                            pm.paragraph_profile.space_before_pt = 6.0
                     elif _is_two_col:
                         if sb > 3.0:
                             pm.paragraph_profile.space_before_pt = 3.0
