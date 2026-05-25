@@ -653,6 +653,108 @@ def _has_bullet_dot(bullet_dot_ys: frozenset, para_y0: float) -> bool:
     return any(abs(y - dot_y) <= 8 for dot_y in bullet_dot_ys)
 
 
+def _extract_page_images(fitz_doc, page_index: int = 0) -> "list":
+    """Extract meaningful raster images from a PDF page.
+
+    Skips:
+    - Full-page background images (>= 85 % of page in both dimensions)
+    - Tiny icons (< 25 pt) — handled separately by ``_extract_icon_map``
+    - Thin separator lines (height < 4 pt)
+    - Images reused at > 3 positions (repeated bullets / rule tiles)
+
+    Classifies survivors as:
+    - ``'profile_photo'``: roughly square, width < 40 % of page width
+    - ``'header_footer_decor'``: top or bottom 25 % of the page
+    - ``'body_decor'``: everything else
+
+    Returns a list of ``PageImageBlock`` instances (runtime-only; not serialised).
+    """
+    import fitz as _fitz
+    from tailor.compiler.models import PageImageBlock
+
+    try:
+        page = fitz_doc[page_index]
+    except Exception:
+        return []
+
+    pw = page.rect.width
+    ph = page.rect.height
+    result: list = []
+    seen_xrefs: set = set()
+
+    try:
+        all_imgs = page.get_images(full=True)
+    except Exception:
+        return []
+
+    for img_info in all_imgs:
+        xref = img_info[0]
+        if xref in seen_xrefs:
+            continue
+        seen_xrefs.add(xref)
+
+        try:
+            bboxes = page.get_image_rects(xref)
+        except Exception:
+            continue
+        if not bboxes:
+            continue
+
+        # Images reused at many positions are repeated UI elements (bullets, tiles)
+        if len(bboxes) > 3:
+            continue
+
+        bbox = bboxes[0]
+        bw = float(bbox.width)
+        bh = float(bbox.height)
+        x0 = float(bbox.x0)
+        y0 = float(bbox.y0)
+
+        # --- Filtering ---
+        if bw >= pw * 0.85 and bh >= ph * 0.85:
+            continue  # full-page background
+
+        if bw < 25.0 or bh < 25.0:
+            continue  # tiny icon (handled by _extract_icon_map)
+
+        if bh < 4.0:
+            continue  # separator / ruling line
+
+        # --- Classification ---
+        aspect = max(bw, bh) / max(min(bw, bh), 1.0)
+        is_squarish = aspect < 2.5
+        if is_squarish and bw < pw * 0.45 and bh < ph * 0.40:
+            category = "profile_photo"
+        elif y0 < ph * 0.25 or (y0 + bh) > ph * 0.78:
+            category = "header_footer_decor"
+        else:
+            category = "body_decor"
+
+        # --- Extraction ---
+        try:
+            pix = _fitz.Pixmap(fitz_doc, xref)
+            # Ensure RGB (no CMYK, no Alpha)
+            if pix.n > 4 or pix.colorspace != _fitz.csRGB:
+                pix = _fitz.Pixmap(_fitz.csRGB, pix)
+            if pix.alpha:
+                pix = _fitz.Pixmap(pix, 0)
+            png_bytes = pix.tobytes("png")
+        except Exception:
+            continue
+
+        result.append(PageImageBlock(
+            image_bytes=png_bytes,
+            x_pt=x0,
+            y_pt=y0,
+            width_pt=bw,
+            height_pt=bh,
+            category=category,
+            page_index=page_index,
+        ))
+
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Layout extraction
 # ---------------------------------------------------------------------------
@@ -2674,13 +2776,14 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
             return 1 if col == "left" else (2 if col == "right" else 0)
         all_paras.sort(key=_col_order)
 
-    doc = ResumeDocument(
+    resume_doc = ResumeDocument(
         header_paras=header_paras,
         sections=sections,
         layout=layout,
         all_paras=all_paras,
         source_kind="pdf",
     )
+    resume_doc.page_images = _extract_page_images(doc, page_index=0)
     from tailor.compiler.models import assign_stable_ids
-    assign_stable_ids(doc)
-    return doc
+    assign_stable_ids(resume_doc)
+    return resume_doc

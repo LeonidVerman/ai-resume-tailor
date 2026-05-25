@@ -17,6 +17,25 @@ from typing import Any
 
 
 @dataclass
+class PageImageBlock:
+    """A raster image extracted from a PDF page, with page-relative position.
+
+    All coordinates are in PDF points (72 pt per inch), measured from the
+    page top-left corner (y increases downward).  Not serialised to JSON —
+    runtime-only, like ``ParagraphProfile.inline_image_bytes``.
+    """
+
+    image_bytes: bytes   # raw PNG bytes
+    x_pt: float          # left edge from page left
+    y_pt: float          # top edge from page top
+    width_pt: float      # display width on page (points)
+    height_pt: float     # display height on page (points)
+    # 'profile_photo' | 'header_footer_decor' | 'body_decor'
+    category: str = "body_decor"
+    page_index: int = 0
+
+
+@dataclass
 class ParagraphProfile:
     """Formatting profile for PDF-sourced paragraphs.
 
@@ -449,6 +468,9 @@ class ResumeDocument:
     # Footer paragraphs (contact strip, icons) preserved from the original PDF
     # template and rendered as a dark band at the bottom.  Empty for most templates.
     footer_paras: list[ParaModel] = field(default_factory=list)
+    # Raster images extracted from the source PDF (profile photos, decorative
+    # headers/footers, etc.).  Runtime-only — not serialised to JSON.
+    page_images: list["PageImageBlock"] = field(default_factory=list)
     body_items: list[Any] | None = None  # list[ParaModel | TableBlock]; None for PDF/deserialised
     label_column_fixed: bool = False     # True when label-column layout reordering was applied
     table_column_layout_fixed: bool = False  # True when newspaper/table multi-column fix applied
