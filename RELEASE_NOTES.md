@@ -1,5 +1,21 @@
 # Release Notes
 
+## 0.8.7.BETA — 2026-05-24
+
+### Bug fixes
+- **#58 DOCX rendering - when content enlarged, some visual elements still stay in the original positions**: floating anchor drawings and behindDoc shapes are now repositioned correctly when content overflows; tall table-anchored drawings are extracted and re-inserted at the body level so they don't pin visual elements to stale positions.
+- **#59 DOCX rendering - when section is content overwritten by LLM, leave the original title**: section heading paragraphs are now preserved verbatim from the template; only body/bullet paragraphs receive LLM-injected text.
+- **#61 DOCX rendering - in multi column layout, content sometimes doesn't fit borders**: oversized alignment spacers are collapsed; display-scale fonts are capped; ext-slot SDTs are cleared; separator-cell drawings are stripped from split rows so row heights match actual content.
+- **#62 PDF rendering - incorrect text style**: PDF-extracted text colours are stripped from content paragraphs; role header colours are restored from the template proto; heading-style bold bleed into body paragraphs is prevented.
+- **#63 DOCX rendering - unwanted chaotic line breaks**: post-summary spacer paragraphs are compressed to near-zero height; column-break padding is preserved; synthetic PROFESSIONAL SUMMARY headings are removed; textWrapping line breaks are preserved.
+- **#64 DOCX rendering - check that all LLM output text of Summary/Experience/Skills is pasted across all 40 samples**: summary injection extended to right-column newspaper templates; Technical Skills section moved after References for sidebar templates; inline summary injected into body row (not header row) for table templates.
+- **#65 PDF rendering - some samples contains both LLM and original Summary**: inline summary is now skipped for header-row tables to prevent duplicate summary content appearing in both the table header and the body.
+- **#66 PDF rendering - broken layout**: two-column PDF→DOCX rendering restored with correct section-level Y-sort, consistent bullet indentation, and proper column-break paragraph placement.
+- **#68 PDF rendering - table layout is sometimes strange**: oversized table rows are split at Heading1/2 boundaries so LibreOffice can paginate multi-column layouts; nested subtables are removed from non-first split rows to prevent duplication; drawing-only separator cells have their drawings stripped to prevent forced row height.
+- **#76 PDF rendering - person name/title absent**: merged header is restored by rendering header paragraphs before the table; right indent on header paragraphs inside table cells is cleared; blip (photo) clone on page 2 is suppressed.
+
+---
+
 ## 0.8.6.BETA — 2026-05-11
 
 ### Bug fixes
