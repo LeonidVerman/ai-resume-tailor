@@ -4065,6 +4065,27 @@ def apply_tailored(
                     "apply_tailored: discarding other-type extra %r "
                     "(verbatim other sections exist)", llm_s.heading,
                 )
+            elif (
+                not _layout_bound
+                and llm_s.semantic_type == "skills"
+                and not template_has_skills
+                and header_skill_target is None
+            ):
+                # PDF path (non-layout-bound): template has no skills section and no
+                # header skills block.  Appending an orphan "Technical Skills" at the
+                # end clashes with the template's original design (e.g. nurse templates
+                # that embed competencies as narrative paragraphs).  Drop silently.
+                _log.debug(
+                    "apply_tailored: discarding PDF orphan skills %r "
+                    "(no template skills section or header target)", llm_s.heading,
+                )
+            elif not llm_s.body_lines and not llm_s.roles:
+                # Empty extra section (no content, no roles) — discard.  These arise
+                # when the LLM emits a stale section marker (e.g. "Additional") whose
+                # real body lines were emitted as child sections that matched originals.
+                _log.debug(
+                    "apply_tailored: discarding empty extra section %r", llm_s.heading,
+                )
             else:
                 llm_order_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
 
