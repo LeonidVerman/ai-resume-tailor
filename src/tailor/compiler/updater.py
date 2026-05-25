@@ -222,6 +222,24 @@ def _match_sections(
             result_pairs.append((os_, None))
             llm_indices.append(None)
 
+    # Diagnostic: emit one log line per section showing the mapping result.
+    for os_, ls in result_pairs:
+        if ls is not None:
+            _log.debug(
+                "SECTION_MAP: template=%r(type=%s) → llm=%r(type=%s)",
+                os_.title[:40], os_.semantic_type, ls.heading[:40], ls.semantic_type,
+            )
+        else:
+            _log.debug(
+                "SECTION_MAP: template=%r(type=%s) → [verbatim, no llm match]",
+                os_.title[:40], os_.semantic_type,
+            )
+    for ls in extras:
+        _log.debug(
+            "SECTION_MAP: llm=%r(type=%s) → [extra, no template match]",
+            ls.heading[:40], ls.semantic_type,
+        )
+
     return _MatchResult(pairs=result_pairs, extras=extras, llm_indices=llm_indices)
 
 
@@ -914,6 +932,17 @@ def _update_body_section(
         if _anchor_pid:
             _body_extra_injections.setdefault(_anchor_pid, []).append(extra_pm)
         new_body.append(extra_pm)
+
+    # Diagnostic: section replacement summary.
+    _n_orig = len(content_paras)
+    _n_inserted = min(len(updated), _n_orig)
+    _n_extra = max(0, len(updated) - _n_orig)
+    _n_dropped = max(0, _n_orig - len(updated))
+    _log.debug(
+        "BODY_REPLACE: section=%r orig_content=%d llm_lines=%d "
+        "replaced=%d extra=%d dropped=%d",
+        orig.title[:40], _n_orig, len(llm_lines), _n_inserted, _n_extra, _n_dropped,
+    )
 
     # Defensive copy of the heading ParaModel so that any later in-place
     # mutation of orig.heading.text (e.g. by apply_tailored's extras path
