@@ -455,6 +455,43 @@ def _extract_header_bg(page) -> tuple[str | None, float]:
     return best_color, best_y1
 
 
+def _pixel_sample_col_bg(
+    page, x_center: float, y_start: float, y_end: float
+) -> str | None:
+    """Pixel-sample a vertical strip for a consistent non-white background color.
+
+    Samples at x=x_center across [y_start, y_end] in 8 steps.  Returns the
+    dominant non-white color as hex RRGGBB when ≥ 4 samples agree, else None.
+    Used as a fallback for raster-background PDFs where get_drawings() is empty.
+    """
+    import fitz as _fitz
+    from collections import Counter as _Counter
+
+    colors: list = []
+    step = max(1.0, (y_end - y_start) / 8.0)
+    for i in range(8):
+        y = y_start + (i + 0.5) * step
+        try:
+            clip = _fitz.Rect(x_center - 1, y, x_center + 1, y + 1)
+            pix = page.get_pixmap(matrix=_fitz.Matrix(1, 1), clip=clip, alpha=False)
+            if pix.samples and pix.n >= 3:
+                r, g, b = pix.samples[0], pix.samples[1], pix.samples[2]
+                if (r + g + b) / 3 < 225:  # not near-white
+                    colors.append((r, g, b))
+        except Exception:
+            continue
+
+    if len(colors) < 4:
+        return None
+    dominant, count = _Counter(colors).most_common(1)[0]
+    if count < len(colors) * 0.4:
+        return None
+    r, g, b = dominant
+    if (r + g + b) / 3 >= 225:
+        return None
+    return f"{r:02x}{g:02x}{b:02x}"
+
+
 def _extract_col_info(
     page, gap_midpoint: float | None
 ) -> tuple[str | None, str | None, float | None]:
@@ -467,11 +504,15 @@ def _extract_col_info(
     visual_split_x is the right edge (x1) of the largest left-column rect —
     i.e. the visual boundary of the sidebar, which is more accurate than the
     text-block gap midpoint for column-width calculations.
+
+    If no suitable vector drawings are found and gap_midpoint is known, falls
+    back to pixel-sampling the column centres (handles raster-background PDFs
+    like templates whose background is a single full-page image XObject).
     """
     try:
         drawings = page.get_drawings()
     except Exception:
-        return None, None, None
+        drawings = []
 
     pw = page.rect.width
     ph = page.rect.height
@@ -509,6 +550,17 @@ def _extract_col_info(
                 visual_split_x = x1  # right edge of the largest sidebar rect
         else:
             right_bg = hex_color
+
+    # Pixel-sampling fallback: raster-background PDFs have 0 drawings but still
+    # show a colored sidebar.  Sample the left column centre if nothing was found.
+    if left_bg is None and gap_midpoint is not None and gap_midpoint > pw * 0.10:
+        left_center_x = gap_midpoint * 0.35
+        sampled = _pixel_sample_col_bg(page, left_center_x, ph * 0.15, ph * 0.85)
+        if sampled is not None:
+            left_bg = sampled
+            # Use the text-block gap as visual split when no drawing rect exists.
+            if visual_split_x is None:
+                visual_split_x = gap_midpoint
 
     return left_bg, right_bg, visual_split_x
 
@@ -651,6 +703,110 @@ def _has_bullet_dot(bullet_dot_ys: frozenset, para_y0: float) -> bool:
     """Return True if a bullet dot exists within 8 pt of *para_y0*."""
     y = round(para_y0)
     return any(abs(y - dot_y) <= 8 for dot_y in bullet_dot_ys)
+
+
+def _make_solid_color_png(width_pt: float, height_pt: float, hex_color: str) -> bytes:
+    """Create a solid-color PNG of the given dimensions at 2× resolution."""
+    import fitz as _fitz
+
+    scale = 2.0
+    w_px = max(4, int(width_pt * scale))
+    h_px = max(4, int(height_pt * scale))
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+    pix = _fitz.Pixmap(_fitz.csRGB, _fitz.IRect(0, 0, w_px, h_px), False)
+    pix.set_rect(pix.irect, (r, g, b))
+    return pix.tobytes("png")
+
+
+def _extract_decorative_vector_images(page) -> "list":
+    """Extract large decorative filled regions from vector drawings as PageImageBlock.
+
+    Generates synthetic solid-color PNG images for large filled rectangles
+    (sidebars, header/footer bands, decorative section blocks) so they can be
+    inserted as behind-text floating images in the rendered DOCX.
+
+    Covers regions that ``_extract_col_info`` already uses for ``w:shd`` cell
+    backgrounds AND regions outside the column table (footer bands, decorative
+    mid-page blocks).
+
+    Thresholds:
+    - area >= 3 % of the page  (reduces noise from tiny decorations)
+    - fill is non-white (luminance < 240)
+    - height >= 5 pt  (excludes hairline rules)
+    """
+    from tailor.compiler.models import PageImageBlock
+
+    try:
+        drawings = page.get_drawings()
+    except Exception:
+        return []
+
+    pw = page.rect.width
+    ph = page.rect.height
+    min_area = pw * ph * 0.03
+
+    seen: set = set()
+    result: list = []
+
+    for d in drawings:
+        fill = d.get("fill")
+        if fill is None:
+            continue
+        rect = d.get("rect")
+        if rect is None:
+            continue
+
+        x0, y0, x1, y1 = rect
+        w, h = x1 - x0, y1 - y0
+        if w * h < min_area:
+            continue
+        if h < 5.0:
+            continue
+
+        hex_color = _fitz_color_to_hex(fill)
+        if hex_color is None:
+            continue
+
+        # Skip near-white fills (nothing to overlay)
+        r_c = int(hex_color[0:2], 16)
+        g_c = int(hex_color[2:4], 16)
+        b_c = int(hex_color[4:6], 16)
+        if (r_c + g_c + b_c) / 3 >= 240:
+            continue
+
+        key = (round(x0), round(y0), round(x1), round(y1))
+        if key in seen:
+            continue
+        seen.add(key)
+
+        # Classify
+        is_full_w = w > pw * 0.75
+        is_sidebar = (x0 < pw * 0.10 or x1 > pw * 0.90) and w < pw * 0.65 and h > ph * 0.12
+        if is_full_w and y0 < ph * 0.20:
+            category = "header_band"
+        elif is_full_w and y1 > ph * 0.75:
+            category = "footer_band"
+        elif is_sidebar:
+            category = "sidebar_bg"
+        else:
+            category = "body_decor"
+
+        try:
+            png_bytes = _make_solid_color_png(w, h, hex_color)
+        except Exception:
+            continue
+
+        result.append(PageImageBlock(
+            image_bytes=png_bytes,
+            x_pt=x0, y_pt=y0,
+            width_pt=w, height_pt=h,
+            category=category,
+            page_index=0,
+        ))
+
+    return result
 
 
 def _extract_page_images(fitz_doc, page_index: int = 0) -> "list":
@@ -973,12 +1129,41 @@ def _detect_column_split(
     # Including that block's x0 creates a spurious gap candidate and causes the
     # detector to return the wrong split.  Using body-only blocks removes those
     # false x0 anchors so the real inter-column gap is found instead.
+    #
+    # Additionally, use SPAN x0 positions for the distribution analysis instead
+    # of block x0 positions.  PyMuPDF sometimes merges adjacent two-column
+    # headings at the same Y into a single wide block (e.g. "Experience Education"
+    # from x=65 to x=383).  That merged block's x0 (65) is correct for the left
+    # column, but it hides the right column's x0 (305) from the gap detection.
+    # Using span-level x0 positions captures both column starts from the same
+    # merged block, so the true inter-column gap is visible.  Wide BLOCKS (≥ 50 %
+    # page width) are still kept in the bridging check as before.
     top_cutoff = page_height * 0.24 if page_height > 0 else 0.0
-    x0s = sorted({
-        round(blk["bbox"][0])
-        for blk in blocks
-        if blk.get("type") == 0 and blk["bbox"][1] >= top_cutoff
-    })
+    # Build a frequency map of x0 positions (rounded to nearest int) across all
+    # body blocks (y >= top_cutoff).  An x0 position that appears in only ONE
+    # block is likely a right-aligned element within a column (e.g. a date
+    # "2023" at x=233 in a column whose body starts at x=65).  True column
+    # starts appear in multiple blocks (section headings, role headers, bullets,
+    # body text all share the same left edge).
+    # Positions appearing in >= 2 blocks are kept as column-boundary candidates.
+    _x0_freq: dict[int, int] = {}
+    for blk in blocks:
+        if blk.get("type") != 0 or blk["bbox"][1] < top_cutoff:
+            continue
+        rx0 = round(blk["bbox"][0])
+        _x0_freq[rx0] = _x0_freq.get(rx0, 0) + 1
+    # Always keep positions with 2+ blocks; also allow isolated positions that
+    # are within 5 pt of another position (they form the same cluster).
+    _kept: set[int] = set()
+    for rx0, cnt in _x0_freq.items():
+        if cnt >= 2:
+            _kept.add(rx0)
+    # Add singleton positions that are clustered with a kept position
+    for rx0, cnt in _x0_freq.items():
+        if cnt < 2:
+            if any(abs(rx0 - k) <= 5 for k in _kept):
+                _kept.add(rx0)
+    x0s = sorted(_kept)
     if len(x0s) < 2:
         return None
 
@@ -1006,10 +1191,13 @@ def _detect_column_split(
                 _adjacent_sig += 1
     if _adjacent_sig >= 2:
         return None
-    # Full-width elements that span ≥ 50 % of the page width are cross-column
-    # design elements (e.g. name banner, summary paragraph, section heading
-    # that overflows visually) and should not veto the column split.
-    wide_block_min = page_width * 0.50
+    # Blocks spanning ≥ 45 % of the page width are treated as cross-column
+    # design elements (e.g. name banner, summary paragraph, or PyMuPDF-merged
+    # two-column headings like "Experience Education" at x0=65 x1=350).
+    # These are excluded from the bridging check so they do not veto a valid
+    # column split.  45 % rather than 50 % catches narrower merged blocks that
+    # still straddle the column boundary.
+    wide_block_min = page_width * 0.45
 
     for i in range(len(x0s) - 1):
         gap = x0s[i + 1] - x0s[i]
@@ -2783,7 +2971,12 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
         all_paras=all_paras,
         source_kind="pdf",
     )
-    resume_doc.page_images = _extract_page_images(doc, page_index=0)
+    # Raster images (profile photos, footer bars, etc.)
+    raster_images = _extract_page_images(doc, page_index=0)
+    # Solid-color overlays from vector drawing regions (sidebars, header/footer bands).
+    # Prepended so they render behind raster images and text.
+    vector_images = _extract_decorative_vector_images(doc[0])
+    resume_doc.page_images = vector_images + raster_images
     from tailor.compiler.models import assign_stable_ids
     assign_stable_ids(resume_doc)
     return resume_doc
