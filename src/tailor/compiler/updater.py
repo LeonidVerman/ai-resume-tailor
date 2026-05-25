@@ -143,9 +143,14 @@ def _match_sections(
                 break
 
     # Pass 3: skill-title similarity — match LLM "skills" sections to template
-    # sections whose title contains "skill" (e.g. "Skills & Abilities").  Handles
-    # templates where the skills section is classified as "other" rather than "skills"
-    # because its heading ("Skills & Abilities") was not in the parser's exact list.
+    # sections whose title contains skills-related keywords.  Handles templates
+    # where the skills section uses a different name ("Skills & Abilities",
+    # "Proficiency", "Competencies", "Technical Expertise", "Tools", etc.) and
+    # was classified as "other" rather than "skills" by the semantic parser.
+    _SKILL_TITLE_KWS = (
+        "skill", "proficien", "abilit", "competenc", "expertise",
+        "technolog", "tools", "stack", "technical",
+    )
     for li, ls in enumerate(llm):
         if li in used_llm:
             continue
@@ -154,10 +159,15 @@ def _match_sections(
         for oi, os_ in enumerate(orig):
             if oi in used_orig:
                 continue
-            if "skill" in os_.title.lower():
+            title_lo = os_.title.lower()
+            if any(kw in title_lo for kw in _SKILL_TITLE_KWS):
                 pairs.append((oi, li))
                 used_orig.add(oi)
                 used_llm.add(li)
+                _log.debug(
+                    "SKILLS_TITLE_MATCH: LLM %r → template %r (semantic=%s)",
+                    ls.heading, os_.title, os_.semantic_type,
+                )
                 break
 
     unmatched_llm = [li for li in range(len(llm)) if li not in used_llm]
