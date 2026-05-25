@@ -110,12 +110,20 @@ def _match_sections(
     used_orig: set[int] = set()
     pairs: list[tuple[int, int]] = []   # (orig_idx, llm_idx)
 
-    # Pass 1: exact heading match (case-insensitive)
+    # Pass 1: exact heading match (case-insensitive).
+    # Guard: skip when the LLM section is semantic=other but the template section
+    # is a generated content type (skills/experience/education/certifications).
+    # This prevents a verbatim LLM "MY QUALIFICATIONS" (other) from consuming the
+    # template's "MY QUALIFICATIONS" (skills) slot before the actual LLM skills
+    # section ("TECHNICAL SKILLS", semantic=skills) can match via Pass 2.
+    _GENERATED_TYPES: frozenset[str] = frozenset({"skills", "experience", "education", "certifications"})
     for li, ls in enumerate(llm):
         for oi, os_ in enumerate(orig):
             if oi in used_orig:
                 continue
             if os_.title.lower() == ls.heading.lower():
+                if ls.semantic_type == "other" and os_.semantic_type in _GENERATED_TYPES:
+                    continue  # let Pass 2 semantic match take priority
                 pairs.append((oi, li))
                 used_orig.add(oi)
                 used_llm.add(li)
@@ -176,9 +184,18 @@ def _match_sections(
         # All content originals matched — extras are new sections added by the LLM.
         # Drop extras that belong to locked types (e.g. Education, Certifications):
         # these are verbatim in the template and LLM output of them should be ignored.
+        # Also suppress LLM "other" sections whose heading text matches a template
+        # section that was already matched to a different LLM section — e.g. a
+        # verbatim "MY QUALIFICATIONS" (other) when the template's MY QUALIFICATIONS
+        # was matched to "TECHNICAL SKILLS" via semantic type in Pass 2.
+        _matched_orig_titles: set[str] = {orig[oi].title.lower() for oi in used_orig}
         extras = [
             llm[li] for li in unmatched_llm
             if llm[li].semantic_type not in _LOCKED_SEMANTIC_TYPES
+            and not (
+                llm[li].semantic_type == "other"
+                and llm[li].heading.lower() in _matched_orig_titles
+            )
         ]
     else:
         extras = []
@@ -225,8 +242,11 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     # Extracting only the first pipe segment restores the 1-line title format
     # so the company and date (already in their own body_para/meta slots) are
     # not duplicated and the section footprint matches the original template.
+    _header_rest: list[str] = []   # pipe segments beyond the title (company, date)
     if layout_bound and "|" not in orig.header.text.strip() and "|" in llm.header:
-        _header_text = llm.header.split("|")[0].strip()
+        _parts = [p.strip() for p in llm.header.split("|")]
+        _header_text = _parts[0]
+        _header_rest = _parts[1:]
         _log.debug(
             "ROLE_HEADER_FORMAT_PRESERVED: title-only original; extracted %r from %r",
             _header_text, llm.header[:60],
@@ -242,16 +262,41 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     header_extra_texts = {pm.text.strip().lower() for pm in orig.header_extra}
     llm_meta = [m for m in llm.meta_lines if m.strip().lower() not in header_extra_texts]
 
+    # When the header-only split was applied and the LLM provided no separate meta
+    # lines, the remaining pipe segments (company, date) would otherwise be silently
+    # discarded.  Recover them as a synthetic meta entry but ONLY when the template's
+    # single meta is date-only (starts with a digit), meaning it has no company slot.
+    # Templates whose meta already includes the company name are left unchanged so
+    # we don't overwrite a correct template value with the LLM's formatting.
+    if (
+        not llm_meta
+        and _header_rest
+        and orig.meta_lines
+        and orig.meta_lines[0].text.strip()[:1].isdigit()
+    ):
+        _synthetic = " | ".join(_header_rest)
+        llm_meta = [_synthetic]
+        _log.debug(
+            "ROLE_HEADER_REST_RECOVERED: date-only meta slot; injecting %r",
+            _synthetic[:60],
+        )
+
     # Meta lines: reuse original protos; in layout-bound mode drop extras.
+    # When the LLM provides no meta lines (e.g. experience dates used "20XX"
+    # placeholders that were not recognised as dates), preserve the template's
+    # original meta lines verbatim so the role's date text is not lost.
     new_meta: list[ParaModel] = []
-    for i, meta_text in enumerate(llm_meta):
-        if i < len(orig.meta_lines):
-            new_meta.append(orig.meta_lines[i].with_text(meta_text))
-        elif not layout_bound:
-            src = orig.meta_lines[-1] if orig.meta_lines else orig.header
-            new_meta.append(src.clone_as(meta_text, "role_meta"))
-        else:
-            _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra meta line %r", meta_text[:60])
+    if not llm_meta and orig.meta_lines:
+        new_meta = list(orig.meta_lines)
+    else:
+        for i, meta_text in enumerate(llm_meta):
+            if i < len(orig.meta_lines):
+                new_meta.append(orig.meta_lines[i].with_text(meta_text))
+            elif not layout_bound:
+                src = orig.meta_lines[-1] if orig.meta_lines else orig.header
+                new_meta.append(src.clone_as(meta_text, "role_meta"))
+            else:
+                _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra meta line %r", meta_text[:60])
 
     # Bullets: reuse original protos.
     # layout-bound mode maps 1:1 and drops overflow to preserve visual density.
@@ -282,6 +327,14 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
                 new_bullets.append(orig.bullets[i].with_text(bullet_text))
             elif not layout_bound:
                 new_bullets.append(arch.clone_as(bullet_text, "bullet"))
+            elif not orig.bullets:
+                # Template has no bullet slots — create unbound para so the auto-register
+                # pass can inject it after the role header via _extra_injections.
+                new_bullets.append(arch.clone_as(bullet_text, "bullet"))
+                _log.debug(
+                    "CONTENT_OVERFLOW_REFLOW: unbound bullet for role %r (no template slots)",
+                    orig.role_id[:40] if orig.role_id else "?",
+                )
             else:
                 _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra bullet %r", bullet_text[:60])
 
@@ -292,6 +345,72 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
         role_id=orig.role_id,
         role_id_stable=orig.role_id_stable if layout_bound else "",
     )
+
+
+_YEAR_EXTRACT_RE = re.compile(r"\b(19|20)\d{2}\b")
+
+
+def _role_min_year(texts: "list[str]") -> int:
+    """Extract the earliest 4-digit year from a list of text strings.
+
+    Returns 9999 (sentinel for 'no year found') so roles without dates sort
+    to the end regardless of template/LLM order.
+    """
+    years = [int(m.group()) for t in texts for m in _YEAR_EXTRACT_RE.finditer(t)]
+    return min(years) if years else 9999
+
+
+def _reorder_llm_roles_by_date(
+    orig_roles: "list[RoleEntry]",
+    llm_roles: "list[LlmRole]",
+) -> "list[LlmRole]":
+    """Reorder LLM roles so their date order matches the template's date order.
+
+    Handles the common case where the LLM returns roles in reverse-chronological
+    order (newest first) while the source template uses chronological order
+    (oldest first), or vice versa.  Roles are matched by sorting both lists by
+    start year and pairing them positionally; the result is then placed back into
+    the template's original index positions.
+
+    If role counts differ, dates cannot be extracted, or matching is ambiguous,
+    the original LLM order is returned unchanged.
+    """
+    if len(orig_roles) != len(llm_roles) or len(orig_roles) < 2:
+        return llm_roles
+
+    def _tmpl_year(role: "RoleEntry") -> int:
+        texts = [role.header.text] + [m.text for m in role.meta_lines]
+        return _role_min_year(texts)
+
+    def _llm_year(role: "LlmRole") -> int:
+        texts = [str(role.header)] + [str(m) for m in role.meta_lines]
+        return _role_min_year(texts)
+
+    tmpl_years = [_tmpl_year(r) for r in orig_roles]
+    llm_years = [_llm_year(r) for r in llm_roles]
+
+    # If all years are unknown, fall back to positional matching
+    if all(y == 9999 for y in tmpl_years) or all(y == 9999 for y in llm_years):
+        return llm_roles
+
+    # Sort both by start year; pair k-th template (by year) with k-th LLM (by year)
+    tmpl_order = sorted(range(len(orig_roles)), key=lambda i: tmpl_years[i])
+    llm_by_year = sorted(range(len(llm_roles)), key=lambda j: llm_years[j])
+
+    reordered = [None] * len(llm_roles)
+    for rank, tmpl_idx in enumerate(tmpl_order):
+        if rank < len(llm_by_year):
+            reordered[tmpl_idx] = llm_roles[llm_by_year[rank]]
+
+    if any(r is None for r in reordered):
+        return llm_roles  # matching failed — fall back to original order
+
+    _log.debug(
+        "ROLE_DATE_REORDER: section reordered LLM roles by year; "
+        "tmpl_years=%s llm_years=%s",
+        tmpl_years, llm_years,
+    )
+    return reordered  # type: ignore[return-value]
 
 
 def _update_experience_section(
@@ -310,11 +429,77 @@ def _update_experience_section(
                     "EXPERIENCE_ROLE_COUNT_MISMATCH: section=%r orig_roles=%d reparsed_roles=%d",
                     orig.title, len(orig.roles), len(reparsed),
                 )
+            # Reorder reparsed roles to match the template's role order by date.
+            # Template role.meta_lines may be empty (dates are in pre-role body_paras);
+            # extract dates from body_paras to build the template year sequence.
+            if len(reparsed) == len(orig.roles):
+                _yr_re = _YEAR_EXTRACT_RE
+                # For each template role, find its year from pre-role body_paras
+                # (body_paras before the role_header carry the date/company lines).
+                tmpl_body_years: list[int] = []
+                rh_positions = [
+                    i for i, p in enumerate(orig.body_paras)
+                    if p.semantic == "role_header"
+                ]
+                prev = 0
+                for rh_pos in rh_positions:
+                    seg_years = [
+                        int(m.group())
+                        for p in orig.body_paras[prev:rh_pos]
+                        for m in _yr_re.finditer(p.text)
+                    ]
+                    tmpl_body_years.append(min(seg_years) if seg_years else 9999)
+                    prev = rh_pos + 1
+                # Pad remaining roles with meta-line years (fallback)
+                while len(tmpl_body_years) < len(orig.roles):
+                    extra_texts = [m.text for m in orig.roles[len(tmpl_body_years)].meta_lines]
+                    extra_years = [int(m.group()) for t in extra_texts for m in _yr_re.finditer(t)]
+                    tmpl_body_years.append(min(extra_years) if extra_years else 9999)
+
+                # Build the enriched _reorder helper with body-derived years
+                if any(y != 9999 for y in tmpl_body_years):
+                    llm_years_ord = sorted(
+                        range(len(reparsed)),
+                        key=lambda j: _role_min_year(
+                            [str(reparsed[j].header)] + [str(m) for m in reparsed[j].meta_lines]
+                        ),
+                    )
+                    tmpl_order = sorted(range(len(orig.roles)), key=lambda i: tmpl_body_years[i])
+                    _reordered: list[None] = [None] * len(reparsed)  # type: ignore[assignment]
+                    for rank, tmpl_idx in enumerate(tmpl_order):
+                        if rank < len(llm_years_ord):
+                            _reordered[tmpl_idx] = reparsed[llm_years_ord[rank]]  # type: ignore[index]
+                    if None not in _reordered:
+                        reparsed = _reordered  # type: ignore[assignment]
+                        _log.debug(
+                            "REPARSED_ROLE_REORDER: using body_paras dates; "
+                            "tmpl_years=%s", tmpl_body_years,
+                        )
+
             updated_roles: list[RoleEntry] = []
+            _dash_company_re = re.compile(r'^(.+?)\s+[–—]\s+.+$')
             for o_role, r_role in zip(orig.roles, reparsed):
-                updated_roles.append(
-                    _update_role_bullets_only(o_role, r_role.bullets, layout_bound=layout_bound)
-                )
+                updated = _update_role_bullets_only(o_role, r_role.bullets, layout_bound=layout_bound)
+                # Inject company name from reparsed role header (em-dash format) when
+                # the template meta has a date line but no company name.  Roles whose
+                # meta is empty already render the company via pre-role orphan body_paras.
+                if o_role.meta_lines:
+                    _cm = _dash_company_re.match(str(r_role.header).strip())
+                    _company = _cm.group(1).strip() if _cm else None
+                    if _company and not any(
+                        _company.lower() in m.text.lower()
+                        for m in updated.meta_lines
+                    ):
+                        _arch = updated.meta_lines[-1] if updated.meta_lines else updated.header
+                        _company_pm = _arch.clone_as(_company, "role_meta")
+                        updated = RoleEntry(
+                            header=updated.header,
+                            header_extra=updated.header_extra,
+                            meta_lines=list(updated.meta_lines) + [_company_pm],
+                            bullets=updated.bullets,
+                            role_id=updated.role_id,
+                        )
+                updated_roles.append(updated)
             # Template roles with no LLM counterpart are kept verbatim
             for o_role in orig.roles[len(reparsed):]:
                 updated_roles.append(o_role)
@@ -335,8 +520,8 @@ def _update_experience_section(
             else:
                 clean_body_d = orig.body_paras
             return ResumeSection(
-                title=llm.heading,
-                heading=_strip_col_break_para(orig.heading.with_text(llm.heading)),
+                title=orig.title,
+                heading=orig.heading,
                 semantic_type=orig.semantic_type,
                 body_paras=clean_body_d,
                 roles=updated_roles,
@@ -350,8 +535,8 @@ def _update_experience_section(
             orig.title, len(llm.body_lines), len(orig.roles),
         )
         return ResumeSection(
-            title=llm.heading,
-            heading=_strip_col_break_para(orig.heading.with_text(llm.heading)),
+            title=orig.title,
+            heading=orig.heading,
             semantic_type=orig.semantic_type,
             body_paras=orig.body_paras,
             roles=list(orig.roles),
@@ -359,12 +544,17 @@ def _update_experience_section(
         )
 
     # Normal path: pipe-separated LLM roles matched by position.
+    # Reorder LLM roles to match the template's role order by date so that
+    # reversed-chronological LLM output (newest first) maps correctly to
+    # chronological template layouts (oldest first), and vice versa.
+    reordered_llm_roles = _reorder_llm_roles_by_date(orig.roles, llm.roles)
+
     # In layout-bound mode:
     #   - surplus LLM roles are dropped (no unbound clones)
     #   - unmatched original roles are PRESERVED verbatim (Invariant 3: cardinality)
     updated_roles = [
         _update_role(o, l, layout_bound=layout_bound)
-        for o, l in zip(orig.roles, llm.roles)
+        for o, l in zip(orig.roles, reordered_llm_roles)
     ]
 
     if len(llm.roles) > len(orig.roles) and orig.roles and not layout_bound:
@@ -418,12 +608,71 @@ def _update_experience_section(
             "split_brain_fix: cleaned %d role-claimed paras from body_paras of %r",
             len(orig.body_paras) - len(clean_body), orig.title,
         )
+
+        # Extension-bullet deduplication: when a role has no original bullet slots but
+        # the LLM provides bullets, the updater creates UNBOUND bullets (para_id="")
+        # that will later become _ext_ layout blocks in apply_tailored.  The original
+        # template body paragraphs that fell between role headers (plain Normal-style
+        # paragraphs without bullet markers — e.g. template 17's "Spearheads..." and
+        # "Works collaboratively...") remain in clean_body with their original text and
+        # duplicate the ext bullets in the rendered DOCX.
+        # Fix: clear any non-empty 'paragraph'-semantic body_para that falls AFTER a
+        # role header (in para_id numeric order) when that role has unbound bullets,
+        # UNLESS the paragraph is a visual role-title line for one of the roles.
+        _roles_with_ext = [
+            _r for _r in updated_roles
+            if any(not (_b.para_id or "") for _b in _r.bullets)
+        ]
+        if _roles_with_ext:
+            def _pid_num(pid: str) -> int:
+                m = re.search(r"(\d+)", (pid or "").split("_ext_")[0])
+                return int(m.group(1)) if m else 0
+
+            _role_header_nums = sorted(
+                _pid_num(_r.header.para_id) for _r in updated_roles if _r.header.para_id
+            )
+            _ext_role_nums = {
+                _pid_num(_r.header.para_id) for _r in _roles_with_ext if _r.header.para_id
+            }
+
+            def _is_role_title_line(text: str) -> bool:
+                """True if text looks like a visual role-title prefix for one of the roles."""
+                t = text.strip().lower()
+                for _r in updated_roles:
+                    rh = _r.header.text.strip()
+                    title_part = rh.split("|")[0].strip().lower()
+                    if title_part and t and title_part.startswith(t[:20]) or t.startswith(title_part[:20]):
+                        return True
+                return False
+
+            new_clean_body: list = []
+            for _bp in clean_body:
+                if (
+                    _bp.text.strip()
+                    and _bp.semantic == "paragraph"
+                    and _bp.para_id
+                    and not _is_role_title_line(_bp.text)
+                ):
+                    _bp_num = _pid_num(_bp.para_id)
+                    _preceding = max(
+                        (n for n in _role_header_nums if n < _bp_num), default=None
+                    )
+                    if _preceding in _ext_role_nums:
+                        _log.debug(
+                            "ext_bullet_dedup: cleared body_para %r (original plain-text"
+                            " role content duplicated by ext bullets)",
+                            _bp.para_id,
+                        )
+                        new_clean_body.append(_bp.with_text(""))
+                        continue
+                new_clean_body.append(_bp)
+            clean_body = new_clean_body
     else:
         clean_body = orig.body_paras
 
     return ResumeSection(
-        title=llm.heading,
-        heading=_strip_col_break_para(orig.heading.with_text(llm.heading)),
+        title=orig.title,
+        heading=orig.heading,
         semantic_type=orig.semantic_type,
         body_paras=clean_body,
         roles=updated_roles,
@@ -474,8 +723,12 @@ _SKILLS_FILTER_RE = re.compile(
 )
 _ADDITIONAL_RE = re.compile(r"^additional\b", re.IGNORECASE)
 # Non-skill labeled categories that LLMs sometimes append to Technical Skills sections.
+# Note: "languages?" is intentionally excluded — "Languages: Java, Python, C++" is a
+# valid technical-skill category line and should pass through unchanged.
+# Spoken-language proficiency lines are filtered separately in layout.py via
+# _SPOKEN_LANG_PROFICIENCY_RE (which detects markers like "(native)", "(fluent)").
 _NON_SKILL_LABEL_RE = re.compile(
-    r"^(?:hobbies?|awards?|activities|interests?|volunteering?|publications?|references?|languages?)\s*[:：]\s*",
+    r"^(?:hobbies?|awards?|activities|interests?|volunteering?|publications?|references?)\s*[:：]\s*",
     re.IGNORECASE,
 )
 # Bare social-media or website names that are not skill tokens (e.g. "LinkedIn" alone).
@@ -483,6 +736,8 @@ _SOCIAL_BARE_RE = re.compile(
     r"^(?:linkedin|github|twitter|instagram|portfolio|website|url)\.?$",
     re.IGNORECASE,
 )
+# Standalone URL lines that the LLM extracts from contact info into the skills section.
+_URL_LINE_RE = re.compile(r"^https?://", re.IGNORECASE)
 
 
 def _sanitize_skills_lines(lines: list[str]) -> list[str]:
@@ -494,7 +749,13 @@ def _sanitize_skills_lines(lines: list[str]) -> list[str]:
     - Lines with known non-skill label prefixes (Hobbies:, Awards:, Interests:, …).
     - Bare social-media / website names (LinkedIn, GitHub, …) with no skill context.
     - Full sentences: 6+ whitespace-separated tokens ending in sentence punctuation.
+    - Bare single-word category names that duplicate an existing colon-labeled line
+      (e.g. "Communication" when "Communication: ..." already appears in the list).
     """
+    non_empty = [l.strip() for l in lines if l.strip()]
+    _colon_labels: set[str] = {
+        l.split(":")[0].strip().lower() for l in non_empty if ":" in l
+    }
     clean: list[str] = []
     for line in lines:
         stripped = line.strip()
@@ -508,10 +769,31 @@ def _sanitize_skills_lines(lines: list[str]) -> list[str]:
             _log.debug("skills sanitize: dropping 'Additional' line %r", stripped[:80])
             continue
         if _NON_SKILL_LABEL_RE.match(stripped):
-            _log.debug("skills sanitize: dropping non-skill label line %r", stripped[:80])
+            # Strip the non-skill category label but keep the content.
+            # "Languages: Java, Python, C++" → "Java, Python, C++" (preserved at its
+            # original position in the LLM output order, label removed).
+            m = _NON_SKILL_LABEL_RE.match(stripped)
+            content = stripped[m.end():].strip()
+            if content:
+                _log.debug(
+                    "skills sanitize: stripping label prefix from %r → %r",
+                    stripped[:60], content[:60],
+                )
+                clean.append(content)
+            else:
+                _log.debug("skills sanitize: dropping empty-after-label line %r", stripped[:60])
             continue
         if _SOCIAL_BARE_RE.match(stripped):
             _log.debug("skills sanitize: dropping bare social name %r", stripped[:80])
+            continue
+        if _URL_LINE_RE.match(stripped):
+            _log.debug("skills sanitize: dropping URL line %r", stripped[:80])
+            continue
+        # Drop bare single-word/phrase category labels that are already covered by
+        # a colon-labeled line (e.g. bare "Communication" when "Communication: ..."
+        # is present — avoids duplicate heading artifacts from LLM output).
+        if ":" not in stripped and " " not in stripped and stripped.lower() in _colon_labels:
+            _log.debug("skills sanitize: dropping duplicate category label %r", stripped[:80])
             continue
         # Full-sentence detection: 6+ words AND ends with a sentence-final punct.
         tokens = stripped.split()
@@ -557,10 +839,18 @@ def _update_body_section(
         )
 
     # Build updated versions of each content para (paired by position with LLM lines).
+    _is_skills = orig.semantic_type == "skills"
     updated: list[ParaModel] = []
     for i, line in enumerate(packed_llm):
         if i < len(content_paras):
-            updated.append(content_paras[i].with_text(line))
+            pm = content_paras[i].with_text(line)
+            # Clear list/bullet indentation from skills body paras: some templates
+            # (e.g. template 23 MY QUALIFICATIONS) store skills as indented list
+            # items.  The LLM's categorised skill lines are not list items and should
+            # render at normal paragraph indent like the GENERAL INFO section.
+            if _is_skills and (pm.style.indent_left or 0) > 0:
+                pm = _clear_left_indent(pm)
+            updated.append(pm)
             _log.debug("UPDATER_LAYOUT_BOUND_REPLACEMENT: para_id=%r → %r",
                        content_paras[i].para_id, line[:60])
         else:
@@ -585,7 +875,23 @@ def _update_body_section(
             new_body.append(updated[content_cursor])
             content_cursor += 1
         elif layout_bound:
-            new_body.append(p)  # keep original so para_id stays bound in layout tree
+            # Keep para_id bound in layout tree but clear text — LLM provided
+            # fewer lines than the template has content slots.  Keeping the
+            # original text would show stale template content (e.g. a split
+            # reference entry appearing twice after the LLM merges it into one
+            # line).  Clearing to empty string makes the slot invisible while
+            # preserving the layout_block para_id reference.
+            #
+            # Exception: in a skills section, non-bullet paragraph-type paras
+            # (e.g. a candidate name or intro-prose summary that sits in a
+            # different visual column of the same table cell) must be preserved
+            # verbatim — they carry either the original design element text
+            # (e.g. 'Leonid Verman') or the LLM summary text injected earlier
+            # by _find_intro_prose_para.  Clearing them erases the name/summary.
+            if _is_skills and p.semantic == "paragraph":
+                new_body.append(p)  # preserve name / summary / non-skill para
+            else:
+                new_body.append(p.with_text(""))
         # else (non-layout-bound): LLM produced fewer lines — drop trailing para
 
     # Append any remaining unbound extra paras (LLM content beyond template slots).
@@ -599,9 +905,15 @@ def _update_body_section(
             _body_extra_injections.setdefault(_anchor_pid, []).append(extra_pm)
         new_body.append(extra_pm)
 
+    # Defensive copy of the heading ParaModel so that any later in-place
+    # mutation of orig.heading.text (e.g. by apply_tailored's extras path
+    # when a "summary" LLM section is injected into header_paras) does not
+    # propagate back to this section's heading — preserving the original
+    # template heading text (e.g. "GENERAL INFO" instead of "Professional Summary").
+    _heading_copy = orig.heading.with_text(orig.heading.text)
     result = ResumeSection(
-        title=llm.heading,
-        heading=orig.heading.with_text(llm.heading),
+        title=orig.title,
+        heading=_heading_copy,
         semantic_type=orig.semantic_type,
         body_paras=new_body,
         roles=[],
@@ -619,11 +931,18 @@ def _find_body_prototype(
 
     B: Selection criteria (in priority order):
     1. Non-empty body paragraph from a non-'other' section.
-    2. Not bold (avoids cloning heading-style paragraphs).
+    2. Not bold — explicit style.bold OR heading-named paragraph style
+       (e.g. 'Heading 3') are both excluded; heading styles render bold in
+       Word/LibreOffice even when style.bold is None.
     3. Not explicitly center- or right-aligned (hard left-alignment rule).
-    Falls back to any non-empty body para, then to the first section heading.
+    Falls back to any non-empty non-bold body para, then any non-empty body
+    para, then the first section heading.
     """
-    # Preferred: non-other, non-bold, non-center/right para
+    def _is_heading_style(p: "ParaModel") -> bool:
+        sn = (p.style.style_name or "").lower()
+        return sn.startswith("heading")
+
+    # Preferred: non-other, non-bold, non-heading-style, non-center/right para
     for orig_section, _ in pairs:
         if orig_section.semantic_type == "other":
             continue
@@ -632,10 +951,17 @@ def _find_body_prototype(
                 continue
             if p.style.bold:
                 continue
+            if _is_heading_style(p):
+                continue
             if p.style.alignment in ("center", "right"):
                 continue
             return p
-    # Fallback: any non-empty body para
+    # Fallback: any non-empty non-bold para (including 'other' sections)
+    for orig_section, _ in pairs:
+        for p in orig_section.body_paras:
+            if p.text.strip() and not p.style.bold and not _is_heading_style(p):
+                return p
+    # Final fallback: any non-empty body para
     for orig_section, _ in pairs:
         for p in orig_section.body_paras:
             if p.text.strip():
@@ -714,10 +1040,46 @@ def _make_extra_section(
     """
     new_heading = _strip_col_break_para(heading_arch.clone_as(llm.heading, "section_heading"))
 
+    # Safety-net: strip bold and any inherited heading paragraph style from
+    # body paragraphs.  _find_body_prototype already excludes heading-style
+    # paragraphs, but in case the archetype carries a named heading style (e.g.
+    # 'Heading 3' which is bold in most themes), normalise it here so the
+    # injected section body text renders as regular weight.
+    def _normalise_body_pm(pm: "ParaModel") -> "ParaModel":
+        sn = (pm.style.style_name or "").lower()
+        # Also check paragraph_profile.bold for PDF-sourced paragraphs whose
+        # style.bold is None even when the paragraph is visually bold.
+        _pp_bold = pm.paragraph_profile.bold if pm.paragraph_profile else False
+        if not sn.startswith("heading") and not pm.style.bold and not _pp_bold:
+            return pm
+        from dataclasses import replace as _dc_replace
+        from copy import deepcopy as _deepcopy
+        new_style = _dc_replace(pm.style, bold=False)
+        # If the xml_proto carries a heading pStyle, remove it so the paragraph
+        # inherits the document's Normal/body style (typically not bold).
+        if new_style.xml_proto is not None and sn.startswith("heading"):
+            new_proto = _deepcopy(new_style.xml_proto)
+            pPr = new_proto.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                pStyle = pPr.find(f"{{{_W}}}pStyle")
+                if pStyle is not None:
+                    pPr.remove(pStyle)
+            new_style = _dc_replace(new_style, xml_proto=new_proto)
+        if pm.paragraph_profile is not None:
+            from tailor.compiler.models import ParagraphProfile
+            pp = ParagraphProfile.from_dict(pm.paragraph_profile.to_dict())
+            pp.bold = False
+        else:
+            pp = pm.paragraph_profile
+        return ParaModel(
+            text=pm.text, style=new_style, semantic=pm.semantic,
+            paragraph_profile=pp if pm.paragraph_profile else None,
+        )
+
     body_paras: list[ParaModel] = []
     for line in llm.body_lines:
         if line.strip():
-            body_paras.append(body_arch.clone_as(line, "paragraph"))
+            body_paras.append(_normalise_body_pm(body_arch.clone_as(line, "paragraph")))
 
     return ResumeSection(
         title=llm.heading,
@@ -867,8 +1229,14 @@ def _is_role_like_heading(title: str) -> bool:
 
     Strips a leading date-range prefix (e.g. 'May 2018 - Dec 2019') before
     checking so that merged date+title headings are handled correctly.
+
+    For pipe-separated headings (e.g. 'Senior Engineer | Acme Corp | 2022–2024'),
+    only the first segment (the role title) is evaluated so that long combined
+    headings are not rejected by the word-count guard.
     """
-    clean = re.sub(r'^\w+\s+\d{4}\s*[-–]\s*\w+\s+\d{4}', '', title).strip()
+    # Extract just the title segment for pipe-separated headings
+    title_part = title.split("|")[0].strip() if "|" in title else title
+    clean = re.sub(r'^\w+\s+\d{4}\s*[-–]\s*\w+\s+\d{4}', '', title_part).strip()
     words = clean.lower().split()
     if not (1 <= len(words) <= 7):
         return False
@@ -1151,12 +1519,38 @@ def _update_role_bullets_only(
                 new_bullets.append(arch.clone_as(text, "bullet"))
             else:
                 _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra bullet %r", text[:60])
+    # When the template role had no bullet slots but the LLM now provides bullets,
+    # strip meta_lines that look like description sentences (not dates/company/location).
+    # These are plain-text descriptions that the PDF parser placed in meta_lines
+    # because no explicit bullet markers were detected; keeping them alongside the
+    # new LLM bullets would duplicate the content.  A line is treated as a
+    # description (not a date/location) when it ends with a sentence-closing mark
+    # ('. ', '? ', '! ') or a plain period at end-of-string AND is not a date-like
+    # string.
+    kept_meta = list(orig.meta_lines)
+    if not orig.bullets and new_bullets and orig.meta_lines:
+        import re as _re
+        _DATE_HINT = _re.compile(r"\b\d{4}\b|\bPresent\b|\bCurrent\b|\bNow\b", _re.IGNORECASE)
+        _SENTENCE_END = _re.compile(r"[.!?]\s*$")
+        cleaned = []
+        for m in orig.meta_lines:
+            t = m.text.strip()
+            if _SENTENCE_END.search(t) and not _DATE_HINT.search(t):
+                _log.debug(
+                    "ROLE_META_DESCRIPTION_STRIP: stripped description-like meta %r",
+                    t[:60],
+                )
+            else:
+                cleaned.append(m)
+        if cleaned != orig.meta_lines:
+            kept_meta = cleaned
+
     return RoleEntry(
         # Strip any column break from the role header — the section heading
         # (or Summary heading) handles right-column placement; a second break
         # on the first role header would cause a spurious column jump.
         header=_strip_col_break_para(orig.header),
-        meta_lines=orig.meta_lines,
+        meta_lines=kept_meta,
         bullets=new_bullets,
         role_id=orig.role_id,
     )
@@ -1221,6 +1615,32 @@ def _find_header_skills_block(
 
     # Don't treat the very first block (name/title, index 0) as skills
     if start == 0:
+        return None
+
+    # Guard: if the candidate block contains contact-info content (email, URL,
+    # phone-number), it is a contact section, not a skills block.  Templates
+    # like sample 12 have the contact info (phone, email, website) at the end
+    # of header_paras; without this guard the injector overwrites contact info.
+    _contact_markers = ("@", "www.", "http://", "https://")
+    _phone_re = re.compile(r"^\d[\d\s\-\.\(\)]{6,}$")
+    for _i in range(start, end + 1):
+        _t = header_paras[_i].text.strip()
+        if not _t:
+            continue
+        if any(m in _t for m in _contact_markers):
+            return None
+        if _phone_re.match(_t):
+            return None
+
+    # Guard: single-word or two-word blocks are title/subtitle/department labels
+    # (e.g. "ENGINEERING", "Phlebotomist"), not skills blocks.  Skills blocks
+    # have comma- or semicolon-separated lists with several terms.
+    _candidate_word_count = sum(
+        len(header_paras[_i].text.strip().split())
+        for _i in range(start, end + 1)
+        if header_paras[_i].text.strip()
+    )
+    if _candidate_word_count < 3:
         return None
 
     return (start, end + 1)
@@ -1301,20 +1721,6 @@ def _inject_skills_into_header(
         packed = "; ".join(llm_lines[n - 1:])
         llm_lines = list(llm_lines[: n - 1]) + [packed]
 
-    # In layout-bound mode: cap each skill line to prevent excessive column
-    # expansion when the original header skill slots are narrow placeholders
-    # (e.g. 'Python', 6 chars).  The cap is max(orig_len * 3, 60) so that
-    # the injected text stays within a reasonable proportion of the original
-    # slot width and does not cause multi-line wrapping that crowds adjacent
-    # header regions.
-    if layout_bound:
-        for j, line in enumerate(llm_lines):
-            orig_len = len(orig_skill_paras[min(j, len(orig_skill_paras) - 1)].text.strip())
-            max_chars = max(orig_len * 3, 60)
-            if len(line) > max_chars:
-                cut = line.rfind(" ", 0, max_chars)
-                llm_lines[j] = line[:cut] if cut > 0 else line[:max_chars]
-
     arch = _clear_left_indent(orig_skill_paras[0])
     new_skill_paras: list[ParaModel] = []
     for i, line in enumerate(llm_lines):
@@ -1368,8 +1774,11 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
     # "contact", "social", and "websites" sections indicate a contact/sidebar area.
     # The grader flags any summary text in a section adjacent to these types as
     # SUMMARY_IN_WRONG_SECTION, so the renderer must reject those same sections
-    # as intro-prose anchors.
-    _CONTACT_AREA_TYPES: frozenset[str] = frozenset({"contact", "social", "websites"})
+    # as intro-prose anchors.  "websites" is intentionally excluded: a websites
+    # section before a skills/other section does not indicate a contact sidebar,
+    # and the section after it may legitimately hold intro-prose summary content
+    # (e.g. sample 2 where the Skills section body contains the profile paragraph).
+    _CONTACT_AREA_TYPES: frozenset[str] = frozenset({"contact", "social"})
     for _si, section in enumerate(_sections):
         if section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             continue
@@ -1378,15 +1787,18 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
         # Skip named semantic sections that should never receive summary injection.
         if section.title.strip().lower() in _PROTECTED_INTRO_PROSE_TITLES:
             continue
-        # Skip sections that are adjacent to contact/social sections.
-        # Those are sidebar/contact areas — injecting the Professional Summary
-        # there would put it inside the Contact block rather than the body.
-        _neighbors = [
+        # Skip sections whose PREVIOUS section is a contact/social type.
+        # Those are inside a contact sidebar area — the candidate section follows
+        # contact info and injecting summary there would embed it in the contact block.
+        # The NEXT section being a contact type is fine: the candidate appears before
+        # contact info (e.g. "OFFICE MANAGER" before "LinkedIn profile") and is the
+        # natural profile/summary slot.
+        _prev_types = [
             _sections[j].semantic_type
-            for j in (_si - 1, _si + 1)
+            for j in (_si - 1,)
             if 0 <= j < len(_sections)
         ]
-        if any(nt in _CONTACT_AREA_TYPES for nt in _neighbors):
+        if any(nt in _CONTACT_AREA_TYPES for nt in _prev_types):
             continue
         for p in section.body_paras:
             text = p.text.strip()
@@ -1400,10 +1812,49 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
                 continue
             if text[0] in ("-", "•", "·", "–", "*"):
                 continue
+            # Reject keyword lists that use '•' as an inline separator
+            # (e.g. "Senior Architect • Principal Developer • Senior App Developer").
+            # More than 1 bullet in the middle indicates a skills keyword list, not prose.
+            if text.count("•") > 1:
+                continue
             comma_density = text.count(",") / max(1, len(text))
             if comma_density >= 0.10:
                 continue
             return p
+
+    # Also search header_paras for intro-prose paragraphs (e.g. sample 24 where
+    # the original summary placeholder "I enjoy learning..." is in header_paras
+    # rather than in any section body).  Only search the tail of header_paras
+    # (after the name/title/contact block) to avoid replacing contact info.
+    _CONTACT_SIGNALS: frozenset[str] = frozenset({"@", "://"})
+    _hp = original.header_paras
+    # Find where the contact block ends: walk backwards past trailing empties to
+    # the last long content paragraph, then search only from there onward.
+    _hp_start = 0
+    for _j in range(len(_hp) - 1, -1, -1):
+        _ht = _hp[_j].text.strip()
+        if len(_ht) > 15 and not any(s in _ht for s in _CONTACT_SIGNALS):
+            _hp_start = _j
+            break
+    for p in _hp[_hp_start:]:
+        text = p.text.strip()
+        if len(text) < _INTRO_PROSE_MIN_LEN:
+            continue
+        if p.semantic in ("role_header", "role_meta", "section_heading"):
+            continue
+        if "|" in text or "://" in text or "@" in text:
+            continue
+        if " " not in text:
+            continue
+        if text[0] in ("-", "•", "·", "–", "*"):
+            continue
+        if text.count("•") > 1:
+            continue
+        comma_density = text.count(",") / max(1, len(text))
+        if comma_density >= 0.10:
+            continue
+        return p
+
     return None
 
 
@@ -1929,18 +2380,13 @@ def _update_experience_classified(
             _log.debug("classification: role %r → verbatim (no LLM counterpart)", o_role.role_id)
         updated_roles.append(updated)
 
-    new_heading = (
-        orig.heading
-        if cls_sec.preserve_heading
-        else _strip_col_break_para(orig.heading.with_text(llm.heading))
-    )
     _log.debug(
         "classification: section %r preserve_heading=%s rewrite_policy=%s",
         orig.title, cls_sec.preserve_heading, cls_sec.rewrite_policy,
     )
     return ResumeSection(
-        title=orig.title if cls_sec.preserve_heading else llm.heading,
-        heading=new_heading,
+        title=orig.title,
+        heading=orig.heading,
         semantic_type=orig.semantic_type,
         body_paras=orig.body_paras,
         roles=updated_roles,
@@ -1963,11 +2409,6 @@ def _update_body_classified(
     When preserve_body_structure is False: delegates to _update_body_section
     (existing behaviour), then patches the heading back if preserve_heading.
     """
-    new_heading = (
-        orig.heading
-        if cls_sec.preserve_heading
-        else orig.heading.with_text(llm.heading)
-    )
     _log.debug(
         "classification: body section %r preserve_heading=%s preserve_body_structure=%s",
         orig.title, cls_sec.preserve_heading, cls_sec.preserve_body_structure,
@@ -1997,15 +2438,15 @@ def _update_body_classified(
                 len(llm_lines) - llm_cursor,
             )
         return ResumeSection(
-            title=orig.title if cls_sec.preserve_heading else llm.heading,
-            heading=new_heading,
+            title=orig.title,
+            heading=orig.heading,
             semantic_type=orig.semantic_type,
             body_paras=new_body,
             roles=[],
             section_id=orig.section_id,
         )
 
-    # No structure constraint — use existing body update, then restore heading if needed.
+    # No structure constraint — use existing body update.
     if orig.semantic_type == "skills":
         llm = LlmSection(
             heading=llm.heading,
@@ -2013,17 +2454,7 @@ def _update_body_classified(
             body_lines=_sanitize_skills_lines(llm.body_lines),
             roles=llm.roles,
         )
-    updated = _update_body_section(orig, llm, layout_bound=layout_bound)
-    if cls_sec.preserve_heading:
-        return ResumeSection(
-            title=orig.title,
-            heading=orig.heading,
-            semantic_type=updated.semantic_type,
-            body_paras=updated.body_paras,
-            roles=[],
-            section_id=orig.section_id,
-        )
-    return updated
+    return _update_body_section(orig, llm, layout_bound=layout_bound)
 
 
 def _apply_section_classified(
@@ -2599,14 +3030,26 @@ def _find_summary_anchors(
     if not trailing:
         return None
 
+    def _is_divider_style(pm: "ParaModel") -> bool:
+        """True if the paragraph uses a separator / divider-line style."""
+        sn = (pm.style.style_name or "") if pm.style else ""
+        return "divid" in sn.lower() or "line" in sn.lower()
 
     # Two or more empty slots: use the FIRST two (heading_anchor, body_anchor).
     # Using the first two slots (immediately after name/title) places the summary
     # right below the candidate's name, minimising vertical whitespace between
     # the name and the summary.  The remaining empty slots act as natural spacers
     # before the table/body that follows — giving a visually tight header block.
+    # Skip divider-line slots as body_anchor: those styles carry negative indents
+    # that push the summary text flush to the left margin (sample 15 regression).
     if len(trailing) >= 2:
-        return trailing[0], trailing[1]
+        heading_anchor = trailing[0]
+        # Prefer the first non-divider slot as body_anchor; fall back to trailing[1]
+        body_anchor = next(
+            (p for p in trailing[1:] if not _is_divider_style(p)),
+            trailing[1],
+        )
+        return heading_anchor, body_anchor
 
     # Single empty slot only (no preceding prose para found above).
     _log.debug(
@@ -2660,32 +3103,27 @@ def _build_anchored_summary_section(
     compacted to 1 sentence to avoid expanding a narrow template header slot
     (typically an empty trailing paragraph in a compact table template).
     """
-    from tailor.compiler.layout import compact_summary
     if heading_anchor is None:
-        # Single-anchor: only the body slot exists; compact aggressively to
-        # prevent a narrow slot from overflowing and pushing page content down.
-        _raw = _clean_summary_text(llm_section.body_lines)
-        _lines = compact_summary([_raw], max_sentences=1)
-        body_text = " ".join(_lines).strip() if _lines else _raw
-        # Further cap at 300 chars: a single long sentence can still exceed
-        # the slot height when the summary cell is narrow (e.g. table sidebar).
-        if len(body_text) > 300:
-            cut = body_text.rfind(" ", 0, 300)
-            body_text = body_text[:cut] if cut > 0 else body_text[:300]
+        # Single-anchor: only the body slot exists.  Use the full summary text
+        # and let the table cell expand naturally — the user expects the complete
+        # summary to appear and is aware that later content may shift down.
+        body_text = _clean_summary_text(llm_section.body_lines)
         _log.debug(
-            "ANCHORED_SUMMARY_SINGLE_SLOT_COMPACTED: len %d → %d chars",
-            len(_raw), len(body_text),
+            "ANCHORED_SUMMARY_SINGLE_SLOT: len=%d chars (full text, no compaction)",
+            len(body_text),
         )
     else:
         body_text = _clean_summary_text(llm_section.body_lines)
 
     if heading_anchor is not None:
-        new_heading = heading_anchor.with_text("PROFESSIONAL SUMMARY")
+        # Keep the heading slot empty — templates that lack a dedicated summary
+        # section should receive only the body text, not a synthetic
+        # "PROFESSIONAL SUMMARY" label that was never in the original design.
         new_heading_pm = ParaModel(
-            text=new_heading.text,
-            style=new_heading.style,
+            text="",
+            style=heading_anchor.style,
             semantic="section_heading",
-            paragraph_profile=new_heading.paragraph_profile,
+            paragraph_profile=heading_anchor.paragraph_profile,
         )
         new_heading_pm.para_id = heading_anchor.para_id
     else:
@@ -3202,6 +3640,7 @@ def apply_tailored(
     # like "registered nurse").  The renderer inserts a new paragraph directly
     # after this para_id in the table XML.
     _inline_summary: "tuple[str, str] | None" = None  # (target_pid, summary_text)
+    _right_col_summary: "str | None" = None  # summary text for right-column injection (newspaper-column templates)
 
     if not match.extras:
         # ---- Fast path: no extras, keep original section order ----
@@ -3363,6 +3802,29 @@ def apply_tailored(
                     if original.layout_blocks is not None:
                         _stext = _clean_summary_text(llm_s.body_lines)
                         if _stext:
+                            # Highest priority for newspaper-column templates:
+                            # if a column break exists and this is a summary section,
+                            # inject the summary at the top of the right column.
+                            # This must run BEFORE intro-prose search to prevent the
+                            # summary from being placed in left-column skills/other slots
+                            # (e.g. para_22 in sample 3) that pass the prose heuristic
+                            # but belong to the sidebar, not the main content area.
+                            if (
+                                not _body_injected
+                                and not _has_table_lb
+                                and llm_s.semantic_type == "summary"
+                            ):
+                                _has_col_break = any(
+                                    'type="column"' in (getattr(lb, "xml_proto_xml", "") or "")
+                                    for lb in (original.layout_blocks or [])
+                                )
+                                if _has_col_break:
+                                    _right_col_summary = _stext
+                                    _body_injected = True
+                                    _log.debug(
+                                        "SUMMARY_RIGHT_COL_PENDING: newspaper-column "
+                                        "template, summary injected at top of right column"
+                                    )
                             # First priority (all templates): replace the intro-prose
                             # paragraph if present.  Replacing existing text is safe
                             # for both paragraph-only and table templates — it does not
@@ -3373,14 +3835,15 @@ def apply_tailored(
                             # section).  Replacing them keeps the summary in the correct
                             # visual position and avoids injecting into an empty slot that
                             # may be in the wrong column (e.g. samples 7, 19).
-                            _intro_para = _find_intro_prose_para(original)
-                            if _intro_para is not None:
-                                _intro_para.text = _stext
-                                _body_injected = True
-                                _log.debug(
-                                    "SUMMARY_INTRO_PROSE_REPLACED: para_id=%r len=%d",
-                                    _intro_para.para_id, len(_stext),
-                                )
+                            if not _body_injected:
+                                _intro_para = _find_intro_prose_para(original)
+                                if _intro_para is not None:
+                                    _intro_para.text = _stext
+                                    _body_injected = True
+                                    _log.debug(
+                                        "SUMMARY_INTRO_PROSE_REPLACED: para_id=%r len=%d",
+                                        _intro_para.para_id, len(_stext),
+                                    )
                             # Second priority (paragraph-only templates only): inject
                             # into the first empty body_para of an eligible section.
                             # Guarded by _has_table_lb because inserting text into an
@@ -3421,15 +3884,147 @@ def apply_tailored(
                                             break
                                     if _body_injected:
                                         break
+                    if not _body_injected and _has_table_lb:
+                        # For table templates with no intro-prose and no empty body slots:
+                        # inject the summary inline after the last non-empty header paragraph
+                        # (typically the title/role line, e.g. "registered nurse").
+                        # The renderer inserts a new paragraph in the table header cell.
+                        _last_title_para = next(
+                            (p for p in reversed(original.header_paras)
+                             if p.text.strip() and p.para_id),
+                            None,
+                        )
+                        if _last_title_para is not None:
+                            _inline_summary = (_last_title_para.para_id, _stext)
+                            _body_injected = True
+                            _log.debug(
+                                "SUMMARY_INLINE_AFTER_TITLE: para_id=%r title=%r",
+                                _last_title_para.para_id, _last_title_para.text[:30],
+                            )
+                    pass  # right-column summary injection is handled above (before intro-prose)
                     _log.debug(
                         "SUMMARY_INSERTION_SKIPPED_NO_ANCHORS: %r (body_injected=%s)",
                         llm_s.heading, _body_injected,
                     )
+                elif llm_s.semantic_type == "skills":
+                    # Try to inject skills into the left column (the column that contains
+                    # sidebar sections before the first experience section).
+                    # Use only "experience" as the boundary — education can legitimately
+                    # appear in the left sidebar column (e.g. sample 12 has Education
+                    # in the left column before Communication and Leadership).
+                    _CONTENT_BOUNDARY_TYPES = frozenset({"experience"})
+                    _left_col_end = next(
+                        (i for i, s in enumerate(original.sections)
+                         if s.semantic_type in _CONTENT_BOUNDARY_TYPES),
+                        None,
+                    )
+                    _skills_injected = False
+                    if _left_col_end is not None and _left_col_end > 0:
+                        # Find the last 'other' section before the content boundary
+                        # that has a valid anchor paragraph (non-contact, non-empty).
+                        # Contact-info guard: reject paragraphs with URLs, email,
+                        # phone, or ZIP codes — these belong to contact sections.
+                        _CONTACT_MARKS = ("@", "www.", "http://", "https://")
+                        _phone_re_anchor = re.compile(r"^\+?[\d\s\-\.\(\)]{7,}$")
+                        _zip_re_anchor = re.compile(r"^\d{4,6}$")
+
+                        def _valid_anchor(p: "ParaModel") -> bool:
+                            t = p.text.strip()
+                            if not p.para_id or not t or len(t) < 3:
+                                return False
+                            if any(m in p.text for m in _CONTACT_MARKS):
+                                return False
+                            if _phone_re_anchor.match(t) or _zip_re_anchor.match(t):
+                                return False
+                            return True
+
+                        _left_sec = None
+                        _anchor_bp = None
+                        for _cand_sec in reversed(original.sections[:_left_col_end]):
+                            if _cand_sec.semantic_type in _LOCKED_SEMANTIC_TYPES:
+                                continue
+                            # Never inject skills into a summary section — its body paras
+                            # are summary text, not a sidebar anchor slot.
+                            if _cand_sec.semantic_type == "summary":
+                                continue
+                            _candidate_anchor = next(
+                                (p for p in reversed(_cand_sec.body_paras) if _valid_anchor(p)),
+                                None,
+                            )
+                            if _candidate_anchor is not None:
+                                _left_sec = _cand_sec
+                                _anchor_bp = _candidate_anchor
+                                break
+                        # Guard: if there are template sections AFTER the first
+                        # experience section (e.g. References), technical skills
+                        # belong at the document end (right column, after References),
+                        # not crowded into the left sidebar alongside narrative
+                        # sections like Communication / Leadership (sample 12).
+                        _post_exp_sections = original.sections[_left_col_end + 1:]
+                        if _post_exp_sections and _left_sec is not None:
+                            _left_sec = None  # fall back to document-end placement
+                        if _left_sec is not None:
+                            if _anchor_bp is not None:
+                                _skill_lines = _sanitize_skills_lines(
+                                    [l for l in llm_s.body_lines if l.strip()]
+                                )
+                                if _skill_lines:
+                                    # Create heading styled like the left-column section heading,
+                                    # and body lines styled like the left-column body paras.
+                                    _sk_heading = _left_sec.heading.clone_as(
+                                        llm_s.heading, "section_heading"
+                                    )
+                                    _sk_body = [
+                                        _anchor_bp.clone_as(line, "paragraph")
+                                        for line in _skill_lines
+                                    ]
+                                    # Find the matching updated section to attach _extra_injections
+                                    _left_sec_updated = next(
+                                        (s for s in list(heading_to_section.values()) + verbatim_sections
+                                         if s.section_id == _left_sec.section_id),
+                                        None,
+                                    )
+                                    if _left_sec_updated is not None:
+                                        if not hasattr(_left_sec_updated, "_extra_injections"):
+                                            _left_sec_updated._extra_injections = {}
+                                        # Two empty spacers before the heading create visual
+                                        # separation matching the gap before other sections.
+                                        _sk_spacers = [
+                                            _anchor_bp.clone_as("", "spacer"),
+                                            _anchor_bp.clone_as("", "spacer"),
+                                        ]
+                                        _left_sec_updated._extra_injections.setdefault(
+                                            _anchor_bp.para_id, []
+                                        ).extend(_sk_spacers + [_sk_heading] + _sk_body)
+                                        _skills_injected = True
+                                        _log.debug(
+                                            "SKILLS_LEFT_COLUMN_INJECTED: anchor=%r "
+                                            "heading=%r lines=%d",
+                                            _anchor_bp.para_id, llm_s.heading, len(_skill_lines),
+                                        )
+                    if not _skills_injected:
+                        # Fallback: create as unbound content appended at document end.
+                        _extra_skills = _make_extra_section(llm_s, heading_arch, body_arch)
+                        _extra_skills.section_id = "sec_skills_unbound"
+                        llm_order_sections.append(_extra_skills)
+                        _log.debug(
+                            "apply_tailored: skills extra %r → unbound (doc end fallback)",
+                            llm_s.heading,
+                        )
                 else:
                     _log.debug(
                         "UPDATER_SECTION_ANCHOR_NOT_FOUND: %r dropped in layout-bound mode",
                         llm_s.heading,
                     )
+            elif llm_s.semantic_type == "other" and verbatim_sections:
+                # Template already has verbatim "other" sections (e.g. Affiliations).
+                # Drop the LLM "other" extra (e.g. "Additional") to avoid a duplicate
+                # with mismatched formatting.  The verbatim section carries the original
+                # template styling (bold role headers, etc.) and is placed at the end.
+                _log.debug(
+                    "apply_tailored: discarding other-type extra %r "
+                    "(verbatim other sections exist)", llm_s.heading,
+                )
             else:
                 llm_order_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
 
@@ -3458,6 +4053,12 @@ def apply_tailored(
                         heading_to_section.get(key, orig_section)
                     )
 
+            # Collect unbound skills sections (appended at end, carry to next page if needed)
+            unbound_skills_sections = [
+                s for s in llm_order_sections
+                if s.semantic_type == "skills" and s.section_id == "sec_skills_unbound"
+            ]
+
             if anchored_summaries:
                 # Insert after profile/title block, before first major content
                 # section (experience/education/skills).  Inserting at position 0
@@ -3471,6 +4072,7 @@ def apply_tailored(
                     ordered_sections[:first_major]
                     + anchored_summaries
                     + ordered_sections[first_major:]
+                    + unbound_skills_sections
                 )
                 _log.debug(
                     "SUMMARY_INSERTED_AFTER_PROFILE_BLOCK: inserted before %r "
@@ -3479,21 +4081,72 @@ def apply_tailored(
                     first_major,
                 )
             else:
-                new_sections = ordered_sections
+                new_sections = ordered_sections + unbound_skills_sections
+            if unbound_skills_sections:
+                _log.debug(
+                    "SKILLS_UNBOUND_APPENDED: %d skills section(s) appended at doc end",
+                    len(unbound_skills_sections),
+                )
         else:
             # Non-layout-bound: follow LLM output order with summary at top.
             template_has_summary = any(
                 s.semantic_type == "summary" for s in original.sections
             )
             if not template_has_summary:
-                summary_extras = [s for s in llm_order_sections if s.semantic_type == "summary"]
-                other_llm = [s for s in llm_order_sections if s.semantic_type != "summary"]
-                if summary_extras:
-                    new_sections = summary_extras + verbatim_sections + other_llm
-                else:
-                    new_sections = verbatim_sections + llm_order_sections
+                # Use template order so verbatim sections (Languages, Certifications, etc.)
+                # stay in their original positions relative to matched sections.
+                _matched_ids_ns = {
+                    id(heading_to_section[llm_s.heading.lower()])
+                    for llm_s in llm_sections
+                    if llm_s.heading.lower() in heading_to_section
+                }
+                _tpl_ordered_ns: list[ResumeSection] = []
+                for _orig_s, _llm_s in match.pairs:
+                    if _llm_s is None:
+                        _tpl_ordered_ns.append(_orig_s)
+                    else:
+                        _k = _llm_s.heading.lower()
+                        _tpl_ordered_ns.append(heading_to_section.get(_k, _orig_s))
+                _extra_ns = [s for s in llm_order_sections if id(s) not in _matched_ids_ns]
+                _sum_ns = [s for s in _extra_ns if s.semantic_type == "summary"]
+                _oth_ns = [s for s in _extra_ns if s.semantic_type != "summary"]
+                new_sections = _sum_ns + _tpl_ordered_ns + _oth_ns
             else:
-                new_sections = verbatim_sections + llm_order_sections
+                # Template already has a summary section → its section order is
+                # well-defined.  Follow TEMPLATE order for all matched sections so
+                # the physical layout (y-position, column assignments) is preserved.
+                # Extras (new sections added by the LLM that had no template match)
+                # are appended at the end in LLM output order; verbatim "other"
+                # sections follow them.
+                #
+                # Previously this path followed LLM output order, which caused
+                # sections to render in the wrong sequence (e.g. Professional
+                # Experience before Technical Skills in sample 4 even though the
+                # template places Technical Skills first).
+                _matched_section_ids = {
+                    id(heading_to_section[llm_s.heading.lower()])
+                    for llm_s in llm_sections
+                    if llm_s.heading.lower() in heading_to_section
+                }
+                template_ordered: list[ResumeSection] = []
+                for orig_section, llm_section in match.pairs:
+                    if llm_section is None:
+                        template_ordered.append(orig_section)
+                    else:
+                        key = llm_section.heading.lower()
+                        template_ordered.append(
+                            heading_to_section.get(key, orig_section)
+                        )
+                # Extras are sections in llm_order_sections that are NOT in the
+                # template-ordered set (i.e. newly created sections, not updates).
+                extra_only = [
+                    s for s in llm_order_sections
+                    if id(s) not in _matched_section_ids
+                ]
+                # verbatim_sections are already included in template_ordered
+                # (both built from match.pairs where llm_section is None).
+                # Appending them again would duplicate those sections in the output.
+                new_sections = template_ordered + extra_only
 
     # Fragmented-experience injection: LLM had experience roles but no original
     # experience section existed to match them.  Inject into role-like 'other'
@@ -3637,10 +4290,13 @@ def apply_tailored(
             # body_paras; skipping the orphan loop avoids duplicating content
             # that was already consumed into section.roles by _group_roles.
             if any(bp.semantic == "role_header" for bp in section.body_paras):
+                # Skip body_paras already claimed by role meta_lines (Pattern B:
+                # the date paragraph appears in both body_paras and meta_lines).
+                _claimed = {id(pm) for role in section.roles for pm in role.meta_lines}
                 for bp in section.body_paras:
                     if bp.semantic == "role_header":
                         break  # reached first role; stop collecting orphans
-                    if bp.text.strip():
+                    if bp.text.strip() and id(bp) not in _claimed:
                         all_paras.append(bp)
             for role in section.roles:
                 all_paras.append(role.header)
@@ -3668,10 +4324,11 @@ def apply_tailored(
                 all_paras.append(section.heading)
                 if section.semantic_type == "experience" and section.roles:
                     if any(bp.semantic == "role_header" for bp in section.body_paras):
+                        _claimed2 = {id(pm) for role in section.roles for pm in role.meta_lines}
                         for bp in section.body_paras:
                             if bp.semantic == "role_header":
                                 break
-                            if bp.text.strip():
+                            if bp.text.strip() and id(bp) not in _claimed2:
                                 all_paras.append(bp)
                     for role in section.roles:
                         all_paras.append(role.header)
@@ -4085,8 +4742,13 @@ def apply_tailored(
         for _role in _sec.roles:
             _bound_bullets = [_b for _b in _role.bullets if _b.para_id]
             _unbound_bullets = [_b for _b in _role.bullets if not _b.para_id and _b.text.strip()]
-            if _unbound_bullets and _bound_bullets:
-                _exp_extras.setdefault(_bound_bullets[-1].para_id, []).extend(_unbound_bullets)
+            if _unbound_bullets:
+                # Prefer the last bound bullet as anchor (overflow case);
+                # fall back to the role header when the template has NO bullet slots
+                # (all bullets are unbound).
+                _anchor = _bound_bullets[-1] if _bound_bullets else _role.header
+                if _anchor.para_id:
+                    _exp_extras.setdefault(_anchor.para_id, []).extend(_unbound_bullets)
         if _exp_extras:
             _sec._extra_injections = _exp_extras  # type: ignore[attr-defined]
 
@@ -4182,7 +4844,13 @@ def apply_tailored(
                         _new_pid = f"{_anchor}_ext_{_j + 1}"
                         _pm.para_id = _new_pid
                         from copy import deepcopy as _deepcopy
-                        _new_p = _deepcopy(_anchor_elem)
+                        # Use the paragraph's own xml_proto (e.g. Heading2 for section
+                        # headings) so the injected element inherits the correct style.
+                        # Fall back to the anchor element for bullets/body paras.
+                        if getattr(_pm, 'style', None) is not None and _pm.style.xml_proto is not None:
+                            _new_p = _deepcopy(_pm.style.xml_proto)
+                        else:
+                            _new_p = _deepcopy(_anchor_elem)
                         # Clear all text runs and set new content
                         for _t in _new_p.findall(f".//{{{_W_NS}}}t"):
                             _t.text = ""
@@ -4209,6 +4877,36 @@ def apply_tailored(
 
         _result_layout_blocks = _new_lb
 
+    # Append LayoutParagraphBlock entries for unbound skills sections (templates
+    # that originally had no skills section).  Each paragraph is assigned a
+    # synthetic para_id so the layout-blocks renderer looks it up via para_lookup
+    # and renders it using the paragraph's style.xml_proto at document end.
+    # Rule 2/4: content pushes to next page naturally if it overflows.
+    if _result_layout_blocks is not None:
+        _skills_unbound_secs = [
+            s for s in new_sections
+            if s.section_id == "sec_skills_unbound" and s.semantic_type == "skills"
+        ]
+        if _skills_unbound_secs:
+            from tailor.compiler.models import LayoutParagraphBlock as _SLPB
+            _skills_lb: list = []
+            _su_idx = 0
+            for _usk in _skills_unbound_secs:
+                _usk.heading.para_id = f"para_skills_u_{_su_idx}"
+                _skills_lb.append(_SLPB(para_id=_usk.heading.para_id, xml_proto_xml=None))
+                _su_idx += 1
+                for _ubp in _usk.body_paras:
+                    if _ubp.text.strip():
+                        _ubp.para_id = f"para_skills_u_{_su_idx}"
+                        _skills_lb.append(_SLPB(para_id=_ubp.para_id, xml_proto_xml=None))
+                        _su_idx += 1
+            if _skills_lb:
+                _result_layout_blocks = list(_result_layout_blocks) + _skills_lb
+                _log.debug(
+                    "SKILLS_UNBOUND_LAYOUT_BLOCKS: appended %d blocks for %d section(s)",
+                    len(_skills_lb), len(_skills_unbound_secs),
+                )
+
     _result = ResumeDocument(
         header_paras=effective_header_paras,
         sections=new_sections,
@@ -4230,5 +4928,8 @@ def apply_tailored(
     # new paragraph in the table XML after the identity title para (sample 11 case).
     if _inline_summary:
         _result._inline_summary_pid, _result._inline_summary_text = _inline_summary  # type: ignore[attr-defined]
+
+    if _right_col_summary:
+        _result._right_col_summary_text = _right_col_summary  # type: ignore[attr-defined]
 
     return _result

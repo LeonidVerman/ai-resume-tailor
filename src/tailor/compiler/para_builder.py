@@ -122,6 +122,15 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
     p = etree.Element(f"{{{_W}}}p")
     pPr = etree.SubElement(p, f"{{{_W}}}pPr")
 
+    # All non-bullet paragraphs get pStyle="Normal" so LibreOffice renders them
+    # correctly inside table cells.  Without a pStyle, LibreOffice suppresses
+    # paragraphs that have w:ind w:left > ~800 twips, making section headings
+    # and role entries invisible.  Explicit w:pPr properties (spacing, indent)
+    # override the style-level defaults, so the visual output is unchanged.
+    if pm.semantic != "bullet":
+        _pStyle = etree.SubElement(pPr, f"{{{_W}}}pStyle")
+        _pStyle.set(f"{{{_W}}}val", "Normal")
+
     # Bullet paragraphs: use "ListParagraph" style.  Two strategies:
     #
     # 1. PUA-style bullets (hanging_indent_pt > 0, single-column): these came
@@ -151,6 +160,13 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
         pStyle_elem.set(f"{{{_W}}}val", "ListParagraph")
         indent_pt = (pp.indent_left_pt if pp is not None else 0) or 36
         hang_pt = pp.hanging_indent_pt if pp is not None else 0
+        # For inline "• " bullets with no explicit hanging, add a standard
+        # hanging indent so continuation lines align with the text following
+        # the bullet marker rather than with the marker itself.
+        # "• " at 12 pt ≈ 9 pt wide; scale with font size, cap at 15 pt.
+        if hang_pt == 0 and not use_tab_bullet:
+            _fsize = pp.font_size_pt if pp is not None else 12.0
+            hang_pt = min(round(_fsize * 0.75), 15)
         ind = etree.SubElement(pPr, f"{{{_W}}}ind")
         ind.set(f"{{{_W}}}left", str(int(indent_pt * 20)))
         ind.set(f"{{{_W}}}hanging", str(int(hang_pt * 20)))
@@ -187,13 +203,12 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
             _is_two_col_para = pp.column_id in ("left", "right")
             _line_factor = 1.1 if _is_two_col_para else 1.0
             spc.set(f"{{{_W}}}line", str(int(pp.font_size_pt * _line_factor * 20)))
-            # Content paragraphs use "atLeast" so the line height can expand when
-            # LLM text wraps to additional lines — preserving full generated content.
-            # Structural paras (section_heading, role_header, role_meta) use
-            # "exact" to keep layout anchors stable.
-            _is_content = pm.semantic in ("bullet", "paragraph", "summary_paragraph",
-                                          "skills_paragraph", "other_paragraph")
-            spc.set(f"{{{_W}}}lineRule", "atLeast" if _is_content else "exact")
+            # Always use "atLeast" so LibreOffice does not clip indented paragraphs.
+            # LibreOffice has a rendering defect where lineRule="exact" combined with
+            # w:ind makes the paragraph invisible inside a table cell.  "atLeast"
+            # produces correct output everywhere and still anchors layout because the
+            # specified value is the minimum line height.
+            spc.set(f"{{{_W}}}lineRule", "atLeast")
 
         # Indentation (twips = pt × 20).  Bullets already have w:ind set above.
         if pp.indent_left_pt and pm.semantic != "bullet":
@@ -206,10 +221,6 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
             shd.set(f"{{{_W}}}val", "clear")
             shd.set(f"{{{_W}}}color", "auto")
             shd.set(f"{{{_W}}}fill", pp.background_color)
-
-    # Inline icon image BEFORE text (PDF-sourced sidebar icons like phone/email/location)
-    if pp is not None and pp.inline_image_bytes and doc_part is not None:
-        _add_image_run(p, pp.inline_image_bytes, pp.inline_image_size_pt, doc_part)
 
     # Run(s) with text.  When pp.text_runs is set (mixed-bold role headers),
     # emit one w:r per run with per-run bold; otherwise emit a single run.
@@ -274,5 +285,11 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
 
         for run_text, run_bold in run_list:
             _emit_run(run_text, run_bold)
+
+    # Inline icon image AFTER text (PDF-sourced sidebar icons like phone/email/location).
+    # Placing the icon after the text mirrors the template layout where icons appear
+    # at the end of the contact line rather than at the beginning.
+    if pp is not None and pp.inline_image_bytes and doc_part is not None:
+        _add_image_run(p, pp.inline_image_bytes, pp.inline_image_size_pt, doc_part)
 
     return p

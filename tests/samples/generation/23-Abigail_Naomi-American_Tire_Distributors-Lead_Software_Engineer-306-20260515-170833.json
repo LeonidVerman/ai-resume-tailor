@@ -7,11 +7,11 @@
     "messages": [
       {
         "role": "developer",
-        "content": "[GENERAL_LAYER v1.1]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n21) Must explicitly mention the company + role from TASK.\n22) Must connect: candidate background -> company needs -> role responsibilities, using only supported claims.\n23) Keep it 3-5 short paragraphs; be specific but not verbose.\n\n[CANDIDATE_LAYER_ABIGAIL_NAOMI v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Licensed Civil Engineer + M.S. in Project Management; Project Engineer / Engineering Project Coordinator with strong QA/QC and safety-compliance execution.\n- Emphasize consistent themes: project coordination, schedule control, QA/QC workflows, safety/performance standards adherence, cross-functional engineering collaboration.\n- Prefer role titles and framing aligned to evidence: Project Engineer, Project Coordinator, Engineering Management (avoid implying “Architect” or “Program Director” unless explicitly supported).\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Treat “architecture” as engineering process/workflow architecture (not software/system architecture).\n- Surface explicitly (when writing bullets) the candidate’s mechanisms such as:\n  - Project scheduling and coordination mechanisms (planning, sequencing, monitoring cadence).\n  - QA/QC workflow design and execution (inspection/checklists, verification steps, nonconformance handling if evidenced).\n  - Safety compliance enforcement mechanisms (standards checks, documentation, site/process adherence).\n- Do not imply ownership of enterprise-wide “architecture” or large-scale system design.\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prioritize bullets that show concrete mechanisms in this order:\n  1) QA/QC workflow mechanisms + safety/performance compliance checks.\n  2) Scheduling/coordination mechanisms that balance timeline vs quality constraints.\n  3) Reporting/monitoring mechanisms (monthly performance reports) tied to decisions/actions.\n  4) Leadership actions (hiring/training) tied to execution outcomes.\n- Ensure at least one bullet in the most recent/relevant role explicitly mentions QA/QC workflow or safety/performance compliance mechanism.\n\nDISTRIBUTED SYSTEM DEPTH\n- Not applicable as distributed software systems; do not force software/distributed-systems language.\n- If a job description uses “systems” language, translate safely into engineering project systems (processes, workflows, controls) without introducing software infrastructure claims.\n\nTECHNICAL DIFFERENTIATION\n- Emphasize technical differentiation in civil/engineering project execution:\n  - QA/QC checks and acceptance against safety/performance standards.\n  - Project monitoring cadence (site/field coordination if supported; otherwise keep generic “monitoring”).\n  - Documentation and reporting discipline (monthly performance reports).\n  - Team enablement: training junior engineers; cross-functional coordination.\n- Avoid listing software tools, codes/standards, or methodologies not present in evidence (no invented AutoCAD, Primavera, MS Project, ISO, OSHA, etc.).\n\nDOMAIN / INDUSTRY FRAMING\n- Primary domain credibility: Engineering consultancy + construction project environments.\n- Frame as delivery in safety- and performance-constrained engineering contexts.\n- Keep domain language general and accurate: “engineering projects,” “construction environment,” “engineering consultancy,” “quality control,” “safety compliance.”\n\nSAFE DOMAIN TRANSLATION\n- If tailoring to adjacent industries (manufacturing, facilities, infrastructure, energy), translate conservatively:\n  - “Quality control checks” → “quality assurance/quality control inspections and verification steps.”\n  - “Safety compliance” → “safety and regulatory adherence within project execution” (do not name specific regulators/standards).\n  - “Project scheduling and coordination” → “schedule planning, coordination, and progress tracking across stakeholders.”\n- Do not translate into software engineering, IT project management, or product management unless the job explicitly requests general PM skills and you keep the framing non-software.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim:\n  - Software/system architecture ownership, cloud platforms, DevOps, data systems, cybersecurity, or coding.\n  - Specific compliance frameworks/standards (OSHA/ISO/local building codes) unless explicitly provided.\n  - Specialized civil sub-domains (structural design lead, geotechnical specialist, transportation planner) unless evidenced.\n- Avoid implying licensed authority scope beyond “Licensed Civil Engineer” as stated (no “signing/sealing drawings,” “engineer of record,” etc. unless provided).\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- Reinterpret “system upgrades” safely as process/operational improvements unless the source provides technical system details.\n- Safe phrasing patterns:\n  - “Developed system upgrades” → “implemented project/process upgrades to improve execution and reporting” (only if consistent with context).\n  - “Cross-functional collaboration” → “coordinated handoffs and alignment across engineering functions.”\n- Do not imply IT systems integration, ERP implementations, or software deployments.\n\nLEADERSHIP FRAMING\n- Frame leadership as execution-oriented engineering leadership:\n  - Hiring, evaluating, and training junior engineers (tie to onboarding, quality consistency, delivery readiness).\n  - Setting expectations for QA/QC and safety adherence.\n  - Coordinating teams and resolving execution blockers (only if supported; otherwise keep to coordination).\n- Prefer observable leadership actions over traits.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- For Project Engineer / Project Coordinator roles: keep leadership secondary to project controls + QA/QC + compliance mechanisms.\n- For Engineering Manager roles: increase leadership content but keep it grounded in concrete practices (training, reporting cadence, oversight routines).\n- Avoid overstating scope (no team size, budget, or portfolio scale unless provided).\n\nAI WORK POSITIONING\n- No AI tooling practice evidenced.\n- Do not mention AI, automation, or analytics tools unless explicitly provided in the source materials.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate architecture ownership; treat “architecture” as workflow/process design only.\n- Do not invent:\n  - Metrics (cost savings, % improvements, schedule reductions), project sizes, budgets, headcount, or timelines.\n  - Tools, standards, certifications beyond “Licensed Civil Engineer” and “Master’s Degree in Project Management.”\n  - Responsibilities like contract negotiation, procurement, or client ownership unless evidenced.\n- Keep all bullets aligned to the provided experience highlights; maintain accuracy of roles/dates when present in MASTER_RESUME.\n\nEVIDENCE SOURCES\n- Use only:\n  - MASTER_RESUME (for titles, dates, locations, education specifics, certifications/licensure details).\n  - CANDIDATE_PROFILE.summary/headline/domains/role_fit_themes.\n  - CANDIDATE_PROFILE.experience_highlights (impact, team_context, skills_applied, architecture_patterns, constraints_and_tradeoffs, employer_relationship).\n- If a detail is not in these sources, omit it rather than guessing.\n\nFINAL REMINDER\n- Core differentiation to keep repeating via mechanisms: project scheduling/coordination + QA/QC workflows + safety/performance compliance execution, grounded in civil engineering practice and project management training.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+        "content": "[GENERAL_LAYER v1.2]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n\n21) Generate ONLY the cover letter body.\n    - Do NOT include candidate name, contact information, date, or signature.\n    - Do NOT include a sender header.\n    - Start with \"Dear Hiring Manager,\".\n    - End the content before any closing (e.g., do NOT include \"Sincerely,\" or name).\n\n22) Must explicitly mention the company and role from TASK.\n\n23) Must clearly connect:\n    candidate background → company needs → role responsibilities,\n    using only supported claims (no hallucinations).\n\n24) Keep it 3–5 short paragraphs.\n    - Be specific and concrete.\n    - Avoid verbosity and generic statements.\n\n25) Maintain a professional, concise tone appropriate for the selected generation mode\n    (Conservative / Normal / Aggressive), but do not change structure based on mode.\n\n26) Do NOT include:\n    - work authorization / citizenship statements\n    - availability statements unless explicitly present in input\n    - repeated resume bullet points verbatim\n\nOutput must be plain text only (no JSON inside the body).\n\n[CANDIDATE_LAYER_ABIGAIL_NAOMI v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Licensed Civil Engineer + Project Engineer/Project Coordinator with Master’s-level project management training.\n- Emphasize strengths: engineering project coordination, QA/QC execution, safety compliance, performance monitoring/reporting, and junior engineer training.\n- Keep scope grounded in civil engineering project environments (consultancy + builder/contractor context as stated).\n- Use headline-aligned framing: “Project Engineer with expertise in engineering coordination” supported by compliance + QA mechanisms.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Treat “architecture” as engineering delivery systems and governance mechanisms (not software).\n- Surface explicit mechanisms in bullets where supported:\n  - Project management workflows (stage gates, checklists, inspection plans, QC hold points, reporting cadence).\n  - Safety compliance processes (site safety checks, compliance verification steps, corrective action tracking).\n  - Performance monitoring systems (monthly performance reports; defined KPIs only if provided elsewhere).\n  - “System upgrade development” must be framed carefully as engineering system/process upgrades unless the source evidence specifies technical system type.\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prioritize bullets that show concrete process/mechanism over generic coordination:\n  1) QA/QC mechanisms (quality control checks, inspection routines, nonconformance handling if evidenced).\n  2) Safety compliance verification steps tied to standards (do not name standards unless provided).\n  3) Scheduling/monitoring mechanisms (baseline schedule, milestone tracking, variance reporting—only if evidenced).\n  4) Team leadership (training/evaluation) and reporting cadence.\n- Ensure at least one bullet in the most recent role (if known from MASTER_RESUME) explicitly includes a workflow mechanism (e.g., “implemented QC check cadence…”), but do not invent.\n\nDISTRIBUTED SYSTEM DEPTH\n- Not applicable as software/distributed systems are not evidenced.\n- Do NOT introduce software architecture, microservices, cloud, databases, or “distributed systems” language.\n- If a job description requests “systems thinking,” translate it into project workflow design, QA systems, and compliance governance (mechanism-first).\n\nTECHNICAL DIFFERENTIATION\n- Emphasize civil engineering project execution mechanisms:\n  - Scheduling and monitoring of engineering projects (mechanism-first; avoid “managed timelines” without how).\n  - QA/QC checks tied to safety and performance standards (state “standards” generically unless named in evidence).\n  - Performance reporting cadence (monthly performance reports) and how data was gathered/validated if evidenced.\n  - Training and evaluation of junior engineers (rubrics, review cycles, shadowing plans only if evidenced).\n- Avoid listing tools, software, or methodologies (e.g., Primavera, MS Project, ISO, OSHA) unless present in MASTER_RESUME or other allowed evidence.\n\nDOMAIN / INDUSTRY FRAMING\n- Primary domain credibility: Civil engineering project environments with strong QA/QC and safety compliance orientation.\n- Secondary framing: Engineering project management and quality assurance as transferable across construction/engineering delivery contexts.\n- Keep “system upgrades” within civil/engineering operational systems unless clarified (e.g., process upgrades, reporting system upgrades).\n\nSAFE DOMAIN TRANSLATION\n- Translate conservatively:\n  - “Quality assurance / quality control” → inspection and verification workflows ensuring deliverables meet safety/performance requirements.\n  - “Safety compliance” → compliance verification routines and risk controls within engineering project execution.\n  - “Project coordination” → scheduling, monitoring, cross-functional alignment, and documentation control.\n  - “System upgrades” → process/system improvements to engineering workflows or project monitoring/reporting (do not imply software product development).\n- If tailoring to non-civil industries, keep translation at the level of project governance + QA systems, not domain expertise.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim expertise outside civil engineering + project management (explicit boundary).\n- Do NOT imply:\n  - Software engineering, IT systems architecture, cloud platforms, data engineering, cybersecurity, or product management.\n  - Regulatory certifications/standards (ISO, OSHA, etc.) unless explicitly evidenced.\n  - Specific project types (bridges, roads, high-rises, utilities) unless evidenced.\n  - Budget ownership, contract negotiation, procurement authority, or sign-off authority unless evidenced.\n- Do NOT invent metrics (cost savings, schedule reduction %, defect reduction %) without explicit evidence.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- When roles ask for “process improvement,” “operational excellence,” or “scalable delivery,” reinterpret using accurate engineering governance mechanisms:\n  - “Reusable workflows” → standardized project management workflows and QC checklists.\n  - “Integration” → cross-functional coordination between engineering, site teams, and stakeholders (only as evidenced).\n  - “Extensibility” → adaptable QA/QC and reporting processes that can be applied across projects.\n- Keep claims tied to actions present in experience highlights: scheduling/monitoring, QC checks, compliance verification, reporting, training.\n\nLEADERSHIP FRAMING\n- Frame leadership as hands-on technical/project leadership:\n  - Training and evaluation of junior engineers (coaching, review, performance feedback).\n  - Coordinating cross-functional teams to meet safety/performance requirements.\n  - Establishing/maintaining QA/QC routines and documentation discipline.\n- Prefer observable leadership outputs: training delivered, evaluations conducted, reports produced, compliance ensured (without invented counts).\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep execution and mechanisms primary; leadership secondary but clear.\n- For senior project engineer roles: lead with QA/QC + compliance + scheduling mechanisms, then add mentoring/training.\n- Avoid over-indexing on “led teams” unless team size/scope is evidenced; use “led engineering teams” only as stated, without embellishment.\n\nAI WORK POSITIONING\n- No AI tooling practice evidenced.\n- Do NOT mention AI, ML, automation, or AI-assisted workflows unless provided in MASTER_RESUME or future evidence.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate beyond civil engineering + project management; keep claims aligned with actual experience.\n- Do not invent:\n  - Tools/software, standards, certifications, project sizes, budgets, headcounts, or quantified outcomes.\n  - “Developed system upgrades” as software development; keep it as engineering system/process upgrades unless clarified.\n- Avoid vague superlatives (“expert,” “world-class,” “highly successful”) unless supported by concrete evidence.\n\nEVIDENCE SOURCES\n- Allowed sources for bullet construction:\n  - MASTER_RESUME (primary source for roles, dates, tools, project specifics, metrics).\n  - CANDIDATE_PROFILE.summary and headline.\n  - CANDIDATE_PROFILE.experience_highlights (areas, impacts, team context, skills applied).\n  - CANDIDATE_PROFILE.experience_highlights.architecture_patterns (project management workflows; system upgrade development).\n  - CANDIDATE_PROFILE.experience_highlights.constraints_and_tradeoffs (timeline vs quality; performance vs deadlines).\n  - CANDIDATE_PROFILE.leadership (practices; risk management themes).\n- Do not use any technologies, standards, or metrics not present in the above.\n\nFINAL REMINDER\n- Core differentiation to keep visible: Licensed civil engineer who drives project execution through concrete QA/QC and safety-compliance workflows, disciplined scheduling/monitoring, and practical mentoring of junior engineers—without inflating scope beyond evidenced civil engineering project management.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
       },
       {
         "role": "user",
-        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Engineering Project Management\",\n      \"Quality Assurance and Control\"\n    ],\n    \"secondary\": [\n      \"Civil Engineering\",\n      \"Safety Compliance\"\n    ]\n  },\n  \"candidate\": {\n    \"name\": \"Abigail Naomi\",\n    \"summary\": \"Licensed Civil Engineer with a Master's Degree in Project Management. Experienced in coordinating and monitoring engineering projects, ensuring compliance with safety and performance standards. Skilled in quality assurance and control, with a strong foundation in project engineering methodologies.\",\n    \"headline\": \"Project Engineer with Expertise in Engineering Coordination\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Quality-focused\",\n        \"Execution-oriented\"\n      ]\n    },\n    \"practices\": [\n      \"Cross-functional collaboration\",\n      \"Quality assurance\",\n      \"Project management\"\n    ],\n    \"risk_management\": [\n      \"Safety compliance\",\n      \"Performance standard adherence\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Project management\",\n    \"Engineering coordination\",\n    \"Quality assurance\",\n    \"Safety compliance\",\n    \"Team leadership\",\n    \"Cross-functional collaboration\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate architecture ownership\",\n      \"Keep claims aligned with actual experience\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Avoid claiming unsupported technologies\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [],\n    \"languages\": [],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Project Coordination\",\n      \"impact\": [\n        \"Ensured compliance with safety and performance standards\",\n        \"Conducted quality control checks\",\n        \"Scheduled, coordinated, and monitored engineering projects\"\n      ],\n      \"market\": \"Engineering Consultancy\",\n      \"team_context\": [\n        \"Collaborated with cross-functional engineering teams\"\n      ],\n      \"skills_applied\": [\n        \"Project management\",\n        \"Quality control\",\n        \"Safety compliance\"\n      ],\n      \"architecture_patterns\": [\n        \"Project scheduling and coordination\",\n        \"Quality assurance workflows\"\n      ],\n      \"employer_relationship\": \"Colensky Engineering Consultancy\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Balancing project timelines with quality standards\"\n      ]\n    },\n    {\n      \"area\": \"Engineering Management\",\n      \"impact\": [\n        \"Oversaw engineering projects\",\n        \"Evaluated, hired, and trained junior engineers\",\n        \"Prepared monthly performance reports\",\n        \"Developed system upgrades\"\n      ],\n      \"market\": \"Construction\",\n      \"team_context\": [\n        \"Led engineering teams\"\n      ],\n      \"skills_applied\": [\n        \"Leadership\",\n        \"Project oversight\",\n        \"Team training\"\n      ],\n      \"architecture_patterns\": [\n        \"Engineering project oversight\",\n        \"System upgrade development\"\n      ],\n      \"employer_relationship\": \"Lopelski Builders, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Resource allocation and team management\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Project development environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\"\n    ]\n  }\n}"
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Engineering Project Management\",\n      \"Quality Assurance\"\n    ],\n    \"secondary\": [\n      \"Civil Engineering\",\n      \"Safety Compliance\"\n    ]\n  },\n  \"contacts\": {\n    \"email\": \"hello@techguruplus.com\",\n    \"phone\": \"(123) 456 7890\",\n    \"location\": \"Coquitlam, British Columbia\",\n    \"linkedin_url\": null\n  },\n  \"candidate\": {\n    \"name\": \"Abigail Naomi\",\n    \"summary\": \"Abigail Naomi is a licensed civil engineer with a master's degree in project management. She specializes in coordinating and monitoring engineering projects, ensuring compliance with safety and performance standards. Abigail has extensive experience in quality assurance and control, as well as in training junior engineers.\",\n    \"headline\": \"Project Engineer with Expertise in Engineering Coordination\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Quality-focused\",\n        \"Execution-driven\"\n      ]\n    },\n    \"practices\": [\n      \"Quality assurance\",\n      \"Project coordination\"\n    ],\n    \"risk_management\": [\n      \"Safety compliance\",\n      \"Performance monitoring\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Project management\",\n    \"Quality assurance\",\n    \"Engineering coordination\",\n    \"Team leadership\",\n    \"Safety compliance\",\n    \"Performance monitoring\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate domain expertise beyond civil engineering and project management\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Keep claims aligned with actual experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [],\n    \"languages\": [],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Project Coordination\",\n      \"impact\": [\n        \"Ensured compliance with safety and performance standards\",\n        \"Conducted quality control checks\",\n        \"Scheduled and monitored engineering projects\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Collaborated with cross-functional teams\"\n      ],\n      \"skills_applied\": [\n        \"Project scheduling\",\n        \"Quality assurance\",\n        \"Safety compliance\"\n      ],\n      \"architecture_patterns\": [\n        \"Project management workflows\"\n      ],\n      \"employer_relationship\": \"Colensky Engineering Consultancy\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Balancing project timelines with quality standards\"\n      ]\n    },\n    {\n      \"area\": \"Engineering Oversight\",\n      \"impact\": [\n        \"Oversaw engineering projects\",\n        \"Evaluated and trained junior engineers\",\n        \"Prepared monthly performance reports\",\n        \"Developed system upgrades\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Led engineering teams\"\n      ],\n      \"skills_applied\": [\n        \"Team leadership\",\n        \"Performance evaluation\",\n        \"System development\"\n      ],\n      \"architecture_patterns\": [\n        \"System upgrade development\"\n      ],\n      \"employer_relationship\": \"Lopelski Builders, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Managing team performance and project deadlines\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Project management environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\"\n    ]\n  }\n}"
       },
       {
         "role": "user",
@@ -23,11 +23,11 @@
       },
       {
         "role": "user",
-        "content": "MASTER_COVER_LETTER:\nAbigail Naomi\nDear Hiring Manager,\nI am excited to apply for the Senior Software Engineer role at Tigera. With over 15 years of experience in backend engineering and team leadership, including roles as VP and Director of Software Development, I have built fintech and blockchain systems that became top-5 platforms in the Japanese market, serving over 1M users, and led teams of up to 20 engineers to deliver reliable, scalable products.\nIn addition to my industry work, I currently contribute as an independent contractor supporting world-leading AI research labs in training and evaluating advanced AI models on senior-level software engineering tasks. This work keeps me deeply engaged with cutting-edge development practices, reinforces my ability to solve complex problems under ambiguity, and strengthens my proficiency with AI-assisted development tools. I also adopt AI-accelerated workflows (ChatGPT, Claude, Cursor AI) to improve productivity, code quality, and architectural clarity.\nI would welcome the chance to bring this expertise to your team and contribute to building reliable, scalable systems for your clients. I hold Canadian citizenship and am fully eligible to work in Canada.\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+        "content": "MASTER_COVER_LETTER:\nAbigail Naomi\nDear Hiring Manager,\n\nI am excited to apply for the [Role] role at [Company].\n\n[2-3 short paragraphs connecting candidate background to role/company needs.]\n\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
       },
       {
         "role": "user",
-        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: April 29, 2026\nReturn JSON only.\n"
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: May 15, 2026\nReturn JSON only.\n"
       }
     ],
     "response_format": {
@@ -35,18 +35,18 @@
     }
   },
   "llm_response": {
-    "resume": "ABIGAIL NAOMI\nPROJECT ENGINEER\n\nGENERAL INFO\nLicensed Civil Engineer with a Master’s Degree in Project Management, specializing in coordinating and monitoring engineering projects with strong QA/QC and safety/performance compliance execution. Experienced in schedule planning, cross-functional coordination, and quality verification workflows to keep project work aligned to requirements.\n\nMY QUALIFICATIONS\nLicensed Civil Engineer\nMaster's Degree in Project Management\nAccredited by the National Standard Compliance Agency\nWell-versed in QA/QC policies\n\nCONTACT INFO\nLandline: (123) 456 7890\nEmail: hello@techguruplus.com\nHome Address: 2179 Clover Avenue, Coquitlam, British Columbia V3J 5S9\nWebsite: www.techguruplus.com\n\nPERSONAL REFERENCES\nLamis Perecio | CEO, Colensky Engineering Consultancy\nEmail: hello@reallygreatsite.com\nBertizzia Lopelski | COO, Lopelski Builders, Inc\nPhone: 123-456-7890\n\nEXPERIENCE\nProject Coordinator\nColensky Engineering Consultancy | 2017–Present\n- Ensured compliance with safety and performance standards during engineering project execution, balancing timeline needs with required quality constraints.\n- Conducted QA/QC checks as part of project verification workflows to confirm work met defined requirements.\n- Scheduled, coordinated, and monitored engineering projects, aligning activities across cross-functional engineering teams.\n\nSenior Engineer\nLopelski Builders, Inc. | 2013–2017\n- Oversaw engineering projects, coordinating execution activities and monitoring progress against project expectations.\n- Evaluated, hired, and trained junior engineers, supporting consistent execution practices and team readiness.\n- Prepared monthly performance reports to document project status and communicate progress.\n- Developed system upgrades to improve project execution processes.\n\nEDUCATION\nUniversity of Lovelstyne\nMaster's in Project Engineering | June 2018\nCompleted a postgraduate degree in project engineering; GWA 3.75\nAuthored a dissertation on \"Engineering the Future: Methods in Project Management\"\n\nNat'l Community College\nDegree in Civil Engineering | June 2012\nCompleted an undergraduate degree in civil engineering; GWA 3.56\nGraduated with distinction, with a special award for Best Thesis\nNCC Scholarship Holder\n\nTECHNICAL SKILLS\nProject Controls & Coordination: project scheduling, coordination, progress monitoring, cross-functional collaboration\nQuality & Compliance: QA/QC checks, safety compliance, performance standard adherence\nReporting & Documentation: monthly performance reporting, technical documentation\nOther: requirements clarification, workflow/process improvement\n\nADDITIONAL\nAccredited by the National Standard Compliance Agency\nLicensed Civil Engineer\n\nCURRENT_DATE: April 29, 2026\n\nNote: Target role (Lead Software Engineer) emphasizes software architecture, application development, SDLC, and testing; this resume reflects verified engineering project management, QA/QC, and compliance experience from the provided background.\n",
-    "cover_letter": "Abigail Naomi\n\nDear Hiring Manager,\n\nI am applying for the Lead Software Engineer role at American Tire Distributors. I bring a background in engineering project coordination and oversight, with a consistent focus on requirements alignment, QA/QC verification workflows, and safety/performance compliance in execution-focused environments.\n\nIn my current role as Project Coordinator at Colensky Engineering Consultancy, I schedule, coordinate, and monitor engineering projects while conducting quality control checks and ensuring compliance with safety and performance standards. Previously, as a Senior Engineer at Lopelski Builders, Inc., I oversaw engineering projects, prepared monthly performance reports, and evaluated, hired, and trained junior engineers.\n\nWhile my experience is in civil/engineering project delivery rather than software development, the way I work maps closely to the execution discipline your role calls for: clarifying requirements, assessing impacts of changes on schedule and quality constraints, documenting status and risks, and maintaining a strong verification mindset. I would welcome the opportunity to discuss how my project management training and quality-focused execution approach could support ATD’s teams.\n\nSincerely,\nAbigail Naomi\n\nCURRENT_DATE: April 29, 2026\n"
+    "resume": "ABIGAIL NAOMI\nPROJECT ENGINEER\n\nGENERAL INFO\nLicensed Civil Engineer with a Master’s degree in Project Engineering/Project Management, specializing in engineering project coordination, QA/QC execution, safety compliance verification, and performance monitoring/reporting. Experienced in establishing and following project management workflows (planning, inspection routines, documentation, and reporting cadence) while balancing schedule constraints with quality and safety requirements. Hands-on mentor to junior engineers through training and performance evaluation.\n\nMY QUALIFICATIONS\nLicensed Civil Engineer\nMaster's Degree in Project Management\nAccredited by the National Standard Compliance Agency\nWell-versed in QA/QC policies\n\nCONTACT INFO\nLandline: (123) 456 7890\nEmail: hello@techguruplus.com\nHome Address: 2179 Clover Avenue, Coquitlam, British Columbia V3J 5S9\nWebsite: www.techguruplus.com\n\nPERSONAL REFERENCES\nLamis Perecio | CEO, Colensky Engineering Consultancy\nEmail: hello@reallygreatsite.com\nBertizzia Lopelski | COO, Lopelski Builders, Inc\nPhone: 123-456-7890\n\nEXPERIENCE\nProject Coordinator\nColensky Engineering Consultancy | 2017–Present\n- Scheduled, coordinated, and monitored engineering projects using defined project management workflows to track progress and maintain delivery discipline under timeline constraints.\n- Conducted quality control checks as part of QA/QC routines to verify work met required performance expectations.\n- Ensured compliance with safety and performance standards through ongoing verification and documentation during project execution.\n\nSenior Engineer\nLopelski Builders, Inc. | 2013–2017\n- Oversaw engineering projects, coordinating execution activities and monitoring progress against project deadlines.\n- Prepared monthly performance reports to communicate project status and performance to stakeholders.\n- Evaluated, hired, and trained junior engineers, providing performance feedback and practical coaching to support team execution.\n- Developed system upgrades to improve engineering delivery processes and/or operational systems supporting project work.\n\nEDUCATION\nUniversity of Lovelstyne\nMaster's in Project Engineering | June 2018\nCompleted a postgraduate degree in project engineering; GWA 3.75\nAuthored a dissertation on \"Engineering the Future: Methods in Project Management\"\n\nNat'l Community College\nDegree in Civil Engineering | June 2012\nCompleted an undergraduate degree in civil engineering; GWA 3.56\nGraduated with distinction, with a special award for Best Thesis\nNCC Scholarship Holder\n\nTECHNICAL SKILLS\nProject Coordination & Delivery: project scheduling, project coordination, project monitoring\nQuality & Compliance: QA/QC, quality control checks, safety compliance, compliance verification\nReporting & Documentation: monthly performance reports, technical documentation\nLeadership: junior engineer training, performance evaluation\nOther: project management workflows, system upgrade development\n",
+    "cover_letter": "Abigail Naomi\n(123) 456 7890 | hello@techguruplus.com\n\nMay 15, 2026\n\nDear Hiring Manager,\n\nI am applying for the Lead Software Engineer role at American Tire Distributors. While my background is in civil engineering and project engineering, I bring a strong foundation in structured delivery, impact-focused analysis, and disciplined quality practices—skills I have applied in complex, deadline-driven engineering environments.\n\nIn my current role as a Project Coordinator with Colensky Engineering Consultancy, I schedule, coordinate, and monitor engineering projects while ensuring compliance with safety and performance standards. I also execute QA/QC routines through quality control checks and documentation, balancing timeline constraints with quality requirements through consistent project management workflows.\n\nPreviously, as a Senior Engineer at Lopelski Builders, Inc., I oversaw engineering projects, prepared monthly performance reports, and evaluated, hired, and trained junior engineers. I also developed system upgrades to improve how project work was supported and executed, reinforcing my interest in building maintainable solutions and strengthening delivery processes.\n\nAmerican Tire Distributors’ emphasis on collaboration, dependable execution, and supporting end users aligns with how I approach engineering work: clear requirements, disciplined verification, and consistent communication. I would welcome the opportunity to discuss how my project governance, quality assurance, and team-development experience can translate into strong execution and support in the Lead Software Engineer position.\n\nThank you for your time and consideration.\n\nSincerely,\nAbigail Naomi"
   },
   "diff": {
     "resume": [
       {
         "name": "Technical Skills",
-        "after": "Project Controls & Coordination: project scheduling, coordination, progress monitoring, cross-functional collaboration\nQuality & Compliance: QA/QC checks, safety compliance, performance standard adherence\nReporting & Documentation: monthly performance reporting, technical documentation\nOther: requirements clarification, workflow/process improvement\n\nADDITIONAL\nAccredited by the National Standard Compliance Agency\nLicensed Civil Engineer\n\nCURRENT_DATE: April 29, 2026\n\nNote: Target role (Lead Software Engineer) emphasizes software architecture, application development, SDLC, and testing; this resume reflects verified engineering project management, QA/QC, and compliance experience from the provided background."
+        "after": "Project Coordination & Delivery: project scheduling, project coordination, project monitoring\nQuality & Compliance: QA/QC, quality control checks, safety compliance, compliance verification\nReporting & Documentation: monthly performance reports, technical documentation\nLeadership: junior engineer training, performance evaluation\nOther: project management workflows, system upgrade development"
       }
     ]
   },
-  "generation_run_id": "242",
+  "generation_run_id": "306",
   "updated_ir": {
     "source_kind": "docx",
     "header_paras": [
@@ -91,279 +91,301 @@
         "semantic": "empty",
         "paragraph_profile": null,
         "para_id": "para_7"
-      },
-      {
-        "text": "GENERAL INFO",
-        "semantic": "section_heading",
-        "paragraph_profile": null,
-        "para_id": "para_8"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_9"
-      },
-      {
-        "text": "I am an engineer specializing in the coordination and monitoring of engineering projects, currently looking for a full-time position to expand my skillset.",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_10"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_11"
-      },
-      {
-        "text": "MY QUALIFICATIONS",
-        "semantic": "section_heading",
-        "paragraph_profile": null,
-        "para_id": "para_12"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_13"
-      },
-      {
-        "text": "Licensed Civil Engineer",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_14"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_15"
-      },
-      {
-        "text": "Master's Degree in Project",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_16"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_17"
-      },
-      {
-        "text": "Management",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_18"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_19"
-      },
-      {
-        "text": "Accredited by the National",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_20"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_21"
-      },
-      {
-        "text": "Standard Compliance Agency",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_22"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_23"
-      },
-      {
-        "text": "Well-versed in QA/QC policies",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_24"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_25"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_26"
-      },
-      {
-        "text": "CONTACT INFO",
-        "semantic": "section_heading",
-        "paragraph_profile": null,
-        "para_id": "para_27"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_28"
-      },
-      {
-        "text": "Landline: (123) 456 7890",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_29"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_30"
-      },
-      {
-        "text": "Email: hello@techguruplus.com",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_31"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_32"
-      },
-      {
-        "text": "Home Address: 2179 Clover Avenue, Coquitlam, British Columbia V3J 5S9",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_33"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_34"
-      },
-      {
-        "text": "Website: www.techguruplus.com",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_35"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_36"
-      },
-      {
-        "text": "PERSONAL REFERENCES",
-        "semantic": "section_heading",
-        "paragraph_profile": null,
-        "para_id": "para_37"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_38"
-      },
-      {
-        "text": "Lamis Perecio | CEO, Colensky",
-        "semantic": "role_header",
-        "paragraph_profile": null,
-        "para_id": "para_39"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_40"
-      },
-      {
-        "text": "Engineering Consultancy",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_41"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_42"
-      },
-      {
-        "text": "Email: hello@reallygreatsite.com",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_43"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_44"
-      },
-      {
-        "text": "Bertizzia Lopelski | COO, Lopelski",
-        "semantic": "role_header",
-        "paragraph_profile": null,
-        "para_id": "para_45"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_46"
-      },
-      {
-        "text": "Builders, Inc\nProject Controls & Coordination: project scheduling, coordinati...",
-        "semantic": "paragraph",
-        "paragraph_profile": null,
-        "para_id": "para_47"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_48"
-      },
-      {
-        "text": "\n",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_50"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_51"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_52"
-      },
-      {
-        "text": "",
-        "semantic": "empty",
-        "paragraph_profile": null,
-        "para_id": "para_53"
       }
     ],
     "sections": [
+      {
+        "title": "GENERAL INFO",
+        "semantic_type": "summary",
+        "heading": {
+          "text": "GENERAL INFO",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_8"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_9"
+          },
+          {
+            "text": "I am an engineer specializing in the coordination and monitoring of engineering projects, currently looking for a full-time position to expand my skillset.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_10"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_11"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "MY QUALIFICATIONS",
+        "semantic_type": "other",
+        "heading": {
+          "text": "MY QUALIFICATIONS",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_12"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_13"
+          },
+          {
+            "text": "Licensed Civil Engineer",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_14"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_15"
+          },
+          {
+            "text": "Master's Degree in Project",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_16"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_17"
+          },
+          {
+            "text": "Management",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_18"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_19"
+          },
+          {
+            "text": "Accredited by the National",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_20"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_21"
+          },
+          {
+            "text": "Standard Compliance Agency",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_22"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_23"
+          },
+          {
+            "text": "Well-versed in QA/QC policies",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_24"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_25"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_26"
+          },
+          {
+            "text": "CONTACT INFO",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_27"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_28"
+          },
+          {
+            "text": "Landline: (123) 456 7890",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_29"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_30"
+          },
+          {
+            "text": "Email: hello@techguruplus.com",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_31"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_32"
+          },
+          {
+            "text": "Home Address: 2179 Clover Avenue, Coquitlam, British Columbia V3J 5S9",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_33"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_34"
+          },
+          {
+            "text": "Website: www.techguruplus.com",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_35"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_36"
+          },
+          {
+            "text": "PERSONAL REFERENCES",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_37"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_38"
+          },
+          {
+            "text": "Lamis Perecio | CEO, Colensky",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_40"
+          },
+          {
+            "text": "Engineering Consultancy",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_41"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_42"
+          },
+          {
+            "text": "Email: hello@reallygreatsite.com",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_43"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_44"
+          },
+          {
+            "text": "Bertizzia Lopelski | COO, Lopelski",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_45"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_46"
+          },
+          {
+            "text": "Builders, Inc",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_47"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_48"
+          },
+          {
+            "text": "Phone: 123-456-7890",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_49"
+          },
+          {
+            "text": "\n",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_50"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_51"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_52"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_53"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
       {
         "title": "EXPERIENCE",
         "semantic_type": "experience",
@@ -381,10 +403,22 @@
             "para_id": "para_64"
           },
           {
+            "text": "Project Coordinator",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_65"
+          },
+          {
             "text": "",
             "semantic": "empty",
             "paragraph_profile": null,
             "para_id": "para_66"
+          },
+          {
+            "text": "Colensky Engineering Consultancy 2017-present",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_67"
           },
           {
             "text": "",
@@ -393,10 +427,22 @@
             "para_id": "para_68"
           },
           {
+            "text": "Ensures compliance to safety and performance standards Conducts quality control checks Schedules, coordinates and monitors engineering projects",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_69"
+          },
+          {
             "text": "",
             "semantic": "empty",
             "paragraph_profile": null,
             "para_id": "para_70"
+          },
+          {
+            "text": "Senior Engineer",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_71"
           },
           {
             "text": "",
@@ -417,10 +463,22 @@
             "para_id": "para_74"
           },
           {
+            "text": "2013-2017",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_75"
+          },
+          {
             "text": "",
             "semantic": "empty",
             "paragraph_profile": null,
             "para_id": "para_76"
+          },
+          {
+            "text": "Oversees engineering projects",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_77"
           },
           {
             "text": "",
@@ -429,10 +487,22 @@
             "para_id": "para_78"
           },
           {
+            "text": "Evaluates, hires and trains junior engineers",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_79"
+          },
+          {
             "text": "",
             "semantic": "empty",
             "paragraph_profile": null,
             "para_id": "para_80"
+          },
+          {
+            "text": "Prepares monthly performance reports Develops system upgrades",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_81"
           },
           {
             "text": "",
@@ -444,58 +514,90 @@
         "roles": [
           {
             "header": {
-              "text": "Project Coordinator | Colensky Engineering Consultancy | 2017–Present",
+              "text": "Project Coordinator",
               "semantic": "role_header",
               "paragraph_profile": null,
               "para_id": "para_65"
             },
             "header_extra": [],
-            "meta_lines": [],
+            "meta_lines": [
+              {
+                "text": "Colensky Engineering Consultancy 2017-present",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_67"
+              }
+            ],
             "bullets": [
               {
-                "text": "Ensured compliance with safety and performance standards during engineering project execution, balancing timeline needs with required quality constraints.",
+                "text": "Scheduled, coordinated, and monitored engineering projects using defined project management workflows to track progress and maintain delivery discipline under timeline constraints.",
                 "semantic": "paragraph",
                 "paragraph_profile": null,
                 "para_id": "para_69"
+              },
+              {
+                "text": "Conducted quality control checks as part of QA/QC routines to verify work met required performance expectations.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_69_ext_1"
+              },
+              {
+                "text": "Ensured compliance with safety and performance standards through ongoing verification and documentation during project execution.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_69_ext_2"
               }
             ],
             "role_id": "Project Coordinator",
-            "role_id_stable": "role_1"
+            "role_id_stable": ""
           },
           {
             "header": {
-              "text": "Senior Engineer | Lopelski Builders, Inc. | 2013–2017",
+              "text": "Senior Engineer",
               "semantic": "role_header",
               "paragraph_profile": null,
               "para_id": "para_71"
             },
             "header_extra": [],
-            "meta_lines": [],
+            "meta_lines": [
+              {
+                "text": "2013-2017",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_75"
+              }
+            ],
             "bullets": [
               {
-                "text": "Oversaw engineering projects, coordinating execution activities and monitoring progress against project expectations.",
+                "text": "Oversaw engineering projects, coordinating execution activities and monitoring progress against project deadlines.",
                 "semantic": "paragraph",
                 "paragraph_profile": null,
                 "para_id": "para_77"
               },
               {
-                "text": "Evaluated, hired, and trained junior engineers, supporting consistent execution practices and team readiness.",
+                "text": "Prepared monthly performance reports to communicate project status and performance to stakeholders.",
                 "semantic": "paragraph",
                 "paragraph_profile": null,
                 "para_id": "para_79"
               },
               {
-                "text": "Prepared monthly performance reports to document project status and communicate progress.",
+                "text": "Evaluated, hired, and trained junior engineers, providing performance feedback and practical coaching to support team execution.",
                 "semantic": "paragraph",
                 "paragraph_profile": null,
                 "para_id": "para_81"
+              },
+              {
+                "text": "Developed system upgrades to improve engineering delivery processes and/or operational systems supporting project work.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_81_ext_1"
               }
             ],
             "role_id": "Senior Engineer",
-            "role_id_stable": "role_2"
+            "role_id_stable": ""
           }
         ],
-        "section_id": "sec_1"
+        "section_id": "sec_3"
       },
       {
         "title": "EDUCATION",
@@ -593,7 +695,7 @@
           }
         ],
         "roles": [],
-        "section_id": "sec_2"
+        "section_id": "sec_4"
       }
     ],
     "layout": {
@@ -859,6 +961,46 @@
       },
       {
         "kind": "paragraph",
+        "para_id": "para_49_ext_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Phone: 123-456-7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49_ext_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Phone: 123-456-7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49_ext_3",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Phone: 123-456-7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49_ext_4",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Phone: 123-456-7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49_ext_5",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Phone: 123-456-7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49_ext_6",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Phone: 123-456-7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49_ext_7",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Phone: 123-456-7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49_ext_8",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Phone: 123-456-7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
         "para_id": "para_50",
         "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"20\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr><w:br w:type=\"column\"/></w:r></w:p>"
       },
@@ -910,6 +1052,16 @@
       {
         "kind": "paragraph",
         "para_id": "para_69",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"320\" w:right=\"320\"/><w:spacing w:after=\"0\" w:line=\"259\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Ensures compliance to safety and performance standards Conducts quality control checks Schedules, coordinates and monitors engineering projects</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_69_ext_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"320\" w:right=\"320\"/><w:spacing w:after=\"0\" w:line=\"259\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Ensures compliance to safety and performance standards Conducts quality control checks Schedules, coordinates and monitors engineering projects</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_69_ext_2",
         "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"320\" w:right=\"320\"/><w:spacing w:after=\"0\" w:line=\"259\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Ensures compliance to safety and performance standards Conducts quality control checks Schedules, coordinates and monitors engineering projects</w:t></w:r></w:p>"
       },
       {
@@ -970,6 +1122,11 @@
       {
         "kind": "paragraph",
         "para_id": "para_81",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"320\" w:right=\"140\"/><w:spacing w:after=\"0\" w:line=\"295\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Prepares monthly performance reports Develops system upgrades</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_81_ext_1",
         "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"320\" w:right=\"140\"/><w:spacing w:after=\"0\" w:line=\"295\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"403B3B\"/></w:rPr><w:t>Prepares monthly performance reports Develops system upgrades</w:t></w:r></w:p>"
       },
       {

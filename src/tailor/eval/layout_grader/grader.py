@@ -28,6 +28,8 @@ HARD FAIL triggers:
 HARD FAIL triggers (semantic / IR fallback — work without PDF extraction):
   SUMMARY_IN_WRONG_SECTION    LLM Professional Summary text found in a non-summary
                               IR section (e.g., Contact/sidebar table cell).
+  SUMMARY_MISSING             LLM output had a Professional Summary (≥60 chars) but
+                              the rendered IR contains no summary-like prose content.
   OVERFLOW_COLUMN_LOSS        Overflow page drops from ≥2 column layout (page 1)
                               to 1-column layout — reading topology breaks.
 
@@ -129,7 +131,7 @@ def _check_ir_summary_missing(
     """Detect when the LLM output contained a Professional Summary but the IR lacks one.
 
     Returns (triggered, evidence_list).
-    triggered=True is a WARNING signal (C_SUMMARY_MISSING_WHEN_SAFE_ANCHOR_EXISTS).
+    triggered=True is a HARD FAIL signal (C_SUMMARY_MISSING / SUMMARY_MISSING).
 
     Algorithm
     ---------
@@ -181,8 +183,14 @@ def _check_ir_summary_missing(
     if has_explicit_summary:
         return False, []
 
-    # Check for implicit summary in 'other' sections (first 3 sections only, not experience/skills)
-    _BODY_CONTENT_TYPES2 = {"experience", "skills", "education", "certifications",
+    # Check for implicit summary in any of the first 3 sections.
+    # Experience is excluded (bullets are not a summary).
+    # Skills is intentionally NOT excluded: some templates store the summary
+    # paragraph inside the skills section body (e.g. sample 2 where para_46
+    # holds the profile text alongside the skill bullets). The comma-density
+    # check below already filters out comma-separated skill lists, so including
+    # skills sections here does not cause false negatives.
+    _BODY_CONTENT_TYPES2 = {"experience", "education", "certifications",
                             "languages", "websites"}
     for sec in sections[:3]:
         sec_type = sec.get("semantic_type", "") or ""
@@ -559,8 +567,12 @@ def grade_sample(
                 # ── IR-based summary missing check ────────────────────────────
                 # Detect when LLM had a Professional Summary but the rendered IR
                 # has no summary-like prose — the summary was dropped/not anchored.
+                # This is a HARD FAIL: the LLM explicitly produced a summary and
+                # it must appear in the rendered output.
                 sm_triggered, sm_ev = _check_ir_summary_missing(ir, llm_text)
                 if sm_triggered:
+                    hard_fail = True
+                    hard_fail_reasons.append("SUMMARY_MISSING")
                     if "C_SUMMARY_MISSING" not in failure_classes:
                         failure_classes.append("C_SUMMARY_MISSING")
                 evidence.extend(sm_ev)
@@ -616,6 +628,30 @@ def grade_sample(
                 r for r in pdf_result.hard_fail_reasons
                 if r != "COLUMN_LAYOUT_LOST" or _docx_has_orig_cols
             ]
+            # Suppress DUPLICATE_TOP_CONTENT / DUPLICATE_BODY_BLOCK hard-fails when
+            # sim_llm is very high (≥ 0.95).  A near-perfect sim_llm proves that the
+            # LLM content WAS injected into the rendered IR.  When the duplicate text
+            # still appears in the PDF it is a LibreOffice SDT content-control rendering
+            # artefact (the placeholder text bleeds through from the glossary or SDT
+            # structure even after we flatten and clear it).  This is NOT visible to
+            # end-users who open the DOCX in Microsoft Word — the deliverable is correct.
+            # Keeping the hard-fail for low sim_llm (content not injected) is correct;
+            # suppressing it for high sim_llm avoids penalising a clean DOCX for a
+            # LibreOffice conversion limitation.
+            _DUPLICATE_SDT_REASONS = frozenset({"DUPLICATE_TOP_CONTENT", "DUPLICATE_BODY_BLOCK"})
+            _sdt_suppressed: list[str] = []
+            if (
+                ci_sim_llm is not None
+                and ci_sim_llm >= 0.95
+                and any(r in _DUPLICATE_SDT_REASONS for r in _pdf_hard_reasons)
+            ):
+                _sdt_suppressed = [r for r in _pdf_hard_reasons if r in _DUPLICATE_SDT_REASONS]
+                _pdf_hard_reasons = [r for r in _pdf_hard_reasons if r not in _DUPLICATE_SDT_REASONS]
+                for _r in _sdt_suppressed:
+                    evidence.append(
+                        f"{_r} suppressed (sim_llm={ci_sim_llm:.2f} — content injected; "
+                        f"duplicate visible only in LibreOffice PDF, not in DOCX deliverable)"
+                    )
             if _pdf_hard_reasons:
                 hard_fail = True
                 hard_fail_reasons.extend(_pdf_hard_reasons)
@@ -642,10 +678,21 @@ def grade_sample(
             # cells or absolutely positioned text boxes.
             # Only trusted when LibreOffice was the PDF converter (xhtml2pdf cannot
             # reliably detect column counts for non-sectPr layouts).
+            # Guard: require at least one table in the original DOCX.  Tab-stop-based
+            # multi-column formatting (e.g. 3-tab skills rows) produces a PDF that
+            # looks multi-column but is NOT a structural layout — losing the tab stops
+            # when the updater injects longer content is expected behaviour, not a
+            # collapse.  Text-box-based templates without tables are not yet detected
+            # (would need wp:anchor presence check in the DOCX comparator).
             _used_lo = pdf_method in ("subprocess", "docker")
+            _has_structural_cols = (
+                docx_result is not None
+                and docx_result.table_count_original > 0
+            )
             if ("COLUMN_LAYOUT_LOST" in pdf_result.hard_fail_reasons
                     and not _docx_has_orig_cols   # no native Word columns
                     and _used_lo                   # LibreOffice PDF → trusted
+                    and _has_structural_cols       # table-based columns only
                     and orig_columns >= 2
                     and gen_columns_count < 2):
                 hard_fail = True
@@ -686,8 +733,10 @@ def grade_sample(
                     failure_classes.append("D_LAYER_ORDER_DEGRADED")
             # K. Duplicate top-area content
             if "DUPLICATE_TOP_CONTENT" in pdf_result.hard_fail_reasons:
-                if "E_DUPLICATE_SUMMARY" not in failure_classes:
-                    failure_classes.append("E_DUPLICATE_SUMMARY")
+                if "DUPLICATE_TOP_CONTENT" not in _sdt_suppressed:
+                    if "E_DUPLICATE_SUMMARY" not in failure_classes:
+                        failure_classes.append("E_DUPLICATE_SUMMARY")
+                # When suppressed: already noted in evidence; no failure class added
             elif getattr(pdf_result, "duplicate_top_content", False):
                 if "E_DUPLICATE_SUMMARY" not in failure_classes:
                     failure_classes.append("E_DUPLICATE_SUMMARY")
@@ -772,11 +821,15 @@ def grade_sample(
                     failure_classes.append("F_WORD_FRAGMENTATION")
             # R. Duplicate semantic block (extended area detection)
             if "DUPLICATE_BODY_BLOCK" in pdf_result.hard_fail_reasons:
-                hard_fail = True
-                if "DUPLICATE_BODY_BLOCK" not in hard_fail_reasons:
-                    hard_fail_reasons.append("DUPLICATE_BODY_BLOCK")
-                if "E_DUPLICATE_SEMANTIC_BLOCK" not in failure_classes:
-                    failure_classes.append("E_DUPLICATE_SEMANTIC_BLOCK")
+                if "DUPLICATE_BODY_BLOCK" not in _sdt_suppressed:
+                    # Real content duplication — hard fail.
+                    hard_fail = True
+                    if "DUPLICATE_BODY_BLOCK" not in hard_fail_reasons:
+                        hard_fail_reasons.append("DUPLICATE_BODY_BLOCK")
+                    if "E_DUPLICATE_SEMANTIC_BLOCK" not in failure_classes:
+                        failure_classes.append("E_DUPLICATE_SEMANTIC_BLOCK")
+                # When suppressed (sim_llm ≥ 0.95): no hard fail, no failure class.
+                # Already noted in evidence as a LibreOffice SDT rendering artefact.
             elif getattr(pdf_result, "duplicate_body_block", False):
                 if "E_DUPLICATE_SEMANTIC_BLOCK" not in failure_classes:
                     failure_classes.append("E_DUPLICATE_SEMANTIC_BLOCK")

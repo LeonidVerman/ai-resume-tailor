@@ -209,7 +209,7 @@ def _deduplicate_page_indices(doc) -> set[int]:
     return skip
 
 
-def _detect_header_footer_texts(doc) -> set[str]:
+def _detect_header_footer_texts(doc, skip_pages: "set[int] | None" = None) -> set[str]:
     """Return text strings that appear as page headers/footers.
 
     Two strategies:
@@ -220,13 +220,21 @@ def _detect_header_footer_texts(doc) -> set[str]:
        2 of 2").
     3. Pages 2+ absolute: any block in the top/bottom 8% zone on page 2 or
        later is unconditionally excluded (page numbers, running heads).
+
+    *skip_pages* is the set of duplicate page indices returned by
+    _deduplicate_page_indices.  Skipping those pages prevents content that
+    appears on every page of a multi-page identical template (e.g. the
+    candidate name on a 3-copy gallery PDF) from being incorrectly classified
+    as a running header/footer.
     """
+    _skip = skip_pages or set()
     n_pages = len(doc)
-    if n_pages < 2:
+    n_active = sum(1 for i in range(n_pages) if i not in _skip)
+    if n_active < 2:
         return set()
 
     hf_texts: set[str] = set()
-    min_appearances = max(2, n_pages // 2)
+    min_appearances = max(2, n_active // 2)
 
     # Maps: y-bucket → list of (page_idx, text) tuples
     bucket_entries: dict[float, list[tuple[int, str]]] = {}
@@ -234,6 +242,9 @@ def _detect_header_footer_texts(doc) -> set[str]:
     page_zone_texts: list[set[str]] = []  # one set per page, zone texts only
 
     for page_idx, page in enumerate(doc):
+        if page_idx in _skip:
+            page_zone_texts.append(set())
+            continue
         h = page.rect.height
         top_zone = h * _HF_TOP_ZONE
         bot_zone = h * _HF_BOT_ZONE
@@ -358,6 +369,90 @@ def _dominant_text_color(spans: list[dict]) -> str | None:
     if not counter:
         return None
     return _fitz_color_to_hex(counter.most_common(1)[0][0])
+
+
+def _extract_header_bg(page) -> tuple[str | None, float]:
+    """Detect a full-width dark header rectangle on page 0.
+
+    Returns (hex_bg_color, y_bottom) for the topmost large full-width filled
+    rectangle (width ≥ 80 % of page, height > 8 pt, fill not white/near-white).
+    Used to apply dark background colors to header_paras whose text would
+    otherwise be invisible (white-on-dark templates like sample 3 and 25).
+
+    Returns (None, 0.0) when no such rectangle exists.
+    """
+    try:
+        drawings = page.get_drawings()
+    except Exception:
+        return None, 0.0
+
+    pw = page.rect.width
+    best_color: str | None = None
+    best_y1 = 0.0
+
+    for d in drawings:
+        fill = d.get("fill")
+        if fill is None:
+            continue
+        rect = d.get("rect")
+        if rect is None:
+            continue
+        x0, y0, x1, y1 = rect
+        if (x1 - x0) < pw * 0.80:
+            continue  # not full-width
+        if (y1 - y0) < 8.0:
+            continue  # too thin
+        hex_color = _fitz_color_to_hex(fill)
+        if hex_color is None:
+            continue
+        # Skip white and near-white fills (luminance > 210/255 = 82%).
+        # fafafa (250,250,250) and similar light grays must not be treated as
+        # dark header bands — they produce invisible white-on-light rendering.
+        try:
+            _r = int(hex_color[0:2], 16)
+            _g = int(hex_color[2:4], 16)
+            _b = int(hex_color[4:6], 16)
+            if (_r + _g + _b) / 3 > 210:
+                continue  # too light to be a dark header band
+        except (ValueError, IndexError):
+            continue
+        # Take the topmost large rectangle
+        if best_color is None or y0 < best_y1:
+            best_color = hex_color
+            best_y1 = y1
+
+    # Fallback: pixel-sample the centre column when no large drawing rectangle
+    # was found (some PDFs render the header band via a form XObject or raw
+    # content-stream operators that get_drawings() does not capture).
+    if best_color is None:
+        try:
+            import fitz as _fitz
+            ph = page.rect.height
+            mat = _fitz.Matrix(1, 1)
+            _cx = pw / 2.0
+            # Sample the topmost pixel row to detect dark background
+            _pix0 = page.get_pixmap(matrix=mat, clip=_fitz.Rect(_cx - 1, 0, _cx + 1, 4))
+            _top_px = _pix0.pixel(0, 0)
+            _lum = (_top_px[0] + _top_px[1] + _top_px[2]) / 3.0
+            if _lum < 100:  # dark background at page top
+                # Scan downward to find where the dark band ends
+                _hdr_y1_px = 0.0
+                for _y in range(0, min(350, int(ph)), 4):
+                    _clip = _fitz.Rect(_cx - 1, _y, _cx + 1, _y + 4)
+                    _px = page.get_pixmap(matrix=mat, clip=_clip).pixel(0, 0)
+                    if (_px[0] + _px[1] + _px[2]) / 3.0 > 150:
+                        _hdr_y1_px = float(_y)
+                        break
+                else:
+                    _hdr_y1_px = 200.0
+                if _hdr_y1_px > 12.0:
+                    r, g, b = _top_px[0], _top_px[1], _top_px[2]
+                    best_color = f"{r:02x}{g:02x}{b:02x}"
+                    best_y1 = _hdr_y1_px
+        except Exception:
+            pass
+
+    return best_color, best_y1
 
 
 def _extract_col_info(
@@ -634,8 +729,54 @@ def _extract_layout(doc) -> LayoutProfile:
         # Use the visual sidebar edge (drawing right-edge) when available;
         # it is more accurate than the text-block gap midpoint for column widths.
         col_boundary = visual_split_x if visual_split_x is not None else split_x
-        left_col_width_twips = int(col_boundary * 20)
-        right_col_width_twips = int((rect.width - col_boundary) * 20)
+        # Validate: a detected split with no background colour and no visual
+        # separator may be a false positive caused by heading indentation rather
+        # than a true sidebar layout.
+        #
+        # Heuristic: when the "right column" has very few characters (< 200)
+        # AND the "left column" has proportionally far more content AND the
+        # right zone x-span is narrow (< 100 pt), the split is likely an
+        # indentation gap (section headings further right than body text) rather
+        # than a true sidebar.
+        #
+        # True two-column sidebars either have a background/separator color or
+        # their right zone contains substantial text (> 200 chars) or spans a
+        # wide x-range (≥ 100 pt, because body text, role headers, and bullets
+        # occupy different x positions in the main column).
+        _suppress = False
+        if left_bg is None and right_bg is None and visual_split_x is None:
+            _top_cut = rect.height * 0.24 if rect.height > 0 else 0.0
+
+            def _block_chars(b):
+                return len("".join(
+                    s.get("text", "") for l in b.get("lines", [])
+                    for s in l.get("spans", [])
+                ).strip())
+
+            _right_xs = [b["bbox"][0] for b in blocks
+                         if b.get("type") == 0 and b["bbox"][0] >= split_x and b["bbox"][1] >= _top_cut]
+            _right_chars = sum(_block_chars(b) for b in blocks
+                               if b.get("type") == 0 and b["bbox"][0] >= split_x and b["bbox"][1] >= _top_cut)
+            _left_chars  = sum(_block_chars(b) for b in blocks
+                               if b.get("type") == 0 and b["bbox"][0] < split_x  and b["bbox"][1] >= _top_cut)
+            _right_range = (max(_right_xs) - min(_right_xs)) if len(_right_xs) > 1 else 0
+
+            # Suppress when right zone is thin: few chars, narrow x-span, and
+            # left zone dominates in character count.
+            if (
+                _right_chars < 200
+                and _right_range < 100
+                and _left_chars > _right_chars * 2.5
+            ):
+                _suppress = True
+
+        if _suppress:
+            col_boundary = None
+            left_col_width_twips = None
+            right_col_width_twips = None
+        else:
+            left_col_width_twips = int(col_boundary * 20)
+            right_col_width_twips = int((rect.width - col_boundary) * 20)
     else:
         left_bg = right_bg = None
         col_boundary = None
@@ -723,7 +864,19 @@ def _detect_column_split(
 
     Returns the midpoint of the detected gap as the column split x-coordinate.
     """
-    x0s = sorted({round(blk["bbox"][0]) for blk in blocks if blk.get("type") == 0})
+    # Exclude blocks in the top 24 % of the page from x0 collection.  Templates
+    # with a full-width merged header (name, title, photo row) often place the
+    # name text at an x0 that sits BETWEEN the two body columns (e.g. x0=235 on
+    # a page whose left column is at x0=60-95 and right column at x0=320).
+    # Including that block's x0 creates a spurious gap candidate and causes the
+    # detector to return the wrong split.  Using body-only blocks removes those
+    # false x0 anchors so the real inter-column gap is found instead.
+    top_cutoff = page_height * 0.24 if page_height > 0 else 0.0
+    x0s = sorted({
+        round(blk["bbox"][0])
+        for blk in blocks
+        if blk.get("type") == 0 and blk["bbox"][1] >= top_cutoff
+    })
     if len(x0s) < 2:
         return None
 
@@ -751,7 +904,6 @@ def _detect_column_split(
                 _adjacent_sig += 1
     if _adjacent_sig >= 2:
         return None
-    top_cutoff = page_height * 0.15 if page_height > 0 else 0.0
     # Full-width elements that span ≥ 50 % of the page width are cross-column
     # design elements (e.g. name banner, summary paragraph, section heading
     # that overflows visually) and should not veto the column split.
@@ -788,7 +940,7 @@ def _detect_column_split(
 
             # Reject if any BODY block bridges the gap: starts in the left
             # "column" and extends at least 5 % past the right edge.  Blocks
-            # in the top 15 % (header banner) are excluded.  Full-width blocks
+            # in the top 24 % (header banner) are excluded.  Full-width blocks
             # (≥ 50 % page width) are also excluded — they are intentional
             # cross-column design elements, not evidence of a single column.
             bridge_x1_threshold = right_edge * 1.05
@@ -806,19 +958,27 @@ def _detect_column_split(
                 # Use the midpoint of the *content* gap instead — but only when
                 # max_left_x1 stays strictly below right_edge (i.e. left content
                 # does not actually overlap the right column).
+                # Exclude full-width cross-column blocks so a contact line at
+                # x0=60 x1=530 does not inflate max_left_x1 to 530 and prevent
+                # the refinement from kicking in on the real body gap.
                 x0_mid = (x0s[i] + x0s[i + 1]) / 2.0
+                _body_bot_lbs = page_height * 0.90 if page_height > 0 else float("inf")
                 left_body_x1s = [
                     b["bbox"][2] for b in blocks
                     if b.get("type") == 0
-                    and b["bbox"][0] <= x0s[i]
+                    and round(b["bbox"][0]) <= x0s[i]  # round() matches how x0s was built
                     and b["bbox"][1] >= top_cutoff
+                    and b["bbox"][3] <= _body_bot_lbs  # exclude footer blocks
+                    and (b["bbox"][2] - b["bbox"][0]) < wide_block_min
                 ]
                 if left_body_x1s:
                     max_left_x1 = max(left_body_x1s)
                     if max_left_x1 < right_edge:
                         content_mid = (max_left_x1 + right_edge) / 2.0
                         return max(x0_mid, content_mid)
-                return x0_mid
+                    return x0_mid
+                # No non-wide, non-footer content left of the gap: only full-width
+                # blocks or footer items on the left — not a real sidebar column.
     return None
 
 
@@ -877,10 +1037,18 @@ def _extract_paragraphs(
         # top-to-bottom across ALL columns, interleaving sidebar content with
         # main content.  Column-aware reordering restores correct reading order.
         # split_x (gap midpoint) is used for block classification (left vs right).
-        split_x = _detect_column_split(blocks, page.rect.width, page.rect.height)
-        # Prefer the layout's split_x (computed on page 1) for consistency.
-        if split_x is None and layout_split_x is not None:
-            split_x = layout_split_x
+        # Use the layout's authoritative split_x.  When the layout suppressed
+        # the split (layout_split_x=None after false-positive validation), use
+        # None for all pages so that blocks are never mis-split into left/right
+        # columns.  When the layout detected a real two-column boundary, prefer
+        # it for consistency (avoids per-page drift); fall back to per-page
+        # detection for pages whose content shifts the split slightly.
+        if layout_split_x is None:
+            split_x = None   # layout decided single-column; don't re-detect
+        else:
+            split_x = _detect_column_split(blocks, page.rect.width, page.rect.height)
+            if split_x is None:
+                split_x = layout_split_x
         # right_col_origin: indent is measured from the visual sidebar edge
         # (layout_split_x), which is more accurate than the gap midpoint.
         right_col_origin = layout_split_x if layout_split_x is not None else split_x
@@ -896,6 +1064,73 @@ def _extract_paragraphs(
             )
             blocks = left_blks + right_blks
             right_col_start_idx = len(left_blks)
+
+        # Merged-header-band detection: when NO right-column text block exists
+        # in the top 22 % of the page the template uses a full-width header
+        # banner (name, title, summary) above the two-column body.  Every block
+        # in that top band is forced to col_id=None so the renderer places it
+        # above the two-column table rather than inside the left cell.
+        # When right-column content IS present near the top (sidebar starts at
+        # page top with no banner) this is skipped and the normal x-width
+        # heuristic applies.
+        #
+        # Extended detection: some templates have a full-width banner whose text
+        # x1 < split_x+20 (e.g. "Lydia Mary" x1=199 on a split_x=276 page),
+        # so the cross-column x1 heuristic cannot detect it.  If the right column
+        # starts meaningfully below the left column's first block (gap > 50 pt),
+        # use the first right-column block's Y as the merged-header boundary.
+        _header_band_y = page.rect.height * 0.22 if split_x is not None else 0.0
+        _has_right_in_header = split_x is not None and any(
+            b.get("type") == 0
+            and b["bbox"][0] >= split_x
+            and b["bbox"][1] < _header_band_y
+            for b in blocks
+        )
+
+        _first_right_y = (
+            min(
+                (b["bbox"][1] for b in blocks
+                 if b.get("type") == 0 and b["bbox"][0] >= split_x),
+                default=_header_band_y,
+            )
+            if split_x is not None
+            else _header_band_y
+        )
+        # Detect the "narrow-banner" case: right column starts meaningfully below
+        # the topmost left-column block (gap > 50 pt) and is still within the 22%
+        # zone (so the normal _has_right_in_header guard fires).
+        # Minimum gap (pt) required between the left-column header content and
+        # the first right-column block.  This prevents left-column content that
+        # starts at nearly the same Y as the right column (e.g. "About Me" at
+        # y=135.5 vs "Experiences" at y=135.6) from being treated as a merged
+        # header element.
+        _MIN_HEADER_GAP = 15
+
+        _has_left_above_right = (
+            split_x is not None
+            and _has_right_in_header          # right IS in the top zone
+            and _first_right_y > 50           # right col starts meaningfully into page
+            and any(
+                b.get("type") == 0
+                and b["bbox"][0] < split_x    # left-area block
+                and b["bbox"][1] < _first_right_y - _MIN_HEADER_GAP  # clearly above
+                for b in blocks
+            )
+        )
+
+        # Merged-header-band forcing is only valid for page 0 (the first page
+        # that has the candidate's name, title, summary at the very top).
+        # On continuation pages (page.number > 0) the top zone is simply the
+        # next paragraph of content; forcing it to col=None would place old
+        # template experience/education entries above the two-column table.
+        merged_header_band = (
+            _first_right_y - _MIN_HEADER_GAP if _has_left_above_right
+            else _header_band_y if (
+                split_x is not None and not _has_right_in_header
+                and page.number == 0
+            )
+            else 0.0
+        )
 
         # Reset inter-page spacing
         prev_block_y1 = None
@@ -990,9 +1225,27 @@ def _extract_paragraphs(
             # For right-column blocks, indent is measured from right_col_origin
             # (the visual sidebar edge) so that a block at x=237 on a page
             # with a 215-pt sidebar gets indent = 22 pt, not page-relative 222 pt.
-            if split_x is not None and x0 >= split_x:
-                col_id: str | None = "right"
+            # Cross-column detection: a block whose x0 is in the left area but
+            # whose x1 extends more than 20 pt past the column split is usually
+            # a full-width element (merged name/header banner), col_id=None.
+            # Exception: section-row table layouts have left section labels and
+            # right body text at the same Y, so PyMuPDF merges them into one
+            # block.  For these blocks we defer column assignment to per-line
+            # basis (_cross_col_block=True) so each line gets its true col_id.
+            _cross_col_block = False
+            if merged_header_band > 0 and y0 < merged_header_band:
+                # Block is inside the top merged-header band (no right-column
+                # content exists there): treat as full-width above the table.
+                col_id: str | None = None
+                col_origin = page_margin_left
+            elif split_x is not None and x0 >= split_x:
+                col_id = "right"
                 col_origin = right_col_origin if right_col_origin is not None else split_x
+            elif split_x is not None and x1_blk > split_x + 20.0:
+                # Cross-column block below the header band: split per line.
+                col_id = None
+                col_origin = page_margin_left
+                _cross_col_block = True
             elif split_x is not None:
                 col_id = "left"
                 col_origin = page_margin_left
@@ -1032,11 +1285,24 @@ def _extract_paragraphs(
                 line_text_color = (
                     _dominant_text_color(line_spans) if line_spans else block_text_color
                 )
+                # For cross-column blocks (section-row table pairs), assign
+                # each line its own column based on line_x0 vs split_x.
+                if _cross_col_block and split_x is not None:
+                    _line_col_id: str | None = "right" if line_x0 >= split_x else "left"
+                    _line_col_origin = (
+                        (right_col_origin if right_col_origin is not None else split_x)
+                        if _line_col_id == "right"
+                        else page_margin_left
+                    )
+                else:
+                    _line_col_id = col_id
+                    _line_col_origin = col_origin
+
                 # Attach icon image to first line only (line_idx == 0) for
                 # left-column paragraphs that coincide with a sidebar icon.
                 icon_png: bytes | None = None
                 icon_size_pt: float = 0.0
-                if line_idx == 0 and col_id == "left" and icon_map:
+                if line_idx == 0 and _line_col_id == "left" and icon_map:
                     icon_png = _match_icon(icon_map, y0, y1)
                     if icon_png is not None:
                         icon_size_pt = min(y1 - y0, x1_blk - x0)
@@ -1069,14 +1335,15 @@ def _extract_paragraphs(
                     font_size_pt=line_fi["font_size_pt"],
                     bold=line_fi["bold"],
                     italic=line_fi["italic"],
-                    indent_left_pt=max(0.0, _indent_x - col_origin),
+                    indent_left_pt=max(0.0, _indent_x - _line_col_origin),
                     body_text_x0_pt=line_x0,
                     space_before_pt=space_before if line_idx == 0 else 0.0,
                     text_color=line_text_color,
                     background_color=block_bg_color,
-                    column_id=col_id,
+                    column_id=_line_col_id,
                     inline_image_bytes=icon_png,
                     inline_image_size_pt=icon_size_pt,
+                    y_top_pt=line_y0,
                 )
                 pm = ParaModel(
                     text=line_text,
@@ -1085,6 +1352,14 @@ def _extract_paragraphs(
                     paragraph_profile=profile,
                 )
                 pm.semantic = _infer_semantic(pm)
+                # Content paragraphs (bullets, body text, date lines) should not carry
+                # text_color from the PDF template — those colors come from hyperlinks
+                # or author styling and must not bleed onto LLM-generated content.
+                # Section headings and role_headers keep their accent color (design intent).
+                # Bullet/paragraph colors are stripped here; any color that bleeds via
+                # clone_as archetypes is caught by the post-render sweep in pipeline.py.
+                if pm.semantic in ("bullet", "paragraph", "role_meta") and pm.paragraph_profile:
+                    pm.paragraph_profile.text_color = None
                 # Role headers can have mixed-bold text (e.g. "Title | Company | Date"
                 # where only the title is bold).  Build per-run (text, bold) pairs
                 # so para_builder can render each portion with the correct weight.
@@ -1164,13 +1439,12 @@ def _extract_paragraphs(
                         pm.paragraph_profile.space_before_pt = _heading_sb
                     elif pm.paragraph_profile.space_before_pt > 6.0:
                         pm.paragraph_profile.space_before_pt = 6.0
-                    # Left-column headings often overflow the visual column
-                    # boundary in the source PDF (PDF allows overflow; DOCX
-                    # table cells enforce width and wrap the text).  Zeroing
-                    # the indent gives the heading the full cell width so it
-                    # renders on a single line.
-                    if col_id == "left" and pm.paragraph_profile.indent_left_pt > 0:
-                        pm.paragraph_profile.indent_left_pt = 0.0
+                    # Preserve the left-column heading indent so it aligns
+                    # with the original PDF position.  The renderer adds the
+                    # page left-margin offset on top, placing the heading at
+                    # margin + indent (matching the source template layout).
+                    # Zeroing was previously used to prevent cell overflow, but
+                    # the fresh-Document rendering path avoids that concern.
                 # Global cap: PDF absolute-position inter-block gaps inflate
                 # DOCX flow-layout height.  Apply per-type limits:
                 #   role_header: 4 pt max (block-level gap, needs some spacing)
@@ -1284,24 +1558,31 @@ def _infer_semantic(pm: ParaModel) -> str:
 # ---------------------------------------------------------------------------
 
 _EXPERIENCE_NAMES: frozenset[str] = frozenset({
-    "experience", "work experience", "professional experience",
+    "experience", "experiences", "work experience", "professional experience",
     "employment history", "employment", "career history",
-    "work history", "professional background",
+    "work history", "professional background", "employment summary",
 })
 _SUMMARY_NAMES: frozenset[str] = frozenset({
     "professional summary", "summary", "objective", "career objective",
-    "profile", "professional profile", "about me", "career summary",
-    "executive summary",
+    "profile", "professional profile", "personal profile",
+    "about me", "about", "career summary", "executive summary",
+    "general info", "general information",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "core competencies", "competencies",
     "technical expertise", "expertise", "key skills", "areas of expertise",
     "technologies", "tech stack", "relevant skills", "skills & abilities",
-    "skill summary",
+    "skill summary", "professional skills",
+    # Non-standard names used by some templates; kept out of text_parser._SKILLS_NAMES
+    # so LLM output stays sem=other, allowing the updater guard (Pass 1) to skip the
+    # title match and let the standard skills section ("TECHNICAL SKILLS") match via
+    # semantic type in Pass 2.
+    "my qualifications", "qualifications",
 })
 _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
     "educational background", "degrees", "educational history",
+    "education summary",
 })
 
 _ALL_KNOWN: frozenset[str] = (
@@ -1317,6 +1598,8 @@ _ALL_HEADING_NAMES: frozenset[str] = (
         "affiliations", "affiliations and awards", "affiliations & awards",
         "certifications and training", "training and certifications",
         "professional certifications",
+        "portfolio", "qualifications", "key qualifications",
+        "achievements", "accomplishments", "training",
         # Contact sections appear in sidebar/column layouts; must be recognised
         # as headings so they don't bleed into adjacent experience sections.
         "contact", "contact info", "contact information",
@@ -1443,16 +1726,45 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
         pending.clear()
         # Normalise meta-line layout properties that don't translate to DOCX:
         # • Column-relative indents (90+ pt in two-column PDFs) create huge
-        #   indentation in the single-column output.
+        #   indentation in the single-column output.  Zeroing is skipped for
+        #   two-column paragraphs (column_id is set) whose indents are
+        #   column-relative and must be preserved for correct cell rendering.
         # • Large space_before values come from inter-bullet group gaps in the
         #   original PDF; they were capped at 3 pt for bullet paragraphs but
         #   must also be capped here to prevent page-count regressions.
         for _pm in meta:
             if _pm.paragraph_profile:
-                if _pm.paragraph_profile.indent_left_pt > 4.0:
+                _in_two_col = _pm.paragraph_profile.column_id in ("left", "right")
+                if not _in_two_col and _pm.paragraph_profile.indent_left_pt > 4.0:
                     _pm.paragraph_profile.indent_left_pt = 0.0
                 if _pm.paragraph_profile.space_before_pt > 3.0:
                     _pm.paragraph_profile.space_before_pt = 3.0
+
+        # When no explicit bullet markers exist (has_explicit_bullets=False),
+        # promote paragraph-semantic meta lines to bullets so the updater can
+        # use them as cloning archetypes.  This preserves the original x-position
+        # of role body content (e.g. 49 pt for template 16 experience entries)
+        # rather than falling back to the role header indent (70 pt).
+        # Restricted to two-column paragraphs (column_id set): single-column
+        # resumes use PUA-glyph bullets that are merged to "bullet" semantic
+        # AFTER _group_roles runs, so their paragraphs must stay in meta here.
+        if not bullets:
+            _promoted: list[ParaModel] = []
+            _remaining_meta: list[ParaModel] = []
+            for _pm in meta:
+                if (
+                    _pm.semantic == "paragraph"
+                    and _pm.paragraph_profile is not None
+                    and _pm.paragraph_profile.column_id in ("left", "right")
+                ):
+                    _pm.semantic = "bullet"
+                    _promoted.append(_pm)
+                else:
+                    _remaining_meta.append(_pm)
+            if _promoted:
+                bullets.extend(_promoted)
+                meta[:] = _remaining_meta
+
         roles.append(RoleEntry(
             header=header,
             header_extra=list(header_extra),
@@ -1507,6 +1819,16 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                         and bool(_txt_init) and _txt_init[0].isupper()
                     )
                 )
+                # Guard: if the very next paragraph is already a role_header,
+                # this paragraph is likely the company / affiliation name that
+                # precedes the role title (e.g. "Ginyard International Co."
+                # before "RESPONSIBLE FOR NETWORK AND SOFTWARE").  Treating it as
+                # a role title would create a spurious empty role.  Buffer it in
+                # pre_header_meta instead so it becomes meta for the real role.
+                _next_is_role_header = _peek(idx + 1) == "role_header"
+                if _can_promote and _next_is_role_header:
+                    _can_promote = False
+
                 if _can_promote:
                     # Separate-line format: this paragraph is the role title.
                     header = pm
@@ -1516,6 +1838,9 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                         pre_header_meta.clear()
                         used_pattern_b = True
                     state = "header"
+                else:
+                    # Not promotable — buffer as pre-role meta so it is not lost.
+                    pre_header_meta.append(pm)
             elif s == "role_meta" and not has_pipe_role_headers:
                 # Pattern B: date appears before the title — buffer it.
                 pre_header_meta.append(pm)
@@ -1533,14 +1858,27 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 bullets.append(pm)
                 state = "bullets"
             elif s == "paragraph":
-                # Short line with no year and no sentence-end → continuation of
-                # the role header (e.g. wrapped company name).  Otherwise,
-                # check list geometry before buffering as potential bullet.
+                # Short line with no year and no sentence-end AND aligned with
+                # the role header → continuation of the role header (e.g. a
+                # wrapped company name).  A paragraph at a substantially different
+                # indent from the header is role content (bullets/body), not a
+                # wrapped header fragment, even if it is short.
                 _txt = pm.text.strip()
+                _para_ind = pm.paragraph_profile.indent_left_pt if pm.paragraph_profile else 0.0
+                _in_two_col_para = (
+                    pm.paragraph_profile is not None
+                    and pm.paragraph_profile.column_id in ("left", "right")
+                )
                 _is_continuation = (
                     len(_txt) <= 60
                     and not _YEAR_RE.search(_txt)
                     and not _SENTENCE_END_RE.search(_txt)
+                    # In two-column layouts, only treat as continuation when
+                    # the paragraph is at the same indent as the role header
+                    # (≤ 5 pt difference).  A company name at a different
+                    # x-position (e.g. 49 pt vs 70 pt for the header) is
+                    # role body content, not a wrapped header fragment.
+                    and (not _in_two_col_para or abs(_para_ind - _hdr_indent()) <= 5.0)
                 )
                 if _is_continuation:
                     pm.semantic = "role_meta"
@@ -1561,6 +1899,14 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             if s == "role_meta":
                 if used_pattern_b:
                     # Pattern B continuation: this date starts the next role.
+                    _start_pattern_b(pm)
+                elif re.match(
+                    r"^\(\d{4}[-–—](?:\d{4}|now|present|current|today)\)$",
+                    pm.text.strip(), re.IGNORECASE
+                ) or re.match(r"^\d{4}[-–—](?:\d{4}|now|present|current|today)$",
+                    pm.text.strip(), re.IGNORECASE):
+                    # Pure year-range date (e.g. "(2014-Now)", "2010-2013") appearing
+                    # after meta content: this is the next role's date, not a continuation.
                     _start_pattern_b(pm)
                 else:
                     meta.append(pm)
@@ -1606,6 +1952,14 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
             elif s == "role_meta":
                 if used_pattern_b:
                     # Pattern B continuation from bullets state.
+                    _start_pattern_b(pm)
+                elif re.match(
+                    r"^\(\d{4}[-–—](?:\d{4}|now|present|current|today)\)$",
+                    pm.text.strip(), re.IGNORECASE
+                ) or re.match(r"^\d{4}[-–—](?:\d{4}|now|present|current|today)$",
+                    pm.text.strip(), re.IGNORECASE):
+                    # Pure year-range date (e.g. "(2014-Now)", "2010-2013") appearing
+                    # after bullets: this is the next role's date.  Start a new role.
                     _start_pattern_b(pm)
                 else:
                     # role_meta can appear mid-bullet-list when a line contains
@@ -1745,6 +2099,30 @@ def _group_sections(
                 _last_empty_exp_insert_idx = None
                 continue
 
+            # Extended absorb: for active experience or education sections,
+            # non-known section_headings are role titles / institution names —
+            # absorb them as role_headers rather than creating new sections.
+            # Consecutive role_headers (multi-line title like "RESPONSIBLE FOR
+            # NETWORK / AND SOFTWARE") are merged into the previous one.
+            if (
+                current is not None
+                and current.semantic_type in ("experience", "education")
+                and _htext not in _ALL_HEADING_NAMES_NOSPACE
+            ):
+                if (
+                    current.body_paras
+                    and current.body_paras[-1].semantic == "role_header"
+                ):
+                    # Continuation line of a wrapped role/institution title — merge
+                    last_rh = current.body_paras[-1]
+                    current.body_paras[-1] = last_rh.with_text(
+                        last_rh.text + " " + pm.text.strip()
+                    )
+                else:
+                    pm.semantic = "role_header"
+                    current.body_paras.append(pm)
+                continue
+
             found_section = True
             if current is not None:
                 if (
@@ -1878,6 +2256,159 @@ def _finalise(section: ResumeSection) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Section-label column helpers (for "row-per-section" table layouts)
+# ---------------------------------------------------------------------------
+
+_FOOTER_ITEM_RE = re.compile(r"[@]|^\+?\d[\d\s\-().]{4,}|https?://|www\.", re.IGNORECASE)
+
+
+def _merge_left_col_wraps(left_raw: "list[ParaModel]") -> "list[ParaModel]":
+    """Merge consecutive word-wrapped section label lines in the left column.
+
+    Some templates split two-word section labels across two lines, e.g.
+    'GENERAL' / 'INFO', 'EDUCATION' / 'SUMMARY', 'WORK' / 'HISTORY'.
+    This function merges such pairs into a single 'GENERAL INFO' paragraph so
+    that _is_section_label_column can recognise 'WORK HISTORY' as a known
+    experience heading and _interleave_section_label_column creates one section
+    per label rather than two.
+
+    Merge criteria:
+    - Both lines are bold AND ALL-CAPS AND ≤ 3 words.
+    - Y gap between them is ≤ 30 pt (word-wrap spacing, not a new section).
+    """
+    _MAX_WRAP_GAP = 30.0
+    result: "list[ParaModel]" = []
+    i = 0
+    while i < len(left_raw):
+        pm = left_raw[i]
+        pp = pm.paragraph_profile
+        t = pm.text.strip()
+        is_label = (
+            pp is not None
+            and pp.bold
+            and t
+            and t.upper() == t        # ALL-CAPS
+            and len(t.split()) <= 3
+        )
+        if is_label and i + 1 < len(left_raw):
+            nxt = left_raw[i + 1]
+            npp = nxt.paragraph_profile
+            nt = nxt.text.strip()
+            y_gap = (npp.y_top_pt if npp else 9999) - (pp.y_top_pt if pp else 0.0)
+            next_is_label = (
+                npp is not None
+                and npp.bold
+                and nt
+                and nt.upper() == nt
+                and len(nt.split()) <= 3
+            )
+            if next_is_label and 0 < y_gap <= _MAX_WRAP_GAP:
+                merged_pm = pm.with_text(t + " " + nt)
+                if merged_pm.paragraph_profile:
+                    merged_pm.paragraph_profile.y_top_pt = pp.y_top_pt
+                result.append(merged_pm)
+                i += 2
+                continue
+        result.append(pm)
+        i += 1
+    return result
+
+
+def _is_section_label_column(left_raw: "list[ParaModel]") -> bool:
+    """Return True when the left column contains only known section label text.
+
+    Detects a 'section-row table' layout where the left column holds only
+    section headings and the right column holds all body content.
+
+    Two acceptance paths:
+    1. Known-name match: ≥ 2 items match _ALL_HEADING_NAMES_NOSPACE AND
+       match rate ≥ 60 % (after filtering contact-info items).
+    2. Structural match: after filtering contact info, ≥ 2 items are ALL-CAPS
+       + bold + ≤ 4 words — consistent with a template using non-standard
+       section label names (e.g. 'GENERAL INFO', 'EDUCATION SUMMARY').
+    """
+    if len(left_raw) < 2:
+        return False
+    if any(pm.semantic == "bullet" for pm in left_raw):
+        return False
+    # Strip obvious contact/footer items (phone, email, URL) before matching.
+    section_items = [pm for pm in left_raw if not _FOOTER_ITEM_RE.search(pm.text)]
+    if len(section_items) < 2:
+        return False
+    # Known-name path
+    matches = sum(
+        1 for pm in section_items
+        if _normalize_heading_text(pm.text) in _ALL_HEADING_NAMES_NOSPACE
+    )
+    if matches >= 2 and matches >= len(section_items) * 0.6:
+        return True
+    # Structural fallback: all-caps + bold + short (non-standard label names)
+    structural = sum(
+        1 for pm in section_items
+        if (pm.paragraph_profile and pm.paragraph_profile.bold
+            and pm.text.strip()
+            and pm.text.strip().upper() == pm.text.strip()
+            and len(pm.text.split()) <= 4)
+    )
+    return structural >= 2 and structural >= len(section_items) * 0.6
+
+
+def _interleave_section_label_column(
+    left_raw: "list[ParaModel]",
+    right_raw: "list[ParaModel]",
+) -> "list[ParaModel]":
+    """Merge a section-label left column with right-column body content.
+
+    Forces section_heading semantic on each left label, then inserts it just
+    before the right-column paras that fall within its Y-range.  A 20 pt
+    tolerance handles table-cell top-padding where right content starts
+    slightly above the left label.
+
+    Any right paras that fall outside all section Y-ranges (should not occur
+    in practice) are appended to the last section to avoid data loss.
+    """
+    _TOLERANCE = 20  # pt: right content may start slightly above the label
+
+    for pm in left_raw:
+        pm.semantic = "section_heading"
+
+    # In a section-label table the right column contains NO real section
+    # headings — all section labels live in the left column.  Any right-column
+    # para that _infer_semantic classified as section_heading (e.g. a bold
+    # role title like "BACK-END DEVELOPER") is actually a role_header.
+    # Reclassifying them before interleaving prevents _group_sections from
+    # breaking the experience section into spurious extra sections.
+    for pm in right_raw:
+        if (
+            pm.semantic == "section_heading"
+            and _normalize_heading_text(pm.text) not in _ALL_HEADING_NAMES_NOSPACE
+        ):
+            pm.semantic = "role_header"
+
+    def _y(pm: "ParaModel") -> float:
+        pp = pm.paragraph_profile
+        return pp.y_top_pt if pp is not None else 0.0
+
+    label_ys = [_y(lbl) for lbl in left_raw]
+    result: list[ParaModel] = []
+    assigned_ids: set[int] = set()
+
+    for i, label in enumerate(left_raw):
+        y_start = label_ys[i] - _TOLERANCE
+        y_end = (label_ys[i + 1] - _TOLERANCE) if i + 1 < len(left_raw) else float("inf")
+        section_right = [pm for pm in right_raw if y_start <= _y(pm) < y_end]
+        result.append(label)
+        result.extend(section_right)
+        assigned_ids.update(id(pm) for pm in section_right)
+
+    # Append any right paras that fell outside all Y-ranges (stragglers)
+    stragglers = [pm for pm in right_raw if id(pm) not in assigned_ids]
+    result.extend(stragglers)
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -1920,9 +2451,171 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
 
     layout = _extract_layout(doc)
     skip_pages = _deduplicate_page_indices(doc)
-    hf_texts = _detect_header_footer_texts(doc)
+    hf_texts = _detect_header_footer_texts(doc, skip_pages=skip_pages)
     raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt, layout, skip_pages)
-    header_paras, sections = _group_sections(raw_paras)
+
+    # Two-column documents: run section grouping independently for each column
+    # so that left-column section headings (e.g. "CONTACT") do not trigger
+    # found_section=True and absorb right-column content into the wrong section.
+    # Single-column documents use the normal flat grouping path.
+    if layout.column_split_x is not None:
+        def _col_id(pm: "ParaModel") -> "str | None":
+            return pm.paragraph_profile.column_id if pm.paragraph_profile else None
+
+        above_raw = [pm for pm in raw_paras if _col_id(pm) not in ("left", "right")]
+        left_raw  = [pm for pm in raw_paras if _col_id(pm) == "left"]
+        right_raw = [pm for pm in raw_paras if _col_id(pm) == "right"]
+
+        # Merge word-wrapped section labels before detection.  Some templates
+        # split two-word labels across two lines (e.g. 'GENERAL'/'INFO',
+        # 'WORK'/'HISTORY') so each word appears as a separate paragraph.
+        merged_left_raw = _merge_left_col_wraps(left_raw)
+        if _is_section_label_column(merged_left_raw):
+            # Section-row table layout: left column holds only section labels,
+            # right column holds all body content.  Merge them into a flat list
+            # (section label followed by its right-column content) and run a
+            # single _group_sections pass so all existing logic (_group_roles,
+            # bullet merging, etc.) works correctly.
+            # Filter contact/footer items (phone, email) from the label list;
+            # they are not section headings and would create spurious sections.
+            layout.section_row_table = True
+            label_left = [pm for pm in merged_left_raw if not _FOOTER_ITEM_RE.search(pm.text)]
+            merged = _interleave_section_label_column(label_left, right_raw)
+            above_hdrs, above_secs = _group_sections(above_raw)
+            main_hdrs,  main_secs  = _group_sections(merged)
+            header_paras = above_hdrs + main_hdrs
+            sections     = above_secs + main_secs
+        else:
+            above_hdrs, above_secs = _group_sections(above_raw)
+            left_hdrs,  left_secs  = _group_sections(left_raw)
+            right_hdrs, right_secs = _group_sections(right_raw)
+            header_paras = above_hdrs + left_hdrs + right_hdrs
+            sections     = above_secs + left_secs + right_secs
+    else:
+        header_paras, sections = _group_sections(raw_paras)
+
+    # Detect full-width dark header rectangle on page 0 and apply its background
+    # color to header_paras that fall within the rectangle's y-range.  This
+    # restores the dark-header appearance (e.g. sample 3: dark bar with white
+    # text "CHARLES MCTURLAND") which is drawn as a vector rectangle rather than
+    # a paragraph fill, so the PDF parser would otherwise not capture it.
+    _hdr_bg_color, _hdr_y1 = _extract_header_bg(doc[0])
+    if _hdr_bg_color:
+        # Store on layout so the renderer can create a full-width header band
+        # even for single-column PDFs (column_split_x=None).
+        layout.header_bg_color = _hdr_bg_color
+        for _pm in header_paras:
+            _pp = _pm.paragraph_profile
+            if _pp is None:
+                continue
+            # Apply to paragraphs whose y-position falls within the header band.
+            # y_top_pt is the raw y0 from the PDF block; it's runtime-only but still
+            # present after _extract_paragraphs.  If y_top_pt is None, apply to all
+            # header_paras (they are all in the header area by definition).
+            if _pp.y_top_pt is None or _pp.y_top_pt < _hdr_y1:
+                _pp.background_color = _hdr_bg_color
+                # Text on dark background must be white for visibility.
+                # If no explicit text_color was captured from the PDF, default to white.
+                if not _pp.text_color:
+                    _pp.text_color = "ffffff"
+
+    # Detect full-width dark footer band (same idea as header, but at bottom).
+    # Sample 25 has a thin dark strip at y≈780 with white contact info text.
+    # The bottom margin area (y > 810) is white, so we probe at y≈95% of page
+    # height where the dark footer band lives, not at the very bottom edge.
+    if layout.column_split_x is None:
+        try:
+            _page0 = doc[0]
+            _ph = _page0.rect.height
+            _pw = _page0.rect.width
+            import fitz as _fitz
+            _mat = _fitz.Matrix(1, 1)
+            _cx = _pw / 2.0
+            # Probe at 95% of page height (inside any footer band, above page-bottom margin)
+            _probe_y = _ph * 0.95
+            _pix_b = _page0.get_pixmap(matrix=_mat, clip=_fitz.Rect(_cx - 1, _probe_y, _cx + 1, _probe_y + 4))
+            _bot_px = _pix_b.pixel(0, 0)
+            _bot_lum = (_bot_px[0] + _bot_px[1] + _bot_px[2]) / 3.0
+            if _bot_lum < 100:  # dark footer found
+                # Scan upward from the probe point to find where the band starts
+                _ftr_y0 = _probe_y
+                for _y in range(int(_probe_y), max(0, int(_probe_y) - 120), -2):
+                    _clip = _fitz.Rect(_cx - 1, _y - 2, _cx + 1, _y)
+                    _px = _page0.get_pixmap(matrix=_mat, clip=_clip).pixel(0, 0)
+                    if (_px[0] + _px[1] + _px[2]) / 3.0 > 220:
+                        _ftr_y0 = float(_y)
+                        break
+                r, g, b = _bot_px[0], _bot_px[1], _bot_px[2]
+                layout.footer_bg_color = f"{r:02x}{g:02x}{b:02x}"
+                # Apply footer background to any paragraph whose top y falls
+                # within the detected footer band.  text_color is already cleared
+                # by _extract_paragraphs for non-heading paragraphs so we cannot
+                # use it as a signal; use y_top_pt alone.
+                _all_p = list(header_paras)
+                for _sec in sections:
+                    _all_p.extend(_sec.body_paras)
+                    for _role in _sec.roles:
+                        _all_p.extend(_role.bullets)
+                for _pm in _all_p:
+                    _pp = _pm.paragraph_profile
+                    if _pp and not _pp.background_color:
+                        if _pp.y_top_pt is not None and _pp.y_top_pt >= _ftr_y0:
+                            _pp.background_color = layout.footer_bg_color
+                            if not _pp.text_color:
+                                _pp.text_color = "ffffff"
+        except Exception:
+            pass
+
+    # Set header spacing to reproduce the dark header band's exact height from
+    # the source PDF.  space_before on the first dark-bg header para controls the
+    # gap from the band top to the name; space_after on the last dark-bg header
+    # para controls the gap from the title to the band bottom (_hdr_y1).
+    # y_top_pt is available here (set by _extract_paragraphs) but is runtime-only
+    # and not persisted to the IR JSON.
+    if _hdr_bg_color and header_paras:
+        _dark_hdrs = [
+            _pm for _pm in header_paras
+            if _pm.paragraph_profile and _pm.paragraph_profile.background_color == _hdr_bg_color
+        ]
+        if _dark_hdrs:
+            _first_dhdr = _dark_hdrs[0]
+            _first_pp = _first_dhdr.paragraph_profile
+            if _first_pp and _first_pp.y_top_pt is not None and _first_pp.space_before_pt == 0:
+                _first_pp.space_before_pt = max(0.0, _first_pp.y_top_pt)
+            _last_dhdr = _dark_hdrs[-1]
+            _last_pp = _last_dhdr.paragraph_profile
+            if _last_pp and _last_pp.y_top_pt is not None:
+                _approx_bottom = _last_pp.y_top_pt + (_last_pp.font_size_pt or 12.0)
+                # Cap space_after to avoid overflowing a single page when the body
+                # content is taller than the original (e.g. fitz merges two-column
+                # body into single-column, doubling line count).
+                _last_pp.space_after_pt = min(30.0, max(0.0, _hdr_y1 - _approx_bottom))
+
+    # Final color cleanup: _group_sections may reclassify paragraphs (e.g.
+    # section_heading → role_header) after _extract_paragraphs already ran its
+    # per-semantic clearing.  Sweep all paragraphs one more time so that any
+    # reclassified paragraph does not retain a PDF-extracted text_color that
+    # would bleed onto LLM-generated replacement content via clone_as.
+    # Exception: paragraphs on a dark background (background_color set to a
+    # non-white value) keep their text_color so white-on-dark text remains
+    # visible after rendering.
+    def _clear_content_colors(paras: "list[ParaModel]") -> None:
+        for pm in paras:
+            if pm.semantic in ("section_heading", "role_header") and pm.paragraph_profile:
+                continue  # keep accent colors on structural headings
+            if pm.paragraph_profile:
+                # Keep text_color on dark-background paragraphs (e.g. white text
+                # on the header band) so the text is visible after rendering.
+                bg = pm.paragraph_profile.background_color
+                if bg and bg not in ("ffffff", "fefefe", "f8f8f8"):
+                    continue
+                pm.paragraph_profile.text_color = None
+
+    _clear_content_colors(header_paras)
+    for _sec in sections:
+        _clear_content_colors(_sec.body_paras)
+        for _role in _sec.roles:
+            _clear_content_colors([_role.header] + list(_role.header_extra) + _role.meta_lines + _role.bullets)
 
     # Rebuild all_paras from the structured IR so it reflects any post-processing
     # done by _finalise (e.g. bullet continuation line merging).  The raw flat
@@ -1937,11 +2630,19 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
             # separate-line format resumes there is no role_header in
             # body_paras; skipping the orphan loop avoids duplicating all
             # body content that was already consumed into section.roles.
+            # Paras already absorbed into a role's meta_lines (via pre_header_meta
+            # buffering in _group_roles) are excluded by object-identity check to
+            # prevent them from appearing twice in all_paras.
             if any(bp.semantic == "role_header" for bp in section.body_paras):
+                _consumed_meta_ids = {
+                    id(pm)
+                    for role in section.roles
+                    for pm in role.meta_lines
+                }
                 for bp in section.body_paras:
                     if bp.semantic == "role_header":
                         break
-                    if bp.text.strip():
+                    if bp.text.strip() and id(bp) not in _consumed_meta_ids:
                         all_paras.append(bp)
             for role in section.roles:
                 if role.header_extra and "|" not in role.header.text:
@@ -1958,6 +2659,20 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
                 all_paras.extend(role.bullets)
         else:
             all_paras.extend(section.body_paras)
+
+    # For two-column documents, reorder all_paras to match the rendered DOCX
+    # paragraph order: above (col=None) → left → right.  The renderer writes the
+    # left table cell before the right cell, so roundtrip tests must see the same
+    # order in the source IR.  Python's sort is stable, so relative order within
+    # each column is preserved.
+    # Section-row table layouts keep the natural section-interleaved order
+    # (heading followed by its body) so the grader and LLM text serialiser
+    # see sections in the correct reading sequence.
+    if layout.column_split_x is not None and not layout.section_row_table:
+        def _col_order(pm: "ParaModel") -> int:
+            col = pm.paragraph_profile.column_id if pm.paragraph_profile else None
+            return 1 if col == "left" else (2 if col == "right" else 0)
+        all_paras.sort(key=_col_order)
 
     doc = ResumeDocument(
         header_paras=header_paras,

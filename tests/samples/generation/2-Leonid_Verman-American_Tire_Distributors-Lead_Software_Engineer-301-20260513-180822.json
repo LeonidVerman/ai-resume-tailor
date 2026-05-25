@@ -7,11 +7,11 @@
     "messages": [
       {
         "role": "developer",
-        "content": "[GENERAL_LAYER v1.1]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n21) Must explicitly mention the company + role from TASK.\n22) Must connect: candidate background -> company needs -> role responsibilities, using only supported claims.\n23) Keep it 3-5 short paragraphs; be specific but not verbose.\n\n[CANDIDATE_LAYER_LEONID_VERMAN v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Junior Software Developer / early-career backend-leaning engineer with proven delivery in high-traffic web + cloud-based applications.\n- Emphasize: security-minded feature delivery (MFA), cloud migration contributions, and high-volume bug fixing/support that improves production reliability.\n- Keep scope grounded: contributor on team-delivered systems at IBM and Microsoft; avoid implying senior ownership.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface explicitly (when writing bullets): cloud migration work tied to scalability improvement (40%) and high-traffic application context.\n- Surface explicitly: authentication mechanism (multi-factor authentication) and its user scale (1M+ users) as a concrete security mechanism.\n- Surface explicitly: testing/validation workflows (UAT, QA partnership) as reliability mechanisms, not generic “quality focus.”\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prioritize bullets that include:\n  1) Concrete mechanisms: MFA rollout; cloud migration steps (only if described in source); testing/UAT workflows; bug triage/fix pipeline.\n  2) Measured outcomes already provided: 40% scalability improvement; 150 bug fixes since June 2023; 10% DAU lift; 15 threats identified; 100+ issues resolved.\n  3) High-traffic / 1M+ user context tied to mechanisms.\n  4) Collaboration signals (peer reviews, coding standards) after technical mechanisms are established.\n\nDISTRIBUTED SYSTEM DEPTH\n- Do not fabricate distributed-systems mechanisms (queues, replicas, caching, idempotency, tracing) unless present in evidence.\n- If “cloud migration” is referenced, keep it concrete and conservative:\n  - Describe migration as moving workloads/services to cloud-based platform and resulting scalability impact, without inventing specific cloud services or architectures.\n- Use production-reliability framing grounded in evidence: bug resolution volume, user-reported issue handling, QA/UAT workflows.\n\nTECHNICAL DIFFERENTIATION\n- Languages to surface when relevant: Java, Python, PHP (only where supported by the specific experience highlight).\n- Frontend basics (HTML/CSS) can appear as secondary skills; keep primary narrative backend/security/cloud.\n- Security/auth: multi-factor authentication implementation/enhancement; security audit support (identify threats).\n- Reliability: systematic bug fixing, issue triage, UAT, validation workflows, adherence to coding standards.\n\nDOMAIN / INDUSTRY FRAMING\n- Frame domains as: web applications and cloud-based applications with security and reliability requirements.\n- Treat “technical support systems” as production support/engineering support work (issue resolution, user-reported bugs), not call-center operations.\n- Use employer credibility carefully: IBM and Microsoft as environments with strong engineering standards; avoid implying brand-specific proprietary platform expertise unless stated.\n\nSAFE DOMAIN TRANSLATION\n- Translate “software security” safely as:\n  - authentication hardening (MFA)\n  - participation in security audits and threat identification\n- Translate “cloud migration” safely as:\n  - migrating components/workloads to cloud-based environments to improve scalability (40% improvement per evidence)\n- Translate “high-traffic applications” safely as:\n  - performance/scalability-sensitive web apps; avoid claiming “distributed microservices” unless evidenced.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do not claim expertise in:\n  - cloud infrastructure/DevOps ownership (Kubernetes, Terraform, CI/CD design) unless present in source.\n  - observability platforms (tracing/metrics/log pipelines) unless present.\n  - database architecture, caching, message queues, event-driven systems unless present.\n  - deep security specialization (pen testing, cryptography, compliance frameworks) beyond MFA + audit support.\n- Do not imply tech lead/manager responsibilities; no team-size claims.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- When describing feature work, frame as:\n  - “implemented feature within existing web platform” / “extended application capabilities” rather than “designed platform architecture.”\n- When describing personalization feature:\n  - frame as extending user experience via backend/feature logic and validation/testing; avoid claiming ownership of recommendation/ML systems.\n- For cloud migration:\n  - frame as contributing to migration efforts and ensuring application behavior/performance post-move; avoid claiming end-to-end cloud architecture.\n\nLEADERSHIP FRAMING\n- Frame leadership as “team-level engineering leadership behaviors,” not people management:\n  - active peer code reviews\n  - enforcing/aligning with coding best practices and IBM standards\n  - cross-functional collaboration with QA and engineers\n  - ownership of bug resolution and follow-through\n- Use mechanism-based leadership phrasing: “reviewed PRs against standards,” “partnered with QA to execute UAT,” etc.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep narrative execution-heavy (implementation, debugging, testing, security mechanism).\n- Leadership mentions should be brief and evidence-tied; do not let “collaborative” become the main differentiator.\n- Prefer technical bullets first; add 1 collaboration/process bullet per role only if space.\n\nAI WORK POSITIONING\n- No AI claims. Do not introduce AI tooling, LLM usage, or ML features (none evidenced).\n- Do not imply personalization feature used ML; describe as “user personalization feature” only.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not invent:\n  - specific cloud provider/services (AWS/Azure/GCP), containerization, CI/CD tooling, databases, or messaging systems.\n  - security depth beyond MFA + audit support; no “zero trust,” “SOC2,” “ISO,” “threat modeling” unless explicitly provided.\n  - architecture patterns beyond “backend application development,” “cloud-based platform development,” and “testing/validation workflows.”\n  - metrics beyond those provided (1M+ users, 40% scalability, 150 bug fixes since June 2023, 100+ issues, 10% DAU, 15 threats).\n- Keep role scope accurate: contributor work at IBM and Microsoft; avoid “owned,” “led,” “architected” unless supported—prefer “implemented,” “contributed,” “partnered,” “supported.”\n\nEVIDENCE SOURCES\n- Only construct bullets from:\n  - CANDIDATE_PROFILE.experience_highlights (impact, skills_applied, team_context, constraints_and_tradeoffs, architecture_patterns, security_auth_patterns)\n  - MASTER_RESUME (if provided later)\n  - CANDIDATE_PROFILE.technical_skills (languages, MFA, cloud migration)\n  - CANDIDATE_PROFILE.constraints_and_preferences + claim_boundaries (for tone/limits)\n- If a mechanism is not explicitly evidenced, omit it rather than guessing.\n\nFINAL REMINDER\n- Core differentiation to repeat implicitly across bullets: junior engineer who delivers security mechanisms (MFA), cloud migration scalability gains, and high-volume production bug fixes for high-traffic web applications—without overstating architecture ownership or security specialization.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+        "content": "[GENERAL_LAYER v1.2]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n\n21) Generate ONLY the cover letter body.\n    - Do NOT include candidate name, contact information, date, or signature.\n    - Do NOT include a sender header.\n    - Start with \"Dear Hiring Manager,\".\n    - End the content before any closing (e.g., do NOT include \"Sincerely,\" or name).\n\n22) Must explicitly mention the company and role from TASK.\n\n23) Must clearly connect:\n    candidate background → company needs → role responsibilities,\n    using only supported claims (no hallucinations).\n\n24) Keep it 3–5 short paragraphs.\n    - Be specific and concrete.\n    - Avoid verbosity and generic statements.\n\n25) Maintain a professional, concise tone appropriate for the selected generation mode\n    (Conservative / Normal / Aggressive), but do not change structure based on mode.\n\n26) Do NOT include:\n    - work authorization / citizenship statements\n    - availability statements unless explicitly present in input\n    - repeated resume bullet points verbatim\n\nOutput must be plain text only (no JSON inside the body).\n\n[CANDIDATE_LAYER_LEONID_VERMAN v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Junior Software Developer with brand-name experience (IBM, Microsoft) focused on backend/cloud application work, security-minded feature delivery, and production issue resolution.\n- Emphasize: cloud migration contributions, authentication/security features (MFA), bug-fix throughput, and cross-functional collaboration with QA/engineering.\n- Keep seniority accurate: junior-to-early career; strong execution, reliability, and learning velocity; avoid “architect/owner/lead” language unless explicitly supported.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface explicitly (when tailoring bullets): cloud migration work tied to scalability outcomes (40% scalability improvement) and what was changed (migration steps, deployment/runtime changes) if present in evidence.\n- Surface explicitly: authentication mechanism (multi-factor authentication) at scale (1M+ users) as a concrete security mechanism.\n- Surface explicitly: testing/validation workflows and UAT feedback loops as reliability mechanisms (not just “worked with QA”).\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prefer bullets that include concrete mechanisms in this order:\n  1) MFA implementation details (flows, enforcement points, rollout strategy) if supported by evidence.\n  2) Cloud migration mechanisms (service decomposition, deployment changes, traffic cutover, performance tuning) if supported by evidence.\n  3) Testing/validation workflows (UAT, QA partnership, regression prevention) as reliability mechanisms.\n  4) High-volume bug resolution framed as production support mechanics (triage, repro, root cause, fix, verification).\n- If mechanisms are not specified in evidence, keep claims at the “contributed to / implemented feature / supported migration” level and avoid inventing architecture.\n\nDISTRIBUTED SYSTEM DEPTH\n- Do not over-assert distributed systems expertise unless the source resume provides concrete mechanisms (queues, replicas, caching, stateless services, idempotency, tracing).\n- If the job requires distributed systems, translate safely using only supported concepts:\n  - “Cloud migration improving scalability” → “supported scaling improvements via cloud migration workstreams” (do not claim specific patterns like microservices/event-driven unless evidenced).\n- Prefer operational depth that is supported:\n  - production bug triage, regression verification, release safety, security audit support, cross-team debugging.\n\nTECHNICAL DIFFERENTIATION\n- Emphasize languages and practical delivery: Java, Python, PHP; web/cloud application context; version control usage.\n- Security signal: multi-factor authentication; security auditing support; threat identification (15 potential threats) as audit participation (not ownership).\n- Reliability signal: high-volume issue resolution (100+ user issues; ~150 bug fixes) with verification/testing collaboration.\n- Avoid naming datastores, observability stacks, CI/CD tools, cloud vendors, or API patterns unless present in MASTER_RESUME or other allowed evidence.\n\nDOMAIN / INDUSTRY FRAMING\n- Primary framing: web applications and cloud-based applications; production-facing user experience and reliability.\n- Secondary framing: software security (authentication, audit support) and technical support systems (issue intake, triage, resolution).\n- Keep domain language general and system-oriented; do not imply fintech/healthcare/regulatory specialization.\n\nSAFE DOMAIN TRANSLATION\n- IBM “system security and cloud migration” → cloud application modernization + authentication hardening for large user bases.\n- Microsoft “software development and QA” → product feature delivery + quality workflows + user-reported issue resolution.\n- “Security audit identifying threats” → participation/support in audit process; translate to “helped identify and document potential threats” rather than “led security program.”\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do not claim expertise in:\n  - distributed systems architecture patterns (caching layers, read replicas, event-driven systems) unless explicitly evidenced.\n  - cloud infrastructure ownership (Kubernetes, Terraform, AWS/Azure/GCP services) unless explicitly evidenced.\n  - deep security specialization (pen testing, cryptography, compliance frameworks) beyond MFA and audit support.\n  - data engineering/ETL, ML/AI, or platform engineering unless supported.\n- Do not invent metrics beyond those provided (1M+ users, 40% scalability, 150 bug fixes, 100+ issues, 10% DAU lift, 15 threats).\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- If a target role emphasizes extensibility/integration, reinterpret safely using supported work:\n  - “User personalization feature” → modular feature implementation with configurable user preferences (only if supported by MASTER_RESUME details).\n  - “Testing and validation workflows” → repeatable validation gates and feedback loops (UAT + QA collaboration).\n- Avoid claiming “built extensibility frameworks,” “plugin systems,” or “integration platforms” unless explicitly evidenced.\n\nLEADERSHIP FRAMING\n- Frame leadership as junior-level technical leadership behaviors:\n  - active participation in peer code reviews\n  - adherence to coding standards\n  - collaborative problem-solving across QA/engineering\n  - clear technical documentation and communication\n- Avoid people-management claims (hiring, performance management, team leadership) unless evidenced.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- For roles above junior, do not artificially “senior-ify” the candidate.\n- Keep leadership secondary to execution:\n  - feature implementation, bug resolution, security mechanism delivery, QA/UAT collaboration.\n- If asked for “ownership,” phrase as “owned tasks/workstreams” or “drove fixes end-to-end” only when evidence supports end-to-end responsibility.\n\nAI WORK POSITIONING\n- No AI tooling practice is provided.\n- Do not mention AI/ML, LLMs, prompt engineering, model evaluation, or AI platform work unless present in MASTER_RESUME or new user-provided evidence.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not claim unsupported domain expertise; keep domain statements anchored to web/cloud apps, security features (MFA), QA workflows, and issue resolution.\n- Do not overstate security depth: MFA + audit support only; avoid “security engineer,” “security architect,” “threat modeling owner,” “zero trust,” “SOC2/ISO” unless evidenced.\n- Keep employment and scope accurate: IBM and Microsoft experience as described; do not imply leadership titles or ownership beyond provided highlights.\n- Do not invent:\n  - tools (cloud provider, CI/CD, monitoring)\n  - architecture patterns (microservices, event-driven, caching, replicas)\n  - new metrics, scale, or timelines.\n\nEVIDENCE SOURCES\n- Use only:\n  - MASTER_RESUME (if provided at generation time)\n  - CANDIDATE_PROFILE.experience_highlights (IBM/Microsoft highlights, impacts, team context, skills applied)\n  - CANDIDATE_PROFILE.technical_skills (languages, MFA, cloud migration, version control)\n  - CANDIDATE_PROFILE.leadership (code reviews, standards, security auditing/bug resolution)\n  - CANDIDATE_PROFILE.constraints_and_preferences (accuracy/no exaggeration)\n- Bullet construction rule: if a mechanism/tool is not explicitly in evidence, do not name it; keep phrasing general and accurate.\n\nFINAL REMINDER\n- Core differentiation to preserve: junior engineer with IBM/Microsoft experience who delivers concrete security (MFA), supports cloud migration tied to scalability gains, and reliably resolves high volumes of production/user issues through strong QA collaboration—without inflating architecture or security claims.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
       },
       {
         "role": "user",
-        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Web applications\",\n      \"Cloud-based applications\"\n    ],\n    \"secondary\": [\n      \"Software security\",\n      \"Technical support systems\"\n    ]\n  },\n  \"candidate\": {\n    \"name\": \"Leonid Verman\",\n    \"summary\": \"Dynamic Junior Software Developer with experience at IBM, enhancing system security and implementing features for high-traffic applications. Proven ability in cloud migration and team collaboration, achieving a 40% improvement in scalability. Resourceful problem-solver, adept at resolving bugs and ensuring seamless user experiences.\",\n    \"headline\": \"Junior Software Developer\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Resourceful\",\n        \"Problem-solving\"\n      ]\n    },\n    \"practices\": [\n      \"Peer code reviews\",\n      \"Adherence to coding best practices\"\n    ],\n    \"risk_management\": [\n      \"Security audits\",\n      \"Bug resolution\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Backend development\",\n    \"Software development\",\n    \"Testing and debugging\",\n    \"Cloud-based applications\",\n    \"Technical support\",\n    \"Production reliability\",\n    \"Cross-functional collaboration\",\n    \"Performance optimization\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Keep claims aligned with actual experience\"\n    ],\n    \"security_auth\": [\n      \"Do not overstate security depth\"\n    ],\n    \"employment_constraints\": [\n      \"Do not exaggerate leadership scope\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [\n      \"HTML\",\n      \"CSS\"\n    ],\n    \"languages\": [\n      \"Python\",\n      \"Java\",\n      \"PHP\"\n    ],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [\n      \"Cloud migration\",\n      \"Software security\"\n    ],\n    \"security_auth_patterns\": [\n      \"Multi-factor authentication\"\n    ],\n    \"scalability_reliability_patterns\": [\n      \"Cloud-based applications\"\n    ]\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"System Security and Feature Implementation\",\n      \"impact\": [\n        \"Enhanced system security with multi-factor authentication for over 1 million users\",\n        \"Implemented new features for high-traffic web applications using Java and Python\",\n        \"Improved scalability by 40% through cloud migration projects\",\n        \"Resolved an average of 150 bug fixes since June 2023 for seamless UX\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Engaged in peer code reviews\",\n        \"Collaborated with team members for coding best practices\"\n      ],\n      \"skills_applied\": [\n        \"Java\",\n        \"Python\",\n        \"Cloud migration\",\n        \"Software security\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\",\n        \"Cloud-based platform development\"\n      ],\n      \"employer_relationship\": \"IBM\",\n      \"security_auth_patterns\": [\n        \"Multi-factor authentication\"\n      ],\n      \"constraints_and_tradeoffs\": [\n        \"Ensured adherence to IBM coding standards\"\n      ]\n    },\n    {\n      \"area\": \"Software Development and Quality Assurance\",\n      \"impact\": [\n        \"Resolved over 100 user-reported issues\",\n        \"Developed a user personalization feature increasing daily active users by 10%\",\n        \"Supported a security audit identifying 15 potential threats\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Worked alongside quality assurance team\",\n        \"Partnered with software engineers\"\n      ],\n      \"skills_applied\": [\n        \"User acceptance testing\",\n        \"Bug resolution\",\n        \"Feature development\"\n      ],\n      \"architecture_patterns\": [\n        \"Testing and validation workflows\"\n      ],\n      \"employer_relationship\": \"Microsoft\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Conducted user acceptance testing\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\",\n      \"Agile software environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\",\n      \"Problem solving\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Web applications\",\n      \"Cloud-based applications\"\n    ],\n    \"secondary\": [\n      \"Software security\",\n      \"Technical support systems\"\n    ]\n  },\n  \"contacts\": {\n    \"email\": \"leonidverman@gmail.com\",\n    \"phone\": \"+7 783 173 248\",\n    \"location\": \"Vancouver, V6G 2Z1\",\n    \"linkedin_url\": \"https://www.linkedin.com/in/leonid-verman-3569b71b2/\"\n  },\n  \"candidate\": {\n    \"name\": \"Leonid Verman\",\n    \"summary\": \"Dynamic Junior Software Developer with experience at IBM and Microsoft, focusing on system security and cloud migration. Proven ability to enhance scalability and resolve software bugs, ensuring seamless user experiences. Adept in team collaboration and implementing features for high-traffic applications.\",\n    \"headline\": \"Junior Software Developer\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Resourceful\",\n        \"Problem-solving\"\n      ]\n    },\n    \"practices\": [\n      \"Peer code reviews\",\n      \"Adherence to coding standards\"\n    ],\n    \"risk_management\": [\n      \"Security auditing\",\n      \"Bug resolution\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Backend development\",\n    \"Software development\",\n    \"Cloud-based applications\",\n    \"Technical support\",\n    \"Production reliability\",\n    \"Cross-functional collaboration\",\n    \"Performance optimization\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not claim unsupported domain expertise\"\n    ],\n    \"security_auth\": [\n      \"Do not overstate security depth\"\n    ],\n    \"employment_constraints\": [\n      \"Keep claims aligned with actual experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [\n      \"HTML\",\n      \"CSS\"\n    ],\n    \"languages\": [\n      \"Python\",\n      \"Java\",\n      \"PHP\"\n    ],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [\n      \"Version control systems\"\n    ],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [\n      \"Cloud migration\",\n      \"Code optimization\"\n    ],\n    \"security_auth_patterns\": [\n      \"Multi-factor authentication\"\n    ],\n    \"scalability_reliability_patterns\": [\n      \"Cloud-based applications\"\n    ]\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"System Security and Cloud Migration\",\n      \"impact\": [\n        \"Enhanced system security with multi-factor authentication for over 1 million users\",\n        \"Improved application scalability by 40% through cloud migration\",\n        \"Resolved an average of 150 bug fixes to ensure seamless user experience\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Engaged in peer code reviews\",\n        \"Collaborated with cross-functional teams\"\n      ],\n      \"skills_applied\": [\n        \"Java\",\n        \"Python\",\n        \"Cloud migration\",\n        \"Software security\"\n      ],\n      \"architecture_patterns\": [\n        \"Cloud-based platform development\"\n      ],\n      \"employer_relationship\": \"IBM\",\n      \"security_auth_patterns\": [\n        \"Multi-factor authentication\"\n      ],\n      \"constraints_and_tradeoffs\": [\n        \"Ensured adherence to coding best practices\"\n      ]\n    },\n    {\n      \"area\": \"Software Development and Quality Assurance\",\n      \"impact\": [\n        \"Resolved over 100 user-reported issues\",\n        \"Developed a user personalization feature increasing daily active users by 10%\",\n        \"Supported a security audit identifying 15 potential threats\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Worked alongside quality assurance team\",\n        \"Partnered with software engineers\"\n      ],\n      \"skills_applied\": [\n        \"Bug fixing\",\n        \"User acceptance testing\",\n        \"Security auditing\"\n      ],\n      \"architecture_patterns\": [\n        \"Testing and validation workflows\"\n      ],\n      \"employer_relationship\": \"Microsoft\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Gathered feedback through user acceptance testing\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\",\n      \"Agile software environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\",\n      \"Problem solving\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
       },
       {
         "role": "user",
@@ -23,11 +23,11 @@
       },
       {
         "role": "user",
-        "content": "MASTER_COVER_LETTER:\nLeonid Verman\nDear Hiring Manager,\nI am excited to apply for the Senior Software Engineer role at Tigera. With over 15 years of experience in backend engineering and team leadership, including roles as VP and Director of Software Development, I have built fintech and blockchain systems that became top-5 platforms in the Japanese market, serving over 1M users, and led teams of up to 20 engineers to deliver reliable, scalable products.\nIn addition to my industry work, I currently contribute as an independent contractor supporting world-leading AI research labs in training and evaluating advanced AI models on senior-level software engineering tasks. This work keeps me deeply engaged with cutting-edge development practices, reinforces my ability to solve complex problems under ambiguity, and strengthens my proficiency with AI-assisted development tools. I also adopt AI-accelerated workflows (ChatGPT, Claude, Cursor AI) to improve productivity, code quality, and architectural clarity.\nI would welcome the chance to bring this expertise to your team and contribute to building reliable, scalable systems for your clients. I hold Canadian citizenship and am fully eligible to work in Canada.\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+        "content": "MASTER_COVER_LETTER:\nLeonid Verman\nDear Hiring Manager,\n\nI am excited to apply for the [Role] role at [Company].\n\n[2-3 short paragraphs connecting candidate background to role/company needs.]\n\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
       },
       {
         "role": "user",
-        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: April 28, 2026\nReturn JSON only.\n"
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: May 13, 2026\nReturn JSON only.\n"
       }
     ],
     "response_format": {
@@ -35,23 +35,23 @@
     }
   },
   "llm_response": {
-    "resume": "Leonid Verman\nVancouver, BC V6G 2Z1 | +7 783 173 248 | leonidverman@gmail.com\nLinkedIn: https://www.linkedin.com/in/leonid-verman-3569b71b2/\n\nProfessional Summary\nDynamic Junior Software Developer with experience at IBM and Microsoft delivering backend-leaning features and production support for high-traffic web and cloud-based applications. Implemented multi-factor authentication for 1M+ users, contributed to cloud migration work improving scalability by 40%, and executed high-volume bug triage/fixes (avg. 150 since June 2023). Hands-on in testing/validation workflows (UAT, QA partnership) and peer code reviews aligned with engineering standards.\n\nExperience\nJunior Software Developer | IBM | New York, NY\nJune 2023 – Current\n- Enhanced system security by implementing multi-factor authentication for over 1 million users.\n- Supported migration projects moving significant portions of an application to the cloud; improved scalability by 40%.\n- Implemented new features for high-traffic web applications using Java and Python.\n- Resolved an average of 150 bugs since June 2023 in post-launch applications to maintain seamless user experience.\n- Engaged in peer code reviews to align changes with coding best practices and IBM standards.\n\nSoftware Engineering Intern | Microsoft | Redmond, WA\nMay 2023 – August 2023\n- Worked with the quality assurance team to identify and fix software bugs, resolving over 100 user-reported issues.\n- Partnered with software engineers to develop a user personalization feature that increased daily active users by 10% within the first month of release.\n- Assisted in conducting user acceptance testing (UAT) to gather feedback and identify areas for improvement.\n- Supported a security audit to identify and remedy 15 potential security threats.\n- Participated in brainstorming ideas and solutions for new feature development.\n\nEducation\nBachelor of Science (B.S.) Computer Science | California Institute of Technology | Pasadena, CA\n\nTechnical Skills\nProgramming Languages: Java, Python, PHP\nWeb: HTML, CSS\nSecurity: Multi-factor authentication, Software security\nCloud: Cloud migration, Cloud-based applications\nTesting & Quality: User acceptance testing (UAT), Bug triage and resolution\nEngineering Practices: Peer code reviews, Coding standards, Version control systems\nCore CS: Object-oriented programming, Data structures\n\nAdditional\nLanguages: English\nCertifications And Training: Oracle Certified Associate, AWS Certified Developer\n",
-    "cover_letter": "Leonid Verman\nVancouver, BC V6G 2Z1\n+7 783 173 248 | leonidverman@gmail.com\nhttps://www.linkedin.com/in/leonid-verman-3569b71b2/\n\nApril 28, 2026\n\nDear Hiring Manager,\n\nI am applying for the Lead Software Engineer role at American Tire Distributors. I bring hands-on experience building and supporting high-traffic web and cloud-based applications, with a focus on security mechanisms, production reliability, and disciplined testing and review practices.\n\nAt IBM, I implemented multi-factor authentication for over 1 million users and contributed to cloud migration work that improved scalability by 40%. I also handle high-volume production bug fixing (averaging 150 fixes since June 2023), partnering with teammates through peer code reviews and aligning changes with IBM coding standards.\n\nPreviously at Microsoft, I worked closely with QA and engineers to resolve over 100 user-reported issues and supported UAT to validate changes before release. I also helped deliver a user personalization feature that increased daily active users by 10% within the first month, and supported a security audit that identified and remedied 15 potential threats.\n\nI would welcome the opportunity to bring this execution-focused background—security-minded development, cloud migration support, and systematic troubleshooting/testing—to help ATD deliver maintainable software that supports end users and resolves production issues effectively. Thank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+    "resume": "Leonid Verman\nVancouver, V6G 2Z1 | +7 783 173 248 | leonidverman@gmail.com\nLinkedIn: https://www.linkedin.com/in/leonid-verman-3569b71b2/\n\nProfessional Summary\nJunior Software Developer with experience at IBM and Microsoft delivering backend-focused features for high-traffic web and cloud-based applications. Contributed to system security by implementing multi-factor authentication for 1M+ users and supported cloud migration work that improved scalability by 40%. Known for disciplined production issue resolution (150 average bug fixes since June 2023), strong collaboration with QA/engineering partners, and consistent participation in peer code reviews and standards-driven delivery.\n\nExperience\nJunior Software Developer | IBM | New York, NY\nJune 2023 – Current\n- Enhanced system security by implementing multi-factor authentication for over 1 million users.\n- Supported migration projects moving significant portions of an application to the cloud, improving scalability by 40%.\n- Implemented new features for high-traffic web applications using Java and Python.\n- Resolved an average of 150 bug fixes since June 2023 for applications post-launch to maintain a seamless user experience.\n- Engaged in peer code reviews to ensure adherence to coding best practices and IBM standards.\n\nSoftware Engineering Intern | Microsoft | Redmond, WA\nMay 2023 – August 2023\n- Worked alongside the quality assurance team to identify and fix software bugs, resolving over 100 user-reported issues.\n- Partnered with software engineers to develop a user personalization feature that led to a 10% increase in daily active users within the first month of release.\n- Assisted in conducting user acceptance testing (UAT) to gather feedback and identify areas of improvement.\n- Supported a security audit to identify and remedy 15 potential security threats.\n- Participated in brainstorming ideas and solutions for new feature development.\n\nEducation\nBachelor of Science (B.S.) Computer Science | California Institute of Technology\nPasadena, CA\n\nTechnical Skills\nProgramming Languages: Python, Java, PHP\nWeb: HTML, CSS\nCloud & Backend: Cloud migration, Cloud-based applications, Code optimization, Object-oriented programming, Data structures\nSecurity: Multi-factor authentication, Software security\nQuality & Delivery: User acceptance testing (UAT), Bug fixing\nTools: Version control systems\n\nAdditional\nLanguages: English\nCertifications And Training: Oracle Certified Associate, AWS Certified Developer\n",
+    "cover_letter": "Leonid Verman\n+7 783 173 248 | leonidverman@gmail.com | https://www.linkedin.com/in/leonid-verman-3569b71b2/\n\nMay 13, 2026\n\nDear Hiring Manager,\n\nI am excited to apply for the Lead Software Engineer role at American Tire Distributors. I bring hands-on experience delivering and supporting software for high-traffic applications, with a focus on security-minded feature work, cloud migration contributions, and disciplined production issue resolution.\n\nIn my current role as a Junior Software Developer at IBM, I’ve contributed to strengthening system access by implementing multi-factor authentication for over 1 million users, and I supported cloud migration efforts that improved application scalability by 40%. Alongside feature development in Java and Python, I’ve also handled post-launch support by resolving an average of 150 bug fixes since June 2023, with an emphasis on verification and maintaining a seamless user experience.\n\nPreviously at Microsoft, I worked closely with QA and engineering partners to resolve over 100 user-reported issues and supported user acceptance testing to incorporate feedback into improvements. I also contributed to a user personalization feature that increased daily active users by 10% within the first month, and supported a security audit that identified and addressed 15 potential threats.\n\nAmerican Tire Distributors’ focus on dependable delivery for a large customer network resonates with how I approach software work: clear communication, careful testing/validation, and steady execution on security and reliability needs. I would welcome the opportunity to bring that approach to your team while continuing to grow into the broader design, impact analysis, and solution-building expectations of the Lead Software Engineer role.\n\nSincerely,\nLeonid Verman"
   },
   "diff": {
     "resume": [
       {
         "name": "Professional Summary",
-        "after": "Dynamic Junior Software Developer with experience at IBM and Microsoft delivering backend-leaning features and production support for high-traffic web and cloud-based applications. Implemented multi-factor authentication for 1M+ users, contributed to cloud migration work improving scalability by 40%, and executed high-volume bug triage/fixes (avg. 150 since June 2023). Hands-on in testing/validation workflows (UAT, QA partnership) and peer code reviews aligned with engineering standards."
+        "after": "Junior Software Developer with experience at IBM and Microsoft delivering backend-focused features for high-traffic web and cloud-based applications. Contributed to system security by implementing multi-factor authentication for 1M+ users and supported cloud migration work that improved scalability by 40%. Known for disciplined production issue resolution (150 average bug fixes since June 2023), strong collaboration with QA/engineering partners, and consistent participation in peer code reviews and standards-driven delivery."
       },
       {
         "name": "Technical Skills",
         "before": "Clear communication\nCloud migration\nResourceful\nSoftware security\nTeam collaboration\nVersion control systems\nPython programming\nCode optimization\nObject-oriented programming\nHTML and CSS\nPHP development\nStrong problem solving\nData structures\nLeonid Verman\nDynamic Junior Software Developer with experience at IBM, enhancing system security and implementing features for high-traffic applications. Proven ability in cloud migration and team collaboration, achieving a 40% improvement in scalability. Resourceful problem-solver, adept at resolving bugs and ensuring seamless user experiences.\nEmployment History\nJunior Software Developer | IBM | New York, NY\nJune 2023 – Current\nEnhance system security to safeguard data with multi-factor authentication for over 1 million users\nImplement new features for high-traffic web applications using Java and Python\nSupport migration projects to move significant portions of an application to the cloud, improving scalability by 40%\nEngage in peer code reviews to ensure adherence to coding best practices and IBM standards\nResolved an average of 150 bug fixes since June 2023 for apps post-launch to ensure seamless UX\nSoftware Engineering Intern | Microsoft | Redmond, WA\nMay 2023 – August 2023\nWorked alongside the quality assurance team to identify and fix software bugs, resolving over 100 user-reported issues\nParticipated in brainstorming ideas and solutions for new feature development\nAssisted in conducting user acceptance testing (UAT) to gather feedback and identify areas of improvement\nPartnered with software engineers to develop a user personalization feature that led to a 10% increase in daily active users within the first month of release\nSupported a security audit to identify and remedy 15 potential security threats",
-        "after": "Programming Languages: Java, Python, PHP\nWeb: HTML, CSS\nSecurity: Multi-factor authentication, Software security\nCloud: Cloud migration, Cloud-based applications\nTesting & Quality: User acceptance testing (UAT), Bug triage and resolution\nEngineering Practices: Peer code reviews, Coding standards, Version control systems\nCore CS: Object-oriented programming, Data structures\n\nAdditional\nLanguages: English\nCertifications And Training: Oracle Certified Associate, AWS Certified Developer"
+        "after": "Programming Languages: Python, Java, PHP\nWeb: HTML, CSS\nCloud & Backend: Cloud migration, Cloud-based applications, Code optimization, Object-oriented programming, Data structures\nSecurity: Multi-factor authentication, Software security\nQuality & Delivery: User acceptance testing (UAT), Bug fixing\nTools: Version control systems\n\nAdditional\nLanguages: English\nCertifications And Training: Oracle Certified Associate, AWS Certified Developer"
       }
     ]
   },
-  "generation_run_id": "214",
+  "generation_run_id": "301",
   "updated_ir": {
     "source_kind": "docx",
     "header_paras": [
@@ -104,7 +104,7 @@
             "para_id": "para_7"
           },
           {
-            "text": "Dynamic Junior Software Developer with experience at IBM and Microsoft delivering backend-leaning features and production support for high-traffic web and cloud-based applications. Implemented multi-factor authentication for 1M+ users, contributed to cloud migration work improving scalability by 40%, and executed high-volume bug triage/fixes (avg. Hands-on in testing/validation workflows (UAT, QA partnership) and peer code reviews aligned with engineering standards.",
+            "text": "+7 783 173 248 ",
             "semantic": "paragraph",
             "paragraph_profile": null,
             "para_id": "para_8"
@@ -128,6 +128,12 @@
             "para_id": "para_11"
           },
           {
+            "text": "leonidverman@gmail.com",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_12"
+          },
+          {
             "text": "",
             "semantic": "empty",
             "paragraph_profile": null,
@@ -146,6 +152,12 @@
             "para_id": "para_15"
           },
           {
+            "text": "VANCOUVER V6G 2Z1",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_16"
+          },
+          {
             "text": "",
             "semantic": "empty",
             "paragraph_profile": null,
@@ -162,6 +174,12 @@
             "semantic": "empty",
             "paragraph_profile": null,
             "para_id": "para_19"
+          },
+          {
+            "text": "Bold Profile",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_20"
           },
           {
             "text": " ",
@@ -206,7 +224,7 @@
         "section_id": "sec_2"
       },
       {
-        "title": "Technical Skills",
+        "title": "Skill",
         "semantic_type": "skills",
         "heading": {
           "text": "Technical Skills",
@@ -222,7 +240,7 @@
             "para_id": "para_27"
           },
           {
-            "text": "Programming Languages: Java, Python, PHP",
+            "text": "Programming Languages: Python, Java, PHP",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_28"
@@ -234,46 +252,70 @@
             "para_id": "para_29"
           },
           {
-            "text": "Security: Multi-factor authentication, Software security",
+            "text": "Cloud & Backend: Cloud migration, Cloud-based applications,",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_30"
           },
           {
-            "text": "Cloud: Cloud migration, Cloud-based applications",
+            "text": "Security: Multi-factor authentication, Software security",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_31"
           },
           {
-            "text": "Testing & Quality: User acceptance testing (UAT), Bug triage and resolution",
+            "text": "Quality & Delivery: User acceptance testing (UAT), Bug",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_32"
           },
           {
-            "text": "Engineering Practices: Peer code reviews, Coding standards, Version control systems",
+            "text": "Tools: Version control systems",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_33"
           },
           {
-            "text": "Core CS: Object-oriented programming, Data structures",
+            "text": "English",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_34"
           },
           {
-            "text": "English",
+            "text": "Oracle Certified Associate, AWS Certified Developer",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_35"
           },
           {
-            "text": "Oracle Certified Associate, AWS Certified Developer",
+            "text": "Object-oriented programming",
             "semantic": "bullet",
             "paragraph_profile": null,
             "para_id": "para_36"
+          },
+          {
+            "text": "HTML and CSS",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_37"
+          },
+          {
+            "text": "PHP development",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_38"
+          },
+          {
+            "text": "Strong problem solving",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          },
+          {
+            "text": "Data structures",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_40"
           },
           {
             "text": " ",
@@ -294,10 +336,22 @@
             "para_id": "para_43"
           },
           {
+            "text": "Leonid Verman",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_44"
+          },
+          {
             "text": " ",
             "semantic": "empty",
             "paragraph_profile": null,
             "para_id": "para_45"
+          },
+          {
+            "text": "Dynamic Junior Software Developer with experience at IBM, enhancing system security and implementing features for high-traffic applications. Proven ability in cloud migration and team collaboration, achieving a 40% improvement in scalability. Resourceful problem-solver, adept at resolving bugs and ensuring seamless user experiences.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_46"
           },
           {
             "text": " ",
@@ -328,10 +382,10 @@
         "section_id": "sec_3"
       },
       {
-        "title": "Experience",
+        "title": "Employment History",
         "semantic_type": "experience",
         "heading": {
-          "text": "Experience",
+          "text": "Employment History",
           "semantic": "section_heading",
           "paragraph_profile": null,
           "para_id": "para_51"
@@ -344,6 +398,90 @@
             "para_id": "para_66"
           },
           {
+            "text": "Junior Software Developer | IBM | New York, NY ",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_67"
+          },
+          {
+            "text": "June 2023 – Current",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_68"
+          },
+          {
+            "text": "Enhanced system security by implementing multi-factor authentication for over 1 million users.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_69"
+          },
+          {
+            "text": "Supported migration projects moving significant portions of an application to",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_70"
+          },
+          {
+            "text": "Implemented new features for high-traffic web applications using Java and Python.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_71"
+          },
+          {
+            "text": "Resolved an average of 150 bug fixes since June 2023 for applications post-launch to",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_72"
+          },
+          {
+            "text": "Engaged in peer code reviews to ensure adherence to coding best practices and IBM standards.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_73"
+          },
+          {
+            "text": "Software Engineering Intern | Microsoft | Redmond, WA ",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_74"
+          },
+          {
+            "text": "May 2023 – August 2023",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_75"
+          },
+          {
+            "text": "Worked alongside the quality assurance team to identify and fix software bugs, resolving over 100 user-reported",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_76"
+          },
+          {
+            "text": "Partnered with software engineers to develop a user personalization feature",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_77"
+          },
+          {
+            "text": "Assisted in conducting user acceptance testing (UAT) to gather feedback and identify areas of",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_78"
+          },
+          {
+            "text": "Supported a security audit to identify and remedy 15 potential security threats.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_79"
+          },
+          {
+            "text": "Participated in brainstorming ideas and solutions for new feature development.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_80"
+          },
+          {
             "text": " ",
             "semantic": "empty",
             "paragraph_profile": null,
@@ -353,7 +491,7 @@
         "roles": [
           {
             "header": {
-              "text": "Junior Software Developer | IBM | New York, NY",
+              "text": "Junior Software Developer | IBM | New York, NY ",
               "semantic": "role_header",
               "paragraph_profile": null,
               "para_id": "para_67"
@@ -375,7 +513,7 @@
                 "para_id": "para_69"
               },
               {
-                "text": "Supported migration projects moving significant portions of an application to the cloud; improved scalability by 40%.",
+                "text": "Supported migration projects moving significant portions of an application to the cloud, improving scalability by 40%.",
                 "semantic": "bullet",
                 "paragraph_profile": null,
                 "para_id": "para_70"
@@ -387,24 +525,24 @@
                 "para_id": "para_71"
               },
               {
-                "text": "Resolved an average of 150 bugs since June 2023 in post-launch applications to maintain seamless user experience.",
+                "text": "Resolved an average of 150 bug fixes since June 2023 for applications post-launch to maintain a seamless user experience.",
                 "semantic": "bullet",
                 "paragraph_profile": null,
                 "para_id": "para_72"
               },
               {
-                "text": "Engaged in peer code reviews to align changes with coding best practices and IBM standards.",
+                "text": "Engaged in peer code reviews to ensure adherence to coding best practices and IBM standards.",
                 "semantic": "bullet",
                 "paragraph_profile": null,
                 "para_id": "para_73"
               }
             ],
             "role_id": "Junior Software Developer | IBM | New York, NY",
-            "role_id_stable": "role_1"
+            "role_id_stable": ""
           },
           {
             "header": {
-              "text": "Software Engineering Intern | Microsoft | Redmond, WA",
+              "text": "Software Engineering Intern | Microsoft | Redmond, WA ",
               "semantic": "role_header",
               "paragraph_profile": null,
               "para_id": "para_74"
@@ -420,19 +558,19 @@
             ],
             "bullets": [
               {
-                "text": "Worked with the quality assurance team to identify and fix software bugs, resolving over 100 user-reported issues.",
+                "text": "Worked alongside the quality assurance team to identify and fix software bugs, resolving over 100 user-reported issues.",
                 "semantic": "bullet",
                 "paragraph_profile": null,
                 "para_id": "para_76"
               },
               {
-                "text": "Partnered with software engineers to develop a user personalization feature that increased daily active users by 10% within the first month of release.",
+                "text": "Partnered with software engineers to develop a user personalization feature that led to a 10% increase in daily active users within the first month of release.",
                 "semantic": "bullet",
                 "paragraph_profile": null,
                 "para_id": "para_77"
               },
               {
-                "text": "Assisted in conducting user acceptance testing (UAT) to gather feedback and identify areas for improvement.",
+                "text": "Assisted in conducting user acceptance testing (UAT) to gather feedback and identify areas of improvement.",
                 "semantic": "bullet",
                 "paragraph_profile": null,
                 "para_id": "para_78"
@@ -451,7 +589,7 @@
               }
             ],
             "role_id": "Software Engineering Intern | Microsoft | Redmond, WA",
-            "role_id_stable": "role_2"
+            "role_id_stable": ""
           }
         ],
         "section_id": "sec_4"

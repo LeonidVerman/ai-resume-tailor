@@ -45,6 +45,9 @@ class ParagraphProfile:
     # Set by pdf_parser for role headers with non-uniform bold across spans.
     # Not serialised to JSON (runtime-only, like inline_image_bytes).
     text_runs: list | None = None
+    # Absolute Y position of the block top in PDF points (runtime-only; not serialised).
+    # Set by _extract_paragraphs for section-label-column pairing in parse_pdf.
+    y_top_pt: float = 0.0
 
     def to_dict(self) -> dict:
         return {
@@ -138,6 +141,10 @@ class ParaModel:
             paragraph_profile=self.paragraph_profile,
         )
         p.para_id = self.para_id
+        # Preserve runtime-only y_top_pt so the PDF two-column Y-sort can place
+        # updated paragraphs at their original template positions.
+        if p.paragraph_profile is not None and self.paragraph_profile is not None:
+            p.paragraph_profile.y_top_pt = self.paragraph_profile.y_top_pt
         return p
 
     def clone_as(self, new_text: str, semantic: str | None = None) -> "ParaModel":
@@ -169,6 +176,10 @@ class ParaModel:
             if self.paragraph_profile is not None
             else None
         )
+        # Preserve runtime-only y_top_pt so the PDF two-column Y-sort places
+        # cloned paragraphs at their archetype's original template position.
+        if pp_clone is not None and self.paragraph_profile is not None:
+            pp_clone.y_top_pt = self.paragraph_profile.y_top_pt
         return ParaModel(
             text=new_text,
             style=cloned,
@@ -289,6 +300,9 @@ class LayoutProfile:
     right_col_width_twips: int | None = None # right column width in twips
     left_col_bg_color: str | None = None     # hex RRGGBB fill for left column
     right_col_bg_color: str | None = None    # hex RRGGBB fill for right column
+    section_row_table: bool = False          # True when left column is section-label only (one row per section)
+    header_bg_color: str | None = None       # hex RRGGBB for full-width dark header band (single-col PDFs)
+    footer_bg_color: str | None = None       # hex RRGGBB for full-width dark footer band (single-col PDFs)
 
     def to_dict(self) -> dict:
         return {
@@ -305,6 +319,9 @@ class LayoutProfile:
             "right_col_width_twips": self.right_col_width_twips,
             "left_col_bg_color": self.left_col_bg_color,
             "right_col_bg_color": self.right_col_bg_color,
+            "section_row_table": self.section_row_table,
+            "header_bg_color": self.header_bg_color,
+            "footer_bg_color": self.footer_bg_color,
         }
 
     @classmethod
@@ -323,6 +340,9 @@ class LayoutProfile:
             right_col_width_twips=d.get("right_col_width_twips"),
             left_col_bg_color=d.get("left_col_bg_color"),
             right_col_bg_color=d.get("right_col_bg_color"),
+            section_row_table=bool(d.get("section_row_table", False)),
+            header_bg_color=d.get("header_bg_color"),
+            footer_bg_color=d.get("footer_bg_color"),
         )
 
 
@@ -426,6 +446,9 @@ class ResumeDocument:
     all_paras: list[ParaModel]
     # 'docx' for DOCX-sourced (xml_proto available); 'pdf' for PDF-sourced (para_builder path).
     source_kind: str = "docx"
+    # Footer paragraphs (contact strip, icons) preserved from the original PDF
+    # template and rendered as a dark band at the bottom.  Empty for most templates.
+    footer_paras: list[ParaModel] = field(default_factory=list)
     body_items: list[Any] | None = None  # list[ParaModel | TableBlock]; None for PDF/deserialised
     label_column_fixed: bool = False     # True when label-column layout reordering was applied
     table_column_layout_fixed: bool = False  # True when newspaper/table multi-column fix applied

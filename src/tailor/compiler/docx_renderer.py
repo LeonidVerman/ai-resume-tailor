@@ -162,6 +162,34 @@ def _strip_column_break(p_elem) -> None:
                 r_elem.remove(br)
 
 
+def _strip_text_wrapping_breaks(p_elem, new_text: str = "") -> None:
+    """Remove w:br type='textWrapping' elements from runs in a paragraph.
+
+    Template paragraphs sometimes encode multi-line content using soft-return
+    breaks (w:br type='textWrapping').  When LLM text replaces the original
+    content, _set_para_text distributes the new (often shorter) text
+    proportionally across the original runs.  Each run then gets only a few
+    characters, and the surviving br elements force a line break between each
+    tiny fragment — producing "character-by-character" rendering with 1-3 chars
+    per line.  Stripping the breaks before text replacement lets the new content
+    flow naturally at full paragraph width.
+
+    Only called when content is being actively replaced (pm is not None), so
+    verbatim-preserved paragraphs keep their original break structure.
+
+    Guard: when *new_text* contains '\\n', the line breaks are intentional
+    (e.g. multi-subsection skills paragraphs like sample 34 CORE COMPETENCIES).
+    In that case the textWrapping br elements are preserved so _set_para_text
+    can distribute text segments to the correct run groups.
+    """
+    if "\n" in new_text:
+        return  # preserve intentional line breaks
+    for r_elem in list(p_elem.findall(f"{{{_W}}}r")):
+        for br in list(r_elem.findall(f"{{{_W}}}br")):
+            if br.get(f"{{{_W}}}type") == "textWrapping":
+                r_elem.remove(br)
+
+
 def _ensure_keep_next(p_elem) -> None:
     """Add w:keepNext to the paragraph pPr if not already present.
 
@@ -319,6 +347,60 @@ def _set_run_text(r_elem, portion: str) -> None:
             t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
 
 
+def _clear_sdt_placeholder(p_elem) -> None:
+    """Flatten run-level SDT content controls inside a patched paragraph.
+
+    Some Word templates wrap each text segment in a w:sdt content control so
+    that the template author can tag placeholders.  When we patch the
+    paragraph text via _set_para_text the runs inside w:sdtContent are updated,
+    but LibreOffice may still render the old placeholder text from the SDT's
+    w:placeholder docPart reference even after w:showingPlcHdr is removed.
+
+    The most reliable fix is to flatten the SDT: replace each w:sdt child of
+    the paragraph with the runs from its w:sdtContent.  This removes all SDT
+    overhead and lets LibreOffice render our updated runs directly.
+
+    Only run-level SDTs (direct w:sdt children of w:p) are flattened.
+    Paragraph-level SDTs (where w:p is inside w:sdtContent) are handled by
+    clearing w:showingPlcHdr from the enclosing w:sdt instead, because those
+    SDTs span the entire paragraph and flattening them would require replacing
+    the paragraph itself — a much larger structural change.
+    """
+    sdt_ns = f"{{{_W}}}sdt"
+    sdt_pr_ns = f"{{{_W}}}sdtPr"
+    showing_ns = f"{{{_W}}}showingPlcHdr"
+    sdt_content_ns = f"{{{_W}}}sdtContent"
+
+    # Pattern A: p_elem lives inside w:sdtContent — clear showingPlcHdr only.
+    parent = p_elem.getparent()
+    if parent is not None and parent.tag == sdt_content_ns:
+        sdt = parent.getparent()
+        if sdt is not None and sdt.tag == sdt_ns:
+            sdt_pr = sdt.find(sdt_pr_ns)
+            if sdt_pr is not None:
+                showing = sdt_pr.find(showing_ns)
+                if showing is not None:
+                    sdt_pr.remove(showing)
+        return  # paragraph-level SDT handled; skip run-level flattening
+
+    # Pattern B: flatten each direct w:sdt child of the paragraph.
+    # Find SDT children in reverse order so index-based insertion stays valid.
+    sdt_children = p_elem.findall(sdt_ns)
+    for sdt_elem in sdt_children:
+        sdt_content = sdt_elem.find(sdt_content_ns)
+        if sdt_content is None:
+            continue
+        # Collect runs (and other inline content) from sdtContent.
+        runs = list(sdt_content)
+        if not runs:
+            continue
+        # Insert the runs at the position of the sdt element.
+        idx = list(p_elem).index(sdt_elem)
+        for offset, run in enumerate(runs):
+            p_elem.insert(idx + offset, run)
+        p_elem.remove(sdt_elem)
+
+
 def _set_para_text(p_elem, text: str) -> None:
     """Set text on p_elem in-place, preserving all per-run formatting.
 
@@ -333,8 +415,20 @@ def _set_para_text(p_elem, text: str) -> None:
     breaks.  Strip any '\\n' characters from *text* before distributing so
     that the line break is not written twice (once into w:t and once via w:br).
     """
+    # Preserve original text for multi-line distribution check (before stripping \n).
+    _text_has_newlines = "\n" in text
     # w:br elements provide the line break; avoid doubling by stripping \n from text.
     text = text.replace("\n", "")
+    # Early-exit for multi-SDT paragraphs: when a paragraph has two or more
+    # direct w:sdt children, those SDTs form a structured multi-column layout
+    # (e.g. sample 7 "email TAB phone TAB LinkedIn" contact row).  Distributing
+    # new text across the SDT runs collapses all columns into a single run and
+    # destroys the tab-stop-based horizontal spread.  Skip text update entirely;
+    # _clear_sdt_placeholder will flatten each SDT to its original runs,
+    # preserving the original text and tab structure.
+    _sdt_count = sum(1 for child in p_elem if child.tag == f"{{{_W}}}sdt")
+    if _sdt_count >= 2:
+        return  # multi-column SDT row — preserve structure unchanged
     all_runs: list = []
     for child in p_elem:
         tag = child.tag
@@ -412,6 +506,34 @@ def _set_para_text(p_elem, text: str) -> None:
     elif vml_text_str and text.startswith(vml_text_str):
         text = text[len(vml_text_str):]
 
+    # Pre-compute pure-tab separator run indices BEFORE clearing so we can save
+    # the original text of post-tab content runs.  Pure-tab runs have <w:tab/>
+    # but NO <w:t> children; content runs have <w:t> but typically no <w:tab/>.
+    _pure_tab_idx_pre: set[int] = {
+        i for i, r in enumerate(all_runs)
+        if not r.findall(f"{{{_W}}}t") and r.findall(f"{{{_W}}}tab")
+    }
+    # When pure-tab separators exist and new text has no tab, we need to preserve
+    # post-tab content runs unchanged (they contain right-column data such as
+    # "Really Great University (2012-2014)").  Save their original text now.
+    #
+    # Guard: only save when the new text is a label-only update (new text is
+    # significantly shorter than the original total).  When the new text is as
+    # long as the original, it already incorporates both sides and restoring
+    # post-tab runs would duplicate content (e.g. letter-spaced skills headings).
+    _post_tab_preserve: dict[int, str] = {}
+    if _pure_tab_idx_pre and "\t" not in text and total_orig > 0:
+        _first_pre_tab = min(_pure_tab_idx_pre)
+        # Only restore if new text is less than half the total original length.
+        # Label-only updates (e.g. "EDUCATION" replacing "EDUCATION\tUniversity…")
+        # have len(text) << total_orig.  Full replacements have len(text) ≈ total_orig.
+        if len(text) < total_orig * 0.55:
+            for i, r in enumerate(all_runs):
+                if i > _first_pre_tab and i not in ws_text and i not in vml_indices:
+                    _t_elems = r.findall(f"{{{_W}}}t")
+                    if _t_elems:
+                        _post_tab_preserve[i] = "".join(t.text or "" for t in _t_elems)
+
     # Clear text from all runs (direct w:t children only; VML content is untouched).
     for r in all_runs:
         for t in r.findall(f"{{{_W}}}t"):
@@ -434,6 +556,109 @@ def _set_para_text(p_elem, text: str) -> None:
         _set_run_text(all_runs[content_indices[0]], text)
         return
 
+    # Tab-column overflow guard: when a paragraph uses pure-tab separator runs
+    # (no <w:t>, only <w:tab/>) as column dividers and the new text is significantly
+    # longer than the original total, proportional distribution would cut words
+    # mid-column.  Put the full text in the first content run and clear the rest so
+    # it wraps within the first column rather than being sliced across columns.
+    # This applies to skills-grid rows when the LLM provides long categorised lines.
+    # It does NOT trigger for round-trip identical text (same length) or when the
+    # text is shorter — those cases use proportional distribution as before.
+    _pure_tab_idx: set[int] = {
+        i for i, r in enumerate(all_runs)
+        if not any((t.text or "") for t in r.findall(f"{{{_W}}}t"))
+        and r.findall(f"{{{_W}}}tab")
+    }
+    if _pure_tab_idx and len(text) > total_orig * 1.1:
+        _first_ci = content_indices[0]
+        _set_run_text(all_runs[_first_ci], text)
+        for ci in content_indices[1:]:
+            _set_run_text(all_runs[ci], "")
+        return
+
+    # Tab-split label fix: when the paragraph has pure-tab separator runs (column
+    # dividers) and the new text contains no tab characters, place ALL text in the
+    # first content run before the tab.  Post-tab content runs (which hold right-
+    # column data like "Really Great University (2012-2014)") are RESTORED to their
+    # original text so they are not lost.  This prevents label-column headings like
+    # "EDUCATION\t<right-col-text>" from distributing "EDUCATION" proportionally as
+    # "ED" (pre-tab) + "UCATION" (post-tab), which splits the word across columns.
+    if _pure_tab_idx and "\t" not in text:
+        _first_tab_run = min(_pure_tab_idx)
+        _pre_tab_ci = [ci for ci in content_indices if ci < _first_tab_run]
+        if _pre_tab_ci:
+            _set_run_text(all_runs[_pre_tab_ci[0]], text)
+            for ci in content_indices:
+                if ci == _pre_tab_ci[0]:
+                    continue
+                elif ci in _post_tab_preserve:
+                    # Restore original right-column content (e.g. institution name)
+                    _set_run_text(all_runs[ci], _post_tab_preserve[ci])
+                else:
+                    _set_run_text(all_runs[ci], "")
+            return
+
+    # Multi-line paragraph distribution: when the original text had \n (line breaks
+    # correspond to <w:br type="textWrapping"/> elements) and the paragraph still
+    # has those br elements (i.e. _strip_text_wrapping_breaks was skipped), distribute
+    # each line segment to its corresponding run group instead of proportionally
+    # across all runs.  This preserves paragraph-internal line breaks for templates
+    # like multi-category skills sections (e.g. sample 34 CORE COMPETENCIES).
+    if _text_has_newlines and not _pure_tab_idx and not vml_indices:
+        _tw_br_run_indices: set[int] = {
+            i for i, r in enumerate(all_runs)
+            if r.findall(f"{{{_W}}}br")
+            and not any((t.text or "") for t in r.findall(f"{{{_W}}}t"))
+        }
+        if _tw_br_run_indices:
+            # Group content run indices by br-separator runs.
+            # Each group receives one \n-split text segment.
+            _segs = (text or "").split("\n") if "\n" in (text or "") else [text]
+            # Rebuild from original text (before \n was stripped) using known segments
+            # Actually text already has \n stripped → use original segments from
+            # _text_has_newlines. We must re-derive segments from the pre-strip text.
+            # Re-examine: text was already stripped; we need the segment list.
+            # Use the run-group structure: groups separated by br-only runs.
+            _run_groups: list[list[int]] = [[]]
+            for _ri, _r in enumerate(all_runs):
+                if _ri in ws_text:
+                    continue
+                _is_sep = (
+                    _r.findall(f"{{{_W}}}br")
+                    and not any((t.text or "") for t in _r.findall(f"{{{_W}}}t"))
+                )
+                if _is_sep:
+                    _run_groups.append([])
+                else:
+                    _run_groups[-1].append(_ri)
+            # Remove empty trailing group
+            while _run_groups and not _run_groups[-1]:
+                _run_groups.pop()
+            # The stripped text is a single string; we can't reconstruct segments.
+            # Fall through to proportional distribution if segments mismatch.
+            if len(_run_groups) > 1:
+                # Distribute text across groups by their original length proportion.
+                _group_orig_lens = [
+                    sum(orig_lens[ci] for ci in grp if ci < len(orig_lens))
+                    for grp in _run_groups
+                ]
+                _total_grp_len = sum(_group_orig_lens) or 1
+                _assigned = 0
+                for _gi, (_grp, _glen) in enumerate(zip(_run_groups, _group_orig_lens)):
+                    if not _grp:
+                        continue
+                    if _gi == len(_run_groups) - 1:
+                        _seg = text[_assigned:]
+                    else:
+                        _seg_end = round(len(text) * sum(_group_orig_lens[:_gi+1]) / _total_grp_len)
+                        _seg = text[_assigned:_seg_end]
+                        _assigned = _seg_end
+                    # Write segment to first run of group; clear the rest.
+                    _set_run_text(all_runs[_grp[0]], _seg)
+                    for _ci in _grp[1:]:
+                        _set_run_text(all_runs[_ci], "")
+                return
+
     # Distribute new text proportionally across content runs only.
     last_ci = content_indices[-1]
 
@@ -451,15 +676,19 @@ def _set_para_text(p_elem, text: str) -> None:
             assigned = end
         _set_run_text(r, portion)
 
-    # Strip any <w:tab/> elements left over in runs after text distribution.
+    # Strip <w:tab/> elements from runs that also carry text content.
     # Tab-column role headers and bullet paragraphs (e.g. \u25cf + <w:tab/> +
     # text) use tab stops for original alignment.  After setting new LLM text
-    # the alignment comes from the text itself (pipe separators or paragraph
-    # indent), so residual <w:tab/> elements only produce mid-word tab
-    # characters when the paragraph is read back.
+    # the alignment comes from the text itself, so residual <w:tab/> elements
+    # inside text-bearing runs produce mid-word tab characters when read back.
+    # Pure-tab separator runs (no <w:t> text) must be left intact so that
+    # contact-row paragraphs (email <tab> phone <tab> LinkedIn) keep their
+    # even distribution across tab stops.
     for r in all_runs:
-        for tab in list(r.findall(f"{{{_W}}}tab")):
-            r.remove(tab)
+        has_text_content = any((t.text or "") for t in r.findall(f"{{{_W}}}t"))
+        if has_text_content:
+            for tab in list(r.findall(f"{{{_W}}}tab")):
+                r.remove(tab)
 
 
 # ---------------------------------------------------------------------------
@@ -481,6 +710,7 @@ def _render_para(pm: ParaModel, body, sectPr, preserve_section_break: bool = Fal
         if not preserve_section_break:
             _strip_section_break(clone)
         _set_para_text(clone, pm.text)
+        _clear_sdt_placeholder(clone)
     elif pm.paragraph_profile is not None:
         from tailor.compiler.para_builder import build_para_element
         clone = build_para_element(pm)
@@ -494,6 +724,68 @@ def _render_para(pm: ParaModel, body, sectPr, preserve_section_break: bool = Fal
         sectPr.addprevious(clone)
     else:
         body.append(clone)
+
+
+def _strip_override_table_style_font_compat(d) -> None:
+    """Neutralize style-template settings that cause LibreOffice to suppress paragraphs.
+
+    Two problematic settings are removed from the style template when rendering
+    PDF-sourced two-column layouts:
+
+    1. overrideTableStyleFontSizeAndJustification compat setting (val='1'):
+       causes LibreOffice to ignore explicit run-level font sizes in table cells,
+       making large section headings and role entries invisible.
+
+    2. w:tblLayout w:type="fixed" in the default TableNormal style:
+       combined with fixed-width cell tables, this causes LibreOffice to clip
+       indented paragraph content outside the cell's paint region.  Removing
+       the tblLayout element from the style lets individual table-level
+       tblLayout (already set on our generated table) govern layout exclusively.
+    """
+    try:
+        from docx.oxml.ns import qn
+
+        # Remove the compat setting
+        settings_part = d.settings.element
+        compat = settings_part.find(qn("w:compat"))
+        if compat is not None:
+            for cs in list(compat.findall(qn("w:compatSetting"))):
+                if cs.get(qn("w:name")) == "overrideTableStyleFontSizeAndJustification":
+                    compat.remove(cs)
+
+        # Remove tblLayout from the default TableNormal style
+        styles_part = d.part.styles._element
+        for style in styles_part.findall(qn("w:style")):
+            if (
+                style.get(qn("w:type")) == "table"
+                and style.get(qn("w:default")) == "1"
+            ):
+                tblPr = style.find(qn("w:tblPr"))
+                if tblPr is not None:
+                    for tblLayout in list(tblPr.findall(qn("w:tblLayout"))):
+                        tblPr.remove(tblLayout)
+                break
+
+        # Remove w:sz / w:szCs from docDefaults rPrDefault.
+        # When docDefaults specifies a small font size (e.g. sz=22 = 11pt) and a
+        # table-cell paragraph carries an explicit large font (e.g. sz=60 = 30pt),
+        # LibreOffice positions the glyph relative to the small default baseline
+        # rather than the paragraph's own font metrics, placing the text outside
+        # the visible line box (invisible).  Removing the default sz leaves font
+        # sizing entirely to per-paragraph / per-run properties, which LibreOffice
+        # handles correctly for all indent and font-size combinations.
+        styles_elem = d.part.styles._element
+        doc_defaults = styles_elem.find(qn("w:docDefaults"))
+        if doc_defaults is not None:
+            rpr_default = doc_defaults.find(qn("w:rPrDefault"))
+            if rpr_default is not None:
+                rpr = rpr_default.find(qn("w:rPr"))
+                if rpr is not None:
+                    for tag in (qn("w:sz"), qn("w:szCs")):
+                        for el in list(rpr.findall(tag)):
+                            rpr.remove(el)
+    except Exception:
+        pass  # graceful: proceed without stripping if styles can't be modified
 
 
 def _apply_pdf_page_geometry(sectPr, layout) -> None:
@@ -546,6 +838,762 @@ def _get_text_area_width_twips(sectPr) -> int:
     return max(1, page_w - left - right)
 
 
+def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=None) -> None:
+    """Render a section-row PDF as a DOCX table with one row per section.
+
+    The PDF has a two-column table where left cell = section label and
+    right cell = section body content.  Each section gets its own table
+    row so that labels and bodies stay side-by-side (vs. all labels in one
+    cell and all bodies in another, which is the independent-column layout).
+    """
+    from lxml import etree
+    from tailor.compiler.para_builder import build_para_element
+
+    layout = doc.layout
+
+    pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
+    pgMar = sectPr.find(f"{{{_W}}}pgMar") if sectPr is not None else None
+    page_w_twips = int(pgSz.get(f"{{{_W}}}w", "12240")) if pgSz is not None else 12240
+    left_margin_twips = int(pgMar.get(f"{{{_W}}}left", "1440")) if pgMar is not None else 1440
+    right_margin_twips = int(pgMar.get(f"{{{_W}}}right", "1440")) if pgMar is not None else 1440
+
+    left_w = layout.left_col_width_twips or (page_w_twips // 3)
+    right_w_max = page_w_twips - right_margin_twips - left_w
+    right_w = min(layout.right_col_width_twips or right_w_max, right_w_max)
+    right_w = max(right_w, 2000)
+    total_w = left_w + right_w
+
+    # Build the section-row table
+    tbl = etree.Element(f"{{{_W}}}tbl")
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW_elem = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW_elem.set(f"{{{_W}}}w", str(total_w))
+    tblW_elem.set(f"{{{_W}}}type", "dxa")
+    tblInd = etree.SubElement(tblPr, f"{{{_W}}}tblInd")
+    tblInd.set(f"{{{_W}}}w", str(-left_margin_twips))
+    tblInd.set(f"{{{_W}}}type", "dxa")
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+        brd.set(f"{{{_W}}}val", "none")
+    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        m = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+        m.set(f"{{{_W}}}w", "0")
+        m.set(f"{{{_W}}}type", "dxa")
+
+    def _add_top_border(tcPr_elem):
+        """Add a thin top separator line to a table cell."""
+        tc_brd = etree.SubElement(tcPr_elem, f"{{{_W}}}tcBorders")
+        top_brd = etree.SubElement(tc_brd, f"{{{_W}}}top")
+        top_brd.set(f"{{{_W}}}val", "single")
+        top_brd.set(f"{{{_W}}}sz", "6")
+        top_brd.set(f"{{{_W}}}color", "000000")
+
+    def _shift_para_indent(p_elem, delta_twips: int) -> None:
+        """Subtract delta_twips from the left indent of a w:p element (floor at 0)."""
+        if delta_twips <= 0:
+            return
+        pPr = p_elem.find(f"{{{_W}}}pPr")
+        if pPr is None:
+            return
+        ind = pPr.find(f"{{{_W}}}ind")
+        if ind is not None:
+            cur = int(ind.get(f"{{{_W}}}left", "0"))
+            ind.set(f"{{{_W}}}left", str(max(0, cur - delta_twips)))
+
+    def _section_right_paras(section):
+        """Yield (ParaModel, is_role_header) for all right-cell paras in a section."""
+        if section.semantic_type == "experience" and section.roles:
+            _has_orphan = any(bp.semantic == "role_header" for bp in section.body_paras)
+            if _has_orphan:
+                for bp in section.body_paras:
+                    if bp.semantic == "role_header":
+                        break
+                    if bp.text.strip():
+                        yield bp
+            for role in section.roles:
+                yield role.header
+                yield from role.meta_lines
+                yield from role.bullets
+        else:
+            yield from section.body_paras
+
+    def _min_indent_twips(section) -> int:
+        """Return the minimum indent across all right-cell paras in a section (twips)."""
+        vals = [
+            int(pm.paragraph_profile.indent_left_pt * 20)
+            for pm in _section_right_paras(section)
+            if pm.paragraph_profile and pm.paragraph_profile.indent_left_pt > 0
+        ]
+        return min(vals) if vals else 0
+
+    for section in doc.sections:
+        tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+        # Compute per-section indent baseline to normalise all body content
+        # to the same visual left edge within the right cell.  Different PDF
+        # templates place right-column content at varying x offsets (e.g. skills
+        # at x=231 vs. role headers at x=215); subtracting the section minimum
+        # makes each section's content start flush at the right-cell left edge.
+        sec_min_ind = _min_indent_twips(section)
+
+        # Left cell: section heading
+        left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+        left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
+        left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
+        left_tcW.set(f"{{{_W}}}w", str(left_w))
+        left_tcW.set(f"{{{_W}}}type", "dxa")
+        _add_top_border(left_tcPr)
+
+        # Apply cell-level background shading when the section heading carries a
+        # background color (e.g. sample 14's peach section bands).  Cell-level
+        # shading spans the full cell width whereas paragraph-level shading only
+        # covers the text area, giving partial/striped blocks.
+        _hd_bg = (section.heading.paragraph_profile.background_color
+                  if section.heading.paragraph_profile else None)
+        if _hd_bg:
+            _hd_shd = etree.SubElement(left_tcPr, f"{{{_W}}}shd")
+            _hd_shd.set(f"{{{_W}}}val", "clear")
+            _hd_shd.set(f"{{{_W}}}color", "auto")
+            _hd_shd.set(f"{{{_W}}}fill", _hd_bg)
+
+        heading_elem = build_para_element(section.heading, doc_part=doc_part, skip_bg_shd=bool(_hd_bg))
+        pPr = heading_elem.find(f"{{{_W}}}pPr")
+        if pPr is not None:
+            ind = pPr.find(f"{{{_W}}}ind")
+            if ind is not None:
+                cur = int(ind.get(f"{{{_W}}}left", "0"))
+                ind.set(f"{{{_W}}}left", str(cur + left_margin_twips))
+            else:
+                new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
+                new_ind.set(f"{{{_W}}}left", str(left_margin_twips))
+        left_tc.append(heading_elem)
+
+        # Right cell: section body content
+        right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+        right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
+        right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
+        right_tcW.set(f"{{{_W}}}w", str(right_w))
+        right_tcW.set(f"{{{_W}}}type", "dxa")
+        _add_top_border(right_tcPr)
+
+        # Apply cell-level background shading to the right cell as well when the
+        # heading carries a background colour (so the row looks like a full band).
+        if _hd_bg:
+            _rt_shd = etree.SubElement(right_tcPr, f"{{{_W}}}shd")
+            _rt_shd.set(f"{{{_W}}}val", "clear")
+            _rt_shd.set(f"{{{_W}}}color", "auto")
+            _rt_shd.set(f"{{{_W}}}fill", _hd_bg)
+
+        def _append(pm, combined_text=None):
+            """Build and append a para element with normalised indent."""
+            src = pm.with_text(combined_text) if combined_text else pm
+            # Skip paragraph-level bg shading when the cell carries cell shading.
+            p_elem = build_para_element(src, doc_part=doc_part, skip_bg_shd=bool(_hd_bg))
+            _shift_para_indent(p_elem, sec_min_ind)
+            right_tc.append(p_elem)
+
+        if section.semantic_type == "experience" and section.roles:
+            _has_orphan = any(bp.semantic == "role_header" for bp in section.body_paras)
+            if _has_orphan:
+                for bp in section.body_paras:
+                    if bp.semantic == "role_header":
+                        break
+                    if bp.text.strip():
+                        _append(bp)
+            for role in section.roles:
+                if role.header_extra and "|" not in role.header.text:
+                    _combined = role.header.text.strip() + " | " + " | ".join(
+                        he.text.strip() for he in role.header_extra if he.text.strip()
+                    )
+                    _append(role.header, _combined)
+                else:
+                    _append(role.header)
+                for pm in role.meta_lines:
+                    _append(pm)
+                for pm in role.bullets:
+                    _append(pm)
+        else:
+            for pm in section.body_paras:
+                _append(pm)
+
+        if not right_tc.findall(f"{{{_W}}}p"):
+            etree.SubElement(right_tc, f"{{{_W}}}p")
+
+    # Render header paras (name, title, license) as full-width above the table
+    header_elements = [build_para_element(pm, doc_part=doc_part) for pm in doc.header_paras]
+
+    if sectPr is not None:
+        for elem in header_elements:
+            sectPr.addprevious(elem)
+        sectPr.addprevious(tbl)
+    else:
+        for elem in header_elements:
+            body.append(elem)
+        body.append(tbl)
+
+
+def _make_full_width_dark_band(
+    bg_hex: str, page_w_twips: int, left_margin_twips: int,
+    paras: list, doc_part=None, *, center_text: bool = False,
+) -> "Any":
+    """Return a full-page-width w:tbl element with *bg_hex* cell shading.
+
+    Used to render full-width dark header/footer bands (e.g. sample 25).
+    The table is pushed to the physical page left edge via tblInd=-left_margin.
+    Each ParaModel in *paras* is appended to the single cell with skip_bg_shd=False.
+    When *center_text* is True, each paragraph's indent is offset by left_margin_twips
+    so the content aligns correctly within the full-width cell.
+    """
+    from lxml import etree
+    from tailor.compiler.para_builder import build_para_element
+
+    tbl = etree.Element(f"{{{_W}}}tbl")
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW.set(f"{{{_W}}}w", str(page_w_twips))
+    tblW.set(f"{{{_W}}}type", "dxa")
+    tblInd = etree.SubElement(tblPr, f"{{{_W}}}tblInd")
+    tblInd.set(f"{{{_W}}}w", str(-left_margin_twips))
+    tblInd.set(f"{{{_W}}}type", "dxa")
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+        brd.set(f"{{{_W}}}val", "none")
+    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        m = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+        m.set(f"{{{_W}}}w", "0")
+        m.set(f"{{{_W}}}type", "dxa")
+    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+    tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    tcPr = etree.SubElement(tc, f"{{{_W}}}tcPr")
+    tcW = etree.SubElement(tcPr, f"{{{_W}}}tcW")
+    tcW.set(f"{{{_W}}}w", str(page_w_twips))
+    tcW.set(f"{{{_W}}}type", "dxa")
+    shd = etree.SubElement(tcPr, f"{{{_W}}}shd")
+    shd.set(f"{{{_W}}}val", "clear")
+    shd.set(f"{{{_W}}}color", "auto")
+    shd.set(f"{{{_W}}}fill", bg_hex)
+    for pm in paras:
+        p_elem = build_para_element(pm, doc_part=doc_part, skip_bg_shd=False)
+        if center_text:
+            pPr = p_elem.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                ind = pPr.find(f"{{{_W}}}ind")
+                if ind is not None:
+                    cur = int(ind.get(f"{{{_W}}}left", "0"))
+                    ind.set(f"{{{_W}}}left", str(cur + left_margin_twips))
+                else:
+                    new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
+                    new_ind.set(f"{{{_W}}}left", str(left_margin_twips))
+        tc.append(p_elem)
+    if not paras:
+        etree.SubElement(tc, f"{{{_W}}}p")
+    return tbl
+
+
+def _detect_body_two_col(body_paras) -> "list[tuple] | None":
+    """Return (left_pm, right_pm) row pairs if body_paras form a 2-column grid, else None.
+
+    Detection criteria:
+    - Exactly 2 distinct indent_left_pt values across all body_paras.
+    - Every y_top_pt bucket has at most one para from each indent group.
+    This catches contact-info sub-tables (address on left, phone/email on right)
+    that appear side-by-side in the source PDF but land in the same section body.
+    """
+    if len(body_paras) < 2:
+        return None
+    indents = []
+    for pm in body_paras:
+        pp = pm.paragraph_profile
+        if pp is None or pp.indent_left_pt is None:
+            return None
+        indents.append(pp.indent_left_pt)
+    unique_indents = sorted({round(x) for x in indents})
+    if len(unique_indents) != 2:
+        return None
+    left_ind, right_ind = unique_indents
+    by_y: "dict" = {}
+    for pm in body_paras:
+        pp = pm.paragraph_profile
+        if pp.y_top_pt is None:
+            return None
+        y = round(pp.y_top_pt, 1)
+        ind = round(pp.indent_left_pt)
+        slot = by_y.setdefault(y, {})
+        if ind in slot:
+            return None  # duplicate: not a clean grid
+        slot[ind] = pm
+    rows = []
+    for y in sorted(by_y):
+        row = by_y[y]
+        rows.append((row.get(left_ind), row.get(right_ind)))
+    return rows if rows else None
+
+
+def _detect_same_level_section_groups(sections) -> "list[list[int]]":
+    """Return groups (lists of section indices) where headings share the same y_top (±5 pt).
+
+    Sections at the same vertical position in the source PDF were laid out as
+    side-by-side columns (e.g. Education | Skills | Interests across the bottom
+    row of a template).  Grouping them lets the renderer create an N-column
+    table so they appear horizontally aligned in the output.
+    """
+    from collections import defaultdict
+    if not sections:
+        return []
+    y_groups: "dict[int, list[int]]" = defaultdict(list)
+    for i, sec in enumerate(sections):
+        pp = sec.heading.paragraph_profile
+        # Only group original template sections (non-empty para_id).
+        # LLM-added extra sections inherit y_top from their archetype, which
+        # would cause false same-level grouping with unrelated template sections.
+        if pp and pp.y_top_pt > 0 and sec.heading.para_id:
+            bucket = round(pp.y_top_pt / 5) * 5  # snap to 5 pt grid
+            y_groups[bucket].append(i)
+    return [sorted(idxs) for idxs in y_groups.values() if len(idxs) >= 2]
+
+
+def _render_pdf_single_col_with_groups(
+    doc: "ResumeDocument",
+    body,
+    sectPr,
+    doc_part,
+    groups: "list[list[int]]",
+    text_area_w_twips: int,
+) -> None:
+    """Render a single-column PDF that has same-level (multi-column) section groups.
+
+    Sections NOT in any group are rendered as regular paragraphs.
+    Sections in the same group are rendered as a single-row N-column table,
+    matching the original side-by-side layout from the source PDF.
+    """
+    from lxml import etree
+    from tailor.compiler.para_builder import build_para_element
+
+    grouped_idxs: "set[int]" = {idx for grp in groups for idx in grp}
+    rendered_group_keys: "set[tuple[int, ...]]" = set()
+
+    def _add(elem) -> None:
+        if sectPr is not None:
+            sectPr.addprevious(elem)
+        else:
+            body.append(elem)
+
+    def _section_min_indent_twips(sec) -> int:
+        """Return the minimum indent_left_pt (in twips) across all paras in a section."""
+        vals = []
+        for pm in [sec.heading] + list(sec.body_paras):
+            pp = pm.paragraph_profile
+            if pp and pp.indent_left_pt > 0:
+                vals.append(int(pp.indent_left_pt * 20))
+        for role in sec.roles:
+            for pm in [role.header] + list(role.meta_lines) + list(role.bullets):
+                pp = pm.paragraph_profile
+                if pp and pp.indent_left_pt > 0:
+                    vals.append(int(pp.indent_left_pt * 20))
+        return min(vals) if vals else 0
+
+    def _shift_indent(p_elem, delta_twips: int) -> None:
+        """Subtract delta_twips from w:ind w:left (floor at 0) inside a w:p element."""
+        if delta_twips <= 0:
+            return
+        pPr = p_elem.find(f"{{{_W}}}pPr")
+        if pPr is None:
+            return
+        ind = pPr.find(f"{{{_W}}}ind")
+        if ind is not None:
+            cur = int(ind.get(f"{{{_W}}}left", "0"))
+            ind.set(f"{{{_W}}}left", str(max(0, cur - delta_twips)))
+
+    def _role_date_first(role) -> bool:
+        """True when the first meta_line is physically above the role header (date-first layout)."""
+        if not role.meta_lines:
+            return False
+        m0_pp = role.meta_lines[0].paragraph_profile
+        h_pp = role.header.paragraph_profile
+        if m0_pp is None or h_pp is None:
+            return False
+        m0_y = m0_pp.y_top_pt
+        h_y = h_pp.y_top_pt
+        if m0_y is None or h_y is None:
+            return False
+        return m0_y < h_y
+
+    def _role_header_pm(role):
+        """Return a ParaModel for the role header, combining header_extra when present."""
+        if role.header_extra and "|" not in role.header.text:
+            combined = role.header.text.strip() + " | " + " | ".join(
+                he.text.strip() for he in role.header_extra if he.text.strip()
+            )
+            return role.header.with_text(combined)
+        return role.header
+
+    def _role_two_col_date(role) -> bool:
+        """True when date meta is in the left column and role title is in the right column.
+
+        Detects the 'parallel columns' experience layout where the date appears at
+        x≈0 and the role title is indented far to the right (e.g. sample 6).
+        Both date and title share the same y_top (they are side-by-side).
+        """
+        if not role.meta_lines:
+            return False
+        m0_pp = role.meta_lines[0].paragraph_profile
+        h_pp = role.header.paragraph_profile
+        if m0_pp is None or h_pp is None:
+            return False
+        date_x = m0_pp.indent_left_pt
+        role_x = h_pp.indent_left_pt
+        if date_x is None or role_x is None or role_x - date_x < 100:
+            return False
+        date_y = m0_pp.y_top_pt
+        role_y = h_pp.y_top_pt
+        if date_y is None or role_y is None:
+            return False
+        return abs(date_y - role_y) < 5
+
+    def _build_role_two_col_table(role, hdr_pm, min_indent: int = 0):
+        """Build a 2-column role sub-table: left=date, right=title+bullets.
+
+        Used when the date and role title are side-by-side in the source PDF
+        (two-column experience layout).  min_indent is subtracted from all indents
+        when the role is inside an outer table cell.
+        """
+        h_pp = role.header.paragraph_profile
+        left_col_w = max(0, int(h_pp.indent_left_pt * 20) - min_indent) if h_pp and h_pp.indent_left_pt else 0
+        right_col_w = max(100, text_area_w_twips - min_indent - left_col_w)
+
+        tbl = etree.Element(f"{{{_W}}}tbl")
+        tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+        tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+        tblW_el.set(f"{{{_W}}}w", str(left_col_w + right_col_w))
+        tblW_el.set(f"{{{_W}}}type", "dxa")
+        tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+        tblLayout.set(f"{{{_W}}}type", "fixed")
+        tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+        for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+            brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+            brd.set(f"{{{_W}}}val", "none")
+        tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+        for side in ("top", "left", "bottom", "right"):
+            m_el = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+            m_el.set(f"{{{_W}}}w", "0")
+            m_el.set(f"{{{_W}}}type", "dxa")
+
+        tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+        # Left cell: date
+        tc_l = etree.SubElement(tr, f"{{{_W}}}tc")
+        tcPr_l = etree.SubElement(tc_l, f"{{{_W}}}tcPr")
+        tcW_l = etree.SubElement(tcPr_l, f"{{{_W}}}tcW")
+        tcW_l.set(f"{{{_W}}}w", str(left_col_w))
+        tcW_l.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr_l, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+        date_elem = build_para_element(role.meta_lines[0], doc_part)
+        _shift_indent(date_elem, min_indent)
+        tc_l.append(date_elem)
+
+        # Right cell: role header + remaining meta + bullets
+        tc_r = etree.SubElement(tr, f"{{{_W}}}tc")
+        tcPr_r = etree.SubElement(tc_r, f"{{{_W}}}tcPr")
+        tcW_r = etree.SubElement(tcPr_r, f"{{{_W}}}tcW")
+        tcW_r.set(f"{{{_W}}}w", str(right_col_w))
+        tcW_r.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr_r, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+        shift = min_indent + left_col_w
+        hdr_elem = build_para_element(hdr_pm, doc_part)
+        _shift_indent(hdr_elem, shift)
+        tc_r.append(hdr_elem)
+        for m in role.meta_lines[1:]:
+            m_elem = build_para_element(m, doc_part)
+            _shift_indent(m_elem, shift)
+            tc_r.append(m_elem)
+        for b in role.bullets:
+            b_elem = build_para_element(b, doc_part)
+            _shift_indent(b_elem, shift)
+            tc_r.append(b_elem)
+        if not tc_r.findall(f"{{{_W}}}p"):
+            etree.SubElement(tc_r, f"{{{_W}}}p")
+
+        return tbl
+
+    def _emit_role_elems_shifted(role, min_indent: int) -> "list":
+        """Build shifted paragraph elements for a role (used inside table cells)."""
+        result = []
+        hdr_pm = _role_header_pm(role)
+        date_first = _role_date_first(role)
+        two_col = _role_two_col_date(role)
+        if two_col:
+            result.append(_build_role_two_col_table(role, hdr_pm, min_indent))
+        elif date_first:
+            elem = build_para_element(role.meta_lines[0], doc_part)
+            _shift_indent(elem, min_indent)
+            result.append(elem)
+            elem = build_para_element(hdr_pm, doc_part)
+            _shift_indent(elem, min_indent)
+            result.append(elem)
+            for m in role.meta_lines[1:]:
+                elem = build_para_element(m, doc_part)
+                _shift_indent(elem, min_indent)
+                result.append(elem)
+        else:
+            elem = build_para_element(hdr_pm, doc_part)
+            _shift_indent(elem, min_indent)
+            result.append(elem)
+            for m in role.meta_lines:
+                elem = build_para_element(m, doc_part)
+                _shift_indent(elem, min_indent)
+                result.append(elem)
+        if not two_col:
+            for b in role.bullets:
+                elem = build_para_element(b, doc_part)
+                _shift_indent(elem, min_indent)
+                result.append(elem)
+        return result
+
+    def _emit_role_elems(role) -> "list":
+        """Build paragraph elements for a role (used outside table cells)."""
+        result = []
+        hdr_pm = _role_header_pm(role)
+        date_first = _role_date_first(role)
+        two_col = _role_two_col_date(role)
+        if two_col:
+            result.append(_build_role_two_col_table(role, hdr_pm))
+        elif date_first:
+            result.append(build_para_element(role.meta_lines[0], doc_part))
+            result.append(build_para_element(hdr_pm, doc_part))
+            for m in role.meta_lines[1:]:
+                result.append(build_para_element(m, doc_part))
+            for b in role.bullets:
+                result.append(build_para_element(b, doc_part))
+        else:
+            result.append(build_para_element(hdr_pm, doc_part))
+            for m in role.meta_lines:
+                result.append(build_para_element(m, doc_part))
+            for b in role.bullets:
+                result.append(build_para_element(b, doc_part))
+        return result
+
+    def _build_section_paras_for_cell(sec, min_indent: int) -> "list":
+        """Build paragraph elements for a table cell, normalizing indent to cell origin."""
+        elems = []
+        heading_elem = build_para_element(sec.heading, doc_part)
+        _shift_indent(heading_elem, min_indent)
+        elems.append(heading_elem)
+        if sec.semantic_type == "experience" and sec.roles:
+            _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
+            if _has_orphan:
+                _claimed = {id(pm) for role in sec.roles for pm in role.meta_lines}
+                for bp in sec.body_paras:
+                    if bp.semantic == "role_header":
+                        break
+                    if bp.text.strip() and id(bp) not in _claimed:
+                        elem = build_para_element(bp, doc_part)
+                        _shift_indent(elem, min_indent)
+                        elems.append(elem)
+            for role in sec.roles:
+                elems.extend(_emit_role_elems_shifted(role, min_indent))
+        else:
+            for pm in sec.body_paras:
+                elem = build_para_element(pm, doc_part)
+                _shift_indent(elem, min_indent)
+                elems.append(elem)
+        return elems
+
+    def _build_section_paras(sec) -> "list":
+        elems: list = [build_para_element(sec.heading, doc_part)]
+        if sec.semantic_type == "experience" and sec.roles:
+            _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
+            if _has_orphan:
+                # Skip body_paras that are already claimed by role meta_lines
+                # (Pattern B: date appears in both body_paras and role.meta_lines)
+                _claimed = {id(pm) for role in sec.roles for pm in role.meta_lines}
+                for bp in sec.body_paras:
+                    if bp.semantic == "role_header":
+                        break
+                    if bp.text.strip() and id(bp) not in _claimed:
+                        elems.append(build_para_element(bp, doc_part))
+            for role in sec.roles:
+                elems.extend(_emit_role_elems(role))
+        else:
+            two_col_rows = _detect_body_two_col(sec.body_paras)
+            if two_col_rows:
+                col_w = text_area_w_twips // 2
+                tbl = etree.Element(f"{{{_W}}}tbl")
+                tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+                tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+                tblW_el.set(f"{{{_W}}}w", str(col_w * 2))
+                tblW_el.set(f"{{{_W}}}type", "dxa")
+                tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+                tblLayout.set(f"{{{_W}}}type", "fixed")
+                tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+                for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+                    brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+                    brd.set(f"{{{_W}}}val", "none")
+                tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+                for side in ("top", "left", "bottom", "right"):
+                    m_el = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+                    m_el.set(f"{{{_W}}}w", "0")
+                    m_el.set(f"{{{_W}}}type", "dxa")
+                for left_pm, right_pm in two_col_rows:
+                    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+                    for pm in (left_pm, right_pm):
+                        tc = etree.SubElement(tr, f"{{{_W}}}tc")
+                        tcPr = etree.SubElement(tc, f"{{{_W}}}tcPr")
+                        tcW = etree.SubElement(tcPr, f"{{{_W}}}tcW")
+                        tcW.set(f"{{{_W}}}w", str(col_w))
+                        tcW.set(f"{{{_W}}}type", "dxa")
+                        etree.SubElement(tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+                        if pm is not None:
+                            tc.append(build_para_element(pm, doc_part))
+                        else:
+                            etree.SubElement(tc, f"{{{_W}}}p")
+                elems.append(tbl)
+            else:
+                for pm in sec.body_paras:
+                    elems.append(build_para_element(pm, doc_part))
+        return elems
+
+    # Header paragraphs first
+    for pm in doc.header_paras:
+        _add(build_para_element(pm, doc_part))
+
+    for i, sec in enumerate(doc.sections):
+        if i not in grouped_idxs:
+            # Render normally
+            for elem in _build_section_paras(sec):
+                _add(elem)
+        else:
+            # Find which group this section belongs to
+            grp = next((g for g in groups if i in g), None)
+            if grp is None:
+                for elem in _build_section_paras(sec):
+                    _add(elem)
+                continue
+            key = tuple(grp)
+            if key in rendered_group_keys:
+                continue  # already rendered as a table
+            rendered_group_keys.add(key)
+
+            n = len(grp)
+            col_w = text_area_w_twips // n
+
+            # Build N-column borderless table
+            tbl = etree.Element(f"{{{_W}}}tbl")
+            tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+            tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+            tblW_el.set(f"{{{_W}}}w", str(col_w * n))
+            tblW_el.set(f"{{{_W}}}type", "dxa")
+            tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+            tblLayout.set(f"{{{_W}}}type", "fixed")
+            tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+            for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+                brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+                brd.set(f"{{{_W}}}val", "none")
+            tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+            for side in ("top", "left", "bottom", "right"):
+                m_el = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+                m_el.set(f"{{{_W}}}w", "0")
+                m_el.set(f"{{{_W}}}type", "dxa")
+
+            tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+            for sec_idx in grp:
+                grp_sec = doc.sections[sec_idx]
+                min_ind = _section_min_indent_twips(grp_sec)
+                tc = etree.SubElement(tr, f"{{{_W}}}tc")
+                tcPr = etree.SubElement(tc, f"{{{_W}}}tcPr")
+                tcW = etree.SubElement(tcPr, f"{{{_W}}}tcW")
+                tcW.set(f"{{{_W}}}w", str(col_w))
+                tcW.set(f"{{{_W}}}type", "dxa")
+                etree.SubElement(tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+                for elem in _build_section_paras_for_cell(grp_sec, min_ind):
+                    tc.append(elem)
+                if not tc.findall(f"{{{_W}}}p"):
+                    etree.SubElement(tc, f"{{{_W}}}p")
+
+            _add(tbl)
+
+
+def _render_pdf_single_col_dark_header(doc: "ResumeDocument", body, sectPr, doc_part=None) -> None:
+    """Render a single-column PDF with full-width dark header (and optional footer) bands.
+
+    Used when layout.column_split_x is None but layout.header_bg_color is set
+    (dark header detected via pixel sampling rather than vector rectangle).
+    Creates a full-page-width header table with dark shading at the very top of the
+    page (top margin = 0), renders all body paragraphs in single-column below it,
+    then optionally appends a dark footer table for contact strips.
+    """
+    from lxml import etree
+    from tailor.compiler.para_builder import build_para_element
+
+    layout = doc.layout
+    pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
+    pgMar = sectPr.find(f"{{{_W}}}pgMar") if sectPr is not None else None
+    page_w_twips = int(pgSz.get(f"{{{_W}}}w", "12240")) if pgSz is not None else 12240
+    left_margin_twips = int(pgMar.get(f"{{{_W}}}left", "1440")) if pgMar is not None else 1440
+
+    # Zero top margin so the dark header band starts at the physical page top
+    if pgMar is not None:
+        pgMar.set(f"{{{_W}}}top", "0")
+        pgMar.set(f"{{{_W}}}header", "0")
+
+    # Build the full-width header band table
+    hdr_tbl = _make_full_width_dark_band(
+        layout.header_bg_color, page_w_twips, left_margin_twips,
+        doc.header_paras, doc_part=doc_part, center_text=True,
+    )
+
+    # Collect body paragraphs (all_paras minus header_paras)
+    _header_ids = frozenset(id(pm) for pm in doc.header_paras)
+    main_paras = [pm for pm in doc.all_paras if id(pm) not in _header_ids]
+
+    # Footer paragraphs are stored separately in doc.footer_paras (preserved by
+    # compile_resume_from_pdf before apply_tailored replaces section content).
+    # Multiple footer paras (phone / email / address on separate fitz blocks) are
+    # merged into a SINGLE paragraph joined by "    " (spaces) so the footer band
+    # occupies one line height instead of three, preventing page overflow.
+    _raw_footer = list(doc.footer_paras) if doc.footer_paras else []
+
+    ftr_tbl = None
+    if _raw_footer and layout.footer_bg_color:
+        if len(_raw_footer) > 1:
+            from tailor.compiler.models import ParaModel as _PM
+            _merged_text = "     ".join(pm.text.strip() for pm in _raw_footer if pm.text.strip())
+            _arch = _raw_footer[0]
+            _merged_pm = _arch.with_text(_merged_text)
+            _mpp = _merged_pm.paragraph_profile
+            if _mpp:
+                _mpp.alignment = "center"
+                _mpp.space_before_pt = 4.0
+                _mpp.space_after_pt = 4.0
+            footer_paras_render = [_merged_pm]
+        else:
+            footer_paras_render = _raw_footer
+        ftr_tbl = _make_full_width_dark_band(
+            layout.footer_bg_color, page_w_twips, left_margin_twips,
+            footer_paras_render, doc_part=doc_part, center_text=True,
+        )
+
+    # Insert everything before sectPr
+    def _add(elem):
+        if sectPr is not None:
+            sectPr.addprevious(elem)
+        else:
+            body.append(elem)
+
+    _add(hdr_tbl)
+    for pm in main_paras:
+        _add(build_para_element(pm, doc_part=doc_part))
+    if ftr_tbl is not None:
+        _add(ftr_tbl)
+
+
 def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> None:
     """Render a two-column PDF-sourced document as a borderless DOCX table.
 
@@ -568,11 +1616,21 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     left_margin_twips = (
         int(pgMar.get(f"{{{_W}}}left", "1440")) if pgMar is not None else 1440
     )
+    right_margin_twips = (
+        int(pgMar.get(f"{{{_W}}}right", "1440")) if pgMar is not None else 1440
+    )
 
-    # Column widths: from layout (computed from visual sidebar drawing edge).
-    # Fall back to proportional split if layout widths are absent.
+    # Column widths.  The table is pushed to the physical page left edge via
+    # tblInd=-left_margin, so the table spans from x=0 to x=left_w+right_w.
+    # right_w must not exceed page_w - right_margin - left_w; otherwise the
+    # table overflows the right margin and LibreOffice clips the right cell.
     left_w = layout.left_col_width_twips or (page_w_twips // 3)
-    right_w = layout.right_col_width_twips or (page_w_twips - left_w)
+    right_w_max = page_w_twips - right_margin_twips - left_w
+    right_w = min(
+        layout.right_col_width_twips or right_w_max,
+        right_w_max,
+    )
+    right_w = max(right_w, 2000)  # floor: prevent degenerate right cell
     total_w = left_w + right_w
 
     # Table element
@@ -633,28 +1691,96 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         shd.set(f"{{{_W}}}color", "auto")
         shd.set(f"{{{_W}}}fill", layout.right_col_bg_color)
 
-    # Sort ALL paragraphs purely by column_id so that the cell contents match
-    # the source PDF columns regardless of how _group_sections classified them.
-    # Paragraphs with no column_id (column_id is None) did not belong to either
-    # column and are rendered as full-width elements ABOVE the two-column table.
-    # Using column_id directly prevents the header_paras heuristic from placing
-    # left-column employment sections above the table when their section names
-    # are not in the known-headings vocabulary.
+    # Separate doc.header_paras into:
+    #   above_paras  — full-width above-table items (dark-background name/title,
+    #                  or items with no column assignment)
+    #   hdr_left/right — light-background header items that belong in a cell
+    #                    (e.g. LLM-injected summary placed in the right column)
+    # This handles templates where the dark header band contains name+title
+    # whose column_id was set to "right" by the PDF parser (text past the
+    # sidebar boundary) while the LLM summary should land in the right cell.
+    _header_ids: frozenset[int] = frozenset(id(pm) for pm in doc.header_paras)
+    _LIGHT_BG = frozenset(("ffffff", "fefefe", "f8f8f8"))
+
+    def _is_dark_bg(pm) -> bool:
+        pp = pm.paragraph_profile
+        if pp is None:
+            return False
+        bg = pp.background_color
+        if not bg:
+            return False
+        # Use luminance threshold: dark = average channel < 128.
+        # This correctly classifies near-white light backgrounds (e.g. fdf3eb peach,
+        # fafafa light gray) as NOT dark, preventing them from triggering the
+        # full-width dark-header-band rendering that is only for truly dark bands.
+        try:
+            r = int(bg[0:2], 16)
+            g = int(bg[2:4], 16)
+            b = int(bg[4:6], 16)
+            return (r + g + b) / 3 < 128
+        except (ValueError, IndexError):
+            return False
+
     above_paras = [
-        pm for pm in doc.all_paras
-        if not (pm.paragraph_profile and pm.paragraph_profile.column_id in ("left", "right"))
+        pm for pm in doc.header_paras
+        if _is_dark_bg(pm)
+        or not (pm.paragraph_profile and pm.paragraph_profile.column_id in ("left", "right"))
     ]
-    left_paras = [
-        pm for pm in doc.all_paras
+    _above_ids = frozenset(id(pm) for pm in above_paras)
+    _hdr_left = [
+        pm for pm in doc.header_paras
+        if id(pm) not in _above_ids
+        and pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
+    ]
+    _hdr_right = [
+        pm for pm in doc.header_paras
+        if id(pm) not in _above_ids
+        and pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
+    ]
+    body_paras = [pm for pm in doc.all_paras if id(pm) not in _header_ids]
+    left_paras = _hdr_left + [
+        pm for pm in body_paras
         if pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
     ]
-    right_paras = [
-        pm for pm in doc.all_paras
+    right_paras = _hdr_right + [
+        pm for pm in body_paras
         if pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
     ]
 
+    # Pre-compute each left para's "section heading indent" so body paras that
+    # are more indented than their section heading can be capped to the heading
+    # level.  This normalises over-indented body items (e.g. skills bullet text
+    # at x=51 in a section whose heading is at x=31) without affecting headings
+    # or items that are already flush with their section heading.
+    _sec_heading_ind_twips: list[int] = []
+    _cur_heading_ind = 0
     for pm in left_paras:
-        left_tc.append(build_para_element(pm, doc_part=doc_part))
+        pp = pm.paragraph_profile
+        if pm.semantic == "section_heading" and pp is not None:
+            _cur_heading_ind = int(pp.indent_left_pt * 20)
+        _sec_heading_ind_twips.append(_cur_heading_ind)
+
+    for i, pm in enumerate(left_paras):
+        p_elem = build_para_element(pm, doc_part=doc_part)
+        # Shift all left-cell content right by left_margin_twips so it sits at
+        # the same x position as in the source PDF.  paragraph indent_left_pt is
+        # measured from the column origin (= page_margin_left), but the left
+        # cell starts at the physical page left edge (x=0), so we add the margin.
+        # Body paras more indented than their section heading are capped to the
+        # heading indent to keep visual alignment consistent within each section.
+        pPr = p_elem.find(f"{{{_W}}}pPr")
+        if pPr is not None:
+            ind = pPr.find(f"{{{_W}}}ind")
+            heading_ind = _sec_heading_ind_twips[i]
+            if ind is not None:
+                cur = int(ind.get(f"{{{_W}}}left", "0"))
+                if pm.semantic != "section_heading":
+                    cur = min(cur, heading_ind)
+                ind.set(f"{{{_W}}}left", str(cur + left_margin_twips))
+            else:
+                new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
+                new_ind.set(f"{{{_W}}}left", str(left_margin_twips))
+        left_tc.append(p_elem)
     # DOCX requires at least one paragraph per cell
     if not left_paras:
         etree.SubElement(left_tc, f"{{{_W}}}p")
@@ -674,37 +1800,22 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         None,
     )
     if header_bg and above_paras:
-        hdr_tbl = etree.Element(f"{{{_W}}}tbl")
-        hdr_tblPr = etree.SubElement(hdr_tbl, f"{{{_W}}}tblPr")
-        hdr_tblW = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblW")
-        hdr_tblW.set(f"{{{_W}}}w", str(total_w))
-        hdr_tblW.set(f"{{{_W}}}type", "dxa")
-        hdr_tblInd = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblInd")
-        hdr_tblInd.set(f"{{{_W}}}w", str(-left_margin_twips))
-        hdr_tblInd.set(f"{{{_W}}}type", "dxa")
-        hdr_tblLayout = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblLayout")
-        hdr_tblLayout.set(f"{{{_W}}}type", "fixed")
-        hdr_borders = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblBorders")
-        for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
-            brd = etree.SubElement(hdr_borders, f"{{{_W}}}{side}")
-            brd.set(f"{{{_W}}}val", "none")
-        hdr_cellMar = etree.SubElement(hdr_tblPr, f"{{{_W}}}tblCellMar")
-        for side in ("top", "left", "bottom", "right"):
-            m = etree.SubElement(hdr_cellMar, f"{{{_W}}}{side}")
-            m.set(f"{{{_W}}}w", "0")
-            m.set(f"{{{_W}}}type", "dxa")
-        hdr_tr = etree.SubElement(hdr_tbl, f"{{{_W}}}tr")
-        hdr_tc = etree.SubElement(hdr_tr, f"{{{_W}}}tc")
-        hdr_tcPr = etree.SubElement(hdr_tc, f"{{{_W}}}tcPr")
-        hdr_tcW = etree.SubElement(hdr_tcPr, f"{{{_W}}}tcW")
-        hdr_tcW.set(f"{{{_W}}}w", str(total_w))
-        hdr_tcW.set(f"{{{_W}}}type", "dxa")
-        hdr_shd = etree.SubElement(hdr_tcPr, f"{{{_W}}}shd")
-        hdr_shd.set(f"{{{_W}}}val", "clear")
-        hdr_shd.set(f"{{{_W}}}color", "auto")
-        hdr_shd.set(f"{{{_W}}}fill", header_bg)
-        for pm in above_paras:
-            hdr_tc.append(build_para_element(pm, doc_part=doc_part, skip_bg_shd=True))
+        # Dark header band: zero the top page margin so the header table
+        # starts at the physical page top (y=0), matching the source PDF where
+        # the dark rectangle starts at y=0 above the text area margin.
+        if sectPr is not None:
+            pgMar = sectPr.find(f"{{{_W}}}pgMar")
+            if pgMar is not None:
+                pgMar.set(f"{{{_W}}}top", "0")
+                pgMar.set(f"{{{_W}}}header", "0")
+
+        # Header table spans the FULL page width (including right margin) so the
+        # dark band reaches both page edges.  Body table uses total_w which
+        # respects the right margin; header overrides this with page_w_twips.
+        hdr_tbl = _make_full_width_dark_band(
+            header_bg, page_w_twips, left_margin_twips,
+            above_paras, doc_part=doc_part, center_text=False,
+        )
         header_elements = [hdr_tbl]
     else:
         header_elements = [build_para_element(pm, doc_part=doc_part) for pm in above_paras]
@@ -729,6 +1840,7 @@ def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> 
         # Happy path: counts match — update each paragraph in place.
         for p_elem, pm in zip(clone_paras, tb.para_models):
             _set_para_text(p_elem, pm.text)
+            _clear_sdt_placeholder(p_elem)
     # else: count mismatch (shouldn't happen unless LLM restructured the table);
     # fall through and insert the unmodified clone so the layout is preserved.
 
@@ -742,9 +1854,11 @@ def _zero_para_spacing(p_elem) -> None:
     """Strip vertical spacing from an empty spacer paragraph.
 
     Applied to empty paragraphs that follow the summary body anchor and precede
-    the main table content (samples 13/14).  Zeroing space_before + space_after
-    compresses the whitespace gap between the header summary and the table,
-    allowing the table to start on page 1 rather than being pushed to page 2.
+    the main table content (samples 13/14).  Zeroing all spacing (before, after,
+    and line-height) compresses the whitespace gap between the header summary
+    and the table, allowing the table to start on page 1 rather than being
+    pushed to page 2.  Uses exact line-height=1 (near-zero) so that LibreOffice
+    renders the paragraph as a hairline rather than a full line-height gap.
     """
     from lxml import etree as _etree
     pPr = p_elem.find(f"{{{_W}}}pPr")
@@ -756,8 +1870,8 @@ def _zero_para_spacing(p_elem) -> None:
         spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
     spacing.set(f"{{{_W}}}before", "0")
     spacing.set(f"{{{_W}}}after", "0")
-    spacing.set(f"{{{_W}}}line", "240")
-    spacing.set(f"{{{_W}}}lineRule", "auto")
+    spacing.set(f"{{{_W}}}line", "1")
+    spacing.set(f"{{{_W}}}lineRule", "exact")
 
 
 def _make_inline_summary_para(reference_p_elem, text: str):
@@ -844,9 +1958,16 @@ _WPS = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 def _fix_anchor_layout_in_cell(cell_elem) -> None:
     """Selectively apply layoutInCell to anchored drawings inside a table cell.
 
-    Full-page behindDoc backgrounds (cx ≥ 7 M EMU, cy ≥ 10 M EMU) get
-    layoutInCell='0' so they use page-level coordinates and cover the full
-    page regardless of cell boundaries.
+    behindDoc anchors whose height covers the full page (cy ≥ 10 M EMU,
+    roughly 11 inches) get layoutInCell='0' so they use page-level
+    coordinates and do NOT force the table row to match their height.
+
+    This covers both full-page-width backgrounds (cx ≥ 7 M EMU) and
+    narrow-column sidebar backgrounds (e.g. sample 11 blue left sidebar at
+    cx ≈ 2.85 M EMU but cy = 11 in).  If a background is tall enough to
+    span the page it must always be page-relative; letting it be
+    cell-relative forces the containing table row to be 11 inches tall,
+    pushing all body rows to page 2.
 
     All other anchors are left UNCHANGED.  Foreground drawings (photo, contact
     icons, etc.) must keep their original layoutInCell value so they appear
@@ -860,11 +1981,10 @@ def _fix_anchor_layout_in_cell(cell_elem) -> None:
         if ext is None:
             continue
         try:
-            cx = int(ext.get("cx", "0"))
             cy = int(ext.get("cy", "0"))
         except ValueError:
             continue
-        if cx >= 7_000_000 and cy >= 10_000_000:
+        if cy >= 10_000_000:
             anchor.set("layoutInCell", "0")
 
 
@@ -1160,6 +2280,83 @@ def _find_and_move_bg_to_start(body, sectPr, allow_blip: bool = False) -> None:
     )
 
 
+def _promote_cell_bg_drawings_to_body(body, sectPr) -> None:
+    """Promote page-relative behind-doc drawings from table cells to body level.
+
+    When a two-column table is built, behindDoc anchors with
+    relativeFrom="page" (both H and V) inside table cells are rendered by
+    LibreOffice relative to the cell origin instead of the page origin.  This
+    causes full-page background drawings (e.g. the dark header in sample 3)
+    to disappear or render at the wrong position.
+
+    Fix: extract just the <w:drawing> element (NOT the whole paragraph) from
+    each cell paragraph that contains such an anchor.  The drawing is placed
+    in a zero-height body paragraph BEFORE the table; the original paragraph
+    stays in the cell with its text content intact.  This works for both
+    drawing-only paragraphs and mixed drawing+text paragraphs (e.g. the
+    contact-email paragraph in sample 3 that doubles as the anchor host).
+    """
+    from copy import deepcopy as _dc
+    from lxml import etree as _et
+
+    _W_NS = f"{{{_W}}}"
+    _WP_NS = f"{{{_WP}}}"
+
+    # Find the first table in body (the two-col table just built)
+    tbl = next((c for c in body if c.tag == f"{_W_NS}tbl"), None)
+    if tbl is None:
+        return
+
+    extracted_drawings: list = []
+    for tc in tbl.findall(f".//{_W_NS}tc"):
+        for p in tc.findall(f"{_W_NS}p"):
+            for anchor in list(p.findall(f".//{_WP_NS}anchor")):
+                if anchor.get("behindDoc") != "1":
+                    continue
+                posH = anchor.find(f"{_WP_NS}positionH")
+                posV = anchor.find(f"{_WP_NS}positionV")
+                h_page = posH is not None and posH.get("relativeFrom") == "page"
+                v_page = posV is not None and posV.get("relativeFrom") == "page"
+                if not (h_page and v_page):
+                    continue
+                # Find the <w:drawing> parent of this anchor
+                drawing = anchor.getparent()
+                if drawing is None or drawing.tag != f"{_W_NS}drawing":
+                    continue
+                dc_drawing = _dc(drawing)
+                # Set layoutInCell='0' on any anchor in the extracted drawing
+                # so LibreOffice treats it as page-relative even at body level.
+                for _extr_anchor in dc_drawing.findall(f".//{_WP_NS}anchor"):
+                    _extr_anchor.set("layoutInCell", "0")
+                extracted_drawings.append(dc_drawing)
+                drawing_parent = drawing.getparent()
+                if drawing_parent is not None:
+                    drawing_parent.remove(drawing)
+
+    if not extracted_drawings:
+        return
+
+    # Create zero-height body paragraphs containing the drawings and insert
+    # them BEFORE the table so they render at page coordinates.
+    tbl_idx = list(body).index(tbl)
+    for offset, drawing in enumerate(extracted_drawings):
+        bg_p = _et.Element(f"{_W_NS}p")
+        bg_pPr = _et.SubElement(bg_p, f"{_W_NS}pPr")
+        bg_sp = _et.SubElement(bg_pPr, f"{_W_NS}spacing")
+        bg_sp.set(f"{_W_NS}before", "0")
+        bg_sp.set(f"{_W_NS}after", "0")
+        bg_sp.set(f"{_W_NS}line", "1")
+        bg_sp.set(f"{_W_NS}lineRule", "exact")
+        bg_r = _et.SubElement(bg_p, f"{_W_NS}r")
+        bg_r.append(drawing)
+        body.insert(tbl_idx + offset, bg_p)
+
+    _log.debug(
+        "CELL_BG_PROMOTED_TO_BODY: extracted %d behind-doc drawing(s) before table",
+        len(extracted_drawings),
+    )
+
+
 def _find_single_col_break_idx(layout_blocks) -> "int | None":
     """Return index of the sole column-break paragraph block, or None.
 
@@ -1173,6 +2370,344 @@ def _find_single_col_break_idx(layout_blocks) -> "int | None":
         and 'type="column"' in lb.xml_proto_xml
     ]
     return breaks[0] if len(breaks) == 1 else None
+
+
+_WP_NS = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+_BULLET_MARKER_MAX_EMU = 100_000   # cx/cy ≤ this → small bullet dot, not a line
+
+
+def _strip_column_bullet_drawings(tc_elem) -> None:
+    """Remove small absolutely-positioned bullet-marker drawings from a table cell.
+
+    Templates like sample 20 use absolutely-positioned tiny shapes (cx≈38100 EMU,
+    relativeFrom='column') as bullet markers.  Inside a table cell these cannot use
+    the native 'column' reference (which points to the original narrow left column,
+    not the wide right cell), so LibreOffice renders them in the wrong column.
+
+    This function:
+    1. Scans every <w:p> in the cell for small anchor drawings (cx ≤ 100k EMU).
+    2. For each such paragraph (always an empty spacer after the bullet text),
+       identifies the immediately preceding non-empty text paragraph as the
+       intended bullet target.
+    3. Removes the drawing paragraph.
+    4. Injects a '• ' prefix run into the identified bullet text paragraph so the
+       bullet marker appears inline at the correct position.
+    """
+    paras = list(tc_elem.findall(f"{{{_W}}}p"))
+    to_remove: list = []
+    to_bullet: list = []
+    prev_text_p = None
+
+    for p_elem in paras:
+        drawings = p_elem.findall(f".//{{{_W}}}drawing")
+        is_bullet_marker = False
+        for d in drawings:
+            for anc in d.findall(f".//{{{_WP_NS}}}anchor"):
+                ext = anc.find(f"{{{_WP_NS}}}extent")
+                if ext is None:
+                    continue
+                try:
+                    cx = int(ext.get("cx", "0"))
+                    cy = int(ext.get("cy", "0"))
+                except ValueError:
+                    continue
+                if cx <= _BULLET_MARKER_MAX_EMU and cy <= _BULLET_MARKER_MAX_EMU:
+                    is_bullet_marker = True
+                    break
+            if is_bullet_marker:
+                break
+
+        if is_bullet_marker:
+            to_remove.append(p_elem)
+            if prev_text_p is not None:
+                to_bullet.append(prev_text_p)
+            prev_text_p = None  # consumed — reset so we don't double-bullet
+        else:
+            ts = p_elem.findall(f".//{{{_W}}}t")
+            if any(t.text and t.text.strip() for t in ts):
+                prev_text_p = p_elem
+            # empty paras don't reset prev_text_p
+
+    for p_elem in to_remove:
+        parent = p_elem.getparent()
+        if parent is not None:
+            parent.remove(p_elem)
+
+    for p_elem in to_bullet:
+        runs = p_elem.findall(f"{{{_W}}}r")
+        if runs:
+            # Prepend bullet character to first run's text
+            first_t = runs[0].find(f"{{{_W}}}t")
+            if first_t is not None:
+                existing = first_t.text or ""
+                first_t.text = "• " + existing
+                first_t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+        else:
+            # No runs — add a minimal run with bullet char before any existing runs
+            from lxml import etree as _et
+            new_r = _et.Element(f"{{{_W}}}r")
+            new_t = _et.SubElement(new_r, f"{{{_W}}}t")
+            new_t.text = "• "
+            new_t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+            pPr = p_elem.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                pPr.addnext(new_r)
+            else:
+                p_elem.insert(0, new_r)
+
+
+def _is_docx_section_header_left_layout(doc, left_blocks) -> bool:
+    """Return True when the left column contains ONLY section-heading + spacer blocks.
+
+    This pattern appears in templates like sample 20 where the native 2-column
+    layout has a narrow left column that holds only section labels (Summary, Work
+    Experience, …) separated by blank spacers, while all body content lives in the
+    wide right column.  Unlike the independent-column layout these sections are
+    logically paired: each label belongs with the body content beside it.
+
+    Detection: every layout block in the left column that carries `<w:t>` text
+    content must be the heading of one of doc.sections (excluding the first
+    'other' section, which is the header-table content).  The presence of a
+    TableBlock (the name/contact header table) is expected and allowed.
+    """
+    # Collect heading para_ids for sections[1:] (skip sections[0] = header table)
+    heading_pids: set[str] = set()
+    for sec in doc.sections[1:]:
+        if sec.heading and sec.heading.para_id:
+            heading_pids.add(sec.heading.para_id)
+
+    if len(heading_pids) < 2:
+        return False  # need at least 2 sections
+
+    for blk in left_blocks:
+        if isinstance(blk, LayoutTableBlock):
+            continue  # header table is fine
+        if not isinstance(blk, LayoutParagraphBlock):
+            continue
+        # A block with visible text that is NOT a section heading → body content
+        if blk.para_id and "<w:t>" in (blk.xml_proto_xml or ""):
+            if blk.para_id not in heading_pids:
+                return False
+
+    return True
+
+
+def _render_docx_section_row_table(
+    doc,
+    body,
+    sectPr,
+    col_break_idx: int,
+    main_pgSz_w,
+    main_pgSz_h,
+    main_is_multicolumn: bool,
+) -> None:
+    """Render a section-header-left DOCX template as a multi-row section table.
+
+    Used for templates like sample 20 where the native 2-column layout places
+    section labels (Summary, Work Experience, …) in the narrow left column and
+    all body content in the wide right column.  Unlike the single-row 2-cell
+    table produced by _render_layout_two_col_table, this function creates ONE
+    TABLE ROW PER SECTION so that each label stays vertically aligned with its
+    corresponding body content regardless of how much the content grows.
+
+    Column widths are read from the template's w:cols spec.  A thin top border
+    on every cell replicates the horizontal divider line that the original
+    template renders via absolutely-positioned image shapes.
+    """
+    from copy import deepcopy
+    from lxml import etree
+
+    para_lookup = _build_para_lookup(doc)
+
+    # ── Column geometry ──────────────────────────────────────────────────────
+    _pgSz = sectPr.find(f"{{{_W}}}pgSz") if sectPr is not None else None
+    _pgMar = sectPr.find(f"{{{_W}}}pgMar") if sectPr is not None else None
+    _page_w = int(_pgSz.get(f"{{{_W}}}w", "12240")) if _pgSz is not None else 12240
+    _mar_left = int(_pgMar.get(f"{{{_W}}}left", "0")) if _pgMar is not None else 0
+    _mar_right = int(_pgMar.get(f"{{{_W}}}right", "0")) if _pgMar is not None else 0
+    _text_area = max(_page_w - _mar_left - _mar_right, 1)
+
+    left_w = right_w = 0
+    if sectPr is not None:
+        cols_elem = sectPr.find(f"{{{_W}}}cols")
+        if cols_elem is not None:
+            col_elems = cols_elem.findall(f"{{{_W}}}col")
+            if len(col_elems) >= 2:
+                try:
+                    left_w = int(col_elems[0].get(f"{{{_W}}}w", "0"))
+                    right_w = int(col_elems[1].get(f"{{{_W}}}w", "0"))
+                except ValueError:
+                    pass
+    if left_w == 0 or right_w == 0:
+        left_w = _text_area // 3
+        right_w = _text_area - left_w
+
+    # Remove w:cols so LibreOffice uses table layout, not native column flow.
+    if sectPr is not None:
+        cols_to_remove = sectPr.find(f"{{{_W}}}cols")
+        if cols_to_remove is not None:
+            sectPr.remove(cols_to_remove)
+
+    left_blocks = list(doc.layout_blocks[:col_break_idx])   # type: ignore[index]
+    right_blocks = list(doc.layout_blocks[col_break_idx + 1:])  # type: ignore[index]
+
+    # ── Section heading para_id mappings ────────────────────────────────────
+    # sections[0] is the "other" section whose content lives in the header table
+    # (name, title, license).  We start section rows from sections[1].
+    heading_pid_to_si: dict[str, int] = {}
+    for si, sec in enumerate(doc.sections):
+        if si == 0:
+            continue
+        if sec.heading and sec.heading.para_id:
+            heading_pid_to_si[sec.heading.para_id] = si
+
+    # ── para_id → section_index for right-column content ────────────────────
+    para_to_si: dict[str, int] = {}
+    for si, sec in enumerate(doc.sections):
+        if si == 0:
+            continue
+        for pm in sec.body_paras:
+            if pm.para_id:
+                para_to_si[pm.para_id] = si
+        for role in sec.roles:
+            for pm in ([role.header]
+                       + list(role.header_extra)
+                       + list(role.meta_lines)
+                       + list(role.bullets)):
+                if pm and pm.para_id:
+                    para_to_si[pm.para_id] = si
+
+    # ── Split right_blocks into per-section buckets ──────────────────────────
+    n_sections = len(doc.sections)
+    section_right_blocks: list[list] = [[] for _ in range(n_sections)]
+    last_si = 1  # fallback section for unrecognised blocks
+    for blk in right_blocks:
+        if isinstance(blk, LayoutParagraphBlock):
+            if blk.para_id:
+                si = para_to_si.get(blk.para_id)
+                if si is not None:
+                    last_si = si
+                    section_right_blocks[si].append(blk)
+                # else: spacer/orphan — skip
+            # else: unbound block (para_id="") — skip; handled via all_paras below
+
+    # ── Find heading blocks in left_blocks ───────────────────────────────────
+    heading_block_for_si: dict[int, LayoutParagraphBlock] = {}
+    for blk in left_blocks:
+        if isinstance(blk, LayoutParagraphBlock) and blk.para_id in heading_pid_to_si:
+            si = heading_pid_to_si[blk.para_id]
+            heading_block_for_si[si] = blk
+
+    # ── Render the header TableBlock at body level first ─────────────────────
+    for blk in left_blocks:
+        if isinstance(blk, LayoutTableBlock) and blk.xml_proto_xml:
+            tbl_elem = etree.fromstring(blk.xml_proto_xml)
+            all_p = tbl_elem.findall(f".//{{{_W}}}p")
+            for para_id, p_elem in zip(blk.para_ids, all_p):
+                pm = para_lookup.get(para_id)
+                if pm is not None:
+                    _strip_text_wrapping_breaks(p_elem, pm.text)
+                    _set_para_text(p_elem, pm.text)
+                    _clear_sdt_placeholder(p_elem)
+            if sectPr is not None:
+                sectPr.addprevious(tbl_elem)
+            else:
+                body.append(tbl_elem)
+            break  # only one header table expected
+
+    # ── Build the section-row table ──────────────────────────────────────────
+    tbl = etree.Element(f"{{{_W}}}tbl")
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW_el.set(f"{{{_W}}}w", str(left_w + right_w))
+    tblW_el.set(f"{{{_W}}}type", "dxa")
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+    _add_tbl_no_borders(tblPr)
+    _add_tbl_zero_cell_margins(tblPr)
+
+    def _add_divider_border(tcPr_elem) -> None:
+        """Add a thin black top border to replicate the section divider line."""
+        tc_brd = etree.SubElement(tcPr_elem, f"{{{_W}}}tcBorders")
+        top = etree.SubElement(tc_brd, f"{{{_W}}}top")
+        top.set(f"{{{_W}}}val", "single")
+        top.set(f"{{{_W}}}sz", "6")
+        top.set(f"{{{_W}}}color", "000000")
+
+    def _make_tc(tr_elem, w_twips: int, add_border: bool) -> "Any":
+        """Create a table cell with given width and optional top divider border."""
+        tc = etree.SubElement(tr_elem, f"{{{_W}}}tc")
+        tcPr = etree.SubElement(tc, f"{{{_W}}}tcPr")
+        tcW = etree.SubElement(tcPr, f"{{{_W}}}tcW")
+        tcW.set(f"{{{_W}}}w", str(w_twips))
+        tcW.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+        if add_border:
+            _add_divider_border(tcPr)
+        return tc
+
+    last_right_tc = None
+    for si, sec in enumerate(doc.sections):
+        if si == 0:
+            continue  # header-table section — already rendered above
+
+        tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+        # Left cell: section heading
+        left_tc = _make_tc(tr, left_w, add_border=True)
+        h_blk = heading_block_for_si.get(si)
+        if h_blk is not None:
+            h_elem = _render_block_into_elem(
+                h_blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
+            )
+            if h_elem is not None:
+                # Strip absolutely-positioned drawings from the heading paragraph
+                # (the original template embeds them here as divider-line anchors;
+                # we use the table top-border instead so positioning stays correct).
+                for drawing in list(h_elem.findall(f".//{{{_W}}}drawing")):
+                    parent = drawing.getparent()
+                    if parent is not None:
+                        parent.remove(drawing)
+                left_tc.append(h_elem)
+        if not left_tc.findall(f"{{{_W}}}p"):
+            etree.SubElement(left_tc, f"{{{_W}}}p")
+
+        # Right cell: section body content
+        right_tc = _make_tc(tr, right_w, add_border=True)
+        last_right_tc = right_tc
+
+        for blk in section_right_blocks[si]:
+            r_elem = _render_block_into_elem(
+                blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
+            )
+            if r_elem is not None:
+                right_tc.append(r_elem)
+
+        # Strip absolutely-positioned bullet-marker drawings and inject '• ' text so
+        # bullets appear inline in the right cell instead of bleeding into the left.
+        _strip_column_bullet_drawings(right_tc)
+
+        if not right_tc.findall(f"{{{_W}}}p"):
+            etree.SubElement(right_tc, f"{{{_W}}}p")
+
+    # Append unbound extra paras (LLM overflow with no para_id) to last right cell.
+    if last_right_tc is not None:
+        for pm in (doc.all_paras or []):
+            if not pm.para_id and pm.text.strip():
+                if pm.style.xml_proto is not None:
+                    from copy import deepcopy as _dc
+                    p_elem = _dc(pm.style.xml_proto)
+                    _set_para_text(p_elem, pm.text)
+                    last_right_tc.append(p_elem)
+                elif pm.paragraph_profile is not None:
+                    from tailor.compiler.para_builder import build_para_element
+                    last_right_tc.append(build_para_element(pm))
+
+    # Insert the section-row table into the body.
+    if sectPr is not None:
+        sectPr.addprevious(tbl)
+    else:
+        body.append(tbl)
 
 
 def _header_paras_have_blip_bg(doc, layout_blocks) -> bool:
@@ -1221,8 +2756,95 @@ def _header_paras_have_blip_bg(doc, layout_blocks) -> bool:
     return False
 
 
-def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn):
-    """Render one LayoutParagraphBlock → lxml element (None if empty)."""
+_SPACER_LINE_THRESHOLD = 500  # twips; spacer paras above this push content to column bottom
+
+
+def _collapse_oversized_spacer(elem) -> bool:
+    """Reduce extreme line-spacing on empty template spacer paragraphs.
+
+    Some templates use a paragraph with w:spacing w:line set to a very large
+    value (e.g. 2541 twips ≈ 127 pt) to push the next section (e.g. AFFILIATIONS)
+    to the bottom of the right column.  When the LLM-rendered content is shorter
+    than the original, this spacer creates a large blank gap.  Reduce it to a
+    minimal line height so AFFILIATIONS follows directly after CONTACT INFORMATION.
+
+    Returns True if the spacer was collapsed, False otherwise.
+    """
+    pPr = elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        return False
+    spacing = pPr.find(f"{{{_W}}}spacing")
+    if spacing is None:
+        return False
+    line_val = spacing.get(f"{{{_W}}}line")
+    if line_val is None:
+        return False
+    try:
+        line_int = int(line_val)
+    except ValueError:
+        return False
+    if line_int > _SPACER_LINE_THRESHOLD:
+        # Only collapse when the paragraph carries no text content
+        has_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
+        if not has_text:
+            spacing.set(f"{{{_W}}}before", "0")
+            spacing.set(f"{{{_W}}}after", "0")
+            spacing.set(f"{{{_W}}}line", "1")
+            spacing.set(f"{{{_W}}}lineRule", "exact")
+            return True
+    return False
+
+
+def _minimize_empty_para(elem) -> None:
+    """Reduce an empty spacer paragraph to near-zero height (before=0, after=0, line=1)."""
+    from lxml import etree as _etree
+    has_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
+    if has_text:
+        return
+    pPr = elem.find(f"{{{_W}}}pPr")
+    if pPr is None:
+        pPr = _etree.SubElement(elem, f"{{{_W}}}pPr")
+        elem.insert(0, pPr)
+    spacing = pPr.find(f"{{{_W}}}spacing")
+    if spacing is None:
+        spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
+    spacing.set(f"{{{_W}}}before", "0")
+    spacing.set(f"{{{_W}}}after", "0")
+    spacing.set(f"{{{_W}}}line", "1")
+    spacing.set(f"{{{_W}}}lineRule", "exact")
+
+
+def _cap_para_font_size(elem, max_halfpts: int = 36) -> None:
+    """Cap run-level sz/szCs values that exceed max_halfpts (half-points = pt*2).
+
+    Called on _ext_ blocks that clone their XML proto from a large-font heading
+    paragraph (e.g. name heading with sz=64 = 32pt).  Without this cap, body
+    bullets set into such paragraphs render in oversized font (sample 27).
+    Default max 18pt (sz=36) preserves all normal body/title fonts while
+    preventing name-heading sizes from bleeding into injected body content.
+    """
+    for rPr in elem.iter(f"{{{_W}}}rPr"):
+        for tag in (f"{{{_W}}}sz", f"{{{_W}}}szCs"):
+            sz_el = rPr.find(tag)
+            if sz_el is not None:
+                val_str = sz_el.get(f"{{{_W}}}val")
+                if val_str is not None:
+                    try:
+                        if int(val_str) > max_halfpts:
+                            sz_el.set(f"{{{_W}}}val", str(max_halfpts))
+                    except ValueError:
+                        pass
+
+
+def _render_block_into_elem(
+    block, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn,
+    exempt_font_cap_ids: "frozenset[str] | None" = None,
+):
+    """Render one LayoutParagraphBlock → lxml element (None if empty).
+
+    *exempt_font_cap_ids*: para_ids whose large run-level fonts must NOT be
+    capped even when semantic is non-heading (e.g. header name paragraphs).
+    """
     from lxml import etree
     if not block.xml_proto_xml:
         return None
@@ -1232,7 +2854,115 @@ def _render_block_into_elem(block, para_lookup, main_pgSz_w, main_pgSz_h, main_i
     _strip_column_break(elem)
     pm = para_lookup.get(block.para_id) if block.para_id else None
     if pm is not None:
+        # For ext slots (overflow paragraphs cloned from a multi-SDT template slot),
+        # the cloned proto carries ≥2 SDT children that represent a structured
+        # multi-column layout (e.g. 3-column tab-based skills).  _set_para_text
+        # has a guard that preserves such paragraphs unchanged.  For ext slots that
+        # carry newly-assigned text this would silently render the original template
+        # content.  Strip all SDT children and let _set_para_text place the new
+        # text in a simple run instead.
+        if block.para_id and "_ext_" in block.para_id:
+            _sdt_cnt = sum(1 for _c in elem if _c.tag == f"{{{_W}}}sdt")
+            if _sdt_cnt >= 2:
+                _pPr_sdt = elem.find(f"{{{_W}}}pPr")
+                for _sdt_c in list(elem):
+                    if _sdt_c.tag != f"{{{_W}}}pPr":
+                        elem.remove(_sdt_c)
+        _strip_text_wrapping_breaks(elem, pm.text)
         _set_para_text(elem, pm.text)
+        _clear_sdt_placeholder(elem)
+        # Cap oversized font when:
+        #   (a) _ext_ blocks cloned from large-font heading protos (original guard), OR
+        #   (b) any non-heading block whose XML proto carries run-level sz > 36 (18pt)
+        #       but whose semantic indicates body content — handles the case where a
+        #       name-heading slot (sz=64) is reused for a body paragraph by the updater
+        #       (e.g. sample 27 right-column: MATTHEW TURNER proto used for bullets).
+        _HEADING_SEMANTICS = frozenset({"section_heading", "role_header"})
+        _is_exempt_font = (
+            exempt_font_cap_ids is not None
+            and block.para_id is not None
+            and block.para_id in exempt_font_cap_ids
+        )
+        _needs_font_cap = (
+            bool(block.para_id and "_ext_" in block.para_id)
+            and pm.semantic not in _HEADING_SEMANTICS
+            and not _is_exempt_font
+        )
+        _proto_run_font_cap: int = 36  # default cap (18pt)
+        if not _needs_font_cap and pm.semantic not in _HEADING_SEMANTICS and not _is_exempt_font:
+            # Detect run-level rPr with sz > 36 (18pt).  Run rPr is a direct child
+            # of w:r; paragraph-default rPr (pPr/rPr) is a direct child of w:pPr.
+            for _rPr in elem.iter(f"{{{_W}}}rPr"):
+                _parent = _rPr.getparent()
+                if _parent is not None and _parent.tag == f"{{{_W}}}r":
+                    _sz_el = _rPr.find(f"{{{_W}}}sz")
+                    if _sz_el is not None:
+                        try:
+                            if int(_sz_el.get(f"{{{_W}}}val", "0")) > 36:
+                                _needs_font_cap = True
+                                break
+                        except ValueError:
+                            pass
+            if _needs_font_cap:
+                # Use the paragraph-default rPr sz (pPr/rPr/sz) as the cap
+                # when it is smaller than the global default — this restores the
+                # body font size rather than capping at 18pt (e.g. sample 27
+                # MATTHEW TURNER slot has pPr/rPr/sz=20=10pt which is correct).
+                _pPr_cap = elem.find(f"{{{_W}}}pPr")
+                if _pPr_cap is not None:
+                    _rPr_cap = _pPr_cap.find(f"{{{_W}}}rPr")
+                    if _rPr_cap is not None:
+                        _sz_cap = _rPr_cap.find(f"{{{_W}}}sz")
+                        if _sz_cap is not None:
+                            try:
+                                _ppr_sz = int(_sz_cap.get(f"{{{_W}}}val", "0"))
+                                if 0 < _ppr_sz < _proto_run_font_cap:
+                                    _proto_run_font_cap = _ppr_sz
+                            except ValueError:
+                                pass
+        if _needs_font_cap:
+            _cap_para_font_size(elem, max_halfpts=_proto_run_font_cap)
+        # Strip display-only (Symbol/Wingdings/SymbolMT) fonts from run rPr so
+        # that injected text renders with normal characters instead of garbled
+        # symbol glyphs.  These fonts map codepoints to dingbats/symbols rather
+        # than letters; any new text placed in such runs shows as Greek or random
+        # graphics.  Removing the rFonts element lets LibreOffice use the
+        # paragraph's default font for the run.
+        _DISPLAY_FONTS = frozenset({
+            "symbol", "wingdings", "wingdings2", "wingdings3",
+            "symbolmt", "webdings", "marlett",
+        })
+        if pm.text.strip():
+            for _rPr_sym in elem.iter(f"{{{_W}}}rPr"):
+                _rFonts_sym = _rPr_sym.find(f"{{{_W}}}rFonts")
+                if _rFonts_sym is not None:
+                    _font_names = {
+                        _rFonts_sym.get(attr, "").lower()
+                        for attr in (
+                            f"{{{_W}}}ascii", f"{{{_W}}}hAnsi",
+                            f"{{{_W}}}cs", f"{{{_W}}}eastAsia",
+                        )
+                        if _rFonts_sym.get(attr)
+                    }
+                    if _font_names and _font_names.issubset(_DISPLAY_FONTS):
+                        _rPr_sym.remove(_rFonts_sym)
+        # Sync cleared indent: the updater may have called _clear_left_indent(pm),
+        # setting pm.style.indent_left=None and removing w:left from pm.style.xml_proto.
+        # But the renderer uses block.xml_proto_xml (the original template XML) which
+        # still carries the old w:left attribute.  When the pm has no explicit
+        # indent_left but the elem has an explicit non-zero w:left, the updater
+        # cleared it — remove it from elem to match.
+        if pm.style.indent_left is None:
+            _pPr = elem.find(f"{{{_W}}}pPr")
+            if _pPr is not None:
+                _ind = _pPr.find(f"{{{_W}}}ind")
+                if _ind is not None:
+                    _w_left = _ind.get(f"{{{_W}}}left")
+                    if _w_left is not None and _w_left != "0":
+                        del _ind.attrib[f"{{{_W}}}left"]
+                        if not _ind.attrib:
+                            _pPr.remove(_ind)
+    _collapse_oversized_spacer(elem)
     return elem
 
 
@@ -1502,13 +3232,26 @@ def _render_layout_two_col_table(
                     right_w = max(_text_area - left_w - _col_space, 1)
                 except ValueError:
                     pass
+    _was_stretched = False
     if left_w == 0 or right_w == 0:
         left_w = right_w = _text_area // 2
+        _was_stretched = True
     else:
         _col_sum = left_w + right_w
         if _col_sum < _text_area * 0.92:
             left_w = round(left_w / _col_sum * _text_area)
             right_w = _text_area - left_w
+            _was_stretched = True
+
+    # The column gap (_col_space) separates the two columns in the original w:cols
+    # layout but is absent from the 2-cell table.  Without it, right-cell content
+    # starts _col_space twips to the LEFT of where the original right column started,
+    # causing text to overlap the insideV border and the left-column photo (#61/#60).
+    # Fix: expand the right cell by _col_space and add that amount as a left cell
+    # margin so the right-cell text starts at the original right-column X position.
+    # Skip when the widths were already stretched to fill _text_area — in that case
+    # the proportional scaling implicitly absorbed the gap.
+    _right_col_gap = _col_space if (not _was_stretched and _col_space > 0) else 0
 
     # Precompute column left-edge x-positions in EMU for anchor-position correction.
     # When w:cols is removed (below), any anchor using posH relativeFrom='column'
@@ -1533,7 +3276,304 @@ def _render_layout_two_col_table(
     # they appear at the TOP of the right cell on page 1, and the overflow on
     # page 2 begins only after those paragraphs — they do NOT repeat on page 2.
     left_blocks = list(doc.layout_blocks[:col_break_idx])  # type: ignore[index]
-    right_blocks = list(doc.layout_blocks[col_break_idx + 1:])  # type: ignore[index]
+    # Include the col-break paragraph itself in the right column.  For templates
+    # where the column-break is embedded inside the first right-column heading
+    # (e.g. sample 3 "Software Engineer" Heading1), dropping it caused the heading
+    # to be lost.  _render_block_into_elem → _strip_column_break removes the
+    # break character so the paragraph is rendered normally in the table cell.
+    # For templates with a standalone empty col-break paragraph (e.g. sample 27),
+    # the leading-empty-trim below discards it harmlessly.
+    right_blocks = list(doc.layout_blocks[col_break_idx:])  # type: ignore[index]
+
+    # Skip leading empty (spacer) blocks at the top of the right column.
+    # In native 2-column templates these empty paragraphs were column-break
+    # follow-up spacers that aligned content relative to the left column.
+    # Inside a table cell they create a blank gap above the first real section
+    # heading.  A block is "empty" when: (a) it is a LayoutParagraphBlock,
+    # (b) its XML proto exists, and (c) neither the XML nor the pm text carries
+    # any visible text content.
+    #
+    # Exception: when the total leading space is small (≤ 700 twips = 35pt),
+    # the spacers are intentional vertical positioning — e.g. sample 27 has
+    # 596 twips before MATTHEW TURNER to align it with the original header
+    # geometry.  Trimming them would move the name too high.  Templates with
+    # large cumulative leading space (e.g. 1000+ twips) have column-alignment
+    # spacers that do not belong in a table cell and should be removed.
+    _para_lookup_for_trim = _build_para_lookup(doc)
+    _rb_leading_twips = 0
+    for _scan_blk in right_blocks:
+        if not isinstance(_scan_blk, LayoutParagraphBlock) or not _scan_blk.xml_proto_xml:
+            break
+        _pm_s = _para_lookup_for_trim.get(_scan_blk.para_id) if _scan_blk.para_id else None
+        if (_pm_s and _pm_s.text.strip()) or "<w:t>" in _scan_blk.xml_proto_xml:
+            break
+        try:
+            _sp_el = etree.fromstring(_scan_blk.xml_proto_xml).find(f".//{{{_W}}}spacing")
+            _rb_leading_twips += int(_sp_el.get(f"{{{_W}}}line", "0")) if _sp_el is not None else 0
+        except Exception:
+            pass
+    _rb_start = 0
+    if _rb_leading_twips > 700:
+        for _i, _blk in enumerate(right_blocks):
+            if not isinstance(_blk, LayoutParagraphBlock) or not _blk.xml_proto_xml:
+                break  # hit a table block or block without XML — stop trimming
+            _pm_trim = _para_lookup_for_trim.get(_blk.para_id) if _blk.para_id else None
+            _pm_text_trim = (_pm_trim.text.strip() if _pm_trim else "")
+            _has_xml_text_trim = "<w:t>" in _blk.xml_proto_xml
+            if _pm_text_trim or _has_xml_text_trim:
+                break  # found real content — stop trimming
+            _rb_start = _i + 1
+    if _rb_start:
+        right_blocks = right_blocks[_rb_start:]
+
+    # Collapse runs of 2+ consecutive empty paragraph blocks from both columns.
+    # Native w:cols templates use repeated empty paragraphs between sections to
+    # vertically align section starts across columns.  Inside a table cell these
+    # spacers create visible blank gaps between sections.  A run of N≥2
+    # consecutive empties is collapsed to at most 1 so each column flows
+    # continuously without the original column-alignment padding.
+    def _collapse_empty_runs(blocks, _para_lookup):
+        result = []
+        consecutive = 0
+        for blk in blocks:
+            is_empty = False
+            if isinstance(blk, LayoutParagraphBlock) and blk.xml_proto_xml:
+                _pm = _para_lookup.get(blk.para_id) if blk.para_id else None
+                is_empty = (
+                    "<w:t>" not in blk.xml_proto_xml
+                    and (_pm is None or not _pm.text.strip())
+                )
+            if is_empty:
+                consecutive += 1
+                if consecutive <= 1:
+                    result.append(blk)
+                # else: skip — alignment spacer
+            else:
+                consecutive = 0
+                result.append(blk)
+        return result
+
+    left_blocks = _collapse_empty_runs(left_blocks, para_lookup)
+    right_blocks = _collapse_empty_runs(right_blocks, para_lookup)
+
+    # Collect para_ids of right-column name/title paragraphs whose run-level
+    # font size is large (> 36 half-pts = 18pt) so the font-cap logic in
+    # _render_block_into_elem skips them.  These slots are identity paragraphs
+    # (name, title) that must render at their original large size even when the
+    # updater assigned body-semantic text to the slot.  Only inspect the first 3
+    # right-column blocks that have visible text content to avoid flagging actual
+    # body content.  Skip leading empty spacer paragraphs (which the 700t-threshold
+    # heuristic now preserves before the name paragraph, e.g. sample 27).
+    _rne_candidates = [
+        _b for _b in right_blocks[:8]
+        if isinstance(_b, LayoutParagraphBlock)
+        and _b.xml_proto_xml
+        and "<w:t>" in _b.xml_proto_xml
+    ][:3]
+    _right_name_exempt: set[str] = set()
+    for _rne_blk in _rne_candidates:
+        if not isinstance(_rne_blk, LayoutParagraphBlock) or not _rne_blk.para_id or not _rne_blk.xml_proto_xml:
+            continue
+        try:
+            _rne_proto = etree.fromstring(_rne_blk.xml_proto_xml)
+            if any(
+                int(_sz.get(f"{{{_W}}}val", "0")) > 36
+                for _rPr in _rne_proto.iter(f"{{{_W}}}rPr")
+                if _rPr.getparent() is not None and _rPr.getparent().tag == f"{{{_W}}}r"
+                for _sz in _rPr.findall(f"{{{_W}}}sz")
+            ):
+                _right_name_exempt.add(_rne_blk.para_id)
+        except Exception:
+            pass
+
+    # Extract full-page blip background DRAWINGS from left_blocks and insert them
+    # as a separate body-level paragraph BEFORE the table.  A behindDoc blip
+    # inside a table cell forces LibreOffice to set the row height to the image
+    # extent (e.g. A4: 11.70 in), making the entire page blank.
+    #
+    # Crucially, only the <w:drawing> element is extracted — the surrounding
+    # <w:p> paragraph stays in the left cell with its text content (e.g. the
+    # candidate name "ABIGAIL NAOMI") and formatting intact.  Extracting the
+    # whole paragraph would move the name text out of the table cell, causing it
+    # to render in a body-level context where its font size + column width
+    # constraints produce a letter-per-line vertical display.
+    from copy import deepcopy as _deepcopy
+    _blip_drawings: list = []   # extracted <w:drawing> elements
+    _left_blocks_filtered: list = []
+    for _blk in left_blocks:
+        _modified = False
+        if (
+            isinstance(_blk, LayoutParagraphBlock)
+            and _blk.xml_proto_xml
+            and "behindDoc" in _blk.xml_proto_xml
+            and "blip" in _blk.xml_proto_xml
+        ):
+            try:
+                _pel = etree.fromstring(_blk.xml_proto_xml)
+                # Use descendant search — <w:drawing> is typically nested inside
+                # a <w:r> run, not a direct child of the paragraph.
+                for _drawing in list(_pel.findall(f".//{{{_W}}}drawing")):
+                    _anchor = _drawing.find(f".//{{{_WP}}}anchor")
+                    if _anchor is not None and _is_bg_anchor_any(_anchor):
+                        _blip_drawings.append(_deepcopy(_drawing))
+                        # Remove from its actual parent (could be a <w:r> run)
+                        _parent = _drawing.getparent()
+                        if _parent is not None:
+                            _parent.remove(_drawing)
+                        _modified = True
+                if _modified:
+                    # Keep the paragraph (with text, without background drawing)
+                    # in its block list using its updated XML.
+                    # NOTE: do NOT cap w:right indent here.  These blocks are
+                    # rendered as body-level paragraphs (full page width) where
+                    # the original right indent (e.g. right=5840) is intentional:
+                    # it positions the name text in the left 43% of the page,
+                    # leaving the right 57% for the circular photo, and forces
+                    # "ABIGAIL" / "NAOMI" to wrap onto separate lines.
+                    # Capping the indent (done in a previous approach) made the
+                    # text use the full page width → single-line display → header
+                    # too short → table starting before the photo's bottom edge.
+                    _left_blocks_filtered.append(LayoutParagraphBlock(
+                        para_id=_blk.para_id,
+                        xml_proto_xml=etree.tostring(_pel).decode(),
+                    ))
+            except Exception:
+                pass
+        if not _modified:
+            _left_blocks_filtered.append(_blk)
+    left_blocks = _left_blocks_filtered
+
+    # Insert a single body-level paragraph containing the background drawings.
+    # Wrap the drawing in a <w:r> run (Word XML spec) and add a zero-height
+    # pPr so the paragraph itself consumes no vertical space.
+    if _blip_drawings:
+        _bg_p = etree.Element(f"{{{_W}}}p")
+        _bg_pPr = etree.SubElement(_bg_p, f"{{{_W}}}pPr")
+        _bg_sp = etree.SubElement(_bg_pPr, f"{{{_W}}}spacing")
+        _bg_sp.set(f"{{{_W}}}before", "0")
+        _bg_sp.set(f"{{{_W}}}after", "0")
+        _bg_sp.set(f"{{{_W}}}line", "1")
+        _bg_sp.set(f"{{{_W}}}lineRule", "exact")
+        _bg_r = etree.SubElement(_bg_p, f"{{{_W}}}r")
+        for _draw in _blip_drawings:
+            _bg_r.append(_draw)
+        if sectPr is not None:
+            sectPr.addprevious(_bg_p)
+        else:
+            body.append(_bg_p)
+
+    # Separate left_blocks into header blocks (to be rendered as full-width
+    # body-level paragraphs BEFORE the table) and section blocks (inside the
+    # left table cell).  This restores the merged header area seen in the
+    # original template: candidate name + title span the full page width while
+    # the 2-column table starts below with section content.
+    #
+    # NOTE: in the original code ALL left blocks went into the left cell to
+    # avoid pushing the table to page 2 (the header consumed too much vertical
+    # space on page 1).  For templates with compact headers (< 2 in of height)
+    # this trade-off reversal is safe.  The _needs_table_for_contact guard that
+    # activates this path ensures we only reach here for such templates.
+    _header_para_ids_set: set[str] = {
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    }
+    # Also include para_ids from any injected summary section (sec_summary_inserted).
+    # _find_summary_anchors consumes empty header_para slots to create this section,
+    # removing them from doc.header_paras.  Without this guard those paras stay in
+    # the left table cell and appear alongside (not above) the right column content.
+    for _sec in (doc.sections or []):
+        if getattr(_sec, "section_id", None) == "sec_summary_inserted":
+            if _sec.heading and _sec.heading.para_id:
+                _header_para_ids_set.add(_sec.heading.para_id)
+            for _bp in _sec.body_paras:
+                if _bp.para_id:
+                    _header_para_ids_set.add(_bp.para_id)
+    _header_para_ids: frozenset[str] = frozenset(_header_para_ids_set)
+    _header_left_blocks = [
+        blk for blk in left_blocks
+        if isinstance(blk, LayoutParagraphBlock) and blk.para_id in _header_para_ids
+    ]
+    _section_left_blocks = [
+        blk for blk in left_blocks
+        if not (isinstance(blk, LayoutParagraphBlock) and blk.para_id in _header_para_ids)
+    ]
+    # Safety: if all left blocks are header blocks (nothing left for the left cell),
+    # try to split at the first dark-text non-empty paragraph to separate the
+    # truly full-width header (name/title with white text on dark background) from
+    # the left-column content (contact/education/skills with dark text).
+    # Example: sample 3 has para_1='CHARLES MCTURLAND' (white, sz=66) and
+    # para_2='SOFTWARE ENGINEER' (white, sz=31) as the header, while para_7+
+    # (contact info, dark color=202529) belongs in the left cell.
+    # If no white-to-dark transition is found, fall back: all into left cell.
+    if not _section_left_blocks and _header_left_blocks:
+        _split_at: int | None = None
+        for _hi, _hblk in enumerate(_header_left_blocks):
+            if not isinstance(_hblk, LayoutParagraphBlock) or not _hblk.xml_proto_xml:
+                continue
+            _hblk_xml = etree.fromstring(_hblk.xml_proto_xml)
+            _hblk_text = "".join(
+                t.text or "" for t in _hblk_xml.findall(f".//{{{_W}}}t")
+            ).strip()
+            if not _hblk_text:
+                continue  # empty spacer — skip for split detection
+            _has_white = any(
+                c.get(f"{{{_W}}}val", "").upper() == "FFFFFF"
+                for c in _hblk_xml.findall(f".//{{{_W}}}color")
+            )
+            if not _has_white:
+                # First non-empty paragraph WITHOUT white text = start of left-col content
+                _split_at = _hi
+                break
+        if _split_at is not None and _split_at > 0:
+            # White-text blocks (name/title) → full-width before table
+            # Dark-text blocks (contact/edu/skills) → left cell
+            _section_left_blocks = _header_left_blocks[_split_at:]
+            _header_left_blocks = _header_left_blocks[:_split_at]
+            _white_text_split_applied = True
+        else:
+            # No clear split: all into left cell (original safe fallback)
+            _section_left_blocks = _header_left_blocks
+            _header_left_blocks = []
+            _white_text_split_applied = False
+    else:
+        _white_text_split_applied = False
+
+    # Right-column-name guard: when the right column starts with candidate name/title
+    # content (non-section-heading paragraph), the template uses a split-header layout
+    # where the left contact block and right name sit at the same vertical level.
+    # Extracting left header blocks to the body would push them ABOVE the right-column
+    # name, breaking visual alignment.  Keep all left blocks in the left cell instead.
+    # Example: sample 16 where left=contact-info and right=HARPER RUSSO / DEVOPS.
+    # Skip when _white_text_split_applied: the white-text heuristic already correctly
+    # determined which blocks are the full-width header vs. left-column content.
+    if _header_left_blocks and not _white_text_split_applied:
+        _first_right_pm = None
+        for _rblk in right_blocks:
+            if isinstance(_rblk, LayoutParagraphBlock) and _rblk.para_id:
+                _rblk_pm = para_lookup.get(_rblk.para_id)
+                if _rblk_pm and _rblk_pm.text.strip():
+                    _first_right_pm = _rblk_pm
+                    break
+        if _first_right_pm is not None and _first_right_pm.semantic not in {
+            "section_heading", "empty"
+        }:
+            # Right column starts with name/title — keep contact/header in left cell.
+            _section_left_blocks = _header_left_blocks + _section_left_blocks
+            _header_left_blocks = []
+
+    # Render header blocks as body-level paragraphs (full page width).
+    # Exempt header paragraphs from font capping so name/title keep their
+    # large template font sizes (e.g. sample 22 "Lydia Mary" at 35pt).
+    for _hblk in _header_left_blocks:
+        _hel = _render_block_into_elem(
+            _hblk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn,
+            exempt_font_cap_ids=_header_para_ids,
+        )
+        if _hel is not None:
+            if sectPr is not None:
+                sectPr.addprevious(_hel)
+            else:
+                body.append(_hel)
+    left_blocks = _section_left_blocks
 
     # Build tblPr: inherit borders from source table when available (Task 2).
     # When no source table exists, use no visible borders but add an insideV
@@ -1546,7 +3586,7 @@ def _render_layout_two_col_table(
     tbl = etree.Element(f"{{{_W}}}tbl")
     tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
     tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
-    tblW_el.set(f"{{{_W}}}w", str(left_w + right_w))
+    tblW_el.set(f"{{{_W}}}w", str(left_w + right_w + _right_col_gap))
     tblW_el.set(f"{{{_W}}}type", "dxa")
     tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
     tblLayout.set(f"{{{_W}}}type", "fixed")
@@ -1576,7 +3616,7 @@ def _render_layout_two_col_table(
 
     tr = etree.SubElement(tbl, f"{{{_W}}}tr")
 
-    def _fill_cell(tc, blocks, col_x_emu: int, extra_paras=None) -> None:
+    def _fill_cell(tc, blocks, col_x_emu: int, extra_paras=None, exempt_font_cap_ids=None) -> None:
         for blk in blocks:
             if isinstance(blk, LayoutTableBlock):
                 tbl_el = etree.fromstring(blk.xml_proto_xml)
@@ -1584,10 +3624,12 @@ def _render_layout_two_col_table(
                     pm = para_lookup.get(para_id)
                     if pm is not None:
                         _set_para_text(p_el, pm.text)
+                        _clear_sdt_placeholder(p_el)
                 tc.append(tbl_el)
             else:
                 el = _render_block_into_elem(
-                    blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn
+                    blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn,
+                    exempt_font_cap_ids=exempt_font_cap_ids,
                 )
                 if el is not None:
                     # Convert column-relative background anchor positions to page-relative
@@ -1603,6 +3645,7 @@ def _render_layout_two_col_table(
                     _xel = deepcopy(pm.style.xml_proto)
                     _strip_last_rendered_page_breaks(_xel)
                     _set_para_text(_xel, pm.text)
+                    _clear_sdt_placeholder(_xel)
                     tc.append(_xel)
                 elif pm.paragraph_profile is not None:
                     from tailor.compiler.para_builder import build_para_element
@@ -1623,11 +3666,73 @@ def _render_layout_two_col_table(
     right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
     right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
     right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
-    right_tcW.set(f"{{{_W}}}w", str(right_w))
+    right_tcW.set(f"{{{_W}}}w", str(right_w + _right_col_gap))
     right_tcW.set(f"{{{_W}}}type", "dxa")
+    if _right_col_gap > 0:
+        # Cell-level left margin overrides the table-level zero margin, pushing
+        # right-column text to start at the original right-column X position.
+        right_tcMar = etree.SubElement(right_tcPr, f"{{{_W}}}tcMar")
+        right_tcMar_left = etree.SubElement(right_tcMar, f"{{{_W}}}left")
+        right_tcMar_left.set(f"{{{_W}}}w", str(_right_col_gap))
+        right_tcMar_left.set(f"{{{_W}}}type", "dxa")
     etree.SubElement(right_tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+
+    # Restore right-column paragraphs whose large-font proto was hijacked as a
+    # bullet slot by the updater (e.g. sample 27: "MATTHEW TURNER" at sz=64 gets
+    # assigned bullet text because the parser included it in the WORK HISTORY role).
+    # A heading/name paragraph in the right column must keep its original text.
+    _BODY_SEM_RC = frozenset({"bullet", "paragraph"})
+    for _rc_blk in right_blocks:
+        if not isinstance(_rc_blk, LayoutParagraphBlock) or not _rc_blk.xml_proto_xml:
+            continue
+        if not _rc_blk.para_id:
+            continue
+        _rc_pm = para_lookup.get(_rc_blk.para_id)
+        if _rc_pm is None or _rc_pm.semantic not in _BODY_SEM_RC or not _rc_pm.text.strip():
+            continue
+        try:
+            _rc_proto = etree.fromstring(_rc_blk.xml_proto_xml)
+            _has_large_rc = any(
+                int(_sz.get(f"{{{_W}}}val", "0")) > 36
+                for _sz in _rc_proto.findall(f".//{{{_W}}}sz")
+            )
+            if _has_large_rc:
+                _orig_text_rc = "".join(
+                    t.text or "" for t in _rc_proto.findall(f".//{{{_W}}}t")
+                )
+                if _orig_text_rc.strip():
+                    para_lookup[_rc_blk.para_id] = _rc_pm.with_text(_orig_text_rc)
+                    _log.debug(
+                        "RIGHT_COL_HEADING_RESTORED: para_id=%r hijacked=%r → original=%r",
+                        _rc_blk.para_id, _rc_pm.text[:40], _orig_text_rc[:40],
+                    )
+        except Exception:
+            pass
+
+    # Right-column summary injection: for newspaper-column templates where
+    # all left-column header slots are occupied (e.g. contact/education/skills),
+    # the summary must be prepended at the TOP of the right cell before experience.
+    _right_col_summary_text = getattr(doc, "_right_col_summary_text", None)
+    if _right_col_summary_text and right_blocks:
+        _first_right_blk = next(
+            (b for b in right_blocks
+             if isinstance(b, LayoutParagraphBlock) and b.xml_proto_xml),
+            None,
+        )
+        if _first_right_blk:
+            _sum_ref = etree.fromstring(_first_right_blk.xml_proto_xml)
+            _sum_p = _make_inline_summary_para(_sum_ref, _right_col_summary_text)
+            right_tc.append(_sum_p)
+            _log.debug(
+                "RIGHT_COL_SUMMARY_INJECTED: len=%d chars", len(_right_col_summary_text)
+            )
+
     _unbound_extra = [pm for pm in (doc.all_paras or []) if not pm.para_id and pm.text.strip()]
-    _fill_cell(right_tc, right_blocks, _right_col_x_emu, extra_paras=_unbound_extra if _unbound_extra else None)
+    _fill_cell(
+        right_tc, right_blocks, _right_col_x_emu,
+        extra_paras=_unbound_extra if _unbound_extra else None,
+        exempt_font_cap_ids=frozenset(_right_name_exempt) if _right_name_exempt else None,
+    )
 
     if sectPr is not None:
         sectPr.addprevious(tbl)
@@ -1635,8 +3740,8 @@ def _render_layout_two_col_table(
         body.append(tbl)
 
     _log.debug(
-        "LAYOUT_TWO_COL_TABLE: left=%d/%d-twips right=%d/%d-twips accent=%s",
-        len(left_blocks), left_w, len(right_blocks), right_w, _accent,
+        "LAYOUT_TWO_COL_TABLE: left=%d/%d-twips right=%d/%d-twips gap=%d-twips accent=%s",
+        len(left_blocks), left_w, len(right_blocks), right_w, _right_col_gap, _accent,
     )
 
 
@@ -1749,26 +3854,67 @@ def _render_from_layout_blocks(
         if _col_break_idx is not None:
             _total_blocks = len(doc.layout_blocks)  # type: ignore[arg-type]
             _col_ratio = _col_break_idx / max(_total_blocks - 1, 1)
-            # Skip only when HEADER blocks carry the blip image — those get rendered
-            # as standalone body paragraphs before the table, causing blank middle
-            # pages in LibreOffice (samples 18, 23).  Non-header blip images stay
-            # inside a table cell and do not cause this problem (sample 16).
-            _has_blip = _header_paras_have_blip_bg(doc, doc.layout_blocks)  # type: ignore[arg-type]
-            if _col_ratio <= 0.80 and not _has_blip:
+            # _has_blip guard: skip table conversion when the RIGHT column contains a
+            # full-page raster behindDoc image in a header block.  Only RIGHT-side
+            # blips cause blank middle pages — when the background paragraph is
+            # extracted to body level before the table it creates a full-page element
+            # that pushes the table to page 2.  LEFT-side blips (e.g. sample 3 where
+            # the background is in the left column) stay inside the left cell and are
+            # handled correctly as absolute-positioned drawings without forcing row height.
+            _right_blocks = (
+                list(doc.layout_blocks)[_col_break_idx + 1:]  # type: ignore[index]
+                if _col_break_idx is not None else []
+            )
+            _has_blip = _header_paras_have_blip_bg(doc, _right_blocks)  # type: ignore[arg-type]
+            _contact_ref_names: frozenset[str] = frozenset({
+                "contact info", "contact information", "personal references",
+                "personal reference", "references",
+            })
+            _left_para_ids: set[str] = {
+                lb.para_id
+                for lb in doc.layout_blocks[:_col_break_idx]  # type: ignore[index]
+                if isinstance(lb, LayoutParagraphBlock) and lb.para_id
+            }
+            _needs_table_for_contact = any(
+                s.heading and s.heading.para_id in _left_para_ids
+                and s.title.strip().lower() in _contact_ref_names
+                for s in doc.sections
+            )
+            if _col_ratio <= 0.80 and (not _has_blip or _needs_table_for_contact):
+                # Section-header-left layout (e.g. sample 20): the narrow left
+                # column contains ONLY section headings; all body content is in
+                # the wide right column.  Use a multi-row table (one row per
+                # section) so each heading stays vertically aligned with its
+                # corresponding body content regardless of content size changes.
+                _left_blocks_for_detect = list(doc.layout_blocks[:_col_break_idx])  # type: ignore[index]
+                if _is_docx_section_header_left_layout(doc, _left_blocks_for_detect):
+                    _render_docx_section_row_table(
+                        doc, body, sectPr,
+                        _col_break_idx,
+                        _main_pgSz_w, _main_pgSz_h,
+                        _main_is_multicolumn,
+                    )
+                    return
+
                 _render_layout_two_col_table(
                     doc, body, sectPr,
                     _col_break_idx,
                     _main_pgSz_w, _main_pgSz_h,
                     _main_is_multicolumn,
                 )
-                # Solid-colour backgrounds only — blip images are composite and
-                # must not be cloned (they contain foreground photo/icon content).
+                # Promote page-relative behind-doc drawings from inside table cells
+                # to body level so LibreOffice renders them against the page origin
+                # instead of the cell origin.  This restores the dark background in
+                # templates like sample 3 where a full-page "Group 1" wpg:wgp shape
+                # provides the header background.
+                _promote_cell_bg_drawings_to_body(body, sectPr)
+                # For templates with a blip background extracted to body level
+                # (e.g. template 23), the background is a HEADER element: it
+                # should only appear on page 1 and must NOT be cloned to page 2.
+                # Use default allow_blip=False so the blip is left in place at
+                # body start without being duplicated for overflow pages.
                 _find_and_move_bg_to_start(body, sectPr)
                 return
-            if _has_blip:
-                _log.debug(
-                    "LAYOUT_TWO_COL_TABLE_SKIPPED: header block has blip bg — using native columns"
-                )
             else:
                 _log.debug(
                     "LAYOUT_TWO_COL_TABLE_SKIPPED: col_break_idx=%d total=%d ratio=%.2f > 0.80",
@@ -1782,6 +3928,12 @@ def _render_from_layout_blocks(
             lb_para_ids.update(pid for pid in block.para_ids if pid)
         elif isinstance(block, LayoutParagraphBlock) and block.para_id:
             lb_para_ids.add(block.para_id)
+
+    # Header paragraph ids: name/title paragraphs that should NOT have their
+    # fonts capped even when they carry large run-level font sizes.
+    _header_para_ids: frozenset[str] = frozenset(
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    )
 
     # Detect unbound content: paragraphs in all_paras not captured by layout_blocks.
     # Two cases:
@@ -1816,6 +3968,8 @@ def _render_from_layout_blocks(
         None,
     )
     _compress_remaining: int = 0  # count of subsequent empty paras still to compress
+    _spacer_followup_remaining: int = 0  # minimize empty paras following an oversized spacer
+    _pending_bg_drawings: list = []  # extracted full-height behindDoc drawings awaiting emit
 
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
@@ -1829,7 +3983,9 @@ def _render_from_layout_blocks(
                     pid_to_pelem[para_id] = p_elem
                 pm = para_lookup.get(para_id)
                 if pm is not None:
+                    _strip_text_wrapping_breaks(p_elem, pm.text)
                     _set_para_text(p_elem, pm.text)
+                    _clear_sdt_placeholder(p_elem)
                     patched += 1
                 else:
                     _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: table para_id=%r", para_id)
@@ -1838,21 +3994,109 @@ def _render_from_layout_blocks(
                 "TABLE_BLOCK_XML_PATCHED: table_id=%r  patched=%d/%d",
                 block.table_id, patched, len(block.para_ids),
             )
-            # Inline summary injection: insert new paragraph after the target
-            # para in the table XML (for templates where the title is the last
-            # header_para and there are no trailing empty slots, e.g. sample 11).
+            # Inline summary injection: insert the summary paragraph for table
+            # templates that have no dedicated summary slot.
+            #
+            # Strategy: when the anchor para is in the header row (row 0) and
+            # there is a body row below it, injecting inside the table (either
+            # header row or body row) inflates the row height and pushes page-1
+            # content to page 2.  Skip the injection for those templates to
+            # preserve the two-row layout on page 1.
+            #
+            # Fallback: anchor not in header row → insert after the anchor para
+            # inside the table (legacy behaviour for non-header anchors).
             if _inline_pid and _inline_text and _inline_pid in pid_to_pelem:
                 _ref_p = pid_to_pelem[_inline_pid]
-                _new_p = _make_inline_summary_para(_ref_p, _inline_text)
-                _ref_p.addnext(_new_p)
+                _anchor_in_header_row = False
+                _has_body_row = False
+                _ref_tc = _ref_p.getparent()
+                if _ref_tc is not None and _ref_tc.tag == f"{{{_W}}}tc":
+                    _ref_tr = _ref_tc.getparent()
+                    if _ref_tr is not None and _ref_tr.tag == f"{{{_W}}}tr":
+                        _ref_tbl_el = _ref_tr.getparent()
+                        if _ref_tbl_el is not None:
+                            _all_rows = _ref_tbl_el.findall(f"{{{_W}}}tr")
+                            try:
+                                _this_ri = _all_rows.index(_ref_tr)
+                                _anchor_in_header_row = (_this_ri == 0)
+                                _has_body_row = _this_ri + 1 < len(_all_rows)
+                            except ValueError:
+                                pass
+                if _anchor_in_header_row and _has_body_row:
+                    # Skip — adding the summary to either row would push content
+                    # to page 2 (layout collapse).  The template has no summary slot.
+                    _log.debug(
+                        "INLINE_SUMMARY_SKIPPED_HEADER_ROW: anchor_para=%r table has body row",
+                        _inline_pid,
+                    )
+                else:
+                    _new_p = _make_inline_summary_para(_ref_p, _inline_text)
+                    _ref_p.addnext(_new_p)
+                    _log.debug(
+                        "INLINE_SUMMARY_INJECTED: new para after para_id=%r",
+                        getattr(doc, "_inline_summary_pid", "?"),
+                    )
                 _inline_pid = None  # consume once
-                _log.debug(
-                    "INLINE_SUMMARY_INJECTED: new para inserted after para_id=%r",
-                    getattr(doc, "_inline_summary_pid", "?"),
-                )
+            # Remove explicit trHeight and enable row splitting on all rows.
+            # Original template heights were sized for short placeholder text.
+            # After LLM injection content grows and locked trHeight values can
+            # push the body row to page 2.  Also, LibreOffice defaults to
+            # NOT splitting table rows (unlike Word), so rows that are taller
+            # than the remaining page space go entirely to page 2 rather than
+            # splitting.  Explicitly setting cantSplit='0' overrides this.
+            for _tr_h_elem in tbl_elem.findall(f"{{{_W}}}tr"):
+                _trPr_h = _tr_h_elem.find(f"{{{_W}}}trPr")
+                if _trPr_h is None:
+                    _trPr_h = etree.SubElement(_tr_h_elem, f"{{{_W}}}trPr")
+                    _tr_h_elem.insert(0, _trPr_h)
+                # Remove locked height
+                for _trH in list(_trPr_h.findall(f"{{{_W}}}trHeight")):
+                    _trPr_h.remove(_trH)
+                # Explicitly allow row splitting across pages
+                _csplit = _trPr_h.find(f"{{{_W}}}cantSplit")
+                if _csplit is None:
+                    _csplit = etree.SubElement(_trPr_h, f"{{{_W}}}cantSplit")
+                _csplit.set(f"{{{_W}}}val", "0")
+            # Extract full-height behindDoc anchors from table cells to
+            # body-level paragraphs placed BEFORE the table.  A behindDoc
+            # anchor with cy ≥ 10 M EMU (≈ 11 in) inside a table cell
+            # forces LibreOffice to size the containing row to match the
+            # drawing height, filling page 1 and pushing body rows to page 2
+            # (e.g. sample 11 blue sidebar background at cy=11in).
+            # Extracting the <w:drawing> element (keeping the paragraph in
+            # the cell) and placing it in a zero-height body paragraph
+            # preserves the background appearance while fixing row height.
+            _extracted_bg_drawings: list = []
+            for _bg_drawing in list(tbl_elem.findall(f".//{{{_W}}}drawing")):
+                _bg_anchor = _bg_drawing.find(f".//{{{_WP}}}anchor")
+                if _bg_anchor is None or _bg_anchor.get("behindDoc") != "1":
+                    continue
+                _bg_ext = _bg_anchor.find(f"{{{_WP}}}extent")
+                if _bg_ext is None:
+                    continue
+                try:
+                    _bg_cy = int(_bg_ext.get("cy", "0"))
+                except ValueError:
+                    continue
+                if _bg_cy >= 10_000_000:
+                    from copy import deepcopy as _dc_bg
+                    _extracted_bg_drawings.append(_dc_bg(_bg_drawing))
+                    _bg_parent = _bg_drawing.getparent()
+                    if _bg_parent is not None:
+                        _bg_parent.remove(_bg_drawing)
+                    _log.debug(
+                        "TABLE_BLOCK_BG_EXTRACTED: cy=%d (%.1fin) from tbl",
+                        _bg_cy, _bg_cy / 914400,
+                    )
+            # Apply layoutInCell='0' to remaining anchors for safety.
+            for _tc in tbl_elem.findall(f".//{{{_W}}}tc"):
+                _fix_anchor_layout_in_cell(_tc)
             # Once we hit a table block, stop compressing spacers (table started).
             _compress_remaining = 0
             elem: Any = tbl_elem
+            # Schedule background drawings to be inserted before the table.
+            # They are emitted in the elem-insertion block below.
+            _pending_bg_drawings = _extracted_bg_drawings
 
         else:
             # LayoutParagraphBlock
@@ -1865,7 +4109,9 @@ def _render_from_layout_blocks(
                     from copy import deepcopy
                     elem = deepcopy(pm.style.xml_proto)
                     _strip_last_rendered_page_breaks(elem)
+                    _strip_text_wrapping_breaks(elem, pm.text)
                     _set_para_text(elem, pm.text)
+                    _clear_sdt_placeholder(elem)
                 elif pm.paragraph_profile is not None:
                     from tailor.compiler.para_builder import build_para_element
                     elem = build_para_element(pm)
@@ -1887,12 +4133,103 @@ def _render_from_layout_blocks(
                 )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
                 if pm is not None:
+                    # Ext slots that inherited a multi-SDT proto: strip SDT children
+                    # so the new text is placed in a simple run (same fix as in
+                    # _render_block_into_elem for the two-col-table path).
+                    if block.para_id and "_ext_" in block.para_id:
+                        _sdt_cnt_lb = sum(1 for _c in elem if _c.tag == f"{{{_W}}}sdt")
+                        if _sdt_cnt_lb >= 2:
+                            for _sdt_c_lb in list(elem):
+                                if _sdt_c_lb.tag != f"{{{_W}}}pPr":
+                                    elem.remove(_sdt_c_lb)
+                    _strip_text_wrapping_breaks(elem, pm.text)
                     _set_para_text(elem, pm.text)
+                    _clear_sdt_placeholder(elem)
+                    # Reuse the expanded font-cap logic from _render_block_into_elem.
+                    # The check covers both _ext_ blocks and any block where the XML
+                    # proto carries large run-level fonts but pm.semantic is body content.
+                    # Header paragraphs (name/title) are exempt: they are allowed to keep
+                    # their original large font to preserve the resume branding.
+                    _HEADING_SEMANTICS_LB = frozenset({"section_heading", "role_header"})
+                    _is_header_para_lb = (
+                        block.para_id is not None
+                        and block.para_id in _header_para_ids
+                    )
+                    _needs_cap_lb = (
+                        bool(block.para_id and "_ext_" in block.para_id)
+                        and pm.semantic not in _HEADING_SEMANTICS_LB
+                        and not _is_header_para_lb
+                    )
+                    _cap_lb: int = 36
+                    if (not _needs_cap_lb
+                            and pm.semantic not in _HEADING_SEMANTICS_LB
+                            and not _is_header_para_lb):
+                        for _rPr_lb in elem.iter(f"{{{_W}}}rPr"):
+                            _parent_lb = _rPr_lb.getparent()
+                            if _parent_lb is not None and _parent_lb.tag == f"{{{_W}}}r":
+                                _sz_lb = _rPr_lb.find(f"{{{_W}}}sz")
+                                if _sz_lb is not None:
+                                    try:
+                                        if int(_sz_lb.get(f"{{{_W}}}val", "0")) > 36:
+                                            _needs_cap_lb = True
+                                            break
+                                    except ValueError:
+                                        pass
+                        if _needs_cap_lb:
+                            _pPr_lb = elem.find(f"{{{_W}}}pPr")
+                            if _pPr_lb is not None:
+                                _rPr_lb2 = _pPr_lb.find(f"{{{_W}}}rPr")
+                                if _rPr_lb2 is not None:
+                                    _sz_lb2 = _rPr_lb2.find(f"{{{_W}}}sz")
+                                    if _sz_lb2 is not None:
+                                        try:
+                                            _ppr_sz_lb = int(_sz_lb2.get(f"{{{_W}}}val", "0"))
+                                            if 0 < _ppr_sz_lb < _cap_lb:
+                                                _cap_lb = _ppr_sz_lb
+                                        except ValueError:
+                                            pass
+                    if _needs_cap_lb:
+                        _cap_para_font_size(elem, max_halfpts=_cap_lb)
+                    # Strip display-only fonts (same as in _render_block_into_elem).
+                    _DISPLAY_FONTS_LB = frozenset({
+                        "symbol", "wingdings", "wingdings2", "wingdings3",
+                        "symbolmt", "webdings", "marlett",
+                    })
+                    if pm.text.strip():
+                        for _rPr_sym_lb in elem.iter(f"{{{_W}}}rPr"):
+                            _rFonts_sym_lb = _rPr_sym_lb.find(f"{{{_W}}}rFonts")
+                            if _rFonts_sym_lb is not None:
+                                _fn_lb = {
+                                    _rFonts_sym_lb.get(a, "").lower()
+                                    for a in (
+                                        f"{{{_W}}}ascii", f"{{{_W}}}hAnsi",
+                                        f"{{{_W}}}cs", f"{{{_W}}}eastAsia",
+                                    )
+                                    if _rFonts_sym_lb.get(a)
+                                }
+                                if _fn_lb and _fn_lb.issubset(_DISPLAY_FONTS_LB):
+                                    _rPr_sym_lb.remove(_rFonts_sym_lb)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
                 else:
                     if block.para_id:
                         _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)
                     # Structural/orphan paragraph — insert verbatim (original text kept)
+                _did_collapse = _collapse_oversized_spacer(elem)
+                if _did_collapse:
+                    # After collapsing a large spacer, also minimize subsequent
+                    # consecutive empty paragraphs (e.g. para_104-109 after para_102
+                    # in template 17) that together create the same blank gap.
+                    _spacer_followup_remaining = 20
+                elif _spacer_followup_remaining > 0:
+                    _has_xml_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
+                    _pm_text = (pm.text.strip() if pm else "")
+                    if not _pm_text and not _has_xml_text:
+                        _minimize_empty_para(elem)
+                        _spacer_followup_remaining -= 1
+                        _log.debug("SPACER_FOLLOWUP_MINIMIZED: para_id=%r", block.para_id)
+                    else:
+                        _spacer_followup_remaining = 0  # hit real content, stop
+
 
             # Post-summary spacer compression: once the summary body anchor para
             # has been rendered, compress the spacing of subsequent empty paras.
@@ -1912,6 +4249,26 @@ def _render_from_layout_blocks(
                     )
                 else:
                     _compress_remaining = 0  # non-empty para: stop compressing
+
+        # Emit extracted background drawings as zero-height body paragraphs
+        # immediately before their table so they render at page coordinates
+        # (layoutInCell='0') without forcing table row heights.
+        if _pending_bg_drawings:
+            for _bg_draw in _pending_bg_drawings:
+                _bg_p = etree.Element(f"{{{_W}}}p")
+                _bg_pPr = etree.SubElement(_bg_p, f"{{{_W}}}pPr")
+                _bg_sp = etree.SubElement(_bg_pPr, f"{{{_W}}}spacing")
+                _bg_sp.set(f"{{{_W}}}before", "0")
+                _bg_sp.set(f"{{{_W}}}after", "0")
+                _bg_sp.set(f"{{{_W}}}line", "1")
+                _bg_sp.set(f"{{{_W}}}lineRule", "exact")
+                _bg_r = etree.SubElement(_bg_p, f"{{{_W}}}r")
+                _bg_r.append(_bg_draw)
+                if sectPr is not None:
+                    sectPr.addprevious(_bg_p)
+                else:
+                    body.append(_bg_p)
+            _pending_bg_drawings = []
 
         if sectPr is not None:
             sectPr.addprevious(elem)
@@ -2151,6 +4508,312 @@ def _maybe_insert_bg_rect(docx_path: str, body, sectPr) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Glossary cleanup
+# ---------------------------------------------------------------------------
+
+def _clear_docx_glossary(docx_path: str) -> None:
+    """Remove SDT placeholder content and thumbnail from generated DOCX.
+
+    Two problems are fixed here:
+
+    1. Glossary placeholder paragraphs (word/glossary/document.xml):
+       Word stores SDT placeholder text as building blocks in the glossary.
+       LibreOffice may render these paragraphs as a supplementary section
+       appended to the output PDF even after we flatten all SDTs.
+       Fix: replace the glossary with an empty <w:docParts/> element.
+
+    2. Document thumbnail (docProps/thumbnail.emf):
+       The thumbnail captures the template's original appearance including
+       SDT placeholder text (e.g. "Summarize your key responsibilities...").
+       LibreOffice reads this EMF and overlays its vector-text layer onto the
+       rendered PDF, causing the old placeholder text to appear alongside the
+       updated LLM content.
+       Fix: remove the thumbnail from the ZIP entirely.  LibreOffice renders
+       the document correctly without it; Word regenerates the thumbnail on
+       the next save.
+    """
+    import io
+    import zipfile as _zf
+
+    _GLOSSARY_PATH = "word/glossary/document.xml"
+    _THUMBNAIL_PATH = "docProps/thumbnail.emf"
+    _ROOT_RELS_PATH = "_rels/.rels"
+    _THUMBNAIL_TYPE = "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"
+    _EMPTY_GLOSSARY = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<w:glossaryDocument xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"'
+        ' xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+        ' xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"'
+        ' mc:Ignorable="w14"'
+        ' xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">'
+        '<w:docParts/>'
+        '</w:glossaryDocument>'
+    )
+
+    try:
+        with open(docx_path, "rb") as f:
+            data = f.read()
+
+        buf = io.BytesIO(data)
+        out_buf = io.BytesIO()
+
+        with _zf.ZipFile(buf, "r") as zin, _zf.ZipFile(out_buf, "w", _zf.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                if item.filename == _THUMBNAIL_PATH:
+                    _log.debug("THUMBNAIL_REMOVED: %s stripped from %s", _THUMBNAIL_PATH, docx_path)
+                    continue  # drop the thumbnail file
+                if item.filename == _GLOSSARY_PATH:
+                    zout.writestr(item, _EMPTY_GLOSSARY.encode("utf-8"))
+                    _log.debug("GLOSSARY_CLEARED: %s emptied in %s", _GLOSSARY_PATH, docx_path)
+                elif item.filename == _ROOT_RELS_PATH:
+                    # Remove the thumbnail relationship so python-docx (and Word)
+                    # do not try to load the now-absent thumbnail file.
+                    try:
+                        from lxml import etree as _et
+                        rels_xml = zin.read(item.filename)
+                        root = _et.fromstring(rels_xml)
+                        removed = 0
+                        for rel in list(root):
+                            if rel.get("Type") == _THUMBNAIL_TYPE:
+                                root.remove(rel)
+                                removed += 1
+                        if removed:
+                            cleaned = _et.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+                            zout.writestr(item, cleaned)
+                            _log.debug("THUMBNAIL_REL_REMOVED: stripped %d rel(s) from %s", removed, _ROOT_RELS_PATH)
+                        else:
+                            zout.writestr(item, rels_xml)
+                    except Exception:
+                        zout.writestr(item, zin.read(item.filename))
+                else:
+                    zout.writestr(item, zin.read(item.filename))
+
+        with open(docx_path, "wb") as f:
+            f.write(out_buf.getvalue())
+
+    except Exception as exc:
+        _log.debug("GLOSSARY_CLEAR_FAILED: %s — %s", docx_path, exc)
+
+
+# ---------------------------------------------------------------------------
+# Post-processing: split oversized single-row tables
+# ---------------------------------------------------------------------------
+
+_OVERSIZED_ROW_PARA_THRESHOLD = 14  # trigger row split when any cell exceeds this
+
+
+def _trim_trailing_cell_paras(body: Any) -> None:
+    """Remove excess trailing empty paragraphs from table cells.
+
+    Template cells often carry multiple trailing empty paragraphs as spacing
+    artefacts.  Extra trailing empties inflate the row's rendered height and
+    create visible gaps in the opposite (shorter) cell.  We keep exactly one
+    mandatory terminal paragraph per cell (required by OOXML) and strip the
+    rest so LibreOffice can size each row to its actual content.
+    """
+    for tbl_elem in body.findall(f"{{{_W}}}tbl"):
+        for row in tbl_elem.findall(f"{{{_W}}}tr"):
+            for cell in row.findall(f"{{{_W}}}tc"):
+                paras = cell.findall(f"{{{_W}}}p")
+                if len(paras) <= 1:
+                    continue
+                trailing: list[Any] = []
+                for p in reversed(paras):
+                    runs = p.findall(f"{{{_W}}}r")
+                    text = "".join(
+                        (t.text or "")
+                        for r in runs
+                        for t in r.findall(f"{{{_W}}}t")
+                    )
+                    if not text.strip():
+                        trailing.append(p)
+                    else:
+                        break
+                # Keep trailing[0] (the mandatory OOXML terminal paragraph);
+                # remove the extra empty paragraphs before it.
+                for p in trailing[1:]:
+                    cell.remove(p)
+
+
+def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
+    """Split table rows whose cells contain too many paragraphs.
+
+    LibreOffice cannot split a table row across pages even with cantSplit='0'.
+    This pass scans every row in every table in the body.  Rows whose tallest
+    cell exceeds _OVERSIZED_ROW_PARA_THRESHOLD paragraphs are physically split
+    at Heading2-style paragraph boundaries (or the midpoint when none are found),
+    allowing LibreOffice to paginate the content naturally across pages.
+
+    keepNext/keepLines are suppressed on all paragraphs in the new rows so that
+    Heading-style properties do not chain rows together and force the whole table
+    to the next page.
+    """
+    from copy import deepcopy
+    from lxml import etree as _et
+
+    for tbl_elem in list(body.findall(f"{{{_W}}}tbl")):
+        # Snapshot: newly inserted rows are NOT re-processed in the same pass.
+        for row in list(tbl_elem.findall(f"{{{_W}}}tr")):
+            cells = row.findall(f"{{{_W}}}tc")
+            if not cells:
+                continue
+
+            cell_paras = [tc.findall(f"{{{_W}}}p") for tc in cells]
+            max_paras = max(len(ps) for ps in cell_paras)
+            if max_paras <= _OVERSIZED_ROW_PARA_THRESHOLD:
+                continue
+
+            tallest_idx = max(range(len(cells)), key=lambda i: len(cell_paras[i]))
+            tallest_paras = cell_paras[tallest_idx]
+            n = len(tallest_paras)
+
+            # Split only at Heading2 boundaries (major sections), not Heading3.
+            # Too many tiny rows cause keepNext chains that force the table to
+            # the next page; fewer, larger rows allow natural pagination.
+            split_indices: list[int] = []
+            for i, p in enumerate(tallest_paras):
+                if i == 0:
+                    continue
+                pPr = p.find(f"{{{_W}}}pPr")
+                if pPr is not None:
+                    pStyle = pPr.find(f"{{{_W}}}pStyle")
+                    if pStyle is not None:
+                        sv = pStyle.get(f"{{{_W}}}val", "").lower().replace(" ", "")
+                        if sv in ("heading2", "heading1"):
+                            split_indices.append(i)
+
+            if not split_indices:
+                split_indices = [n // 2]
+
+            boundaries = [0] + split_indices + [n]
+            tallest_slices = [
+                (boundaries[i], boundaries[i + 1])
+                for i in range(len(boundaries) - 1)
+                if boundaries[i] < boundaries[i + 1]
+            ]
+            if len(tallest_slices) <= 1:
+                continue
+
+            _log.debug(
+                "SPLIT_OVERSIZED_ROW: max_paras=%d → %d rows at indices %r",
+                max_paras, len(tallest_slices), split_indices,
+            )
+
+            # Pre-compute Heading2 boundaries for non-tallest cells.
+            # When the boundary count matches the slice count, use semantic
+            # heading-based split instead of proportional so section headings
+            # are never separated from their content across rows.
+            cell_h2_boundaries: list[list[int]] = []
+            for ci_h2, ps_h2 in enumerate(cell_paras):
+                if ci_h2 == tallest_idx:
+                    cell_h2_boundaries.append([])
+                    continue
+                h2_idx: list[int] = []
+                for i, p in enumerate(ps_h2):
+                    if i == 0:
+                        continue
+                    pPr = p.find(f"{{{_W}}}pPr")
+                    if pPr is not None:
+                        pStyle = pPr.find(f"{{{_W}}}pStyle")
+                        if pStyle is not None:
+                            sv = pStyle.get(f"{{{_W}}}val", "").lower().replace(" ", "")
+                            if sv in ("heading2", "heading1"):
+                                h2_idx.append(i)
+                cell_h2_boundaries.append(h2_idx)
+
+            new_rows: list[Any] = []
+            for slice_num, (slice_start, slice_end) in enumerate(tallest_slices):
+                new_row = deepcopy(row)
+                new_cells_elem = new_row.findall(f"{{{_W}}}tc")
+
+                # Remove trHeight so LibreOffice sizes each new row naturally
+                trPr = new_row.find(f"{{{_W}}}trPr")
+                if trPr is not None:
+                    for trH in list(trPr.findall(f"{{{_W}}}trHeight")):
+                        trPr.remove(trH)
+
+                for ci, new_tc in enumerate(new_cells_elem):
+                    for p in list(new_tc.findall(f"{{{_W}}}p")):
+                        new_tc.remove(p)
+                    # Non-first split rows: remove subtables (nested w:tbl elements).
+                    # deepcopy copies all content including nested tables; keeping
+                    # them in every split row duplicates header/contact sub-tables
+                    # (e.g. sample 19 LICENSE NO. appearing twice).  Only the first
+                    # split row keeps them since they belong at the top of the cell.
+                    if slice_num > 0:
+                        for _sub_tbl in list(new_tc.findall(f"{{{_W}}}tbl")):
+                            new_tc.remove(_sub_tbl)
+
+                    orig_ps = cell_paras[ci]
+                    c_n = len(orig_ps)
+                    # Detect drawing-only separator cells (no text in any para).
+                    # These are typically vertical dividers sized to the full original
+                    # row height (e.g. sample 14 center divider line at 5 in).
+                    # Cloning them into every split row forces each row to the drawing
+                    # height, producing one page per split row.  Strip the drawings so
+                    # each split row sizes to its actual content.
+                    _cell_has_text = any(
+                        any(t.text for t in p.findall(f".//{{{_W}}}t"))
+                        for p in orig_ps
+                    )
+
+                    if ci == tallest_idx:
+                        para_slice = orig_ps[slice_start:slice_end]
+                    elif c_n == 0:
+                        para_slice = []
+                    else:
+                        h2_idx = cell_h2_boundaries[ci]
+                        if len(h2_idx) == len(tallest_slices) - 1:
+                            # Cell has the same number of sections as tallest —
+                            # use its own Heading2 boundaries for a semantic split.
+                            cell_bounds = [0] + h2_idx + [c_n]
+                            c_start = cell_bounds[slice_num]
+                            c_end = cell_bounds[slice_num + 1]
+                        else:
+                            # Fall back to proportional split.
+                            c_start = round(slice_start * c_n / n)
+                            c_end = round(slice_end * c_n / n)
+                            c_start = min(c_start, c_n - 1)
+                            c_end = max(c_end, c_start + 1)
+                            c_end = min(c_end, c_n)
+                        para_slice = orig_ps[c_start:c_end]
+
+                    if not para_slice and orig_ps:
+                        para_slice = [orig_ps[-1]]
+
+                    for p in para_slice:
+                        new_p = deepcopy(p)
+                        if not _cell_has_text:
+                            # Remove drawings from separator cells so they don't
+                            # force the split row to the drawing's height.
+                            for _dw in list(new_p.findall(f".//{{{_W}}}drawing")):
+                                _dw_parent = _dw.getparent()
+                                if _dw_parent is not None:
+                                    _dw_parent.remove(_dw)
+                        new_tc.append(new_p)
+
+                    # Suppress keepNext/keepLines on all paras so LibreOffice
+                    # can paginate between rows without the heading style chain.
+                    for cell_p in new_tc.findall(f"{{{_W}}}p"):
+                        cell_pPr = cell_p.find(f"{{{_W}}}pPr")
+                        if cell_pPr is None:
+                            cell_pPr = _et.SubElement(cell_p, f"{{{_W}}}pPr")
+                            cell_p.insert(0, cell_pPr)
+                        for prop_tag in (f"{{{_W}}}keepNext", f"{{{_W}}}keepLines"):
+                            prop = cell_pPr.find(prop_tag)
+                            if prop is None:
+                                prop = _et.SubElement(cell_pPr, prop_tag)
+                            prop.set(f"{{{_W}}}val", "0")
+
+                new_rows.append(new_row)
+
+            row_idx = list(tbl_elem).index(row)
+            tbl_elem.remove(row)
+            for offset, new_row in enumerate(new_rows):
+                tbl_elem.insert(row_idx + offset, new_row)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -2173,6 +4836,68 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         If any paragraph in doc.all_paras has no xml_proto (cannot render).
     """
     # Start from a copy of the template so styles and document settings are preserved
+    # PDF two-column documents: use a fresh minimal DOCX rather than copying
+    # the style template.  Style templates carry DOCX compat settings (e.g.
+    # w:sz in docDefaults, compatibilityMode) that cause LibreOffice to suppress
+    # indented paragraphs in table cells.  A fresh Document() has clean defaults.
+    if doc.source_kind == "pdf" and doc.layout.column_split_x is not None:
+        d = Document()
+        _patch_bullet_numbering(d)
+        body = d.element.body
+        sectPr = body.find(f"{{{_W}}}sectPr")
+        _apply_pdf_page_geometry(sectPr, doc.layout)
+        if doc.layout.section_row_table:
+            _render_pdf_section_row_table(doc, body, sectPr, doc_part=d.part)
+        else:
+            _render_pdf_two_col(doc, body, sectPr, doc_part=d.part)
+        d.save(output_path)
+        return
+
+    # Single-column PDF with a detected full-width dark header band: use a fresh
+    # minimal DOCX (no style template compat settings) and render the dark header
+    # as a full-page-width table that starts at the physical page top (margin=0).
+    if doc.source_kind == "pdf" and doc.layout.header_bg_color:
+        d = Document()
+        _patch_bullet_numbering(d)
+        body = d.element.body
+        sectPr = body.find(f"{{{_W}}}sectPr")
+        _apply_pdf_page_geometry(sectPr, doc.layout)
+        _render_pdf_single_col_dark_header(doc, body, sectPr, doc_part=d.part)
+        d.save(output_path)
+        return
+
+    # Single-column PDF: detect same-level section groups (e.g. three sections
+    # sharing the same y_top, rendered as a multi-column table row).
+    if doc.source_kind == "pdf" and doc.layout.column_split_x is None and not doc.layout.header_bg_color:
+        _same_level_groups = _detect_same_level_section_groups(doc.sections)
+        if _same_level_groups:
+            shutil.copy(template_path, output_path)
+            _d_grp = Document(output_path)
+            _patch_bullet_numbering(_d_grp)
+            _body_grp = _d_grp.element.body
+            _sectPr_grp = _body_grp.find(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}sectPr")
+            for _child in list(_body_grp):
+                _body_grp.remove(_child)
+            if _sectPr_grp is not None:
+                _body_grp.append(_sectPr_grp)
+            _apply_pdf_page_geometry(_sectPr_grp, doc.layout)
+            if _sectPr_grp is not None:
+                _cols_grp = _sectPr_grp.find(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}cols")
+                if _cols_grp is not None:
+                    _sectPr_grp.remove(_cols_grp)
+            _pgSz_g = _sectPr_grp.find(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}pgSz") if _sectPr_grp is not None else None
+            _pgMar_g = _sectPr_grp.find(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}pgMar") if _sectPr_grp is not None else None
+            _pw_g = int(_pgSz_g.get(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}w", "12240")) if _pgSz_g is not None else 12240
+            _lm_g = int(_pgMar_g.get(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}left", "1440")) if _pgMar_g is not None else 1440
+            _rm_g = int(_pgMar_g.get(f"{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}right", "1440")) if _pgMar_g is not None else 1440
+            _text_w_g = _pw_g - _lm_g - _rm_g
+            _render_pdf_single_col_with_groups(
+                doc, _body_grp, _sectPr_grp, _d_grp.part,
+                _same_level_groups, _text_w_g,
+            )
+            _d_grp.save(output_path)
+            return
+
     shutil.copy(template_path, output_path)
     d = Document(output_path)
     # PDF-sourced docs use numPr-based bullets; patch Symbol \uf0b7 → Unicode •
@@ -2206,6 +4931,13 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         _use_lb = USE_LAYOUT_BLOCK_RENDERER or not _has_runtime_xml
         if _use_lb:
             _render_from_layout_blocks(doc, body, sectPr)
+            # Split single-row tables that exceed page height so LibreOffice
+            # can paginate them naturally (cantSplit='0' alone is insufficient).
+            _split_oversized_table_rows(body, sectPr)
+            # The split leaves trailing empty paragraphs at the end of each
+            # sub-row's cells (template spacing paragraphs that fell between
+            # sections).  Strip them here so rows size to actual content.
+            _trim_trailing_cell_paras(body)
             # Inherit page background color for overflow pages.  Extracts the
             # dominant edge-pixel color from any behindDoc blip background and
             # inserts a solid-fill rectangle (no image, no text, no foreground
@@ -2213,6 +4945,12 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
             # content overflows, covering it with the same background fill.
             _maybe_insert_bg_rect(output_path, body, sectPr)
             d.save(output_path)
+            # After saving, remove the glossary document from the ZIP so that
+            # LibreOffice does not render the SDT placeholder paragraphs stored
+            # there as a supplementary section.  The glossary's content controls
+            # (w:placeholder / w:docPart entries) are no longer needed — we have
+            # already flattened all SDTs in the main document XML.
+            _clear_docx_glossary(output_path)
             return
         _log.debug(
             "LAYOUT_BLOCK_RENDERER_FALLBACK: layout_blocks present but runtime xml_proto "
@@ -2223,11 +4961,25 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     # source PDF's paper size and margins so the round-trip page count is stable.
     if doc.source_kind == "pdf" and sectPr is not None:
         _apply_pdf_page_geometry(sectPr, doc.layout)
+        # Strip native word-processor column layout from the style template.
+        # For single-column PDFs the column layout is derived from the IR, not
+        # from the DOCX style template.  If the style template carries w:cols
+        # (e.g. a two-column DOCX used as a style donor), paragraphs would flow
+        # through those columns and cause visual column overlap or spillover.
+        if doc.layout.column_split_x is None:
+            _cols = sectPr.find(f"{{{_W}}}cols")
+            if _cols is not None:
+                sectPr.remove(_cols)
 
     # PDF sources with a detected two-column layout: render as a borderless
     # two-cell table so that sidebar and main content are placed in separate
     # columns with correct widths, indentation, and background colours.
     if doc.source_kind == "pdf" and doc.layout.column_split_x is not None:
+        # Strip the "overrideTableStyleFontSizeAndJustification" compat setting
+        # from the style template.  When this is set to 1, LibreOffice suppresses
+        # paragraphs inside table cells whose explicit font size differs from the
+        # table style's default — making section headings and role entries invisible.
+        _strip_override_table_style_font_compat(d)
         _render_pdf_two_col(doc, body, sectPr, doc_part=d.part)
         d.save(output_path)
         return

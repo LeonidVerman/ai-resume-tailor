@@ -137,8 +137,11 @@ def _parse_llm_target_text(llm_text: str) -> str:
         )
         if is_heading:
             current_is_target = _is_llm_section(stripped)
-            if current_is_target:
-                parts.append(stripped)
+            # Do NOT append the heading itself: template headings replace LLM headings
+            # in the rendered output, so including LLM heading words (e.g. "Technical"
+            # from "Technical Skills" when the template uses "Skill") would add tokens
+            # to llm_target_tokens that can never appear in the rendered IR, causing a
+            # spurious gap in sim_llm even when content is fully injected.
         elif current_is_target:
             parts.append(stripped)
 
@@ -256,12 +259,15 @@ def check_content_injection(
     llm_target_portion = _parse_llm_target_text(llm_text)
     llm_target_tokens = _tokenize(llm_target_portion) if llm_target_portion else _tokenize(llm_text)
 
-    if llm_target_text and llm_target_tokens:
+    if llm_target_tokens:
         # Use recall (coverage) not Jaccard: measures what fraction of the LLM's
-        # target-section vocabulary appears in the rendered output.  Extra tokens
-        # in the rendered output don't reduce the score — only missing LLM tokens
-        # do.  This matches the warning message ("X% of LLM vocabulary not reflected").
-        sim_llm = _recall(_tokenize(llm_target_text), llm_target_tokens)
+        # target-section vocabulary appears anywhere in the rendered output.
+        # We use the FULL rendered IR text (not just LLM-keyword sections) because
+        # some templates inject the summary into a non-standard section heading
+        # (e.g. "OFFICE MANAGER" in template 7) which _ir_split_text classifies as
+        # template-preserved even though it actually holds LLM content.  Searching
+        # the full rendered text avoids that false-negative.
+        sim_llm = _recall(_tokenize(ir_full_lower), llm_target_tokens)
     else:
         sim_llm = 0.0
 
