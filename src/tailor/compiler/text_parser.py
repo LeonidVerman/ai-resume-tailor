@@ -16,6 +16,22 @@ from dataclasses import dataclass, field
 
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
+# Broad standalone-date pattern that also matches "20XX"/"19XX" placeholder years
+# (templates use XX instead of real digits).  Used to detect inter-role date lines
+# in experience sections so they are treated as role boundaries, not bullet items.
+_MONTH_SHORT = (
+    r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+    r"(?:[a-z]*)\.?"
+)
+_YEAR_SLOT = r"(?:(?:19|20)\d{2}|(?:19|20)[Xx]{2})"
+_DATE_WORD = r"(?:Present|Current|Now|Ongoing)"
+_EXP_DATE_RE = re.compile(
+    rf"^\s*(?:{_MONTH_SHORT}\s+)?{_YEAR_SLOT}"
+    rf"(?:\s*[-–—]\s*(?:(?:{_MONTH_SHORT}\s+)?(?:{_YEAR_SLOT}|{_DATE_WORD})))?"
+    r"\s*$",
+    re.IGNORECASE,
+)
+
 # Bullet prefixes the LLM may emit: hyphen-minus ("- "), Unicode bullet ("• "),
 # black-circle ("● "), or en-dash ("– ").  All are 2 characters; stripped[2:]
 # removes the prefix cleanly.  The LLM sometimes mirrors the template's own
@@ -145,6 +161,8 @@ _SUMMARY_NAMES: frozenset[str] = frozenset({
     "executive summary",
     # Non-canonical labels used in resume templates as summary containers:
     "professional overview", "general info", "general information",
+    # Generic intro section names:
+    "about",
 })
 _SKILLS_NAMES: frozenset[str] = frozenset({
     "technical skills", "skills", "skill", "core competencies", "competencies",
@@ -174,6 +192,36 @@ _ALL_KNOWN: frozenset[str] = (
         "publications", "projects", "volunteer", "volunteering",
         "awards", "honors", "references", "interests", "activities",
         "leadership", "leadership experience", "additional information",
+        # Common named sections that some templates include as separate headings.
+        # Recognising "communication" prevents it from being absorbed as a body
+        # line of a preceding skills section when it appears alone (e.g. after
+        # "Technical Skills" body lines in a template that has a separate
+        # Communication section).
+        "communication",
+        # Contact and affiliation sections: LLMs sometimes append these under an
+        # "ADDITIONAL" filler heading after "TECHNICAL SKILLS", causing the updater
+        # to inject them into skill slots.  Treating them as known section headings
+        # makes the parser break at those boundaries instead.
+        "contact information", "contact info", "affiliations",
+        # "Additional" (bare word) used by some LLMs as a catch-all section after
+        # Technical Skills — must be a section boundary, not a body line.
+        "additional",
+        # "My Qualifications" / "Personal References" appear in template 23 and
+        # similar.  Treating them as known section boundaries prevents their content
+        # from being absorbed into the preceding section (e.g. GENERAL INFO).
+        # Not added to _SKILLS_NAMES so they stay semantic=other in LLM output —
+        # this lets "TECHNICAL SKILLS" (semantic=skills) match the template's
+        # MY QUALIFICATIONS slot via semantic-type matching in Pass 2.
+        "my qualifications", "personal references", "personal reference",
+        # Accomplishment / achievement sections (e.g. sample 32 "Accomplishments")
+        # and combined skills headings ("Skills and Abilities").
+        "accomplishments", "achievement", "achievements",
+        "skills and abilities",
+        # "Education Summary" appears as a section heading in some templates (e.g.
+        # sample 26) and LLMs sometimes copy it verbatim inside other sections.
+        # Treating it as a known boundary prevents it from being absorbed as body
+        # content of the preceding section (e.g. General Info).
+        "education summary",
     })
 )
 
@@ -301,7 +349,15 @@ def parse_llm_output(text: str) -> list[LlmSection]:
     cur_role: LlmRole | None = None
     state = "pre"
     found_section = False  # True once the first known heading has been seen
-
+    # Capture first long non-contact prose paragraph seen before any section heading.
+    # Some templates (e.g. "OFFICE MANAGER") put the summary paragraph before the
+    # first recognized heading; this preserves it for synthetic summary injection.
+    _pre_section_prose: str = ""
+    # Pending meta-lines collected from standalone date lines that appear between
+    # experience roles.  The date belongs to the NEXT role (not the current one),
+    # so it is buffered here and flushed into the next LlmRole's meta_lines when
+    # the next role header is seen.  This prevents "December 20XX–November 20XX"
+    # from being appended as a bullet of the preceding role.
     def _finish_role() -> None:
         nonlocal cur_role
         if cur_role is not None and current is not None:
@@ -384,6 +440,21 @@ def parse_llm_output(text: str) -> list[LlmSection]:
             continue
 
         if current is None:
+            # Capture the first long non-contact prose line before any heading as a
+            # potential summary.  Safe criteria: ≥60 chars, has spaces, no email/URL/pipe,
+            # not a bullet, not starting with digit (avoids phone numbers and dates).
+            if (
+                not _pre_section_prose
+                and stripped
+                and len(stripped) >= 60
+                and " " in stripped
+                and "@" not in stripped
+                and "://" not in stripped
+                and "|" not in stripped
+                and stripped[0] not in ("-", "•", "·", "–", "*")
+                and not stripped[0].isdigit()
+            ):
+                _pre_section_prose = stripped
             continue  # text before first section heading
 
         if not stripped:
@@ -429,9 +500,33 @@ def parse_llm_output(text: str) -> list[LlmSection]:
         elif state == "bullets":
             if any(stripped.startswith(p) for p in _BULLET_PREFIXES):
                 cur_role.bullets.append(stripped[2:])
+            elif (
+                current is not None
+                and current.semantic_type == "experience"
+                and _EXP_DATE_RE.match(stripped)
+            ):
+                # Standalone date line appearing between roles (e.g. the LLM echoes
+                # "December 20XX–November 20XX" at the start of the next role's block).
+                # Finish the current role and discard the date: it is already present
+                # in the template's left-column table cell (role_meta para_id) and does
+                # not need to be passed through the updater.  Adding it as a bullet
+                # causes it to appear twice in the rendered output.
+                _finish_role()
+                state = "body"  # wait for next role header
             else:
                 cur_role.bullets.append(stripped)
 
     _finish_role()
     _finish_section()
+
+    # If pre-section prose was captured and no summary section exists, inject a
+    # synthetic "Professional Summary" section at position 0 so the updater can
+    # place it in the template's intro-prose slot.
+    if _pre_section_prose and not any(s.semantic_type == "summary" for s in sections):
+        sections.insert(0, LlmSection(
+            heading="Professional Summary",
+            semantic_type="summary",
+            body_lines=[_pre_section_prose],
+        ))
+
     return sections

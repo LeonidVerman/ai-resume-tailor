@@ -53,6 +53,14 @@ _OUT_IR_DOCX  = _REPO / "tmp" / "artefacts" / "ir"      / "docx"
 _OUT_IR_PDF   = _REPO / "tmp" / "artefacts" / "ir"      / "pdf"
 _OUT_REND_DOCX = _REPO / "tmp" / "artefacts" / "rendering" / "docx"
 _OUT_REND_PDF  = _REPO / "tmp" / "artefacts" / "rendering" / "pdf"
+# Staging dir: intermediate DOCX that LibreOffice converts.  Kept separate from
+# _OUT_REND_PDF so that LibreOffice's output PDF lands in a fresh location and
+# the subsequent shutil.copy2 to _OUT_REND_PDF is never a same-file copy
+# (which causes PermissionError [WinError 32] on Windows).
+_OUT_STAGE_PDF = _OUT_REND_PDF / "_stage"
+
+_OUT_SS_DOCX = _OUT_REND_DOCX / "screenshots"
+_OUT_SS_PDF  = _OUT_REND_PDF  / "screenshots"
 
 _NUM_RE = re.compile(r"^(\d+)-")
 
@@ -185,32 +193,80 @@ def discover(filter_arg: Optional[str] = None) -> tuple[list[SamplePair], list[s
             f"[{', '.join(unmatched_cls)}] skip - classification exists but no generation file"
         )
 
-    # Filter by user argument
+    # Filter by user argument(s).  Multiple numeric prefixes may be passed
+    # (e.g. "2 3 4 14 25") and are treated as an OR filter: any sample whose
+    # numeric prefix matches one of the supplied values is included.
     if filter_arg:
-        # Try numeric prefix first
-        num_match = _num_prefix(filter_arg + "-dummy")
-        if num_match is None:
-            num_match = filter_arg.split("-")[0] if filter_arg[0].isdigit() else None
-        if num_match:
-            pairs = [p for p in pairs if p.prefix == num_match]
-            skips = [s for s in skips if f"[{num_match}]" in s]
-        else:
-            # Match by filename fragment
-            fragment = filter_arg.lower()
+        # Support space-separated or comma-separated multiple numeric prefixes
+        # that may have been joined into a single string by the caller.
+        _tokens = [t.strip() for t in filter_arg.replace(",", " ").split() if t.strip()]
+        _num_matches: set[str] = set()
+        _fragments: list[str] = []
+        for tok in _tokens:
+            nm = _num_prefix(tok + "-dummy")
+            if nm is None:
+                nm = tok.split("-")[0] if tok and tok[0].isdigit() else None
+            if nm:
+                _num_matches.add(nm)
+            else:
+                _fragments.append(tok.lower())
+
+        if _num_matches:
+            pairs = [p for p in pairs if p.prefix in _num_matches]
+            skips = [s for s in skips if any(f"[{nm}]" in s for nm in _num_matches)]
+        elif _fragments:
             pairs = [p for p in pairs
-                     if fragment in p.cls_path.name.lower()
-                     or fragment in p.gen_path.name.lower()
-                     or fragment in p.resume_path.name.lower()]
+                     if any(frag in p.cls_path.name.lower()
+                            or frag in p.gen_path.name.lower()
+                            or frag in p.resume_path.name.lower()
+                            for frag in _fragments)]
             skips = []
 
     return pairs, skips
 
 
 # ---------------------------------------------------------------------------
+# Screenshot helper
+# ---------------------------------------------------------------------------
+
+def _generate_screenshot(
+    original_path: Path,
+    rendered_path: Path,
+    out_path: Path,
+    zoom: float = 2.0,
+    verbose: bool = True,
+    tag: str = "",
+) -> None:
+    """Generate a side-by-side comparison screenshot (non-fatal on failure).
+
+    Always deletes the existing PNG first so a stale screenshot never survives
+    a failed regeneration — if generation fails, the file is absent rather than
+    showing outdated content.
+    """
+    # Remove old file unconditionally so a failed regeneration leaves no stale PNG.
+    if out_path.exists():
+        out_path.unlink()
+    try:
+        sys.path.insert(0, str(_REPO / "scripts"))
+        from render_screenshot import make_comparison
+        make_comparison(
+            original_path=original_path,
+            rendered_path=rendered_path,
+            out_path=out_path,
+            zoom=zoom,
+        )
+        if verbose:
+            print(f"  SS    -> {out_path.relative_to(_REPO)}")
+    except Exception as exc:
+        print(f"{tag} WARN [stage=screenshot] {type(exc).__name__}: {exc}")
+
+
+# ---------------------------------------------------------------------------
 # Rendering
 # ---------------------------------------------------------------------------
 
-def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
+def render_sample(pair: SamplePair, verbose: bool = True, screenshots: bool = True,
+                  screenshot_zoom: float = 2.0) -> bool:
     """Run the full pipeline for one sample.  Returns True on success."""
     tag = f"[{pair.prefix}/{pair.source_kind.upper()}]"
 
@@ -243,7 +299,10 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
         out_rend_dir = _OUT_REND_DOCX
     else:
         out_ir_dir   = _OUT_IR_PDF
-        out_rend_dir = _OUT_REND_PDF
+        # Use a staging sub-dir so LibreOffice writes its PDF next to a fresh
+        # DOCX (no pre-existing same-named PDF), and the later shutil.copy2 to
+        # _OUT_REND_PDF is always a genuine different-file copy.
+        out_rend_dir = _OUT_STAGE_PDF
 
     out_ir_dir.mkdir(parents=True, exist_ok=True)
     out_rend_dir.mkdir(parents=True, exist_ok=True)
@@ -314,30 +373,61 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
 
     # ── Stage 5: DOCX → PDF via LibreOffice ───────────────────────────────
     try:
+        import gc
+        gc.collect()  # release any lingering python-docx / lxml handles before LibreOffice
+
         from tailor.docx.pdf import _docx_to_pdf_subprocess
 
         _docx_to_pdf_subprocess(str(out_docx))
         lo_pdf = out_docx.with_suffix(".pdf")
+        grader_pdf = _OUT_REND_PDF / lo_pdf.name
         if lo_pdf.exists():
             # The grader reads PDFs from _OUT_REND_PDF.  Always copy the freshly
             # rendered PDF there so the grader uses the latest version.
-            grader_pdf = _OUT_REND_PDF / lo_pdf.name
+            # For PDF-path, out_docx is in _OUT_STAGE_PDF so lo_pdf != grader_pdf
+            # and shutil.copy2 is a genuine different-file copy (no WinError 32).
             _OUT_REND_PDF.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(str(lo_pdf), str(grader_pdf))
-            # Keep the docx-dir copy in place (used by test_sparse_page_detection)
-        elif out_pdf.exists():
-            # lo_pdf wasn't created by LibreOffice; copy existing pdf from
-            # grader dir back to out_pdf location if needed.
+            if lo_pdf.resolve() != grader_pdf.resolve():
+                shutil.copy2(str(lo_pdf), str(grader_pdf))
+            # Keep the docx-dir / staging copy in place (used by test_sparse_page_detection)
+        elif grader_pdf.exists():
+            # lo_pdf wasn't created by LibreOffice but the grader already has a copy.
             if verbose:
                 print(f"{tag} WARN: PDF not refreshed — LibreOffice did not produce {lo_pdf.name}")
         else:
-            raise FileNotFoundError(f"PDF not found at {out_pdf}")
+            raise FileNotFoundError(f"PDF not found at {grader_pdf}")
     except Exception as e:
         print(f"{tag} FAIL [stage=docx-to-pdf] {type(e).__name__}: {e}")
+        if verbose:
+            traceback.print_exc()
         return False
 
     if verbose:
-        print(f"  PDF   -> {out_pdf.relative_to(_REPO)}")
+        print(f"  PDF   -> {grader_pdf.relative_to(_REPO)}")
+
+    # ── Stage 6: side-by-side screenshot ──────────────────────────────────
+    if screenshots:
+        if pair.source_kind == "docx":
+            ss_dir = _OUT_SS_DOCX
+            # Compare original DOCX template → rendered PDF (best visual fidelity)
+            _generate_screenshot(
+                original_path=pair.resume_path,
+                rendered_path=grader_pdf,
+                out_path=ss_dir / f"{stem}.png",
+                zoom=screenshot_zoom,
+                verbose=verbose,
+                tag=tag,
+            )
+        else:
+            ss_dir = _OUT_SS_PDF
+            _generate_screenshot(
+                original_path=pair.resume_path,
+                rendered_path=grader_pdf,
+                out_path=ss_dir / f"{stem}.png",
+                zoom=screenshot_zoom,
+                verbose=verbose,
+                tag=tag,
+            )
 
     if verbose:
         print(f"{tag} OK")
@@ -350,12 +440,38 @@ def render_sample(pair: SamplePair, verbose: bool = True) -> bool:
 # ---------------------------------------------------------------------------
 
 def main(argv: list[str] | None = None) -> int:
-    args = argv if argv is not None else sys.argv[1:]
-    filter_arg = args[0] if args else None
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="Deterministic rendering test for matched samples.",
+        add_help=False,
+    )
+    parser.add_argument("filter", nargs="*", default=None,
+                        help="Numeric prefix(es) or filename fragment to filter samples. "
+                             "Multiple values are accepted: render_samples.py 2 3 4 14")
+    parser.add_argument("--screenshots", dest="screenshots", action="store_true",
+                        default=True, help="Generate comparison screenshots (default).")
+    parser.add_argument("--no-screenshots", dest="screenshots", action="store_false",
+                        help="Disable screenshot generation.")
+    parser.add_argument("--strict-screenshots", action="store_true", default=False,
+                        help="Fail the run if any screenshot fails (default: warnings only).")
+    parser.add_argument("--screenshot-zoom", type=float, default=2.0, metavar="ZOOM",
+                        help="PyMuPDF rendering zoom factor (default 2.0).")
+    parser.add_argument("-h", "--help", action="help",
+                        help="Show this help message and exit.")
+
+    args = parser.parse_args(argv if argv is not None else sys.argv[1:])
+    # Join multiple positional args: "2 3 4" → "2 3 4" so discover() can split them.
+    filter_arg = " ".join(args.filter) if args.filter else None
+    screenshots = args.screenshots
+    zoom = args.screenshot_zoom
 
     print("=" * 60)
     print("  render_samples.py - deterministic rendering test")
     print("=" * 60)
+    if screenshots:
+        print(f"  Screenshots: ON (zoom={zoom}x)")
+    else:
+        print("  Screenshots: OFF")
 
     try:
         pairs, skips = discover(filter_arg)
@@ -382,7 +498,8 @@ def main(argv: list[str] | None = None) -> int:
 
     n_ok = n_fail = 0
     for pair in pairs:
-        if render_sample(pair, verbose=True):
+        if render_sample(pair, verbose=True, screenshots=screenshots,
+                         screenshot_zoom=zoom):
             n_ok += 1
         else:
             n_fail += 1
@@ -393,11 +510,19 @@ def main(argv: list[str] | None = None) -> int:
 
     if n_fail:
         print("\nOutput artifacts (where generated):")
-        for d in (_OUT_IR_DOCX, _OUT_IR_PDF, _OUT_REND_DOCX, _OUT_REND_PDF):
+        for d in (_OUT_IR_DOCX, _OUT_IR_PDF, _OUT_REND_DOCX, _OUT_REND_PDF, _OUT_STAGE_PDF):
             if d.exists():
                 files = sorted(d.iterdir())
                 if files:
                     print(f"  {d.relative_to(_REPO)}/  ({len(files)} files)")
+
+    if screenshots:
+        print("\nScreenshots:")
+        for ss_dir in (_OUT_SS_DOCX, _OUT_SS_PDF):
+            if ss_dir.exists():
+                pngs = sorted(ss_dir.glob("*.png"))
+                if pngs:
+                    print(f"  {ss_dir.relative_to(_REPO)}/  ({len(pngs)} files)")
 
     return 1 if n_fail else 0
 

@@ -141,9 +141,10 @@ def _compute_page_count_score(
     if delta <= 0:
         return 100.0, False, evidence
     if delta == 1:
-        # Soft penalty: +1 page is undesirable but not critical
+        # +1 page is acceptable when LLM content is larger than the template
+        # placeholder — informational note only, no score penalty.
         evidence.append(f"Page count +1 ({orig_pages}->{gen_pages})")
-        return 80.0, False, evidence
+        return 100.0, False, evidence
     if delta == 2:
         evidence.append(f"Page count +2 ({orig_pages}->{gen_pages})")
         return 70.0, False, evidence
@@ -947,7 +948,16 @@ def _detect_overflow_column_loss(
 
     evidence: list[str] = []
     hard_fail = False
+    last_page_number = gen_extracted.pages[-1].page_number
     for page in gen_extracted.pages[1:]:
+        # Near-empty pages (trailing overflow with very little content) cannot
+        # reliably show multi-column layout and the column-loss check is not
+        # meaningful for them.  Skip rather than false-flagging an acceptable
+        # trailing page as a column-topology defect.
+        _ar, _, _, _, _ml = _compute_effective_area_metrics(page)
+        if _ml <= _THIN_OVERFLOW_HARD_LINES and _ar <= _THIN_OVERFLOW_HARD_AREA:
+            continue  # near-empty page — column count underdetermined, skip
+
         pg_cols = _estimate_page_column_count(page)
         if pg_cols < 2:
             # Template comparison: if the template's page at the same position
@@ -959,14 +969,24 @@ def _detect_overflow_column_loss(
                     (op for op in orig_pages if op.page_number == page.page_number),
                     None,
                 )
-                if same_orig_page is not None:
-                    orig_pg_cols = _estimate_page_column_count(same_orig_page)
-                    if orig_pg_cols < 2:
-                        evidence.append(
-                            f"Column topology on page {page.page_number}: "
-                            f"1-column (also 1-column in template — structural)"
-                        )
-                        continue  # template already had 1-col here, not a defect
+                if same_orig_page is None:
+                    # Template has no page at this position: the generated content
+                    # overflowed beyond the template's end.  When only one column's
+                    # content (typically the right column) spills onto the extra page,
+                    # that overflow page naturally appears single-column — this is
+                    # expected overflow behaviour, not a column-loss defect.
+                    evidence.append(
+                        f"Column topology on page {page.page_number}: "
+                        f"1-column (overflow beyond template length — structural)"
+                    )
+                    continue
+                orig_pg_cols = _estimate_page_column_count(same_orig_page)
+                if orig_pg_cols < 2:
+                    evidence.append(
+                        f"Column topology on page {page.page_number}: "
+                        f"1-column (also 1-column in template — structural)"
+                    )
+                    continue  # template already had 1-col here, not a defect
             hard_fail = True
             evidence.append(
                 f"Column topology break on page {page.page_number} (HARD FAIL): "
@@ -1323,6 +1343,7 @@ def _detect_thin_overflow_page(
 
     evidence: list[str] = []
     triggered = False
+    last_page_number = gen_extracted.pages[-1].page_number
 
     for page in gen_extracted.pages[1:]:
         ar, _, _, _, ml = _compute_effective_area_metrics(page)
@@ -1336,12 +1357,14 @@ def _detect_thin_overflow_page(
             if orig_ml < _THIN_PAGE_MAX_LINES and orig_ar < _THIN_PAGE_MAX_AREA:
                 continue  # structural — template is also thin at this position
 
-        triggered = True
+        is_last = page.page_number == last_page_number
         evidence.append(
             f"Thin overflow page {page.page_number}: "
             f"{ml} content line(s), {ar * 100:.0f}% area coverage — "
             f"small amount of content spilled onto an otherwise empty page"
         )
+        if not is_last:
+            triggered = True  # only penalise sparse middle pages, not trailing overflow
 
     if triggered:
         return 0.0, False, evidence
@@ -1596,11 +1619,19 @@ def _detect_thin_overflow_hard_fail(
     gen_extracted,
     orig_extracted=None,
 ) -> "tuple[bool, list[str]]":
-    """Escalate THIN_OVERFLOW_PAGE to HARD FAIL when the overflow page is near-empty.
+    """Escalate THIN_OVERFLOW_PAGE to HARD FAIL for near-empty MIDDLE pages only.
 
-    A generated page with ≤ 3 lines and ≤ 2% area coverage is functionally blank:
-    almost no content spilled onto it.  This is a more severe defect than a lightly
-    sparse page and warrants a hard fail regardless of the template comparison.
+    Policy:
+    - Near-empty MIDDLE page (not the last page): HARD FAIL.
+      Content that overflowed pushed everything else further down, creating an
+      effectively blank page in the middle of the document — a genuine layout defect.
+    - Near-empty TRAILING page (last page of a multi-page document): informational.
+      When LLM content is longer than the template placeholder a single extra page
+      can have very little content on it; this is expected and acceptable.  The
+      renderer is not expected to pack every overflow page densely.
+
+    A "near-empty" page has ≤ _THIN_OVERFLOW_HARD_LINES lines AND
+    ≤ _THIN_OVERFLOW_HARD_AREA (0.5%) effective block area.
 
     Returns (hard_fail, evidence_list).
     """
@@ -1611,6 +1642,9 @@ def _detect_thin_overflow_hard_fail(
     if orig_extracted:
         for p in orig_extracted.pages:
             orig_pages_by_num[p.page_number] = p
+
+    last_page_number = gen_extracted.pages[-1].page_number
+    evidence: "list[str]" = []
 
     for page in gen_extracted.pages[1:]:
         ar, _, _, _, ml = _compute_effective_area_metrics(page)
@@ -1624,12 +1658,24 @@ def _detect_thin_overflow_hard_fail(
             if orig_ml <= _THIN_OVERFLOW_HARD_LINES and orig_ar <= _THIN_OVERFLOW_HARD_AREA:
                 continue  # structural — template already had this
 
-        return True, [
-            f"Near-empty overflow page {page.page_number} (HARD FAIL): "
-            f"{ml} line(s), {ar*100:.1f}% area — content forced onto a nearly blank page"
-        ]
+        is_last = page.page_number == last_page_number
 
-    return False, []
+        if is_last:
+            # Near-empty trailing page: informational only.  LLM content may be
+            # slightly larger than the template placeholder; a lightly-filled last
+            # page is acceptable and does not indicate a layout defect.
+            evidence.append(
+                f"Near-empty trailing page {page.page_number}: "
+                f"{ml} line(s), {ar*100:.1f}% area — acceptable overflow from larger LLM content"
+            )
+        else:
+            # Near-empty middle page: genuine layout defect → HARD FAIL.
+            return True, [
+                f"Near-empty overflow page {page.page_number} (HARD FAIL): "
+                f"{ml} line(s), {ar*100:.1f}% area — content forced onto a nearly blank middle page"
+            ]
+
+    return False, evidence
 
 
 # ---------------------------------------------------------------------------

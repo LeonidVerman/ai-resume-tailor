@@ -228,7 +228,9 @@ class TestBuildAnchoredSummarySection:
         )
         sec = _build_anchored_summary_section(llm_sec, h_anchor, b_anchor)
         assert sec.heading.para_id == "para_h"
-        assert sec.heading.text == "PROFESSIONAL SUMMARY"
+        # Heading slot is kept empty — no synthetic "PROFESSIONAL SUMMARY" label
+        # is added for templates without a dedicated summary section.
+        assert sec.heading.text == ""
 
     def test_uses_body_anchor_para_id(self):
         from tailor.compiler.text_parser import LlmSection
