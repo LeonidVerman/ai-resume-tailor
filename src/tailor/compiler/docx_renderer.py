@@ -1883,9 +1883,13 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         pm for pm in body_paras
         if pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
     ]
+    # column_id=None body paras (cross-column or unassigned) fall back to the
+    # right column so LLM-injected sections whose archetype was a full-width
+    # header para are not silently dropped from the rendered output.
     right_paras = _hdr_right + [
         pm for pm in body_paras
-        if pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
+        if not pm.paragraph_profile
+        or pm.paragraph_profile.column_id in ("right", None)
     ]
 
     # Pre-compute each left para's "section heading indent" so body paras that
