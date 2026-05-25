@@ -85,7 +85,10 @@ def _make_floating_image_para(
     cx_emu = int(w_pt * _PT_TO_EMU)
     cy_emu = int(h_pt * _PT_TO_EMU)
 
-    p = etree.Element(f"{{{_W}}}p")
+    # Declare DrawingML namespaces with canonical prefixes ('a:', 'pic:') on the
+    # paragraph element so lxml uses those prefixes for all descendant elements.
+    # Without this lxml auto-generates 'ns0:', 'ns2:' etc. which confuse LibreOffice.
+    p = etree.Element(f"{{{_W}}}p", nsmap={"a": _A, "pic": _PIC})
     r = etree.SubElement(p, f"{{{_W}}}r")
     drawing = etree.SubElement(r, f"{{{_W}}}drawing")
 
@@ -113,7 +116,10 @@ def _make_floating_image_para(
     docPr.set("id", str(img_id))
     docPr.set("name", f"Picture{img_id}")
 
-    etree.SubElement(anchor, f"{{{_WP}}}cNvGraphicFramePr")
+    # cNvGraphicFramePr must contain graphicFrameLocks so renderers treat this
+    # as a proper picture frame (required by LibreOffice; Word tolerates omission).
+    cNvGFPr = etree.SubElement(anchor, f"{{{_WP}}}cNvGraphicFramePr")
+    etree.SubElement(cNvGFPr, f"{{{_A}}}graphicFrameLocks", noChangeAspect="1")
 
     graphic = etree.SubElement(anchor, f"{{{_A}}}graphic")
     graphicData = etree.SubElement(
@@ -124,7 +130,7 @@ def _make_floating_image_para(
     pic = etree.SubElement(graphicData, f"{{{_PIC}}}pic")
 
     nvPicPr = etree.SubElement(pic, f"{{{_PIC}}}nvPicPr")
-    cNvPr = etree.SubElement(nvPicPr, f"{{{_PIC}}}cNvPr", id="0", name=f"Picture{img_id}")
+    etree.SubElement(nvPicPr, f"{{{_PIC}}}cNvPr", id=str(img_id), name=f"Picture{img_id}")
     etree.SubElement(nvPicPr, f"{{{_PIC}}}cNvPicPr")
 
     blipFill = etree.SubElement(pic, f"{{{_PIC}}}blipFill")
@@ -157,10 +163,11 @@ def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
         return
 
     def _add(elem) -> None:
-        if sectPr is not None:
-            sectPr.addprevious(elem)
-        else:
-            body.append(elem)
+        # Insert at position 0 so the anchor paragraph is always on page 1.
+        # LibreOffice places page-anchored images on the page of their anchor
+        # paragraph — appending at the end puts images on the last page when
+        # the document spans multiple pages.
+        body.insert(0, elem)
 
     for i, img in enumerate(doc.page_images):
         behind = img.category != "profile_photo"
