@@ -2254,6 +2254,20 @@ def _render_block_into_elem(
     _strip_column_break(elem)
     pm = para_lookup.get(block.para_id) if block.para_id else None
     if pm is not None:
+        # For ext slots (overflow paragraphs cloned from a multi-SDT template slot),
+        # the cloned proto carries ≥2 SDT children that represent a structured
+        # multi-column layout (e.g. 3-column tab-based skills).  _set_para_text
+        # has a guard that preserves such paragraphs unchanged.  For ext slots that
+        # carry newly-assigned text this would silently render the original template
+        # content.  Strip all SDT children and let _set_para_text place the new
+        # text in a simple run instead.
+        if block.para_id and "_ext_" in block.para_id:
+            _sdt_cnt = sum(1 for _c in elem if _c.tag == f"{{{_W}}}sdt")
+            if _sdt_cnt >= 2:
+                _pPr_sdt = elem.find(f"{{{_W}}}pPr")
+                for _sdt_c in list(elem):
+                    if _sdt_c.tag != f"{{{_W}}}pPr":
+                        elem.remove(_sdt_c)
         _strip_text_wrapping_breaks(elem, pm.text)
         _set_para_text(elem, pm.text)
         _clear_sdt_placeholder(elem)
@@ -2308,6 +2322,30 @@ def _render_block_into_elem(
                                 pass
         if _needs_font_cap:
             _cap_para_font_size(elem, max_halfpts=_proto_run_font_cap)
+        # Strip display-only (Symbol/Wingdings/SymbolMT) fonts from run rPr so
+        # that injected text renders with normal characters instead of garbled
+        # symbol glyphs.  These fonts map codepoints to dingbats/symbols rather
+        # than letters; any new text placed in such runs shows as Greek or random
+        # graphics.  Removing the rFonts element lets LibreOffice use the
+        # paragraph's default font for the run.
+        _DISPLAY_FONTS = frozenset({
+            "symbol", "wingdings", "wingdings2", "wingdings3",
+            "symbolmt", "webdings", "marlett",
+        })
+        if pm.text.strip():
+            for _rPr_sym in elem.iter(f"{{{_W}}}rPr"):
+                _rFonts_sym = _rPr_sym.find(f"{{{_W}}}rFonts")
+                if _rFonts_sym is not None:
+                    _font_names = {
+                        _rFonts_sym.get(attr, "").lower()
+                        for attr in (
+                            f"{{{_W}}}ascii", f"{{{_W}}}hAnsi",
+                            f"{{{_W}}}cs", f"{{{_W}}}eastAsia",
+                        )
+                        if _rFonts_sym.get(attr)
+                    }
+                    if _font_names and _font_names.issubset(_DISPLAY_FONTS):
+                        _rPr_sym.remove(_rFonts_sym)
         # Sync cleared indent: the updater may have called _clear_left_indent(pm),
         # setting pm.style.indent_left=None and removing w:left from pm.style.xml_proto.
         # But the renderer uses block.xml_proto_xml (the original template XML) which
@@ -2687,6 +2725,36 @@ def _render_layout_two_col_table(
             _rb_start = _i + 1
     if _rb_start:
         right_blocks = right_blocks[_rb_start:]
+
+    # Collapse runs of 2+ consecutive empty paragraph blocks from both columns.
+    # Native w:cols templates use repeated empty paragraphs between sections to
+    # vertically align section starts across columns.  Inside a table cell these
+    # spacers create visible blank gaps between sections.  A run of N≥2
+    # consecutive empties is collapsed to at most 1 so each column flows
+    # continuously without the original column-alignment padding.
+    def _collapse_empty_runs(blocks, _para_lookup):
+        result = []
+        consecutive = 0
+        for blk in blocks:
+            is_empty = False
+            if isinstance(blk, LayoutParagraphBlock) and blk.xml_proto_xml:
+                _pm = _para_lookup.get(blk.para_id) if blk.para_id else None
+                is_empty = (
+                    "<w:t>" not in blk.xml_proto_xml
+                    and (_pm is None or not _pm.text.strip())
+                )
+            if is_empty:
+                consecutive += 1
+                if consecutive <= 1:
+                    result.append(blk)
+                # else: skip — alignment spacer
+            else:
+                consecutive = 0
+                result.append(blk)
+        return result
+
+    left_blocks = _collapse_empty_runs(left_blocks, para_lookup)
+    right_blocks = _collapse_empty_runs(right_blocks, para_lookup)
 
     # Collect para_ids of right-column name/title paragraphs whose run-level
     # font size is large (> 36 half-pts = 18pt) so the font-cap logic in
@@ -3465,6 +3533,15 @@ def _render_from_layout_blocks(
                 )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
                 if pm is not None:
+                    # Ext slots that inherited a multi-SDT proto: strip SDT children
+                    # so the new text is placed in a simple run (same fix as in
+                    # _render_block_into_elem for the two-col-table path).
+                    if block.para_id and "_ext_" in block.para_id:
+                        _sdt_cnt_lb = sum(1 for _c in elem if _c.tag == f"{{{_W}}}sdt")
+                        if _sdt_cnt_lb >= 2:
+                            for _sdt_c_lb in list(elem):
+                                if _sdt_c_lb.tag != f"{{{_W}}}pPr":
+                                    elem.remove(_sdt_c_lb)
                     _strip_text_wrapping_breaks(elem, pm.text)
                     _set_para_text(elem, pm.text)
                     _clear_sdt_placeholder(elem)
@@ -3513,6 +3590,25 @@ def _render_from_layout_blocks(
                                             pass
                     if _needs_cap_lb:
                         _cap_para_font_size(elem, max_halfpts=_cap_lb)
+                    # Strip display-only fonts (same as in _render_block_into_elem).
+                    _DISPLAY_FONTS_LB = frozenset({
+                        "symbol", "wingdings", "wingdings2", "wingdings3",
+                        "symbolmt", "webdings", "marlett",
+                    })
+                    if pm.text.strip():
+                        for _rPr_sym_lb in elem.iter(f"{{{_W}}}rPr"):
+                            _rFonts_sym_lb = _rPr_sym_lb.find(f"{{{_W}}}rFonts")
+                            if _rFonts_sym_lb is not None:
+                                _fn_lb = {
+                                    _rFonts_sym_lb.get(a, "").lower()
+                                    for a in (
+                                        f"{{{_W}}}ascii", f"{{{_W}}}hAnsi",
+                                        f"{{{_W}}}cs", f"{{{_W}}}eastAsia",
+                                    )
+                                    if _rFonts_sym_lb.get(a)
+                                }
+                                if _fn_lb and _fn_lb.issubset(_DISPLAY_FONTS_LB):
+                                    _rPr_sym_lb.remove(_rFonts_sym_lb)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
                 else:
                     if block.para_id:
@@ -4039,9 +4135,27 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                 for ci, new_tc in enumerate(new_cells_elem):
                     for p in list(new_tc.findall(f"{{{_W}}}p")):
                         new_tc.remove(p)
+                    # Non-first split rows: remove subtables (nested w:tbl elements).
+                    # deepcopy copies all content including nested tables; keeping
+                    # them in every split row duplicates header/contact sub-tables
+                    # (e.g. sample 19 LICENSE NO. appearing twice).  Only the first
+                    # split row keeps them since they belong at the top of the cell.
+                    if slice_num > 0:
+                        for _sub_tbl in list(new_tc.findall(f"{{{_W}}}tbl")):
+                            new_tc.remove(_sub_tbl)
 
                     orig_ps = cell_paras[ci]
                     c_n = len(orig_ps)
+                    # Detect drawing-only separator cells (no text in any para).
+                    # These are typically vertical dividers sized to the full original
+                    # row height (e.g. sample 14 center divider line at 5 in).
+                    # Cloning them into every split row forces each row to the drawing
+                    # height, producing one page per split row.  Strip the drawings so
+                    # each split row sizes to its actual content.
+                    _cell_has_text = any(
+                        any(t.text for t in p.findall(f".//{{{_W}}}t"))
+                        for p in orig_ps
+                    )
 
                     if ci == tallest_idx:
                         para_slice = orig_ps[slice_start:slice_end]
@@ -4068,7 +4182,15 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                         para_slice = [orig_ps[-1]]
 
                     for p in para_slice:
-                        new_tc.append(deepcopy(p))
+                        new_p = deepcopy(p)
+                        if not _cell_has_text:
+                            # Remove drawings from separator cells so they don't
+                            # force the split row to the drawing's height.
+                            for _dw in list(new_p.findall(f".//{{{_W}}}drawing")):
+                                _dw_parent = _dw.getparent()
+                                if _dw_parent is not None:
+                                    _dw_parent.remove(_dw)
+                        new_tc.append(new_p)
 
                     # Suppress keepNext/keepLines on all paras so LibreOffice
                     # can paginate between rows without the heading style chain.
