@@ -3814,6 +3814,12 @@ def _render_layout_two_col_table(
 
     def _fill_cell(tc, blocks, col_x_emu: int, extra_paras=None, exempt_font_cap_ids=None) -> None:
         _cell_consec_empty: int = 0
+        # Compression guards: only compress BETWEEN section content, never before the
+        # first section heading (prevents collapsing name/title spacers in right cells,
+        # e.g. sample 16 where spacers before PROFILE must be preserved) or right after
+        # a section heading (preserves heading→content breathing room).
+        _cell_section_seen: bool = False
+        _cell_prev_was_section: bool = False
         for blk in blocks:
             if isinstance(blk, LayoutTableBlock):
                 tbl_el = etree.fromstring(blk.xml_proto_xml)
@@ -3824,6 +3830,7 @@ def _render_layout_two_col_table(
                         _clear_sdt_placeholder(p_el)
                 tc.append(tbl_el)
                 _cell_consec_empty = 0
+                _cell_prev_was_section = False
             else:
                 el = _render_block_into_elem(
                     blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn,
@@ -3835,17 +3842,39 @@ def _render_layout_two_col_table(
                     # from shifting when the column reference changes (sample 16 fix).
                     _fix_col_relative_anchors(el, col_x_emu)
                     # Consecutive-empty compression: minimize 2nd+ consecutive empty paras
-                    # to remove blank gaps between roles. Skip header_para blocks (contact
-                    # info area) which are section-separation spacers that must be preserved.
+                    # to remove blank gaps between roles (sample 22).
+                    # Guards:
+                    # - skip header_para blocks (contact info area, sample 16 left cell)
+                    # - skip when no section_heading seen yet (name/title spacers in right
+                    #   cells must be preserved, sample 16 DEVOPS→PROFILE spacers)
+                    # - skip immediately after a section_heading (preserve heading breathing)
                     _fc_has_text = any(t.text for t in el.iter(f"{{{_W}}}t"))
                     _fc_pid = blk.para_id if isinstance(blk, LayoutParagraphBlock) else None
                     _fc_is_header = bool(_fc_pid and _fc_pid in _header_para_ids)
-                    if not _fc_has_text and not _fc_is_header:
-                        _cell_consec_empty += 1
-                        if _cell_consec_empty >= 2:
-                            _minimize_empty_para(el)
-                    else:
+                    if _fc_has_text or _fc_is_header:
+                        _fc_pm = para_lookup.get(_fc_pid) if _fc_pid else None
+                        _fc_is_section = bool(
+                            _fc_pm and _fc_pm.semantic == "section_heading"
+                        )
+                        if _fc_is_section:
+                            _cell_section_seen = True
+                            _cell_prev_was_section = True
+                        else:
+                            _cell_prev_was_section = False
                         _cell_consec_empty = 0
+                    else:
+                        # Empty para: compress only when inside content (after first
+                        # section heading and not immediately following a section heading)
+                        if (
+                            _cell_section_seen
+                            and not _cell_prev_was_section
+                            and not _fc_is_header
+                        ):
+                            _cell_consec_empty += 1
+                            if _cell_consec_empty >= 2:
+                                _minimize_empty_para(el)
+                        else:
+                            _cell_consec_empty = 0
                     tc.append(el)
         # Append extra unbound paragraphs (LLM overflow content)
         if extra_paras:
