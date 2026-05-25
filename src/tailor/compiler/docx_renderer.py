@@ -4079,6 +4079,43 @@ def _render_from_layout_blocks(
             if _mnum is not None and int(_mnum) >= 2:
                 _main_is_multicolumn = True
 
+    # Some templates define the 2-column area via an intermediate sectPr (w:pPr/w:sectPr
+    # with w:num≥2) rather than the main body sectPr.  Example: sample 17, where the
+    # main sectPr is 1-column but the intermediate sectPr at body[96] declares
+    # w:num="2".  Detect this pattern: if layout_blocks contain a single col-break AND
+    # an intermediate 2-col sectPr, set _main_is_multicolumn=True and inject the 2-col
+    # widths into the main sectPr so _render_layout_two_col_table reads correct values.
+    if not _main_is_multicolumn and doc.layout_blocks:
+        _lb_colbreak_probe = _find_single_col_break_idx(doc.layout_blocks)  # type: ignore[arg-type]
+        if _lb_colbreak_probe is not None:
+            from copy import deepcopy as _dc_mc
+            for _ilb in doc.layout_blocks:  # type: ignore[union-attr]
+                if not (isinstance(_ilb, LayoutParagraphBlock) and _ilb.xml_proto_xml
+                        and "sectPr" in _ilb.xml_proto_xml):
+                    continue
+                try:
+                    _ilb_el = etree.fromstring(_ilb.xml_proto_xml)
+                    _ilb_pPr = _ilb_el.find(f"{{{_W}}}pPr")
+                    _ilb_sp = _ilb_pPr.find(f"{{{_W}}}sectPr") if _ilb_pPr is not None else None
+                    _ilb_cols = _ilb_sp.find(f"{{{_W}}}cols") if _ilb_sp is not None else None
+                    if _ilb_cols is None:
+                        continue
+                    _ilb_num = _ilb_cols.get(f"{{{_W}}}num")
+                    if _ilb_num is None or int(_ilb_num) < 2:
+                        continue
+                    if len(_ilb_cols.findall(f"{{{_W}}}col")) < 2:
+                        continue
+                    # Found intermediate 2-col sectPr — patch main sectPr and set flag
+                    _main_is_multicolumn = True
+                    if sectPr is not None:
+                        _mc_existing = sectPr.find(f"{{{_W}}}cols")
+                        if _mc_existing is not None:
+                            sectPr.remove(_mc_existing)
+                        sectPr.append(_dc_mc(_ilb_cols))
+                    break
+                except Exception:
+                    pass
+
     # Task 3 — same-lane column continuation: convert native w:cols to a 2-cell
     # table so right-column overflow stays in the right column on the next page.
     # Guards:
