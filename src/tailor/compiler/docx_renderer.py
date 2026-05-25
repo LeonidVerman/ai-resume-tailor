@@ -3473,12 +3473,20 @@ def _render_layout_two_col_table(
     # spacers create visible blank gaps between sections.  A run of N≥2
     # consecutive empties is collapsed to at most 1 so each column flows
     # continuously without the original column-alignment padding.
-    def _collapse_empty_runs(blocks, _para_lookup):
+    def _collapse_empty_runs(blocks, _para_lookup, _exempt_ids=None):
         result = []
         consecutive = 0
         for blk in blocks:
             is_empty = False
             if isinstance(blk, LayoutParagraphBlock) and blk.xml_proto_xml:
+                # Header-area paragraphs provide necessary vertical spacing (e.g.
+                # trailing empties in the contact section push EDUCATION below the
+                # dark header background — sample 16; leading empties push SKILLS
+                # below the horizontal divider — sample 18).  Never collapse them.
+                if _exempt_ids and blk.para_id and blk.para_id in _exempt_ids:
+                    consecutive = 0
+                    result.append(blk)
+                    continue
                 _pm = _para_lookup.get(blk.para_id) if blk.para_id else None
                 is_empty = (
                     "<w:t>" not in blk.xml_proto_xml
@@ -3494,7 +3502,8 @@ def _render_layout_two_col_table(
                 result.append(blk)
         return result
 
-    left_blocks = _collapse_empty_runs(left_blocks, para_lookup)
+    _hp_ids_for_collapse = frozenset(pm.para_id for pm in (doc.header_paras or []) if pm.para_id)
+    left_blocks = _collapse_empty_runs(left_blocks, para_lookup, _hp_ids_for_collapse)
     right_blocks = _collapse_empty_runs(right_blocks, para_lookup)
 
     # Collect para_ids of right-column name/title paragraphs whose run-level
@@ -5029,6 +5038,11 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                 cell_h2_boundaries.append(h2_idx)
 
             new_rows: list[Any] = []
+            # Track the adjusted slice end per non-tallest cell so the next
+            # slice starts where the previous one actually ended (not where the
+            # proportional formula says it should start).  This prevents content
+            # loss when the anti-orphan adjustment moves c_end backward.
+            _cell_prop_prev_end: dict[int, int] = {}
             for slice_num, (slice_start, slice_end) in enumerate(tallest_slices):
                 new_row = deepcopy(row)
                 new_cells_elem = new_row.findall(f"{{{_W}}}tc")
@@ -5080,11 +5094,42 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                             c_end = cell_bounds[slice_num + 1]
                         else:
                             # Fall back to proportional split.
-                            c_start = round(slice_start * c_n / n)
+                            # Use tracked previous slice end (if any) as c_start so
+                            # anti-orphan adjustments don't create coverage gaps.
+                            c_start = _cell_prop_prev_end.get(ci, round(slice_start * c_n / n))
                             c_end = round(slice_end * c_n / n)
                             c_start = min(c_start, c_n - 1)
                             c_end = max(c_end, c_start + 1)
                             c_end = min(c_end, c_n)
+                            # Anti-orphan heading: when the proportional boundary
+                            # falls right after a section heading (bold+text para
+                            # preceded by an empty para), adjust c_end backward so
+                            # the heading stays in the NEXT row with its body.
+                            # Example: sample 18 REFERENCES heading orphaned from
+                            # Philippe Stolvan by the midpoint split.
+                            if slice_num < len(tallest_slices) - 1:
+                                for _back in range(1, min(4, c_end - c_start)):
+                                    _oi = c_end - _back
+                                    if _oi <= c_start:
+                                        break
+                                    _op = orig_ps[_oi]
+                                    _op_text = "".join(
+                                        t.text or "" for t in _op.findall(f".//{{{_W}}}t")
+                                    ).strip()
+                                    if not _op_text:
+                                        continue
+                                    _op_bold = False
+                                    for _or in _op.findall(f".//{{{_W}}}r"):
+                                        _orPr = _or.find(f"{{{_W}}}rPr")
+                                        if _orPr is not None and _orPr.find(f"{{{_W}}}b") is not None:
+                                            _op_bold = True
+                                            break
+                                    if _op_bold and _oi > c_start and not any(
+                                        t.text for t in orig_ps[_oi - 1].findall(f".//{{{_W}}}t")
+                                    ):
+                                        c_end = _oi
+                                        break
+                            _cell_prop_prev_end[ci] = c_end
                         para_slice = orig_ps[c_start:c_end]
 
                     if not para_slice and orig_ps:
@@ -5124,6 +5169,20 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                             if prop is None:
                                 prop = _et.SubElement(cell_pPr, prop_tag)
                             prop.set(f"{{{_W}}}val", "0")
+
+                # Strip leading empty paragraphs from continuation rows to
+                # avoid blank gaps at the top of continuation cells (e.g.
+                # sample 22 right column — the empty spacer between the first
+                # and second Experience roles starts the second split row).
+                if slice_num > 0:
+                    for _strip_tc in new_cells_elem:
+                        while True:
+                            _strip_ps = _strip_tc.findall(f"{{{_W}}}p")
+                            if len(_strip_ps) <= 1:
+                                break
+                            if any(t.text for t in _strip_ps[0].findall(f".//{{{_W}}}t")):
+                                break
+                            _strip_tc.remove(_strip_ps[0])
 
                 new_rows.append(new_row)
 
