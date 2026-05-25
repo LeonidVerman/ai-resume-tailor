@@ -1047,7 +1047,10 @@ def _make_extra_section(
     # injected section body text renders as regular weight.
     def _normalise_body_pm(pm: "ParaModel") -> "ParaModel":
         sn = (pm.style.style_name or "").lower()
-        if not sn.startswith("heading") and not pm.style.bold:
+        # Also check paragraph_profile.bold for PDF-sourced paragraphs whose
+        # style.bold is None even when the paragraph is visually bold.
+        _pp_bold = pm.paragraph_profile.bold if pm.paragraph_profile else False
+        if not sn.startswith("heading") and not pm.style.bold and not _pp_bold:
             return pm
         from dataclasses import replace as _dc_replace
         from copy import deepcopy as _deepcopy
@@ -1516,12 +1519,38 @@ def _update_role_bullets_only(
                 new_bullets.append(arch.clone_as(text, "bullet"))
             else:
                 _log.debug("UPDATER_EXTRA_LLM_CONTENT_DROPPED: extra bullet %r", text[:60])
+    # When the template role had no bullet slots but the LLM now provides bullets,
+    # strip meta_lines that look like description sentences (not dates/company/location).
+    # These are plain-text descriptions that the PDF parser placed in meta_lines
+    # because no explicit bullet markers were detected; keeping them alongside the
+    # new LLM bullets would duplicate the content.  A line is treated as a
+    # description (not a date/location) when it ends with a sentence-closing mark
+    # ('. ', '? ', '! ') or a plain period at end-of-string AND is not a date-like
+    # string.
+    kept_meta = list(orig.meta_lines)
+    if not orig.bullets and new_bullets and orig.meta_lines:
+        import re as _re
+        _DATE_HINT = _re.compile(r"\b\d{4}\b|\bPresent\b|\bCurrent\b|\bNow\b", _re.IGNORECASE)
+        _SENTENCE_END = _re.compile(r"[.!?]\s*$")
+        cleaned = []
+        for m in orig.meta_lines:
+            t = m.text.strip()
+            if _SENTENCE_END.search(t) and not _DATE_HINT.search(t):
+                _log.debug(
+                    "ROLE_META_DESCRIPTION_STRIP: stripped description-like meta %r",
+                    t[:60],
+                )
+            else:
+                cleaned.append(m)
+        if cleaned != orig.meta_lines:
+            kept_meta = cleaned
+
     return RoleEntry(
         # Strip any column break from the role header — the section heading
         # (or Summary heading) handles right-column placement; a second break
         # on the first role header would cause a spurious column jump.
         header=_strip_col_break_para(orig.header),
-        meta_lines=orig.meta_lines,
+        meta_lines=kept_meta,
         bullets=new_bullets,
         role_id=orig.role_id,
     )
@@ -4064,18 +4093,60 @@ def apply_tailored(
                 s.semantic_type == "summary" for s in original.sections
             )
             if not template_has_summary:
-                summary_extras = [s for s in llm_order_sections if s.semantic_type == "summary"]
-                other_llm = [s for s in llm_order_sections if s.semantic_type != "summary"]
-                if summary_extras:
-                    new_sections = summary_extras + verbatim_sections + other_llm
-                else:
-                    new_sections = verbatim_sections + llm_order_sections
+                # Use template order so verbatim sections (Languages, Certifications, etc.)
+                # stay in their original positions relative to matched sections.
+                _matched_ids_ns = {
+                    id(heading_to_section[llm_s.heading.lower()])
+                    for llm_s in llm_sections
+                    if llm_s.heading.lower() in heading_to_section
+                }
+                _tpl_ordered_ns: list[ResumeSection] = []
+                for _orig_s, _llm_s in match.pairs:
+                    if _llm_s is None:
+                        _tpl_ordered_ns.append(_orig_s)
+                    else:
+                        _k = _llm_s.heading.lower()
+                        _tpl_ordered_ns.append(heading_to_section.get(_k, _orig_s))
+                _extra_ns = [s for s in llm_order_sections if id(s) not in _matched_ids_ns]
+                _sum_ns = [s for s in _extra_ns if s.semantic_type == "summary"]
+                _oth_ns = [s for s in _extra_ns if s.semantic_type != "summary"]
+                new_sections = _sum_ns + _tpl_ordered_ns + _oth_ns
             else:
-                # Append verbatim sections at the END so they appear after all
-                # LLM-ordered matched sections.  Verbatim "other" sections (e.g.
-                # Affiliations & Awards) naturally belong at the end of a resume;
-                # prepending them would displace Summary / Experience to the bottom.
-                new_sections = llm_order_sections + verbatim_sections
+                # Template already has a summary section → its section order is
+                # well-defined.  Follow TEMPLATE order for all matched sections so
+                # the physical layout (y-position, column assignments) is preserved.
+                # Extras (new sections added by the LLM that had no template match)
+                # are appended at the end in LLM output order; verbatim "other"
+                # sections follow them.
+                #
+                # Previously this path followed LLM output order, which caused
+                # sections to render in the wrong sequence (e.g. Professional
+                # Experience before Technical Skills in sample 4 even though the
+                # template places Technical Skills first).
+                _matched_section_ids = {
+                    id(heading_to_section[llm_s.heading.lower()])
+                    for llm_s in llm_sections
+                    if llm_s.heading.lower() in heading_to_section
+                }
+                template_ordered: list[ResumeSection] = []
+                for orig_section, llm_section in match.pairs:
+                    if llm_section is None:
+                        template_ordered.append(orig_section)
+                    else:
+                        key = llm_section.heading.lower()
+                        template_ordered.append(
+                            heading_to_section.get(key, orig_section)
+                        )
+                # Extras are sections in llm_order_sections that are NOT in the
+                # template-ordered set (i.e. newly created sections, not updates).
+                extra_only = [
+                    s for s in llm_order_sections
+                    if id(s) not in _matched_section_ids
+                ]
+                # verbatim_sections are already included in template_ordered
+                # (both built from match.pairs where llm_section is None).
+                # Appending them again would duplicate those sections in the output.
+                new_sections = template_ordered + extra_only
 
     # Fragmented-experience injection: LLM had experience roles but no original
     # experience section existed to match them.  Inject into role-like 'other'
@@ -4219,10 +4290,13 @@ def apply_tailored(
             # body_paras; skipping the orphan loop avoids duplicating content
             # that was already consumed into section.roles by _group_roles.
             if any(bp.semantic == "role_header" for bp in section.body_paras):
+                # Skip body_paras already claimed by role meta_lines (Pattern B:
+                # the date paragraph appears in both body_paras and meta_lines).
+                _claimed = {id(pm) for role in section.roles for pm in role.meta_lines}
                 for bp in section.body_paras:
                     if bp.semantic == "role_header":
                         break  # reached first role; stop collecting orphans
-                    if bp.text.strip():
+                    if bp.text.strip() and id(bp) not in _claimed:
                         all_paras.append(bp)
             for role in section.roles:
                 all_paras.append(role.header)
@@ -4250,10 +4324,11 @@ def apply_tailored(
                 all_paras.append(section.heading)
                 if section.semantic_type == "experience" and section.roles:
                     if any(bp.semantic == "role_header" for bp in section.body_paras):
+                        _claimed2 = {id(pm) for role in section.roles for pm in role.meta_lines}
                         for bp in section.body_paras:
                             if bp.semantic == "role_header":
                                 break
-                            if bp.text.strip():
+                            if bp.text.strip() and id(bp) not in _claimed2:
                                 all_paras.append(bp)
                     for role in section.roles:
                         all_paras.append(role.header)

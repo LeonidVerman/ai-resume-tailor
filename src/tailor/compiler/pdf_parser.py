@@ -209,7 +209,7 @@ def _deduplicate_page_indices(doc) -> set[int]:
     return skip
 
 
-def _detect_header_footer_texts(doc) -> set[str]:
+def _detect_header_footer_texts(doc, skip_pages: "set[int] | None" = None) -> set[str]:
     """Return text strings that appear as page headers/footers.
 
     Two strategies:
@@ -220,13 +220,21 @@ def _detect_header_footer_texts(doc) -> set[str]:
        2 of 2").
     3. Pages 2+ absolute: any block in the top/bottom 8% zone on page 2 or
        later is unconditionally excluded (page numbers, running heads).
+
+    *skip_pages* is the set of duplicate page indices returned by
+    _deduplicate_page_indices.  Skipping those pages prevents content that
+    appears on every page of a multi-page identical template (e.g. the
+    candidate name on a 3-copy gallery PDF) from being incorrectly classified
+    as a running header/footer.
     """
+    _skip = skip_pages or set()
     n_pages = len(doc)
-    if n_pages < 2:
+    n_active = sum(1 for i in range(n_pages) if i not in _skip)
+    if n_active < 2:
         return set()
 
     hf_texts: set[str] = set()
-    min_appearances = max(2, n_pages // 2)
+    min_appearances = max(2, n_active // 2)
 
     # Maps: y-bucket → list of (page_idx, text) tuples
     bucket_entries: dict[float, list[tuple[int, str]]] = {}
@@ -234,6 +242,9 @@ def _detect_header_footer_texts(doc) -> set[str]:
     page_zone_texts: list[set[str]] = []  # one set per page, zone texts only
 
     for page_idx, page in enumerate(doc):
+        if page_idx in _skip:
+            page_zone_texts.append(set())
+            continue
         h = page.rect.height
         top_zone = h * _HF_TOP_ZONE
         bot_zone = h * _HF_BOT_ZONE
@@ -358,6 +369,90 @@ def _dominant_text_color(spans: list[dict]) -> str | None:
     if not counter:
         return None
     return _fitz_color_to_hex(counter.most_common(1)[0][0])
+
+
+def _extract_header_bg(page) -> tuple[str | None, float]:
+    """Detect a full-width dark header rectangle on page 0.
+
+    Returns (hex_bg_color, y_bottom) for the topmost large full-width filled
+    rectangle (width ≥ 80 % of page, height > 8 pt, fill not white/near-white).
+    Used to apply dark background colors to header_paras whose text would
+    otherwise be invisible (white-on-dark templates like sample 3 and 25).
+
+    Returns (None, 0.0) when no such rectangle exists.
+    """
+    try:
+        drawings = page.get_drawings()
+    except Exception:
+        return None, 0.0
+
+    pw = page.rect.width
+    best_color: str | None = None
+    best_y1 = 0.0
+
+    for d in drawings:
+        fill = d.get("fill")
+        if fill is None:
+            continue
+        rect = d.get("rect")
+        if rect is None:
+            continue
+        x0, y0, x1, y1 = rect
+        if (x1 - x0) < pw * 0.80:
+            continue  # not full-width
+        if (y1 - y0) < 8.0:
+            continue  # too thin
+        hex_color = _fitz_color_to_hex(fill)
+        if hex_color is None:
+            continue
+        # Skip white and near-white fills (luminance > 210/255 = 82%).
+        # fafafa (250,250,250) and similar light grays must not be treated as
+        # dark header bands — they produce invisible white-on-light rendering.
+        try:
+            _r = int(hex_color[0:2], 16)
+            _g = int(hex_color[2:4], 16)
+            _b = int(hex_color[4:6], 16)
+            if (_r + _g + _b) / 3 > 210:
+                continue  # too light to be a dark header band
+        except (ValueError, IndexError):
+            continue
+        # Take the topmost large rectangle
+        if best_color is None or y0 < best_y1:
+            best_color = hex_color
+            best_y1 = y1
+
+    # Fallback: pixel-sample the centre column when no large drawing rectangle
+    # was found (some PDFs render the header band via a form XObject or raw
+    # content-stream operators that get_drawings() does not capture).
+    if best_color is None:
+        try:
+            import fitz as _fitz
+            ph = page.rect.height
+            mat = _fitz.Matrix(1, 1)
+            _cx = pw / 2.0
+            # Sample the topmost pixel row to detect dark background
+            _pix0 = page.get_pixmap(matrix=mat, clip=_fitz.Rect(_cx - 1, 0, _cx + 1, 4))
+            _top_px = _pix0.pixel(0, 0)
+            _lum = (_top_px[0] + _top_px[1] + _top_px[2]) / 3.0
+            if _lum < 100:  # dark background at page top
+                # Scan downward to find where the dark band ends
+                _hdr_y1_px = 0.0
+                for _y in range(0, min(350, int(ph)), 4):
+                    _clip = _fitz.Rect(_cx - 1, _y, _cx + 1, _y + 4)
+                    _px = page.get_pixmap(matrix=mat, clip=_clip).pixel(0, 0)
+                    if (_px[0] + _px[1] + _px[2]) / 3.0 > 150:
+                        _hdr_y1_px = float(_y)
+                        break
+                else:
+                    _hdr_y1_px = 200.0
+                if _hdr_y1_px > 12.0:
+                    r, g, b = _top_px[0], _top_px[1], _top_px[2]
+                    best_color = f"{r:02x}{g:02x}{b:02x}"
+                    best_y1 = _hdr_y1_px
+        except Exception:
+            pass
+
+    return best_color, best_y1
 
 
 def _extract_col_info(
@@ -634,8 +729,54 @@ def _extract_layout(doc) -> LayoutProfile:
         # Use the visual sidebar edge (drawing right-edge) when available;
         # it is more accurate than the text-block gap midpoint for column widths.
         col_boundary = visual_split_x if visual_split_x is not None else split_x
-        left_col_width_twips = int(col_boundary * 20)
-        right_col_width_twips = int((rect.width - col_boundary) * 20)
+        # Validate: a detected split with no background colour and no visual
+        # separator may be a false positive caused by heading indentation rather
+        # than a true sidebar layout.
+        #
+        # Heuristic: when the "right column" has very few characters (< 200)
+        # AND the "left column" has proportionally far more content AND the
+        # right zone x-span is narrow (< 100 pt), the split is likely an
+        # indentation gap (section headings further right than body text) rather
+        # than a true sidebar.
+        #
+        # True two-column sidebars either have a background/separator color or
+        # their right zone contains substantial text (> 200 chars) or spans a
+        # wide x-range (≥ 100 pt, because body text, role headers, and bullets
+        # occupy different x positions in the main column).
+        _suppress = False
+        if left_bg is None and right_bg is None and visual_split_x is None:
+            _top_cut = rect.height * 0.24 if rect.height > 0 else 0.0
+
+            def _block_chars(b):
+                return len("".join(
+                    s.get("text", "") for l in b.get("lines", [])
+                    for s in l.get("spans", [])
+                ).strip())
+
+            _right_xs = [b["bbox"][0] for b in blocks
+                         if b.get("type") == 0 and b["bbox"][0] >= split_x and b["bbox"][1] >= _top_cut]
+            _right_chars = sum(_block_chars(b) for b in blocks
+                               if b.get("type") == 0 and b["bbox"][0] >= split_x and b["bbox"][1] >= _top_cut)
+            _left_chars  = sum(_block_chars(b) for b in blocks
+                               if b.get("type") == 0 and b["bbox"][0] < split_x  and b["bbox"][1] >= _top_cut)
+            _right_range = (max(_right_xs) - min(_right_xs)) if len(_right_xs) > 1 else 0
+
+            # Suppress when right zone is thin: few chars, narrow x-span, and
+            # left zone dominates in character count.
+            if (
+                _right_chars < 200
+                and _right_range < 100
+                and _left_chars > _right_chars * 2.5
+            ):
+                _suppress = True
+
+        if _suppress:
+            col_boundary = None
+            left_col_width_twips = None
+            right_col_width_twips = None
+        else:
+            left_col_width_twips = int(col_boundary * 20)
+            right_col_width_twips = int((rect.width - col_boundary) * 20)
     else:
         left_bg = right_bg = None
         col_boundary = None
@@ -821,11 +962,13 @@ def _detect_column_split(
                 # x0=60 x1=530 does not inflate max_left_x1 to 530 and prevent
                 # the refinement from kicking in on the real body gap.
                 x0_mid = (x0s[i] + x0s[i + 1]) / 2.0
+                _body_bot_lbs = page_height * 0.90 if page_height > 0 else float("inf")
                 left_body_x1s = [
                     b["bbox"][2] for b in blocks
                     if b.get("type") == 0
                     and round(b["bbox"][0]) <= x0s[i]  # round() matches how x0s was built
                     and b["bbox"][1] >= top_cutoff
+                    and b["bbox"][3] <= _body_bot_lbs  # exclude footer blocks
                     and (b["bbox"][2] - b["bbox"][0]) < wide_block_min
                 ]
                 if left_body_x1s:
@@ -833,7 +976,9 @@ def _detect_column_split(
                     if max_left_x1 < right_edge:
                         content_mid = (max_left_x1 + right_edge) / 2.0
                         return max(x0_mid, content_mid)
-                return x0_mid
+                    return x0_mid
+                # No non-wide, non-footer content left of the gap: only full-width
+                # blocks or footer items on the left — not a real sidebar column.
     return None
 
 
@@ -892,10 +1037,18 @@ def _extract_paragraphs(
         # top-to-bottom across ALL columns, interleaving sidebar content with
         # main content.  Column-aware reordering restores correct reading order.
         # split_x (gap midpoint) is used for block classification (left vs right).
-        split_x = _detect_column_split(blocks, page.rect.width, page.rect.height)
-        # Prefer the layout's split_x (computed on page 1) for consistency.
-        if split_x is None and layout_split_x is not None:
-            split_x = layout_split_x
+        # Use the layout's authoritative split_x.  When the layout suppressed
+        # the split (layout_split_x=None after false-positive validation), use
+        # None for all pages so that blocks are never mis-split into left/right
+        # columns.  When the layout detected a real two-column boundary, prefer
+        # it for consistency (avoids per-page drift); fall back to per-page
+        # detection for pages whose content shifts the split slightly.
+        if layout_split_x is None:
+            split_x = None   # layout decided single-column; don't re-detect
+        else:
+            split_x = _detect_column_split(blocks, page.rect.width, page.rect.height)
+            if split_x is None:
+                split_x = layout_split_x
         # right_col_origin: indent is measured from the visual sidebar edge
         # (layout_split_x), which is more accurate than the gap midpoint.
         right_col_origin = layout_split_x if layout_split_x is not None else split_x
@@ -965,9 +1118,17 @@ def _extract_paragraphs(
             )
         )
 
+        # Merged-header-band forcing is only valid for page 0 (the first page
+        # that has the candidate's name, title, summary at the very top).
+        # On continuation pages (page.number > 0) the top zone is simply the
+        # next paragraph of content; forcing it to col=None would place old
+        # template experience/education entries above the two-column table.
         merged_header_band = (
             _first_right_y - _MIN_HEADER_GAP if _has_left_above_right
-            else _header_band_y if split_x is not None and not _has_right_in_header
+            else _header_band_y if (
+                split_x is not None and not _has_right_in_header
+                and page.number == 0
+            )
             else 0.0
         )
 
@@ -1399,7 +1560,7 @@ def _infer_semantic(pm: ParaModel) -> str:
 _EXPERIENCE_NAMES: frozenset[str] = frozenset({
     "experience", "experiences", "work experience", "professional experience",
     "employment history", "employment", "career history",
-    "work history", "professional background",
+    "work history", "professional background", "employment summary",
 })
 _SUMMARY_NAMES: frozenset[str] = frozenset({
     "professional summary", "summary", "objective", "career objective",
@@ -2290,7 +2451,7 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
 
     layout = _extract_layout(doc)
     skip_pages = _deduplicate_page_indices(doc)
-    hf_texts = _detect_header_footer_texts(doc)
+    hf_texts = _detect_header_footer_texts(doc, skip_pages=skip_pages)
     raw_paras = _extract_paragraphs(doc, hf_texts, layout.margin_left_pt, layout, skip_pages)
 
     # Two-column documents: run section grouping independently for each column
@@ -2333,17 +2494,121 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     else:
         header_paras, sections = _group_sections(raw_paras)
 
+    # Detect full-width dark header rectangle on page 0 and apply its background
+    # color to header_paras that fall within the rectangle's y-range.  This
+    # restores the dark-header appearance (e.g. sample 3: dark bar with white
+    # text "CHARLES MCTURLAND") which is drawn as a vector rectangle rather than
+    # a paragraph fill, so the PDF parser would otherwise not capture it.
+    _hdr_bg_color, _hdr_y1 = _extract_header_bg(doc[0])
+    if _hdr_bg_color:
+        # Store on layout so the renderer can create a full-width header band
+        # even for single-column PDFs (column_split_x=None).
+        layout.header_bg_color = _hdr_bg_color
+        for _pm in header_paras:
+            _pp = _pm.paragraph_profile
+            if _pp is None:
+                continue
+            # Apply to paragraphs whose y-position falls within the header band.
+            # y_top_pt is the raw y0 from the PDF block; it's runtime-only but still
+            # present after _extract_paragraphs.  If y_top_pt is None, apply to all
+            # header_paras (they are all in the header area by definition).
+            if _pp.y_top_pt is None or _pp.y_top_pt < _hdr_y1:
+                _pp.background_color = _hdr_bg_color
+                # Text on dark background must be white for visibility.
+                # If no explicit text_color was captured from the PDF, default to white.
+                if not _pp.text_color:
+                    _pp.text_color = "ffffff"
+
+    # Detect full-width dark footer band (same idea as header, but at bottom).
+    # Sample 25 has a thin dark strip at y≈780 with white contact info text.
+    # The bottom margin area (y > 810) is white, so we probe at y≈95% of page
+    # height where the dark footer band lives, not at the very bottom edge.
+    if layout.column_split_x is None:
+        try:
+            _page0 = doc[0]
+            _ph = _page0.rect.height
+            _pw = _page0.rect.width
+            import fitz as _fitz
+            _mat = _fitz.Matrix(1, 1)
+            _cx = _pw / 2.0
+            # Probe at 95% of page height (inside any footer band, above page-bottom margin)
+            _probe_y = _ph * 0.95
+            _pix_b = _page0.get_pixmap(matrix=_mat, clip=_fitz.Rect(_cx - 1, _probe_y, _cx + 1, _probe_y + 4))
+            _bot_px = _pix_b.pixel(0, 0)
+            _bot_lum = (_bot_px[0] + _bot_px[1] + _bot_px[2]) / 3.0
+            if _bot_lum < 100:  # dark footer found
+                # Scan upward from the probe point to find where the band starts
+                _ftr_y0 = _probe_y
+                for _y in range(int(_probe_y), max(0, int(_probe_y) - 120), -2):
+                    _clip = _fitz.Rect(_cx - 1, _y - 2, _cx + 1, _y)
+                    _px = _page0.get_pixmap(matrix=_mat, clip=_clip).pixel(0, 0)
+                    if (_px[0] + _px[1] + _px[2]) / 3.0 > 220:
+                        _ftr_y0 = float(_y)
+                        break
+                r, g, b = _bot_px[0], _bot_px[1], _bot_px[2]
+                layout.footer_bg_color = f"{r:02x}{g:02x}{b:02x}"
+                # Apply footer background to any paragraph whose top y falls
+                # within the detected footer band.  text_color is already cleared
+                # by _extract_paragraphs for non-heading paragraphs so we cannot
+                # use it as a signal; use y_top_pt alone.
+                _all_p = list(header_paras)
+                for _sec in sections:
+                    _all_p.extend(_sec.body_paras)
+                    for _role in _sec.roles:
+                        _all_p.extend(_role.bullets)
+                for _pm in _all_p:
+                    _pp = _pm.paragraph_profile
+                    if _pp and not _pp.background_color:
+                        if _pp.y_top_pt is not None and _pp.y_top_pt >= _ftr_y0:
+                            _pp.background_color = layout.footer_bg_color
+                            if not _pp.text_color:
+                                _pp.text_color = "ffffff"
+        except Exception:
+            pass
+
+    # Set header spacing to reproduce the dark header band's exact height from
+    # the source PDF.  space_before on the first dark-bg header para controls the
+    # gap from the band top to the name; space_after on the last dark-bg header
+    # para controls the gap from the title to the band bottom (_hdr_y1).
+    # y_top_pt is available here (set by _extract_paragraphs) but is runtime-only
+    # and not persisted to the IR JSON.
+    if _hdr_bg_color and header_paras:
+        _dark_hdrs = [
+            _pm for _pm in header_paras
+            if _pm.paragraph_profile and _pm.paragraph_profile.background_color == _hdr_bg_color
+        ]
+        if _dark_hdrs:
+            _first_dhdr = _dark_hdrs[0]
+            _first_pp = _first_dhdr.paragraph_profile
+            if _first_pp and _first_pp.y_top_pt is not None and _first_pp.space_before_pt == 0:
+                _first_pp.space_before_pt = max(0.0, _first_pp.y_top_pt)
+            _last_dhdr = _dark_hdrs[-1]
+            _last_pp = _last_dhdr.paragraph_profile
+            if _last_pp and _last_pp.y_top_pt is not None:
+                _approx_bottom = _last_pp.y_top_pt + (_last_pp.font_size_pt or 12.0)
+                # Cap space_after to avoid overflowing a single page when the body
+                # content is taller than the original (e.g. fitz merges two-column
+                # body into single-column, doubling line count).
+                _last_pp.space_after_pt = min(30.0, max(0.0, _hdr_y1 - _approx_bottom))
+
     # Final color cleanup: _group_sections may reclassify paragraphs (e.g.
     # section_heading → role_header) after _extract_paragraphs already ran its
     # per-semantic clearing.  Sweep all paragraphs one more time so that any
     # reclassified paragraph does not retain a PDF-extracted text_color that
     # would bleed onto LLM-generated replacement content via clone_as.
-    # Only section_heading paragraphs may keep their accent color (template design).
+    # Exception: paragraphs on a dark background (background_color set to a
+    # non-white value) keep their text_color so white-on-dark text remains
+    # visible after rendering.
     def _clear_content_colors(paras: "list[ParaModel]") -> None:
         for pm in paras:
             if pm.semantic in ("section_heading", "role_header") and pm.paragraph_profile:
                 continue  # keep accent colors on structural headings
             if pm.paragraph_profile:
+                # Keep text_color on dark-background paragraphs (e.g. white text
+                # on the header band) so the text is visible after rendering.
+                bg = pm.paragraph_profile.background_color
+                if bg and bg not in ("ffffff", "fefefe", "f8f8f8"):
+                    continue
                 pm.paragraph_profile.text_color = None
 
     _clear_content_colors(header_paras)

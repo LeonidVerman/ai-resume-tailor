@@ -301,6 +301,8 @@ class LayoutProfile:
     left_col_bg_color: str | None = None     # hex RRGGBB fill for left column
     right_col_bg_color: str | None = None    # hex RRGGBB fill for right column
     section_row_table: bool = False          # True when left column is section-label only (one row per section)
+    header_bg_color: str | None = None       # hex RRGGBB for full-width dark header band (single-col PDFs)
+    footer_bg_color: str | None = None       # hex RRGGBB for full-width dark footer band (single-col PDFs)
 
     def to_dict(self) -> dict:
         return {
@@ -318,6 +320,8 @@ class LayoutProfile:
             "left_col_bg_color": self.left_col_bg_color,
             "right_col_bg_color": self.right_col_bg_color,
             "section_row_table": self.section_row_table,
+            "header_bg_color": self.header_bg_color,
+            "footer_bg_color": self.footer_bg_color,
         }
 
     @classmethod
@@ -337,6 +341,8 @@ class LayoutProfile:
             left_col_bg_color=d.get("left_col_bg_color"),
             right_col_bg_color=d.get("right_col_bg_color"),
             section_row_table=bool(d.get("section_row_table", False)),
+            header_bg_color=d.get("header_bg_color"),
+            footer_bg_color=d.get("footer_bg_color"),
         )
 
 
@@ -440,6 +446,9 @@ class ResumeDocument:
     all_paras: list[ParaModel]
     # 'docx' for DOCX-sourced (xml_proto available); 'pdf' for PDF-sourced (para_builder path).
     source_kind: str = "docx"
+    # Footer paragraphs (contact strip, icons) preserved from the original PDF
+    # template and rendered as a dark band at the bottom.  Empty for most templates.
+    footer_paras: list[ParaModel] = field(default_factory=list)
     body_items: list[Any] | None = None  # list[ParaModel | TableBlock]; None for PDF/deserialised
     label_column_fixed: bool = False     # True when label-column layout reordering was applied
     table_column_layout_fixed: bool = False  # True when newspaper/table multi-column fix applied

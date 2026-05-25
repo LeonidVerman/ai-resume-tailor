@@ -5,11 +5,12 @@
 :: then automatically grade layout preservation for the same sample(s).
 ::
 :: Usage (from repo root):
-::   tests\test_rendering.cmd           :: render + grade all matched samples
-::   tests\test_rendering.cmd 1         :: render + grade sample with numeric prefix 1
-::   tests\test_rendering.cmd 1-Leonid  :: render + grade sample matching filename fragment
+::   tests\test_rendering.cmd               :: render + grade all matched samples
+::   tests\test_rendering.cmd 1             :: render + grade sample with numeric prefix 1
+::   tests\test_rendering.cmd 2 3 4 14 25   :: render + grade specific samples
+::   tests\test_rendering.cmd 1-Leonid      :: render + grade sample matching filename fragment
 ::
-:: The optional argument is forwarded to both render_samples.py and grade_layout.py.
+:: Multiple numeric prefixes are accepted and passed to render_samples.py.
 :: To grade without re-rendering, use grade_layout.cmd directly.
 
 setlocal

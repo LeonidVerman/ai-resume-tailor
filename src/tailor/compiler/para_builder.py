@@ -222,10 +222,6 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
             shd.set(f"{{{_W}}}color", "auto")
             shd.set(f"{{{_W}}}fill", pp.background_color)
 
-    # Inline icon image BEFORE text (PDF-sourced sidebar icons like phone/email/location)
-    if pp is not None and pp.inline_image_bytes and doc_part is not None:
-        _add_image_run(p, pp.inline_image_bytes, pp.inline_image_size_pt, doc_part)
-
     # Run(s) with text.  When pp.text_runs is set (mixed-bold role headers),
     # emit one w:r per run with per-run bold; otherwise emit a single run.
     # Regular bullet paragraphs get an inline "• " prefix on the first run.
@@ -289,5 +285,11 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
 
         for run_text, run_bold in run_list:
             _emit_run(run_text, run_bold)
+
+    # Inline icon image AFTER text (PDF-sourced sidebar icons like phone/email/location).
+    # Placing the icon after the text mirrors the template layout where icons appear
+    # at the end of the contact line rather than at the beginning.
+    if pp is not None and pp.inline_image_bytes and doc_part is not None:
+        _add_image_run(p, pp.inline_image_bytes, pp.inline_image_size_pt, doc_part)
 
     return p

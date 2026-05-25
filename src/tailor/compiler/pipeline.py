@@ -148,26 +148,55 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
             pp = pm.paragraph_profile
             if pp is None:
                 continue
-            # Strip PDF-extracted text colors from ALL paragraphs (including
-            # section_heading and role_header).  LibreOffice has a rendering defect
-            # where a paragraph with both an explicit w:color and w:ind inside a table
-            # cell is not rendered — the text becomes invisible.  Since the PDF template
-            # background image is not carried over, the original accent colors are
-            # meaningless in the DOCX context anyway; all headings render in black.
+            if pm.semantic in ("section_heading", "role_header"):
+                continue  # keep template accent colors on structural headings
+            # Keep text_color for paragraphs on a dark background (e.g. white text
+            # on the header band) — stripping it would make the text invisible.
+            bg = pp.background_color
+            if bg and bg not in ("ffffff", "fefefe", "f8f8f8"):
+                continue
+            # Strip color from LLM-replaced content (bullets, body paragraphs, meta).
+            # PDF-extracted colors bleed onto new content via clone_as; clearing them
+            # ensures body text renders in the default DOCX color.
             pp.text_color = None
             if pm.semantic == "bullet":
                 # Bullets are never bold — clear unconditionally (fixes role-header
                 # bold bleed when the role header is the only archetype available).
                 pp.bold = False
             elif pm.semantic == "paragraph":
-                # Normalize heading-style bleed: bold + oversized font on body
-                # content means this paragraph was cloned from a heading archetype.
-                if pp.bold and pp.font_size_pt and pp.font_size_pt > default_size * 1.1:
+                # Normalize heading-style bleed: bold + oversized font on
+                # LLM-injected body content (para_id="") means the paragraph
+                # was cloned from a heading or all-bold archetype.
+                # Original template paragraphs (non-empty para_id) keep their
+                # font so that candidate names (e.g. 42pt "Alexander") are
+                # not reduced to body-text size.
+                if not pm.para_id:
+                    # LLM-injected: clear bold unconditionally
                     pp.bold = False
-                    pp.font_size_pt = default_size
+                    if pp.font_size_pt and pp.font_size_pt > default_size * 1.1:
+                        pp.font_size_pt = default_size
 
     _fix(doc.header_paras)
     _fix(doc.all_paras)
+
+    _LIGHT_BG_SET = frozenset(("ffffff", "fefefe", "f8f8f8"))
+
+    # Apply center alignment to large-font header paragraphs on a dark background
+    # (e.g. "CHARLES MCTURLAND" on the dark header bar in sample 3).  These
+    # typically appear centred in the original template but alignment is not
+    # reliably extracted from PDF spans.  Threshold: 20pt+ font AND dark fill.
+    # Also ensure white text color on dark backgrounds: PDF parsers often fail to
+    # extract the white color for dark-background text, leaving text_color=None
+    # which renders as default (black) — invisible on a dark band.
+    for _pm in doc.header_paras:
+        _pp = _pm.paragraph_profile
+        if _pp and _pp.background_color and _pp.background_color not in _LIGHT_BG_SET:
+            if _pp.font_size_pt and _pp.font_size_pt >= 20.0:
+                _pp.alignment = "center"
+            # Set white text on dark background when no color was extracted
+            if _pp.text_color is None:
+                _pp.text_color = "ffffff"
+
     for sec in doc.sections:
         _fix(sec.body_paras)
         for role in sec.roles:
@@ -201,6 +230,18 @@ def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocumen
         if sec.heading.paragraph_profile
         and sec.heading.paragraph_profile.column_id == "left"
     }
+    # Also keep sections that were originally left-column by section_id even
+    # when apply_tailored changed the heading title (e.g. "Skill" → "Technical
+    # Skills").  Without this, _fix_extra_left_sections would move the updated
+    # left-column section to the right because its new title is not in
+    # template_left_titles.
+    template_left_section_ids = {
+        sec.section_id
+        for sec in template_ir.sections
+        if sec.heading.paragraph_profile
+        and sec.heading.paragraph_profile.column_id == "left"
+        and sec.section_id
+    }
 
     # Reference indents from the template's first right-column section.
     right_heading_indent = 0.0
@@ -225,12 +266,33 @@ def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocumen
             pp.column_id = "right"
             pp.indent_left_pt = indent
 
+    # Semantic types that belong in the sidebar (left column) are only kept
+    # there when the template ITSELF already has sidebar-type (non-main-content)
+    # sections in the left column.  If the left column holds main content
+    # (experience, education) rather than a sidebar, skills-type extras are
+    # moved to the right column just like other unmatched extras.
+    _template_has_left_sidebar = any(
+        sec.semantic_type in ("skills", "other", "certifications", "languages")
+        for sec in template_ir.sections
+        if sec.heading.paragraph_profile
+        and sec.heading.paragraph_profile.column_id == "left"
+    )
+    _SIDEBAR_SEMANTIC_TYPES = (
+        frozenset({"skills", "certifications", "languages"})
+        if _template_has_left_sidebar
+        else frozenset()
+    )
+
     for sec in updated.sections:
         h_pp = sec.heading.paragraph_profile
         if not (h_pp and h_pp.column_id == "left"):
             continue
         if _norm(sec.title) in template_left_titles:
             continue
+        if sec.section_id and sec.section_id in template_left_section_ids:
+            continue  # originally a left-column section — keep it there
+        if sec.semantic_type in _SIDEBAR_SEMANTIC_TYPES:
+            continue  # sidebar content type — always stays in left column
         _move(sec.heading, right_heading_indent)
         for bp in sec.body_paras:
             _move(bp, right_body_indent)
@@ -261,13 +323,19 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     """
     import re
 
-    if doc.layout.column_split_x is None:
-        return
-
-    SUMMARY_TITLES = frozenset({"professional summary", "summary", "profile", "objective"})
+    # Match by semantic_type first so section titles like "GENERAL INFO" that
+    # carry semantic_type="summary" are found even when not in SUMMARY_TITLES.
+    _SUMMARY_TITLES = frozenset({"professional summary", "summary", "profile", "objective"})
     summary_idx: int | None = None
     for i, sec in enumerate(doc.sections):
-        if sec.title.lower().strip() in SUMMARY_TITLES and sec.body_paras:
+        is_summary = (
+            sec.semantic_type == "summary"
+            or sec.title.lower().strip() in _SUMMARY_TITLES
+        )
+        # Only inject LLM-extra sections (no section_id).  Original template
+        # sections (section_id set) already occupy their correct body position
+        # and must not be promoted into the header band.
+        if is_summary and sec.body_paras and not sec.section_id:
             summary_idx = i
             break
     if summary_idx is None:
@@ -286,6 +354,8 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             return False
         if "@" in t:                                          # email address
             return False
+        if re.match(r"^\d", t):                               # street address (house number)
+            return False
         if re.search(r"\d[\d\s.()\-]{5,}", t):               # phone-like digit run
             return False
         if re.search(r"\b\d{4}\b", t):                       # 4-digit year/zip/id
@@ -298,26 +368,161 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             return False
         return True
 
-    summary_indices = {
+    # Build column-aware summary index sets.  For sidebar layouts the original
+    # summary text lives in the left column; for merged-header layouts it lives
+    # in the right column (below the candidate name).  Prefer the left-column
+    # match so that sidebar templates (e.g. sample 25) inject the LLM summary
+    # into the sidebar and clean up old template placeholder text there, rather
+    # than mixing left and right columns and producing an ambiguous target_col.
+    _sum_left = {
         j for j, hp in enumerate(doc.header_paras)
-        if _is_original_summary_line(hp.text)
+        if hp.paragraph_profile and hp.paragraph_profile.column_id == "left"
+        and _is_original_summary_line(hp.text)
     }
-    if not summary_indices:
-        return  # no original summary lines to replace
+    _sum_right = {
+        j for j, hp in enumerate(doc.header_paras)
+        if hp.paragraph_profile and hp.paragraph_profile.column_id == "right"
+        and _is_original_summary_line(hp.text)
+    }
+    # Also detect full-width (col=None) original summary lines that appear in
+    # templates where the header is above the two-column body or single-column.
+    _sum_none = {
+        j for j, hp in enumerate(doc.header_paras)
+        if hp.paragraph_profile and hp.paragraph_profile.column_id is None
+        and _is_original_summary_line(hp.text)
+    }
+
+    if _sum_left:
+        summary_indices: set[int] = _sum_left
+        _target_col: "str | None" = "left"
+    elif _sum_right:
+        summary_indices = _sum_right
+        _target_col = "right"
+    elif _sum_none:
+        summary_indices = _sum_none
+        _target_col = None  # full-width above table or single-column
+    else:
+        summary_indices = set()
+        _target_col = None  # determined below
 
     summary_sec = doc.sections[summary_idx]
 
-    # Lift LLM summary body paragraphs into the above-table header area.
-    for bp in summary_sec.body_paras:
-        if bp.paragraph_profile:
-            bp.paragraph_profile.column_id = None
-            bp.paragraph_profile.bold = False  # summary text is never bold
+    if not summary_indices:
+        # No original summary lines to replace.  For single-column templates
+        # keep the LLM summary as a body section (no header injection needed).
+        if doc.layout.column_split_x is None:
+            return
+        # Two-column: no pre-existing summary → append LLM summary BELOW the
+        # name/title block so it renders above the two-column table.
+        if not doc.header_paras:
+            return
+        # Inherit the column from existing header content so the summary lands
+        # in the right cell when the name/title are in the right column (e.g.
+        # sidebar templates where name is right-aligned, like sample 2 & 3),
+        # or above the table when the header is truly full-width (like sample 14).
+        _existing_cols = [
+            hp.paragraph_profile.column_id
+            for hp in doc.header_paras
+            if hp.paragraph_profile and hp.paragraph_profile.column_id in ("left", "right")
+        ]
+        if "right" in _existing_cols:
+            _target_col = "right"
+        elif "left" in _existing_cols:
+            _target_col = "left"
+        else:
+            _target_col = None  # place above the two-column table
 
-    doc.header_paras = (
-        [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
-        + list(summary_sec.body_paras)
-    )
-    doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+        for bp in summary_sec.body_paras:
+            if bp.paragraph_profile:
+                bp.paragraph_profile.column_id = _target_col
+                bp.paragraph_profile.bold = False
+        doc.header_paras = list(doc.header_paras) + list(summary_sec.body_paras)
+        doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+    else:
+
+        # Lift LLM summary body paragraphs into the header area.
+        # When placing in the right column, normalise indent_left_pt to 0 so the
+        # summary starts flush with the right-column content below it (matching the
+        # indentation of WORK EXPERIENCE body text) rather than inheriting a deeper
+        # indent from the heading archetype used to clone the body paragraphs.
+        for bp in summary_sec.body_paras:
+            if bp.paragraph_profile:
+                bp.paragraph_profile.column_id = _target_col
+                bp.paragraph_profile.bold = False  # summary text is never bold
+                if _target_col == "right":
+                    # Flush with the right-column content and centre-align to
+                    # match the typical template style for summary paragraphs.
+                    bp.paragraph_profile.indent_left_pt = 0.0
+                    bp.paragraph_profile.alignment = "center"
+
+        if _target_col == "left":
+            # Sidebar layout: the summary replaces the original profile text in the
+            # left column.  Also remove any remaining original left-column AND
+            # right-column header items that are template placeholders — dates,
+            # old section headings, experience fragments.  Items with para_id set
+            # are from the original template; items with para_id='' were created
+            # by apply_tailored and must be kept.
+            # Exception: preserve original items that are clearly the candidate
+            # name/title (large font ≥ 20pt, or above-table col=None items).
+            # These must appear in the rendered output regardless of column.
+            # All other original col=left/right template placeholders are dropped
+            # (dates, old education fragments, experience descriptions).
+            _kept = []
+            for j, hp in enumerate(doc.header_paras):
+                if j in summary_indices:
+                    continue
+                pp = hp.paragraph_profile
+                col = pp.column_id if pp else None
+                if pp and hp.para_id and col in ("left", "right"):
+                    # Keep only very large items (name, full-page title).
+                    # 20pt threshold separates names (~24-40pt) from body text.
+                    pp_size = pp.font_size_pt or 0.0
+                    if pp_size >= 20.0 and hp.text.strip():
+                        _kept.append(hp)
+                    # else: original placeholder — drop
+                else:
+                    # col=None (above-table) items always kept; LLM items (para_id='') kept
+                    _kept.append(hp)
+            doc.header_paras = _kept + list(summary_sec.body_paras)
+            doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+        elif _target_col == "right":
+            # Right-column injection.
+            # After removing the matched summary lines, also drop any remaining
+            # col=right original items that are very short and look like leftover
+            # sentence fragments from the template summary (e.g. "experiences.").
+            # Keep: the first non-empty col=right item (the candidate name) and
+            # any item that is col=None (above-table) or LLM-generated (para_id='').
+            _first_right_kept = False
+            kept: list = []
+            for j, hp in enumerate(doc.header_paras):
+                if j in summary_indices:
+                    continue
+                pp = hp.paragraph_profile
+                col = pp.column_id if pp else None
+                if col == "right" and hp.para_id:
+                    if not _first_right_kept and hp.text.strip():
+                        _first_right_kept = True
+                        kept.append(hp)
+                    elif len(hp.text.strip()) >= 25:
+                        kept.append(hp)
+                    # else: short col=right original fragment — drop (leftover)
+                else:
+                    kept.append(hp)
+            doc.header_paras = kept + list(summary_sec.body_paras)
+            doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+        else:
+            # _target_col is None: full-width header above the two-column body
+            # (samples 18, 38) or single-column template (sample 33).
+            # Remove the original summary lines from header_paras; keep name/title.
+            kept = [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
+            if doc.layout.column_split_x is not None:
+                # Two-column: inject LLM summary above the table (col=None = full-width)
+                doc.header_paras = kept + list(summary_sec.body_paras)
+                doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+            else:
+                # Single-column: just remove original summary — keep the LLM
+                # summary section in doc.sections so it renders in the body.
+                doc.header_paras = kept
 
     # Rebuild all_paras so the renderer sees the updated structure.
     from tailor.compiler.models import ParaModel
@@ -581,27 +786,171 @@ def _normalize_bullet_styles(doc: ResumeDocument) -> None:
 
 
 def _apply_heading_case_convention(doc: ResumeDocument) -> None:
-    """Apply the template's section-heading capitalisation style to all sections.
+    """Apply the template's section-heading capitalisation style to LLM-injected sections.
 
-    Detects whether the majority (≥ 50 %) of existing section headings are
-    ALL-CAPS or Title-Case and transforms any outliers to match.  This ensures
-    LLM-injected sections ('Technical Skills', 'Additional') follow the same
-    visual style as template sections ('GENERAL INFO', 'WORK HISTORY').
+    For two-column PDF layouts, the convention is determined from the left-column
+    (template) sections and applied only to right-column (LLM-injected) sections.
+    This prevents verbatim template sub-entries (e.g. 'Samira Hadid' in REFERENCES)
+    from being incorrectly uppercased while still normalising extra LLM sections
+    ('Technical Skills' → 'TECHNICAL SKILLS', 'Additional' → 'ADDITIONAL').
     """
     if doc.source_kind != "pdf":
         return
-    titles = [s.title.strip() for s in doc.sections if s.title.strip()]
-    if not titles:
+    if doc.layout.column_split_x is None:
+        return  # only meaningful for two-column PDF layouts
+
+    def _col(sec) -> "str | None":
+        pp = sec.heading.paragraph_profile
+        return pp.column_id if pp else None
+
+    # Determine convention from left-column (template) section headings.
+    left_titles = [s.title.strip() for s in doc.sections if _col(s) == "left" and s.title.strip()]
+    if not left_titles:
         return
 
-    all_caps = sum(1 for t in titles if t == t.upper())
-    # Only apply a convention when the majority clearly agree.
-    if all_caps / len(titles) >= 0.5:
-        for sec in doc.sections:
-            t = sec.title.strip()
+    all_caps = sum(1 for t in left_titles if t == t.upper())
+    if all_caps / len(left_titles) < 0.5:
+        return
+
+    # Apply ONLY to right-column (LLM-injected extra) sections.
+    for sec in doc.sections:
+        if _col(sec) != "right":
+            continue
+        t = sec.title.strip()
+        if t and t != t.upper():
+            sec.title = t.upper()
+            sec.heading = sec.heading.with_text(t.upper())
+
+
+def _apply_role_header_case_convention(
+    template_ir: ResumeDocument, doc: ResumeDocument
+) -> None:
+    """Apply the template's role-header capitalisation to LLM-updated role entries.
+
+    Detects whether the original template uses ALL CAPS for role headers
+    (e.g. "RESTAURANT MANAGER | COMPANY | DATE") and if so, uppercases the
+    LLM-provided role header text.  This reproduces the visual style of
+    templates like sample 8 (May Riley) where every role title is in ALL CAPS.
+
+    Only applies to PDF-sourced documents.  Looks at the ORIGINAL template's
+    role headers to detect the convention (updated headers may already be mixed
+    case due to the LLM output).
+    """
+    if doc.source_kind != "pdf":
+        return
+
+    # Collect original template role header texts (before LLM updates).
+    orig_role_headers: list[str] = [
+        role.header.text.strip()
+        for sec in template_ir.sections
+        if sec.semantic_type == "experience"
+        for role in sec.roles
+        if role.header.text.strip()
+    ]
+    if not orig_role_headers:
+        return
+
+    # Check if ALL CAPS is the predominant convention.
+    all_caps_count = sum(
+        1 for t in orig_role_headers
+        if t and t.replace("|", "").replace(" ", "").isupper() and any(c.isalpha() for c in t)
+    )
+    if all_caps_count < len(orig_role_headers) * 0.6:
+        return  # not predominantly ALL CAPS
+
+    # Apply ALL CAPS to updated role headers.
+    # Mutate .text in-place so the same ParaModel object referenced in all_paras
+    # reflects the change (with_text() creates a new object that all_paras won't see).
+    for sec in doc.sections:
+        if sec.semantic_type != "experience":
+            continue
+        for role in sec.roles:
+            t = role.header.text.strip()
             if t and t != t.upper():
-                sec.title = t.upper()
-                sec.heading = sec.heading.with_text(t.upper())
+                role.header.text = t.upper()
+
+
+def _inject_skills_into_section_body(doc: ResumeDocument) -> None:
+    """Replace a skills sub-block inside a section's body_paras with LLM skills.
+
+    Some templates embed a "SKILLS & ABILITIES" sub-section inside another
+    section's body (e.g. within a CONTACT section).  The PDF parser cannot split
+    it off as a standalone section because there is no clear section break, so the
+    skills content lands in the parent section's body_paras.
+
+    When apply_tailored creates a separate extra "Technical Skills" section because
+    there is no top-level skills section to match, the result is a redundant heading
+    ("TECHNICAL SKILLS") appearing in the rendered output AND the original SKILLS &
+    ABILITIES content remaining unchanged in the parent section body.
+
+    This function detects that pattern and:
+    1. Finds a body section with a skills-like sub-heading inside its body_paras.
+    2. Finds the extra skills section added by the LLM.
+    3. Replaces the original skills bullets with the LLM skill lines.
+    4. Removes the extra skills section so its heading doesn't render separately.
+    """
+    if doc.layout.column_split_x is None:
+        return
+
+    # Find the extra skills section (has section_id absent from any template
+    # section, meaning it's a new/extra section without an original counterpart).
+    extra_skills: "ResumeSection | None" = None
+    extra_skills_idx: int | None = None
+    for i, sec in enumerate(doc.sections):
+        if sec.semantic_type == "skills" and not sec.section_id:
+            extra_skills = sec
+            extra_skills_idx = i
+            break
+    if extra_skills is None:
+        return
+
+    # Find a parent section whose body_paras contain a skills sub-heading.
+    _SKILL_KEYWORDS = ("skill", "abilit", "competenc", "expertise")
+    parent_sec = None
+    skill_start_idx: int | None = None
+    for sec in doc.sections:
+        for j, bp in enumerate(sec.body_paras):
+            txt_lower = bp.text.lower()
+            if any(k in txt_lower for k in _SKILL_KEYWORDS) and len(bp.text) < 30:
+                parent_sec = sec
+                skill_start_idx = j
+                break
+        if parent_sec is not None:
+            break
+
+    if parent_sec is None or skill_start_idx is None:
+        return
+
+    # Replace body_paras from skill_start_idx onwards with the LLM skill lines.
+    # Keep the heading paragraph (the sub-section label like "SKILLS &", "ABILITIES")
+    # and any immediately following paragraph that is also part of the heading.
+    heading_end = skill_start_idx + 1
+    while heading_end < len(parent_sec.body_paras):
+        bp = parent_sec.body_paras[heading_end]
+        txt = bp.text.strip().lower()
+        if any(k in txt for k in _SKILL_KEYWORDS) and len(bp.text) < 15:
+            heading_end += 1  # multi-line heading (e.g. "SKILLS &" + "ABILITIES")
+        else:
+            break
+
+    # Use the first non-heading body_para as clone archetype for the skill lines.
+    archetype = (
+        parent_sec.body_paras[heading_end]
+        if heading_end < len(parent_sec.body_paras)
+        else parent_sec.body_paras[skill_start_idx]
+    )
+
+    skill_lines = [line for line in extra_skills.body_paras if line.text.strip()]
+    new_skill_paras = [
+        archetype.clone_as(line.text, "paragraph") for line in skill_lines
+    ]
+
+    parent_sec.body_paras = (
+        list(parent_sec.body_paras[:heading_end]) + new_skill_paras
+    )
+
+    # Remove the extra skills section so its heading doesn't appear twice.
+    doc.sections = [s for i, s in enumerate(doc.sections) if i != extra_skills_idx]
 
 
 def compile_resume_from_pdf(
@@ -623,15 +972,39 @@ def compile_resume_from_pdf(
     # single-page PDFs — they would otherwise become LLM bullet archetypes and
     # produce wrong size, indent, and italic on generated bullets.
     _strip_template_footer_bullets(template_ir)
+
+    # Capture footer paras BEFORE apply_tailored replaces section content.
+    # These are body paragraphs that carry a dark background_color (detected as
+    # a footer band via pixel sampling in parse_pdf).  apply_tailored replaces
+    # section body content with LLM output, so footer paras would otherwise be lost.
+    _footer_bg = template_ir.layout.footer_bg_color
+    if _footer_bg:
+        _LIGHT = frozenset(("ffffff", "fefefe", "f8f8f8"))
+        _footer_paras = []
+        for _sec in template_ir.sections:
+            for _pm in _sec.body_paras:
+                _pp = _pm.paragraph_profile
+                if _pp and _pp.background_color and _pp.background_color not in _LIGHT:
+                    _footer_paras.append(_pm)
+        template_ir.footer_paras = _footer_paras
+
     llm_sections = parse_llm_output(llm_text)
     llm_sections = apply_layout_fitting(template_ir, llm_sections)
     updated = apply_tailored(template_ir, llm_sections, classification=classification)
+
+    # Re-inject footer paras if they were lost during apply_tailored
+    if template_ir.footer_paras and not updated.footer_paras:
+        updated.footer_paras = list(template_ir.footer_paras)
 
     # Clear PDF-extracted text colors from all content paragraphs before rendering.
     _clear_pdf_content_colors(updated)
     # For two-column templates with a full-width header: move the LLM-injected
     # Professional Summary body into header_paras so it renders above the table.
     _inject_llm_summary_into_header(updated)
+    # Merge extra LLM skills section into an existing section's skills sub-block
+    # (e.g. "SKILLS & ABILITIES" inside a CONTACT section body) so the skills
+    # content appears in the correct place rather than as a separate banner.
+    _inject_skills_into_section_body(updated)
     # Remove orphan sections and clear stale body_paras for sections with roles.
     _remove_orphan_subsections(updated)
     # Move extra LLM sections (e.g. Professional Summary) out of the left sidebar
@@ -644,27 +1017,36 @@ def compile_resume_from_pdf(
     # sections (e.g. 'Technical Skills' → 'TECHNICAL SKILLS' when all template
     # section headings are ALL-CAPS).
     _apply_heading_case_convention(updated)
+    # Apply the template's role-header capitalisation to LLM-updated role entries
+    # (e.g. if template uses ALL CAPS roles, keep that convention in the output).
+    _apply_role_header_case_convention(template_ir, updated)
 
-    # Re-sort sections by (column, y_top_pt) for PDF two-column documents.
+    # Re-sort sections by column for PDF two-column documents.
     # Done AFTER _fix_extra_left_sections so LLM-injected extra sections (e.g.
     # Technical Skills) already have col_id="right" and sort correctly after
     # the template's left-column sections rather than interleaving with them.
+    #
+    # We use a STABLE sort on col_order only (left=1 before right=2) so that
+    # the within-column order from apply_tailored is preserved.  Sorting by
+    # y_top_pt was incorrect for multi-page PDFs where page-relative y values
+    # are not monotone across the full document (a section at the top of page 2
+    # has a smaller y than a section at the bottom of page 1, causing page 2
+    # sections to sort before page 1 sections in the same column).
     if (
         updated.source_kind == "pdf"
         and updated.layout.column_split_x is not None
     ):
         from tailor.compiler.models import ParaModel as _ParaModel  # local import
 
-        def _sec_col_y_key(sec) -> "tuple[int, float]":
+        def _sec_col_key(sec) -> int:
             pp = sec.heading.paragraph_profile
-            col_order = (
+            return (
                 1 if (pp and pp.column_id == "left")
                 else 2 if (pp and pp.column_id == "right")
                 else 0
             )
-            return (col_order, pp.y_top_pt if pp else 0.0)
 
-        updated.sections.sort(key=_sec_col_y_key)
+        updated.sections.sort(key=_sec_col_key)  # Python sort is stable
 
         if not updated.layout.section_row_table:
             # Re-order all_paras to reflect the new section order while preserving
