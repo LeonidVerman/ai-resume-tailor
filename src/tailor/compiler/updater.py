@@ -3497,6 +3497,7 @@ def apply_anchor_budgets(
         source_kind=updated.source_kind,
         layout_blocks=updated.layout_blocks,
         body_items=updated.body_items,
+        page_images=getattr(updated, "page_images", []),
     )
 
 
@@ -4917,6 +4918,7 @@ def apply_tailored(
         source_kind=original.source_kind,
         body_items=original.body_items if (has_table_blocks and not has_unhandled_extras) else None,
         layout_blocks=_result_layout_blocks,
+        page_images=getattr(original, "page_images", []),
     )
 
     # Apply per-slot text-length budgets in layout-bound mode.  Runs last so

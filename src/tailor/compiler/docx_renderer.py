@@ -38,8 +38,149 @@ from tailor.compiler.models import (
 if TYPE_CHECKING:
     pass
 
-_W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+_W   = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+_WP  = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+_A   = "http://schemas.openxmlformats.org/drawingml/2006/main"
+_PIC = "http://schemas.openxmlformats.org/drawingml/2006/picture"
+_R   = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 _log = logging.getLogger(__name__)
+
+_PT_TO_EMU = 12700  # 1 point = 12700 English Metric Units
+
+
+# ---------------------------------------------------------------------------
+# Floating image helpers (PDF raster asset preservation)
+# ---------------------------------------------------------------------------
+
+def _make_floating_image_para(
+    png_bytes: bytes,
+    x_pt: float,
+    y_pt: float,
+    w_pt: float,
+    h_pt: float,
+    doc_part,
+    img_id: int,
+    behind_doc: bool = False,
+) -> "Any | None":
+    """Return a ``w:p`` containing a floating (page-anchored) image, or None on error.
+
+    The image is positioned at (x_pt, y_pt) from the page top-left corner,
+    matching the original PDF coordinates.  When *behind_doc* is True the image
+    sits behind body text (suitable for decorative backgrounds); otherwise it
+    floats above text with no wrapping (suitable for profile photos).
+    """
+    if doc_part is None or not png_bytes:
+        return None
+
+    import io
+    from lxml import etree
+
+    try:
+        rId, _ = doc_part.get_or_add_image(io.BytesIO(png_bytes))
+    except Exception:
+        return None
+
+    x_emu = int(x_pt * _PT_TO_EMU)
+    y_emu = int(y_pt * _PT_TO_EMU)
+    cx_emu = int(w_pt * _PT_TO_EMU)
+    cy_emu = int(h_pt * _PT_TO_EMU)
+
+    # Declare DrawingML namespaces with canonical prefixes ('a:', 'pic:') on the
+    # paragraph element so lxml uses those prefixes for all descendant elements.
+    # Without this lxml auto-generates 'ns0:', 'ns2:' etc. which confuse LibreOffice.
+    p = etree.Element(f"{{{_W}}}p", nsmap={"a": _A, "pic": _PIC})
+    r = etree.SubElement(p, f"{{{_W}}}r")
+    drawing = etree.SubElement(r, f"{{{_W}}}drawing")
+
+    anchor = etree.SubElement(
+        drawing, f"{{{_WP}}}anchor",
+        distT="0", distB="0", distL="0", distR="0",
+        simplePos="0", relativeHeight="2",
+        behindDoc="1" if behind_doc else "0",
+        locked="0", layoutInCell="1", allowOverlap="0",
+    )
+
+    etree.SubElement(anchor, f"{{{_WP}}}simplePos", x="0", y="0")
+
+    posH = etree.SubElement(anchor, f"{{{_WP}}}positionH", relativeFrom="page")
+    etree.SubElement(posH, f"{{{_WP}}}posOffset").text = str(x_emu)
+
+    posV = etree.SubElement(anchor, f"{{{_WP}}}positionV", relativeFrom="page")
+    etree.SubElement(posV, f"{{{_WP}}}posOffset").text = str(y_emu)
+
+    etree.SubElement(anchor, f"{{{_WP}}}extent", cx=str(cx_emu), cy=str(cy_emu))
+    etree.SubElement(anchor, f"{{{_WP}}}effectExtent", l="0", t="0", r="0", b="0")
+    etree.SubElement(anchor, f"{{{_WP}}}wrapNone")
+
+    docPr = etree.SubElement(anchor, f"{{{_WP}}}docPr")
+    docPr.set("id", str(img_id))
+    docPr.set("name", f"Picture{img_id}")
+
+    # cNvGraphicFramePr must contain graphicFrameLocks so renderers treat this
+    # as a proper picture frame (required by LibreOffice; Word tolerates omission).
+    cNvGFPr = etree.SubElement(anchor, f"{{{_WP}}}cNvGraphicFramePr")
+    etree.SubElement(cNvGFPr, f"{{{_A}}}graphicFrameLocks", noChangeAspect="1")
+
+    graphic = etree.SubElement(anchor, f"{{{_A}}}graphic")
+    graphicData = etree.SubElement(
+        graphic, f"{{{_A}}}graphicData",
+        uri="http://schemas.openxmlformats.org/drawingml/2006/picture",
+    )
+
+    pic = etree.SubElement(graphicData, f"{{{_PIC}}}pic")
+
+    nvPicPr = etree.SubElement(pic, f"{{{_PIC}}}nvPicPr")
+    etree.SubElement(nvPicPr, f"{{{_PIC}}}cNvPr", id=str(img_id), name=f"Picture{img_id}")
+    etree.SubElement(nvPicPr, f"{{{_PIC}}}cNvPicPr")
+
+    blipFill = etree.SubElement(pic, f"{{{_PIC}}}blipFill")
+    blip = etree.SubElement(blipFill, f"{{{_A}}}blip")
+    blip.set(f"{{{_R}}}embed", rId)
+    stretch = etree.SubElement(blipFill, f"{{{_A}}}stretch")
+    etree.SubElement(stretch, f"{{{_A}}}fillRect")
+
+    spPr = etree.SubElement(pic, f"{{{_PIC}}}spPr")
+    xfrm = etree.SubElement(spPr, f"{{{_A}}}xfrm")
+    etree.SubElement(xfrm, f"{{{_A}}}off", x="0", y="0")
+    etree.SubElement(xfrm, f"{{{_A}}}ext", cx=str(cx_emu), cy=str(cy_emu))
+    prstGeom = etree.SubElement(spPr, f"{{{_A}}}prstGeom", prst="rect")
+    etree.SubElement(prstGeom, f"{{{_A}}}avLst")
+
+    return p
+
+
+def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
+    """Append floating image paragraphs for every extracted ``PageImageBlock``.
+
+    Called once after each render path writes its content paragraphs.
+    Images are appended to the body (or inserted before sectPr when present)
+    so they appear as page-anchored floating objects independent of text flow.
+
+    Profile photos float above text (behindDoc=0); decorative elements sit
+    behind text (behindDoc=1).
+    """
+    if not getattr(doc, "page_images", None) or doc_part is None:
+        return
+
+    def _add(elem) -> None:
+        # Insert at position 0 so the anchor paragraph is always on page 1.
+        # LibreOffice places page-anchored images on the page of their anchor
+        # paragraph — appending at the end puts images on the last page when
+        # the document spans multiple pages.
+        body.insert(0, elem)
+
+    for i, img in enumerate(doc.page_images):
+        behind = img.category != "profile_photo"
+        para = _make_floating_image_para(
+            img.image_bytes,
+            img.x_pt, img.y_pt,
+            img.width_pt, img.height_pt,
+            doc_part,
+            img_id=1000 + i,
+            behind_doc=behind,
+        )
+        if para is not None:
+            _add(para)
 
 
 # ---------------------------------------------------------------------------
@@ -4883,6 +5024,7 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
             _render_pdf_section_row_table(doc, body, sectPr, doc_part=d.part)
         else:
             _render_pdf_two_col(doc, body, sectPr, doc_part=d.part)
+        _insert_page_images(doc, body, sectPr, d.part)
         d.save(output_path)
         return
 
@@ -4896,6 +5038,7 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         sectPr = body.find(f"{{{_W}}}sectPr")
         _apply_pdf_page_geometry(sectPr, doc.layout)
         _render_pdf_single_col_dark_header(doc, body, sectPr, doc_part=d.part)
+        _insert_page_images(doc, body, sectPr, d.part)
         d.save(output_path)
         return
 
@@ -4928,6 +5071,7 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
                 doc, _body_grp, _sectPr_grp, _d_grp.part,
                 _same_level_groups, _text_w_g,
             )
+            _insert_page_images(doc, _body_grp, _sectPr_grp, _d_grp.part)
             _d_grp.save(output_path)
             return
 
@@ -5083,4 +5227,6 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         else:
             _render_para(item, body, sectPr, preserve_section_break=id(item) in header_para_ids)
 
+    if doc.source_kind == "pdf":
+        _insert_page_images(doc, body, sectPr, d.part)
     d.save(output_path)
