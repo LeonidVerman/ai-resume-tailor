@@ -3714,6 +3714,61 @@ def _render_layout_two_col_table(
                 sectPr.addprevious(_hel)
             else:
                 body.append(_hel)
+
+    # Intro-zone extraction (sample 19 pattern): when the left column starts with
+    # an intro zone (title section + contact table + summary) before the first
+    # "real" content section (which has roles), extract the intro zone as body-level
+    # paragraphs so the 2-col table starts at WORK EXPERIENCE level — aligning with
+    # RELEVANT SKILLS in the right column.
+    # Guard: only applies when there is a LayoutTableBlock in the intro zone AND
+    # a content section (with roles) exists in the left column blocks.
+    _sec_with_roles_pids: frozenset[str] = frozenset(
+        sec.heading.para_id
+        for sec in (doc.sections or [])
+        if sec.heading and sec.heading.para_id and sec.roles
+    )
+    _intro_scan_table_seen: bool = False
+    _intro_first_content_idx: "int | None" = None
+    for _ii, _iblk in enumerate(_section_left_blocks):
+        if isinstance(_iblk, LayoutTableBlock):
+            _intro_scan_table_seen = True
+        elif (
+            isinstance(_iblk, LayoutParagraphBlock)
+            and _iblk.para_id
+            and _iblk.para_id in _sec_with_roles_pids
+        ):
+            _intro_first_content_idx = _ii
+            break
+    if (
+        _intro_scan_table_seen
+        and _intro_first_content_idx is not None
+        and 0 < _intro_first_content_idx <= 20
+        and _intro_first_content_idx < len(_section_left_blocks)
+    ):
+        _intro_zone_blocks = _section_left_blocks[:_intro_first_content_idx]
+        _section_left_blocks = _section_left_blocks[_intro_first_content_idx:]
+        for _izblk in _intro_zone_blocks:
+            if isinstance(_izblk, LayoutTableBlock):
+                _iztbl = etree.fromstring(_izblk.xml_proto_xml)
+                for _iz_pid, _iz_pel in zip(_izblk.para_ids, _iztbl.findall(f".//{{{_W}}}p")):
+                    _iz_pm = para_lookup.get(_iz_pid)
+                    if _iz_pm is not None:
+                        _set_para_text(_iz_pel, _iz_pm.text)
+                        _clear_sdt_placeholder(_iz_pel)
+                if sectPr is not None:
+                    sectPr.addprevious(_iztbl)
+                else:
+                    body.append(_iztbl)
+            else:
+                _izel = _render_block_into_elem(
+                    _izblk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn,
+                )
+                if _izel is not None:
+                    if sectPr is not None:
+                        sectPr.addprevious(_izel)
+                    else:
+                        body.append(_izel)
+
     left_blocks = _section_left_blocks
 
     # Build tblPr: inherit borders from source table when available (Task 2).
@@ -3758,6 +3813,7 @@ def _render_layout_two_col_table(
     tr = etree.SubElement(tbl, f"{{{_W}}}tr")
 
     def _fill_cell(tc, blocks, col_x_emu: int, extra_paras=None, exempt_font_cap_ids=None) -> None:
+        _cell_consec_empty: int = 0
         for blk in blocks:
             if isinstance(blk, LayoutTableBlock):
                 tbl_el = etree.fromstring(blk.xml_proto_xml)
@@ -3767,6 +3823,7 @@ def _render_layout_two_col_table(
                         _set_para_text(p_el, pm.text)
                         _clear_sdt_placeholder(p_el)
                 tc.append(tbl_el)
+                _cell_consec_empty = 0
             else:
                 el = _render_block_into_elem(
                     blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn,
@@ -3777,6 +3834,18 @@ def _render_layout_two_col_table(
                     # BEFORE w:cols is used by LibreOffice: prevents background image
                     # from shifting when the column reference changes (sample 16 fix).
                     _fix_col_relative_anchors(el, col_x_emu)
+                    # Consecutive-empty compression: minimize 2nd+ consecutive empty paras
+                    # to remove blank gaps between roles. Skip header_para blocks (contact
+                    # info area) which are section-separation spacers that must be preserved.
+                    _fc_has_text = any(t.text for t in el.iter(f"{{{_W}}}t"))
+                    _fc_pid = blk.para_id if isinstance(blk, LayoutParagraphBlock) else None
+                    _fc_is_header = bool(_fc_pid and _fc_pid in _header_para_ids)
+                    if not _fc_has_text and not _fc_is_header:
+                        _cell_consec_empty += 1
+                        if _cell_consec_empty >= 2:
+                            _minimize_empty_para(el)
+                    else:
+                        _cell_consec_empty = 0
                     tc.append(el)
         # Append extra unbound paragraphs (LLM overflow content)
         if extra_paras:
@@ -4112,6 +4181,11 @@ def _render_from_layout_blocks(
     _spacer_followup_remaining: int = 0  # minimize empty paras following an oversized spacer
     _consecutive_empty_count: int = 0  # consecutive empty para run; minimize from 2nd onward
     _pending_bg_drawings: list = []  # extracted full-height behindDoc drawings awaiting emit
+    # Header spacers (name/title/contact area) must not be compressed — they provide
+    # the vertical gap between the header section and the first body section.
+    _header_para_ids_rfb: frozenset[str] = frozenset(
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    )
 
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
@@ -4381,13 +4455,19 @@ def _render_from_layout_blocks(
                     # empty spacer paragraphs between roles (line=200-400 twips
                     # each).  Only the first is needed for visual separation;
                     # minimize all subsequent ones to prevent a large blank gap.
-                    _consecutive_empty_count += 1
-                    if _consecutive_empty_count >= 2:
-                        _minimize_empty_para(elem)
-                        _log.debug(
-                            "CONSECUTIVE_EMPTY_MINIMIZED: para_id=%r count=%d",
-                            block.para_id, _consecutive_empty_count,
-                        )
+                    # Skip header_para blocks: those spacers sit between the
+                    # document header section and the first body section and must
+                    # be preserved (sample 28: gap between ENGINEERING and GENERAL INFO).
+                    if block.para_id and block.para_id in _header_para_ids_rfb:
+                        _consecutive_empty_count = 0
+                    else:
+                        _consecutive_empty_count += 1
+                        if _consecutive_empty_count >= 2:
+                            _minimize_empty_para(elem)
+                            _log.debug(
+                                "CONSECUTIVE_EMPTY_MINIMIZED: para_id=%r count=%d",
+                                block.para_id, _consecutive_empty_count,
+                            )
                 else:
                     _consecutive_empty_count = 0
 
