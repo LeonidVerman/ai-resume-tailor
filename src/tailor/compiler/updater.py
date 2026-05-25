@@ -172,7 +172,9 @@ def _match_sections(
         _verbatim_only = frozenset({"other"}) | _LOCKED_SEMANTIC_TYPES
         unmatched_content_orig = [
             oi for oi in range(len(orig))
-            if oi not in used_orig and orig[oi].semantic_type not in _verbatim_only
+            if oi not in used_orig
+            and orig[oi].semantic_type not in _verbatim_only
+            and (orig[oi].body_paras or orig[oi].roles)  # empty sections have nothing to inject
         ]
         all_orig_matched = len(unmatched_content_orig) == 0
         if not all_orig_matched:

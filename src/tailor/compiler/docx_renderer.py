@@ -3969,6 +3969,7 @@ def _render_from_layout_blocks(
     )
     _compress_remaining: int = 0  # count of subsequent empty paras still to compress
     _spacer_followup_remaining: int = 0  # minimize empty paras following an oversized spacer
+    _consecutive_empty_count: int = 0  # consecutive empty para run; minimize from 2nd onward
     _pending_bg_drawings: list = []  # extracted full-height behindDoc drawings awaiting emit
 
     for block in doc.layout_blocks:  # type: ignore[union-attr]
@@ -4093,6 +4094,7 @@ def _render_from_layout_blocks(
                 _fix_anchor_layout_in_cell(_tc)
             # Once we hit a table block, stop compressing spacers (table started).
             _compress_remaining = 0
+            _consecutive_empty_count = 0
             elem: Any = tbl_elem
             # Schedule background drawings to be inserted before the table.
             # They are emitted in the elem-insertion block below.
@@ -4214,21 +4216,39 @@ def _render_from_layout_blocks(
                     if block.para_id:
                         _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)
                     # Structural/orphan paragraph — insert verbatim (original text kept)
+                _has_xml_text_ce = any(t.text for t in elem.iter(f"{{{_W}}}t"))
+                _pm_text_ce = (pm.text.strip() if pm else "")
+                _is_empty_ce = not _pm_text_ce and not _has_xml_text_ce
                 _did_collapse = _collapse_oversized_spacer(elem)
                 if _did_collapse:
                     # After collapsing a large spacer, also minimize subsequent
                     # consecutive empty paragraphs (e.g. para_104-109 after para_102
                     # in template 17) that together create the same blank gap.
                     _spacer_followup_remaining = 20
+                    _consecutive_empty_count = 1
                 elif _spacer_followup_remaining > 0:
-                    _has_xml_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
-                    _pm_text = (pm.text.strip() if pm else "")
-                    if not _pm_text and not _has_xml_text:
+                    if _is_empty_ce:
                         _minimize_empty_para(elem)
                         _spacer_followup_remaining -= 1
+                        _consecutive_empty_count += 1
                         _log.debug("SPACER_FOLLOWUP_MINIMIZED: para_id=%r", block.para_id)
                     else:
                         _spacer_followup_remaining = 0  # hit real content, stop
+                        _consecutive_empty_count = 0
+                elif _is_empty_ce:
+                    # Consecutive-empty compression: the template places several
+                    # empty spacer paragraphs between roles (line=200-400 twips
+                    # each).  Only the first is needed for visual separation;
+                    # minimize all subsequent ones to prevent a large blank gap.
+                    _consecutive_empty_count += 1
+                    if _consecutive_empty_count >= 2:
+                        _minimize_empty_para(elem)
+                        _log.debug(
+                            "CONSECUTIVE_EMPTY_MINIMIZED: para_id=%r count=%d",
+                            block.para_id, _consecutive_empty_count,
+                        )
+                else:
+                    _consecutive_empty_count = 0
 
 
             # Post-summary spacer compression: once the summary body anchor para
@@ -4733,8 +4753,10 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                         trPr.remove(trH)
 
                 for ci, new_tc in enumerate(new_cells_elem):
-                    for p in list(new_tc.findall(f"{{{_W}}}p")):
-                        new_tc.remove(p)
+                    # Snapshot the deepcopy cell's direct-child paragraphs BEFORE
+                    # removing anything; their order in new_tc mirrors orig_ps order.
+                    new_tc_ps = list(new_tc.findall(f"{{{_W}}}p"))
+
                     # Non-first split rows: remove subtables (nested w:tbl elements).
                     # deepcopy copies all content including nested tables; keeping
                     # them in every split row duplicates header/contact sub-tables
@@ -4781,16 +4803,27 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                     if not para_slice and orig_ps:
                         para_slice = [orig_ps[-1]]
 
-                    for p in para_slice:
-                        new_p = deepcopy(p)
-                        if not _cell_has_text:
-                            # Remove drawings from separator cells so they don't
-                            # force the split row to the drawing's height.
+                    # Determine which original para indices should be kept.
+                    # new_tc_ps[i] is the deepcopy of orig_ps[i], so matching by
+                    # position correctly identifies which deepcopy elements to keep.
+                    _keep_ids = {id(p) for p in para_slice}
+                    _keep_idxs = {
+                        i for i, orig_p in enumerate(orig_ps) if id(orig_p) in _keep_ids
+                    }
+                    # Remove only the deepcopy paragraphs NOT in the slice.
+                    # Paragraphs in the slice stay in new_tc at their original
+                    # position so nested subtables (e.g. contact table) preserve
+                    # their relative order (before or after those paragraphs).
+                    for idx, new_p in enumerate(new_tc_ps):
+                        if idx not in _keep_idxs:
+                            new_tc.remove(new_p)
+                        elif not _cell_has_text:
+                            # Separator cell: strip drawings from kept paragraphs
+                            # so they don't force the row to the drawing's height.
                             for _dw in list(new_p.findall(f".//{{{_W}}}drawing")):
                                 _dw_parent = _dw.getparent()
                                 if _dw_parent is not None:
                                     _dw_parent.remove(_dw)
-                        new_tc.append(new_p)
 
                     # Suppress keepNext/keepLines on all paras so LibreOffice
                     # can paginate between rows without the heading style chain.
