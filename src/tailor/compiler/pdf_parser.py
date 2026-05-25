@@ -876,6 +876,198 @@ def _extract_decorative_vector_images(page) -> "list":
     return result
 
 
+def _extract_vector_lines(page) -> "list":
+    """Extract thin horizontal/vertical vector rules as PageImageBlock.
+
+    Captures stroke-only paths that form section dividers, column separators,
+    and decorative rules (h < 4 pt or w < 4 pt, length > 20 pt, non-white).
+    Rasterizes each rule as a solid-color PNG matching the stroke color.
+
+    Does not capture:
+    - Tiny glyphs or noise (length < 20 pt)
+    - Near-white lines (luminance ≥ 230 / 255 — invisible on white bg)
+    - Lines already captured by _extract_decorative_vector_images (filled areas)
+    """
+    from tailor.compiler.models import PageImageBlock
+
+    try:
+        drawings = page.get_drawings()
+    except Exception:
+        return []
+
+    result: list = []
+    seen: set = set()
+
+    for d in drawings:
+        rect = d.get("rect")
+        if rect is None:
+            continue
+        color = d.get("color")  # stroke color
+        if color is None:
+            continue  # no stroke — already handled as filled region
+        fill = d.get("fill")
+        if fill is not None:
+            # Skip filled shapes — handled by _extract_decorative_vector_images
+            # UNLESS the fill is white (contact boxes have white fill + stroke)
+            try:
+                fr, fg, fb = int(fill[0] * 255), int(fill[1] * 255), int(fill[2] * 255)
+                if (fr + fg + fb) / 3 < 230:
+                    continue  # non-white fill → already captured
+            except (TypeError, IndexError):
+                pass
+
+        sw = d.get("width") or 1.0
+        x0, y0, x1, y1 = rect
+        w, h = x1 - x0, y1 - y0
+
+        # Effective visual dimensions (stroke width expands the line)
+        effective_h = max(h, sw)
+        effective_w = max(w, sw)
+
+        is_h_rule = effective_h <= 4.0 and effective_w >= 20.0
+        is_v_rule = effective_w <= 4.0 and effective_h >= 20.0
+        if not (is_h_rule or is_v_rule):
+            continue
+
+        hex_color = _fitz_color_to_hex(color)
+        if hex_color is None:
+            continue
+        r_c = int(hex_color[0:2], 16)
+        g_c = int(hex_color[2:4], 16)
+        b_c = int(hex_color[4:6], 16)
+        if (r_c + g_c + b_c) / 3 >= 230:
+            continue  # near-white line — not visually significant
+
+        key = (round(x0, 1), round(y0, 1), round(x1, 1), round(y1, 1))
+        if key in seen:
+            continue
+        seen.add(key)
+
+        # Center the rendered rect on the path (stroke extends ±sw/2)
+        render_x = x0 - sw / 2 if is_v_rule else x0
+        render_y = y0 - sw / 2 if is_h_rule else y0
+        render_w = max(effective_w, 1.0)
+        render_h = max(effective_h, 1.0)
+
+        try:
+            png_bytes = _make_solid_color_png(render_w, render_h, hex_color)
+        except Exception:
+            continue
+
+        result.append(PageImageBlock(
+            image_bytes=png_bytes,
+            x_pt=render_x,
+            y_pt=render_y,
+            width_pt=render_w,
+            height_pt=render_h,
+            category="h_rule" if is_h_rule else "v_rule",
+            page_index=0,
+        ))
+
+    return result
+
+
+def _extract_vector_borders(page) -> "list":
+    """Extract stroked rectangle borders (contact boxes, section frames) as PageImageBlock.
+
+    Targets rectangles with a significant stroke outline but no fill (or white fill)
+    that form visible structural borders. These are rasterized from the page at 2x
+    resolution so antialiasing and corner rounding are preserved.
+
+    Thresholds:
+    - Area >= 0.5 % of page (eliminates tiny icons)
+    - Area < 3 % of page (larger filled areas are handled by _extract_decorative_vector_images)
+    - Has stroke color (non-white)
+    - Fill is None or white (pure border with no filled background)
+    - Stroke width > 0.5 pt (visible border)
+    """
+    from tailor.compiler.models import PageImageBlock
+
+    try:
+        import fitz as _fitz
+        drawings = page.get_drawings()
+    except Exception:
+        return []
+
+    pw = page.rect.width
+    ph = page.rect.height
+    min_area = pw * ph * 0.005   # 0.5 %
+    max_area = pw * ph * 0.30    # 30 % — large contact/section boxes included;
+    # _extract_decorative_vector_images handles filled non-white areas only,
+    # so white-fill stroked rectangles (contact boxes) won't be double-counted.
+
+    result: list = []
+    seen: set = set()
+    scale = 2.0
+    mat = _fitz.Matrix(scale, scale)
+
+    for d in drawings:
+        rect = d.get("rect")
+        if rect is None:
+            continue
+        color = d.get("color")
+        if color is None:
+            continue
+        sw = d.get("width") or 1.0
+        if sw < 0.5:
+            continue
+
+        fill = d.get("fill")
+        # Only capture white-fill or no-fill shapes (filled non-white → handled elsewhere)
+        if fill is not None:
+            try:
+                fr, fg, fb = int(fill[0] * 255), int(fill[1] * 255), int(fill[2] * 255)
+                if (fr + fg + fb) / 3 < 230:
+                    continue
+            except (TypeError, IndexError):
+                continue
+
+        x0, y0, x1, y1 = rect
+        w, h = x1 - x0, y1 - y0
+        area = w * h
+        if area < min_area or area > max_area:
+            continue
+
+        # Must be roughly rectangular (aspect ratio 0.1 to 10)
+        if h < 1.0 or w / h > 10 or h / w > 10:
+            continue
+
+        # Stroke color non-white
+        hex_color = _fitz_color_to_hex(color)
+        if hex_color is None:
+            continue
+        r_c = int(hex_color[0:2], 16)
+        g_c = int(hex_color[2:4], 16)
+        b_c = int(hex_color[4:6], 16)
+        if (r_c + g_c + b_c) / 3 >= 230:
+            continue
+
+        key = (round(x0), round(y0), round(x1), round(y1))
+        if key in seen:
+            continue
+        seen.add(key)
+
+        # Rasterize the clip region (captures the border stroke faithfully)
+        try:
+            clip = _fitz.Rect(x0 - sw, y0 - sw, x1 + sw, y1 + sw)
+            pix = page.get_pixmap(matrix=mat, clip=clip, alpha=False)
+            png_bytes = pix.tobytes("png")
+        except Exception:
+            continue
+
+        result.append(PageImageBlock(
+            image_bytes=png_bytes,
+            x_pt=x0 - sw,
+            y_pt=y0 - sw,
+            width_pt=w + sw * 2,
+            height_pt=h + sw * 2,
+            category="border_box",
+            page_index=0,
+        ))
+
+    return result
+
+
 def _extract_page_images(fitz_doc, page_index: int = 0) -> "list":
     """Extract meaningful raster images from a PDF page.
 
@@ -3118,10 +3310,14 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     )
     # Raster images (profile photos, footer bars, etc.)
     raster_images = _extract_page_images(doc, page_index=0)
-    # Solid-color overlays from vector drawing regions (sidebars, header/footer bands).
-    # Prepended so they render behind raster images and text.
+    # Solid-color overlays from large vector drawing regions (sidebars, header/footer bands).
     vector_images = _extract_decorative_vector_images(doc[0])
-    resume_doc.page_images = vector_images + raster_images
+    # Thin rule lines (horizontal/vertical section dividers, column separators).
+    vector_lines = _extract_vector_lines(doc[0])
+    # Stroked rectangle borders (contact boxes, section frames with white/no fill).
+    vector_borders = _extract_vector_borders(doc[0])
+    # Order: background fills first, then borders, then lines, then raster photos on top.
+    resume_doc.page_images = vector_images + vector_borders + vector_lines + raster_images
     from tailor.compiler.models import assign_stable_ids
     assign_stable_ids(resume_doc)
     return resume_doc
