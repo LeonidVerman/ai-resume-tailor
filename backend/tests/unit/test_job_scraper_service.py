@@ -18,6 +18,7 @@ from backend.app.services.job_scraper_service import (
     _extract_from_next_data,
     _extract_text_from_html,
     _http_scrape,
+    _extract_rendered_meta,
 )
 
 
@@ -65,11 +66,70 @@ PLAIN_HTML = """
 </body></html>
 """
 
+# Simulates a Taleo ATS shell: og:title present, og:site_name absent,
+# raw_text >= 300 chars (loading-screen chrome).
+TALEO_SHELL_HTML = """
+<html>
+<head>
+<meta property="og:title" content="Staff Software Engineer">
+</head>
+<body>
+<div class="app-shell">
+  <p>Please wait while the application loads. The content will appear momentarily.</p>
+  <p>If the page does not load within a few seconds, please try refreshing your browser.</p>
+  <p>We apologise for any inconvenience. This application requires JavaScript to function.</p>
+  <p>Please ensure that JavaScript is enabled in your browser settings before proceeding.</p>
+</div>
+</body>
+</html>
+"""
+
+# Simulates Taleo's fully-rendered page returned by ScraperAPI (JSON-LD present).
+TALEO_RENDERED_HTML = """
+<html><head>
+<script type="application/ld+json">
+{"@type": "JobPosting", "title": "Staff Software Engineer",
+ "hiringOrganization": {"name": "lululemon athletica"},
+ "description": "We are looking for a Staff Software Engineer to join our team and build great things."}
+</script>
+</head><body><h1>Staff Software Engineer</h1></body></html>
+"""
+
+# Simulates a HiBob SPA shell: generic og:title, no body content.
+HIBOB_SHELL_HTML = """
+<html>
+<head>
+<title>Careers</title>
+<meta property="og:title" content="Careers">
+</head>
+<body><div id="root"></div></body>
+</html>
+"""
+
+# Simulates HiBob's fully-rendered page returned by ScraperAPI.
+HIBOB_RENDERED_HTML = """
+<html>
+<head>
+<title>Backend Engineer - HiBob</title>
+<meta property="og:title" content="Backend Engineer">
+<meta property="og:site_name" content="HiBob">
+</head>
+<body>
+<h1>Backend Engineer</h1>
+<div>We are looking for a Backend Engineer with 5+ years of Python experience.
+You will scale our HR platform working alongside distributed-systems specialists.
+Strong knowledge of PostgreSQL, Redis, and cloud infrastructure required.
+Competitive salary, equity, and great benefits included.</div>
+</body>
+</html>
+"""
+
 
 def _mock_response(html: str, url: str = HIRING_CAFE_URL):
     resp = MagicMock()
     resp.text = html
     resp.url = url
+    resp.status_code = 200
     resp.raise_for_status.return_value = None
     return resp
 
@@ -246,6 +306,106 @@ class TestJobScraperServiceScrape:
 
         assert result.source == "scraping_client"
         mock_client.fetch.assert_called_once_with(HIRING_CAFE_URL)
+
+
+# ── ScraperAPI integration in _http_scrape ───────────────────────────────────
+
+
+class TestHttpScrapeScraperAPI:
+    """ScraperAPI step: triggered when company is absent or text is thin."""
+
+    def test_taleo_shell_triggers_scraperapi_and_uses_jsonld(self):
+        """Lululemon/Taleo: shell has ≥300 chars but no company → ScraperAPI →
+        JSON-LD in rendered page gives company + title + description."""
+        with (
+            patch("httpx.get", side_effect=[
+                _mock_response(TALEO_SHELL_HTML, "https://careers.lululemon.com/en_US/careers/JobDetail/Staff-Software-Engineer/59455"),
+                _mock_response(TALEO_RENDERED_HTML),
+            ]),
+            patch.dict("os.environ", {"SCRAPER_API_KEY": "test-key"}),
+        ):
+            result = _http_scrape("https://careers.lululemon.com/en_US/careers/JobDetail/Staff-Software-Engineer/59455")
+
+        assert result.job_title == "Staff Software Engineer"
+        assert result.company == "lululemon athletica"
+        assert "Staff Software Engineer" in result.raw_text
+        assert result.source == "http_fallback"
+
+    def test_hibob_shell_triggers_scraperapi_and_re_extracts_og_title(self):
+        """HiBob: SPA shell has generic 'Careers' og:title → ScraperAPI renders →
+        real job title and company re-extracted from rendered DOM."""
+        with (
+            patch("httpx.get", side_effect=[
+                _mock_response(HIBOB_SHELL_HTML, "https://hibob-e360.careers.hibob.com/jobs/some-uuid"),
+                _mock_response(HIBOB_RENDERED_HTML),
+            ]),
+            patch.dict("os.environ", {"SCRAPER_API_KEY": "test-key"}),
+        ):
+            result = _http_scrape("https://hibob-e360.careers.hibob.com/jobs/some-uuid")
+
+        assert result.job_title == "Backend Engineer"
+        assert result.company == "HiBob"
+        assert "Backend Engineer" in result.raw_text
+        assert result.source == "http_fallback"
+
+    def test_step3_returns_when_company_and_text_both_present(self):
+        """Normal SSR page: step 3 returns early without calling ScraperAPI."""
+        long_body = "<p>" + ("We need a Senior Developer with Python skills. " * 10) + "</p>"
+        html = PLAIN_HTML.replace(
+            "<p>We need a Senior Developer with Python skills.</p>", long_body
+        )
+        mock_get = MagicMock(return_value=_mock_response(html))
+        with (
+            patch("httpx.get", mock_get),
+            patch.dict("os.environ", {"SCRAPER_API_KEY": "test-key"}),
+        ):
+            result = _http_scrape(HIRING_CAFE_URL)
+
+        assert result.company == "Acme Corp"
+        assert result.job_title == "Senior Developer"
+        mock_get.assert_called_once()  # ScraperAPI not called
+
+    def test_falls_back_to_partial_when_scraperapi_fails(self):
+        """If ScraperAPI call raises, fall through to whatever step 3 produced."""
+        with (
+            patch("httpx.get", side_effect=[
+                _mock_response(TALEO_SHELL_HTML),
+                Exception("ScraperAPI unreachable"),
+            ]),
+            patch.dict("os.environ", {"SCRAPER_API_KEY": "test-key"}),
+        ):
+            result = _http_scrape(HIRING_CAFE_URL)
+
+        # Falls back to the shell result: title from og:title, no company
+        assert result.job_title == "Staff Software Engineer"
+        assert result.company is None
+        assert result.source == "http_fallback"
+
+
+# ── _extract_rendered_meta ────────────────────────────────────────────────────
+
+
+class TestExtractRenderedMeta:
+    def test_prefers_og_site_name_over_fallback(self):
+        company, _ = _extract_rendered_meta(HIBOB_RENDERED_HTML, "fallback-co", None)
+        assert company == "HiBob"
+
+    def test_uses_fallback_company_when_og_site_name_absent(self):
+        company, _ = _extract_rendered_meta(TALEO_RENDERED_HTML, "lululemon", None)
+        assert company == "lululemon"
+
+    def test_prefers_og_title_over_h1(self):
+        _, title = _extract_rendered_meta(HIBOB_RENDERED_HTML, None, None)
+        assert title == "Backend Engineer"
+
+    def test_falls_back_to_h1_when_og_title_absent(self):
+        html = "<html><body><h1>Staff Software Engineer</h1></body></html>"
+        _, title = _extract_rendered_meta(html, None, "fallback-title")
+        assert title == "Staff Software Engineer"
+
+    def test_falls_back_to_fallback_title_when_nothing_found(self):
+        _, title = _extract_rendered_meta("<html><body></body></html>", None, "fallback-title")
+        assert title == "fallback-title"
 
 
 # ── _extract_text_from_html ───────────────────────────────────────────────────
