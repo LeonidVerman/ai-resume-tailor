@@ -4538,14 +4538,17 @@ def _render_from_layout_blocks(
                 _compress_remaining = 8  # compress up to 8 following empty paras
             elif _compress_remaining > 0:
                 _para_text = (pm.text.strip() if pm else "").strip()
-                if not _para_text:
+                _is_header_spacer = bool(
+                    block.para_id and block.para_id in _header_para_ids_rfb
+                )
+                if not _para_text and not _is_header_spacer:
                     _zero_para_spacing(elem)
                     _compress_remaining -= 1
                     _log.debug(
                         "SUMMARY_SPACER_COMPRESSED: para_id=%r spacing zeroed",
                         block.para_id,
                     )
-                else:
+                elif _para_text:
                     _compress_remaining = 0  # non-empty para: stop compressing
 
         # Emit extracted background drawings as zero-height body paragraphs
