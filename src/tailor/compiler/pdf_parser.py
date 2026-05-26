@@ -430,25 +430,27 @@ def _extract_header_bg(page) -> tuple[str | None, float]:
             ph = page.rect.height
             mat = _fitz.Matrix(1, 1)
             _cx = pw / 2.0
-            # Sample the topmost pixel row to detect dark background
-            _pix0 = page.get_pixmap(matrix=mat, clip=_fitz.Rect(_cx - 1, 0, _cx + 1, 4))
-            _top_px = _pix0.pixel(0, 0)
-            _lum = (_top_px[0] + _top_px[1] + _top_px[2]) / 3.0
-            if _lum < 100:  # dark background at page top
-                # Scan downward to find where the dark band ends
-                _hdr_y1_px = 0.0
-                for _y in range(0, min(350, int(ph)), 4):
-                    _clip = _fitz.Rect(_cx - 1, _y, _cx + 1, _y + 4)
-                    _px = page.get_pixmap(matrix=mat, clip=_clip).pixel(0, 0)
-                    if (_px[0] + _px[1] + _px[2]) / 3.0 > 150:
-                        _hdr_y1_px = float(_y)
-                        break
-                else:
-                    _hdr_y1_px = 200.0
-                if _hdr_y1_px > 12.0:
-                    r, g, b = _top_px[0], _top_px[1], _top_px[2]
-                    best_color = f"{r:02x}{g:02x}{b:02x}"
-                    best_y1 = _hdr_y1_px
+            # Scan top 30% of page to find a non-white band — the band may not
+            # start at y=0 (some templates have a white margin above the header).
+            _band_color = None
+            _band_y0 = 0.0
+            _band_y1 = 0.0
+            _scan_limit = int(min(ph * 0.30, 250))
+            for _y in range(0, _scan_limit, 4):
+                _clip = _fitz.Rect(_cx - 1, _y, _cx + 1, _y + 4)
+                _px = page.get_pixmap(matrix=mat, clip=_clip, alpha=False).pixel(0, 0)
+                _lum = (_px[0] + _px[1] + _px[2]) / 3.0
+                if _lum < 100:  # non-white / dark band
+                    if _band_color is None:
+                        _band_color = _px
+                        _band_y0 = float(_y)
+                    _band_y1 = float(_y + 4)
+                elif _band_color is not None:
+                    break  # band ended
+            if _band_color is not None and (_band_y1 - _band_y0) > 30.0:
+                r, g, b = _band_color[0], _band_color[1], _band_color[2]
+                best_color = f"{r:02x}{g:02x}{b:02x}"
+                best_y1 = _band_y1
         except Exception:
             pass
 
