@@ -2015,8 +2015,8 @@ def _zero_para_spacing(p_elem) -> None:
         spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
     spacing.set(f"{{{_W}}}before", "0")
     spacing.set(f"{{{_W}}}after", "0")
-    spacing.set(f"{{{_W}}}line", "1")
-    spacing.set(f"{{{_W}}}lineRule", "exact")
+    spacing.set(f"{{{_W}}}line", "240")
+    spacing.set(f"{{{_W}}}lineRule", "auto")
 
 
 def _make_inline_summary_para(reference_p_elem, text: str):
@@ -3470,36 +3470,6 @@ def _render_layout_two_col_table(
             _rb_start = _i + 1
     if _rb_start:
         right_blocks = right_blocks[_rb_start:]
-
-    # Collapse runs of 2+ consecutive empty paragraph blocks from both columns.
-    # Native w:cols templates use repeated empty paragraphs between sections to
-    # vertically align section starts across columns.  Inside a table cell these
-    # spacers create visible blank gaps between sections.  A run of N≥2
-    # consecutive empties is collapsed to at most 1 so each column flows
-    # continuously without the original column-alignment padding.
-    def _collapse_empty_runs(blocks, _para_lookup):
-        result = []
-        consecutive = 0
-        for blk in blocks:
-            is_empty = False
-            if isinstance(blk, LayoutParagraphBlock) and blk.xml_proto_xml:
-                _pm = _para_lookup.get(blk.para_id) if blk.para_id else None
-                is_empty = (
-                    "<w:t>" not in blk.xml_proto_xml
-                    and (_pm is None or not _pm.text.strip())
-                )
-            if is_empty:
-                consecutive += 1
-                if consecutive <= 1:
-                    result.append(blk)
-                # else: skip — alignment spacer
-            else:
-                consecutive = 0
-                result.append(blk)
-        return result
-
-    left_blocks = _collapse_empty_runs(left_blocks, para_lookup)
-    right_blocks = _collapse_empty_runs(right_blocks, para_lookup)
 
     # Collect para_ids of right-column name/title paragraphs whose run-level
     # font size is large (> 36 half-pts = 18pt) so the font-cap logic in
