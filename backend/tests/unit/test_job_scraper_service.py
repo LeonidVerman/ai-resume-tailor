@@ -19,6 +19,7 @@ from backend.app.services.job_scraper_service import (
     _extract_text_from_html,
     _http_scrape,
     _extract_rendered_meta,
+    _company_from_hostname,
 )
 
 
@@ -365,6 +366,23 @@ class TestHttpScrapeScraperAPI:
         assert result.job_title == "Senior Developer"
         mock_get.assert_called_once()  # ScraperAPI not called
 
+    def test_lululemon_taleo_company_derived_from_hostname(self):
+        """Lululemon/Taleo: SSR page has >=300 chars but no og:site_name →
+        company derived from hostname; no ScraperAPI call needed."""
+        # Plain HTTP gives 15 K of SSR content but no og:site_name
+        long_body = "<p>" + ("We are looking for a Staff Software Engineer. " * 40) + "</p>"
+        html = f"""
+        <html><head>
+        <meta property="og:title" content="Staff Software Engineer">
+        </head><body>{long_body}</body></html>
+        """
+        with patch("httpx.get", return_value=_mock_response(html)):
+            result = _http_scrape("https://careers.lululemon.com/en_US/careers/JobDetail/Staff-SWE/59455")
+
+        assert result.company == "Lululemon"
+        assert result.job_title == "Staff Software Engineer"
+        assert len(result.raw_text) > 300
+
     def test_falls_back_to_partial_when_scraperapi_fails(self):
         """If ScraperAPI call raises, fall through to whatever step 3 produced."""
         with (
@@ -380,6 +398,32 @@ class TestHttpScrapeScraperAPI:
         assert result.job_title == "Staff Software Engineer"
         assert result.company is None
         assert result.source == "http_fallback"
+
+
+# ── _company_from_hostname ────────────────────────────────────────────────────
+
+
+class TestCompanyFromHostname:
+    def test_careers_subdomain(self):
+        assert _company_from_hostname("https://careers.lululemon.com/jobs/123") == "Lululemon"
+
+    def test_jobs_subdomain(self):
+        assert _company_from_hostname("https://jobs.example.com/position/42") == "Example"
+
+    def test_hyphenated_slug(self):
+        assert _company_from_hostname("https://careers.my-company.com/jobs/1") == "My Company"
+
+    def test_returns_none_when_only_tld_and_prefix(self):
+        # hiring.cafe → TLD="cafe" stripped → only "hiring" which is in SKIP → None
+        assert _company_from_hostname("https://hiring.cafe/viewjob/abc") is None
+
+    def test_does_not_use_tld_as_company(self):
+        # www.jobs.io → skip TLD "io" → skip "jobs" → skip "www" → None
+        assert _company_from_hostname("https://www.jobs.io/") is None
+
+    def test_skips_multiple_prefixes(self):
+        # www.careers.acme.com → skip www, skip careers → "Acme"
+        assert _company_from_hostname("https://www.careers.acme.com/jobs/1") == "Acme"
 
 
 # ── _extract_rendered_meta ────────────────────────────────────────────────────

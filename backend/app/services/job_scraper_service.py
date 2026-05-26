@@ -239,7 +239,9 @@ def _http_scrape(url: str) -> JobScrapedData:
                 spa_text = _extract_text_from_html(rendered_html)
                 if len(spa_text.strip()) >= 300:
                     rendered_company, rendered_title = _extract_rendered_meta(
-                        rendered_html, og_site, og_title
+                        rendered_html,
+                        og_site or _company_from_hostname(url),
+                        og_title,
                     )
                     logger.info("ScraperAPI SPA render succeeded, text_len=%d", len(spa_text))
                     return JobScrapedData(
@@ -254,15 +256,43 @@ def _http_scrape(url: str) -> JobScrapedData:
 
     # Fall through: return whatever step 3 produced (may be partial).
     if raw_text.strip():
+        # When company is absent but we captured substantial content, derive it
+        # from the hostname (e.g. careers.lululemon.com → "Lululemon").
+        # Only applies to real content (≥300 chars) to avoid misleading metadata
+        # on thin SPA shells where the company name would also be wrong.
+        company = og_site
+        if not company and len(raw_text.strip()) >= 300:
+            company = _company_from_hostname(final_url)
         return JobScrapedData(
             url=final_url,
-            company=og_site or None,
+            company=company or None,
             job_title=og_title or None,
             raw_text=raw_text,
             source="http_fallback",
         )
 
     raise RuntimeError(f"No text content found at {url}")
+
+
+def _company_from_hostname(url: str) -> str | None:
+    """Derive a company name from the job-page hostname as a last resort.
+
+    Strips common career-site subdomain prefixes and the TLD, then returns
+    the next meaningful segment, title-cased.  Examples:
+      careers.lululemon.com  → "Lululemon"
+      jobs.example.com       → "Example"
+    Returns None if no meaningful segment is found.
+    """
+    from urllib.parse import urlparse
+    host = urlparse(url).netloc.lower()
+    SKIP = {"careers", "career", "jobs", "job", "join", "work", "hiring",
+            "apply", "talent", "recruit", "www"}
+    parts = host.split(".")
+    # Always skip the TLD (last segment, e.g. "com", "io", "cafe")
+    for part in parts[:-1]:
+        if part not in SKIP and len(part) > 2:
+            return part.replace("-", " ").title()
+    return None
 
 
 def _h1_text(soup) -> str | None:
