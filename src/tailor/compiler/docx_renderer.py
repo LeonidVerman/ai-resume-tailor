@@ -4987,6 +4987,13 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
             if max_paras <= _OVERSIZED_ROW_PARA_THRESHOLD:
                 continue
 
+            # If any cell contains a nested table, the nested table determines row
+            # height dynamically.  Splitting here creates a height mismatch: the
+            # para-heavy cell is sliced at the threshold while the sibling cell's
+            # nested table is much taller, leaving a large void in the split row.
+            if any(tc.find(f"{{{_W}}}tbl") is not None for tc in cells):
+                continue
+
             tallest_idx = max(range(len(cells)), key=lambda i: len(cell_paras[i]))
             tallest_paras = cell_paras[tallest_idx]
             n = len(tallest_paras)
