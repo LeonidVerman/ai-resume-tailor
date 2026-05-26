@@ -3502,10 +3502,6 @@ def _render_layout_two_col_table(
                 result.append(blk)
         return result
 
-    _hp_ids_for_collapse = frozenset(pm.para_id for pm in (doc.header_paras or []) if pm.para_id)
-    left_blocks = _collapse_empty_runs(left_blocks, para_lookup, _hp_ids_for_collapse)
-    right_blocks = _collapse_empty_runs(right_blocks, para_lookup)
-
     # Collect para_ids of right-column name/title paragraphs whose run-level
     # font size is large (> 36 half-pts = 18pt) so the font-cap logic in
     # _render_block_into_elem skips them.  These slots are identity paragraphs
@@ -3514,6 +3510,7 @@ def _render_layout_two_col_table(
     # right-column blocks that have visible text content to avoid flagging actual
     # body content.  Skip leading empty spacer paragraphs (which the 700t-threshold
     # heuristic now preserves before the name paragraph, e.g. sample 27).
+    # NOTE: computed before collapse so the original block order is intact.
     _rne_candidates = [
         _b for _b in right_blocks[:8]
         if isinstance(_b, LayoutParagraphBlock)
@@ -3535,6 +3532,36 @@ def _render_layout_two_col_table(
                 _right_name_exempt.add(_rne_blk.para_id)
         except Exception:
             pass
+
+    # Find the consecutive empty blocks immediately after the last name/title
+    # block in the right column.  These are structural spacers that define the
+    # header-area height (e.g. sample 16: 4 empties between "DEVOPS ENGINEER"
+    # and "PROFILE" push PROFILE below the dark merged-header background).
+    # Collapsing them causes PROFILE/SKILLS/etc. to start too high (Problem 2).
+    _right_hp_ids: set[str] = set()
+    if _right_name_exempt:
+        _last_rn_idx = max(
+            (i for i, _b in enumerate(right_blocks)
+             if isinstance(_b, LayoutParagraphBlock)
+             and _b.para_id and _b.para_id in _right_name_exempt),
+            default=-1,
+        )
+        if _last_rn_idx >= 0:
+            for _rhb in right_blocks[_last_rn_idx + 1:]:
+                if not isinstance(_rhb, LayoutParagraphBlock) or not _rhb.xml_proto_xml:
+                    break
+                _pm_rh = para_lookup.get(_rhb.para_id) if _rhb.para_id else None
+                if (_pm_rh and _pm_rh.text.strip()) or "<w:t>" in _rhb.xml_proto_xml:
+                    break  # reached first body-section content — stop exempting
+                if _rhb.para_id:
+                    _right_hp_ids.add(_rhb.para_id)
+
+    _hp_ids_for_collapse = frozenset(pm.para_id for pm in (doc.header_paras or []) if pm.para_id)
+    left_blocks = _collapse_empty_runs(left_blocks, para_lookup, _hp_ids_for_collapse)
+    right_blocks = _collapse_empty_runs(
+        right_blocks, para_lookup,
+        frozenset(_right_hp_ids) if _right_hp_ids else None,
+    )
 
     # Extract full-page blip background DRAWINGS from left_blocks and insert them
     # as a separate body-level paragraph BEFORE the table.  A behindDoc blip
@@ -3986,6 +4013,11 @@ def _render_layout_two_col_table(
         sectPr.addprevious(tbl)
     else:
         body.append(tbl)
+
+    # Register so _split_oversized_table_rows skips this table — splitting it
+    # creates visual gaps because the left cell drives the row height while the
+    # right cell ends short (see _RENDERER_CREATED_TABLES docstring).
+    _RENDERER_CREATED_TABLES.add(id(tbl))
 
     _log.debug(
         "LAYOUT_TWO_COL_TABLE: left=%d/%d-twips right=%d/%d-twips gap=%d-twips accent=%s",
@@ -4917,6 +4949,13 @@ def _clear_docx_glossary(docx_path: str) -> None:
 
 _OVERSIZED_ROW_PARA_THRESHOLD = 14  # trigger row split when any cell exceeds this
 
+# Tables created by our renderer (from column-flow → 2-cell table conversion) are
+# balanced layouts that fit the page naturally.  They must NOT be split by
+# _split_oversized_table_rows — splitting creates a visual gap between content rows
+# because the left cell tends to drive the row height, leaving the right cell short.
+# Register element IDs here; cleared at the start of each render_docx call.
+_RENDERER_CREATED_TABLES: set[int] = set()
+
 
 def _trim_trailing_cell_paras(body: Any) -> None:
     """Remove excess trailing empty paragraphs from table cells.
@@ -4968,6 +5007,10 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
     from lxml import etree as _et
 
     for tbl_elem in list(body.findall(f"{{{_W}}}tbl")):
+        # Skip tables created by _render_layout_two_col_table — those are balanced
+        # 2-cell layouts that fit the page; splitting them creates row-height gaps.
+        if id(tbl_elem) in _RENDERER_CREATED_TABLES:
+            continue
         # Snapshot: newly inserted rows are NOT re-processed in the same pass.
         for row in list(tbl_elem.findall(f"{{{_W}}}tr")):
             cells = row.findall(f"{{{_W}}}tc")
@@ -5312,9 +5355,12 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         )
         _use_lb = USE_LAYOUT_BLOCK_RENDERER or not _has_runtime_xml
         if _use_lb:
+            _RENDERER_CREATED_TABLES.clear()
             _render_from_layout_blocks(doc, body, sectPr)
             # Split single-row tables that exceed page height so LibreOffice
             # can paginate them naturally (cantSplit='0' alone is insufficient).
+            # Tables created by _render_layout_two_col_table are registered in
+            # _RENDERER_CREATED_TABLES and skipped — they are balanced layouts.
             _split_oversized_table_rows(body, sectPr)
             # The split leaves trailing empty paragraphs at the end of each
             # sub-row's cells (template spacing paragraphs that fell between
