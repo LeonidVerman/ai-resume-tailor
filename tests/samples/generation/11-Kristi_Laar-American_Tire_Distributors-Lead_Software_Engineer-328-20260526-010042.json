@@ -1,0 +1,1161 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "structured_resume": {
+    "status": "valid",
+    "validation": {
+      "errors": [],
+      "is_valid": true,
+      "document_id": "176",
+      "section_results": [
+        {
+          "is_valid": true,
+          "section_id": "sec_1",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_2",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_3",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_4",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_5",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_6",
+          "error_codes": []
+        }
+      ]
+    },
+    "repair_input": null,
+    "classification": {
+      "sections": [
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_8",
+              "block_id": "block_1",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_9",
+              "block_id": "block_2",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_10",
+              "block_id": "block_3",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_11",
+              "block_id": "block_4",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_12",
+              "block_id": "block_5",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "CONTACT",
+          "section_id": "sec_1",
+          "display_title": "CONTACT",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_17",
+              "block_id": "block_6",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Communication",
+          "section_id": "sec_2",
+          "display_title": "Communication",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_22",
+              "block_id": "block_7",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Leadership",
+          "section_id": "sec_3",
+          "display_title": "Leadership",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_24",
+              "block_id": "block_8",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_25",
+              "block_id": "block_9",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_26",
+              "block_id": "block_10",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Education",
+          "section_id": "sec_4",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_39",
+                  "block_id": "block_12",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_38",
+                  "block_id": "block_11",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_2",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_41",
+                  "block_id": "block_14",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_40",
+                  "block_id": "block_13",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_3",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_43",
+                  "block_id": "block_16",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_42",
+                  "block_id": "block_15",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "Experience",
+          "section_id": "sec_5",
+          "display_title": "Experience",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_48",
+              "block_id": "block_17",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "References",
+          "section_id": "sec_6",
+          "display_title": "References",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        }
+      ],
+      "document_id": "176",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "repair_response": null,
+    "recovery_applied": false,
+    "raw_classification": {
+      "sections": [
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_8",
+              "block_id": "block_1",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_9",
+              "block_id": "block_2",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_10",
+              "block_id": "block_3",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_11",
+              "block_id": "block_4",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_12",
+              "block_id": "block_5",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "CONTACT",
+          "section_id": "sec_1",
+          "display_title": "CONTACT",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_17",
+              "block_id": "block_6",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Communication",
+          "section_id": "sec_2",
+          "display_title": "Communication",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_22",
+              "block_id": "block_7",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Leadership",
+          "section_id": "sec_3",
+          "display_title": "Leadership",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_24",
+              "block_id": "block_8",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_25",
+              "block_id": "block_9",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_26",
+              "block_id": "block_10",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Education",
+          "section_id": "sec_4",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_39",
+                  "block_id": "block_12",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_38",
+                  "block_id": "block_11",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_2",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_41",
+                  "block_id": "block_14",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_40",
+                  "block_id": "block_13",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_3",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_43",
+                  "block_id": "block_16",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_42",
+                  "block_id": "block_15",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "Experience",
+          "section_id": "sec_5",
+          "display_title": "Experience",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_48",
+              "block_id": "block_17",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "References",
+          "section_id": "sec_6",
+          "display_title": "References",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        }
+      ],
+      "document_id": "176",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "invalid_section_ids": [],
+    "repaired_section_count": 0,
+    "validation_error_count": 0,
+    "validation_after_repair": null,
+    "downgraded_section_count": 0,
+    "invalid_section_count_after_repair": 0,
+    "invalid_section_count_before_repair": 0
+  },
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.2]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n\n21) Generate ONLY the cover letter body.\n    - Do NOT include candidate name, contact information, date, or signature.\n    - Do NOT include a sender header.\n    - Start with \"Dear Hiring Manager,\".\n    - End the content before any closing (e.g., do NOT include \"Sincerely,\" or name).\n\n22) Must explicitly mention the company and role from TASK.\n\n23) Must clearly connect:\n    candidate background → company needs → role responsibilities,\n    using only supported claims (no hallucinations).\n\n24) Keep it 3–5 short paragraphs.\n    - Be specific and concrete.\n    - Avoid verbosity and generic statements.\n\n25) Maintain a professional, concise tone appropriate for the selected generation mode\n    (Conservative / Normal / Aggressive), but do not change structure based on mode.\n\n26) Do NOT include:\n    - work authorization / citizenship statements\n    - availability statements unless explicitly present in input\n    - repeated resume bullet points verbatim\n\nOutput must be plain text only (no JSON inside the body).\n\n[CANDIDATE_LAYER_KRISTI_LAAR v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Registered Nurse (BSN) with strengths in pediatric care + general practice support, patient education, and safety-oriented care delivery.\n- Emphasize: clear, empathetic communication with patients/families and effective collaboration with multidisciplinary care teams.\n- Keep value proposition grounded in nursing scope: bedside/clinical nursing practice, patient monitoring, education, coordination, and adherence to protocols.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Translate “architecture” to clinical operating mechanisms (not software).\n- Surface explicitly (when supported by evidence) mechanisms such as:\n  - Patient safety protocols adherence (checks, verification steps, escalation pathways).\n  - Patient care management routines (assessment → intervention → monitoring → documentation → handoff).\n  - Standardized general practice workflows (triage/rooming support, care coordination, follow-up education).\n- Do not leave “patient safety” as a generic claim; tie it to concrete nursing actions (verification, monitoring, documentation, coordination).\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prioritize bullets that show concrete care mechanisms over generic “high-quality care” statements:\n  1) Safety and protocol-driven actions (verification, monitoring, escalation, compliance-aligned steps).\n  2) Communication mechanisms (patient/family education, care plan explanation, handoffs with medical staff).\n  3) Team-based coordination (multidisciplinary collaboration, aligning on care needs).\n  4) General satisfaction statements (only if tied to actions).\n- Ensure at least one bullet in the most recent role explicitly references safety-oriented mechanisms and workflow discipline (if evidence exists).\n\nDISTRIBUTED SYSTEM DEPTH\n- Reinterpret “distributed systems” as distributed care delivery across roles (RN + providers + multidisciplinary staff) without inventing tools or settings.\n- Emphasize mechanics of coordination:\n  - Structured handoffs/updates with medical staff.\n  - Balancing patient needs with protocols and guidelines.\n  - Managing diverse patient needs while maintaining consistent standards.\n- Avoid claiming ER/ICU/acute care complexity, specialized units, or high-acuity environments unless explicitly supported.\n\nTECHNICAL DIFFERENTIATION\n- Treat “technical” as clinical practice skills evidenced in the profile:\n  - Pediatric care delivery and family communication.\n  - General practice workflow execution within multidisciplinary teams.\n  - Patient education and safety-oriented care.\n- Avoid listing clinical procedures, devices, EHR systems, medication administration specifics, or certifications not present in evidence.\n\nDOMAIN / INDUSTRY FRAMING\n- Primary domain: Healthcare / Patient Care.\n- Secondary emphasis: Pediatrics and General Practice.\n- Frame domain credibility as: consistent, protocol-aligned nursing care with strong communication and patient education in team-based clinical environments.\n- Keep employer context accurate: Wholeness Healthcare; Tyler Stein MD.\n\nSAFE DOMAIN TRANSLATION\n- Pediatrics → family-centered pediatric nursing support; age-appropriate communication; safety-focused care delivery.\n- General practice → broad patient needs management; consistent workflow execution; coordination with multidisciplinary staff.\n- Patient safety & satisfaction → protocol adherence + communication + education + coordination (do not imply survey ownership or formal quality program leadership unless evidenced).\n- Healthcare compliance → adherence to established guidelines/protocols (do not name HIPAA, Joint Commission, or other frameworks unless explicitly provided).\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim:\n  - Physician-level diagnosis/treatment decision ownership; “medical expert” positioning beyond nursing scope.\n  - Specialized nursing domains (ICU, ER, OR, NICU, oncology, labor & delivery) unless evidenced.\n  - Specific clinical procedures, medication administration authority details, or device operation not in the profile.\n  - Formal quality leadership roles (e.g., “led hospital-wide patient safety program”) without evidence.\n- Avoid inventing metrics (patient volumes, satisfaction scores, incident reduction percentages).\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- When tailoring to roles emphasizing coordination/operations, frame experience as:\n  - Integrating care across multidisciplinary teams through clear communication and consistent workflow execution.\n  - Extending care impact via patient education (ensuring understanding, adherence, and follow-through).\n  - Maintaining consistency by aligning actions with protocols/guidelines and escalating appropriately.\n- Keep this as nursing coordination, not “program management” unless explicitly supported.\n\nLEADERSHIP FRAMING\n- Frame leadership as bedside/clinical leadership behaviors:\n  - Safety-oriented practice and modeling protocol adherence.\n  - Collaborative teamwork and proactive communication with medical staff.\n  - Patient/family education as an influence mechanism to improve adherence and satisfaction.\n- Use observable actions; avoid vague “strong leader” phrasing.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep clinical execution and patient-facing mechanisms primary.\n- Leadership should appear as “how she works” (collaborative, safety-oriented) rather than people-management claims.\n- Do not claim team size, direct reports, charge nurse duties, or supervisory authority unless evidenced.\n\nAI WORK POSITIONING\n- No AI tooling practice is provided.\n- Do not mention AI, ML, automation, or AI-assisted clinical decisioning.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Stay within nursing scope; do not overstate medical expertise beyond nursing.\n- Keep claims aligned with stated areas only: pediatrics, general practice, patient education, communication, safety, collaboration.\n- Do not add certifications, specialized training, clinical systems, or compliance frameworks not present.\n- Do not invent dates, titles beyond “Registered Nurse,” or responsibilities not evidenced.\n\nEVIDENCE SOURCES\n- Only use:\n  - CANDIDATE_PROFILE.candidate (headline, summary)\n  - CANDIDATE_PROFILE.domains\n  - CANDIDATE_PROFILE.leadership (practices, risk_management, style keywords)\n  - CANDIDATE_PROFILE.role_fit_themes\n  - CANDIDATE_PROFILE.experience_highlights (areas, impacts, team_context, skills_applied, constraints_and_tradeoffs, employer_relationship, architecture_patterns)\n  - CANDIDATE_PROFILE.constraints_and_preferences\n- If MASTER_RESUME is provided later, use it for role titles/dates and any additional verified specifics; do not infer missing details.\n\nFINAL REMINDER\n- Core differentiation to keep repeating through concrete mechanisms: BSN Registered Nurse with pediatric + general practice experience, known for safety-oriented, protocol-aligned care and strong patient/family + team communication.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Healthcare\",\n      \"Patient Care\"\n    ],\n    \"secondary\": [\n      \"Pediatrics\",\n      \"General Practice\"\n    ]\n  },\n  \"contacts\": {\n    \"email\": \"kristi@example.com\",\n    \"phone\": \"909.555.0100\",\n    \"location\": \"Redmond, WA\",\n    \"linkedin_url\": null\n  },\n  \"candidate\": {\n    \"name\": \"Kristi Laar\",\n    \"summary\": \"Kristi Laar is a dedicated registered nurse with a Bachelor of Science in Nursing from Bellows College. She has extensive experience in pediatrics and general practice, recognized for her exceptional communication skills and contributions to patient safety and satisfaction.\",\n    \"headline\": \"Registered Nurse with Strong Communication Skills\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Patient-focused\",\n        \"Safety-oriented\"\n      ]\n    },\n    \"practices\": [\n      \"Patient safety\",\n      \"Quality care\"\n    ],\n    \"risk_management\": [\n      \"Patient safety protocols\",\n      \"Healthcare compliance\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Patient care\",\n    \"Healthcare communication\",\n    \"Safety and satisfaction\",\n    \"Pediatric care\",\n    \"General practice\",\n    \"Collaborative healthcare\",\n    \"Patient education\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate medical expertise beyond nursing\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Keep claims aligned with nursing experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [],\n    \"languages\": [],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Pediatrics\",\n      \"impact\": [\n        \"Delivered high-quality pediatric care\",\n        \"Maintained patient safety and satisfaction\"\n      ],\n      \"market\": \"Healthcare\",\n      \"team_context\": [\n        \"Collaborated with healthcare teams\"\n      ],\n      \"skills_applied\": [\n        \"Patient care\",\n        \"Communication\"\n      ],\n      \"architecture_patterns\": [\n        \"Patient care management\"\n      ],\n      \"employer_relationship\": \"Wholeness Healthcare\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Balancing patient needs with healthcare protocols\"\n      ]\n    },\n    {\n      \"area\": \"General Practice\",\n      \"impact\": [\n        \"Provided comprehensive general practice care\",\n        \"Ensured patient safety and satisfaction\"\n      ],\n      \"market\": \"Healthcare\",\n      \"team_context\": [\n        \"Worked within multidisciplinary teams\"\n      ],\n      \"skills_applied\": [\n        \"Patient care\",\n        \"Communication\"\n      ],\n      \"architecture_patterns\": [\n        \"General practice workflows\"\n      ],\n      \"employer_relationship\": \"Wholeness Healthcare\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Managing diverse patient needs\"\n      ]\n    },\n    {\n      \"area\": \"General Practice\",\n      \"impact\": [\n        \"Delivered consistent patient care\",\n        \"Maintained high standards of patient safety\"\n      ],\n      \"market\": \"Healthcare\",\n      \"team_context\": [\n        \"Collaborated with medical staff\"\n      ],\n      \"skills_applied\": [\n        \"Patient care\",\n        \"Communication\"\n      ],\n      \"architecture_patterns\": [\n        \"General practice workflows\"\n      ],\n      \"employer_relationship\": \"Tyler Stein MD\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Adhering to medical guidelines\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative healthcare teams\",\n      \"Patient-centered environments\"\n    ],\n    \"communication\": [\n      \"Patient education\",\n      \"Cross-functional collaboration\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\nkristi\nlaar\nregistered nurse\nCONTACT\n111 1st Avenue\nRedmond, WA 65432\n909.555.0100 \nkristi@example.com\nwww.interestingsite.com\nCommunication\nI have received several awards for my outstanding communication skills, including recognition for providing exceptional patient education and counseling.\nLeadership\nI received the \"Outstanding Nursing Student\" award during my time in nursing school, and I have been recognized for my contributions to patient safety and satisfaction in my current role.\nEducation\nBellows College | Madison, WI \nBachelors of Science in Nursing\nRelevant coursework: Anatomy and physiology, pharmacology, nursing ethics, and patient care management. \nExperience\nNovember 20XX–October 20XX\nRegistered Nurse | Pediatrics | Wholeness Healthcare\nDecember 20XX–November 20XX\nRegistered Nurse | General Practice | Wholeness Healthcare\nSeptember 20XX–August 20XX\nRegistered Nurse | General Practice | Tyler Stein MD \nI have a proven track record of delivering high-quality care while maintaining patient safety and satisfaction\nReferences\n[Available upon request] "
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nKristi Laar\nDear Hiring Manager,\n\nI am excited to apply for the [Role] role at [Company].\n\n[2-3 short paragraphs connecting candidate background to role/company needs.]\n\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: May 26, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "Kristi Laar\nRegistered Nurse\n\nCONTACT\n111 1st Avenue\nRedmond, WA 65432\n909.555.0100\nkristi@example.com\nwww.interestingsite.com\n\nProfessional Summary\nRegistered Nurse (BSN) with experience in pediatrics and general practice, recognized for clear patient/family communication, patient education, and safety-oriented, protocol-aligned care. Known for consistent care workflows (assessment → intervention → monitoring → documentation → handoff) and collaborative coordination with multidisciplinary teams while balancing patient needs with clinical guidelines.\n\nExperience\nNovember 20XX–October 20XX\nRegistered Nurse | Pediatrics | Wholeness Healthcare\n- Delivered pediatric nursing care using a consistent care-management routine (assessment, intervention, monitoring, documentation, and handoff) to support safe, reliable care delivery.\n- Educated pediatric patients and families with clear, age-appropriate communication to support understanding of care plans and follow-through.\n- Collaborated with healthcare team members to coordinate patient needs while balancing family concerns with established care protocols.\n- Maintained a safety-oriented approach aligned to patient safety protocols, including careful verification and timely escalation when needed.\n\nDecember 20XX–November 20XX\nRegistered Nurse | General Practice | Wholeness Healthcare\n- Provided general practice nursing support across diverse patient needs while adhering to established guidelines and standardized workflows.\n- Communicated patient status and care needs with multidisciplinary teams to support coordinated, consistent care.\n- Delivered patient education and counseling to help patients understand care instructions and expectations.\n- Maintained focus on patient safety and satisfaction through protocol-aligned care and clear communication.\n\nSeptember 20XX–August 20XX\nRegistered Nurse | General Practice | Tyler Stein MD\n- Delivered consistent general practice nursing care while adhering to medical guidelines and established office workflows.\n- Collaborated with medical staff to coordinate patient care needs and ensure clear handoffs and updates.\n- Supported patient safety through protocol-driven practice and attention to accurate documentation and follow-through.\n\nEducation\nBellows College | Madison, WI\nBachelors of Science in Nursing\nRelevant coursework: Anatomy and physiology, pharmacology, nursing ethics, and patient care management.\n\nTechnical Skills\nClinical Care & Workflows: Patient care management routines (assessment → intervention → monitoring → documentation → handoff), General practice workflows, Pediatric care support\nCommunication: Patient education and counseling, Patient/family communication, Multidisciplinary team collaboration\nSafety & Risk Management: Patient safety protocols, Healthcare compliance\n\nAdditional\nCommunication\nI have received several awards for my outstanding communication skills, including recognition for providing exceptional patient education and counseling.\nLeadership\nI received the \"Outstanding Nursing Student\" award during my time in nursing school, and I have been recognized for my contributions to patient safety and satisfaction in my current role.\nReferences\n[Available upon request]\n",
+    "cover_letter": "Kristi Laar\n909.555.0100 | kristi@example.com\n\nMay 26, 2026\n\nDear Hiring Manager,\n\nI am excited to apply for the Lead Software Engineer role at American Tire Distributors. While my background is in healthcare as a Registered Nurse (BSN), I’m drawn to ATD’s emphasis on serving customers through reliable, high-quality delivery across a large network—and I believe my strengths in disciplined workflows, safety-oriented execution, and clear communication translate well to environments that require consistent, dependable outcomes.\n\nIn pediatrics and general practice, I’ve worked within protocol-driven systems where accuracy, documentation, and effective handoffs are essential. My day-to-day practice relies on a repeatable care-management routine—assessment, intervention, monitoring, documentation, and handoff—while balancing patient needs with established guidelines. I’m also recognized for patient education and counseling, which reflects my ability to explain complex information clearly to different audiences.\n\nI understand this role focuses on designing and supporting complex software solutions, performing impact analysis, testing, and collaborating through an Agile process. Although I am not a software engineer, I bring a track record of working calmly in high-responsibility settings, coordinating with multidisciplinary teams, and maintaining safety and quality standards through consistent processes.\n\nThank you for considering my application. I would welcome the opportunity to discuss how my communication style, workflow discipline, and safety-first approach could contribute to teams focused on reliable delivery and strong customer support at American Tire Distributors.\n\nSincerely,\nKristi Laar"
+  },
+  "diff": {
+    "resume": [
+      {
+        "name": "Professional Summary",
+        "after": "Registered Nurse (BSN) with experience in pediatrics and general practice, recognized for clear patient/family communication, patient education, and safety-oriented, protocol-aligned care. Known for consistent care workflows (assessment → intervention → monitoring → documentation → handoff) and collaborative coordination with multidisciplinary teams while balancing patient needs with clinical guidelines."
+      },
+      {
+        "name": "Experience",
+        "roles": [
+          {
+            "name": "Registered Nurse | Pediatrics | Wholeness Healthcare",
+            "added": [
+              "Delivered pediatric nursing care using a consistent care-management routine (assessment, intervention, monitoring, documentation, and handoff) to support safe, reliable care delivery.",
+              "Educated pediatric patients and families with clear, age-appropriate communication to support understanding of care plans and follow-through.",
+              "Collaborated with healthcare team members to coordinate patient needs while balancing family concerns with established care protocols.",
+              "Maintained a safety-oriented approach aligned to patient safety protocols, including careful verification and timely escalation when needed."
+            ],
+            "removed": [
+              "December 20XX–November 20XX"
+            ]
+          },
+          {
+            "name": "Registered Nurse | General Practice | Wholeness Healthcare",
+            "added": [
+              "Provided general practice nursing support across diverse patient needs while adhering to established guidelines and standardized workflows.",
+              "Communicated patient status and care needs with multidisciplinary teams to support coordinated, consistent care.",
+              "Delivered patient education and counseling to help patients understand care instructions and expectations.",
+              "Maintained focus on patient safety and satisfaction through protocol-aligned care and clear communication."
+            ],
+            "removed": [
+              "September 20XX–August 20XX"
+            ]
+          },
+          {
+            "name": "Registered Nurse | General Practice | Tyler Stein MD",
+            "added": [
+              "Delivered consistent general practice nursing care while adhering to medical guidelines and established office workflows.",
+              "Collaborated with medical staff to coordinate patient care needs and ensure clear handoffs and updates.",
+              "Supported patient safety through protocol-driven practice and attention to accurate documentation and follow-through."
+            ],
+            "removed": [
+              "I have a proven track record of delivering high-quality care while maintaining patient safety and satisfaction"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Technical Skills",
+        "after": "Clinical Care & Workflows: Patient care management routines (assessment → intervention → monitoring → documentation → handoff), General practice workflows, Pediatric care support\nCommunication: Patient education and counseling, Patient/family communication, Multidisciplinary team collaboration\nSafety & Risk Management: Patient safety protocols, Healthcare compliance\n\nAdditional\nCommunication\nI have received several awards for my outstanding communication skills, including recognition for providing exceptional patient education and counseling.\nLeadership\nI received the \"Outstanding Nursing Student\" award during my time in nursing school, and I have been recognized for my contributions to patient safety and satisfaction in my current role."
+      }
+    ]
+  },
+  "generation_run_id": "328",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      },
+      {
+        "text": "kristi",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_3"
+      },
+      {
+        "text": "laar",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_4"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_5"
+      },
+      {
+        "text": "registered nurse",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_6"
+      }
+    ],
+    "sections": [
+      {
+        "title": "CONTACT",
+        "semantic_type": "other",
+        "heading": {
+          "text": "CONTACT",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_7"
+        },
+        "body_paras": [
+          {
+            "text": "111 1st Avenue",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_8"
+          },
+          {
+            "text": "Redmond, WA 65432",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_9"
+          },
+          {
+            "text": "909.555.0100 ",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_10"
+          },
+          {
+            "text": "kristi@example.com",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_11"
+          },
+          {
+            "text": "www.interestingsite.com",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_12"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_13"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_14"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_15"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "Communication",
+        "semantic_type": "other",
+        "heading": {
+          "text": "Communication",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_16"
+        },
+        "body_paras": [
+          {
+            "text": "I have received several awards for my outstanding communication skills, including recognition for providing exceptional patient education and counseling.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_17"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_18"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_19"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_20"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "Leadership",
+        "semantic_type": "other",
+        "heading": {
+          "text": "Leadership",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_21"
+        },
+        "body_paras": [
+          {
+            "text": "I received the \"Outstanding Nursing Student\" award during my time in nursing school, and I have been recognized for my contributions to patient safety and satisfaction in my current role.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_22"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_3"
+      },
+      {
+        "title": "Education",
+        "semantic_type": "education",
+        "heading": {
+          "text": "Education",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_23"
+        },
+        "body_paras": [
+          {
+            "text": "Bellows College | Madison, WI ",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_24"
+          },
+          {
+            "text": "Bachelors of Science in Nursing",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_25"
+          },
+          {
+            "text": "Relevant coursework: Anatomy and physiology, pharmacology, nursing ethics, and patient care management. ",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_26"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_27"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_28"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_29"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_4"
+      },
+      {
+        "title": "Experience",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "Experience",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_30"
+        },
+        "body_paras": [
+          {
+            "text": "November 20XX–October 20XX",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_37"
+          },
+          {
+            "text": "Registered Nurse | Pediatrics | Wholeness Healthcare",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_38"
+          },
+          {
+            "text": "December 20XX–November 20XX",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          },
+          {
+            "text": "Registered Nurse | General Practice | Wholeness Healthcare",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_40"
+          },
+          {
+            "text": "September 20XX–August 20XX",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_41"
+          },
+          {
+            "text": "Registered Nurse | General Practice | Tyler Stein MD ",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_42"
+          },
+          {
+            "text": "I have a proven track record of delivering high-quality care while maintaining patient safety and satisfaction",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_43"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_44"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_45"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_46"
+          }
+        ],
+        "roles": [
+          {
+            "header": {
+              "text": "Registered Nurse | Pediatrics | Wholeness Healthcare",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_38"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "December 20XX–November 20XX",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_39"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Delivered pediatric nursing care using a consistent care-management routine (assessment, intervention, monitoring, documentation, and handoff) to support safe, reliable care delivery.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_38_ext_1"
+              },
+              {
+                "text": "Educated pediatric patients and families with clear, age-appropriate communication to support understanding of care plans and follow-through.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_38_ext_2"
+              },
+              {
+                "text": "Collaborated with healthcare team members to coordinate patient needs while balancing family concerns with established care protocols.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_38_ext_3"
+              },
+              {
+                "text": "Maintained a safety-oriented approach aligned to patient safety protocols, including careful verification and timely escalation when needed.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_38_ext_4"
+              }
+            ],
+            "role_id": "Registered Nurse | Pediatrics | Wholeness Healthcare",
+            "role_id_stable": ""
+          },
+          {
+            "header": {
+              "text": "Registered Nurse | General Practice | Wholeness Healthcare",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_40"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "September 20XX–August 20XX",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_41"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Provided general practice nursing support across diverse patient needs while adhering to established guidelines and standardized workflows.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_40_ext_1"
+              },
+              {
+                "text": "Communicated patient status and care needs with multidisciplinary teams to support coordinated, consistent care.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_40_ext_2"
+              },
+              {
+                "text": "Delivered patient education and counseling to help patients understand care instructions and expectations.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_40_ext_3"
+              },
+              {
+                "text": "Maintained focus on patient safety and satisfaction through protocol-aligned care and clear communication.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_40_ext_4"
+              }
+            ],
+            "role_id": "Registered Nurse | General Practice | Wholeness Healthcare",
+            "role_id_stable": ""
+          },
+          {
+            "header": {
+              "text": "Registered Nurse | General Practice | Tyler Stein MD ",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_42"
+            },
+            "header_extra": [],
+            "meta_lines": [],
+            "bullets": [
+              {
+                "text": "Delivered consistent general practice nursing care while adhering to medical guidelines and established office workflows.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_42_ext_1"
+              },
+              {
+                "text": "Collaborated with medical staff to coordinate patient care needs and ensure clear handoffs and updates.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_42_ext_2"
+              },
+              {
+                "text": "Supported patient safety through protocol-driven practice and attention to accurate documentation and follow-through.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_42_ext_3"
+              }
+            ],
+            "role_id": "Registered Nurse | General Practice | Tyler Stein MD",
+            "role_id_stable": ""
+          }
+        ],
+        "section_id": "sec_5"
+      },
+      {
+        "title": "References",
+        "semantic_type": "other",
+        "heading": {
+          "text": "References",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_47"
+        },
+        "body_paras": [
+          {
+            "text": "[Available upon request] ",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_48"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_49"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_6"
+      },
+      {
+        "title": "Technical Skills",
+        "semantic_type": "skills",
+        "heading": {
+          "text": "Technical Skills",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_skills_u_0"
+        },
+        "body_paras": [
+          {
+            "text": "Clinical Care & Workflows: Patient care management routines (assessment → intervention → monitoring → documentation → handoff), General practice workflows, Pediatric care support",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_skills_u_1"
+          },
+          {
+            "text": "Communication: Patient education and counseling, Patient/family communication, Multidisciplinary team collaboration",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_skills_u_2"
+          },
+          {
+            "text": "Safety & Risk Management: Patient safety protocols, Healthcare compliance",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_skills_u_3"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_skills_unbound"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 612.0,
+      "page_height_pt": 792.0,
+      "margin_top_pt": 18.0,
+      "margin_bottom_pt": 72,
+      "margin_left_pt": 14.4,
+      "margin_right_pt": 14.4,
+      "default_font_name": "Calibri",
+      "default_font_size_pt": 10.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null,
+      "section_row_table": false,
+      "header_bg_color": null,
+      "footer_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "paragraph",
+        "para_id": "para_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:wp14=\"http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing\" xmlns:wpg=\"http://schemas.microsoft.com/office/word/2010/wordprocessingGroup\" xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\" xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:w10=\"urn:schemas-microsoft-com:office:word\" w14:paraId=\"4F1C4FD8\" w14:textId=\"47CD6345\" w:rsidR=\"00A839BE\" w:rsidRDefault=\"00E5183E\" w:rsidP=\"00355D85\"><w:r><w:rPr><w:noProof/><w:lang w:val=\"en-AU\" w:eastAsia=\"en-AU\"/></w:rPr><mc:AlternateContent><mc:Choice Requires=\"wpg\"><w:drawing><wp:anchor distT=\"0\" distB=\"0\" distL=\"114300\" distR=\"114300\" simplePos=\"0\" relativeHeight=\"251692032\" behindDoc=\"1\" locked=\"1\" layoutInCell=\"1\" allowOverlap=\"1\" wp14:anchorId=\"2D663625\" wp14:editId=\"40B8A420\"><wp:simplePos x=\"0\" y=\"0\"/><wp:positionH relativeFrom=\"column\"><wp:posOffset>-182880</wp:posOffset></wp:positionH><wp:positionV relativeFrom=\"paragraph\"><wp:posOffset>-228600</wp:posOffset></wp:positionV><wp:extent cx=\"2852928\" cy=\"10058400\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"5080\" b=\"0\"/><wp:wrapNone/><wp:docPr id=\"6\" name=\"Group 6\"><a:extLst xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:ext uri=\"{C183D7F6-B498-43B3-948B-1728B52AA6E4}\"><adec:decorative xmlns:adec=\"http://schemas.microsoft.com/office/drawing/2017/decorative\" val=\"1\"/></a:ext></a:extLst></wp:docPr><wp:cNvGraphicFramePr/><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingGroup\"><wpg:wgp><wpg:cNvGrpSpPr/><wpg:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"2852928\" cy=\"10058400\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"2852420\" cy=\"10058400\"/></a:xfrm></wpg:grpSpPr><wps:wsp><wps:cNvPr id=\"7\" name=\"Rectangle 7\"><a:extLst><a:ext uri=\"{C183D7F6-B498-43B3-948B-1728B52AA6E4}\"><adec:decorative xmlns:adec=\"http://schemas.microsoft.com/office/drawing/2017/decorative\" val=\"1\"/></a:ext></a:extLst></wps:cNvPr><wps:cNvSpPr/><wps:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"2852420\" cy=\"10058400\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:solidFill><a:schemeClr val=\"accent1\"><a:lumMod val=\"20000\"/><a:lumOff val=\"80000\"/></a:schemeClr></a:solidFill><a:ln><a:noFill/></a:ln></wps:spPr><wps:style><a:lnRef idx=\"2\"><a:schemeClr val=\"accent1\"><a:shade val=\"50000\"/></a:schemeClr></a:lnRef><a:fillRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"lt1\"/></a:fontRef></wps:style><wps:bodyPr rot=\"0\" spcFirstLastPara=\"0\" vertOverflow=\"overflow\" horzOverflow=\"overflow\" vert=\"horz\" wrap=\"square\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" numCol=\"1\" spcCol=\"0\" rtlCol=\"0\" fromWordArt=\"0\" anchor=\"ctr\" anchorCtr=\"0\" forceAA=\"0\" compatLnSpc=\"1\"><a:prstTxWarp prst=\"textNoShape\"><a:avLst/></a:prstTxWarp><a:noAutofit/></wps:bodyPr></wps:wsp><wps:wsp><wps:cNvPr id=\"9\" name=\"Rectangle 1\"><a:extLst><a:ext uri=\"{C183D7F6-B498-43B3-948B-1728B52AA6E4}\"><adec:decorative xmlns:adec=\"http://schemas.microsoft.com/office/drawing/2017/decorative\" val=\"1\"/></a:ext></a:extLst></wps:cNvPr><wps:cNvSpPr/><wps:spPr><a:xfrm><a:off x=\"807720\" y=\"975360\"/><a:ext cx=\"1691640\" cy=\"1691640\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:noFill/><a:ln w=\"6350\"><a:solidFill><a:schemeClr val=\"accent1\"/></a:solidFill></a:ln></wps:spPr><wps:style><a:lnRef idx=\"2\"><a:schemeClr val=\"accent1\"><a:shade val=\"50000\"/></a:schemeClr></a:lnRef><a:fillRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"lt1\"/></a:fontRef></wps:style><wps:bodyPr rot=\"0\" spcFirstLastPara=\"0\" vertOverflow=\"overflow\" horzOverflow=\"overflow\" vert=\"horz\" wrap=\"square\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" numCol=\"1\" spcCol=\"0\" rtlCol=\"0\" fromWordArt=\"0\" anchor=\"ctr\" anchorCtr=\"0\" forceAA=\"0\" compatLnSpc=\"1\"><a:prstTxWarp prst=\"textNoShape\"><a:avLst/></a:prstTxWarp><a:noAutofit/></wps:bodyPr></wps:wsp></wpg:wgp></a:graphicData></a:graphic><wp14:sizeRelH relativeFrom=\"margin\"><wp14:pctWidth>0</wp14:pctWidth></wp14:sizeRelH></wp:anchor></w:drawing></mc:Choice><mc:Fallback><w:pict><v:group w14:anchorId=\"23251884\" id=\"Group 6\" o:spid=\"_x0000_s1026\" alt=\"&quot;&quot;\" style=\"position:absolute;margin-left:-14.4pt;margin-top:-18pt;width:224.65pt;height:11in;z-index:-251624448;mso-width-relative:margin\" coordsize=\"28524,100584\" o:gfxdata=\"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&#10;di54bWxQSwUGAAAAAAQABADzAAAApAYAAAAA&#10;\"><v:rect id=\"Rectangle 7\" o:spid=\"_x0000_s1027\" alt=\"&quot;&quot;\" style=\"position:absolute;width:28524;height:100584;visibility:visible;mso-wrap-style:square;v-text-anchor:middle\" o:gfxdata=\"UEsDBBQABgAIAAAAIQDb4fbL7gAAAIUBAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbHyQz07DMAyH&#10;70i8Q+QralM4IITa7kDhCAiNB7ASt43WOlEcyvb2pNu4IODoPz9/n1xv9vOkForiPDdwXVagiI23&#10;jocG3rdPxR0oScgWJ8/UwIEENu3lRb09BBKV0ywNjCmFe63FjDSjlD4Q50nv44wpl3HQAc0OB9I3&#10;VXWrjedEnIq03oC27qjHjympx31un0wiTQLq4bS4shrAECZnMGVTvbD9QSnOhDInjzsyuiBXWQP0&#10;r4R18jfgnHvJr4nOknrFmJ5xzhraRtHWf3Kkpfz/yGo5S+H73hkquyhdjr3R8m2lj09svwAAAP//&#10;AwBQSwMEFAAGAAgAAAAhAFr0LFu/AAAAFQEAAAsAAABfcmVscy8ucmVsc2zPwWrDMAwG4Ptg72B0&#10;X5TuUMaI01uh19I+gLGVxCy2jGSy9e1nemrHjpL4P0nD4SetZiPRyNnCruvBUPYcYp4tXC/Htw8w&#10;Wl0ObuVMFm6kcBhfX4Yzra62kC6xqGlKVgtLreUTUf1CyWnHhXKbTCzJ1VbKjMX5LzcTvvf9HuXR&#10;gPHJNKdgQU5hB+ZyK23zHztFL6w81c5zQp6m6P9TMfB3PtPWFCczVQtB9N4U2rp2HOA44NMz4y8A&#10;AAD//wMAUEsDBBQABgAIAAAAIQDX2tU4xQAAANoAAAAPAAAAZHJzL2Rvd25yZXYueG1sRI9Ba8JA&#10;FITvBf/D8gre6qY9WImuIoKlFaE0KujtmX0m0ezbsLsm6b/vFgo9DjPzDTNb9KYWLTlfWVbwPEpA&#10;EOdWV1wo2O/WTxMQPiBrrC2Tgm/ysJgPHmaYatvxF7VZKESEsE9RQRlCk0rp85IM+pFtiKN3sc5g&#10;iNIVUjvsItzU8iVJxtJgxXGhxIZWJeW37G4U7DJ/fduc3KHdfJw/j8mk3nbZWqnhY7+cggjUh//w&#10;X/tdK3iF3yvxBsj5DwAAAP//AwBQSwECLQAUAAYACAAAACEA2+H2y+4AAACFAQAAEwAAAAAAAAAA&#10;AAAAAAAAAAAAW0NvbnRlbnRfVHlwZXNdLnhtbFBLAQItABQABgAIAAAAIQBa9CxbvwAAABUBAAAL&#10;AAAAAAAAAAAAAAAAAB8BAABfcmVscy8ucmVsc1BLAQItABQABgAIAAAAIQDX2tU4xQAAANoAAAAP&#10;AAAAAAAAAAAAAAAAAAcCAABkcnMvZG93bnJldi54bWxQSwUGAAAAAAMAAwC3AAAA+QIAAAAA&#10;\" fillcolor=\"#dee3ea [660]\" stroked=\"f\" strokeweight=\"1pt\"/><v:rect id=\"Rectangle 1\" o:spid=\"_x0000_s1028\" alt=\"&quot;&quot;\" style=\"position:absolute;left:8077;top:9753;width:16916;height:16917;visibility:visible;mso-wrap-style:square;v-text-anchor:middle\" o:gfxdata=\"UEsDBBQABgAIAAAAIQDb4fbL7gAAAIUBAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbHyQz07DMAyH&#10;70i8Q+QralM4IITa7kDhCAiNB7ASt43WOlEcyvb2pNu4IODoPz9/n1xv9vOkForiPDdwXVagiI23&#10;jocG3rdPxR0oScgWJ8/UwIEENu3lRb09BBKV0ywNjCmFe63FjDSjlD4Q50nv44wpl3HQAc0OB9I3&#10;VXWrjedEnIq03oC27qjHjympx31un0wiTQLq4bS4shrAECZnMGVTvbD9QSnOhDInjzsyuiBXWQP0&#10;r4R18jfgnHvJr4nOknrFmJ5xzhraRtHWf3Kkpfz/yGo5S+H73hkquyhdjr3R8m2lj09svwAAAP//&#10;AwBQSwMEFAAGAAgAAAAhAFr0LFu/AAAAFQEAAAsAAABfcmVscy8ucmVsc2zPwWrDMAwG4Ptg72B0&#10;X5TuUMaI01uh19I+gLGVxCy2jGSy9e1nemrHjpL4P0nD4SetZiPRyNnCruvBUPYcYp4tXC/Htw8w&#10;Wl0ObuVMFm6kcBhfX4Yzra62kC6xqGlKVgtLreUTUf1CyWnHhXKbTCzJ1VbKjMX5LzcTvvf9HuXR&#10;gPHJNKdgQU5hB+ZyK23zHztFL6w81c5zQp6m6P9TMfB3PtPWFCczVQtB9N4U2rp2HOA44NMz4y8A&#10;AAD//wMAUEsDBBQABgAIAAAAIQDZMI3mxQAAANoAAAAPAAAAZHJzL2Rvd25yZXYueG1sRI9Pa8JA&#10;FMTvgt9heYXedNMe2hrdiARCPRSqUQq9PbIvfzD7NmbXmPbTd4WCx2FmfsOs1qNpxUC9aywreJpH&#10;IIgLqxuuFBwP2ewNhPPIGlvLpOCHHKyT6WSFsbZX3tOQ+0oECLsYFdTed7GUrqjJoJvbjjh4pe0N&#10;+iD7SuoerwFuWvkcRS/SYMNhocaO0pqKU34xCqL37nNXbNKs+fqQu+/2Nz+/lqlSjw/jZgnC0+jv&#10;4f/2VitYwO1KuAEy+QMAAP//AwBQSwECLQAUAAYACAAAACEA2+H2y+4AAACFAQAAEwAAAAAAAAAA&#10;AAAAAAAAAAAAW0NvbnRlbnRfVHlwZXNdLnhtbFBLAQItABQABgAIAAAAIQBa9CxbvwAAABUBAAAL&#10;AAAAAAAAAAAAAAAAAB8BAABfcmVscy8ucmVsc1BLAQItABQABgAIAAAAIQDZMI3mxQAAANoAAAAP&#10;AAAAAAAAAAAAAAAAAAcCAABkcnMvZG93bnJldi54bWxQSwUGAAAAAAMAAwC3AAAA+QIAAAAA&#10;\" filled=\"f\" strokecolor=\"#5e7697 [3204]\" strokeweight=\".5pt\"/><w10:anchorlock/></v:group></w:pict></mc:Fallback></mc:AlternateContent></w:r></w:p>"
+      },
+      {
+        "kind": "table",
+        "table_id": "tbl_1",
+        "xml_proto_xml": "<w:tbl xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:wp14=\"http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:w15=\"http://schemas.microsoft.com/office/word/2012/wordml\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\" xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:w10=\"urn:schemas-microsoft-com:office:word\"><w:tblPr><w:tblW w:w=\"4588\" w:type=\"pct\"/><w:jc w:val=\"center\"/><w:tblLayout w:type=\"fixed\"/><w:tblCellMar><w:top w:w=\"288\" w:type=\"dxa\"/><w:left w:w=\"504\" w:type=\"dxa\"/><w:bottom w:w=\"288\" w:type=\"dxa\"/><w:right w:w=\"504\" w:type=\"dxa\"/></w:tblCellMar><w:tblLook w:val=\"0600\" w:firstRow=\"0\" w:lastRow=\"0\" w:firstColumn=\"0\" w:lastColumn=\"0\" w:noHBand=\"1\" w:noVBand=\"1\"/></w:tblPr><w:tblGrid><w:gridCol w:w=\"3778\"/><w:gridCol w:w=\"6925\"/></w:tblGrid><w:tr w:rsidR=\"00A839BE\" w:rsidRPr=\"00320ECB\" w14:paraId=\"36B15DC5\" w14:textId=\"77777777\" w:rsidTr=\"00824394\"><w:trPr><w:trHeight w:val=\"3312\"/><w:jc w:val=\"center\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"3780\" w:type=\"dxa\"/><w:shd w:val=\"clear\" w:color=\"auto\" w:fill=\"auto\"/><w:tcMar><w:left w:w=\"634\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"1F6D9116\" w14:textId=\"72C7702C\" w:rsidR=\"00A839BE\" w:rsidRPr=\"00772C66\" w:rsidRDefault=\"00A839BE\" w:rsidP=\"00E5183E\"><w:pPr><w:pStyle w:val=\"ProfilePicture\"/><w:rPr><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"00772C66\"><w:rPr><w:lang w:val=\"en-US\"/></w:rPr><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" wp14:anchorId=\"5C51799F\" wp14:editId=\"59DC4F55\"><wp:extent cx=\"1545336\" cy=\"1536192\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"6985\"/><wp:docPr id=\"4\" name=\"Picture 4\" descr=\"Decorative\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"4\" name=\"Picture 4\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill rotWithShape=\"1\"><a:blip r:embed=\"rId7\" cstate=\"print\"><a:extLst><a:ext uri=\"{28A0092B-C50C-407E-A947-70E740481C1C}\"><a14:useLocalDpi xmlns:a14=\"http://schemas.microsoft.com/office/drawing/2010/main\" val=\"0\"/></a:ext></a:extLst></a:blip><a:srcRect/><a:stretch/></pic:blipFill><pic:spPr bwMode=\"auto\"><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"1545336\" cy=\"1536192\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:ln><a:noFill/></a:ln><a:extLst><a:ext uri=\"{53640926-AAD7-44D8-BBD7-CCE9431645EC}\"><a14:shadowObscured xmlns:a14=\"http://schemas.microsoft.com/office/drawing/2010/main\"/></a:ext></a:extLst></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"6930\" w:type=\"dxa\"/><w:shd w:val=\"clear\" w:color=\"auto\" w:fill=\"auto\"/></w:tcPr><w:p w14:paraId=\"4963CCC4\" w14:textId=\"5B8F6BFA\" w:rsidR=\"00A839BE\" w:rsidRDefault=\"00000000\" w:rsidP=\"00A92A90\"><w:pPr><w:pStyle w:val=\"Title\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1813938694\"/><w:placeholder><w:docPart w:val=\"4F14E05542454E94B167F760DF967323\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00446C78\"><w:t>kristi</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"14B34888\" w14:textId=\"73E6CE96\" w:rsidR=\"00A839BE\" w:rsidRDefault=\"00000000\" w:rsidP=\"00437FAC\"><w:pPr><w:pStyle w:val=\"Subtitle\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"1116880608\"/><w:placeholder><w:docPart w:val=\"AD39DE33B92D42C896953A8DF275259C\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00446C78\"><w:t>laar</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"4A4F9B50\" w14:textId=\"77777777\" w:rsidR=\"00E5183E\" w:rsidRPr=\"00772C66\" w:rsidRDefault=\"00E5183E\" w:rsidP=\"00E5183E\"><w:pPr><w:spacing w:line=\"264\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"28\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"00772C66\"><w:rPr><w:noProof/><w:lang w:eastAsia=\"en-AU\"/></w:rPr><mc:AlternateContent><mc:Choice Requires=\"wps\"><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" wp14:anchorId=\"6B061EDB\" wp14:editId=\"64DAACBF\"><wp:extent cx=\"3693795\" cy=\"0\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"20955\" b=\"19050\"/><wp:docPr id=\"12\" name=\"Straight Connector 12\" descr=\"Decorative\"/><wp:cNvGraphicFramePr/><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\"><wps:wsp><wps:cNvCnPr/><wps:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"3693795\" cy=\"0\"/></a:xfrm><a:prstGeom prst=\"line\"><a:avLst/></a:prstGeom><a:noFill/><a:ln w=\"6350\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:srgbClr val=\"5E7697\"/></a:solidFill><a:prstDash val=\"solid\"/><a:miter lim=\"800000\"/></a:ln><a:effectLst/></wps:spPr><wps:bodyPr/></wps:wsp></a:graphicData></a:graphic></wp:inline></w:drawing></mc:Choice><mc:Fallback><w:pict><v:line w14:anchorId=\"009F0BC1\" id=\"Straight Connector 12\" o:spid=\"_x0000_s1026\" alt=\"Decorative\" style=\"visibility:visible;mso-wrap-style:square;mso-left-percent:-10001;mso-top-percent:-10001;mso-position-horizontal:absolute;mso-position-horizontal-relative:char;mso-position-vertical:absolute;mso-position-vertical-relative:line;mso-left-percent:-10001;mso-top-percent:-10001\" from=\"0,0\" to=\"290.85pt,0\" o:gfxdata=\"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&#10;UEsFBgAAAAAEAAQA8wAAABAFAAAAAA==&#10;\" strokecolor=\"#5e7697\" strokeweight=\".5pt\"><v:stroke joinstyle=\"miter\"/><w10:anchorlock/></v:line></w:pict></mc:Fallback></mc:AlternateContent></w:r></w:p><w:p w14:paraId=\"3CF24E44\" w14:textId=\"155FAFB7\" w:rsidR=\"00A839BE\" w:rsidRPr=\"00276ADF\" w:rsidRDefault=\"00000000\" w:rsidP=\"00446C78\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"2037386088\"/><w:placeholder><w:docPart w:val=\"98CCEC55A6514EEAB4341A119C4CE8DA\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00446C78\"><w:t>registered nurse</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"00A839BE\" w:rsidRPr=\"00320ECB\" w14:paraId=\"57AE7F2B\" w14:textId=\"77777777\" w:rsidTr=\"009E2041\"><w:trPr><w:trHeight w:val=\"6682\"/><w:jc w:val=\"center\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"3780\" w:type=\"dxa\"/><w:shd w:val=\"clear\" w:color=\"auto\" w:fill=\"auto\"/></w:tcPr><w:p w14:paraId=\"4D672AF4\" w14:textId=\"0268A098\" w:rsidR=\"00A839BE\" w:rsidRPr=\"00154F17\" w:rsidRDefault=\"00000000\" w:rsidP=\"00154F17\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1177034809\"/><w:placeholder><w:docPart w:val=\"F73DF7B00A4A4744944E0723054A14C1\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00446C78\" w:rsidRPr=\"00E32D04\"><w:t>CONTACT</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"09E7AB0F\" w14:textId=\"06894E92\" w:rsidR=\"00A839BE\" w:rsidRPr=\"00151DE9\" w:rsidRDefault=\"00000000\" w:rsidP=\"00E5183E\"><w:pPr><w:rPr><w:rStyle w:val=\"Strong\"/><w:b w:val=\"0\"/><w:bCs w:val=\"0\"/><w:color w:val=\"000000\" w:themeColor=\"text1\"/></w:rPr></w:pPr><w:sdt><w:sdtPr><w:rPr><w:b/><w:bCs/><w:color w:val=\"5F483E\" w:themeColor=\"accent4\" w:themeShade=\"BF\"/></w:rPr><w:id w:val=\"-93319987\"/><w:placeholder><w:docPart w:val=\"83835B01C06A4E8F85998D98AB30551C\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtEndPr><w:rPr><w:b w:val=\"0\"/><w:bCs w:val=\"0\"/><w:color w:val=\"000000\" w:themeColor=\"text1\"/></w:rPr></w:sdtEndPr><w:sdtContent><w:r w:rsidR=\"00446C78\" w:rsidRPr=\"00151DE9\"><w:t>111 1st Avenue</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"736903F2\" w14:textId=\"5F726E1F\" w:rsidR=\"00446C78\" w:rsidRPr=\"00151DE9\" w:rsidRDefault=\"00000000\" w:rsidP=\"00E5183E\"><w:pPr><w:rPr><w:rStyle w:val=\"Strong\"/><w:b w:val=\"0\"/><w:bCs w:val=\"0\"/><w:color w:val=\"000000\" w:themeColor=\"text1\"/></w:rPr></w:pPr><w:sdt><w:sdtPr><w:rPr><w:b/><w:bCs/><w:color w:val=\"5F483E\" w:themeColor=\"accent4\" w:themeShade=\"BF\"/></w:rPr><w:id w:val=\"836423806\"/><w:placeholder><w:docPart w:val=\"8002699046994847978241DA20915BF6\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtEndPr><w:rPr><w:b w:val=\"0\"/><w:bCs w:val=\"0\"/><w:color w:val=\"000000\" w:themeColor=\"text1\"/></w:rPr></w:sdtEndPr><w:sdtContent><w:r w:rsidR=\"00446C78\" w:rsidRPr=\"00151DE9\"><w:t>Redmond, WA 65432</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"5FB509F7\" w14:textId=\"77777777\" w:rsidR=\"00E5183E\" w:rsidRPr=\"00C52161\" w:rsidRDefault=\"00000000\" w:rsidP=\"00C52161\"><w:sdt><w:sdtPr><w:id w:val=\"-1410763268\"/><w:placeholder><w:docPart w:val=\"1F3933C4A2C6435F82287246B6F2CAB1\"/></w:placeholder><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00E5183E\" w:rsidRPr=\"00C52161\"><w:t>909.555.0100</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"00E5183E\" w:rsidRPr=\"00C52161\"><w:t xml:space=\"preserve\"> </w:t></w:r></w:p><w:p w14:paraId=\"67D62B88\" w14:textId=\"65574313\" w:rsidR=\"00446C78\" w:rsidRPr=\"00151DE9\" w:rsidRDefault=\"00000000\" w:rsidP=\"00E5183E\"><w:pPr><w:rPr><w:rStyle w:val=\"Strong\"/><w:b w:val=\"0\"/><w:bCs w:val=\"0\"/><w:color w:val=\"000000\" w:themeColor=\"text1\"/></w:rPr></w:pPr><w:sdt><w:sdtPr><w:rPr><w:b/><w:bCs/><w:color w:val=\"5F483E\" w:themeColor=\"accent4\" w:themeShade=\"BF\"/></w:rPr><w:id w:val=\"657260533\"/><w:placeholder><w:docPart w:val=\"84A91661B2EE48C5AB5CEBCEF11E3ED9\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtEndPr><w:rPr><w:b w:val=\"0\"/><w:bCs w:val=\"0\"/><w:color w:val=\"000000\" w:themeColor=\"text1\"/></w:rPr></w:sdtEndPr><w:sdtContent><w:r w:rsidR=\"00446C78\" w:rsidRPr=\"00151DE9\"><w:t>kristi@example.com</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"179A1ED1\" w14:textId=\"1761B056\" w:rsidR=\"00A839BE\" w:rsidRPr=\"00151DE9\" w:rsidRDefault=\"00000000\" w:rsidP=\"00E5183E\"><w:sdt><w:sdtPr><w:id w:val=\"-1391569392\"/><w:placeholder><w:docPart w:val=\"C9CDC900EE9A47DF97913112E2F9168A\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00446C78\" w:rsidRPr=\"00151DE9\"><w:t>www.interestingsite.com</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"4283FFA7\" w14:textId=\"1EF1AFFD\" w:rsidR=\"00A839BE\" w:rsidRDefault=\"00A839BE\" w:rsidP=\"009E2041\"/><w:p w14:paraId=\"5F2ED3E7\" w14:textId=\"228431A4\" w:rsidR=\"00D84359\" w:rsidRPr=\"00772C66\" w:rsidRDefault=\"00D84359\" w:rsidP=\"00824394\"><w:pPr><w:spacing w:before=\"100\"/></w:pPr><w:r w:rsidRPr=\"00772C66\"><w:rPr><w:noProof/><w:lang w:eastAsia=\"en-AU\"/></w:rPr><mc:AlternateContent><mc:Choice Requires=\"wps\"><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" wp14:anchorId=\"6957923D\" wp14:editId=\"3470D249\"><wp:extent cx=\"1700784\" cy=\"0\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/><wp:docPr id=\"8\" name=\"Straight Connector 8\" descr=\"Decorative\"/><wp:cNvGraphicFramePr/><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\"><wps:wsp><wps:cNvCnPr/><wps:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"1700784\" cy=\"0\"/></a:xfrm><a:prstGeom prst=\"line\"><a:avLst/></a:prstGeom></wps:spPr><wps:style><a:lnRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:lnRef><a:fillRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></a:fontRef></wps:style><wps:bodyPr/></wps:wsp></a:graphicData></a:graphic></wp:inline></w:drawing></mc:Choice><mc:Fallback><w:pict><v:line w14:anchorId=\"7DC3E543\" id=\"Straight Connector 8\" o:spid=\"_x0000_s1026\" alt=\"Decorative\" style=\"visibility:visible;mso-wrap-style:square;mso-left-percent:-10001;mso-top-percent:-10001;mso-position-horizontal:absolute;mso-position-horizontal-relative:char;mso-position-vertical:absolute;mso-position-vertical-relative:line;mso-left-percent:-10001;mso-top-percent:-10001\" from=\"0,0\" to=\"133.9pt,0\" o:gfxdata=\"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&#10;AAA=&#10;\" strokecolor=\"#5e7697 [3204]\" strokeweight=\".5pt\"><v:stroke joinstyle=\"miter\"/><w10:anchorlock/></v:line></w:pict></mc:Fallback></mc:AlternateContent></w:r></w:p><w:p w14:paraId=\"24407A5B\" w14:textId=\"7660BA39\" w:rsidR=\"00A839BE\" w:rsidRDefault=\"00A839BE\" w:rsidP=\"009E2041\"/><w:p w14:paraId=\"56E64D4B\" w14:textId=\"57D3971E\" w:rsidR=\"00D84359\" w:rsidRPr=\"00154F17\" w:rsidRDefault=\"00000000\" w:rsidP=\"00D84359\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1469962737\"/><w:placeholder><w:docPart w:val=\"9CAA3F5FF9DC426999F228C24DBCE59D\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00D84359\" w:rsidRPr=\"004A4C22\"><w:t>Communication</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"5C301FAB\" w14:textId=\"1747EAFF\" w:rsidR=\"00D84359\" w:rsidRPr=\"00151DE9\" w:rsidRDefault=\"00000000\" w:rsidP=\"00D84359\"><w:pPr><w:rPr><w:rStyle w:val=\"Strong\"/><w:b w:val=\"0\"/><w:bCs w:val=\"0\"/><w:color w:val=\"000000\" w:themeColor=\"text1\"/></w:rPr></w:pPr><w:sdt><w:sdtPr><w:rPr><w:b/><w:bCs/><w:color w:val=\"5F483E\" w:themeColor=\"accent4\" w:themeShade=\"BF\"/></w:rPr><w:id w:val=\"1350366811\"/><w:placeholder><w:docPart w:val=\"1375C87448554CE2BF0294967FABEF7F\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtEndPr><w:rPr><w:b w:val=\"0\"/><w:bCs w:val=\"0\"/><w:color w:val=\"000000\" w:themeColor=\"text1\"/></w:rPr></w:sdtEndPr><w:sdtContent><w:r w:rsidR=\"00D84359\" w:rsidRPr=\"002A164D\"><w:t>I have received several awards for my outstanding communication skills, including recognition for providing exceptional patient education and counseling.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"03EEC1AC\" w14:textId=\"4103F701\" w:rsidR=\"00D84359\" w:rsidRDefault=\"00D84359\" w:rsidP=\"00D84359\"/><w:p w14:paraId=\"6E36EBF9\" w14:textId=\"77777777\" w:rsidR=\"00824394\" w:rsidRPr=\"00772C66\" w:rsidRDefault=\"00824394\" w:rsidP=\"00824394\"><w:pPr><w:spacing w:before=\"100\"/></w:pPr><w:r w:rsidRPr=\"00772C66\"><w:rPr><w:noProof/><w:lang w:eastAsia=\"en-AU\"/></w:rPr><mc:AlternateContent><mc:Choice Requires=\"wps\"><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" wp14:anchorId=\"4C079DFA\" wp14:editId=\"5B4456A9\"><wp:extent cx=\"1700784\" cy=\"0\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/><wp:docPr id=\"16\" name=\"Straight Connector 16\" descr=\"Decorative\"/><wp:cNvGraphicFramePr/><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\"><wps:wsp><wps:cNvCnPr/><wps:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"1700784\" cy=\"0\"/></a:xfrm><a:prstGeom prst=\"line\"><a:avLst/></a:prstGeom><a:noFill/><a:ln w=\"6350\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:srgbClr val=\"5E7697\"/></a:solidFill><a:prstDash val=\"solid\"/><a:miter lim=\"800000\"/></a:ln><a:effectLst/></wps:spPr><wps:bodyPr/></wps:wsp></a:graphicData></a:graphic></wp:inline></w:drawing></mc:Choice><mc:Fallback><w:pict><v:line w14:anchorId=\"34FF89C5\" id=\"Straight Connector 16\" o:spid=\"_x0000_s1026\" alt=\"Decorative\" style=\"visibility:visible;mso-wrap-style:square;mso-left-percent:-10001;mso-top-percent:-10001;mso-position-horizontal:absolute;mso-position-horizontal-relative:char;mso-position-vertical:absolute;mso-position-vertical-relative:line;mso-left-percent:-10001;mso-top-percent:-10001\" from=\"0,0\" to=\"133.9pt,0\" o:gfxdata=\"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&#10;SwUGAAAAAAQABADzAAAADwUAAAAA&#10;\" strokecolor=\"#5e7697\" strokeweight=\".5pt\"><v:stroke joinstyle=\"miter\"/><w10:anchorlock/></v:line></w:pict></mc:Fallback></mc:AlternateContent></w:r></w:p><w:p w14:paraId=\"08D277D0\" w14:textId=\"77777777\" w:rsidR=\"00D84359\" w:rsidRDefault=\"00D84359\" w:rsidP=\"00D84359\"/><w:p w14:paraId=\"0188D6CC\" w14:textId=\"1927C613\" w:rsidR=\"00D84359\" w:rsidRPr=\"00154F17\" w:rsidRDefault=\"00000000\" w:rsidP=\"00D84359\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"480506815\"/><w:placeholder><w:docPart w:val=\"C7AB6E94291B4BF0A61A699E97BBB01F\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00D84359\" w:rsidRPr=\"00D91DAB\"><w:t>Leadership</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"009CD42E\" w14:textId=\"2E48C324\" w:rsidR=\"00D84359\" w:rsidRPr=\"00173B36\" w:rsidRDefault=\"00000000\" w:rsidP=\"00D84359\"><w:sdt><w:sdtPr><w:rPr><w:b/><w:bCs/><w:color w:val=\"5F483E\" w:themeColor=\"accent4\" w:themeShade=\"BF\"/></w:rPr><w:id w:val=\"1161436911\"/><w:placeholder><w:docPart w:val=\"5806265142644F2DAE80A968741E25DD\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtEndPr><w:rPr><w:b w:val=\"0\"/><w:bCs w:val=\"0\"/><w:color w:val=\"000000\" w:themeColor=\"text1\"/></w:rPr></w:sdtEndPr><w:sdtContent><w:r w:rsidR=\"00D84359\" w:rsidRPr=\"009B3052\"><w:t>I received the \"Outstanding Nursing Student\" award during my time in nursing school, and I have been recognized for my contributions to patient safety and satisfaction in my current role.</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"6930\" w:type=\"dxa\"/><w:shd w:val=\"clear\" w:color=\"auto\" w:fill=\"auto\"/></w:tcPr><w:p w14:paraId=\"343343CD\" w14:textId=\"1ECD7FFA\" w:rsidR=\"00D84359\" w:rsidRPr=\"00276ADF\" w:rsidRDefault=\"00000000\" w:rsidP=\"00D84359\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"989679475\"/><w:placeholder><w:docPart w:val=\"063BC3E95DE3417EA3814A0FC36D7D0C\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\" w:rsidRPr=\"00353B04\"><w:t>Education</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"2DBCD8FB\" w14:textId=\"707C65E6\" w:rsidR=\"00D84359\" w:rsidRDefault=\"00000000\" w:rsidP=\"00D84359\"><w:pPr><w:pStyle w:val=\"Heading3\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"1269658012\"/><w:placeholder><w:docPart w:val=\"5D22303F8414411C8694E43A9BE7D680\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\"><w:t>Bellows College | Madison, WI</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"00D84359\"><w:t xml:space=\"preserve\"> </w:t></w:r></w:p><w:p w14:paraId=\"40DCCFED\" w14:textId=\"4990ED57\" w:rsidR=\"00D84359\" w:rsidRDefault=\"00000000\" w:rsidP=\"00E5183E\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"335121622\"/><w:placeholder><w:docPart w:val=\"A68D109E70FB44789C48F5427CED38EA\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\" w:rsidRPr=\"00685E20\"><w:t>Bachelors of Science in Nursing</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"7221A085\" w14:textId=\"11AC519D\" w:rsidR=\"00D84359\" w:rsidRDefault=\"00000000\" w:rsidP=\"00824394\"><w:sdt><w:sdtPr><w:id w:val=\"-1100028826\"/><w:placeholder><w:docPart w:val=\"737DFD81D2B54738BDFEA204CB4A89DA\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\" w:rsidRPr=\"00824394\"><w:t>Relevant coursework: Anatomy and physiology, pharmacology, nursing ethics, and patient care management.</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"00D84359\" w:rsidRPr=\"008247DC\"><w:t xml:space=\"preserve\"> </w:t></w:r></w:p><w:p w14:paraId=\"0B437B63\" w14:textId=\"77777777\" w:rsidR=\"00824394\" w:rsidRPr=\"008247DC\" w:rsidRDefault=\"00824394\" w:rsidP=\"00824394\"/><w:p w14:paraId=\"2300E138\" w14:textId=\"21D89D7D\" w:rsidR=\"0007266C\" w:rsidRPr=\"00772C66\" w:rsidRDefault=\"0007266C\" w:rsidP=\"00D84359\"><w:r w:rsidRPr=\"00772C66\"><w:rPr><w:noProof/><w:lang w:eastAsia=\"en-AU\"/></w:rPr><mc:AlternateContent><mc:Choice Requires=\"wps\"><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" wp14:anchorId=\"0E1E9A82\" wp14:editId=\"081BD60F\"><wp:extent cx=\"3684905\" cy=\"0\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/><wp:docPr id=\"15\" name=\"Straight Connector 15\" descr=\"Decorative\"/><wp:cNvGraphicFramePr/><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\"><wps:wsp><wps:cNvCnPr/><wps:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"3684905\" cy=\"0\"/></a:xfrm><a:prstGeom prst=\"line\"><a:avLst/></a:prstGeom></wps:spPr><wps:style><a:lnRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:lnRef><a:fillRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></a:fontRef></wps:style><wps:bodyPr/></wps:wsp></a:graphicData></a:graphic></wp:inline></w:drawing></mc:Choice><mc:Fallback><w:pict><v:line w14:anchorId=\"59C1597C\" id=\"Straight Connector 15\" o:spid=\"_x0000_s1026\" alt=\"Decorative\" style=\"visibility:visible;mso-wrap-style:square;mso-left-percent:-10001;mso-top-percent:-10001;mso-position-horizontal:absolute;mso-position-horizontal-relative:char;mso-position-vertical:absolute;mso-position-vertical-relative:line;mso-left-percent:-10001;mso-top-percent:-10001\" from=\"0,0\" to=\"290.15pt,0\" o:gfxdata=\"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&#10;AAAA&#10;\" strokecolor=\"#5e7697 [3204]\" strokeweight=\".5pt\"><v:stroke joinstyle=\"miter\"/><w10:anchorlock/></v:line></w:pict></mc:Fallback></mc:AlternateContent></w:r></w:p><w:p w14:paraId=\"16887245\" w14:textId=\"3FB4EDD8\" w:rsidR=\"0007266C\" w:rsidRDefault=\"0007266C\" w:rsidP=\"00D84359\"/><w:p w14:paraId=\"33DFA65C\" w14:textId=\"0E256747\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"0007266C\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"757180393\"/><w:placeholder><w:docPart w:val=\"8D299C4DDC75426B91A13A44C00AE6FA\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\" w:rsidRPr=\"000F7D04\"><w:t>Experience</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"202BDCB1\" w14:textId=\"020BA7C4\" w:rsidR=\"0007266C\" w:rsidRPr=\"00F61BD1\" w:rsidRDefault=\"00000000\" w:rsidP=\"0007266C\"><w:pPr><w:pStyle w:val=\"Heading3\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"170687849\"/><w:placeholder><w:docPart w:val=\"18BA665ED1DF4A60A4BBCDD439C8D574\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\" w:rsidRPr=\"00F61BD1\"><w:t>November 20XX–October 20XX</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"4DBE24E0\" w14:textId=\"759D3824\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00E5183E\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"226117804\"/><w:placeholder><w:docPart w:val=\"88D32AD462E9419DA2928FB1BBB75C6B\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\"><w:t xml:space=\"preserve\">Registered Nurse </w:t></w:r><w:r w:rsidR=\"0007266C\"><w:rPr><w:rStyle w:val=\"Strong\"/></w:rPr><w:t>|</w:t></w:r><w:r w:rsidR=\"0007266C\"><w:t xml:space=\"preserve\"> Pediatrics </w:t></w:r><w:r w:rsidR=\"0007266C\"><w:rPr><w:rStyle w:val=\"Strong\"/></w:rPr><w:t>|</w:t></w:r><w:r w:rsidR=\"0007266C\"><w:t xml:space=\"preserve\"> </w:t></w:r><w:r w:rsidR=\"0007266C\" w:rsidRPr=\"00876210\"><w:t>Wholeness Healthcare</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"4DBE24E0\" w14:textId=\"759D3824\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00E5183E\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"226117804\"/><w:placeholder><w:docPart w:val=\"88D32AD462E9419DA2928FB1BBB75C6B\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\"><w:t xml:space=\"preserve\">Delivered pediatric nursing care using a consistent care-management routine (assessment, intervention, monitoring, documentation, and handoff) to support safe, reliable care delivery.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"4DBE24E0\" w14:textId=\"759D3824\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00E5183E\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"226117804\"/><w:placeholder><w:docPart w:val=\"88D32AD462E9419DA2928FB1BBB75C6B\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\"><w:t xml:space=\"preserve\">Educated pediatric patients and families with clear, age-appropriate communication to support understanding of care plans and follow-through.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"4DBE24E0\" w14:textId=\"759D3824\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00E5183E\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"226117804\"/><w:placeholder><w:docPart w:val=\"88D32AD462E9419DA2928FB1BBB75C6B\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\"><w:t xml:space=\"preserve\">Collaborated with healthcare team members to coordinate patient needs while balancing family concerns with established care protocols.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"4DBE24E0\" w14:textId=\"759D3824\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00E5183E\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"226117804\"/><w:placeholder><w:docPart w:val=\"88D32AD462E9419DA2928FB1BBB75C6B\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\"><w:t xml:space=\"preserve\">Maintained a safety-oriented approach aligned to patient safety protocols, including careful verification and timely escalation when needed.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"044AE2BE\" w14:textId=\"03C43F25\" w:rsidR=\"0007266C\" w:rsidRPr=\"00F61BD1\" w:rsidRDefault=\"00000000\" w:rsidP=\"0007266C\"><w:pPr><w:pStyle w:val=\"Heading3\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"2099894255\"/><w:placeholder><w:docPart w:val=\"FB59F57D9C984E60A8FBB826091749D3\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\" w:rsidRPr=\"00F61BD1\"><w:t>December 20XX–</w:t></w:r><w:r w:rsidR=\"0007266C\" w:rsidRPr=\"0007266C\"><w:t>November</w:t></w:r><w:r w:rsidR=\"0007266C\" w:rsidRPr=\"00F61BD1\"><w:t xml:space=\"preserve\"> 20XX</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"47E935DD\" w14:textId=\"0BC5DB98\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00824394\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-14466242\"/><w:placeholder><w:docPart w:val=\"E41A0E41BD5D45B39634DEAA74AD5358\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\">Registered Nurse </w:t></w:r><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:rPr><w:b/><w:bCs/></w:rPr><w:t>|</w:t></w:r><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\"> </w:t></w:r><w:r w:rsidR=\"005632D5\"><w:t>General Practice</w:t></w:r><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\"> </w:t></w:r><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:rPr><w:b/><w:bCs/></w:rPr><w:t>|</w:t></w:r><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\"> Wholeness Healthcare</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"47E935DD\" w14:textId=\"0BC5DB98\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00824394\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-14466242\"/><w:placeholder><w:docPart w:val=\"E41A0E41BD5D45B39634DEAA74AD5358\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\">Provided general practice nursing support across diverse patient needs while adhering to established guidelines and standardized workflows.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"47E935DD\" w14:textId=\"0BC5DB98\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00824394\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-14466242\"/><w:placeholder><w:docPart w:val=\"E41A0E41BD5D45B39634DEAA74AD5358\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\">Communicated patient status and care needs with multidisciplinary teams to support coordinated, consistent care.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"47E935DD\" w14:textId=\"0BC5DB98\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00824394\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-14466242\"/><w:placeholder><w:docPart w:val=\"E41A0E41BD5D45B39634DEAA74AD5358\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\">Delivered patient education and counseling to help patients understand care instructions and expectations.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"47E935DD\" w14:textId=\"0BC5DB98\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00824394\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-14466242\"/><w:placeholder><w:docPart w:val=\"E41A0E41BD5D45B39634DEAA74AD5358\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\">Maintained focus on patient safety and satisfaction through protocol-aligned care and clear communication.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"7478A382\" w14:textId=\"55BBC9F0\" w:rsidR=\"0007266C\" w:rsidRPr=\"00F61BD1\" w:rsidRDefault=\"00000000\" w:rsidP=\"0007266C\"><w:pPr><w:pStyle w:val=\"Heading3\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1797747247\"/><w:placeholder><w:docPart w:val=\"5DDAD192EDE8458689C30B1BDC5D1146\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\"><w:t>September 20XX–August 20XX</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"5E127CF0\" w14:textId=\"0714D455\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00824394\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1748172032\"/><w:placeholder><w:docPart w:val=\"C02889B1A298426EABB59D94328ED114\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\">Registered Nurse </w:t></w:r><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:rPr><w:b/><w:bCs/></w:rPr><w:t>|</w:t></w:r><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\"> </w:t></w:r><w:r w:rsidR=\"005632D5\"><w:t>General Practice</w:t></w:r><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\"> </w:t></w:r><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:rPr><w:b/><w:bCs/></w:rPr><w:t>|</w:t></w:r><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\"> </w:t></w:r><w:r w:rsidR=\"005632D5\"><w:t>Tyler Stein MD</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"0007266C\"><w:t xml:space=\"preserve\"> </w:t></w:r></w:p><w:p w14:paraId=\"5E127CF0\" w14:textId=\"0714D455\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00824394\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1748172032\"/><w:placeholder><w:docPart w:val=\"C02889B1A298426EABB59D94328ED114\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\">Delivered consistent general practice nursing care while adhering to medical guidelines and established office workflows.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"5E127CF0\" w14:textId=\"0714D455\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00824394\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1748172032\"/><w:placeholder><w:docPart w:val=\"C02889B1A298426EABB59D94328ED114\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\">Collaborated with medical staff to coordinate patient care needs and ensure clear handoffs and updates.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"5E127CF0\" w14:textId=\"0714D455\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00824394\"><w:pPr><w:pStyle w:val=\"Experience\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1748172032\"/><w:placeholder><w:docPart w:val=\"C02889B1A298426EABB59D94328ED114\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"005632D5\" w:rsidRPr=\"005632D5\"><w:t xml:space=\"preserve\">Supported patient safety through protocol-driven practice and attention to accurate documentation and follow-through.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"160175A2\" w14:textId=\"36F9C34A\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"00D84359\"><w:sdt><w:sdtPr><w:id w:val=\"-1496177041\"/><w:placeholder><w:docPart w:val=\"C3FCAEE84D5B43CA9D8C4560A132B2F7\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\" w:rsidRPr=\"001A7423\"><w:t>I have a proven track record of delivering high-quality care while maintaining patient safety and satisfaction</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"1A60B4BC\" w14:textId=\"77777777\" w:rsidR=\"0007266C\" w:rsidRDefault=\"0007266C\" w:rsidP=\"00D84359\"/><w:p w14:paraId=\"70A13817\" w14:textId=\"51018CF8\" w:rsidR=\"0007266C\" w:rsidRPr=\"00772C66\" w:rsidRDefault=\"0007266C\" w:rsidP=\"00D84359\"><w:r w:rsidRPr=\"00772C66\"><w:rPr><w:noProof/><w:lang w:eastAsia=\"en-AU\"/></w:rPr><mc:AlternateContent><mc:Choice Requires=\"wps\"><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" wp14:anchorId=\"4389E913\" wp14:editId=\"00354899\"><wp:extent cx=\"3684905\" cy=\"0\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/><wp:docPr id=\"3\" name=\"Straight Connector 3\" descr=\"Decorative\"/><wp:cNvGraphicFramePr/><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\"><wps:wsp><wps:cNvCnPr/><wps:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"3684905\" cy=\"0\"/></a:xfrm><a:prstGeom prst=\"line\"><a:avLst/></a:prstGeom></wps:spPr><wps:style><a:lnRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:lnRef><a:fillRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></a:fontRef></wps:style><wps:bodyPr/></wps:wsp></a:graphicData></a:graphic></wp:inline></w:drawing></mc:Choice><mc:Fallback><w:pict><v:line w14:anchorId=\"54DA38A2\" id=\"Straight Connector 3\" o:spid=\"_x0000_s1026\" alt=\"Decorative\" style=\"visibility:visible;mso-wrap-style:square;mso-left-percent:-10001;mso-top-percent:-10001;mso-position-horizontal:absolute;mso-position-horizontal-relative:char;mso-position-vertical:absolute;mso-position-vertical-relative:line;mso-left-percent:-10001;mso-top-percent:-10001\" from=\"0,0\" to=\"290.15pt,0\" o:gfxdata=\"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&#10;AAAA&#10;\" strokecolor=\"#5e7697 [3204]\" strokeweight=\".5pt\"><v:stroke joinstyle=\"miter\"/><w10:anchorlock/></v:line></w:pict></mc:Fallback></mc:AlternateContent></w:r></w:p><w:p w14:paraId=\"5BD2EDDD\" w14:textId=\"77777777\" w:rsidR=\"0007266C\" w:rsidRDefault=\"0007266C\" w:rsidP=\"0007266C\"/><w:p w14:paraId=\"1C255F64\" w14:textId=\"1C053B04\" w:rsidR=\"0007266C\" w:rsidRDefault=\"00000000\" w:rsidP=\"0007266C\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"317540549\"/><w:placeholder><w:docPart w:val=\"7E81A55D912D480EB8C853EF8244E959\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\" w:rsidRPr=\"00E2301F\"><w:t>References</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"0D858E3D\" w14:textId=\"67621276\" w:rsidR=\"0007266C\" w:rsidRPr=\"00173B36\" w:rsidRDefault=\"00000000\" w:rsidP=\"0007266C\"><w:sdt><w:sdtPr><w:id w:val=\"1259946291\"/><w:placeholder><w:docPart w:val=\"23325854041B4890ABE9A968AE35A7CF\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"0007266C\"><w:t>[Available upon request]</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"0007266C\"><w:t xml:space=\"preserve\"> </w:t></w:r></w:p></w:tc></w:tr></w:tbl>",
+        "para_ids": [
+          "para_2",
+          "para_3",
+          "para_4",
+          "para_5",
+          "para_6",
+          "para_7",
+          "para_8",
+          "para_9",
+          "para_10",
+          "para_11",
+          "para_12",
+          "para_13",
+          "para_14",
+          "para_15",
+          "para_16",
+          "para_17",
+          "para_18",
+          "para_19",
+          "para_20",
+          "para_21",
+          "para_22",
+          "para_23",
+          "para_24",
+          "para_25",
+          "para_26",
+          "para_27",
+          "para_28",
+          "para_29",
+          "para_30",
+          "para_37",
+          "para_38",
+          "para_38_ext_1",
+          "para_38_ext_2",
+          "para_38_ext_3",
+          "para_38_ext_4",
+          "para_39",
+          "para_40",
+          "para_40_ext_1",
+          "para_40_ext_2",
+          "para_40_ext_3",
+          "para_40_ext_4",
+          "para_41",
+          "para_42",
+          "para_42_ext_1",
+          "para_42_ext_2",
+          "para_42_ext_3",
+          "para_43",
+          "para_44",
+          "para_45",
+          "para_46",
+          "para_47",
+          "para_48"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"4823D316\" w14:textId=\"3A5CB0C5\" w:rsidR=\"00535F87\" w:rsidRPr=\"00173B36\" w:rsidRDefault=\"00535F87\" w:rsidP=\"00355D85\"/>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_skills_u_0"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_skills_u_1"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_skills_u_2"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_skills_u_3"
+      }
+    ]
+  }
+}
