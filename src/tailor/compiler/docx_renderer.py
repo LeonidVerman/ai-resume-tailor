@@ -4301,21 +4301,30 @@ def _render_from_layout_blocks(
                     getattr(doc, "_inline_summary_pid", "?"),
                 )
                 _inline_pid = None  # consume once
-            # Remove explicit trHeight and enable row splitting on all rows.
+            # Remove explicit trHeight on oversized rows and enable row splitting.
             # Original template heights were sized for short placeholder text.
             # After LLM injection content grows and locked trHeight values can
             # push the body row to page 2.  Also, LibreOffice defaults to
             # NOT splitting table rows (unlike Word), so rows that are taller
             # than the remaining page space go entirely to page 2 rather than
             # splitting.  Explicitly setting cantSplit='0' overrides this.
+            # Small header rows (e.g. photo+name row) keep their trHeight so
+            # the row stays fixed-height and the photo does not shift downward.
             for _tr_h_elem in tbl_elem.findall(f"{{{_W}}}tr"):
                 _trPr_h = _tr_h_elem.find(f"{{{_W}}}trPr")
                 if _trPr_h is None:
                     _trPr_h = etree.SubElement(_tr_h_elem, f"{{{_W}}}trPr")
                     _tr_h_elem.insert(0, _trPr_h)
-                # Remove locked height
-                for _trH in list(_trPr_h.findall(f"{{{_W}}}trHeight")):
-                    _trPr_h.remove(_trH)
+                # Only remove trHeight for rows that will be split (oversized).
+                # Header rows with a fixed trHeight (e.g. photo cell) must keep
+                # it so the photo stays aligned within the original cell height.
+                _row_max_p = max(
+                    (len(_tc.findall(f"{{{_W}}}p")) for _tc in _tr_h_elem.findall(f"{{{_W}}}tc")),
+                    default=0,
+                )
+                if _row_max_p > _OVERSIZED_ROW_PARA_THRESHOLD:
+                    for _trH in list(_trPr_h.findall(f"{{{_W}}}trHeight")):
+                        _trPr_h.remove(_trH)
                 # Explicitly allow row splitting across pages
                 _csplit = _trPr_h.find(f"{{{_W}}}cantSplit")
                 if _csplit is None:
@@ -4840,10 +4849,19 @@ def _maybe_clone_solidfill_bg_para(body, sectPr) -> None:
                 continue
             # Found a qualifying solid-fill sidebar background paragraph.
             clone_p = _deepcopy(child)
-            # Ensure the cloned anchor is page-relative (not cell-relative)
-            # so it covers the correct sidebar area on page 2.
+            # Make the cloned anchor page-relative so it appears from the TOP
+            # of whatever page it lands on (not relative to its paragraph, which
+            # would position it mid-page on page 3 content).
             for clone_anchor in clone_p.findall(f".//{{{_WP_NS}}}anchor"):
                 clone_anchor.set("layoutInCell", "0")
+                _pos_v = clone_anchor.find(f"{{{_WP_NS}}}positionV")
+                if _pos_v is not None:
+                    _pos_v.set("relativeFrom", "page")
+                    _pos_off = _pos_v.find(f"{{{_WP_NS}}}posOffset")
+                    if _pos_off is not None:
+                        _pos_off.text = "0"
+                    else:
+                        _et.SubElement(_pos_v, f"{{{_WP_NS}}}posOffset").text = "0"
             if sectPr is not None:
                 sectPr.addprevious(clone_p)
             else:
@@ -5063,16 +5081,111 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                     _independent_flow = True
                     break
             if _independent_flow:
-                trPr = row.find(f"{{{_W}}}trPr")
-                if trPr is None:
-                    trPr = _et.SubElement(row, f"{{{_W}}}trPr")
-                    row.insert(0, trPr)
-                for _trH in list(trPr.findall(f"{{{_W}}}trHeight")):
-                    trPr.remove(_trH)
-                _cs = trPr.find(f"{{{_W}}}cantSplit")
-                if _cs is None:
-                    _cs = _et.SubElement(trPr, f"{{{_W}}}cantSplit")
-                _cs.set(f"{{{_W}}}val", "0")
+                # Independent sidebar: split ONLY the tallest (right) column at
+                # Heading2 boundaries.  Left sidebar content stays entirely in
+                # sub-row 0; continuation sub-rows use vMerge so the left column
+                # appears as one unified sidebar while the right column paginates.
+                _if_paras = cell_paras[tallest_idx]
+                _if_n = len(_if_paras)
+                _if_split: list[int] = []
+                for _ii, _ip in enumerate(_if_paras):
+                    if _ii == 0:
+                        continue
+                    _ipPr = _ip.find(f"{{{_W}}}pPr")
+                    if _ipPr is not None:
+                        _ipSt = _ipPr.find(f"{{{_W}}}pStyle")
+                        if _ipSt is not None:
+                            _isv = _ipSt.get(f"{{{_W}}}val", "").lower().replace(" ", "")
+                            if _isv in ("heading2", "heading1"):
+                                _if_split.append(_ii)
+                if not _if_split:
+                    _if_split = [_if_n // 2]
+                _if_bounds = [0] + _if_split + [_if_n]
+                _if_slices = [
+                    (_if_bounds[i], _if_bounds[i + 1])
+                    for i in range(len(_if_bounds) - 1)
+                    if _if_bounds[i] < _if_bounds[i + 1]
+                ]
+                if len(_if_slices) <= 1:
+                    # Nothing meaningful to split; just allow splitting.
+                    _if_trPr = row.find(f"{{{_W}}}trPr")
+                    if _if_trPr is None:
+                        _if_trPr = _et.SubElement(row, f"{{{_W}}}trPr")
+                        row.insert(0, _if_trPr)
+                    for _trH in list(_if_trPr.findall(f"{{{_W}}}trHeight")):
+                        _if_trPr.remove(_trH)
+                    _if_cs = _if_trPr.find(f"{{{_W}}}cantSplit")
+                    if _if_cs is None:
+                        _if_cs = _et.SubElement(_if_trPr, f"{{{_W}}}cantSplit")
+                    _if_cs.set(f"{{{_W}}}val", "0")
+                    continue
+                _if_new_rows: list[Any] = []
+                for _if_sn, (_if_ss, _if_se) in enumerate(_if_slices):
+                    _if_nr = deepcopy(row)
+                    _if_ncs = _if_nr.findall(f"{{{_W}}}tc")
+                    # Remove trHeight; allow splitting
+                    _if_nr_trPr = _if_nr.find(f"{{{_W}}}trPr")
+                    if _if_nr_trPr is None:
+                        _if_nr_trPr = _et.SubElement(_if_nr, f"{{{_W}}}trPr")
+                        _if_nr.insert(0, _if_nr_trPr)
+                    for _trH in list(_if_nr_trPr.findall(f"{{{_W}}}trHeight")):
+                        _if_nr_trPr.remove(_trH)
+                    _if_nr_cs = _if_nr_trPr.find(f"{{{_W}}}cantSplit")
+                    if _if_nr_cs is None:
+                        _if_nr_cs = _et.SubElement(_if_nr_trPr, f"{{{_W}}}cantSplit")
+                    _if_nr_cs.set(f"{{{_W}}}val", "0")
+                    for _if_ci, _if_ntc in enumerate(_if_ncs):
+                        _if_ntc_ps = list(_if_ntc.findall(f"{{{_W}}}p"))
+                        _if_orig_ps = cell_paras[_if_ci]
+                        if _if_ci == tallest_idx:
+                            # Right column: keep only the current slice.
+                            _if_para_slice = _if_orig_ps[_if_ss:_if_se]
+                            if not _if_para_slice and _if_orig_ps:
+                                _if_para_slice = [_if_orig_ps[-1]]
+                            _if_keep = {id(p) for p in _if_para_slice}
+                            _if_kidxs = {
+                                i for i, op in enumerate(_if_orig_ps)
+                                if id(op) in _if_keep
+                            }
+                            for _if_idx, _if_np in enumerate(_if_ntc_ps):
+                                if _if_idx not in _if_kidxs:
+                                    _if_ntc.remove(_if_np)
+                        else:
+                            # Left sidebar cell
+                            _if_tc_pr = _if_ntc.find(f"{{{_W}}}tcPr")
+                            if _if_tc_pr is None:
+                                _if_tc_pr = _et.SubElement(_if_ntc, f"{{{_W}}}tcPr")
+                                _if_ntc.insert(0, _if_tc_pr)
+                            for _vm in list(_if_tc_pr.findall(f"{{{_W}}}vMerge")):
+                                _if_tc_pr.remove(_vm)
+                            if _if_sn == 0:
+                                # First sub-row: full sidebar content + vMerge restart
+                                _if_vm = _et.SubElement(_if_tc_pr, f"{{{_W}}}vMerge")
+                                _if_vm.set(f"{{{_W}}}val", "restart")
+                            else:
+                                # Continuation: empty cell with vMerge continue
+                                for _rp in list(_if_ntc.findall(f"{{{_W}}}p")):
+                                    _if_ntc.remove(_rp)
+                                for _rt in list(_if_ntc.findall(f"{{{_W}}}tbl")):
+                                    _if_ntc.remove(_rt)
+                                _et.SubElement(_if_ntc, f"{{{_W}}}p")
+                                _et.SubElement(_if_tc_pr, f"{{{_W}}}vMerge")
+                        # Suppress keepNext/keepLines on all cell paras
+                        for _if_cp in _if_ntc.findall(f"{{{_W}}}p"):
+                            _if_cpPr = _if_cp.find(f"{{{_W}}}pPr")
+                            if _if_cpPr is None:
+                                _if_cpPr = _et.SubElement(_if_cp, f"{{{_W}}}pPr")
+                                _if_cp.insert(0, _if_cpPr)
+                            for _pt in (f"{{{_W}}}keepNext", f"{{{_W}}}keepLines"):
+                                _pp = _if_cpPr.find(_pt)
+                                if _pp is None:
+                                    _pp = _et.SubElement(_if_cpPr, _pt)
+                                _pp.set(f"{{{_W}}}val", "0")
+                    _if_new_rows.append(_if_nr)
+                _if_row_idx = list(tbl_elem).index(row)
+                tbl_elem.remove(row)
+                for _if_i, _if_nr in enumerate(_if_new_rows):
+                    tbl_elem.insert(_if_row_idx + _if_i, _if_nr)
                 continue
             tallest_paras = cell_paras[tallest_idx]
             n = len(tallest_paras)
