@@ -3467,40 +3467,32 @@ def _render_layout_two_col_table(
     if _rb_start:
         right_blocks = right_blocks[_rb_start:]
 
-    # Collapse runs of 2+ consecutive empty paragraph blocks from both columns.
-    # Native w:cols templates use repeated empty paragraphs between sections to
-    # vertically align section starts across columns.  Inside a table cell these
-    # spacers create visible blank gaps between sections.  A run of N≥2
-    # consecutive empties is collapsed to at most 1 so each column flows
-    # continuously without the original column-alignment padding.
-    def _collapse_empty_runs(blocks, _para_lookup, _exempt_ids=None):
-        result = []
-        consecutive = 0
-        for blk in blocks:
-            is_empty = False
+    # Strip trailing empty blocks from both columns.
+    # In native w:cols templates, empty paragraphs at the END of a column are
+    # column-break alignment artifacts — they fill the column to align the
+    # column-break point.  Inside a table cell they add dead vertical space
+    # below the last real section (e.g. sample 22 has 12 trailing empties after
+    # Skills).  Only TRAILING empties are removed; all intra-section empty
+    # paragraphs (section heading → spacing pairs → first content) are preserved,
+    # so the original template's vertical geometry is intact.
+    def _strip_trailing_empty_blocks(blocks, _para_lookup):
+        end = len(blocks)
+        while end > 0:
+            blk = blocks[end - 1]
             if isinstance(blk, LayoutParagraphBlock) and blk.xml_proto_xml:
-                # Header-area paragraphs provide necessary vertical spacing (e.g.
-                # trailing empties in the contact section push EDUCATION below the
-                # dark header background — sample 16; leading empties push SKILLS
-                # below the horizontal divider — sample 18).  Never collapse them.
-                if _exempt_ids and blk.para_id and blk.para_id in _exempt_ids:
-                    consecutive = 0
-                    result.append(blk)
-                    continue
                 _pm = _para_lookup.get(blk.para_id) if blk.para_id else None
-                is_empty = (
+                if (
                     "<w:t>" not in blk.xml_proto_xml
+                    and "<w:drawing>" not in blk.xml_proto_xml
                     and (_pm is None or not _pm.text.strip())
-                )
-            if is_empty:
-                consecutive += 1
-                if consecutive <= 1:
-                    result.append(blk)
-                # else: skip — alignment spacer
-            else:
-                consecutive = 0
-                result.append(blk)
-        return result
+                ):
+                    end -= 1
+                    continue
+            break
+        return blocks[:end]
+
+    left_blocks = _strip_trailing_empty_blocks(left_blocks, para_lookup)
+    right_blocks = _strip_trailing_empty_blocks(right_blocks, para_lookup)
 
     # Collect para_ids of right-column name/title paragraphs whose run-level
     # font size is large (> 36 half-pts = 18pt) so the font-cap logic in
@@ -3510,7 +3502,6 @@ def _render_layout_two_col_table(
     # right-column blocks that have visible text content to avoid flagging actual
     # body content.  Skip leading empty spacer paragraphs (which the 700t-threshold
     # heuristic now preserves before the name paragraph, e.g. sample 27).
-    # NOTE: computed before collapse so the original block order is intact.
     _rne_candidates = [
         _b for _b in right_blocks[:8]
         if isinstance(_b, LayoutParagraphBlock)
@@ -3532,36 +3523,6 @@ def _render_layout_two_col_table(
                 _right_name_exempt.add(_rne_blk.para_id)
         except Exception:
             pass
-
-    # Find the consecutive empty blocks immediately after the last name/title
-    # block in the right column.  These are structural spacers that define the
-    # header-area height (e.g. sample 16: 4 empties between "DEVOPS ENGINEER"
-    # and "PROFILE" push PROFILE below the dark merged-header background).
-    # Collapsing them causes PROFILE/SKILLS/etc. to start too high (Problem 2).
-    _right_hp_ids: set[str] = set()
-    if _right_name_exempt:
-        _last_rn_idx = max(
-            (i for i, _b in enumerate(right_blocks)
-             if isinstance(_b, LayoutParagraphBlock)
-             and _b.para_id and _b.para_id in _right_name_exempt),
-            default=-1,
-        )
-        if _last_rn_idx >= 0:
-            for _rhb in right_blocks[_last_rn_idx + 1:]:
-                if not isinstance(_rhb, LayoutParagraphBlock) or not _rhb.xml_proto_xml:
-                    break
-                _pm_rh = para_lookup.get(_rhb.para_id) if _rhb.para_id else None
-                if (_pm_rh and _pm_rh.text.strip()) or "<w:t>" in _rhb.xml_proto_xml:
-                    break  # reached first body-section content — stop exempting
-                if _rhb.para_id:
-                    _right_hp_ids.add(_rhb.para_id)
-
-    _hp_ids_for_collapse = frozenset(pm.para_id for pm in (doc.header_paras or []) if pm.para_id)
-    left_blocks = _collapse_empty_runs(left_blocks, para_lookup, _hp_ids_for_collapse)
-    right_blocks = _collapse_empty_runs(
-        right_blocks, para_lookup,
-        frozenset(_right_hp_ids) if _right_hp_ids else None,
-    )
 
     # Extract full-page blip background DRAWINGS from left_blocks and insert them
     # as a separate body-level paragraph BEFORE the table.  A behindDoc blip
