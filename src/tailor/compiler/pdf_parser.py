@@ -889,7 +889,12 @@ def _extract_vector_lines(page) -> "list":
     - Tiny glyphs or noise (length < 20 pt)
     - Near-white lines (luminance ≥ 230 / 255 — invisible on white bg)
     - Lines already captured by _extract_decorative_vector_images (filled areas)
+    - Hyperlink underlines: multiple segments at the same y (±2 pt snap)
+    - Hyperlink underlines: blue-dominant stroke color (e.g. #0000ff, #1155cc)
+    - Short decorative fragments: length < 25 % of page width
     """
+    from collections import defaultdict
+
     from tailor.compiler.models import PageImageBlock
 
     try:
@@ -897,7 +902,11 @@ def _extract_vector_lines(page) -> "list":
     except Exception:
         return []
 
-    result: list = []
+    pw = page.rect.width
+    min_length = pw * 0.25  # require at least 25 % of page width
+
+    # --- Pass 1: collect deduplicated candidates ---
+    candidates: list = []
     seen: set = set()
 
     for d in drawings:
@@ -922,7 +931,6 @@ def _extract_vector_lines(page) -> "list":
         x0, y0, x1, y1 = rect
         w, h = x1 - x0, y1 - y0
 
-        # Effective visual dimensions (stroke width expands the line)
         effective_h = max(h, sw)
         effective_w = max(w, sw)
 
@@ -945,14 +953,42 @@ def _extract_vector_lines(page) -> "list":
             continue
         seen.add(key)
 
-        # Center the rendered rect on the path (stroke extends ±sw/2)
-        render_x = x0 - sw / 2 if is_v_rule else x0
-        render_y = y0 - sw / 2 if is_h_rule else y0
-        render_w = max(effective_w, 1.0)
-        render_h = max(effective_h, 1.0)
+        line_len = effective_w if is_h_rule else effective_h
+        candidates.append({
+            "is_h": is_h_rule, "x0": x0, "y0": y0, "sw": sw,
+            "eff_w": effective_w, "eff_h": effective_h,
+            "len": line_len, "hex": hex_color,
+            "r": r_c, "g": g_c, "b": b_c,
+        })
+
+    # --- Pass 2: filter hyperlink underlines and short fragments ---
+
+    # Rule A: multiple distinct segments at the same y → hyperlinks in a row
+    y_groups: "dict[int, list]" = defaultdict(list)
+    for c in candidates:
+        y_key = round(c["y0"] / 2) * 2  # 2 pt snap
+        y_groups[y_key].append(c)
+    single_y = [segs[0] for segs in y_groups.values() if len(segs) == 1]
+
+    result: list = []
+    for c in single_y:
+        r_c, g_c, b_c = c["r"], c["g"], c["b"]
+
+        # Rule B: strongly blue-dominant stroke = hyperlink underline color
+        if b_c > r_c + 80 and b_c > g_c + 80 and b_c > 100:
+            continue
+
+        # Rule C: too short to be a section divider
+        if c["len"] < min_length:
+            continue
+
+        render_x = c["x0"] - c["sw"] / 2 if not c["is_h"] else c["x0"]
+        render_y = c["y0"] - c["sw"] / 2 if c["is_h"] else c["y0"]
+        render_w = max(c["eff_w"], 1.0)
+        render_h = max(c["eff_h"], 1.0)
 
         try:
-            png_bytes = _make_solid_color_png(render_w, render_h, hex_color)
+            png_bytes = _make_solid_color_png(render_w, render_h, c["hex"])
         except Exception:
             continue
 
@@ -962,7 +998,7 @@ def _extract_vector_lines(page) -> "list":
             y_pt=render_y,
             width_pt=render_w,
             height_pt=render_h,
-            category="h_rule" if is_h_rule else "v_rule",
+            category="h_rule" if c["is_h"] else "v_rule",
             page_index=0,
         ))
 
