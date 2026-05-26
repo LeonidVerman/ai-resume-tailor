@@ -130,14 +130,20 @@ def _heading_level(pm: "ParaModel") -> int | None:
     return int(m.group(1)) if m else None
 
 
+_CONTACT_NAMES: frozenset[str] = frozenset({
+    "contact", "contact info", "contact information",
+    "personal contact", "contact details",
+})
+
+
 def _classify_section(heading_text: str) -> str:
     """Classify a section heading into a semantic type.
 
     Returns one of: experience | summary | skills | education |
-    certifications | languages | websites | other.
+    certifications | languages | websites | contact | other.
 
-    Locked types (certifications, languages, websites) map to those specific
-    return values so apply_tailored can enforce write-protection without
+    Locked types (certifications, languages, websites, contact) map to those
+    specific return values so apply_tailored can enforce write-protection without
     requiring caller-side heading-name checks.
     """
     t = heading_text.strip().lower()
@@ -155,6 +161,8 @@ def _classify_section(heading_text: str) -> str:
         return "languages"
     if t in _WEBSITES_NAMES:
         return "websites"
+    if t in _CONTACT_NAMES:
+        return "contact"
     # D/E: word-level fallback for noncanonical compound headings.
     # Split on whitespace and common delimiters so headings like
     # "Websites, Portfolios, Profiles" or "Core Technologies" match.

@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     pass
 
 _W   = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+_W14 = "http://schemas.microsoft.com/office/word/2010/wordml"
 _WP  = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
 _A   = "http://schemas.openxmlformats.org/drawingml/2006/main"
 _PIC = "http://schemas.openxmlformats.org/drawingml/2006/picture"
@@ -4091,7 +4092,8 @@ def _render_from_layout_blocks(
         _lb_colbreak_probe = _find_single_col_break_idx(doc.layout_blocks)  # type: ignore[arg-type]
         if _lb_colbreak_probe is not None:
             from copy import deepcopy as _dc_mc
-            for _ilb in doc.layout_blocks:  # type: ignore[union-attr]
+            _all_lb = list(doc.layout_blocks)  # type: ignore[union-attr]
+            for _ilb_idx, _ilb in enumerate(_all_lb):
                 if not (isinstance(_ilb, LayoutParagraphBlock) and _ilb.xml_proto_xml
                         and "sectPr" in _ilb.xml_proto_xml):
                     continue
@@ -4107,6 +4109,31 @@ def _render_from_layout_blocks(
                         continue
                     if len(_ilb_cols.findall(f"{{{_W}}}col")) < 2:
                         continue
+                    # Guard: if a 1-col sectPr follows this 2-col sectPr, the 2-col
+                    # area is only a sub-section (e.g. sample 26 Education Summary).
+                    # In that case the overall layout is mixed-column — do NOT activate
+                    # the whole-document 2-col table; let native sectPr flow through.
+                    _has_subsequent_1col = False
+                    for _slb in _all_lb[_ilb_idx + 1:]:
+                        if not (isinstance(_slb, LayoutParagraphBlock) and _slb.xml_proto_xml
+                                and "sectPr" in _slb.xml_proto_xml):
+                            continue
+                        try:
+                            _slb_el = etree.fromstring(_slb.xml_proto_xml)
+                            _slb_pPr = _slb_el.find(f"{{{_W}}}pPr")
+                            _slb_sp = _slb_pPr.find(f"{{{_W}}}sectPr") if _slb_pPr is not None else None
+                            _slb_cols = _slb_sp.find(f"{{{_W}}}cols") if _slb_sp is not None else None
+                            if _slb_cols is None:
+                                _has_subsequent_1col = True
+                                break
+                            _slb_num = _slb_cols.get(f"{{{_W}}}num", "1")
+                            if int(_slb_num) < 2:
+                                _has_subsequent_1col = True
+                                break
+                        except Exception:
+                            pass
+                    if _has_subsequent_1col:
+                        break  # sub-section 2-col; skip whole-doc 2-col table
                     # Found intermediate 2-col sectPr — patch main sectPr and set flag
                     _main_is_multicolumn = True
                     if sectPr is not None:
@@ -4265,6 +4292,10 @@ def _render_from_layout_blocks(
             for para_id, p_elem in zip(block.para_ids, all_p):
                 if para_id:
                     pid_to_pelem[para_id] = p_elem
+                    # Stamp w14:paraId so the grader can re-identify paragraphs
+                    # in templates that have no native w14:paraId attributes.
+                    if not p_elem.get(f"{{{_W14}}}paraId"):
+                        p_elem.set(f"{{{_W14}}}paraId", para_id)
                 pm = para_lookup.get(para_id)
                 if pm is not None:
                     _strip_text_wrapping_breaks(p_elem, pm.text)
@@ -4395,10 +4426,16 @@ def _render_from_layout_blocks(
                         block.para_id,
                     )
                     continue
+                if block.para_id and not elem.get(f"{{{_W14}}}paraId"):
+                    elem.set(f"{{{_W14}}}paraId", block.para_id)
                 pass  # (keepNext injection removed — was causing extra pages)
             else:
                 elem = etree.fromstring(block.xml_proto_xml)
                 _strip_last_rendered_page_breaks(elem)
+                # Stamp w14:paraId so grader can re-identify paragraphs in templates
+                # that have no native w14:paraId (e.g. DOCX-origin templates).
+                if block.para_id and not elem.get(f"{{{_W14}}}paraId"):
+                    elem.set(f"{{{_W14}}}paraId", block.para_id)
                 # Strip single-column sectPr (page-size-only section breaks) to prevent
                 # stale section boundaries from creating forced page breaks.  Multi-column
                 # sectPr (w:cols w:num≥2) are preserved for newspaper-style column layouts.

@@ -66,7 +66,7 @@ _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 # Semantic types that are NEVER modified regardless of LLM output (spec §3).
 # Only "summary", "experience", and "skills" are editable (spec §1).
 _LOCKED_SEMANTIC_TYPES: frozenset[str] = frozenset({
-    "education", "certifications", "languages", "websites",
+    "education", "certifications", "languages", "websites", "contact",
 })
 
 # Major resume content sections — a synthetic summary should appear before these,
@@ -906,6 +906,16 @@ def _update_body_section(
         if _anchor_pid:
             _body_extra_injections.setdefault(_anchor_pid, []).append(extra_pm)
         new_body.append(extra_pm)
+
+    # When no content_paras existed (empty section body), every LLM line was
+    # cloned via clone_as() and carries para_id="".  Assign synthetic IDs so
+    # ir_validator's empty-para_id check (_epi_count > 2 → hard fail) passes.
+    if not content_paras:
+        _synth_i = 0
+        for _bp in new_body:
+            if _bp.text.strip() and not _bp.para_id:
+                _bp.para_id = f"_synth_{orig.section_id}_{_synth_i}"
+                _synth_i += 1
 
     # Defensive copy of the heading ParaModel so that any later in-place
     # mutation of orig.heading.text (e.g. by apply_tailored's extras path
