@@ -4291,35 +4291,15 @@ def _render_from_layout_blocks(
             # inside the table (legacy behaviour for non-header anchors).
             if _inline_pid and _inline_text and _inline_pid in pid_to_pelem:
                 _ref_p = pid_to_pelem[_inline_pid]
-                _anchor_in_header_row = False
-                _has_body_row = False
-                _ref_tc = _ref_p.getparent()
-                if _ref_tc is not None and _ref_tc.tag == f"{{{_W}}}tc":
-                    _ref_tr = _ref_tc.getparent()
-                    if _ref_tr is not None and _ref_tr.tag == f"{{{_W}}}tr":
-                        _ref_tbl_el = _ref_tr.getparent()
-                        if _ref_tbl_el is not None:
-                            _all_rows = _ref_tbl_el.findall(f"{{{_W}}}tr")
-                            try:
-                                _this_ri = _all_rows.index(_ref_tr)
-                                _anchor_in_header_row = (_this_ri == 0)
-                                _has_body_row = _this_ri + 1 < len(_all_rows)
-                            except ValueError:
-                                pass
-                if _anchor_in_header_row and _has_body_row:
-                    # Skip — adding the summary to either row would push content
-                    # to page 2 (layout collapse).  The template has no summary slot.
-                    _log.debug(
-                        "INLINE_SUMMARY_SKIPPED_HEADER_ROW: anchor_para=%r table has body row",
-                        _inline_pid,
-                    )
-                else:
-                    _new_p = _make_inline_summary_para(_ref_p, _inline_text)
-                    _ref_p.addnext(_new_p)
-                    _log.debug(
-                        "INLINE_SUMMARY_INJECTED: new para after para_id=%r",
-                        getattr(doc, "_inline_summary_pid", "?"),
-                    )
+                # Inject the summary paragraph immediately after the anchor (typically
+                # the role/title line in the header cell, e.g. "registered nurse").
+                # The header row's trHeight is removed below so the row auto-sizes.
+                _new_p = _make_inline_summary_para(_ref_p, _inline_text)
+                _ref_p.addnext(_new_p)
+                _log.debug(
+                    "INLINE_SUMMARY_INJECTED: new para after para_id=%r",
+                    getattr(doc, "_inline_summary_pid", "?"),
+                )
                 _inline_pid = None  # consume once
             # Remove explicit trHeight and enable row splitting on all rows.
             # Original template heights were sized for short placeholder text.
@@ -4816,6 +4796,64 @@ def _maybe_insert_bg_rect(docx_path: str, body, sectPr) -> None:
         _log.debug("OVERFLOW_BG_RECT_SKIP: %s", exc)
 
 
+def _maybe_clone_solidfill_bg_para(body, sectPr) -> None:
+    """Clone a solid-fill sidebar background paragraph for page 2 continuation.
+
+    Some templates (e.g. sample 11) use a behindDoc solidFill rectangle in the
+    FIRST body paragraph (before the main table) to paint a left-sidebar
+    background.  That paragraph only appears on page 1.  When content overflows
+    to page 2, the sidebar has no background.
+
+    Fix: deep-clone that paragraph and insert it just before sectPr so that it
+    lands on page 2 when content overflows.  On pages where no overflow occurs,
+    the clone and the original overlap with the same fill — visually identical.
+
+    Detects: a direct child <w:p> of <w:body> (not inside a table) that has a
+    <wp:anchor behindDoc="1"> with cy >= 10 M EMU and a solidFill (no blip).
+    """
+    from copy import deepcopy as _deepcopy
+    from lxml import etree as _et
+
+    _WP_NS = _WP
+    _DML_NS = _DML
+
+    for child in list(body):
+        if child.tag != f"{{{_W}}}p":
+            continue
+        for anchor in child.findall(f".//{{{_WP_NS}}}anchor"):
+            if anchor.get("behindDoc") != "1":
+                continue
+            ext = anchor.find(f"{{{_WP_NS}}}extent")
+            if ext is None:
+                continue
+            try:
+                cy_val = int(ext.get("cy", "0"))
+            except ValueError:
+                continue
+            if cy_val < 10_000_000:
+                continue
+            # Must be solidFill with no blip — blip-based backgrounds are
+            # handled separately by _maybe_insert_bg_rect.
+            has_blip = anchor.find(f".//{{{_DML_NS}}}blip") is not None
+            has_solid = anchor.find(f".//{{{_DML_NS}}}solidFill") is not None
+            if has_blip or not has_solid:
+                continue
+            # Found a qualifying solid-fill sidebar background paragraph.
+            clone_p = _deepcopy(child)
+            # Ensure the cloned anchor is page-relative (not cell-relative)
+            # so it covers the correct sidebar area on page 2.
+            for clone_anchor in clone_p.findall(f".//{{{_WP_NS}}}anchor"):
+                clone_anchor.set("layoutInCell", "0")
+            if sectPr is not None:
+                sectPr.addprevious(clone_p)
+            else:
+                body.append(clone_p)
+            _log.debug(
+                "SIDEBAR_BG_CLONE: cloned solid-fill bg para cy=%d for page 2", cy_val
+            )
+            return  # only one clone needed
+
+
 # ---------------------------------------------------------------------------
 # Glossary cleanup
 # ---------------------------------------------------------------------------
@@ -4939,7 +4977,12 @@ def _trim_trailing_cell_paras(body: Any) -> None:
                     continue
                 trailing: list[Any] = []
                 for p in reversed(paras):
-                    runs = p.findall(f"{{{_W}}}r")
+                    # Use recursive search so runs nested inside w:hyperlink,
+                    # w:sdt, etc. are found.  Injected paragraphs clone the
+                    # anchor element structure where w:r may not be a direct
+                    # child of w:p — direct search would incorrectly classify
+                    # those paragraphs as empty and strip them.
+                    runs = p.findall(f".//{{{_W}}}r")
                     text = "".join(
                         (t.text or "")
                         for r in runs
@@ -4995,6 +5038,42 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                 continue
 
             tallest_idx = max(range(len(cells)), key=lambda i: len(cell_paras[i]))
+
+            # Independent column flow: if a non-tallest cell has ≥2 Heading2/1
+            # sections it has its own independent section structure (sidebar) rather
+            # than being paired content for the tallest cell.  Splitting at heading
+            # boundaries synchronises row heights and creates large voids: a short
+            # sidebar section is paired with a tall content section, leaving empty
+            # space in the sidebar row while the matching content section grows.
+            # Instead: strip trHeight and allow LibreOffice to split at page breaks.
+            _independent_flow = False
+            for _ci, _ps in enumerate(cell_paras):
+                if _ci == tallest_idx:
+                    continue
+                _h2 = 0
+                for _p in _ps:
+                    _pPr = _p.find(f"{{{_W}}}pPr")
+                    if _pPr is not None:
+                        _pSt = _pPr.find(f"{{{_W}}}pStyle")
+                        if _pSt is not None:
+                            _sv = _pSt.get(f"{{{_W}}}val", "").lower().replace(" ", "")
+                            if _sv in ("heading2", "heading1"):
+                                _h2 += 1
+                if _h2 >= 2:
+                    _independent_flow = True
+                    break
+            if _independent_flow:
+                trPr = row.find(f"{{{_W}}}trPr")
+                if trPr is None:
+                    trPr = _et.SubElement(row, f"{{{_W}}}trPr")
+                    row.insert(0, trPr)
+                for _trH in list(trPr.findall(f"{{{_W}}}trHeight")):
+                    trPr.remove(_trH)
+                _cs = trPr.find(f"{{{_W}}}cantSplit")
+                if _cs is None:
+                    _cs = _et.SubElement(trPr, f"{{{_W}}}cantSplit")
+                _cs.set(f"{{{_W}}}val", "0")
+                continue
             tallest_paras = cell_paras[tallest_idx]
             n = len(tallest_paras)
 
@@ -5338,11 +5417,13 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
             # sub-row's cells (template spacing paragraphs that fell between
             # sections).  Strip them here so rows size to actual content.
             _trim_trailing_cell_paras(body)
-            # Inherit page background color for overflow pages.  Extracts the
-            # dominant edge-pixel color from any behindDoc blip background and
-            # inserts a solid-fill rectangle (no image, no text, no foreground
-            # content) at the body end.  That paragraph lands on page 2 when
-            # content overflows, covering it with the same background fill.
+            # Inherit page background color for overflow pages.
+            # (a) Solid-fill sidebar backgrounds (e.g. sample 11): clone the
+            #     background paragraph from the body start to the body end so
+            #     the sidebar color appears on page 2 when content overflows.
+            _maybe_clone_solidfill_bg_para(body, sectPr)
+            # (b) Blip-image backgrounds (e.g. sample 16): extract dominant
+            #     edge color and insert a solid-fill rectangle at body end.
             _maybe_insert_bg_rect(output_path, body, sectPr)
             d.save(output_path)
             # After saving, remove the glossary document from the ZIP so that

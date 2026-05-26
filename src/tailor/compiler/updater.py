@@ -3960,12 +3960,25 @@ def apply_tailored(
                                 break
                         # Guard: if there are template sections AFTER the first
                         # experience section (e.g. References), technical skills
-                        # belong at the document end (right column, after References),
-                        # not crowded into the left sidebar alongside narrative
-                        # sections like Communication / Leadership (sample 12).
+                        # belong at the document end, unless the template is a
+                        # 2-row sidebar layout (header row + one body row with a
+                        # sidebar cell containing multiple independent sections).
+                        # For 2-row sidebar layouts the left cell has all sidebar
+                        # sections in one place and is the correct injection target.
                         _post_exp_sections = original.sections[_left_col_end + 1:]
                         if _post_exp_sections and _left_sec is not None:
-                            _left_sec = None  # fall back to document-end placement
+                            from tailor.compiler.models import LayoutTableBlock as _LTB
+                            _main_tbl_rows = 0
+                            for _lb in (original.layout_blocks or []):
+                                if isinstance(_lb, _LTB):
+                                    from lxml import etree as _etree_g
+                                    _W_g = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+                                    _te = _etree_g.fromstring(_lb.xml_proto_xml)
+                                    _main_tbl_rows = len(_te.findall(f"{{{_W_g}}}tr"))
+                                    break
+                            # 2-row table = header row + sidebar body row: safe to inject
+                            if _main_tbl_rows != 2:
+                                _left_sec = None  # fall back to document-end placement
                         if _left_sec is not None:
                             if _anchor_bp is not None:
                                 _skill_lines = _sanitize_skills_lines(
