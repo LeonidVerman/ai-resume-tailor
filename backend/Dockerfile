@@ -32,11 +32,15 @@ COPY pyproject.toml ./pyproject.toml
 # Install Python dependencies for the backend
 RUN pip install --no-cache-dir -e ./backend
 
-# Install the tailor generator package (without playwright — browser scraping
-# is not used in the backend; the HTTP fallback handles job URL scraping)
+# Install the tailor generator package (no-deps: playwright is declared in
+# backend/pyproject.toml and installed with its Chromium binary below)
 COPY src/ ./src/
 RUN pip install --no-cache-dir -e . --no-deps && \
     pip install --no-cache-dir openai requests curl_cffi pymupdf
+
+# Install Playwright + Chromium for JS-heavy job-page scraping (HiBob, etc.)
+# --with-deps installs the required system packages for the headless browser.
+RUN playwright install --with-deps chromium
 
 # Copy backend source and all runtime assets tailor.config resolves at runtime
 # (BASE_DIR = /app, so prompts/templates/config/profile live at /app/*)
