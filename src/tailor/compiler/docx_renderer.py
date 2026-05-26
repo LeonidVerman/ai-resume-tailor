@@ -4017,7 +4017,7 @@ def _render_layout_two_col_table(
     # Register so _split_oversized_table_rows skips this table — splitting it
     # creates visual gaps because the left cell drives the row height while the
     # right cell ends short (see _RENDERER_CREATED_TABLES docstring).
-    _RENDERER_CREATED_TABLES.add(id(tbl))
+    _RENDERER_CREATED_TABLES.add(tbl)
 
     _log.debug(
         "LAYOUT_TWO_COL_TABLE: left=%d/%d-twips right=%d/%d-twips gap=%d-twips accent=%s",
@@ -4953,8 +4953,12 @@ _OVERSIZED_ROW_PARA_THRESHOLD = 14  # trigger row split when any cell exceeds th
 # balanced layouts that fit the page naturally.  They must NOT be split by
 # _split_oversized_table_rows — splitting creates a visual gap between content rows
 # because the left cell tends to drive the row height, leaving the right cell short.
-# Register element IDs here; cleared at the start of each render_docx call.
-_RENDERER_CREATED_TABLES: set[int] = set()
+# Store element *references* (not id() integers) — id() values are unreliable across
+# function-call boundaries because the lxml proxy can be GC'd after the creating
+# function returns, letting a new proxy for the same C element get a different id().
+# A strong reference in this set keeps the proxy alive so lxml returns the same
+# object on subsequent findall() calls.  Cleared at the start of each render_docx call.
+_RENDERER_CREATED_TABLES: set[Any] = set()
 
 
 def _trim_trailing_cell_paras(body: Any) -> None:
@@ -5009,7 +5013,7 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
     for tbl_elem in list(body.findall(f"{{{_W}}}tbl")):
         # Skip tables created by _render_layout_two_col_table — those are balanced
         # 2-cell layouts that fit the page; splitting them creates row-height gaps.
-        if id(tbl_elem) in _RENDERER_CREATED_TABLES:
+        if tbl_elem in _RENDERER_CREATED_TABLES:
             continue
         # Snapshot: newly inserted rows are NOT re-processed in the same pass.
         for row in list(tbl_elem.findall(f"{{{_W}}}tr")):
