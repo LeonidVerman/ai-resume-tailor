@@ -91,7 +91,8 @@ def _num_prefix(name: str) -> Optional[str]:
 def discover(filter_arg: Optional[str] = None) -> tuple[list[SamplePair], list[str]]:
     """Return (matched_pairs, skip_messages).
 
-    Pairs a generation JSON with the resume DOCX that shares its numeric prefix.
+    Pairs a generation JSON with the resume DOCX/PDF that shares its numeric prefix.
+    Each prefix yields up to two pairs: one DOCX-origin and one PDF-origin.
     Classification is read from the generation JSON's ``structured_resume`` field
     at render time — no external classification files are required.
 
@@ -106,11 +107,18 @@ def discover(filter_arg: Optional[str] = None) -> tuple[list[SamplePair], list[s
             gen_index.setdefault(n, []).append(p)
 
     # Index DOCX resume files by numeric prefix
-    res_index: dict[str, list[Path]] = {}
+    res_docx_index: dict[str, list[Path]] = {}
     for p in _RES_DOCX_DIR.glob("*.docx"):
         n = _num_prefix(p.name)
         if n:
-            res_index.setdefault(n, []).append(p)
+            res_docx_index.setdefault(n, []).append(p)
+
+    # Index PDF resume files by numeric prefix
+    res_pdf_index: dict[str, list[Path]] = {}
+    for p in _RES_PDF_DIR.glob("*.pdf"):
+        n = _num_prefix(p.name)
+        if n:
+            res_pdf_index.setdefault(n, []).append(p)
 
     # Check for ambiguous multi-file conflicts
     for n, paths in gen_index.items():
@@ -119,27 +127,35 @@ def discover(filter_arg: Optional[str] = None) -> tuple[list[SamplePair], list[s
                 f"Ambiguous: prefix {n!r} has {len(paths)} generation files: "
                 + ", ".join(p.name for p in paths)
             )
-    for n, paths in res_index.items():
-        if len(paths) > 1:
-            raise ValueError(
-                f"Ambiguous: prefix {n!r} has {len(paths)} resume DOCX files: "
-                + ", ".join(p.name for p in paths)
-            )
+    for idx_name, idx in [("DOCX", res_docx_index), ("PDF", res_pdf_index)]:
+        for n, paths in idx.items():
+            if len(paths) > 1:
+                raise ValueError(
+                    f"Ambiguous: prefix {n!r} has {len(paths)} {idx_name} resume files: "
+                    + ", ".join(p.name for p in paths)
+                )
 
     pairs: list[SamplePair] = []
     skips: list[str] = []
 
     for n in sorted(gen_index.keys(), key=int):
         gen_path = gen_index[n][0]
-        if n not in res_index:
+        if n in res_docx_index:
+            pairs.append(SamplePair(
+                prefix=n,
+                source_kind="docx",
+                resume_path=res_docx_index[n][0],
+                gen_path=gen_path,
+            ))
+        else:
             skips.append(f"[{n}] skip - no resume DOCX found for prefix {n}")
-            continue
-        pairs.append(SamplePair(
-            prefix=n,
-            source_kind="docx",
-            resume_path=res_index[n][0],
-            gen_path=gen_path,
-        ))
+        if n in res_pdf_index:
+            pairs.append(SamplePair(
+                prefix=n,
+                source_kind="pdf",
+                resume_path=res_pdf_index[n][0],
+                gen_path=gen_path,
+            ))
 
     # Filter by user argument(s).  Multiple numeric prefixes may be passed
     # (e.g. "2 3 4 14 25") and are treated as an OR filter.
