@@ -999,7 +999,7 @@ def compile_resume_from_pdf(
         template_ir.footer_paras = _footer_paras
 
     llm_sections = parse_llm_output(llm_text)
-    llm_sections = apply_layout_fitting(template_ir, llm_sections)
+    llm_sections = apply_layout_fitting(template_ir, llm_sections, skip_compaction=True)
     updated = apply_tailored(template_ir, llm_sections, classification=classification)
 
     # Re-inject footer paras if they were lost during apply_tailored

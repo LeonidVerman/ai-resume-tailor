@@ -888,6 +888,7 @@ def _find_container_by_title(
 def apply_layout_fitting(
     original: ResumeDocument,
     llm_sections: list[LlmSection],
+    skip_compaction: bool = False,
 ) -> list[LlmSection]:
     """Normalise *llm_sections* for layout-aware rendering against *original*.
 
@@ -897,7 +898,9 @@ def apply_layout_fitting(
     2. Extract source container capacities.
     3. Redistribute Additional subgroup content (Languages / Certifications /
        Links) from Technical Skills to dedicated source containers.
-    4. Compact oversized sections for narrow containers:
+    4. Compact oversized sections for narrow containers (skipped when
+       *skip_compaction* is True, e.g. PDF-origin path where geometry is
+       already fixed and overflow is preferred over truncation):
        - Summary    → sentence-level compaction.
        - Skills     → line-level (tail-drop) compaction.
        - Experience → bullet-level compaction (per-role, capacity-aware).
@@ -920,86 +923,89 @@ def apply_layout_fitting(
     # Step 3: Additional redistribution
     result = redistribute_additional(result, containers)
 
-    # Step 4: Compaction for narrow containers
-    compacted: list[LlmSection] = []
-    for llm_s in result:
-        orig_section = _find_source_section(llm_s, original.sections)
-        if orig_section is None:
-            compacted.append(llm_s)
-            continue
-
-        container = _find_container_by_title(orig_section, containers)
-        if container is None:
-            compacted.append(llm_s)
-            continue
-
-        fit = estimate_fit(container, llm_s)
-
-        if llm_s.semantic_type == "summary" and container.is_narrow:
-            if fit.risk in ("medium", "high") and tpl_class == "table_sidebar":
-                # Fixed-cell layout: sentence count must be capped to prevent
-                # height overflow.  For linear/multi-column templates the two-
-                # column table renderer handles overflow; don't truncate there.
-                new_lines = compact_summary(llm_s.body_lines, _SUMMARY_MAX_SENTENCES_NARROW)
-                log.debug(
-                    "compact_summary: '%s' %d→%d lines (fit=%s)",
-                    llm_s.heading, len(llm_s.body_lines), len(new_lines), fit.risk,
-                )
-                compacted.append(LlmSection(
-                    heading=llm_s.heading,
-                    semantic_type=llm_s.semantic_type,
-                    body_lines=new_lines,
-                    roles=llm_s.roles,
-                ))
+    # Step 4: Compaction for narrow containers (disabled for PDF-origin path)
+    if skip_compaction:
+        compacted = list(result)
+    else:
+        compacted = []
+        for llm_s in result:
+            orig_section = _find_source_section(llm_s, original.sections)
+            if orig_section is None:
+                compacted.append(llm_s)
                 continue
 
-        elif llm_s.semantic_type == "skills" and (
-            container.is_narrow or tpl_class == "table_sidebar"
-        ):
-            if fit.risk in ("medium", "high"):
-                # table_sidebar: fixed cell height — hard count cap is required.
-                # linear (native columns): overflow is handled by the two-column
-                # table renderer; only apply per-line char limits, not count cap.
-                if tpl_class == "table_sidebar":
-                    target = max(container.orig_para_count, 3)
-                else:
-                    # Allow all lines through; updater injects overflow as extra
-                    # layout_blocks so they appear in-column, not at end-of-doc.
-                    target = max(
-                        len([l for l in llm_s.body_lines if l.strip()]), 1
+            container = _find_container_by_title(orig_section, containers)
+            if container is None:
+                compacted.append(llm_s)
+                continue
+
+            fit = estimate_fit(container, llm_s)
+
+            if llm_s.semantic_type == "summary" and container.is_narrow:
+                if fit.risk in ("medium", "high") and tpl_class == "table_sidebar":
+                    # Fixed-cell layout: sentence count must be capped to prevent
+                    # height overflow.  For linear/multi-column templates the two-
+                    # column table renderer handles overflow; don't truncate there.
+                    new_lines = compact_summary(llm_s.body_lines, _SUMMARY_MAX_SENTENCES_NARROW)
+                    log.debug(
+                        "compact_summary: '%s' %d→%d lines (fit=%s)",
+                        llm_s.heading, len(llm_s.body_lines), len(new_lines), fit.risk,
                     )
-                new_lines = compact_skills(llm_s.body_lines, target)
-                log.debug(
-                    "compact_skills: '%s' %d→%d lines (fit=%s, target=%d)",
-                    llm_s.heading, len(llm_s.body_lines), len(new_lines),
-                    fit.risk, target,
-                )
-                compacted.append(LlmSection(
-                    heading=llm_s.heading,
-                    semantic_type=llm_s.semantic_type,
-                    body_lines=new_lines,
-                    roles=llm_s.roles,
-                ))
-                continue
+                    compacted.append(LlmSection(
+                        heading=llm_s.heading,
+                        semantic_type=llm_s.semantic_type,
+                        body_lines=new_lines,
+                        roles=llm_s.roles,
+                    ))
+                    continue
 
-        elif llm_s.semantic_type == "experience" and llm_s.roles:
-            if fit.risk in ("medium", "high") and container.orig_bullets_per_role:
-                new_roles = compact_experience_bullets(
-                    llm_s.roles, container, compact_tpl
-                )
-                log.debug(
-                    "compact_experience: '%s' %d roles (fit=%s, compact_tpl=%s)",
-                    llm_s.heading, len(new_roles), fit.risk, compact_tpl,
-                )
-                compacted.append(LlmSection(
-                    heading=llm_s.heading,
-                    semantic_type=llm_s.semantic_type,
-                    body_lines=llm_s.body_lines,
-                    roles=new_roles,
-                ))
-                continue
+            elif llm_s.semantic_type == "skills" and (
+                container.is_narrow or tpl_class == "table_sidebar"
+            ):
+                if fit.risk in ("medium", "high"):
+                    # table_sidebar: fixed cell height — hard count cap is required.
+                    # linear (native columns): overflow is handled by the two-column
+                    # table renderer; only apply per-line char limits, not count cap.
+                    if tpl_class == "table_sidebar":
+                        target = max(container.orig_para_count, 3)
+                    else:
+                        # Allow all lines through; updater injects overflow as extra
+                        # layout_blocks so they appear in-column, not at end-of-doc.
+                        target = max(
+                            len([l for l in llm_s.body_lines if l.strip()]), 1
+                        )
+                    new_lines = compact_skills(llm_s.body_lines, target)
+                    log.debug(
+                        "compact_skills: '%s' %d→%d lines (fit=%s, target=%d)",
+                        llm_s.heading, len(llm_s.body_lines), len(new_lines),
+                        fit.risk, target,
+                    )
+                    compacted.append(LlmSection(
+                        heading=llm_s.heading,
+                        semantic_type=llm_s.semantic_type,
+                        body_lines=new_lines,
+                        roles=llm_s.roles,
+                    ))
+                    continue
 
-        compacted.append(llm_s)
+            elif llm_s.semantic_type == "experience" and llm_s.roles:
+                if fit.risk in ("medium", "high") and container.orig_bullets_per_role:
+                    new_roles = compact_experience_bullets(
+                        llm_s.roles, container, compact_tpl
+                    )
+                    log.debug(
+                        "compact_experience: '%s' %d roles (fit=%s, compact_tpl=%s)",
+                        llm_s.heading, len(new_roles), fit.risk, compact_tpl,
+                    )
+                    compacted.append(LlmSection(
+                        heading=llm_s.heading,
+                        semantic_type=llm_s.semantic_type,
+                        body_lines=llm_s.body_lines,
+                        roles=new_roles,
+                    ))
+                    continue
+
+            compacted.append(llm_s)
 
     # Step 4.5: Skills content sanitization (spec §6).
     # Remove internal-marker lines, "Additional" lines, and full-sentence lines
