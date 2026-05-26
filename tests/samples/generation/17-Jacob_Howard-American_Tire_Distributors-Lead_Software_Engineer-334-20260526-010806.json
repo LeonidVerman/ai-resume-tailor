@@ -1,0 +1,2033 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "structured_resume": {
+    "status": "valid",
+    "validation": {
+      "errors": [],
+      "is_valid": true,
+      "document_id": "182",
+      "section_results": [
+        {
+          "is_valid": true,
+          "section_id": "sec_1",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_2",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_3",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_4",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_5",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_6",
+          "error_codes": []
+        }
+      ]
+    },
+    "repair_input": null,
+    "classification": {
+      "sections": [
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "role_1_normA_1",
+                  "block_id": "role_1_normA_1",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_26",
+                  "block_id": "para_26",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_28",
+                  "block_id": "para_28",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_30",
+                  "block_id": "para_30",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_24",
+                  "block_id": "para_24",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_2",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "role_2_normA_2",
+                  "block_id": "role_2_normA_2",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_34",
+                  "block_id": "para_34",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_32",
+                  "block_id": "para_32",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "EMPLOYMENT SUMMARY",
+          "section_id": "sec_1",
+          "display_title": "EMPLOYMENT SUMMARY",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_41",
+              "block_id": "para_41",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_43",
+              "block_id": "para_43",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_45",
+              "block_id": "para_45",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_47",
+              "block_id": "para_47",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_49",
+              "block_id": "para_49",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_51",
+              "block_id": "para_51",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_53",
+              "block_id": "para_53",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_55",
+              "block_id": "para_55",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_57",
+              "block_id": "para_57",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_59",
+              "block_id": "para_59",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "EDUCATIONAL HISTORY",
+          "section_id": "sec_2",
+          "display_title": "EDUCATIONAL HISTORY",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_68",
+              "block_id": "para_68",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_70",
+              "block_id": "para_70",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "AFFILIATIONS",
+          "section_id": "sec_3",
+          "display_title": "AFFILIATIONS",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_82",
+              "block_id": "para_82",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "PROFESSIONAL OVERVIEW",
+          "section_id": "sec_4",
+          "display_title": "PROFESSIONAL OVERVIEW",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_89",
+              "block_id": "para_89",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_91",
+              "block_id": "para_91",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_93",
+              "block_id": "para_93",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_95",
+              "block_id": "para_95",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_97",
+              "block_id": "para_97",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_99",
+              "block_id": "para_99",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            }
+          ],
+          "raw_title": "CORE COMPETENCIES",
+          "section_id": "sec_5",
+          "display_title": "CORE COMPETENCIES",
+          "semantic_type": "skills",
+          "rewrite_policy": "rewrite_body",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_106",
+              "block_id": "para_106",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_108",
+              "block_id": "para_108",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_110",
+              "block_id": "para_110",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_112",
+              "block_id": "para_112",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "CONTACT INFORMATION",
+          "section_id": "sec_6",
+          "display_title": "CONTACT INFORMATION",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        }
+      ],
+      "document_id": "182",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "repair_response": null,
+    "recovery_applied": false,
+    "raw_classification": {
+      "sections": [
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "role_1_normA_1",
+                  "block_id": "role_1_normA_1",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_26",
+                  "block_id": "para_26",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_28",
+                  "block_id": "para_28",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_30",
+                  "block_id": "para_30",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_24",
+                  "block_id": "para_24",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_2",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "role_2_normA_2",
+                  "block_id": "role_2_normA_2",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_34",
+                  "block_id": "para_34",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_32",
+                  "block_id": "para_32",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "EMPLOYMENT SUMMARY",
+          "section_id": "sec_1",
+          "display_title": "EMPLOYMENT SUMMARY",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_41",
+              "block_id": "para_41",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_43",
+              "block_id": "para_43",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_45",
+              "block_id": "para_45",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_47",
+              "block_id": "para_47",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_49",
+              "block_id": "para_49",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_51",
+              "block_id": "para_51",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_53",
+              "block_id": "para_53",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_55",
+              "block_id": "para_55",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_57",
+              "block_id": "para_57",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_59",
+              "block_id": "para_59",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "EDUCATIONAL HISTORY",
+          "section_id": "sec_2",
+          "display_title": "EDUCATIONAL HISTORY",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_68",
+              "block_id": "para_68",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_70",
+              "block_id": "para_70",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "AFFILIATIONS",
+          "section_id": "sec_3",
+          "display_title": "AFFILIATIONS",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_82",
+              "block_id": "para_82",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "PROFESSIONAL OVERVIEW",
+          "section_id": "sec_4",
+          "display_title": "PROFESSIONAL OVERVIEW",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_89",
+              "block_id": "para_89",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_91",
+              "block_id": "para_91",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_93",
+              "block_id": "para_93",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_95",
+              "block_id": "para_95",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_97",
+              "block_id": "para_97",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_99",
+              "block_id": "para_99",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            }
+          ],
+          "raw_title": "CORE COMPETENCIES",
+          "section_id": "sec_5",
+          "display_title": "CORE COMPETENCIES",
+          "semantic_type": "skills",
+          "rewrite_policy": "rewrite_body",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_106",
+              "block_id": "para_106",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_108",
+              "block_id": "para_108",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_110",
+              "block_id": "para_110",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_112",
+              "block_id": "para_112",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "CONTACT INFORMATION",
+          "section_id": "sec_6",
+          "display_title": "CONTACT INFORMATION",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        }
+      ],
+      "document_id": "182",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "invalid_section_ids": [],
+    "repaired_section_count": 0,
+    "validation_error_count": 0,
+    "validation_after_repair": null,
+    "downgraded_section_count": 0,
+    "invalid_section_count_after_repair": 0,
+    "invalid_section_count_before_repair": 0
+  },
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.2]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n\n21) Generate ONLY the cover letter body.\n    - Do NOT include candidate name, contact information, date, or signature.\n    - Do NOT include a sender header.\n    - Start with \"Dear Hiring Manager,\".\n    - End the content before any closing (e.g., do NOT include \"Sincerely,\" or name).\n\n22) Must explicitly mention the company and role from TASK.\n\n23) Must clearly connect:\n    candidate background → company needs → role responsibilities,\n    using only supported claims (no hallucinations).\n\n24) Keep it 3–5 short paragraphs.\n    - Be specific and concrete.\n    - Avoid verbosity and generic statements.\n\n25) Maintain a professional, concise tone appropriate for the selected generation mode\n    (Conservative / Normal / Aggressive), but do not change structure based on mode.\n\n26) Do NOT include:\n    - work authorization / citizenship statements\n    - availability statements unless explicitly present in input\n    - repeated resume bullet points verbatim\n\nOutput must be plain text only (no JSON inside the body).\n\n[CANDIDATE_LAYER_JACOB_HOWARD v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Mechanical Engineer focused on product development + mechanical design, with strong quality/control mindset.\n- Emphasize: end-to-end component/product design work, design validation, and cross-functional execution with technicians/supervisors/vendors.\n- Keep headline-aligned: “Mechanical Engineer with Expertise in Product Design” (do not drift into unrelated engineering disciplines).\n- Prefer roles framed as: design-to-release support, design-for-manufacturability collaboration, and quality-driven engineering documentation.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Treat “architecture” as mechanical system/component design decisions (not software architecture).\n- Surface explicitly (when supported by source text):\n  - Component design choices and how they meet requirements/constraints\n  - Design validation activities (fit/function verification, tolerance/requirements adherence) without inventing test methods\n  - Quality assurance/control contributions tied to concrete checks, documentation, or review mechanisms (only if evidenced)\n- Ensure at least one bullet in the most recent role includes a concrete design mechanism (e.g., “developed component designs” + constraint context), not just “worked on products.”\n\nARCHITECTURE SIGNAL PRIORITIZATION\nPrioritize bullets in this order:\n1. Concrete mechanical design mechanisms (component design, design iteration, requirement adherence) tied to constraints.\n2. Product development execution with cross-functional collaboration (technicians/supervisors/vendors) tied to deliverables.\n3. Quality control / assurance contributions tied to specific project continuity or spec conformance (no invented tools/standards).\n4. Documentation and collaboration practices as supporting evidence.\n\nDISTRIBUTED SYSTEM DEPTH\n- Not applicable as distributed systems/software depth is not evidenced.\n- Do not introduce distributed systems, cloud, microservices, APIs, or software scalability language.\n\nTECHNICAL DIFFERENTIATION\n- Keep technical differentiation mechanical and evidence-based:\n  - Mechanical product/component development\n  - Mechanical design and validation against requirements\n  - Quality control support for ongoing projects\n  - Engineering documentation as an execution mechanism (e.g., design documentation, change notes) only at the level stated\n- Do not list CAD/FEA/GD&T/materials/manufacturing processes unless present in MASTER_RESUME or provided evidence.\n\nDOMAIN / INDUSTRY FRAMING\n- Primary domain: Mechanical Engineering in product development contexts.\n- Secondary: Engineering design + quality control.\n- Frame domain credibility as: delivering mechanical components/products with practical constraints and quality requirements.\n- Avoid implying regulated industries, safety-critical certification, or specific product verticals unless explicitly supported.\n\nSAFE DOMAIN TRANSLATION\n- Translate conservatively:\n  - “Mechanical product development” → designing and developing mechanical components/products from concept through project execution support.\n  - “Quality control” → ensuring ongoing work aligns with design specifications and product requirements.\n  - “Worked with vendors/technicians/supervisors” → cross-functional coordination to align design intent with operational realities.\n- Keep translations generic and mechanism-based; do not infer specific manufacturing methods, supply-chain ownership, or compliance frameworks.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do not reinterpret experience as:\n  - Electrical engineering, firmware/software engineering, robotics/controls, or industrial automation\n  - Specialized materials engineering, FEA specialist, CFD specialist, or certified quality auditor\n  - Ownership of formal QMS/compliance standards (ISO, AS9100, FDA, etc.) unless evidenced\n- Do not invent:\n  - CAD tools (SolidWorks/Creo/AutoCAD), PLM systems, test rigs, metrology tools, or lab procedures\n  - Metrics (cost reduction %, defect rate %, cycle time %) or production volumes\n  - Patents, certifications, or formal sign-off authority\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- When tailoring to roles needing integration/collaboration, frame “integration” as:\n  - Design-to-operations alignment (design intent ↔ technician execution)\n  - Vendor coordination to ensure components meet requirements\n  - Documentation as the interface mechanism between design, quality, and operations\n- Prefer phrasing that shows modular thinking: components, interfaces, tolerances/requirements alignment (only if supported), and iterative refinement under constraints.\n- Do not claim systems integration across electrical/software domains unless explicitly supported.\n\nLEADERSHIP FRAMING\n- Frame leadership as technical/initiative leadership, not people management:\n  - “Spearheaded development…” as ownership of design workstreams and coordination with stakeholders\n  - Collaboration mechanisms: design reviews, documentation handoffs, vendor/ops alignment (only if supported by evidence)\n- Emphasize quality-focused decision-making: balancing innovation with practical constraints.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep technical design execution primary; leadership is supportive evidence.\n- Avoid overstating “Lead Mechanical Engineer” into org leadership (headcount, budgeting, hiring) unless evidenced.\n- Prefer: “led development of components/products” + “coordinated with technicians/vendors” over generic “managed teams.”\n\nAI WORK POSITIONING\n- No AI tooling practice is evidenced.\n- Do not mention AI/ML, generative AI, automation via AI tools, or model usage.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate domain expertise beyond mechanical engineering/product development.\n- Do not add tools, standards, methods, or metrics not present in evidence.\n- Do not imply specific industries, regulated compliance, or specialized certifications.\n- Keep role scope aligned with provided employers/relationships:\n  - “Lead Mechanical Engineer at Valenti and Associates”\n  - “Mechanical Engineer at Durafame Inc.”\n- Avoid seniority inflation (e.g., “principal,” “director,” “head of engineering”) unless explicitly supported.\n\nEVIDENCE SOURCES\nUse only:\n- MASTER_RESUME (if provided later)\n- CANDIDATE_PROFILE.summary/headline\n- CANDIDATE_PROFILE.experience_highlights (impact, team_context, skills_applied, constraints_and_tradeoffs, employer_relationship)\n- CANDIDATE_PROFILE.leadership (practices, risk_management, style keywords)\nRules:\n- If a mechanism/tool/metric is not in evidence, do not introduce it.\n- Bullets must be traceable to the above sources.\n\nFINAL REMINDER\n- Core differentiation to preserve: mechanical product/component development with quality-focused design validation and strong cross-functional collaboration—stated concretely, without inventing tools, metrics, or non-mechanical domains.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Mechanical Engineering\",\n      \"Product Development\"\n    ],\n    \"secondary\": [\n      \"Engineering Design\",\n      \"Quality Control\"\n    ]\n  },\n  \"contacts\": {\n    \"email\": \"hello@techguruplus.com\",\n    \"phone\": \"(123) 456 7890\",\n    \"location\": \"Any City, State, Country\",\n    \"linkedin_url\": null\n  },\n  \"candidate\": {\n    \"name\": \"Jacob Howard\",\n    \"summary\": \"Jacob Howard is a seasoned mechanical engineer with extensive experience in product development and mechanical design. He excels in collaborative environments, working closely with technicians, supervisors, and vendors to deliver high-quality mechanical products. Jacob is committed to staying current with the latest engineering materials and techniques.\",\n    \"headline\": \"Mechanical Engineer with Expertise in Product Design\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Quality-focused\"\n      ]\n    },\n    \"practices\": [\n      \"Strong team collaboration\",\n      \"Engineering documentation\"\n    ],\n    \"risk_management\": [\n      \"Balancing design innovation with practical constraints\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Mechanical engineering\",\n    \"Product development\",\n    \"Design and validation\",\n    \"Quality control\",\n    \"Team collaboration\",\n    \"Engineering documentation\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate domain expertise beyond mechanical engineering\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Keep claims aligned with actual experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [],\n    \"languages\": [],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Mechanical Engineering\",\n      \"impact\": [\n        \"Spearheaded development of mechanical products and components\",\n        \"Collaborated with operations technicians, supervisors, and vendors\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Collaborative work with cross-functional teams\"\n      ],\n      \"skills_applied\": [\n        \"Product development\",\n        \"Team collaboration\"\n      ],\n      \"architecture_patterns\": [\n        \"Mechanical product development\",\n        \"Component design\"\n      ],\n      \"employer_relationship\": \"Lead Mechanical Engineer at Valenti and Associates\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Balancing design innovation with practical constraints\"\n      ]\n    },\n    {\n      \"area\": \"Mechanical Engineering\",\n      \"impact\": [\n        \"Created robust mechanical designs\",\n        \"Provided quality control for ongoing projects\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Worked with design and quality control teams\"\n      ],\n      \"skills_applied\": [\n        \"Design and validation\",\n        \"Quality control\"\n      ],\n      \"architecture_patterns\": [\n        \"Mechanical design\",\n        \"Quality assurance\"\n      ],\n      \"employer_relationship\": \"Mechanical Engineer at Durafame Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Ensuring design specifications meet product requirements\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\nJACOB HOWARD\nMECHANICAL ENGINEER\nEMPLOYMENT SUMMARY\nLead Mechanical Engineer\nVALENTI AND ASSOCIATES | AUG 2016 - PRESENT\nSpearheads the development of mechanical products and components\nWorks collaboratively with operations technicians, supervisors, and vendors\nMechanical Engineer\nDURAFAME INC. | OCT 2013 - JUL 2016\nCreated robust mechanical designs and translated these into design specifications and product requirements Provided quality control for ongoing projects\nEDUCATIONAL HISTORY\nEnjeti-Maynard Institute\nPOSTGRADUATE CERTIFICATE | JAN 2015 - DEC 2016\nCertificate in Engineering Design\nTook classes on mechanical design, with emphasis on innovative applications\nAccomplished an engineering design portfolio\nKulkaslo Institute\nBACHELOR OF SCIENCE | SEPT 2009 - MAY 2014\nBS Mechanical Engineering\nGPA: 3.95\nHighest Performing Student, Engineering Department Conducted more than 10 workshops for the KI Engineering Club\nPROFESSIONAL OVERVIEW\nI am a mechanical engineer who's well-versed in both technical engineering and product design. I keep up-to-date with the latest materials and techniques.\nCORE COMPETENCIES\nDesign and Validation\nStatistical Analysis\nProduct Development\nStrong Team Collaboration\nEngineering Documentation\nProduction Support\nCONTACT INFORMATION\nEmail: hello@techguruplus.com\nPhone: (123) 456 7890\nWebsite: www.techguruplus.com\nOffice Address: 123 Anywhere St., Any City, State, Country 12345\nAFFILIATIONS\nGRW International Institute of Mechanical Engineers (2016 - present)\nNational Association of Engineers & Computer Scientists (2016 - present)"
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nJacob Howard\nDear Hiring Manager,\n\nI am excited to apply for the [Role] role at [Company].\n\n[2-3 short paragraphs connecting candidate background to role/company needs.]\n\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: May 26, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "JACOB HOWARD\nMECHANICAL ENGINEER\n\nEMPLOYMENT SUMMARY\nLead Mechanical Engineer\nVALENTI AND ASSOCIATES | AUG 2016 - PRESENT\n- Spearhead the development of mechanical products and components, balancing design innovation with practical constraints.\n- Develop and refine component designs to align with product requirements and real-world execution constraints.\n- Collaborate with operations technicians, supervisors, and vendors to align design intent with build and project needs.\n- Produce and maintain engineering documentation to support cross-functional execution and project continuity.\n\nMechanical Engineer\nDURAFAME INC. | OCT 2013 - JUL 2016\n- Create mechanical designs and translate them into design specifications and product requirements.\n- Provide quality control support for ongoing projects to help ensure work aligns with design specifications.\n- Collaborate with design and quality control teams to review requirements and support design validation activities.\n\nEDUCATIONAL HISTORY\nEnjeti-Maynard Institute\nPOSTGRADUATE CERTIFICATE | JAN 2015 - DEC 2016\nCertificate in Engineering Design\n- Took classes on mechanical design, with emphasis on innovative applications\n- Accomplished an engineering design portfolio\n\nKulkaslo Institute\nBACHELOR OF SCIENCE | SEPT 2009 - MAY 2014\nBS Mechanical Engineering\nGPA: 3.95\n- Highest Performing Student, Engineering Department\n- Conducted more than 10 workshops for the KI Engineering Club\n\nPROFESSIONAL OVERVIEW\nMechanical Engineer with Expertise in Product Design, with experience in end-to-end mechanical product/component development, design-to-spec execution, and quality-focused validation. Known for collaborative work with technicians, supervisors, and vendors, and for maintaining clear engineering documentation to support reliable delivery.\n\nCORE COMPETENCIES\nDesign and Validation, Statistical Analysis, Product Development, Strong Team Collaboration, Engineering Documentation, Production Support\n\nCONTACT INFORMATION\nEmail: hello@techguruplus.com\nPhone: (123) 456 7890\nWebsite: www.techguruplus.com\nOffice Address: 123 Anywhere St., Any City, State, Country 12345\n\nAFFILIATIONS\nGRW International Institute of Mechanical Engineers (2016 - present)\nNational Association of Engineers & Computer Scientists (2016 - present)\n",
+    "cover_letter": "Jacob Howard\n(123) 456 7890 | hello@techguruplus.com\n\nMay 26, 2026\n\nDear Hiring Manager,\n\nI am excited to apply for the Lead Software Engineer role at American Tire Distributors. While my background is in mechanical engineering rather than software development, I have built my career around designing complex solutions to requirements, translating those requirements into clear specifications, and supporting delivery through documentation, validation, and cross-functional coordination.\n\nIn my current role as Lead Mechanical Engineer at Valenti and Associates, I spearhead the development of mechanical products and components and work closely with operations technicians, supervisors, and vendors to align design intent with execution constraints. This has required disciplined impact thinking when changes arise, careful attention to requirements, and clear engineering documentation so work can be implemented and supported consistently.\n\nPreviously at Durafame Inc., I created mechanical designs and translated them into design specifications and product requirements, while also providing quality control support for ongoing projects. That experience strengthened my focus on verification against requirements and on collaborating with design and quality teams to keep deliverables aligned with expectations.\n\nAmerican Tire Distributors’ emphasis on collaboration, supportability, and solving end-user problems resonates with how I approach engineering work. I would welcome the opportunity to discuss how my experience in requirements-driven design, validation, and cross-functional execution could translate to the needs of your Lead Software Engineer position.\n\nThank you for your time and consideration.\n\nSincerely,\nJacob Howard"
+  },
+  "diff": null,
+  "generation_run_id": "334",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "JACOB HOWARD",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      },
+      {
+        "text": "MECHANICAL ENGINEER",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_3"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_4"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_5"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_6"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_7"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_8"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_9"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_10"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_11"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_12"
+      }
+    ],
+    "sections": [
+      {
+        "title": "EMPLOYMENT SUMMARY",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "EMPLOYMENT SUMMARY",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_13"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_20"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_21"
+          },
+          {
+            "text": "Lead Mechanical Engineer",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_22"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_23"
+          },
+          {
+            "text": "VALENTI AND ASSOCIATES | AUG 2016 - PRESENT",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_24"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_25"
+          },
+          {
+            "text": "Spearheads the development of mechanical products and components",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_26"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_27"
+          },
+          {
+            "text": "Works collaboratively with operations technicians, supervisors, and vendors",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_28"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_29"
+          },
+          {
+            "text": "Mechanical Engineer",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_30"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_31"
+          },
+          {
+            "text": "DURAFAME INC. | OCT 2013 - JUL 2016",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_32"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_33"
+          },
+          {
+            "text": "Created robust mechanical designs and translated these into design specifications and product requirements Provided quality control for ongoing projects",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_34"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_35"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_36"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_37"
+          }
+        ],
+        "roles": [
+          {
+            "header": {
+              "text": "VALENTI AND ASSOCIATES | AUG 2016 - PRESENT",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_24"
+            },
+            "header_extra": [
+              {
+                "text": "Spearheads the development of mechanical products and components",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_26"
+              },
+              {
+                "text": "Works collaboratively with operations technicians, supervisors, and vendors",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_28"
+              },
+              {
+                "text": "Mechanical Engineer",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_30"
+              }
+            ],
+            "meta_lines": [],
+            "bullets": [],
+            "role_id": "VALENTI AND ASSOCIATES | AUG 2016 - PRESENT",
+            "role_id_stable": "role_1"
+          },
+          {
+            "header": {
+              "text": "DURAFAME INC. | OCT 2013 - JUL 2016",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_32"
+            },
+            "header_extra": [
+              {
+                "text": "Created robust mechanical designs and translated these into design specifications and product requirements Provided quality control for ongoing projects",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_34"
+              }
+            ],
+            "meta_lines": [],
+            "bullets": [],
+            "role_id": "DURAFAME INC. | OCT 2013 - JUL 2016",
+            "role_id_stable": "role_2"
+          }
+        ],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "EDUCATIONAL HISTORY",
+        "semantic_type": "education",
+        "heading": {
+          "text": "EDUCATIONAL HISTORY",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_38"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_40"
+          },
+          {
+            "text": "Enjeti-Maynard Institute",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_41"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_42"
+          },
+          {
+            "text": "POSTGRADUATE CERTIFICATE | JAN 2015 - DEC 2016",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_43"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_44"
+          },
+          {
+            "text": "Certificate in Engineering Design",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_45"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_46"
+          },
+          {
+            "text": "Took classes on mechanical design, with emphasis on innovative applications",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_47"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_48"
+          },
+          {
+            "text": "Accomplished an engineering design portfolio",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_49"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_50"
+          },
+          {
+            "text": "Kulkaslo Institute",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_51"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_52"
+          },
+          {
+            "text": "BACHELOR OF SCIENCE | SEPT 2009 - MAY 2014",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_53"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_54"
+          },
+          {
+            "text": "BS Mechanical Engineering",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_55"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_56"
+          },
+          {
+            "text": "GPA: 3.95",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_57"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_58"
+          },
+          {
+            "text": "Highest Performing Student, Engineering Department Conducted more than 10 workshops for the KI Engineering Club",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_59"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_60"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_61"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_62"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_63"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_64"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_65"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "AFFILIATIONS",
+        "semantic_type": "other",
+        "heading": {
+          "text": "AFFILIATIONS",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_66"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_67"
+          },
+          {
+            "text": "GRW International Institute of Mechanical Engineers (2016 - present)",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_68"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_69"
+          },
+          {
+            "text": "National Association of Engineers & Computer Scientists (2016 - present)",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_70"
+          },
+          {
+            "text": "\n",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_71"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_72"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_73"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_74"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_75"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_76"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_77"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_78"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_79"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_3"
+      },
+      {
+        "title": "PROFESSIONAL OVERVIEW",
+        "semantic_type": "summary",
+        "heading": {
+          "text": "PROFESSIONAL OVERVIEW",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_80"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_81"
+          },
+          {
+            "text": "I am a mechanical engineer who's well-versed in both technical engineering and product design. I keep up-to-date with the latest materials and techniques.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_82"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_83"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_84"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_85"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_86"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_4"
+      },
+      {
+        "title": "CORE COMPETENCIES",
+        "semantic_type": "skills",
+        "heading": {
+          "text": "CORE COMPETENCIES",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_87"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_88"
+          },
+          {
+            "text": "Design and Validation, Statistical Analysis, Product Development, Strong Team Collaboration, Engineering Documentation, Production Support",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_89"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_90"
+          },
+          {
+            "text": "Statistical Analysis",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_91"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_92"
+          },
+          {
+            "text": "Product Development",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_93"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_94"
+          },
+          {
+            "text": "Strong Team Collaboration",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_95"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_96"
+          },
+          {
+            "text": "Engineering Documentation",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_97"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_98"
+          },
+          {
+            "text": "Production Support",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_99"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_100"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_101"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_102"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_103"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_5"
+      },
+      {
+        "title": "CONTACT INFORMATION",
+        "semantic_type": "other",
+        "heading": {
+          "text": "CONTACT INFORMATION",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_104"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_105"
+          },
+          {
+            "text": "Email: hello@techguruplus.com",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_106"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_107"
+          },
+          {
+            "text": "Phone: (123) 456 7890",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_108"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_109"
+          },
+          {
+            "text": "Website: www.techguruplus.com",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_110"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_111"
+          },
+          {
+            "text": "Office Address: 123 Anywhere St., Any City, State, Country 12345",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_112"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_113"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_114"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_6"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 596.0,
+      "page_height_pt": 842.25,
+      "margin_top_pt": 29.45,
+      "margin_bottom_pt": 9.5,
+      "margin_left_pt": 36.0,
+      "margin_right_pt": 20.5,
+      "default_font_name": "Calibri",
+      "default_font_size_pt": 11.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null,
+      "section_row_table": false,
+      "header_bg_color": null,
+      "footer_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "paragraph",
+        "para_id": "para_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:wp14=\"http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" w14:paraId=\"5038298D\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"3520\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:bookmarkStart w:id=\"0\" w:name=\"page1\"/><w:bookmarkEnd w:id=\"0\"/><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:b/><w:bCs/><w:noProof/><w:color w:val=\"FFD02B\"/><w:sz w:val=\"86\"/><w:szCs w:val=\"86\"/></w:rPr><w:drawing><wp:anchor distT=\"0\" distB=\"0\" distL=\"114300\" distR=\"114300\" simplePos=\"0\" relativeHeight=\"251657728\" behindDoc=\"1\" locked=\"0\" layoutInCell=\"0\" allowOverlap=\"1\" wp14:anchorId=\"14C4CB0D\" wp14:editId=\"5CAE7BAD\"><wp:simplePos x=\"0\" y=\"0\"/><wp:positionH relativeFrom=\"page\"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom=\"page\"><wp:posOffset>0</wp:posOffset></wp:positionV><wp:extent cx=\"7562850\" cy=\"10690225\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/><wp:wrapNone/><wp:docPr id=\"1\" name=\"Picture 1\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"0\" name=\"Picture 1\"/><pic:cNvPicPr><a:picLocks noChangeAspect=\"1\" noChangeArrowheads=\"1\"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId4\"/><a:srcRect/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr bwMode=\"auto\"><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"7562850\" cy=\"10690225\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:noFill/></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:b/><w:bCs/><w:color w:val=\"FFD02B\"/><w:sz w:val=\"86\"/><w:szCs w:val=\"86\"/></w:rPr><w:t>JACOB HOWARD</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"159ED413\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"280\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_3",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"093AAC2E\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"3520\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"34\"/><w:szCs w:val=\"34\"/></w:rPr><w:t>MECHANICAL ENGINEER</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_4",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"2AEC1AEF\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:sectPr w:rsidR=\"00C076FA\"><w:pgSz w:w=\"11920\" w:h=\"16845\"/><w:pgMar w:top=\"589\" w:right=\"410\" w:bottom=\"190\" w:left=\"720\" w:header=\"0\" w:footer=\"0\" w:gutter=\"0\"/><w:cols w:space=\"720\" w:equalWidth=\"0\"><w:col w:w=\"10780\"/></w:cols></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_5",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3ED1FB78\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_6",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"18A910B9\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_7",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"28F352CA\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_8",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"19BBD119\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_9",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"55516B05\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_10",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"2F838ED6\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_11",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"650B706C\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_12",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"02E4C06C\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"249\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_13",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"1CB692E7\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:b/><w:bCs/><w:color w:val=\"313434\"/><w:sz w:val=\"26\"/><w:szCs w:val=\"26\"/></w:rPr><w:t>EMPLOYMENT SUMMARY</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_20",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"232E6D15\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_21",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"471B7BD8\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"205\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_22",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"046AF6AC\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:b/><w:bCs/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"23\"/><w:szCs w:val=\"23\"/></w:rPr><w:t>Lead Mechanical Engineer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_23",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"1685D8DD\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"72\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_24",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"27DD487D\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"17\"/><w:szCs w:val=\"17\"/></w:rPr><w:t>VALENTI AND ASSOCIATES | AUG 2016 - PRESENT</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_25",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"6F32B1B5\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"93\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_26",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"06D865D8\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:spacing w:line=\"289\" w:lineRule=\"auto\"/><w:ind w:left=\"260\" w:right=\"1000\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Spearheads the development of mechanical products and components</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_27",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"36C7B0F6\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"1\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_28",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"25DCAEA0\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:spacing w:line=\"299\" w:lineRule=\"auto\"/><w:ind w:left=\"260\" w:right=\"1360\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Works collaboratively with operations technicians, supervisors, and vendors</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_29",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"1E240120\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"201\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_30",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"664BE9A9\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:b/><w:bCs/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"23\"/><w:szCs w:val=\"23\"/></w:rPr><w:t>Mechanical Engineer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_31",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"094FEBB6\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"72\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_32",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"5A126D7F\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"17\"/><w:szCs w:val=\"17\"/></w:rPr><w:t>DURAFAME INC. | OCT 2013 - JUL 2016</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_33",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"0FFF8CD0\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"148\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_34",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"59C9BBB6\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:spacing w:line=\"316\" w:lineRule=\"auto\"/><w:ind w:left=\"260\" w:right=\"720\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"19\"/><w:szCs w:val=\"19\"/></w:rPr><w:t>Created robust mechanical designs and translated these into design specifications and product requirements Provided quality control for ongoing projects</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_35",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"2B331F24\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_36",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"633E82BD\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_37",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"702A849E\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"317\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_38",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"2A2E9A2F\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:b/><w:bCs/><w:color w:val=\"313434\"/><w:sz w:val=\"26\"/><w:szCs w:val=\"26\"/></w:rPr><w:t>EDUCATIONAL HISTORY</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_39",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"58DDCF6B\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_40",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"506B2D9D\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"215\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_41",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3AC1AF89\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:b/><w:bCs/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"23\"/><w:szCs w:val=\"23\"/></w:rPr><w:t>Enjeti-Maynard Institute</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_42",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3377E9E5\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"68\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_43",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"1A54C8D7\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"17\"/><w:szCs w:val=\"17\"/></w:rPr><w:t>POSTGRADUATE CERTIFICATE | JAN 2015 - DEC 2016</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_44",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"41A9A0FE\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"135\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_45",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"239215A7\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"260\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Certificate in Engineering Design</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_46",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3655784B\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"47\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_47",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"07F499CF\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:spacing w:line=\"289\" w:lineRule=\"auto\"/><w:ind w:left=\"260\" w:right=\"1040\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Took classes on mechanical design, with emphasis on innovative applications</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_48",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"4DBD5564\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"1\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7381CA32\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"260\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Accomplished an engineering design portfolio</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_50",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"5536DD71\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"274\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_51",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"34DA2CDD\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:b/><w:bCs/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"23\"/><w:szCs w:val=\"23\"/></w:rPr><w:t>Kulkaslo Institute</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_52",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"30F7FAF2\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"65\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_53",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3462D587\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"17\"/><w:szCs w:val=\"17\"/></w:rPr><w:t>BACHELOR OF SCIENCE | SEPT 2009 - MAY 2014</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_54",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"4EA67E0C\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"122\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_55",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"643E82AD\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"260\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>BS Mechanical Engineering</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_56",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"4D280B67\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"47\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_57",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"144A3F1E\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"260\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>GPA: 3.95</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_58",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7F642D6C\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"47\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_59",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"412F8C09\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:spacing w:line=\"294\" w:lineRule=\"auto\"/><w:ind w:left=\"260\" w:right=\"1060\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Highest Performing Student, Engineering Department Conducted more than 10 workshops for the KI Engineering Club</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_71",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"581BFC3A\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:spacing w:line=\"20\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr><w:br w:type=\"column\"/></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_72",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"44A8176F\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_73",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7F97D968\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_74",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7F7C740C\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_75",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"647CE792\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_76",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"26CCA595\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_77",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"13F8FAEE\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_78",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"51BF3FF8\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_79",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3106002F\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"206\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_80",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"4E41E4EA\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:b/><w:bCs/><w:sz w:val=\"26\"/><w:szCs w:val=\"26\"/></w:rPr><w:t>PROFESSIONAL OVERVIEW</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_81",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"50F7B6AE\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"201\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_82",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"4A280A9A\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:spacing w:line=\"292\" w:lineRule=\"auto\"/><w:ind w:right=\"540\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>I am a mechanical engineer who's well-versed in both technical engineering and product design. I keep up-to-date with the latest materials and techniques.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_83",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7D2B842B\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_84",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"097A57BE\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_85",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3584B9B7\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_86",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3FD562F8\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"249\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_87",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7842947D\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:b/><w:bCs/><w:sz w:val=\"26\"/><w:szCs w:val=\"26\"/></w:rPr><w:t>CORE COMPETENCIES</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_88",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"2D477BCB\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"206\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_89",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"2A64E24E\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"260\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Design and Validation</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_90",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7B4A8FB7\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"47\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_91",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"76786753\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"260\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Statistical Analysis</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_92",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"0420C122\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"47\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_93",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"779DF111\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"260\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Product Development</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_94",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"01361077\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"47\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_95",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"12225F4E\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"260\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Strong Team Collaboration</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_96",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"4BAEDE0C\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"47\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_97",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"0E8945DF\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"260\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Engineering Documentation</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_98",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"434A2D2A\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"47\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_99",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"0FB38418\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"260\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Production Support</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_100",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"74DF4C68\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_101",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"35831AC2\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_102",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"01A64A64\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_103",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"63807D7F\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"266\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_104",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"535B608E\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:b/><w:bCs/><w:sz w:val=\"26\"/><w:szCs w:val=\"26\"/></w:rPr><w:t>CONTACT INFORMATION</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_105",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"739410B5\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"199\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_106",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"1251E9E4\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Email: hello@techguruplus.com</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_107",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"6B86864C\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"47\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_108",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"22DB13D6\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Phone: (123) 456 7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_109",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"4994C6E4\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"47\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_110",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"6B9F03F9\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Website: www.techguruplus.com</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_111",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"4E685DEB\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"47\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_112",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"14E7E0F5\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00000000\"><w:pPr><w:spacing w:line=\"299\" w:lineRule=\"auto\"/><w:ind w:right=\"480\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r w:rsidRPr=\"002C1ABA\"><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>Office Address: 123 Anywhere St., Any City, State, Country 12345</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_113",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"1EADCFA7\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"2541\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_114",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"0D03F96F\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/></w:rPr><w:sectPr w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\"><w:type w:val=\"continuous\"/><w:pgSz w:w=\"11920\" w:h=\"16845\"/><w:pgMar w:top=\"589\" w:right=\"410\" w:bottom=\"190\" w:left=\"720\" w:header=\"0\" w:footer=\"0\" w:gutter=\"0\"/><w:cols w:num=\"2\" w:space=\"720\" w:equalWidth=\"0\"><w:col w:w=\"5860\" w:space=\"720\"/><w:col w:w=\"4200\"/></w:cols></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_60",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"6C84E0E7\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_61",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"40B4E5FE\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_62",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"76E826A6\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRPr=\"002C1ABA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:color w:val=\"FFFFFF\" w:themeColor=\"background1\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_63",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"431FA54A\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_64",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3014F2CF\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_65",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"2EB3AA65\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"320\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_66",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3D9CAB33\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"300\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:b/><w:bCs/><w:color w:val=\"313434\"/><w:sz w:val=\"26\"/><w:szCs w:val=\"26\"/></w:rPr><w:t>AFFILIATIONS</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_67",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3E609A72\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"202\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_68",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"1B11D5DE\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"560\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"313434\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr><w:t>GRW International Institute of Mechanical Engineers (2016 - present)</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_69",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"16465FF2\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00C076FA\"><w:pPr><w:spacing w:line=\"47\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_70",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"24DB8688\" w14:textId=\"77777777\" w:rsidR=\"00C076FA\" w:rsidRDefault=\"00000000\"><w:pPr><w:ind w:left=\"560\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:color w:val=\"313434\"/><w:sz w:val=\"19\"/><w:szCs w:val=\"19\"/></w:rPr><w:t>National Association of Engineers &amp; Computer Scientists (2016 - present)</w:t></w:r></w:p>"
+      }
+    ]
+  }
+}

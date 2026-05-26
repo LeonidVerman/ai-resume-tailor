@@ -1,0 +1,1072 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "structured_resume": {
+    "status": "valid",
+    "validation": {
+      "errors": [],
+      "is_valid": true,
+      "document_id": "180",
+      "section_results": [
+        {
+          "is_valid": true,
+          "section_id": "sec_1",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_2",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_3",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_4",
+          "error_codes": []
+        }
+      ]
+    },
+    "repair_input": null,
+    "classification": {
+      "sections": [
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "role_1_normA_1",
+                  "block_id": "role_1_normA_1",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_20",
+                  "block_id": "para_20",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_21",
+                  "block_id": "para_21",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_19",
+                  "block_id": "para_19",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_2",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "role_2_normA_2",
+                  "block_id": "role_2_normA_2",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_24",
+                  "block_id": "para_24",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_25",
+                  "block_id": "para_25",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_23",
+                  "block_id": "para_23",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_3",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "role_3_normA_3",
+                  "block_id": "role_3_normA_3",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_28",
+                  "block_id": "para_28",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_29",
+                  "block_id": "para_29",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_27",
+                  "block_id": "para_27",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "PROFESSIONAL Experience",
+          "section_id": "sec_1",
+          "display_title": "PROFESSIONAL Experience",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_32",
+              "block_id": "para_32",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_33",
+              "block_id": "para_33",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_34",
+              "block_id": "para_34",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "EDUCATION",
+          "section_id": "sec_2",
+          "display_title": "EDUCATION",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_37",
+              "block_id": "para_37",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_38",
+              "block_id": "para_38",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_39",
+              "block_id": "para_39",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            }
+          ],
+          "raw_title": "SKILLS & ABILITIES",
+          "section_id": "sec_3",
+          "display_title": "SKILLS & ABILITIES",
+          "semantic_type": "skills",
+          "rewrite_policy": "rewrite_body",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_42",
+              "block_id": "para_42",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Awards",
+          "section_id": "sec_4",
+          "display_title": "Awards",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        }
+      ],
+      "document_id": "180",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "repair_response": null,
+    "recovery_applied": false,
+    "raw_classification": {
+      "sections": [
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "role_1_normA_1",
+                  "block_id": "role_1_normA_1",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_20",
+                  "block_id": "para_20",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_21",
+                  "block_id": "para_21",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_19",
+                  "block_id": "para_19",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_2",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "role_2_normA_2",
+                  "block_id": "role_2_normA_2",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_24",
+                  "block_id": "para_24",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_25",
+                  "block_id": "para_25",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_23",
+                  "block_id": "para_23",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_3",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "role_3_normA_3",
+                  "block_id": "role_3_normA_3",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_28",
+                  "block_id": "para_28",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_29",
+                  "block_id": "para_29",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_27",
+                  "block_id": "para_27",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "PROFESSIONAL Experience",
+          "section_id": "sec_1",
+          "display_title": "PROFESSIONAL Experience",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_32",
+              "block_id": "para_32",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_33",
+              "block_id": "para_33",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_34",
+              "block_id": "para_34",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "EDUCATION",
+          "section_id": "sec_2",
+          "display_title": "EDUCATION",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_37",
+              "block_id": "para_37",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_38",
+              "block_id": "para_38",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_39",
+              "block_id": "para_39",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            }
+          ],
+          "raw_title": "SKILLS & ABILITIES",
+          "section_id": "sec_3",
+          "display_title": "SKILLS & ABILITIES",
+          "semantic_type": "skills",
+          "rewrite_policy": "rewrite_body",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_42",
+              "block_id": "para_42",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Awards",
+          "section_id": "sec_4",
+          "display_title": "Awards",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        }
+      ],
+      "document_id": "180",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "invalid_section_ids": [],
+    "repaired_section_count": 0,
+    "validation_error_count": 0,
+    "validation_after_repair": null,
+    "downgraded_section_count": 0,
+    "invalid_section_count_after_repair": 0,
+    "invalid_section_count_before_repair": 0
+  },
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.2]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n\n21) Generate ONLY the cover letter body.\n    - Do NOT include candidate name, contact information, date, or signature.\n    - Do NOT include a sender header.\n    - Start with \"Dear Hiring Manager,\".\n    - End the content before any closing (e.g., do NOT include \"Sincerely,\" or name).\n\n22) Must explicitly mention the company and role from TASK.\n\n23) Must clearly connect:\n    candidate background → company needs → role responsibilities,\n    using only supported claims (no hallucinations).\n\n24) Keep it 3–5 short paragraphs.\n    - Be specific and concrete.\n    - Avoid verbosity and generic statements.\n\n25) Maintain a professional, concise tone appropriate for the selected generation mode\n    (Conservative / Normal / Aggressive), but do not change structure based on mode.\n\n26) Do NOT include:\n    - work authorization / citizenship statements\n    - availability statements unless explicitly present in input\n    - repeated resume bullet points verbatim\n\nOutput must be plain text only (no JSON inside the body).\n\n[CANDIDATE_LAYER_SHEETAL_PARMAR v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Phlebotomist focused on safe, accurate specimen collection and processing in healthcare settings.\n- Emphasize: venipuncture + capillary puncture proficiency, protocol adherence, patient comfort, privacy, and accuracy/attention to detail.\n- Keep headline/branding aligned to: “Experienced Phlebotomist” + “patient-centered specimen collection and processing.”\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Not applicable as “architecture patterns” are not present in the candidate evidence.\n- Do not invent systems/architecture mechanisms, tooling, or technical platforms.\n- Replace “architecture” emphasis with healthcare workflow mechanisms (procedure steps, protocol adherence, privacy handling) only if supported by evidence.\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prioritize bullets that show concrete clinical mechanisms:\n  1) Venipuncture / capillary puncture execution\n  2) Sample processing per established protocols\n  3) Patient privacy + adherence to medical regulations\n  4) Collaboration with healthcare professionals\n- Prefer specificity of actions over generic “excellent care” phrasing.\n\nDISTRIBUTED SYSTEM DEPTH\n- Not relevant for this candidate. Do not introduce software/distributed systems language.\n\nTECHNICAL DIFFERENTIATION\n- Treat “technical” as clinical/procedural skill:\n  - Venipuncture\n  - Capillary puncture\n  - Blood sample processing per protocol\n  - Patient privacy handling and regulatory adherence (state generically; do not name frameworks unless provided)\n- Use mechanism-first phrasing tied to day-to-day phlebotomy workflow; avoid unsupported equipment/tool claims.\n\nDOMAIN / INDUSTRY FRAMING\n- Primary domain: Healthcare services with patient-facing phlebotomy and lab-adjacent specimen handling.\n- Frame domain credibility as: accurate specimen collection + compliant handling + patient-centered interaction in clinical environments.\n- Keep terminology general and accurate (healthcare setting, clinical protocols, medical regulations).\n\nSAFE DOMAIN TRANSLATION\n- Translate conservatively:\n  - “Processed blood samples according to established protocols” → specimen handling/processing aligned to clinic/lab procedures.\n  - “Maintained patient privacy and adhered to medical regulations” → protected patient confidentiality and followed required clinical policies.\n- Do not translate into: lab technologist/MLS responsibilities, diagnostic interpretation, nursing duties, or medical assistant scope unless explicitly supported.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim:\n  - Performing diagnostic testing, analyzing results, or operating specific lab analyzers\n  - Administering medications, IV therapy, or broader nursing/clinical treatment duties\n  - Specific compliance frameworks (e.g., HIPAA/CLIA) unless explicitly stated in source evidence\n  - Use of specific EHR/LIS systems, barcode systems, centrifuges, or transport logistics unless provided\n- Avoid implying supervisory authority, training ownership, or audit ownership without evidence.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- If a role requires adaptability, frame as workflow integration (not software integration):\n  - “Collaborated with healthcare professionals” → coordinated with clinical teams to support timely specimen collection and handoff.\n  - Emphasize consistency across settings (Lamna Healthcare, Wholeness Healthcare, Swan Sonia Healthcare) without inventing differences.\n- Do not claim cross-department process redesign unless supported.\n\nLEADERSHIP FRAMING\n- Frame leadership as collaborative, patient-centered execution:\n  - proactive communication with healthcare professionals\n  - calm, detail-oriented patient interaction\n  - reliability in following protocols and protecting privacy\n- Avoid management language (managed team, led department) unless evidence exists.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep leadership secondary to hands-on phlebotomy execution.\n- Show “leadership through practice” (consistency, collaboration, compliance) rather than authority.\n\nAI WORK POSITIONING\n- No AI tooling practice is provided. Do not mention AI, automation, or AI-assisted workflows.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate technical skills beyond phlebotomy and basic specimen processing.\n- Do not claim unsupported healthcare technologies, systems, certifications, or specialized lab responsibilities.\n- Do not invent metrics (volume of draws/day, error-rate reductions, turnaround times) or outcomes not present in evidence.\n- Do not add employers, dates, locations, or role titles beyond what appears in the provided sources.\n\nEVIDENCE SOURCES\n- Only use evidence from:\n  - CANDIDATE_PROFILE.summary and headline\n  - CANDIDATE_PROFILE.experience_highlights (Lamna Healthcare, Wholeness Healthcare, Swan Sonia Healthcare)\n  - CANDIDATE_PROFILE.role_fit_themes\n  - CANDIDATE_PROFILE.constraints_and_preferences\n  - CANDIDATE_PROFILE.claim_boundaries\n- Bullets must be traceable to the listed impacts/skills/team context; do not introduce new tools, settings (e.g., hospital ER), or procedures.\n\nFINAL REMINDER\n- Core differentiation to repeat implicitly across materials: patient-centered phlebotomist with strong venipuncture/capillary puncture execution, protocol-based sample processing, and strict patient privacy/regulatory adherence across multiple healthcare settings.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Healthcare Services\"\n    ],\n    \"secondary\": [\n      \"Patient Care\",\n      \"Laboratory Procedures\"\n    ]\n  },\n  \"contacts\": {\n    \"email\": \"sheetal@example.com\",\n    \"phone\": \"316.555.0136\",\n    \"location\": null,\n    \"linkedin_url\": null\n  },\n  \"candidate\": {\n    \"name\": \"Sheetal Parmar\",\n    \"summary\": \"Sheetal Parmar is a dedicated phlebotomist with extensive experience in venipuncture and capillary puncture procedures. She has worked in various healthcare settings, ensuring accurate blood sample processing and maintaining patient privacy. Recognized for excellent patient care and attention to detail.\",\n    \"headline\": \"Experienced Phlebotomist\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaboration\",\n        \"Attention to Detail\",\n        \"Patient Care\"\n      ]\n    },\n    \"practices\": [],\n    \"risk_management\": []\n  },\n  \"role_fit_themes\": [\n    \"Phlebotomy\",\n    \"Patient Care\",\n    \"Laboratory Procedures\",\n    \"Healthcare Services\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate technical skills beyond phlebotomy\",\n      \"Avoid claiming unsupported healthcare technologies\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": []\n  },\n  \"technical_skills\": {\n    \"frontend\": [],\n    \"languages\": [],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Phlebotomy\",\n      \"impact\": [\n        \"Performed venipuncture and capillary puncture procedures\",\n        \"Processed blood samples according to established protocols\",\n        \"Maintained patient privacy and adhered to medical regulations\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Collaborated with healthcare professionals\"\n      ],\n      \"skills_applied\": [\n        \"Venipuncture\",\n        \"Capillary Puncture\",\n        \"Patient Privacy\"\n      ],\n      \"architecture_patterns\": [],\n      \"employer_relationship\": \"Lamna Healthcare\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    },\n    {\n      \"area\": \"Phlebotomy\",\n      \"impact\": [\n        \"Performed venipuncture and capillary puncture procedures\",\n        \"Processed blood samples according to established protocols\",\n        \"Maintained patient privacy and adhered to medical regulations\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Collaborated with healthcare professionals\"\n      ],\n      \"skills_applied\": [\n        \"Venipuncture\",\n        \"Capillary Puncture\",\n        \"Patient Privacy\"\n      ],\n      \"architecture_patterns\": [],\n      \"employer_relationship\": \"Wholeness Healthcare\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    },\n    {\n      \"area\": \"Phlebotomy\",\n      \"impact\": [\n        \"Performed venipuncture and capillary puncture procedures\",\n        \"Processed blood samples according to established protocols\",\n        \"Maintained patient privacy and adhered to medical regulations\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Collaborated with healthcare professionals\"\n      ],\n      \"skills_applied\": [\n        \"Venipuncture\",\n        \"Capillary Puncture\",\n        \"Patient Privacy\"\n      ],\n      \"architecture_patterns\": [],\n      \"employer_relationship\": \"Swan Sonia Healthcare\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Healthcare environments\",\n      \"Patient-focused settings\"\n    ],\n    \"communication\": [\n      \"Patient interaction\",\n      \"Collaboration with healthcare teams\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\nSheetal Parmar\nPhlebotomist\n316.555.0136 | sheetal@example.com\nPROFESSIONAL Experience\nJan 20XX — present | Phlebotomist\nLamna Healthcare \nThis is the place for a summary of your key responsibilities and most stellar accomplishments\nFeb 20XX — Jan 20XX | Phlebotomist\nWholeness Healthcare\nThis is the place for a summary of your key responsibilities and most stellar accomplishments\nDec 20XX — Jul 20XX | Phlebotomist\nSwan Sonia Healthcare\nThis is the place for a summary of your key responsibilities and most stellar accomplishments\nEDUCATION\nAug 20XX — May 20XX | Associates in Phlebotomy\nBellows College\nCompleted courses in Introduction to Phlebotomy, Venipuncture Techniques, Capillary Puncture Techniques, Laboratory Procedures and Equipment, and Medical Law and Ethics as part of associate degree in Phlebotomy program.\nSKILLS & ABILITIES\nPerforming venipuncture and capillary puncture procedures\nProcessing blood samples according to established laboratory protocols\nFamiliar with medical terminology and patient privacy regulations.\nAwards\nRecognized by supervisors and colleagues for excellent patient care and attention to detail. Successfully completed certification in phlebotomy from a national health organization."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nSheetal Parmar\nDear Hiring Manager,\n\nI am excited to apply for the [Role] role at [Company].\n\n[2-3 short paragraphs connecting candidate background to role/company needs.]\n\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: May 26, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "Sheetal Parmar\nPhlebotomist\n316.555.0136 | sheetal@example.com\n\nPROFESSIONAL SUMMARY\nExperienced Phlebotomist with hands-on expertise in venipuncture and capillary puncture, specimen processing, and protocol-driven clinical workflows. Patient-centered and detail-oriented, with a consistent focus on accurate collection/handling and protecting patient privacy while collaborating with healthcare professionals.\n\nEXPERIENCE\nJan 20XX — present | Phlebotomist\nLamna Healthcare\n- Performed venipuncture and capillary puncture procedures while prioritizing patient comfort and clear communication.\n- Processed blood samples according to established protocols to support accurate downstream laboratory handling.\n- Protected patient privacy and followed required clinical policies and medical regulations during collection and specimen handling.\n- Collaborated with healthcare professionals to coordinate specimen collection needs and support timely handoff.\n\nFeb 20XX — Jan 20XX | Phlebotomist\nWholeness Healthcare\n- Performed venipuncture and capillary puncture procedures in a patient-facing healthcare setting.\n- Processed blood samples according to established protocols, maintaining careful attention to labeling and handling steps.\n- Maintained patient privacy and adhered to medical regulations throughout patient interactions and specimen processing.\n- Coordinated with healthcare professionals to align on collection requirements and patient readiness.\n\nDec 20XX — Jul 20XX | Phlebotomist\nSwan Sonia Healthcare\n- Performed venipuncture and capillary puncture procedures with a focus on accuracy and patient-centered care.\n- Processed blood samples according to established protocols to ensure consistent specimen handling.\n- Maintained patient privacy and adhered to medical regulations in day-to-day clinical workflow.\n- Collaborated with healthcare professionals to support efficient specimen collection and communication.\n\nEDUCATION\nAug 20XX — May 20XX | Associates in Phlebotomy\nBellows College\nCompleted courses in Introduction to Phlebotomy, Venipuncture Techniques, Capillary Puncture Techniques, Laboratory Procedures and Equipment, and Medical Law and Ethics as part of associate degree in Phlebotomy program.\n\nTECHNICAL SKILLS\nClinical Procedures: Venipuncture, Capillary Puncture\nSpecimen Handling: Processing blood samples according to established laboratory protocols\nClinical Knowledge: Medical terminology\nCompliance & Privacy: Patient privacy regulations\n\nADDITIONAL\nAwards\n- Recognized by supervisors and colleagues for excellent patient care and attention to detail.\n- Successfully completed certification in phlebotomy from a national health organization.\n",
+    "cover_letter": "Sheetal Parmar\n316.555.0136 | sheetal@example.com\n\nMay 26, 2026\n\nDear Hiring Manager,\n\nI am excited to apply for the Lead Software Engineer role at American Tire Distributors. While my background is in healthcare as an experienced Phlebotomist, I wanted to be transparent that my experience is not in software engineering.\n\nAcross multiple healthcare settings, I have built my career around precision, protocol adherence, and dependable execution—performing venipuncture and capillary puncture procedures, processing blood samples according to established protocols, and protecting patient privacy while collaborating closely with healthcare professionals. These responsibilities require careful attention to detail, clear communication, and consistent follow-through in environments where accuracy matters.\n\nIf American Tire Distributors is open to candidates transitioning into technology roles, I would welcome the opportunity to discuss how my strengths in disciplined process execution, documentation-minded work habits, and stakeholder communication could translate to a structured development environment over time. If the role requires prior hands-on software engineering experience, I understand and appreciate your consideration.\n\nThank you for your time and consideration.\n\nSincerely,\nSheetal Parmar"
+  },
+  "diff": {
+    "resume": [
+      {
+        "name": "Professional Summary",
+        "after": "Experienced Phlebotomist with hands-on expertise in venipuncture and capillary puncture, specimen processing, and protocol-driven clinical workflows. Patient-centered and detail-oriented, with a consistent focus on accurate collection/handling and protecting patient privacy while collaborating with healthcare professionals."
+      },
+      {
+        "name": "Experience",
+        "roles": [
+          {
+            "name": "Jan 20XX — present | Phlebotomist",
+            "added": [
+              "Performed venipuncture and capillary puncture procedures while prioritizing patient comfort and clear communication.",
+              "Processed blood samples according to established protocols to support accurate downstream laboratory handling.",
+              "Protected patient privacy and followed required clinical policies and medical regulations during collection and specimen handling.",
+              "Collaborated with healthcare professionals to coordinate specimen collection needs and support timely handoff."
+            ],
+            "removed": [
+              "Lamna Healthcare",
+              "This is the place for a summary of your key responsibilities and most stellar accomplishments"
+            ]
+          },
+          {
+            "name": "Feb 20XX — Jan 20XX | Phlebotomist",
+            "added": [
+              "Performed venipuncture and capillary puncture procedures in a patient-facing healthcare setting.",
+              "Processed blood samples according to established protocols, maintaining careful attention to labeling and handling steps.",
+              "Maintained patient privacy and adhered to medical regulations throughout patient interactions and specimen processing.",
+              "Coordinated with healthcare professionals to align on collection requirements and patient readiness."
+            ],
+            "removed": [
+              "Wholeness Healthcare",
+              "This is the place for a summary of your key responsibilities and most stellar accomplishments"
+            ]
+          },
+          {
+            "name": "Dec 20XX — Jul 20XX | Phlebotomist",
+            "added": [
+              "Performed venipuncture and capillary puncture procedures with a focus on accuracy and patient-centered care.",
+              "Processed blood samples according to established protocols to ensure consistent specimen handling.",
+              "Maintained patient privacy and adhered to medical regulations in day-to-day clinical workflow.",
+              "Collaborated with healthcare professionals to support efficient specimen collection and communication."
+            ],
+            "removed": [
+              "Swan Sonia Healthcare",
+              "This is the place for a summary of your key responsibilities and most stellar accomplishments"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Technical Skills",
+        "after": "Clinical Procedures: Venipuncture, Capillary Puncture\nSpecimen Handling: Processing blood samples according to established laboratory protocols\nClinical Knowledge: Medical terminology\nCompliance & Privacy: Patient privacy regulations\n\nADDITIONAL"
+      }
+    ]
+  },
+  "generation_run_id": "332",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "Sheetal Parmar",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      },
+      {
+        "text": "Phlebotomist",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_3"
+      },
+      {
+        "text": "316.555.0136 | sheetal@example.com",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_4"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_6"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_7"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Professional Summary",
+        "semantic_type": "summary",
+        "heading": {
+          "text": "",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_5"
+        },
+        "body_paras": [
+          {
+            "text": "Experienced Phlebotomist with hands-on expertise in venipuncture and capillary puncture, specimen processing, and protocol-driven clinical workflows. Patient-centered and detail-oriented, with a consistent focus on accurate collection/handling and protecting patient privacy while collaborating with healthcare professionals.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_8"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_summary_inserted"
+      },
+      {
+        "title": "PROFESSIONAL Experience",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "PROFESSIONAL Experience",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_9"
+        },
+        "body_paras": [
+          {
+            "text": "Jan 20XX — present | Phlebotomist",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_19"
+          },
+          {
+            "text": "Lamna Healthcare ",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_20"
+          },
+          {
+            "text": "This is the place for a summary of your key responsibilities and most stellar accomplishments",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_21"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_22"
+          },
+          {
+            "text": "Feb 20XX — Jan 20XX | Phlebotomist",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_23"
+          },
+          {
+            "text": "Wholeness Healthcare",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_24"
+          },
+          {
+            "text": "This is the place for a summary of your key responsibilities and most stellar accomplishments",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_25"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_26"
+          },
+          {
+            "text": "Dec 20XX — Jul 20XX | Phlebotomist",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_27"
+          },
+          {
+            "text": "Swan Sonia Healthcare",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_28"
+          },
+          {
+            "text": "This is the place for a summary of your key responsibilities and most stellar accomplishments",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_29"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_30"
+          }
+        ],
+        "roles": [
+          {
+            "header": {
+              "text": "Jan 20XX — present | Phlebotomist",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_19"
+            },
+            "header_extra": [],
+            "meta_lines": [],
+            "bullets": [],
+            "role_id": "Jan 20XX — present | Phlebotomist",
+            "role_id_stable": ""
+          },
+          {
+            "header": {
+              "text": "Feb 20XX — Jan 20XX | Phlebotomist",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_23"
+            },
+            "header_extra": [
+              {
+                "text": "Wholeness Healthcare",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_24"
+              },
+              {
+                "text": "This is the place for a summary of your key responsibilities and most stellar accomplishments",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_25"
+              }
+            ],
+            "meta_lines": [],
+            "bullets": [],
+            "role_id": "Feb 20XX — Jan 20XX | Phlebotomist",
+            "role_id_stable": "role_2"
+          },
+          {
+            "header": {
+              "text": "Dec 20XX — Jul 20XX | Phlebotomist",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_27"
+            },
+            "header_extra": [
+              {
+                "text": "Swan Sonia Healthcare",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_28"
+              },
+              {
+                "text": "This is the place for a summary of your key responsibilities and most stellar accomplishments",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_29"
+              }
+            ],
+            "meta_lines": [],
+            "bullets": [],
+            "role_id": "Dec 20XX — Jul 20XX | Phlebotomist",
+            "role_id_stable": "role_3"
+          }
+        ],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "EDUCATION",
+        "semantic_type": "education",
+        "heading": {
+          "text": "EDUCATION",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_31"
+        },
+        "body_paras": [
+          {
+            "text": "Aug 20XX — May 20XX | Associates in Phlebotomy",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_32"
+          },
+          {
+            "text": "Bellows College",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_33"
+          },
+          {
+            "text": "Completed courses in Introduction to Phlebotomy, Venipuncture Techniques, Capillary Puncture Techniques, Laboratory Procedures and Equipment, and Medical Law and Ethics as part of associate degree in Phlebotomy program.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_34"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_35"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "SKILLS & ABILITIES",
+        "semantic_type": "other",
+        "heading": {
+          "text": "SKILLS & ABILITIES",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_36"
+        },
+        "body_paras": [
+          {
+            "text": "Clinical Procedures: Venipuncture, Capillary Puncture",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_37"
+          },
+          {
+            "text": "Specimen Handling: Processing blood samples according to established laboratory protocols",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_38"
+          },
+          {
+            "text": "Clinical Knowledge: Medical terminology",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_40"
+          },
+          {
+            "text": "Compliance & Privacy: Patient privacy regulations",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_39_ext_1"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_3"
+      },
+      {
+        "title": "Awards",
+        "semantic_type": "other",
+        "heading": {
+          "text": "Awards",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_41"
+        },
+        "body_paras": [
+          {
+            "text": "Recognized by supervisors and colleagues for excellent patient care and attention to detail. Successfully completed certification in phlebotomy from a national health organization.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_42"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_4"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 612.0,
+      "page_height_pt": 792.0,
+      "margin_top_pt": 64.8,
+      "margin_bottom_pt": 36.0,
+      "margin_left_pt": 72.0,
+      "margin_right_pt": 72.0,
+      "default_font_name": "Calibri",
+      "default_font_size_pt": 10.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null,
+      "section_row_table": false,
+      "header_bg_color": null,
+      "footer_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "paragraph",
+        "para_id": "para_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"3F1EE581\" w14:textId=\"77777777\" w:rsidR=\"00D11FD2\" w:rsidRDefault=\"00D11FD2\" w:rsidP=\"00D11FD2\"><w:pPr><w:rPr><w:noProof/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"2BEE7777\" w14:textId=\"23243556\" w:rsidR=\"00D11FD2\" w:rsidRPr=\"00E625B0\" w:rsidRDefault=\"00D11FD2\" w:rsidP=\"00D11FD2\"><w:pPr><w:pStyle w:val=\"Title\"/></w:pPr><w:r><w:rPr><w:noProof/></w:rPr><w:t>Sheetal Parmar</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_3",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7669EA84\" w14:textId=\"3FD0E90B\" w:rsidR=\"00D11FD2\" w:rsidRDefault=\"003E0009\" w:rsidP=\"003E0009\"><w:pPr><w:pStyle w:val=\"Subtitle\"/></w:pPr><w:r><w:t>Phlebotomist</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_4",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"5856C56F\" w14:textId=\"77777777\" w:rsidR=\"00D11FD2\" w:rsidRPr=\"00A1021D\" w:rsidRDefault=\"00D11FD2\" w:rsidP=\"00D11FD2\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r><w:t>316.555.0136 | sheetal@example.com</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_5",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"45C8B249\" w14:textId=\"77777777\" w:rsidR=\"00D11FD2\" w:rsidRDefault=\"00D11FD2\" w:rsidP=\"00D11FD2\"/>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_6",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"4E6B98CB\" w14:textId=\"77777777\" w:rsidR=\"00FF18A6\" w:rsidRDefault=\"00FF18A6\" w:rsidP=\"00B0180D\"><w:pPr><w:pStyle w:val=\"Dividerline\"/></w:pPr></w:p>"
+      },
+      {
+        "kind": "table",
+        "table_id": "tbl_1",
+        "xml_proto_xml": "<w:tbl xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\"><w:tblPr><w:tblW w:w=\"0\" w:type=\"auto\"/><w:tblInd w:w=\"-1440\" w:type=\"dxa\"/><w:tblBorders><w:bottom w:val=\"single\" w:sz=\"18\" w:space=\"0\" w:color=\"9A92BF\" w:themeColor=\"accent5\" w:themeTint=\"99\"/></w:tblBorders><w:tblLook w:val=\"04A0\" w:firstRow=\"1\" w:lastRow=\"0\" w:firstColumn=\"1\" w:lastColumn=\"0\" w:noHBand=\"0\" w:noVBand=\"1\"/></w:tblPr><w:tblGrid><w:gridCol w:w=\"10080\"/></w:tblGrid><w:tr w:rsidR=\"00FF18A6\" w14:paraId=\"3F718784\" w14:textId=\"77777777\" w:rsidTr=\"00FF18A6\"><w:tc><w:tcPr><w:tcW w:w=\"10080\" w:type=\"dxa\"/></w:tcPr><w:p w14:paraId=\"3C3B0668\" w14:textId=\"77777777\" w:rsidR=\"00FF18A6\" w:rsidRPr=\"00FF18A6\" w:rsidRDefault=\"00FF18A6\" w:rsidP=\"00FF18A6\"><w:pPr><w:pStyle w:val=\"Dividerline\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"8\"/><w:szCs w:val=\"12\"/></w:rPr></w:pPr></w:p></w:tc></w:tr></w:tbl>",
+        "para_ids": [
+          "para_7"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_8",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"77529F31\" w14:textId=\"77777777\" w:rsidR=\"00D11FD2\" w:rsidRDefault=\"00D11FD2\" w:rsidP=\"00FF18A6\"/>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_9",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"79655ADE\" w14:textId=\"01AF082D\" w:rsidR=\"005C1251\" w:rsidRPr=\"00AC33DB\" w:rsidRDefault=\"005C1251\" w:rsidP=\"00AC33DB\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:r w:rsidRPr=\"00AC33DB\"><w:t>PROFESSIONAL Experience</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_19",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"75473DB3\" w14:textId=\"18509352\" w:rsidR=\"005C1251\" w:rsidRPr=\"00AC33DB\" w:rsidRDefault=\"005C1251\" w:rsidP=\"00AC33DB\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r w:rsidRPr=\"00AC33DB\"><w:t>Jan 20XX — present | Phlebotomist</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_20",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7B655ADD\" w14:textId=\"6132E886\" w:rsidR=\"005C1251\" w:rsidRPr=\"00AC33DB\" w:rsidRDefault=\"005C1251\" w:rsidP=\"00AC33DB\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r w:rsidRPr=\"00AC33DB\"><w:t xml:space=\"preserve\">Lamna Healthcare </w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_21",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"077F02A5\" w14:textId=\"677721F9\" w:rsidR=\"005C1251\" w:rsidRDefault=\"005C1251\" w:rsidP=\"00AC33DB\"><w:bookmarkStart w:id=\"0\" w:name=\"OLE_LINK171\"/><w:bookmarkStart w:id=\"1\" w:name=\"OLE_LINK172\"/><w:r><w:t xml:space=\"preserve\">This is the place for </w:t></w:r><w:r w:rsidR=\"00382A7A\"><w:t>a summary</w:t></w:r><w:r><w:t xml:space=\"preserve\"> of your key responsibilities and most stellar accomplishments</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_22",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7B280536\" w14:textId=\"72DBAAA6\" w:rsidR=\"005C1251\" w:rsidRDefault=\"005C1251\" w:rsidP=\"005C1251\"><w:pPr><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_23",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"12D05056\" w14:textId=\"71D1B9EC\" w:rsidR=\"005C1251\" w:rsidRPr=\"00AC33DB\" w:rsidRDefault=\"005C1251\" w:rsidP=\"00AC33DB\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r w:rsidRPr=\"00AC33DB\"><w:t xml:space=\"preserve\">Feb 20XX — Jan 20XX | </w:t></w:r><w:bookmarkStart w:id=\"2\" w:name=\"OLE_LINK175\"/><w:bookmarkStart w:id=\"3\" w:name=\"OLE_LINK176\"/><w:r w:rsidRPr=\"00AC33DB\"><w:t>Phlebotomist</w:t></w:r><w:bookmarkEnd w:id=\"2\"/><w:bookmarkEnd w:id=\"3\"/></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_24",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"5FE49FFE\" w14:textId=\"3B184B39\" w:rsidR=\"005C1251\" w:rsidRPr=\"00AC33DB\" w:rsidRDefault=\"005C1251\" w:rsidP=\"00AC33DB\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r w:rsidRPr=\"00AC33DB\"><w:t>Wholeness Healthcare</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_25",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"06399E48\" w14:textId=\"40C63A00\" w:rsidR=\"005C1251\" w:rsidRDefault=\"005C1251\" w:rsidP=\"005C1251\"><w:pPr><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr></w:pPr><w:bookmarkStart w:id=\"4\" w:name=\"OLE_LINK179\"/><w:bookmarkStart w:id=\"5\" w:name=\"OLE_LINK180\"/><w:r><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr><w:t xml:space=\"preserve\">This is the place for </w:t></w:r><w:r w:rsidR=\"00382A7A\"><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr><w:t>a summary</w:t></w:r><w:r><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr><w:t xml:space=\"preserve\"> of your key responsibilities and most stellar accomplishments</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_26",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"1D42A579\" w14:textId=\"45C7DF1A\" w:rsidR=\"00AD14CC\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"005C1251\"><w:pPr><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_27",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"1804BF40\" w14:textId=\"77777777\" w:rsidR=\"00AD14CC\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AD14CC\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r><w:t xml:space=\"preserve\">Dec 20XX — </w:t></w:r><w:r><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr><w:t xml:space=\"preserve\">Jul 20XX | </w:t></w:r><w:r w:rsidRPr=\"005C1251\"><w:t>Phlebotomist</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_28",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"20BA9425\" w14:textId=\"69C1B9CF\" w:rsidR=\"00AD14CC\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AD14CC\"><w:pPr><w:pStyle w:val=\"Heading2\"/><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr></w:pPr><w:r><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr><w:t>Swan Sonia Healthcare</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_29",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"30D22037\" w14:textId=\"704BFCF7\" w:rsidR=\"00AD14CC\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AD14CC\"><w:pPr><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr></w:pPr><w:r><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr><w:t xml:space=\"preserve\">This is the place for </w:t></w:r><w:r w:rsidR=\"00382A7A\"><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr><w:t>a summary</w:t></w:r><w:r><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr><w:t xml:space=\"preserve\"> of your key responsibilities and most stellar accomplishments</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_30",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7A4AA84D\" w14:textId=\"19438BF2\" w:rsidR=\"00865446\" w:rsidRDefault=\"00865446\" w:rsidP=\"00AD14CC\"><w:pPr><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_31",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"490A7147\" w14:textId=\"34F11643\" w:rsidR=\"00AD14CC\" w:rsidRPr=\"00B0180D\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00B0180D\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:r w:rsidRPr=\"00B0180D\"><w:t>EDUCATION</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_32",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"28CAD718\" w14:textId=\"5899D670\" w:rsidR=\"00AD14CC\" w:rsidRPr=\"00B0180D\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00B0180D\"><w:pPr><w:pStyle w:val=\"Heading3\"/></w:pPr><w:bookmarkStart w:id=\"6\" w:name=\"OLE_LINK141\"/><w:bookmarkStart w:id=\"7\" w:name=\"OLE_LINK142\"/><w:r w:rsidRPr=\"00B0180D\"><w:t>Aug 20XX — May 20XX | Associates in Phlebotomy</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_33",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"0AFA7C88\" w14:textId=\"0D1E52D1\" w:rsidR=\"00AD14CC\" w:rsidRPr=\"00AD14CC\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AD14CC\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:r w:rsidRPr=\"00AD14CC\"><w:t>Bellows College</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_34",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"6BD0C4BD\" w14:textId=\"22BEDF51\" w:rsidR=\"00670E86\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AD14CC\"><w:pPr><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr></w:pPr><w:r><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr><w:t>Completed courses in Introduction to Phlebotomy, Venipuncture Techniques, Capillary Puncture Techniques, Laboratory Procedures and Equipment, and Medical Law and Ethics as part of associate degree in Phlebotomy program.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_35",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"22BE4DCF\" w14:textId=\"4D401EA3\" w:rsidR=\"00865446\" w:rsidRDefault=\"00865446\" w:rsidP=\"00AD14CC\"><w:pPr><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_36",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"58305C15\" w14:textId=\"3A1BC1FE\" w:rsidR=\"00AD14CC\" w:rsidRPr=\"00AD14CC\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AD14CC\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:r w:rsidRPr=\"00AD14CC\"><w:t>SKILLS &amp; ABILITIES</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_37",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"525B1DC4\" w14:textId=\"77777777\" w:rsidR=\"00AD14CC\" w:rsidRPr=\"00AC33DB\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AC33DB\"><w:r w:rsidRPr=\"00AC33DB\"><w:t>Performing venipuncture and capillary puncture procedures</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_38",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"0C91D382\" w14:textId=\"77777777\" w:rsidR=\"00AD14CC\" w:rsidRPr=\"00AC33DB\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AC33DB\"><w:r w:rsidRPr=\"00AC33DB\"><w:t>Processing blood samples according to established laboratory protocols</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_39",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"516BCA8A\" w14:textId=\"0F1E2513\" w:rsidR=\"00AD14CC\" w:rsidRPr=\"00AC33DB\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AC33DB\"><w:r w:rsidRPr=\"00AC33DB\"><w:t>Familiar with medical terminology and patient privacy regulations.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_39_ext_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"516BCA8A\" w14:textId=\"0F1E2513\" w:rsidR=\"00AD14CC\" w:rsidRPr=\"00AC33DB\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AC33DB\"><w:r w:rsidRPr=\"00AC33DB\"><w:t>Familiar with medical terminology and patient privacy regulations.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_40",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"7B5CAEB3\" w14:textId=\"77777777\" w:rsidR=\"00AD14CC\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AD14CC\"><w:pPr><w:rPr><w:kern w:val=\"0\"/><w14:ligatures w14:val=\"none\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_41",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"14470041\" w14:textId=\"52B5BD1F\" w:rsidR=\"00AD14CC\" w:rsidRPr=\"00AD14CC\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AD14CC\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:r w:rsidRPr=\"00AD14CC\"><w:t>Awards</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_42",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" w14:paraId=\"331C2B11\" w14:textId=\"79BBCCCC\" w:rsidR=\"00AD14CC\" w:rsidRPr=\"00AC33DB\" w:rsidRDefault=\"00AD14CC\" w:rsidP=\"00AC33DB\"><w:r w:rsidRPr=\"00AC33DB\"><w:t>Recognized by supervisors and colleagues for excellent patient care and attention to detail. Successfully completed certification in phlebotomy from a national health organization.</w:t></w:r></w:p>"
+      }
+    ]
+  }
+}

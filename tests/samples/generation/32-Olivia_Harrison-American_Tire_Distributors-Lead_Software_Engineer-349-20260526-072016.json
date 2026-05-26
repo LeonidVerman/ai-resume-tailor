@@ -1,0 +1,1226 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "structured_resume": {
+    "status": "valid",
+    "validation": {
+      "errors": [],
+      "is_valid": true,
+      "document_id": "197",
+      "section_results": [
+        {
+          "is_valid": true,
+          "section_id": "sec_1",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_2",
+          "error_codes": []
+        }
+      ]
+    },
+    "repair_input": null,
+    "classification": {
+      "sections": [
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_29",
+                  "block_id": "para_29",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_30",
+                  "block_id": "para_30",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_31",
+                  "block_id": "para_31",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_28",
+                  "block_id": "para_28",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_2",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_37",
+                  "block_id": "para_37",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_38",
+                  "block_id": "para_38",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_40",
+                  "block_id": "para_40",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_44",
+                  "block_id": "para_44",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_45",
+                  "block_id": "para_45",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_46",
+                  "block_id": "para_46",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_34",
+                  "block_id": "para_34",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_35",
+                  "block_id": "para_35",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_33",
+                  "block_id": "para_33",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "Experience",
+          "section_id": "sec_1",
+          "display_title": "Experience",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_48",
+              "block_id": "para_48",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_49",
+              "block_id": "para_49",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_50",
+              "block_id": "para_50",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_52",
+              "block_id": "para_52",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_53",
+              "block_id": "para_53",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_55",
+              "block_id": "para_55",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_56",
+              "block_id": "para_56",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_59",
+              "block_id": "para_59",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_60",
+              "block_id": "para_60",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_61",
+              "block_id": "para_61",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_62",
+              "block_id": "para_62",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Education",
+          "section_id": "sec_2",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        }
+      ],
+      "document_id": "197",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "repair_response": null,
+    "recovery_applied": false,
+    "raw_classification": {
+      "sections": [
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_29",
+                  "block_id": "para_29",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_30",
+                  "block_id": "para_30",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_31",
+                  "block_id": "para_31",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_28",
+                  "block_id": "para_28",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_2",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_37",
+                  "block_id": "para_37",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_38",
+                  "block_id": "para_38",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_40",
+                  "block_id": "para_40",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_44",
+                  "block_id": "para_44",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_45",
+                  "block_id": "para_45",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_46",
+                  "block_id": "para_46",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_34",
+                  "block_id": "para_34",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_35",
+                  "block_id": "para_35",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_33",
+                  "block_id": "para_33",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "Experience",
+          "section_id": "sec_1",
+          "display_title": "Experience",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_48",
+              "block_id": "para_48",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_49",
+              "block_id": "para_49",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_50",
+              "block_id": "para_50",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_52",
+              "block_id": "para_52",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_53",
+              "block_id": "para_53",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_55",
+              "block_id": "para_55",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_56",
+              "block_id": "para_56",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_59",
+              "block_id": "para_59",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_60",
+              "block_id": "para_60",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_61",
+              "block_id": "para_61",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_62",
+              "block_id": "para_62",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Education",
+          "section_id": "sec_2",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        }
+      ],
+      "document_id": "197",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "invalid_section_ids": [],
+    "repaired_section_count": 0,
+    "validation_error_count": 0,
+    "validation_after_repair": null,
+    "downgraded_section_count": 0,
+    "invalid_section_count_after_repair": 0,
+    "invalid_section_count_before_repair": 0
+  },
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.2]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n\n21) Generate ONLY the cover letter body.\n    - Do NOT include candidate name, contact information, date, or signature.\n    - Do NOT include a sender header.\n    - Start with \"Dear Hiring Manager,\".\n    - End the content before any closing (e.g., do NOT include \"Sincerely,\" or name).\n\n22) Must explicitly mention the company and role from TASK.\n\n23) Must clearly connect:\n    candidate background → company needs → role responsibilities,\n    using only supported claims (no hallucinations).\n\n24) Keep it 3–5 short paragraphs.\n    - Be specific and concrete.\n    - Avoid verbosity and generic statements.\n\n25) Maintain a professional, concise tone appropriate for the selected generation mode\n    (Conservative / Normal / Aggressive), but do not change structure based on mode.\n\n26) Do NOT include:\n    - work authorization / citizenship statements\n    - availability statements unless explicitly present in input\n    - repeated resume bullet points verbatim\n\nOutput must be plain text only (no JSON inside the body).\n\n[CANDIDATE_LAYER_OLIVIA_HARRISON v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Software Engineer focused on backend programming + support/feedback systems + testing/validation workflows.\n- Emphasize strengths: implementing software changes, building internal support tooling, debugging/testing, and cross-functional collaboration.\n- Keep scope grounded: contributor-level backend engineer; avoid implying principal/architect ownership.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface explicitly (only as supported): “backend application development” and “testing/validation workflows.”\n- Convert generic phrases (“backend programming”, “software systems”) into concrete engineering actions (e.g., implemented backend features, fixed defects, added validation steps) without inventing technologies.\n- Do NOT introduce distributed-system mechanisms (queues, replicas, caching, stateless services, etc.) unless present in MASTER_RESUME or additional evidence.\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prioritize bullets that show:\n  1) Concrete backend changes shipped (feature/fix/change implementation).\n  2) Support/feedback system development (internal tooling/workflows).\n  3) Testing/validation workflow improvements (test execution, defect isolation, verification).\n  4) Collaboration and documentation contributions.\n- If a role has multiple bullets, ensure at least one bullet is mechanism-first (what was changed/added in the system) rather than responsibility-only.\n\nDISTRIBUTED SYSTEM DEPTH\n- Treat as “not evidenced” in current profile.\n- Avoid claims about scalability, high throughput, microservices, event-driven systems, or reliability engineering unless explicitly supported by MASTER_RESUME.\n- If a job description demands distributed systems, translate candidly as: backend feature delivery + testing/support workflows; do not fabricate scale/latency constraints.\n\nTECHNICAL DIFFERENTIATION\n- Emphasize: backend programming, software change implementation, support/feedback system development, software testing, technical support investigation.\n- Prefer mechanism-first bullet phrasing:\n  - “Implemented X change in backend module/service to enable Y behavior” (do not name modules/services unless evidenced).\n  - “Added validation/test steps to verify Z and reduce regressions” (no invented metrics).\n  - “Investigated defects by reproducing issues and isolating root cause” (avoid naming tools/frameworks not evidenced).\n- Do not list languages, frameworks, databases, cloud, CI/CD, observability tools unless provided elsewhere.\n\nDOMAIN / INDUSTRY FRAMING\n- Frame domain as general software engineering (backend + internal support systems), not a specialized industry.\n- Keep employer context neutral; do not infer fintech/healthcare/regulatory environments.\n\nSAFE DOMAIN TRANSLATION\n- Support/feedback systems → internal tooling that captures issues/requests and routes them for resolution (keep generic).\n- Technical support → incident/issue investigation, troubleshooting, and customer/user assistance (avoid “SRE/on-call” unless evidenced).\n- Testing workflows → validation steps, test execution, regression checking (avoid claiming automated test frameworks unless evidenced).\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim expertise in: distributed systems at scale, cloud architecture, microservices, event streaming, data engineering/ETL, security/compliance, or DevOps ownership unless explicitly supported.\n- Do NOT infer product domain (payments, crypto, healthcare, etc.).\n- Avoid “architected platform/system” language; prefer “implemented,” “developed,” “contributed,” “collaborated.”\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- If tailoring to roles needing extensibility/integration, safely reframe as:\n  - “Developed support/feedback workflows that integrate with existing internal processes” (do not name integrations).\n  - “Implemented backend changes with attention to maintainability and team handoff” (no invented modular architecture).\n- Avoid claiming API design, third-party integrations, or platform extensibility unless evidenced.\n\nLEADERSHIP FRAMING\n- Frame leadership as collaboration + execution + quality focus:\n  - Coordinated with teammates/cross-functional partners.\n  - Communicated status, clarified requirements, documented changes.\n  - Contributed to quality via testing/validation and careful change implementation.\n- Avoid people-management claims (hiring, performance reviews, managing teams) unless evidenced.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep technical contribution primary (implementation + testing/support investigation).\n- Leadership language should support delivery/quality, not overshadow engineering work.\n- Avoid “led architecture,” “owned roadmap,” “drove org-wide initiatives” unless explicitly supported.\n\nAI WORK POSITIONING\n- No AI experience evidenced.\n- Do not mention AI/ML, LLMs, prompt engineering, model evaluation, or AI tooling unless provided in MASTER_RESUME or new evidence.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate architecture ownership (no “architected,” “designed end-to-end architecture,” “principal engineer” framing).\n- Do not invent: metrics (%, latency, uptime), scale (users/requests), technologies (languages/frameworks/cloud), security/auth work, or compliance claims.\n- Keep employment/role scope aligned with provided experience highlights; avoid implying seniority beyond “Software Engineer” unless supported.\n\nEVIDENCE SOURCES\n- Only use:\n  - MASTER_RESUME (if provided later)\n  - CANDIDATE_PROFILE summary/headline\n  - CANDIDATE_PROFILE.experience_highlights (areas, impacts, team_context, architecture_patterns, employers)\n  - CANDIDATE_PROFILE.role_fit_themes\n  - CANDIDATE_PROFILE.constraints_and_preferences\n- If a bullet requires a missing detail (tech stack, metrics, scale), either omit it or write it generically without fabrication.\n\nFINAL REMINDER\n- Core differentiation: backend software engineer who reliably implements changes, builds support/feedback systems, and strengthens quality through testing/validation—collaborative, execution-focused, and accuracy-first.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Backend systems\",\n      \"Software development\"\n    ],\n    \"secondary\": [\n      \"Technical support systems\",\n      \"Web applications\"\n    ]\n  },\n  \"contacts\": {\n    \"email\": \"hello@techguruplus.com\",\n    \"phone\": \"+1773-461-4203\",\n    \"location\": \"Any City, State, Country\",\n    \"linkedin_url\": null\n  },\n  \"candidate\": {\n    \"name\": \"Olivia Harrison\",\n    \"summary\": \"Experienced Software Engineer with a background in backend programming and support systems development. Proven track record in implementing software changes and developing feedback systems. Strong problem-solving and communication skills.\",\n    \"headline\": \"Software Engineer\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaboration\",\n        \"Execution\",\n        \"Quality focus\"\n      ]\n    },\n    \"practices\": [\n      \"Cross-functional collaboration\",\n      \"Continuous learning\"\n    ],\n    \"risk_management\": []\n  },\n  \"role_fit_themes\": [\n    \"Backend development\",\n    \"Software development\",\n    \"Testing and debugging\",\n    \"Technical support\",\n    \"Cross-functional collaboration\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate architecture ownership\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Keep claims aligned with actual experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [],\n    \"languages\": [],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [\n      \"Backend programming\",\n      \"Software systems\"\n    ],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Software Development\",\n      \"impact\": [\n        \"Implemented software developments and changes\",\n        \"Developed new support and feedback systems\",\n        \"Generated back-end programming using software systems\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Collaborated with team members\"\n      ],\n      \"skills_applied\": [\n        \"Backend programming\",\n        \"Software systems\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\"\n      ],\n      \"employer_relationship\": \"Neoxzeno Technologies, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    },\n    {\n      \"area\": \"Software Testing and Support\",\n      \"impact\": [\n        \"Tested new software applications\",\n        \"Provided technical support\",\n        \"Investigated software solutions\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Worked alongside team members\"\n      ],\n      \"skills_applied\": [\n        \"Software testing\",\n        \"Technical support\"\n      ],\n      \"architecture_patterns\": [\n        \"Testing and validation workflows\"\n      ],\n      \"employer_relationship\": \"Elkiosxz Solutions, Co.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\nOlivia Harrison\nSoftware Engineer\n+1773-461-4203\nhello@techguruplus.com www.techguruplus.com\n123 Anywhere Street, Any City, State, Country 1234\nExperienceEducation\nSoftware Engineer Neoxzeno Technologies, Inc. 2019 - Present\nImplemented software developments and changes\nDeveloped new support and feedback systems\nGenerated back-end programming using software systems\nSoftware Engineer Intern\nElkiosxz Solutions, Co.\n2018 - 2019\nTested new software applications with superiors\nWorked alongside team members to investigate software solutions Provided technical support when necessary\nAccomplishments\nUniversity of Edgeoak\nBS in Software Engineering\n2012 - 2016\nGraduated with Latin Honors, Cum Laude\nPresident of the Computer Club Staff Member of the Student Government\nLayout Designer of the Edgeoak Herald\nWinslough High School\nClass Salutatorian with GPA 3.9,\n2008 - 2012\nAP Scholar Awardee\nMember of the National Honor Society\nVice President of the Computer Club\nMember of the Winslough Warriors Basketball Team\nSkills and Abilities\nOutstanding Software Engineer of 2015 Awardee\nAchieved Recognition for Software Engineering Excellence\nMost Innovative Software Engineer Award Nominee\nKnowledge of Multiple Coding Languages\nProficiency in Software Systems and Computer Operating\nStructures\nProblem Solving Skills Communication Skills\""
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nOlivia Harrison\nDear Hiring Manager,\n\nI am excited to apply for the [Role] role at [Company].\n\n[2-3 short paragraphs connecting candidate background to role/company needs.]\n\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: May 26, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "Olivia Harrison\nSoftware Engineer\n+1773-461-4203\nhello@techguruplus.com | www.techguruplus.com\n123 Anywhere Street, Any City, State, Country 1234\n\nProfessional Summary\nSoftware Engineer with experience in backend application development, implementing software changes, and building internal support/feedback systems. Background includes testing and validation workflows, technical support investigation, and collaborative delivery with teammates. Known for clear communication, careful debugging, and documenting work to support maintainable enhancements.\n\nExperience\nSoftware Engineer | Neoxzeno Technologies, Inc. | 2019 - Present\n- Implemented software developments and changes in backend systems based on enhancement requests and required updates.\n- Developed new support and feedback systems to help capture issues/requests and support ongoing improvements.\n- Generated back-end programming using software systems, collaborating with team members to deliver updates.\n\nSoftware Engineer Intern | Elkiosxz Solutions, Co. | 2018 - 2019\n- Tested new software applications with superiors, supporting testing and validation workflows during development.\n- Investigated software solutions alongside team members by reproducing issues and assisting with troubleshooting.\n- Provided technical support when necessary, communicating findings and next steps to teammates.\n\nEducation\nUniversity of Edgeoak | BS in Software Engineering | 2012 - 2016\n- Graduated with Latin Honors, Cum Laude\n- President of the Computer Club\n- Staff Member of the Student Government\n- Layout Designer of the Edgeoak Herald\n\nWinslough High School | 2008 - 2012\n- Class Salutatorian with GPA 3.9\n- AP Scholar Awardee\n- Member of the National Honor Society\n- Vice President of the Computer Club\n- Member of the Winslough Warriors Basketball Team\n\nTechnical Skills\nBackend & Application Development: Backend programming, Backend application development, Software systems\nTesting & Validation: Software testing, Testing and validation workflows, Debugging, Troubleshooting\nSupport & Collaboration: Technical support, Support/feedback systems, Cross-functional collaboration, Technical documentation\n\nAdditional\nAccomplishments\n- Outstanding Software Engineer of 2015 Awardee\n- Achieved Recognition for Software Engineering Excellence\n- Most Innovative Software Engineer Award Nominee\nSkills and Abilities\n- Knowledge of Multiple Coding Languages\n- Proficiency in Software Systems and Computer Operating Structures\n- Problem Solving Skills\n- Communication Skills",
+    "cover_letter": "Olivia Harrison\n+1773-461-4203 | hello@techguruplus.com\n\nMay 26, 2026\n\nDear Hiring Manager,\n\nI am excited to apply for the Lead Software Engineer role at American Tire Distributors. My background is in backend application development, implementing software changes, and building internal support and feedback systems that help teams respond to end-user needs.\n\nIn my current Software Engineer role at Neoxzeno Technologies, I have implemented software developments and changes and contributed backend programming within existing software systems. I have also developed support and feedback systems, which aligns with ATD’s need for engineers who can deliver enhancements while supporting users and ongoing operations.\n\nEarlier, as a Software Engineer Intern at Elkiosxz Solutions, I supported testing and validation workflows by testing new software applications with senior engineers, investigating software solutions with teammates, and providing technical support when needed. This experience strengthened my approach to debugging, verification, and clear communication during issue investigation.\n\nATD’s focus on collaborative delivery and dependable support across a large customer base is a strong match for how I work: clarifying requirements with teammates, implementing changes carefully, and validating behavior through testing before and after updates. I would welcome the opportunity to contribute these strengths to the Lead Software Engineer role at American Tire Distributors.\n\nSincerely,\nOlivia Harrison"
+  },
+  "diff": {
+    "resume": [
+      {
+        "name": "Professional Summary",
+        "after": "Software Engineer with experience in backend application development, implementing software changes, and building internal support/feedback systems. Background includes testing and validation workflows, technical support investigation, and collaborative delivery with teammates. Known for clear communication, careful debugging, and documenting work to support maintainable enhancements."
+      },
+      {
+        "name": "Technical Skills",
+        "after": "Backend & Application Development: Backend programming, Backend application development, Software systems\nTesting & Validation: Software testing, Testing and validation workflows, Debugging, Troubleshooting\nSupport & Collaboration: Technical support, Support/feedback systems, Cross-functional collaboration, Technical documentation\n\nAdditional\nAccomplishments\n- Outstanding Software Engineer of 2015 Awardee\n- Achieved Recognition for Software Engineering Excellence\n- Most Innovative Software Engineer Award Nominee\nSkills and Abilities\n- Knowledge of Multiple Coding Languages\n- Proficiency in Software Systems and Computer Operating Structures\n- Problem Solving Skills\n- Communication Skills"
+      }
+    ]
+  },
+  "generation_run_id": "349",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "Olivia Harrison",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "Software Engineer",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      },
+      {
+        "text": "\n",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_3"
+      },
+      {
+        "text": "+1773-461-4203",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_4"
+      },
+      {
+        "text": "hello@techguruplus.com www.techguruplus.com",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_5"
+      },
+      {
+        "text": "123 Anywhere Street, Any City, State, Country 1234",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_6"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_9"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_10"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_11"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Professional Summary",
+        "semantic_type": "summary",
+        "heading": {
+          "text": "",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_7"
+        },
+        "body_paras": [
+          {
+            "text": "Software Engineer with experience in backend application development, implementing software changes, and building internal support/feedback systems. Background includes testing and validation workflows, technical support investigation, and collaborative delivery with teammates. Known for clear communication, careful debugging, and documenting work to support maintainable enhancements.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_8"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_summary_inserted"
+      },
+      {
+        "title": "Experience",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "Experience",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_12"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_26"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_27"
+          },
+          {
+            "text": "Software Engineer Neoxzeno Technologies, Inc. 2019 - Present",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_28"
+          },
+          {
+            "text": "Implemented software developments and changes",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_29"
+          },
+          {
+            "text": "Developed new support and feedback systems",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_30"
+          },
+          {
+            "text": "Generated back-end programming using software systems",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_31"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_32"
+          },
+          {
+            "text": "Software Engineer Intern",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_33"
+          },
+          {
+            "text": "Elkiosxz Solutions, Co.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_34"
+          },
+          {
+            "text": "2018 - 2019",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_35"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_36"
+          },
+          {
+            "text": "Tested new software applications with superiors, supporting testing and validation workflows during development.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_37"
+          },
+          {
+            "text": "Investigated software solutions alongside team members by reproducing issues and assisting with troubleshooting.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_38"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          },
+          {
+            "text": "Provided technical support when necessary, communicating findings and next steps to teammates.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_40"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_41"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_42"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_43"
+          },
+          {
+            "text": "Outstanding Software Engineer of 2015 Awardee",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_44"
+          },
+          {
+            "text": "Achieved Recognition for Software Engineering Excellence",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_45"
+          },
+          {
+            "text": "Most Innovative Software Engineer Award Nominee",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_46"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "Education",
+        "semantic_type": "education",
+        "heading": {
+          "text": "Education",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_47"
+        },
+        "body_paras": [
+          {
+            "text": "\nUniversity of Edgeoak",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_48"
+          },
+          {
+            "text": "BS in Software Engineering",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_49"
+          },
+          {
+            "text": "2012 - 2016",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_50"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_51"
+          },
+          {
+            "text": "Graduated with Latin Honors, Cum Laude",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_52"
+          },
+          {
+            "text": "President of the Computer Club Staff Member of the Student Government",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_53"
+          },
+          {
+            "text": "Layout Designer of the Edgeoak Herald",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_54"
+          },
+          {
+            "text": "Winslough High School",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_55"
+          },
+          {
+            "text": "Class Salutatorian with GPA 3.9,",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_56"
+          },
+          {
+            "text": "2008 - 2012",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_57"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_58"
+          },
+          {
+            "text": "AP Scholar Awardee",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_59"
+          },
+          {
+            "text": "Member of the National Honor Society",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_60"
+          },
+          {
+            "text": "Vice President of the Computer Club",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_61"
+          },
+          {
+            "text": "Member of the Winslough Warriors Basketball Team",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_62"
+          },
+          {
+            "text": "Skills and Abilities",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_63"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_64"
+          },
+          {
+            "text": "\n",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_65"
+          },
+          {
+            "text": "Knowledge of Multiple Coding Languages",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_66"
+          },
+          {
+            "text": "Proficiency in Software Systems and Computer Operating",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_67"
+          },
+          {
+            "text": "Structures",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_68"
+          },
+          {
+            "text": "Problem Solving Skills Communication Skills\"",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_69"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "Technical Skills",
+        "semantic_type": "skills",
+        "heading": {
+          "text": "Technical Skills",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_skills_u_0"
+        },
+        "body_paras": [
+          {
+            "text": "Backend & Application Development: Backend programming, Backend application development, Software systems",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_skills_u_1"
+          },
+          {
+            "text": "Testing & Validation: Software testing, Testing and validation workflows, Debugging, Troubleshooting",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_skills_u_2"
+          },
+          {
+            "text": "Support & Collaboration: Technical support, Support/feedback systems, Cross-functional collaboration, Technical documentation",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_skills_u_3"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_skills_unbound"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 595.5,
+      "page_height_pt": 842.5,
+      "margin_top_pt": 49.0,
+      "margin_bottom_pt": 14.0,
+      "margin_left_pt": 54.0,
+      "margin_right_pt": 46.0,
+      "default_font_name": "Microsoft Sans Serif",
+      "default_font_size_pt": 11.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null,
+      "section_row_table": false,
+      "header_bg_color": null,
+      "footer_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "paragraph",
+        "para_id": "para_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Title\"/><w:spacing w:line=\"237\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr/><w:t>Olivia</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>Harrison</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:before=\"226\"/><w:ind w:left=\"110\" w:right=\"0\" w:firstLine=\"0\"/><w:jc w:val=\"left\"/><w:rPr><w:rFonts w:ascii=\"Trebuchet MS\"/><w:i/><w:sz w:val=\"34\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Trebuchet MS\"/><w:i/><w:w w:val=\"95\"/><w:sz w:val=\"34\"/></w:rPr><w:t>Software</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Trebuchet MS\"/><w:i/><w:spacing w:val=\"11\"/><w:w w:val=\"95\"/><w:sz w:val=\"34\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Trebuchet MS\"/><w:i/><w:w w:val=\"95\"/><w:sz w:val=\"34\"/></w:rPr><w:t>Engineer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_3",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/><w:rPr><w:rFonts w:ascii=\"Trebuchet MS\"/><w:i/><w:sz w:val=\"32\"/></w:rPr></w:pPr><w:r><w:rPr/><w:br w:type=\"column\"/></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Trebuchet MS\"/><w:i/><w:sz w:val=\"32\"/></w:rPr></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_4",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"188\"/><w:ind w:left=\"110\"/></w:pPr><w:r><w:rPr/><w:t>+1773-461-4203</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_5",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"422\" w:lineRule=\"auto\" w:before=\"273\"/><w:ind w:left=\"120\" w:right=\"717\"/></w:pPr><w:hyperlink r:id=\"rId5\"><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>hello@techguruplus.com</w:t></w:r></w:hyperlink><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:hyperlink r:id=\"rId6\"><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>www.techguruplus.com</w:t></w:r></w:hyperlink></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_6",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\" w:before=\"91\"/><w:ind w:left=\"120\"/></w:pPr><w:r><w:rPr/><w:t>123</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"14\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>Anywhere</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>Street,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>Any</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>City,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-61\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>State,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Country</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>1234</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_7",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"252\" w:lineRule=\"auto\"/><w:sectPr><w:type w:val=\"continuous\"/><w:pgSz w:w=\"11910\" w:h=\"16850\"/><w:pgMar w:top=\"980\" w:bottom=\"280\" w:left=\"1080\" w:right=\"920\"/><w:cols w:num=\"2\" w:equalWidth=\"0\"><w:col w:w=\"4629\" w:space=\"1642\"/><w:col w:w=\"3639\"/></w:cols></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_8",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"20\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_9",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"20\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_10",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"20\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_11",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"9\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"18\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "lb_orphan_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:tabs><w:tab w:pos=\"5446\" w:val=\"left\" w:leader=\"none\"/></w:tabs><w:spacing w:before=\"121\"/><w:ind w:left=\"110\"/><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:w w:val=\"105\"/></w:rPr><w:t>Experience</w:t><w:tab/><w:t>Education</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_26",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"1\"/><w:ind w:left=\"0\"/><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:sz w:val=\"25\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_27",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:sz w:val=\"25\"/></w:rPr><w:sectPr><w:type w:val=\"continuous\"/><w:pgSz w:w=\"11910\" w:h=\"16850\"/><w:pgMar w:top=\"980\" w:bottom=\"280\" w:left=\"1080\" w:right=\"920\"/></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_28",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:line=\"304\" w:lineRule=\"auto\" w:before=\"117\"/><w:ind w:left=\"110\" w:right=\"1316\" w:firstLine=\"0\"/><w:jc w:val=\"left\"/><w:rPr><w:sz w:val=\"24\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\"/><w:b/><w:sz w:val=\"24\"/></w:rPr><w:t>Software Engineer</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\"/><w:b/><w:spacing w:val=\"1\"/><w:sz w:val=\"24\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:w w:val=\"105\"/><w:sz w:val=\"24\"/></w:rPr><w:t>Neoxzeno</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"4\"/><w:w w:val=\"105\"/><w:sz w:val=\"24\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:w w:val=\"105\"/><w:sz w:val=\"24\"/></w:rPr><w:t>Technologies,</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"5\"/><w:w w:val=\"105\"/><w:sz w:val=\"24\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:w w:val=\"105\"/><w:sz w:val=\"24\"/></w:rPr><w:t>Inc.</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"-58\"/><w:w w:val=\"105\"/><w:sz w:val=\"24\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/><w:sz w:val=\"24\"/></w:rPr><w:t>2019</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/><w:w w:val=\"105\"/><w:sz w:val=\"24\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/><w:sz w:val=\"24\"/></w:rPr><w:t>-</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:w w:val=\"105\"/><w:sz w:val=\"24\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/><w:sz w:val=\"24\"/></w:rPr><w:t>Present</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_29",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\" w:before=\"225\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Implemented</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"28\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>software</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"29\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>developments</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>and</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>changes</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_30",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Developed</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>new</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"2\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>support</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"2\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>and</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"2\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>feedback</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>systems</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_31",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Generated</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"5\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>back-end</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"6\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>programming</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>using</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-5\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>software</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-5\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>systems</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_32",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"32\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_33",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading1\"/><w:spacing w:before=\"187\"/></w:pPr><w:r><w:rPr><w:w w:val=\"95\"/></w:rPr><w:t>Software</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"24\"/><w:w w:val=\"95\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"95\"/></w:rPr><w:t>Engineer</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"24\"/><w:w w:val=\"95\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"95\"/></w:rPr><w:t>Intern</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_34",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"53\"/><w:ind w:left=\"110\"/><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:w w:val=\"105\"/></w:rPr><w:t>Elkiosxz</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"-7\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:w w:val=\"105\"/></w:rPr><w:t>Solutions,</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"-7\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:w w:val=\"105\"/></w:rPr><w:t>Co.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_35",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"99\"/><w:ind w:left=\"110\"/></w:pPr><w:r><w:rPr/><w:t>2018</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>-</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>2019</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_36",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"5\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"26\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_37",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Tested</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"3\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>new</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"4\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>software</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"4\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>applications</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"3\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>with</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>superiors</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_38",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\"/><w:ind w:right=\"46\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Worked</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"4\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>alongside</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"5\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>team</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"5\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>members</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"5\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>to</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>investigate software solutions</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Provided technical</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>support</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>when</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>necessary</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_39",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"32\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_40",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"192\"/><w:ind w:left=\"110\"/><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:w w:val=\"105\"/></w:rPr><w:t>Accomplishments</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_48",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:r><w:rPr><w:b w:val=\"0\"/></w:rPr><w:br w:type=\"column\"/></w:r><w:r><w:rPr/><w:t>University</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-14\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-13\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>Edgeoak</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"53\"/><w:ind w:left=\"110\"/><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:w w:val=\"105\"/></w:rPr><w:t>BS</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"-4\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:w w:val=\"105\"/></w:rPr><w:t>in</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"-4\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:w w:val=\"105\"/></w:rPr><w:t>Software</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"-4\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:w w:val=\"105\"/></w:rPr><w:t>Engineering</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_50",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"99\"/><w:ind w:left=\"110\"/></w:pPr><w:r><w:rPr/><w:t>2012</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>-</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>2016</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_51",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"4\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"26\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_52",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\"/><w:ind w:right=\"601\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Graduated</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"3\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>with</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"4\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Latin</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"4\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Honors,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Cum</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Laude</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_53",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\"/><w:ind w:right=\"329\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>President</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"2\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Computer</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"2\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Club</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Staff</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Member</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"2\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Student</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Government</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_54",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\"/><w:ind w:right=\"601\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Layout</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Designer</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-14\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Edgeoak</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Herald</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_55",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"Heading1\"/><w:spacing w:before=\"264\"/></w:pPr><w:r><w:rPr><w:w w:val=\"95\"/></w:rPr><w:t>Winslough</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"21\"/><w:w w:val=\"95\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"95\"/></w:rPr><w:t>High</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"21\"/><w:w w:val=\"95\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"95\"/></w:rPr><w:t>School</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_56",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"53\"/><w:ind w:left=\"110\"/><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr><w:t>Class</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"23\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr><w:t>Salutatorian</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"23\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr><w:t>with</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"23\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr><w:t>GPA</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"23\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr><w:t>3.9,</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_57",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"99\"/><w:ind w:left=\"110\"/></w:pPr><w:r><w:rPr/><w:t>2008</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>-</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"6\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>2012</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_58",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"5\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"26\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_59",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/></w:pPr><w:r><w:rPr/><w:t>AP</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>Scholar</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>Awardee</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_60",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\" w:before=\"13\"/><w:ind w:right=\"601\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Member</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"16\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"16\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"16\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>National</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"16\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Honor</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-63\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"110\"/></w:rPr><w:t>Society</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_61",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\"/><w:ind w:right=\"639\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Vice President of the Computer</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-65\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Club</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_62",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\"/><w:ind w:right=\"329\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Member</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"8\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"8\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"8\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Winslough</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Warriors</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-12\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Basketball</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-12\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Team</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_63",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"269\"/><w:ind w:left=\"110\"/><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr><w:t>Skills</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr><w:t>and</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:spacing w:val=\"13\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr><w:t>Abilities</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_64",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:rFonts w:ascii=\"Georgia\"/></w:rPr><w:sectPr><w:type w:val=\"continuous\"/><w:pgSz w:w=\"11910\" w:h=\"16850\"/><w:pgMar w:top=\"980\" w:bottom=\"280\" w:left=\"1080\" w:right=\"920\"/><w:cols w:num=\"2\" w:equalWidth=\"0\"><w:col w:w=\"4736\" w:space=\"600\"/><w:col w:w=\"4574\"/></w:cols></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_41",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:ind w:left=\"0\"/><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:sz w:val=\"20\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_42",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:sz w:val=\"20\"/></w:rPr><w:sectPr><w:type w:val=\"continuous\"/><w:pgSz w:w=\"11910\" w:h=\"16850\"/><w:pgMar w:top=\"980\" w:bottom=\"280\" w:left=\"1080\" w:right=\"920\"/></w:sectPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_43",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:w10=\"urn:schemas-microsoft-com:office:word\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"5\"/><w:ind w:left=\"0\"/><w:rPr><w:rFonts w:ascii=\"Georgia\"/><w:sz w:val=\"25\"/></w:rPr></w:pPr><w:r><w:rPr/><w:pict><v:group style=\"position:absolute;margin-left:17.02899pt;margin-top:14.782874pt;width:562.6pt;height:810.3pt;mso-position-horizontal-relative:page;mso-position-vertical-relative:page;z-index:-15779328\" coordorigin=\"341,296\" coordsize=\"11252,16206\"><v:rect style=\"position:absolute;left:340;top:295;width:11252;height:16206\" filled=\"true\" fillcolor=\"#d9e4ec\" stroked=\"false\"><v:fill type=\"solid\"/></v:rect><v:shape style=\"position:absolute;left:6965;top:1549;width:155;height:262\" type=\"#_x0000_t75\" stroked=\"false\"><v:imagedata r:id=\"rId7\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:6920;top:2154;width:255;height:182\" type=\"#_x0000_t75\" stroked=\"false\"><v:imagedata r:id=\"rId8\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:6913;top:3171;width:275;height:234\" type=\"#_x0000_t75\" stroked=\"false\"><v:imagedata r:id=\"rId9\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:6905;top:2602;width:284;height:284\" type=\"#_x0000_t75\" stroked=\"false\"><v:imagedata r:id=\"rId10\" o:title=\"\"/></v:shape><v:shape style=\"position:absolute;left:1235;top:7318;width:5426;height:8401\" coordorigin=\"1236,7318\" coordsize=\"5426,8401\" path=\"m1326,15098l1324,15092,1320,15081,1317,15076,1308,15068,1303,15065,1292,15060,1287,15059,1275,15059,1269,15060,1258,15065,1253,15068,1245,15076,1241,15081,1237,15092,1236,15098,1236,15110,1237,15116,1241,15127,1245,15131,1253,15140,1258,15143,1269,15148,1275,15149,1287,15149,1292,15148,1303,15143,1308,15140,1317,15131,1320,15127,1324,15116,1326,15110,1326,15104,1326,15098xm1326,14528l1324,14522,1320,14511,1317,14506,1308,14498,1303,14495,1292,14490,1287,14489,1275,14489,1269,14490,1258,14495,1253,14498,1245,14506,1241,14511,1237,14522,1236,14528,1236,14540,1237,14546,1241,14557,1245,14561,1253,14570,1258,14573,1269,14578,1275,14579,1287,14579,1292,14578,1303,14573,1308,14570,1317,14561,1320,14557,1324,14546,1326,14540,1326,14534,1326,14528xm1326,13958l1324,13952,1320,13941,1317,13936,1308,13928,1303,13925,1292,13920,1287,13919,1275,13919,1269,13920,1258,13925,1253,13928,1245,13936,1241,13941,1237,13952,1236,13958,1236,13970,1237,13976,1241,13987,1245,13991,1253,14000,1258,14003,1269,14008,1275,14009,1287,14009,1292,14008,1303,14003,1308,14000,1317,13991,1320,13987,1324,13976,1326,13970,1326,13964,1326,13958xm1326,12043l1324,12037,1320,12026,1317,12021,1308,12013,1303,12009,1292,12005,1287,12004,1275,12004,1269,12005,1258,12009,1253,12013,1245,12021,1241,12026,1237,12037,1236,12043,1236,12055,1237,12060,1241,12071,1245,12076,1253,12085,1258,12088,1269,12092,1275,12094,1287,12094,1292,12092,1303,12088,1308,12085,1317,12076,1320,12071,1324,12060,1326,12055,1326,12049,1326,12043xm1326,11473l1324,11467,1320,11456,1317,11451,1308,11443,1303,11439,1292,11435,1287,11434,1275,11434,1269,11435,1258,11439,1253,11443,1245,11451,1241,11456,1237,11467,1236,11473,1236,11485,1237,11490,1241,11501,1245,11506,1253,11515,1258,11518,1269,11522,1275,11524,1287,11524,1292,11522,1303,11518,1308,11515,1317,11506,1320,11501,1324,11490,1326,11485,1326,11479,1326,11473xm1326,10903l1324,10897,1320,10886,1317,10881,1308,10873,1303,10869,1292,10865,1287,10864,1275,10864,1269,10865,1258,10869,1253,10873,1245,10881,1241,10886,1237,10897,1236,10903,1236,10915,1237,10920,1241,10931,1245,10936,1253,10945,1258,10948,1269,10952,1275,10954,1287,10954,1292,10952,1303,10948,1308,10945,1317,10936,1320,10931,1324,10920,1326,10915,1326,10909,1326,10903xm1326,8497l1324,8492,1320,8481,1317,8476,1308,8467,1303,8464,1292,8459,1287,8458,1275,8458,1269,8459,1258,8464,1253,8467,1245,8476,1241,8481,1237,8492,1236,8497,1236,8509,1237,8515,1241,8526,1245,8531,1253,8539,1258,8543,1269,8547,1275,8548,1287,8548,1292,8547,1303,8543,1308,8539,1317,8531,1320,8526,1324,8515,1326,8509,1326,8503,1326,8497xm1326,7927l1324,7922,1320,7911,1317,7906,1308,7897,1303,7894,1292,7889,1287,7888,1275,7888,1269,7889,1258,7894,1253,7897,1245,7906,1241,7911,1237,7922,1236,7927,1236,7939,1237,7945,1241,7956,1245,7961,1253,7969,1258,7973,1269,7977,1275,7978,1287,7978,1292,7977,1303,7973,1308,7969,1317,7961,1320,7956,1324,7945,1326,7939,1326,7933,1326,7927xm1326,7357l1324,7352,1320,7341,1317,7336,1308,7327,1303,7324,1292,7319,1287,7318,1275,7318,1269,7319,1258,7324,1253,7327,1245,7336,1241,7341,1237,7352,1236,7357,1236,7369,1237,7375,1241,7386,1245,7391,1253,7399,1258,7403,1269,7407,1275,7408,1287,7408,1292,7407,1303,7403,1308,7399,1317,7391,1320,7386,1324,7375,1326,7369,1326,7363,1326,7357xm6661,15668l6660,15662,6656,15651,6652,15646,6644,15638,6639,15635,6628,15630,6622,15629,6610,15629,6605,15630,6594,15635,6589,15638,6580,15646,6577,15651,6573,15662,6571,15668,6571,15680,6573,15686,6577,15697,6580,15701,6589,15710,6594,15713,6605,15718,6610,15719,6622,15719,6628,15718,6639,15713,6644,15710,6652,15701,6656,15697,6660,15686,6661,15680,6661,15674,6661,15668xm6661,15383l6660,15377,6656,15366,6652,15361,6644,15353,6639,15350,6628,15345,6622,15344,6610,15344,6605,15345,6594,15350,6589,15353,6580,15361,6577,15366,6573,15377,6571,15383,6571,15395,6573,15401,6577,15412,6580,15416,6589,15425,6594,15428,6605,15433,6610,15434,6622,15434,6628,15433,6639,15428,6644,15425,6652,15416,6656,15412,6660,15401,6661,15395,6661,15389,6661,15383xm6661,14528l6660,14522,6656,14511,6652,14506,6644,14498,6639,14495,6628,14490,6622,14489,6610,14489,6605,14490,6594,14495,6589,14498,6580,14506,6577,14511,6573,14522,6571,14528,6571,14540,6573,14546,6577,14557,6580,14561,6589,14570,6594,14573,6605,14578,6610,14579,6622,14579,6628,14578,6639,14573,6644,14570,6652,14561,6656,14557,6660,14546,6661,14540,6661,14534,6661,14528xm6661,13958l6660,13952,6656,13941,6652,13936,6644,13928,6639,13925,6628,13920,6622,13919,6610,13919,6605,13920,6594,13925,6589,13928,6580,13936,6577,13941,6573,13952,6571,13958,6571,13970,6573,13976,6577,13987,6580,13991,6589,14000,6594,14003,6605,14008,6610,14009,6622,14009,6628,14008,6639,14003,6644,14000,6652,13991,6656,13987,6660,13976,6661,13970,6661,13964,6661,13958xm6661,12328l6660,12322,6656,12311,6652,12306,6644,12298,6639,12294,6628,12290,6622,12289,6610,12289,6605,12290,6594,12294,6589,12298,6580,12306,6577,12311,6573,12322,6571,12328,6571,12340,6573,12345,6577,12356,6580,12361,6589,12370,6594,12373,6605,12377,6610,12379,6622,12379,6628,12377,6639,12373,6644,12370,6652,12361,6656,12356,6660,12345,6661,12340,6661,12334,6661,12328xm6661,11758l6660,11752,6656,11741,6652,11736,6644,11728,6639,11724,6628,11720,6622,11719,6610,11719,6605,11720,6594,11724,6589,11728,6580,11736,6577,11741,6573,11752,6571,11758,6571,11770,6573,11775,6577,11786,6580,11791,6589,11800,6594,11803,6605,11807,6610,11809,6622,11809,6628,11807,6639,11803,6644,11800,6652,11791,6656,11786,6660,11775,6661,11770,6661,11764,6661,11758xm6661,11188l6660,11182,6656,11171,6652,11166,6644,11158,6639,11154,6628,11150,6622,11149,6610,11149,6605,11150,6594,11154,6589,11158,6580,11166,6577,11171,6573,11182,6571,11188,6571,11200,6573,11205,6577,11216,6580,11221,6589,11230,6594,11233,6605,11237,6610,11239,6622,11239,6628,11237,6639,11233,6644,11230,6652,11221,6656,11216,6660,11205,6661,11200,6661,11194,6661,11188xm6661,10903l6660,10897,6656,10886,6652,10881,6644,10873,6639,10869,6628,10865,6622,10864,6610,10864,6605,10865,6594,10869,6589,10873,6580,10881,6577,10886,6573,10897,6571,10903,6571,10915,6573,10920,6577,10931,6580,10936,6589,10945,6594,10948,6605,10952,6610,10954,6622,10954,6628,10952,6639,10948,6644,10945,6652,10936,6656,10931,6660,10920,6661,10915,6661,10909,6661,10903xm6661,8782l6660,8777,6656,8766,6652,8761,6644,8752,6639,8749,6628,8744,6622,8743,6610,8743,6605,8744,6594,8749,6589,8752,6580,8761,6577,8766,6573,8777,6571,8782,6571,8794,6573,8800,6577,8811,6580,8816,6589,8824,6594,8828,6605,8832,6610,8833,6622,8833,6628,8832,6639,8828,6644,8824,6652,8816,6656,8811,6660,8800,6661,8794,6661,8788,6661,8782xm6661,8212l6660,8207,6656,8196,6652,8191,6644,8182,6639,8179,6628,8174,6622,8173,6610,8173,6605,8174,6594,8179,6589,8182,6580,8191,6577,8196,6573,8207,6571,8212,6571,8224,6573,8230,6577,8241,6580,8246,6589,8254,6594,8258,6605,8262,6610,8263,6622,8263,6628,8262,6639,8258,6644,8254,6652,8246,6656,8241,6660,8230,6661,8224,6661,8218,6661,8212xm6661,7927l6660,7922,6656,7911,6652,7906,6644,7897,6639,7894,6628,7889,6622,7888,6610,7888,6605,7889,6594,7894,6589,7897,6580,7906,6577,7911,6573,7922,6571,7927,6571,7939,6573,7945,6577,7956,6580,7961,6589,7969,6594,7973,6605,7977,6610,7978,6622,7978,6628,7977,6639,7973,6644,7969,6652,7961,6656,7956,6660,7945,6661,7939,6661,7933,6661,7927xm6661,7357l6660,7352,6656,7341,6652,7336,6644,7327,6639,7324,6628,7319,6622,7318,6610,7318,6605,7319,6594,7324,6589,7327,6580,7336,6577,7341,6573,7352,6571,7357,6571,7369,6573,7375,6577,7386,6580,7391,6589,7399,6594,7403,6605,7407,6610,7408,6622,7408,6628,7407,6639,7403,6644,7399,6652,7391,6656,7386,6660,7375,6661,7369,6661,7363,6661,7357xe\" filled=\"true\" fillcolor=\"#000000\" stroked=\"false\"><v:path arrowok=\"t\"/><v:fill type=\"solid\"/></v:shape><w10:wrap type=\"none\"/></v:group></w:pict></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_44",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\" w:before=\"1\"/><w:ind w:right=\"135\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Outstanding Software Engineer of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>2015</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Awardee</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_45",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\"/><w:ind w:right=\"89\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Achieved</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-13\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Recognition</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-13\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>for</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-13\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Software</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Engineering</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Excellence</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_46",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\"/><w:ind w:right=\"37\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Most</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Innovative</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Software</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Engineer</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Award</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-5\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Nominee</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_65",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:before=\"6\"/><w:ind w:left=\"0\"/><w:rPr><w:sz w:val=\"25\"/></w:rPr></w:pPr><w:r><w:rPr/><w:br w:type=\"column\"/></w:r><w:r><w:rPr><w:sz w:val=\"25\"/></w:rPr></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_66",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\" w:before=\"1\"/><w:ind w:right=\"800\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Knowledge of Multiple Coding</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-64\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Languages</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_67",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\"/><w:ind w:right=\"244\"/></w:pPr><w:r><w:rPr/><w:t>Proficiency</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"28\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>in</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"29\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>Software</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"28\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>Systems</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-61\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>and</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Computer</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Operating</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_68",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"271\" w:lineRule=\"exact\"/></w:pPr><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Structures</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_69",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"252\" w:lineRule=\"auto\" w:before=\"13\"/><w:ind w:right=\"244\"/></w:pPr><w:r><w:rPr/><w:t>Problem</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>Solving</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>Skills</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"1\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-1\"/><w:w w:val=\"105\"/></w:rPr><w:t>Communication</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/><w:w w:val=\"105\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"105\"/></w:rPr><w:t>Skills\"</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_skills_u_0"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_skills_u_1"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_skills_u_2"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_skills_u_3"
+      }
+    ]
+  }
+}

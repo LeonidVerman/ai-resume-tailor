@@ -1,0 +1,1631 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "structured_resume": {
+    "status": "valid",
+    "validation": {
+      "errors": [],
+      "is_valid": true,
+      "document_id": "133",
+      "section_results": [
+        {
+          "is_valid": true,
+          "section_id": "sec_1",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_2",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_3",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_4",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_5",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_6",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_7",
+          "error_codes": []
+        }
+      ]
+    },
+    "repair_input": null,
+    "classification": {
+      "sections": [
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_8",
+              "block_id": "para_8",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_12",
+              "block_id": "para_12",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_16",
+              "block_id": "para_16",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_20",
+              "block_id": "para_20",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Contact",
+          "section_id": "sec_1",
+          "display_title": "Contact",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_24",
+              "block_id": "para_24",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Websites, Portfolios, Profiles",
+          "section_id": "sec_2",
+          "display_title": "Websites, Portfolios, Profiles",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_28",
+              "block_id": "para_28",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_29",
+              "block_id": "para_29",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_30",
+              "block_id": "para_30",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_31",
+              "block_id": "para_31",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_32",
+              "block_id": "para_32",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_33",
+              "block_id": "para_33",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_34",
+              "block_id": "para_34",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_35",
+              "block_id": "para_35",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_36",
+              "block_id": "para_36",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_37",
+              "block_id": "para_37",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_38",
+              "block_id": "para_38",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_39",
+              "block_id": "para_39",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_40",
+              "block_id": "para_40",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            }
+          ],
+          "raw_title": "Skill",
+          "section_id": "sec_3",
+          "display_title": "Skill",
+          "semantic_type": "skills",
+          "rewrite_policy": "rewrite_body",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_69",
+                  "block_id": "para_69",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_70",
+                  "block_id": "para_70",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_71",
+                  "block_id": "para_71",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_72",
+                  "block_id": "para_72",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_73",
+                  "block_id": "para_73",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_68",
+                  "block_id": "para_68",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_67",
+                  "block_id": "para_67",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_2",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_76",
+                  "block_id": "para_76",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_77",
+                  "block_id": "para_77",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_78",
+                  "block_id": "para_78",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_79",
+                  "block_id": "para_79",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_80",
+                  "block_id": "para_80",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_75",
+                  "block_id": "para_75",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_74",
+                  "block_id": "para_74",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "Employment History",
+          "section_id": "sec_4",
+          "display_title": "Employment History",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_84",
+              "block_id": "para_84",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_85",
+              "block_id": "para_85",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Education",
+          "section_id": "sec_5",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_89",
+              "block_id": "para_89",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Languages",
+          "section_id": "sec_6",
+          "display_title": "Languages",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_93",
+              "block_id": "para_93",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_94",
+              "block_id": "para_94",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Certifications And Training",
+          "section_id": "sec_7",
+          "display_title": "Certifications And Training",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        }
+      ],
+      "document_id": "133",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "repair_response": null,
+    "recovery_applied": false,
+    "raw_classification": {
+      "sections": [
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_8",
+              "block_id": "para_8",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_12",
+              "block_id": "para_12",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_16",
+              "block_id": "para_16",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_20",
+              "block_id": "para_20",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Contact",
+          "section_id": "sec_1",
+          "display_title": "Contact",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_24",
+              "block_id": "para_24",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Websites, Portfolios, Profiles",
+          "section_id": "sec_2",
+          "display_title": "Websites, Portfolios, Profiles",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_28",
+              "block_id": "para_28",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_29",
+              "block_id": "para_29",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_30",
+              "block_id": "para_30",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_31",
+              "block_id": "para_31",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_32",
+              "block_id": "para_32",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_33",
+              "block_id": "para_33",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_34",
+              "block_id": "para_34",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_35",
+              "block_id": "para_35",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_36",
+              "block_id": "para_36",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_37",
+              "block_id": "para_37",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_38",
+              "block_id": "para_38",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_39",
+              "block_id": "para_39",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_40",
+              "block_id": "para_40",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            }
+          ],
+          "raw_title": "Skill",
+          "section_id": "sec_3",
+          "display_title": "Skill",
+          "semantic_type": "skills",
+          "rewrite_policy": "rewrite_body",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_69",
+                  "block_id": "para_69",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_70",
+                  "block_id": "para_70",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_71",
+                  "block_id": "para_71",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_72",
+                  "block_id": "para_72",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_73",
+                  "block_id": "para_73",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_68",
+                  "block_id": "para_68",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_67",
+                  "block_id": "para_67",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_2",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_76",
+                  "block_id": "para_76",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_77",
+                  "block_id": "para_77",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_78",
+                  "block_id": "para_78",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_79",
+                  "block_id": "para_79",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_80",
+                  "block_id": "para_80",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_75",
+                  "block_id": "para_75",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_74",
+                  "block_id": "para_74",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "Employment History",
+          "section_id": "sec_4",
+          "display_title": "Employment History",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_84",
+              "block_id": "para_84",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_85",
+              "block_id": "para_85",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Education",
+          "section_id": "sec_5",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_89",
+              "block_id": "para_89",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Languages",
+          "section_id": "sec_6",
+          "display_title": "Languages",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_93",
+              "block_id": "para_93",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_94",
+              "block_id": "para_94",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Certifications And Training",
+          "section_id": "sec_7",
+          "display_title": "Certifications And Training",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        }
+      ],
+      "document_id": "133",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "invalid_section_ids": [],
+    "repaired_section_count": 0,
+    "validation_error_count": 0,
+    "validation_after_repair": null,
+    "downgraded_section_count": 0,
+    "invalid_section_count_after_repair": 0,
+    "invalid_section_count_before_repair": 0
+  },
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.2]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n\n21) Generate ONLY the cover letter body.\n    - Do NOT include candidate name, contact information, date, or signature.\n    - Do NOT include a sender header.\n    - Start with \"Dear Hiring Manager,\".\n    - End the content before any closing (e.g., do NOT include \"Sincerely,\" or name).\n\n22) Must explicitly mention the company and role from TASK.\n\n23) Must clearly connect:\n    candidate background → company needs → role responsibilities,\n    using only supported claims (no hallucinations).\n\n24) Keep it 3–5 short paragraphs.\n    - Be specific and concrete.\n    - Avoid verbosity and generic statements.\n\n25) Maintain a professional, concise tone appropriate for the selected generation mode\n    (Conservative / Normal / Aggressive), but do not change structure based on mode.\n\n26) Do NOT include:\n    - work authorization / citizenship statements\n    - availability statements unless explicitly present in input\n    - repeated resume bullet points verbatim\n\nOutput must be plain text only (no JSON inside the body).\n\n[CANDIDATE_LAYER_LEONID_VERMAN v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Junior Software Developer / early-career backend-leaning engineer with proven delivery in security features, cloud migration support, and high-traffic web applications.\n- Emphasize: production-facing work quality (bug fixing, reliability, user-impact features) + security-minded engineering (MFA, audit support) + cloud migration contribution.\n- Keep seniority accurate: “implemented,” “contributed,” “supported,” “delivered,” “partnered with,” not “owned strategy,” “architected enterprise-wide,” or “led org-wide.”\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface explicitly (when relevant to the job):  \n  - Multi-factor authentication rollout for 1M+ users (security mechanism with scale context).  \n  - Cloud migration work tied to the stated 40% scalability improvement (do not invent the migration mechanism; keep it as migration/optimization unless details exist).  \n  - Testing/validation workflows and QA collaboration as a reliability mechanism (UAT, validation steps, issue triage loops).\n- Ensure at least 1 bullet in the most recent/primary role includes an explicit mechanism (e.g., MFA enforcement flow, migration steps at a high level, validation workflow).\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prioritize bullets in this order:\n  1) Security mechanism at scale: MFA for 1M+ users; security audit support identifying 15 threats (support role, not sole owner).\n  2) Cloud migration contribution tied to scalability (+40%) with conservative wording.\n  3) High-traffic feature implementation + personalization feature (+10% DAU) with clear mechanism (feature flagging/experimentation only if evidenced; otherwise “implemented personalization feature”).\n  4) Quality/reliability execution: 150 bug fixes average; 100+ user-reported issues resolved; UAT/QA workflows.\n  5) Collaboration/process: peer code reviews, coding best practices.\n\nDISTRIBUTED SYSTEM DEPTH\n- Do not force distributed-systems claims (queues, replicas, caching, tracing) unless present in evidence.\n- If a role requires “distributed systems,” translate safely using what exists:\n  - “High-traffic web applications” + “cloud migration” + “scalability improvement” → discuss scaling context and operational constraints without naming unverified mechanisms.\n- Avoid naming specific cloud services, load balancers, Kubernetes, microservices, event-driven systems, or database scaling patterns unless explicitly supported by provided evidence.\n\nTECHNICAL DIFFERENTIATION\n- Surface verified stack signals only:\n  - Languages: Java, Python, PHP (use only when relevant to the job description).\n  - Frontend basics: HTML/CSS (secondary; do not over-weight unless role is full-stack).\n  - Security/auth: multi-factor authentication (explicit).\n  - Scalability: “code optimization” + “cloud migration” (keep mechanism-level conservative).\n- Prefer mechanism-first phrasing:\n  - “Implemented MFA flows…” (mechanism) → “authentication/security” (system area) → “for 1M+ users while balancing UX” (context/outcome).\n  - “Migrated components to cloud-based platform…” → “deployment/runtime environment” → “improved scalability by 40%” (only as stated).\n\nDOMAIN / INDUSTRY FRAMING\n- Primary domain framing: web applications + cloud-based applications in enterprise environments (IBM, Microsoft).\n- Secondary domain framing: software security practices (MFA implementation, audit support) without claiming deep security specialization.\n- Keep domain language general and transferable: “enterprise web applications,” “high-traffic user-facing systems,” “security-conscious feature delivery.”\n\nSAFE DOMAIN TRANSLATION\n- Translate conservatively:\n  - “System security” → authentication hardening and secure feature delivery.\n  - “Security audit support” → assisted threat identification/remediation planning; do not claim penetration testing unless stated.\n  - “Cloud migration” → contributed to moving workloads/services to cloud-based environment; do not specify provider/services.\n  - “High-traffic applications” → production systems with performance and reliability constraints.\n- If tailoring to a different industry, keep the translation at system-mechanics level (auth, migration, bug triage, QA workflows), not industry-specific claims.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim expertise in:\n  - advanced security engineering (cryptography design, zero trust architecture, SOC operations) beyond MFA + audit support.\n  - specific cloud platforms/services (AWS/GCP/Azure products), containers, Kubernetes, service meshes, or IaC unless evidenced.\n  - data engineering/ETL, ML/AI engineering, or observability stacks (no tools listed).\n  - database scaling, caching, message queues, event-driven architecture (not in evidence).\n- Do NOT imply tech lead/architect ownership; keep scope junior/implementation-focused.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- When roles ask for extensibility/integration, reframe safely using existing evidence:\n  - “Implemented new features for high-traffic web apps” → modular feature implementation within existing platform constraints.\n  - “Personalization feature” → extensible user-preference logic integrated into existing user experience flows.\n  - “Testing and validation workflows” → integration-safe release quality gates (UAT, QA collaboration).\n- Avoid claiming API platform design, SDKs, plugin frameworks, or third-party integrations unless explicitly supported.\n\nLEADERSHIP FRAMING\n- Frame leadership as execution leadership within a team:\n  - active participation in peer code reviews\n  - adherence to coding best practices and code quality\n  - cross-functional collaboration with QA and stakeholders\n  - security-minded risk awareness (audit support, balancing security vs UX)\n- Use verbs like “collaborated,” “partnered,” “reviewed,” “contributed,” “supported,” “drove to closure.”\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep leadership secondary to hands-on engineering.\n- For more senior-targeted postings, emphasize “ownership of tasks/features” and “end-to-end delivery” without inflating to people management or architecture ownership.\n- Maintain a technical core: MFA implementation, cloud migration contribution, feature delivery, bug/issue resolution, QA workflows.\n\nAI WORK POSITIONING\n- No AI tooling or AI project evidence provided.\n- Do not mention AI/ML, LLMs, prompt engineering, model evaluation, or AI platform work.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not invent:\n  - cloud provider, services, or tooling (e.g., AWS Lambda, Azure AD, Kubernetes, Terraform).\n  - databases, caches, queues, observability tools, CI/CD systems.\n  - security frameworks/compliance (SOC2, ISO 27001, PCI) or pen-testing.\n  - metrics beyond those explicitly stated (1M+ users, 40% scalability improvement, 150 bug fixes average, 100+ issues, +10% DAU, 15 threats).\n- Keep employer attribution accurate: IBM and Microsoft as listed; do not imply contractor vs FTE unless specified (not specified here).\n- Use cautious phrasing for impact attribution: “contributed to,” “helped achieve,” “supported,” unless the profile clearly indicates sole ownership.\n\nEVIDENCE SOURCES\n- Only use evidence from:\n  - MASTER_RESUME (if provided later)\n  - CANDIDATE_PROFILE.experience_highlights (IBM/Microsoft impacts, patterns, constraints)\n  - CANDIDATE_PROFILE.technical_skills (Java/Python/PHP, MFA, cloud migration, code optimization)\n  - CANDIDATE_PROFILE.leadership (peer reviews, best practices, security auditing)\n  - CANDIDATE_PROFILE.constraints_and_preferences (accuracy, no exaggeration)\n- If a job requires a mechanism not in evidence, either omit it or phrase as exposure/participation only if supported.\n\nFINAL REMINDER\n- Core differentiation to repeat through bullets: junior engineer with real production impact in enterprise web apps—MFA security at 1M+ user scale, cloud migration contributing to +40% scalability, and strong execution in bug/issue resolution and QA-backed delivery.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Web applications\",\n      \"Cloud-based applications\"\n    ],\n    \"secondary\": [\n      \"Software security\",\n      \"Enterprise software\"\n    ]\n  },\n  \"contacts\": {\n    \"email\": \"leonidverman@gmail.com\",\n    \"phone\": \"+7 783 173 248\",\n    \"location\": \"Vancouver V6G 2Z1\",\n    \"linkedin_url\": \"https://www.linkedin.com/in/leonid-verman-3569b71b2/\"\n  },\n  \"candidate\": {\n    \"name\": \"Leonid Verman\",\n    \"summary\": \"Dynamic Junior Software Developer with experience at IBM, enhancing system security and implementing features for high-traffic applications. Proven ability in cloud migration and team collaboration, achieving a 40% improvement in scalability. Resourceful problem-solver, adept at resolving bugs and ensuring seamless user experiences.\",\n    \"headline\": \"Junior Software Developer\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaboration\",\n        \"Execution\",\n        \"Code quality\"\n      ]\n    },\n    \"practices\": [\n      \"Peer code reviews\",\n      \"Adherence to coding best practices\"\n    ],\n    \"risk_management\": [\n      \"Security auditing\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Backend development\",\n    \"Software development\",\n    \"Testing and debugging\",\n    \"Cloud-based applications\",\n    \"Technical support\",\n    \"Cross-functional collaboration\",\n    \"Performance optimization\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Keep claims aligned with actual experience\"\n    ],\n    \"security_auth\": [\n      \"Do not overstate security depth\"\n    ],\n    \"employment_constraints\": [\n      \"Avoid claiming unsupported technologies\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [\n      \"HTML\",\n      \"CSS\"\n    ],\n    \"languages\": [\n      \"Python\",\n      \"Java\",\n      \"PHP\"\n    ],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [\n      \"Cloud-based applications\"\n    ],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [\n      \"Cloud migration\",\n      \"Software security\"\n    ],\n    \"security_auth_patterns\": [\n      \"Multi-factor authentication\"\n    ],\n    \"scalability_reliability_patterns\": [\n      \"Code optimization\"\n    ]\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"System Security and Feature Implementation\",\n      \"impact\": [\n        \"Enhanced system security with multi-factor authentication for over 1 million users\",\n        \"Implemented new features for high-traffic web applications\",\n        \"Improved scalability by 40% through cloud migration\",\n        \"Resolved an average of 150 bug fixes to ensure seamless UX\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Peer code reviews\",\n        \"Team collaboration\"\n      ],\n      \"skills_applied\": [\n        \"Java\",\n        \"Python\",\n        \"Cloud migration\",\n        \"Software security\"\n      ],\n      \"architecture_patterns\": [\n        \"Cloud-based platform development\"\n      ],\n      \"employer_relationship\": \"IBM\",\n      \"security_auth_patterns\": [\n        \"Multi-factor authentication\"\n      ],\n      \"constraints_and_tradeoffs\": [\n        \"Balancing security and user experience\"\n      ]\n    },\n    {\n      \"area\": \"Software Development and Quality Assurance\",\n      \"impact\": [\n        \"Resolved over 100 user-reported issues\",\n        \"Developed a user personalization feature increasing daily active users by 10%\",\n        \"Supported a security audit identifying 15 potential threats\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Collaboration with quality assurance team\"\n      ],\n      \"skills_applied\": [\n        \"User acceptance testing\",\n        \"Software bug fixing\",\n        \"Security auditing\"\n      ],\n      \"architecture_patterns\": [\n        \"Testing and validation workflows\"\n      ],\n      \"employer_relationship\": \"Microsoft\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Balancing feature development and bug resolution\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\",\n      \"Agile software environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\",\n      \"Problem solving\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\nLV\nContact\n+7 783 173 248 \nleonidverman@gmail.com\nVANCOUVER V6G 2Z1\nBold Profile\nWebsites, Portfolios, Profiles\nhttps://www.linkedin.com/in/leonid-verman-3569b71b2/\nSkill\nClear communication\nCloud migration\nResourceful\nSoftware security\nTeam collaboration\nVersion control systems\nPython programming\nCode optimization\nObject-oriented programming\nHTML and CSS\nPHP development\nStrong problem solving\nData structures\nLeonid Verman\nDynamic Junior Software Developer with experience at IBM, enhancing system security and implementing features for high-traffic applications. Proven ability in cloud migration and team collaboration, achieving a 40% improvement in scalability. Resourceful problem-solver, adept at resolving bugs and ensuring seamless user experiences.\nEmployment History\nJunior Software Developer | IBM | New York, NY \nJune 2023 – Current\nEnhance system security to safeguard data with multi-factor authentication for over 1 million users\nImplement new features for high-traffic web applications using Java and Python\nSupport migration projects to move significant portions of an application to the cloud, improving scalability by 40%\nEngage in peer code reviews to ensure adherence to coding best practices and IBM standards\nResolved an average of 150 bug fixes since June 2023 for apps post-launch to ensure seamless UX\nSoftware Engineering Intern | Microsoft | Redmond, WA \nMay 2023 – August 2023\nWorked alongside the quality assurance team to identify and fix software bugs, resolving over 100 user-reported issues\nParticipated in brainstorming ideas and solutions for new feature development\nAssisted in conducting user acceptance testing (UAT) to gather feedback and identify areas of improvement\nPartnered with software engineers to develop a user personalization feature that led to a 10% increase in daily active users within the first month of release\nSupported a security audit to identify and remedy 15 potential security threats\nEducation\nBachelor of Science (B.S.) Computer Science | California Institute of Technology\nPasadena, CA \nLanguages\nEnglish\nCertifications And Training\nOracle Certified Associate\nAWS Certified Developer"
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nLeonid Verman\nDear Hiring Manager,\n\nI am excited to apply for the [Role] role at [Company].\n\n[2-3 short paragraphs connecting candidate background to role/company needs.]\n\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: May 25, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "Leonid Verman\nContact\n+7 783 173 248 \nleonidverman@gmail.com\nVANCOUVER V6G 2Z1\nWebsites, Portfolios, Profiles\nhttps://www.linkedin.com/in/leonid-verman-3569b71b2/\n\nProfessional Summary\nJunior Software Developer with experience delivering production features and fixes for enterprise web applications at IBM and Microsoft. Contributed to security improvements by implementing multi-factor authentication for 1M+ users, supported cloud migration work tied to a 40% scalability improvement, and partnered with QA on UAT and issue triage to improve release quality. Strong in Java/Python development, debugging, and collaborative delivery through peer code reviews and coding best practices.\n\nExperience\nJunior Software Developer | IBM | New York, NY \nJune 2023 – Current\n- Enhanced system security by implementing multi-factor authentication flows for 1M+ users, balancing security requirements with user experience.\n- Supported migration projects moving significant portions of an application to a cloud-based environment; contributed to a 40% improvement in scalability.\n- Implemented new features for high-traffic web applications using Java and Python within existing platform constraints.\n- Resolved an average of 150 post-launch bug fixes since June 2023 to maintain a seamless user experience in production.\n- Engaged in peer code reviews to align changes with coding best practices and IBM standards.\n\nSoftware Engineering Intern | Microsoft | Redmond, WA \nMay 2023 – August 2023\n- Worked alongside the quality assurance team to identify and fix software bugs, resolving 100+ user-reported issues.\n- Assisted in conducting user acceptance testing (UAT) to gather feedback and identify areas for improvement prior to release.\n- Partnered with software engineers to develop a user personalization feature; increased daily active users by 10% within the first month of release.\n- Supported a security audit to identify and remedy 15 potential security threats.\n- Participated in brainstorming ideas and solutions for new feature development.\n\nEducation\nBachelor of Science (B.S.) Computer Science | California Institute of Technology\nPasadena, CA \n\nTechnical Skills\nProgramming Languages: Java, Python, PHP\nWeb: HTML, CSS\nSecurity: Multi-factor authentication, Software security\nCloud & Scalability: Cloud migration, Cloud-based applications, Code optimization\nEngineering Practices: Object-oriented programming, Data structures, Version control systems, Testing and debugging, User acceptance testing (UAT), Peer code reviews\nProfessional: Clear communication, Team collaboration, Strong problem solving, Resourceful\n\nAdditional\nLanguages\nEnglish\nCertifications And Training\nOracle Certified Associate\nAWS Certified Developer\n",
+    "cover_letter": "Leonid Verman\n+7 783 173 248 | leonidverman@gmail.com | https://www.linkedin.com/in/leonid-verman-3569b71b2/\n\nMay 25, 2026\n\nDear Hiring Manager,\n\nI am excited to apply for the Lead Software Engineer role at American Tire Distributors. My background is in building and supporting enterprise web applications, with hands-on experience delivering security features, cloud migration support, and production issue resolution in collaborative Agile environments.\n\nAt IBM, I implemented multi-factor authentication for over 1 million users, working within the tradeoffs of strengthening security while maintaining a smooth user experience. I also supported migration efforts moving significant portions of an application to a cloud-based environment, contributing to a reported 40% improvement in scalability, and I regularly delivered production-facing fixes—averaging 150 bug fixes since June 2023—to keep post-launch experiences stable.\n\nEarlier at Microsoft, I partnered closely with QA on bug triage and user acceptance testing, resolving over 100 user-reported issues and helping validate releases. I also collaborated with engineers on a user personalization feature that increased daily active users by 10% within the first month, and supported a security audit that identified and addressed 15 potential threats.\n\nAmerican Tire Distributors’ focus on building and supporting solutions that address scalability, performance, and security aligns well with the work I’ve been doing in high-traffic, production environments. I would welcome the opportunity to bring my execution-focused engineering approach—strong debugging, careful validation, and collaborative code review habits—to help deliver maintainable software that supports ATD’s customers and internal users.\n\nSincerely,\nLeonid Verman"
+  },
+  "diff": {
+    "resume": [
+      {
+        "name": "Professional Summary",
+        "after": "Junior Software Developer with experience delivering production features and fixes for enterprise web applications at IBM and Microsoft. Contributed to security improvements by implementing multi-factor authentication for 1M+ users, supported cloud migration work tied to a 40% scalability improvement, and partnered with QA on UAT and issue triage to improve release quality. Strong in Java/Python development, debugging, and collaborative delivery through peer code reviews and coding best practices."
+      },
+      {
+        "name": "Technical Skills",
+        "before": "Clear communication\nCloud migration\nResourceful\nSoftware security\nTeam collaboration\nVersion control systems\nPython programming\nCode optimization\nObject-oriented programming\nHTML and CSS\nPHP development\nStrong problem solving\nData structures\nLeonid Verman\nDynamic Junior Software Developer with experience at IBM, enhancing system security and implementing features for high-traffic applications. Proven ability in cloud migration and team collaboration, achieving a 40% improvement in scalability. Resourceful problem-solver, adept at resolving bugs and ensuring seamless user experiences.\nEmployment History\nJunior Software Developer | IBM | New York, NY\nJune 2023 – Current\nEnhance system security to safeguard data with multi-factor authentication for over 1 million users\nImplement new features for high-traffic web applications using Java and Python\nSupport migration projects to move significant portions of an application to the cloud, improving scalability by 40%\nEngage in peer code reviews to ensure adherence to coding best practices and IBM standards\nResolved an average of 150 bug fixes since June 2023 for apps post-launch to ensure seamless UX\nSoftware Engineering Intern | Microsoft | Redmond, WA\nMay 2023 – August 2023\nWorked alongside the quality assurance team to identify and fix software bugs, resolving over 100 user-reported issues\nParticipated in brainstorming ideas and solutions for new feature development\nAssisted in conducting user acceptance testing (UAT) to gather feedback and identify areas of improvement\nPartnered with software engineers to develop a user personalization feature that led to a 10% increase in daily active users within the first month of release\nSupported a security audit to identify and remedy 15 potential security threats",
+        "after": "Programming Languages: Java, Python, PHP\nWeb: HTML, CSS\nSecurity: Multi-factor authentication, Software security\nCloud & Scalability: Cloud migration, Cloud-based applications, Code optimization\nEngineering Practices: Object-oriented programming, Data structures, Version control systems, Testing and debugging, User acceptance testing (UAT), Peer code reviews\nProfessional: Clear communication, Team collaboration, Strong problem solving, Resourceful\n\nAdditional\nLanguages\nEnglish\nCertifications And Training\nOracle Certified Associate\nAWS Certified Developer"
+      }
+    ]
+  },
+  "generation_run_id": "318",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      },
+      {
+        "text": "LV",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_3"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Contact",
+        "semantic_type": "other",
+        "heading": {
+          "text": "Contact",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_4"
+        },
+        "body_paras": [
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_5"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_6"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_7"
+          },
+          {
+            "text": "+7 783 173 248 ",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_8"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_9"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_10"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_11"
+          },
+          {
+            "text": "leonidverman@gmail.com",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_12"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_13"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_14"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_15"
+          },
+          {
+            "text": "VANCOUVER V6G 2Z1",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_16"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_17"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_18"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_19"
+          },
+          {
+            "text": "Bold Profile",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_20"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_21"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "Websites, Portfolios, Profiles",
+        "semantic_type": "websites",
+        "heading": {
+          "text": "Websites, Portfolios, Profiles",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_22"
+        },
+        "body_paras": [
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_23"
+          },
+          {
+            "text": "https://www.linkedin.com/in/leonid-verman-3569b71b2/",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_24"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_25"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "Skill",
+        "semantic_type": "skills",
+        "heading": {
+          "text": "Skill",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_26"
+        },
+        "body_paras": [
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_27"
+          },
+          {
+            "text": "Programming Languages: Java, Python, PHP",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_28"
+          },
+          {
+            "text": "Web: HTML, CSS",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_29"
+          },
+          {
+            "text": "Security: Multi-factor authentication, Software security",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_30"
+          },
+          {
+            "text": "Cloud & Scalability: Cloud migration, Cloud-based",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_31"
+          },
+          {
+            "text": "Engineering Practices: Object-oriented programming, Data",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_32"
+          },
+          {
+            "text": "Professional: Clear communication, Team collaboration,",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_33"
+          },
+          {
+            "text": "",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_34"
+          },
+          {
+            "text": "",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_35"
+          },
+          {
+            "text": "",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_36"
+          },
+          {
+            "text": "",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_37"
+          },
+          {
+            "text": "",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_38"
+          },
+          {
+            "text": "",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          },
+          {
+            "text": "",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_40"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_41"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_42"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_43"
+          },
+          {
+            "text": "Leonid Verman",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_44"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_45"
+          },
+          {
+            "text": "Junior Software Developer with experience delivering production features and fixes for enterprise web applications at IBM and Microsoft. Contributed to security improvements by implementing multi-factor authentication for 1M+ users, supported cloud migration work tied to a 40% scalability improvement, and partnered with QA on UAT and issue triage to improve release quality. Strong in Java/Python development, debugging, and collaborative delivery through peer code reviews and coding best practices.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_46"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_47"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_48"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_49"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_50"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_3"
+      },
+      {
+        "title": "Employment History",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "Employment History",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_51"
+        },
+        "body_paras": [
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_66"
+          },
+          {
+            "text": "Junior Software Developer | IBM | New York, NY ",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_67"
+          },
+          {
+            "text": "June 2023 – Current",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_68"
+          },
+          {
+            "text": "Enhanced system security by implementing multi-factor authentication flows for 1M+ users,",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_69"
+          },
+          {
+            "text": "Supported migration projects moving significant portions of an application to",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_70"
+          },
+          {
+            "text": "Implemented new features for high-traffic web applications using Java and Python within existing platform",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_71"
+          },
+          {
+            "text": "Resolved an average of 150 post-launch bug fixes since June 2023 to maintain a seamless",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_72"
+          },
+          {
+            "text": "Engaged in peer code reviews to align changes with coding best practices and IBM standards.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_73"
+          },
+          {
+            "text": "Software Engineering Intern | Microsoft | Redmond, WA ",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_74"
+          },
+          {
+            "text": "May 2023 – August 2023",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_75"
+          },
+          {
+            "text": "Worked alongside the quality assurance team to identify and fix software bugs, resolving 100+ user-reported issues.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_76"
+          },
+          {
+            "text": "Assisted in conducting user acceptance testing (UAT) to gather feedback and",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_77"
+          },
+          {
+            "text": "Partnered with software engineers to develop a user personalization feature; increased daily active",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_78"
+          },
+          {
+            "text": "Supported a security audit to identify and remedy 15 potential security threats.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_79"
+          },
+          {
+            "text": "Participated in brainstorming ideas and solutions for new feature development.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_80"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_81"
+          }
+        ],
+        "roles": [
+          {
+            "header": {
+              "text": "Junior Software Developer | IBM | New York, NY ",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_67"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "June 2023 – Current",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_68"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Enhanced system security by implementing multi-factor authentication flows for 1M+ users, balancing security requirements with user experience.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_69"
+              },
+              {
+                "text": "Supported migration projects moving significant portions of an application to a cloud-based environment; contributed to a 40% improvement in scalability.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_70"
+              },
+              {
+                "text": "Implemented new features for high-traffic web applications using Java and Python within existing platform constraints.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_71"
+              },
+              {
+                "text": "Resolved an average of 150 post-launch bug fixes since June 2023 to maintain a seamless user experience in production.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_72"
+              },
+              {
+                "text": "Engaged in peer code reviews to align changes with coding best practices and IBM standards.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_73"
+              }
+            ],
+            "role_id": "Junior Software Developer | IBM | New York, NY",
+            "role_id_stable": ""
+          },
+          {
+            "header": {
+              "text": "Software Engineering Intern | Microsoft | Redmond, WA ",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_74"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "May 2023 – August 2023",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_75"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Worked alongside the quality assurance team to identify and fix software bugs, resolving 100+ user-reported issues.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_76"
+              },
+              {
+                "text": "Assisted in conducting user acceptance testing (UAT) to gather feedback and identify areas for improvement prior to release.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_77"
+              },
+              {
+                "text": "Partnered with software engineers to develop a user personalization feature; increased daily active users by 10% within the first month of release.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_78"
+              },
+              {
+                "text": "Supported a security audit to identify and remedy 15 potential security threats.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_79"
+              },
+              {
+                "text": "Participated in brainstorming ideas and solutions for new feature development.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_80"
+              }
+            ],
+            "role_id": "Software Engineering Intern | Microsoft | Redmond, WA",
+            "role_id_stable": ""
+          }
+        ],
+        "section_id": "sec_4"
+      },
+      {
+        "title": "Education",
+        "semantic_type": "education",
+        "heading": {
+          "text": "Education",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_82"
+        },
+        "body_paras": [
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_83"
+          },
+          {
+            "text": "Bachelor of Science (B.S.) Computer Science | California Institute of Technology",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_84"
+          },
+          {
+            "text": "Pasadena, CA ",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_85"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_86"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_5"
+      },
+      {
+        "title": "Languages",
+        "semantic_type": "languages",
+        "heading": {
+          "text": "Languages",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_87"
+        },
+        "body_paras": [
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_88"
+          },
+          {
+            "text": "English",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_89"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_90"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_6"
+      },
+      {
+        "title": "Certifications And Training",
+        "semantic_type": "certifications",
+        "heading": {
+          "text": "Certifications And Training",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_91"
+        },
+        "body_paras": [
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_92"
+          },
+          {
+            "text": "Oracle Certified Associate",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_93"
+          },
+          {
+            "text": "AWS Certified Developer",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_94"
+          },
+          {
+            "text": " ",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_95"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_96"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_97"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_98"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_7"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 612.0,
+      "page_height_pt": 792.0,
+      "margin_top_pt": 72,
+      "margin_bottom_pt": 72,
+      "margin_left_pt": 72,
+      "margin_right_pt": 72,
+      "default_font_name": "Calibri",
+      "default_font_size_pt": 12.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null,
+      "section_row_table": false,
+      "header_bg_color": null,
+      "footer_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "table",
+        "table_id": "tbl_1",
+        "xml_proto_xml": "<w:tbl xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><w:tblPr><w:tblStyle w:val=\"skn-m072parent-container\"/><w:tblW w:w=\"0\" w:type=\"auto\"/><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblLook w:val=\"05E0\"/></w:tblPr><w:tblGrid><w:gridCol w:w=\"300\"/><w:gridCol w:w=\"3700\"/><w:gridCol w:w=\"300\"/><w:gridCol w:w=\"7940\"/></w:tblGrid><w:tr><w:tblPrEx><w:tblW w:w=\"0\" w:type=\"auto\"/><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblLook w:val=\"05E0\"/></w:tblPrEx><w:trPr><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"300\" w:type=\"dxa\"/><w:tcMar><w:top w:w=\"600\" w:type=\"dxa\"/><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"600\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"top\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:rPr><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:pict><v:rect id=\"_x0000_s1025\" style=\"width:215pt;height:1000pt;margin-top:0;margin-left:0;mso-position-horizontal-relative:page;mso-position-vertical-relative:page;position:absolute;z-index:-251658240\" o:allowincell=\"f\" fillcolor=\"#49443e\" stroked=\"f\"><v:path strokeok=\"f\"/></v:rect></w:pict></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"3700\" w:type=\"dxa\"/><w:tcMar><w:top w:w=\"600\" w:type=\"dxa\"/><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"600\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"top\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:pStyle w:val=\"skn-m072prfl-picfield\"/><w:spacing w:before=\"0\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:vanish/><w:sz w:val=\"336\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072initial-name\"/><w:spacing w:before=\"0\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:b/><w:bCs/><w:vanish/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072initial-namespan\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:b/><w:bCs/><w:vanish/><w:color w:val=\"FFFFFF\"/></w:rPr><w:t>L</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072initial-namespan\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:b/><w:bCs/><w:vanish/><w:color w:val=\"FFFFFF\"/></w:rPr><w:t>V</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxsectiontitle\"/><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:line=\"380\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr><w:t>Contact</w:t></w:r><w:r><w:pict><v:rect id=\"_x0000_s1026\" style=\"width:215pt;height:27pt;margin-top:0;margin-left:-15pt;position:absolute;z-index:-251656192\" fillcolor=\"#bf9000\" stroked=\"f\"><v:path strokeok=\"f\"/></v:rect></w:pict></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:tbl><w:tblPr><w:tblStyle w:val=\"skn-m072icon-row\"/><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblInd w:w=\"300\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblLook w:val=\"05E0\"/></w:tblPr><w:tblGrid><w:gridCol w:w=\"300\"/><w:gridCol w:w=\"200\"/><w:gridCol w:w=\"2900\"/></w:tblGrid><w:tr><w:tblPrEx><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblInd w:w=\"300\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblLook w:val=\"05E0\"/></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\"/><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"300\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"300\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:drawing><wp:inline><wp:extent cx=\"190885\" cy=\"190998\"/><wp:docPr id=\"100001\" name=\"\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"0\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"100001\" name=\"\"/><pic:cNvPicPr><a:picLocks noChangeAspect=\"0\"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" r:embed=\"rId4\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"190885\" cy=\"190998\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"200\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"300\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:rPr><w:rStyle w:val=\"skn-m072icon-rowicon-svg\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072icon-rowemptyCell\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"2900\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"300\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:rPr><w:rStyle w:val=\"skn-m072icon-rowemptyCell\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072icon-txt\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>+7 783 173 248</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072icon-txt\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r></w:p></w:tc></w:tr></w:tbl><w:p><w:pPr><w:rPr><w:vanish/></w:rPr></w:pPr></w:p><w:tbl><w:tblPr><w:tblStyle w:val=\"skn-m072icon-row\"/><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblInd w:w=\"300\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblLook w:val=\"05E0\"/></w:tblPr><w:tblGrid><w:gridCol w:w=\"300\"/><w:gridCol w:w=\"200\"/><w:gridCol w:w=\"2900\"/></w:tblGrid><w:tr><w:tblPrEx><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblInd w:w=\"300\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblLook w:val=\"05E0\"/></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\"/><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"300\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"300\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:drawing><wp:inline><wp:extent cx=\"190885\" cy=\"190998\"/><wp:docPr id=\"100003\" name=\"\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"0\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"100003\" name=\"\"/><pic:cNvPicPr><a:picLocks noChangeAspect=\"0\"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" r:embed=\"rId5\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"190885\" cy=\"190998\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"200\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"300\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:rPr><w:rStyle w:val=\"skn-m072icon-rowicon-svg\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072icon-rowemptyCell\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"2900\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"300\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:rPr><w:rStyle w:val=\"skn-m072icon-rowemptyCell\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072icon-txt\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>leonidverman@gmail.com</w:t></w:r></w:p></w:tc></w:tr></w:tbl><w:p><w:pPr><w:rPr><w:vanish/></w:rPr></w:pPr></w:p><w:tbl><w:tblPr><w:tblStyle w:val=\"skn-m072icon-row\"/><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblInd w:w=\"300\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblLook w:val=\"05E0\"/></w:tblPr><w:tblGrid><w:gridCol w:w=\"300\"/><w:gridCol w:w=\"200\"/><w:gridCol w:w=\"2900\"/></w:tblGrid><w:tr><w:tblPrEx><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblInd w:w=\"300\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblLook w:val=\"05E0\"/></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\"/><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"300\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"300\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:drawing><wp:inline><wp:extent cx=\"190885\" cy=\"190998\"/><wp:docPr id=\"100005\" name=\"\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"0\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"100005\" name=\"\"/><pic:cNvPicPr><a:picLocks noChangeAspect=\"0\"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" r:embed=\"rId6\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"190885\" cy=\"190998\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"200\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"300\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:rPr><w:rStyle w:val=\"skn-m072icon-rowicon-svg\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072icon-rowemptyCell\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"2900\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"300\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:rPr><w:rStyle w:val=\"skn-m072icon-rowemptyCell\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072icon-txt\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>VANCOUVER V6G 2Z1</w:t></w:r></w:p></w:tc></w:tr></w:tbl><w:p><w:pPr><w:rPr><w:vanish/></w:rPr></w:pPr></w:p><w:tbl><w:tblPr><w:tblStyle w:val=\"skn-m072social-blockicon-rownth-last-child1\"/><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblInd w:w=\"300\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblCellMar><w:bottom w:w=\"0\" w:type=\"dxa\"/></w:tblCellMar><w:tblLook w:val=\"05E0\"/></w:tblPr><w:tblGrid><w:gridCol w:w=\"300\"/><w:gridCol w:w=\"200\"/><w:gridCol w:w=\"2900\"/></w:tblGrid><w:tr><w:tblPrEx><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblInd w:w=\"300\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblCellMar><w:bottom w:w=\"0\" w:type=\"dxa\"/></w:tblCellMar><w:tblLook w:val=\"05E0\"/></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\"/><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"300\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"0\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:drawing><wp:inline><wp:extent cx=\"190885\" cy=\"190998\"/><wp:docPr id=\"100007\" name=\"\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"0\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"100007\" name=\"\"/><pic:cNvPicPr><a:picLocks noChangeAspect=\"0\"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" r:embed=\"rId7\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"190885\" cy=\"190998\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"200\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"0\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:rPr><w:rStyle w:val=\"skn-m072icon-rownth-last-child1icon-svg\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072icon-rownth-last-child1emptyCell\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"2900\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"0\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"center\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:rPr><w:rStyle w:val=\"skn-m072icon-rownth-last-child1emptyCell\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:hyperlink r:id=\"rId8\" w:history=\"1\"><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-boxa\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Bold Profile</w:t></w:r></w:hyperlink></w:p></w:tc></w:tr></w:tbl><w:p><w:pPr><w:spacing w:line=\"300\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxsectiontitle\"/><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:line=\"380\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr><w:t>Websites, Portfolios, Profiles</w:t></w:r><w:r><w:pict><v:rect id=\"_x0000_s1027\" style=\"width:215pt;height:46pt;margin-top:0;margin-left:-15pt;position:absolute;z-index:-251655168\" fillcolor=\"#bf9000\" stroked=\"f\"><v:path strokeok=\"f\"/></v:rect></w:pict></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"15\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>https://www.linkedin.com/in/leonid-verman-3569b71b2/</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"300\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxsectiontitle\"/><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:line=\"380\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr><w:t>Skill</w:t></w:r><w:r><w:pict><v:rect id=\"_x0000_s1028\" style=\"width:215pt;height:27pt;margin-top:0;margin-left:-15pt;position:absolute;z-index:-251654144\" fillcolor=\"#bf9000\" stroked=\"f\"><v:path strokeok=\"f\"/></v:rect></w:pict></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:before=\"0\" w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Clear communication</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Cloud migration</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Resourceful</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Software security</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Team collaboration</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Version control systems</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072skillullinth-last-child1\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"2\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Python programming</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"3\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:before=\"100\" w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Code optimization</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"3\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Object-oriented programming</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"3\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>HTML and CSS</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"3\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>PHP development</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072left-boxulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"3\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Strong problem solving</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072skillullinth-last-child1\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"3\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"0\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"600\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Data structures</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:after=\"0\" w:line=\"300\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072left-box\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"300\" w:type=\"dxa\"/><w:tcMar><w:top w:w=\"600\" w:type=\"dxa\"/><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"600\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"top\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:pStyle w:val=\"skn-m072leftboxpaddingParagraph\"/><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:textAlignment w:val=\"auto\"/><w:rPr><w:rStyle w:val=\"skn-m072leftboxpadding\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"7940\" w:type=\"dxa\"/><w:tcMar><w:top w:w=\"0\" w:type=\"dxa\"/><w:left w:w=\"0\" w:type=\"dxa\"/><w:bottom w:w=\"600\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"top\"/><w:hideMark/></w:tcPr><w:tbl><w:tblPr><w:tblStyle w:val=\"skn-m072right-boxright-container-table\"/><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblLook w:val=\"05E0\"/></w:tblPr><w:tblGrid><w:gridCol w:w=\"440\"/><w:gridCol w:w=\"7060\"/><w:gridCol w:w=\"440\"/></w:tblGrid><w:tr><w:tblPrEx><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblLook w:val=\"05E0\"/></w:tblPrEx><w:trPr><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"440\" w:type=\"dxa\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"8\" w:space=\"0\" w:color=\"434343\"/></w:tcBorders><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"top\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:rPr><w:rStyle w:val=\"skn-m072leftboxpadding\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"7060\" w:type=\"dxa\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"8\" w:space=\"0\" w:color=\"434343\"/></w:tcBorders><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"top\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:pStyle w:val=\"skn-m072name\"/><w:spacing w:before=\"0\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:jc w:val=\"center\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdiv\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:caps/><w:color w:val=\"49443E\"/><w:sz w:val=\"70\"/><w:szCs w:val=\"70\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdiv\"/><w:b/><w:bCs/><w:caps/></w:rPr><w:t>Leonid</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdiv\"/><w:b/><w:bCs/><w:caps/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072namespannth-last-child1\"/><w:b w:val=\"0\"/><w:bCs w:val=\"0\"/><w:caps/></w:rPr><w:t>Verman</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:after=\"0\" w:line=\"480\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:jc w:val=\"center\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:p><w:pPr><w:spacing w:before=\"180\" w:after=\"180\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:jc w:val=\"center\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"49443E\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"49443E\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Dynamic Junior Software Developer with experience at IBM, enhancing system security and implementing features for high-traffic applications. Proven ability in cloud migration and team collaboration, achieving a 40% improvement in scalability. Resourceful problem-solver, adept at resolving bugs and ensuring seamless user experiences.</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"300\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:jc w:val=\"center\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"49443E\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"49443E\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"440\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"top\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:pStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdivParagraph\"/><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:textAlignment w:val=\"auto\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr></w:p></w:tc></w:tr><w:tr><w:tblPrEx><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/><w:tblLook w:val=\"05E0\"/></w:tblPrEx><w:trPr><w:tblCellSpacing w:w=\"0\" w:type=\"dxa\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"440\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"top\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:pStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdivParagraph\"/><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:textAlignment w:val=\"auto\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"7060\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"top\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:pStyle w:val=\"skn-m072right-boxright-container-tablefirst-rowdivParagraph\"/><w:spacing w:line=\"300\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:textAlignment w:val=\"auto\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072headingsectiontitle\"/><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:line=\"380\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr><w:t>Employment History</w:t></w:r><w:r><w:pict><v:rect id=\"_x0000_s1029\" style=\"width:390pt;height:27pt;margin-top:0;margin-left:-15pt;position:absolute;z-index:-251653120\" fillcolor=\"#49443e\" stroked=\"f\"><v:path strokeok=\"f\"/></v:rect></w:pict></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072exp-fields\"/><w:spacing w:before=\"0\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072job-title\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Junior Software Developer</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"sprtr\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\">| </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>IBM</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"sprtr\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\">| </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>New York, NY</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072disp-blk\"/><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>June 2023</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\">– </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Current</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"4\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:before=\"120\" w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Enhance system security to safeguard data with multi-factor authentication for over 1 million users</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"4\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Implement new features for high-traffic web applications using Java and Python</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"4\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Support migration projects to move significant portions of an application to the cloud, improving scalability by 40%</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"4\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Engage in peer code reviews to ensure adherence to coding best practices and IBM standards</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ullinth-last-child1\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"4\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"0\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Resolved an average of 150 bug fixes since June 2023 for apps post-launch to ensure seamless UX</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072exp-fields\"/><w:spacing w:before=\"240\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072job-title\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Software Engineering Intern</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"sprtr\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\">| </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Microsoft</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"sprtr\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\">| </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Redmond, WA</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072disp-blk\"/><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>May 2023</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\">– </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>August 2023</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"5\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:before=\"120\" w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Worked alongside the quality assurance team to identify and fix software bugs, resolving over 100 user-reported issues</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"5\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Participated in brainstorming ideas and solutions for new feature development</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"5\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Assisted in conducting user acceptance testing (UAT) to gather feedback and identify areas of improvement</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"5\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Partnered with software engineers to develop a user personalization feature that led to a 10% increase in daily active users within the first month of release</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ullinth-last-child1\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"5\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"0\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Supported a security audit to identify and remedy 15 potential security threats</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"300\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072headingsectiontitle\"/><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:line=\"380\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr><w:t>Education</w:t></w:r><w:r><w:pict><v:rect id=\"_x0000_s1030\" style=\"width:390pt;height:27pt;margin-top:0;margin-left:-15pt;position:absolute;z-index:-251652096\" fillcolor=\"#49443e\" stroked=\"f\"><v:path strokeok=\"f\"/></v:rect></w:pict></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:p><w:pPr><w:spacing w:before=\"0\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"degreedeg-clr\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Bachelor of Science (B.S.) Computer Science</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\">| </w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072txt-upper\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:caps/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>California Institute of Technology</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Pasadena, CA</w:t></w:r><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic Medium\" w:eastAsia=\"Livvic Medium\" w:hAnsi=\"Livvic Medium\" w:cs=\"Livvic Medium\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"300\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072headingsectiontitle\"/><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:line=\"380\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr><w:t>Languages</w:t></w:r><w:r><w:pict><v:rect id=\"_x0000_s1031\" style=\"width:390pt;height:27pt;margin-top:0;margin-left:-15pt;position:absolute;z-index:-251651072\" fillcolor=\"#49443e\" stroked=\"f\"><v:path strokeok=\"f\"/></v:rect></w:pict></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ullinth-last-child1\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"6\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>English</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"300\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072headingsectiontitle\"/><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"4\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:line=\"380\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Open Sans\" w:eastAsia=\"Open Sans\" w:hAnsi=\"Open Sans\" w:cs=\"Open Sans\"/><w:b/><w:bCs/><w:smallCaps/><w:color w:val=\"FFFFFF\"/><w:sz w:val=\"32\"/><w:szCs w:val=\"32\"/></w:rPr><w:t>Certifications And Training</w:t></w:r><w:r><w:pict><v:rect id=\"_x0000_s1032\" style=\"width:390pt;height:27pt;margin-top:0;margin-left:-15pt;position:absolute;z-index:-251650048\" fillcolor=\"#49443e\" stroked=\"f\"><v:path strokeok=\"f\"/></v:rect></w:pict></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"200\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ulli\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"7\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:before=\"0\" w:after=\"100\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>Oracle Certified Associate</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"skn-m072ullinth-last-child1\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"7\"/></w:numPr><w:pBdr><w:top w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"none\" w:sz=\"0\" w:space=\"5\" w:color=\"auto\"/><w:bottom w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"none\" w:sz=\"0\" w:space=\"0\" w:color=\"auto\"/></w:pBdr><w:spacing w:after=\"0\" w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"500\" w:right=\"0\" w:hanging=\"283\"/><w:jc w:val=\"left\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t>AWS Certified Developer</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line=\"300\" w:lineRule=\"exact\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr><w:t> </w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"440\" w:type=\"dxa\"/><w:tcMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tcMar><w:vAlign w:val=\"top\"/><w:hideMark/></w:tcPr><w:p><w:pPr><w:pStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdivParagraph\"/><w:spacing w:line=\"320\" w:lineRule=\"atLeast\"/><w:ind w:left=\"0\" w:right=\"0\"/><w:textAlignment w:val=\"auto\"/><w:rPr><w:rStyle w:val=\"skn-m072right-boxright-container-tablelast-rowdiv\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr></w:p></w:tc></w:tr></w:tbl><w:p><w:pPr><w:rPr><w:rStyle w:val=\"skn-m072leftboxpadding\"/><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr></w:p></w:tc></w:tr></w:tbl>",
+        "para_ids": [
+          "para_1",
+          "para_2",
+          "para_3",
+          "para_4",
+          "para_5",
+          "para_6",
+          "para_7",
+          "para_8",
+          "para_9",
+          "para_10",
+          "para_11",
+          "para_12",
+          "para_13",
+          "para_14",
+          "para_15",
+          "para_16",
+          "para_17",
+          "para_18",
+          "para_19",
+          "para_20",
+          "para_21",
+          "para_22",
+          "para_23",
+          "para_24",
+          "para_25",
+          "para_26",
+          "para_27",
+          "para_28",
+          "para_29",
+          "para_30",
+          "para_31",
+          "para_32",
+          "para_33",
+          "para_34",
+          "para_35",
+          "para_36",
+          "para_37",
+          "para_38",
+          "para_39",
+          "para_40",
+          "para_41",
+          "para_42",
+          "para_43",
+          "para_44",
+          "para_45",
+          "para_46",
+          "para_47",
+          "para_48",
+          "para_49",
+          "para_50",
+          "para_51",
+          "para_66",
+          "para_67",
+          "para_68",
+          "para_69",
+          "para_70",
+          "para_71",
+          "para_72",
+          "para_73",
+          "para_74",
+          "para_75",
+          "para_76",
+          "para_77",
+          "para_78",
+          "para_79",
+          "para_80",
+          "para_81",
+          "para_82",
+          "para_83",
+          "para_84",
+          "para_85",
+          "para_86",
+          "para_87",
+          "para_88",
+          "para_89",
+          "para_90",
+          "para_91",
+          "para_92",
+          "para_93",
+          "para_94",
+          "para_95",
+          "para_96",
+          "para_97"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_98",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\"><w:pPr><w:rPr><w:rFonts w:ascii=\"Livvic\" w:eastAsia=\"Livvic\" w:hAnsi=\"Livvic\" w:cs=\"Livvic\"/><w:color w:val=\"434343\"/><w:sz w:val=\"18\"/><w:szCs w:val=\"18\"/></w:rPr></w:pPr><w:r><w:pict><v:rect id=\"_x0000_s1033\" style=\"width:215pt;height:1000pt;margin-top:0;margin-left:0;mso-position-horizontal-relative:page;mso-position-vertical-relative:page;position:absolute;z-index:-251657216\" o:allowincell=\"f\" fillcolor=\"#49443e\" stroked=\"f\"><v:path strokeok=\"f\"/></v:rect></w:pict></w:r></w:p>"
+      }
+    ]
+  }
+}

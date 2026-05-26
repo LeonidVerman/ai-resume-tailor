@@ -1,0 +1,1040 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "structured_resume": {
+    "status": "valid",
+    "validation": {
+      "errors": [],
+      "is_valid": true,
+      "document_id": "172",
+      "section_results": [
+        {
+          "is_valid": true,
+          "section_id": "sec_1",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_2",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_3",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_4",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_5",
+          "error_codes": []
+        }
+      ]
+    },
+    "repair_input": null,
+    "classification": {
+      "sections": [
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_7",
+              "block_id": "block_1",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Objective",
+          "section_id": "sec_1",
+          "display_title": "Objective",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_10",
+              "block_id": "block_2",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_11",
+              "block_id": "block_3",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_12",
+              "block_id": "block_4",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_14",
+              "block_id": "block_5",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_15",
+              "block_id": "block_6",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_16",
+              "block_id": "block_7",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Education",
+          "section_id": "sec_2",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_27",
+                  "block_id": "block_10",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_26",
+                  "block_id": "block_9",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_25",
+                  "block_id": "block_8",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_2",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_31",
+                  "block_id": "block_13",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_30",
+                  "block_id": "block_12",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_29",
+                  "block_id": "block_11",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "Experience",
+          "section_id": "sec_3",
+          "display_title": "Experience",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_34",
+              "block_id": "block_14",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_35",
+              "block_id": "block_15",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_37",
+              "block_id": "block_16",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_38",
+              "block_id": "block_17",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_40",
+              "block_id": "block_18",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_41",
+              "block_id": "block_19",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            }
+          ],
+          "raw_title": "Skills",
+          "section_id": "sec_4",
+          "display_title": "Skills",
+          "semantic_type": "skills",
+          "rewrite_policy": "rewrite_body",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_44",
+              "block_id": "block_20",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Activities",
+          "section_id": "sec_5",
+          "display_title": "Activities",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        }
+      ],
+      "document_id": "172",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "repair_response": null,
+    "recovery_applied": false,
+    "raw_classification": {
+      "sections": [
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_7",
+              "block_id": "block_1",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Objective",
+          "section_id": "sec_1",
+          "display_title": "Objective",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_10",
+              "block_id": "block_2",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_11",
+              "block_id": "block_3",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_12",
+              "block_id": "block_4",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_14",
+              "block_id": "block_5",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_15",
+              "block_id": "block_6",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_16",
+              "block_id": "block_7",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Education",
+          "section_id": "sec_2",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_27",
+                  "block_id": "block_10",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_26",
+                  "block_id": "block_9",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_25",
+                  "block_id": "block_8",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "role_2",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_31",
+                  "block_id": "block_13",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_30",
+                  "block_id": "block_12",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_29",
+                  "block_id": "block_11",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "Experience",
+          "section_id": "sec_3",
+          "display_title": "Experience",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_34",
+              "block_id": "block_14",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_35",
+              "block_id": "block_15",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_37",
+              "block_id": "block_16",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_38",
+              "block_id": "block_17",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_40",
+              "block_id": "block_18",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_41",
+              "block_id": "block_19",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            }
+          ],
+          "raw_title": "Skills",
+          "section_id": "sec_4",
+          "display_title": "Skills",
+          "semantic_type": "skills",
+          "rewrite_policy": "rewrite_body",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_44",
+              "block_id": "block_20",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Activities",
+          "section_id": "sec_5",
+          "display_title": "Activities",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        }
+      ],
+      "document_id": "172",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "invalid_section_ids": [],
+    "repaired_section_count": 0,
+    "validation_error_count": 0,
+    "validation_after_repair": null,
+    "downgraded_section_count": 0,
+    "invalid_section_count_after_repair": 0,
+    "invalid_section_count_before_repair": 0
+  },
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.2]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n\n21) Generate ONLY the cover letter body.\n    - Do NOT include candidate name, contact information, date, or signature.\n    - Do NOT include a sender header.\n    - Start with \"Dear Hiring Manager,\".\n    - End the content before any closing (e.g., do NOT include \"Sincerely,\" or name).\n\n22) Must explicitly mention the company and role from TASK.\n\n23) Must clearly connect:\n    candidate background → company needs → role responsibilities,\n    using only supported claims (no hallucinations).\n\n24) Keep it 3–5 short paragraphs.\n    - Be specific and concrete.\n    - Avoid verbosity and generic statements.\n\n25) Maintain a professional, concise tone appropriate for the selected generation mode\n    (Conservative / Normal / Aggressive), but do not change structure based on mode.\n\n26) Do NOT include:\n    - work authorization / citizenship statements\n    - availability statements unless explicitly present in input\n    - repeated resume bullet points verbatim\n\nOutput must be plain text only (no JSON inside the body).\n\n[CANDIDATE_LAYER_JACOB_HANCOCK v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Technical Program Manager (TPM) bridging engineering + product + QA to deliver cloud/enterprise software programs.\n- Emphasize: cross-functional delivery leadership, infrastructure/program execution, quality/reliability focus, and CRM + financial-systems adjacency.\n- Keep scope accurate: program leadership and coordination with engineering; do not imply principal architect or hands-on implementation unless explicitly evidenced in MASTER_RESUME.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface “infrastructure launch / infrastructure development” as the primary architecture-adjacent differentiator, but frame as program-led delivery (planning, coordination, rollout, risk management), not as sole designer/implementer.\n- Convert vague impacts (“improved site reliability metrics”) into mechanism-first program artifacts only if evidence exists (e.g., release gating, rollout plans, incident/reliability routines, environment standardization, migration coordination).\n- If no concrete mechanisms are provided in evidence, do not invent technical mechanisms (no replicas/caching/queues/etc.).\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prefer bullets that show:\n  1) Infrastructure program delivery mechanisms (launch planning, phased rollout, dependency management, cutover coordination).\n  2) Reliability/quality mechanisms tied to program operations (SLO/SLI tracking, release readiness, QA strategy, incident postmortem facilitation) ONLY if supported by evidence.\n  3) Cross-functional execution under constraints (scope/timeline/budget).\n  4) General collaboration/communication.\n- Ensure at least one recent-role bullet explicitly references infrastructure program delivery (launch/cutover/rollout) if supported by evidence.\n\nDISTRIBUTED SYSTEM DEPTH\n- Do not force distributed-systems claims (read replicas, async messaging, stateless services, idempotency, etc.) unless explicitly present in MASTER_RESUME or experience evidence.\n- When reliability is mentioned, keep it at TPM-operational depth unless engineering mechanisms are evidenced:\n  - Acceptable: “coordinated infrastructure launch,” “managed release readiness,” “tracked reliability metrics,” “aligned teams on remediation plan.”\n  - Not acceptable without evidence: “designed microservices,” “implemented caching,” “built event-driven architecture,” “tuned database performance.”\n\nTECHNICAL DIFFERENTIATION\n- Emphasize technical-program artifacts and interfaces with engineering:\n  - Requirements translation (business → technical milestones)\n  - Dependency mapping across teams\n  - Delivery plans, milestones, risk registers\n  - Quality assurance coordination (dev + QA)\n  - Infrastructure management (as a program scope area)\n- Only name specific tools/tech stacks if present in MASTER_RESUME (none are provided in CANDIDATE_PROFILE).\n\nDOMAIN / INDUSTRY FRAMING\n- Primary framing: cloud-based applications + enterprise software delivery.\n- Secondary framing: financial systems and CRM contexts (use as credibility signals, not as deep domain specialization).\n- Prefer describing domain work via delivery constraints (quality, reliability, customer experience) rather than niche domain claims.\n\nSAFE DOMAIN TRANSLATION\n- Financial systems → “business-critical systems with correctness and reliability expectations” (do not claim regulatory/compliance expertise unless evidenced).\n- CRM → “customer-facing enterprise workflow platforms” (do not claim deep sales/marketing ops specialization unless evidenced).\n- Infrastructure improvements → “platform/infrastructure program delivery” (avoid claiming ownership of architecture design).\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do not present Jacob as:\n  - a hands-on backend engineer, SRE, or solutions architect unless MASTER_RESUME proves it\n  - an AI/ML engineer or data scientist (no tools/concepts evidenced)\n  - a security/compliance owner (no frameworks/patterns evidenced)\n- Do not invent: scale metrics, uptime %, latency reductions, cost savings, user counts, cloud providers, CI/CD tools, observability stacks, or database technologies.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- If the target role values extensibility/integration, translate Jacob’s experience into safe program-level integration language:\n  - “coordinated cross-team dependencies and integration milestones”\n  - “managed release sequencing across components”\n  - “aligned QA strategy across integrated modules”\n- Avoid claiming API design, integration architecture, or platform extensibility design unless explicitly evidenced.\n\nLEADERSHIP FRAMING\n- Frame leadership as execution leadership:\n  - cross-functional alignment (engineering, QA, stakeholders)\n  - scope/timeline/budget management\n  - quality focus and delivery rigor\n  - documentation and communication cadence\n- Use observable leadership mechanisms: steering meetings, milestone tracking, risk management, launch readiness, stakeholder updates (only if supported by evidence).\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep narrative “TPM with technical depth” rather than “people manager.”\n- Team leadership should be described as leading delivery across functions; avoid implying direct people management scope (team size is unknown).\n- Ensure bullets remain concrete and delivery/mechanism-driven, not personality-driven.\n\nAI WORK POSITIONING\n- Do not claim AI implementation, AI product delivery, or AI tooling usage (no evidence in ai_tooling_practice).\n- If the job asks for AI: limit to interest/strategic awareness only if MASTER_RESUME supports it; otherwise omit AI entirely to avoid inflation.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate architecture ownership; phrase as “led/managed/coordinated delivery of infrastructure initiatives” rather than “architected/built.”\n- Do not add metrics (reliability improvements, budgets, timelines) unless explicitly provided.\n- Do not add technologies, cloud vendors, or security/compliance claims not present in evidence.\n- Maintain accuracy of roles/dates and avoid exaggerating responsibilities.\n\nEVIDENCE SOURCES\n- Only construct bullets from:\n  - MASTER_RESUME (primary source for specifics, dates, tools, metrics, scope)\n  - CANDIDATE_PROFILE.experience_highlights (Relecloud: infrastructure launch + reliability metrics; Proseware: CRM product launch; cross-functional teams; dev+QA leadership)\n  - CANDIDATE_PROFILE.leadership (collaborative, detail-oriented; budget/timeline adherence)\n  - CANDIDATE_PROFILE.constraints_and_preferences (accuracy; avoid exaggeration; collaborative/product environments)\n- If a mechanism/tool/metric is not in these sources, do not introduce it.\n\nFINAL REMINDER\n- Core differentiation to preserve: TPM who reliably delivers enterprise/cloud infrastructure and CRM programs through cross-functional execution, quality focus, and disciplined scope/timeline/budget management—without inflating hands-on architecture ownership.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Cloud-based applications\",\n      \"Enterprise software\"\n    ],\n    \"secondary\": [\n      \"Financial systems\",\n      \"Customer relationship management\"\n    ]\n  },\n  \"contacts\": {\n    \"email\": \"jacob@example.com\",\n    \"phone\": \"805.555.0105\",\n    \"location\": \"Nashville, TN\",\n    \"linkedin_url\": null\n  },\n  \"candidate\": {\n    \"name\": \"Jacob Hancock\",\n    \"summary\": \"Jacob Hancock is a seasoned technical program manager with a strong background in leading cross-functional teams to deliver high-quality software solutions. He has successfully managed projects in the financial and CRM domains, focusing on infrastructure improvements and customer experience enhancements. Jacob holds an MBA and a BS in Computer Science, and he is passionate about leveraging AI to disrupt industries.\",\n    \"headline\": \"Technical Program Manager with AI and CRM Expertise\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Detail-oriented\"\n      ]\n    },\n    \"practices\": [\n      \"Cross-functional collaboration\",\n      \"Quality focus\"\n    ],\n    \"risk_management\": [\n      \"Budget management\",\n      \"Timeline adherence\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Technical program management\",\n    \"Project management\",\n    \"Cross-functional collaboration\",\n    \"Cloud-based applications\",\n    \"Enterprise software\",\n    \"Customer relationship management\",\n    \"Infrastructure development\",\n    \"Quality assurance\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate architecture ownership\",\n      \"Keep claims aligned with actual experience\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": []\n  },\n  \"technical_skills\": {\n    \"frontend\": [],\n    \"languages\": [],\n    \"datastores\": [],\n    \"api_patterns\": [],\n    \"infra_devops\": [\n      \"Infrastructure management\"\n    ],\n    \"observability\": [],\n    \"async_messaging\": [],\n    \"backend_systems\": [\n      \"CRM systems\"\n    ],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Technical Program Management\",\n      \"impact\": [\n        \"Successfully launched new infrastructure\",\n        \"Improved site reliability metrics\"\n      ],\n      \"market\": \"Enterprise Software\",\n      \"team_context\": [\n        \"Managed cross-functional teams\"\n      ],\n      \"skills_applied\": [\n        \"Project management\",\n        \"Technical expertise\"\n      ],\n      \"architecture_patterns\": [\n        \"Infrastructure development\"\n      ],\n      \"employer_relationship\": \"Relecloud\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Managed project scope, timelines, and budget\"\n      ]\n    },\n    {\n      \"area\": \"Project Management\",\n      \"impact\": [\n        \"Developed and launched new CRM software product\"\n      ],\n      \"market\": \"CRM Software\",\n      \"team_context\": [\n        \"Led a team of developers and QA specialists\"\n      ],\n      \"skills_applied\": [\n        \"Leadership\",\n        \"Communication\"\n      ],\n      \"architecture_patterns\": [\n        \"Software development\"\n      ],\n      \"employer_relationship\": \"Proseware, Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Managed team dynamics and project delivery\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\nJACOB HANCOCK\nNashville, TN \n805.555.0105 | jacob@example.com\nObjective\nTo lead the development of a revolutionary artificial intelligence platform that will disrupt the financial industry and enhance customer experience, by collaborating with cross-functional teams and delivering on time, within budget, and with the highest quality standards.\nEducation\nMBA | Jasper University\n20XX – 20XX\nParticipated in a consulting project for a startup that resulted in a recommendation to pivot their business model, which was implemented and led to increased revenue\nBS Computer Science | Bellows College\n20XX – 20XX\nCourses included Data Structures, Algorithms, Computer Architecture, Operating Systems, and Software Engineering\nExperience\nTechnical Program Manager | Relecloud\n20XX – 20XX\nOversaw project scope, timelines, and budget, resulting in the successful launch of the new infrastructure and improved site reliability metrics\nProject Manager | Proseware, Inc.\n20XX – 20XX\nManaged a team of software developers and quality assurance specialists in the development and launch of a new customer relationship management (CRM) software product\nSkills\nProject management\nCommunication\nTechnical expertise\nProblem-solving\nLeadership\nAttention to detail\nActivities\nParticipated in several hackathons, including a winning team at the 20XX Hack event, demonstrating the ability to work under pressure and come up with innovative solutions to technical challenges.\nJACOB HANCOCK\nNashville, TN \n805.555.0105 | jacob@example.com\nObjective\nTo lead the development of a revolutionary artificial intelligence platform that will disrupt the financial industry and enhance customer experience, by collaborating with cross-functional teams and delivering on time, within budget, and with the highest quality standards.\nEducation\nMBA | Jasper University\n20XX – 20XX\nParticipated in a consulting project for a startup that resulted in a recommendation to pivot their business model, which was implemented and led to increased revenue\nBS Computer Science | Bellows College\n20XX – 20XX\nCourses included Data Structures, Algorithms, Computer Architecture, Operating Systems, and Software Engineering\nExperience\nTechnical Program Manager | Relecloud\n20XX – 20XX\nOversaw project scope, timelines, and budget, resulting in the successful launch of the new infrastructure and improved site reliability metrics\nProject Manager | Proseware, Inc.\n20XX – 20XX\nManaged a team of software developers and quality assurance specialists in the development and launch of a new customer relationship management (CRM) software product\nSkills\nProject management\nCommunication\nTechnical expertise\nProblem-solving\nLeadership\nAttention to detail\nActivities\nParticipated in several hackathons, including a winning team at the 20XX Hack event, demonstrating the ability to work under pressure and come up with innovative solutions to technical challenges.\nJACOB HANCOCK\nNashville, TN \n805.555.0105 | jacob@example.com\nObjective\nTo lead the development of a revolutionary artificial intelligence platform that will disrupt the financial industry and enhance customer experience, by collaborating with cross-functional teams and delivering on time, within budget, and with the highest quality standards.\nEducation\nMBA | Jasper University\n20XX – 20XX\nParticipated in a consulting project for a startup that resulted in a recommendation to pivot their business model, which was implemented and led to increased revenue\nBS Computer Science | Bellows College\n20XX – 20XX\nCourses included Data Structures, Algorithms, Computer Architecture, Operating Systems, and Software Engineering\nExperience\nTechnical Program Manager | Relecloud\n20XX – 20XX\nOversaw project scope, timelines, and budget, resulting in the successful launch of the new infrastructure and improved site reliability metrics\nProject Manager | Proseware, Inc.\n20XX – 20XX\nManaged a team of software developers and quality assurance specialists in the development and launch of a new customer relationship management (CRM) software product\nSkills\nProject management\nCommunication\nTechnical expertise\nProblem-solving\nLeadership\nAttention to detail\nActivities\nParticipated in several hackathons, including a winning team at the 20XX Hack event, demonstrating the ability to work under pressure and come up with innovative solutions to technical challenges."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nJacob Hancock\nDear Hiring Manager,\n\nI am excited to apply for the [Role] role at [Company].\n\n[2-3 short paragraphs connecting candidate background to role/company needs.]\n\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: May 26, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "JACOB HANCOCK\nNashville, TN \n805.555.0105 | jacob@example.com\n\nProfessional Summary\nTechnical Program Manager with experience delivering cloud-based and enterprise software programs across engineering and QA. Led infrastructure launch programs and CRM product delivery while managing scope, timelines, and budgets with a strong quality focus. Background includes BS in Computer Science and an MBA, with experience translating complex requirements into executable plans and coordinating cross-functional delivery.\n\nExperience\nTechnical Program Manager | Relecloud\n20XX – 20XX\n- Oversaw project scope, timelines, and budget for an infrastructure launch program, coordinating cross-functional delivery through to release.\n- Led program execution for infrastructure improvements, tracking delivery and quality outcomes including improved site reliability metrics.\n\nProject Manager | Proseware, Inc.\n20XX – 20XX\n- Managed a team of software developers and quality assurance specialists to deliver and launch a new customer relationship management (CRM) software product.\n- Coordinated project delivery across development and QA to support release readiness and product quality.\n\nEducation\nMBA | Jasper University\n20XX – 20XX\n- Participated in a consulting project for a startup that resulted in a recommendation to pivot their business model, which was implemented and led to increased revenue\n\nBS Computer Science | Bellows College\n20XX – 20XX\n- Courses included Data Structures, Algorithms, Computer Architecture, Operating Systems, and Software Engineering\n\nTechnical Skills\nProgram & Delivery: Technical program management, Project management, SDLC coordination, Cross-functional collaboration, Technical documentation\nQuality & Execution: Quality assurance coordination, Release readiness\nDomain: CRM systems, Enterprise software, Cloud-based applications, Financial systems\nOther: Communication, Problem-solving, Leadership, Attention to detail, Technical expertise, Infrastructure management\n\nAdditional\nActivities\n- Participated in several hackathons, including a winning team at the 20XX Hack event, demonstrating the ability to work under pressure and come up with innovative solutions to technical challenges.\n",
+    "cover_letter": "Jacob Hancock\n805.555.0105 | jacob@example.com\n\nMay 26, 2026\n\nDear Hiring Manager,\n\nI am excited to apply for the Lead Software Engineer role at American Tire Distributors. My background is in delivering cloud-based and enterprise software programs by coordinating engineering and QA teams, with a consistent focus on quality, delivery discipline, and clear communication across stakeholders.\n\nAt Relecloud, I oversaw scope, timelines, and budget for an infrastructure launch program and coordinated cross-functional execution through release. I also led program delivery for infrastructure improvements tied to site reliability metrics, which required careful dependency management and a strong release-quality mindset.\n\nPreviously at Proseware, Inc., I managed a team of developers and QA specialists to develop and launch a new CRM software product. That experience strengthened my ability to translate requirements into executable plans, align development and testing work, and drive delivery through launch.\n\nAmerican Tire Distributors’ focus on dependable, customer-facing systems at scale is a strong match for how I operate: aligning teams around clear requirements, maintaining delivery rigor, and keeping quality and supportability front-and-center. I would welcome the opportunity to bring that execution leadership to the Lead Software Engineer role.\n\nSincerely,\nJacob Hancock"
+  },
+  "diff": {
+    "resume": [
+      {
+        "name": "Professional Summary",
+        "after": "Technical Program Manager with experience delivering cloud-based and enterprise software programs across engineering and QA. Led infrastructure launch programs and CRM product delivery while managing scope, timelines, and budgets with a strong quality focus. Background includes BS in Computer Science and an MBA, with experience translating complex requirements into executable plans and coordinating cross-functional delivery."
+      },
+      {
+        "name": "Experience",
+        "roles": [
+          {
+            "name": "Technical Program Manager | Relecloud",
+            "added": [
+              "Led program execution for infrastructure improvements, tracking delivery and quality outcomes including improved site reliability metrics."
+            ],
+            "removed": [
+              "20XX – 20XX"
+            ],
+            "changed": [
+              {
+                "before": "Oversaw project scope, timelines, and budget, resulting in the successful launch of the new infrastructure and improved site reliability metrics",
+                "after": "Oversaw project scope, timelines, and budget for an infrastructure launch program, coordinating cross-functional delivery through to release."
+              }
+            ]
+          },
+          {
+            "name": "Project Manager | Proseware, Inc.",
+            "added": [
+              "Coordinated project delivery across development and QA to support release readiness and product quality."
+            ],
+            "removed": [
+              "20XX – 20XX"
+            ],
+            "changed": [
+              {
+                "before": "Managed a team of software developers and quality assurance specialists in the development and launch of a new customer relationship management (CRM) software product",
+                "after": "Managed a team of software developers and quality assurance specialists to deliver and launch a new customer relationship management (CRM) software product."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Technical Skills",
+        "before": "Project management\nCommunication\nTechnical expertise\nProblem-solving\nLeadership\nAttention to detail\nActivities\nParticipated in several hackathons, including a winning team at the 20XX Hack event, demonstrating the ability to work under pressure and come up with innovative solutions to technical challenges.\nJACOB HANCOCK\nNashville, TN\n805.555.0105 | jacob@example.com\nObjective\nTo lead the development of a revolutionary artificial intelligence platform that will disrupt the financial industry and enhance customer experience, by collaborating with cross-functional teams and delivering on time, within budget, and with the highest quality standards.",
+        "after": "Program & Delivery: Technical program management, Project management, SDLC coordination, Cross-functional collaboration, Technical documentation\nQuality & Execution: Quality assurance coordination, Release readiness\nDomain: CRM systems, Enterprise software, Cloud-based applications, Financial systems\nOther: Communication, Problem-solving, Leadership, Attention to detail, Technical expertise, Infrastructure management\n\nAdditional\nActivities\n- Participated in several hackathons, including a winning team at the 20XX Hack event, demonstrating the ability to work under pressure and come up with innovative solutions to technical challenges."
+      }
+    ]
+  },
+  "generation_run_id": "325",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "JACOB HANCOCK",
+        "semantic": "section_heading",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      },
+      {
+        "text": "Nashville, TN ",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_3"
+      },
+      {
+        "text": "805.555.0105 | jacob@example.com",
+        "semantic": "role_header",
+        "paragraph_profile": null,
+        "para_id": "para_4"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_5"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Objective",
+        "semantic_type": "summary",
+        "heading": {
+          "text": "Objective",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_6"
+        },
+        "body_paras": [
+          {
+            "text": "To lead the development of a revolutionary artificial intelligence platform that will disrupt the financial industry and enhance customer experience, by collaborating with cross-functional teams and delivering on time, within budget, and with the highest quality standards.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_7"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_8"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "Education",
+        "semantic_type": "education",
+        "heading": {
+          "text": "Education",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_9"
+        },
+        "body_paras": [
+          {
+            "text": "MBA | Jasper University",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_10"
+          },
+          {
+            "text": "20XX – 20XX",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_11"
+          },
+          {
+            "text": "Participated in a consulting project for a startup that resulted in a recommendation to pivot their business model, which was implemented and led to increased revenue",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_12"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_13"
+          },
+          {
+            "text": "BS Computer Science | Bellows College",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_14"
+          },
+          {
+            "text": "20XX – 20XX",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_15"
+          },
+          {
+            "text": "Courses included Data Structures, Algorithms, Computer Architecture, Operating Systems, and Software Engineering",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_16"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_17"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "Experience",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "Experience",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_18"
+        },
+        "body_paras": [
+          {
+            "text": "Technical Program Manager | Relecloud",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_25"
+          },
+          {
+            "text": "20XX – 20XX",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_26"
+          },
+          {
+            "text": "Oversaw project scope, timelines, and budget for an infrastructure launch program, coordinating cross-functional delivery through to release.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_27"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_28"
+          },
+          {
+            "text": "Project Manager | Proseware, Inc.",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_29"
+          },
+          {
+            "text": "20XX – 20XX",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_30"
+          },
+          {
+            "text": "Managed a team of software developers and quality assurance specialists to deliver and launch a new customer relationship management (CRM) software product.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_31"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_32"
+          }
+        ],
+        "roles": [
+          {
+            "header": {
+              "text": "Technical Program Manager | Relecloud",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_25"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "20XX – 20XX",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_26"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Oversaw project scope, timelines, and budget for an infrastructure launch program, coordinating cross-functional delivery through to release.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_27"
+              },
+              {
+                "text": "Led program execution for infrastructure improvements, tracking delivery and quality outcomes including improved site reliability metrics.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_27_ext_1"
+              }
+            ],
+            "role_id": "Technical Program Manager | Relecloud",
+            "role_id_stable": ""
+          },
+          {
+            "header": {
+              "text": "Project Manager | Proseware, Inc.",
+              "semantic": "role_header",
+              "paragraph_profile": null,
+              "para_id": "para_29"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "20XX – 20XX",
+                "semantic": "role_meta",
+                "paragraph_profile": null,
+                "para_id": "para_30"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Managed a team of software developers and quality assurance specialists to deliver and launch a new customer relationship management (CRM) software product.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_31"
+              },
+              {
+                "text": "Coordinated project delivery across development and QA to support release readiness and product quality.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_31_ext_1"
+              }
+            ],
+            "role_id": "Project Manager | Proseware, Inc.",
+            "role_id_stable": ""
+          }
+        ],
+        "section_id": "sec_3"
+      },
+      {
+        "title": "Skills",
+        "semantic_type": "skills",
+        "heading": {
+          "text": "Skills",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_33"
+        },
+        "body_paras": [
+          {
+            "text": "Program & Delivery: Technical program management, Project",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_34"
+          },
+          {
+            "text": "Quality & Execution: Quality assurance coordination,",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_35"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_36"
+          },
+          {
+            "text": "Domain: CRM systems, Enterprise software, Cloud-based",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_37"
+          },
+          {
+            "text": "Other: Communication, Problem-solving, Leadership,",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_38"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          },
+          {
+            "text": "",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_40"
+          },
+          {
+            "text": "",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_41"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_42"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_4"
+      },
+      {
+        "title": "Activities",
+        "semantic_type": "other",
+        "heading": {
+          "text": "Activities",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_43"
+        },
+        "body_paras": [
+          {
+            "text": "Participated in several hackathons, including a winning team at the 20XX Hack event, demonstrating the ability to work under pressure and come up with innovative solutions to technical challenges.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_44"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_45"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_46"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_47"
+          },
+          {
+            "text": "JACOB HANCOCK",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_48"
+          },
+          {
+            "text": "Nashville, TN ",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_49"
+          },
+          {
+            "text": "805.555.0105 | jacob@example.com",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_50"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_51"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_5"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 612.0,
+      "page_height_pt": 792.0,
+      "margin_top_pt": 72.0,
+      "margin_bottom_pt": 72,
+      "margin_left_pt": 72.0,
+      "margin_right_pt": 72.0,
+      "default_font_name": "Calibri",
+      "default_font_size_pt": 10.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null,
+      "section_row_table": false,
+      "header_bg_color": null,
+      "footer_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "paragraph",
+        "para_id": "para_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:wp14=\"http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing\" xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\" xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:w10=\"urn:schemas-microsoft-com:office:word\" w14:paraId=\"78C9D7B1\" w14:textId=\"107222EB\" w:rsidR=\"003551E1\" w:rsidRDefault=\"00C107EE\" w:rsidP=\"00E301C7\"><w:r w:rsidRPr=\"00515B8C\"><w:rPr><w:noProof/><w:lang w:val=\"en-AU\" w:eastAsia=\"en-AU\"/></w:rPr><mc:AlternateContent><mc:Choice Requires=\"wps\"><w:drawing><wp:anchor distT=\"0\" distB=\"0\" distL=\"114300\" distR=\"114300\" simplePos=\"0\" relativeHeight=\"251659264\" behindDoc=\"0\" locked=\"1\" layoutInCell=\"1\" allowOverlap=\"1\" wp14:anchorId=\"071AA709\" wp14:editId=\"22015890\"><wp:simplePos x=\"0\" y=\"0\"/><wp:positionH relativeFrom=\"page\"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom=\"paragraph\"><wp:posOffset>-182880</wp:posOffset></wp:positionV><wp:extent cx=\"475488\" cy=\"961147\"/><wp:effectExtent l=\"0\" t=\"0\" r=\"20320\" b=\"10795\"/><wp:wrapNone/><wp:docPr id=\"6\" name=\"Graphic 4\"><a:extLst xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{4D8C7B82-44FA-754B-9D04-98A9361DA67F}\"/></a:ext><a:ext uri=\"{C183D7F6-B498-43B3-948B-1728B52AA6E4}\"><adec:decorative xmlns:adec=\"http://schemas.microsoft.com/office/drawing/2017/decorative\" val=\"1\"/></a:ext></a:extLst></wp:docPr><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\"><wps:wsp><wps:cNvSpPr><a:spLocks noChangeAspect=\"1\"/></wps:cNvSpPr><wps:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"475488\" cy=\"961147\"/></a:xfrm><a:custGeom><a:avLst/><a:gdLst><a:gd name=\"connsiteX0\" fmla=\"*/ 0 w 710738\"/><a:gd name=\"connsiteY0\" fmla=\"*/ 0 h 1440179\"/><a:gd name=\"connsiteX1\" fmla=\"*/ 710738 w 710738\"/><a:gd name=\"connsiteY1\" fmla=\"*/ 720090 h 1440179\"/><a:gd name=\"connsiteX2\" fmla=\"*/ 0 w 710738\"/><a:gd name=\"connsiteY2\" fmla=\"*/ 1440180 h 1440179\"/><a:gd name=\"connsiteX3\" fmla=\"*/ 0 w 710738\"/><a:gd name=\"connsiteY3\" fmla=\"*/ 0 h 1440179\"/></a:gdLst><a:ahLst/><a:cxnLst><a:cxn ang=\"0\"><a:pos x=\"connsiteX0\" y=\"connsiteY0\"/></a:cxn><a:cxn ang=\"0\"><a:pos x=\"connsiteX1\" y=\"connsiteY1\"/></a:cxn><a:cxn ang=\"0\"><a:pos x=\"connsiteX2\" y=\"connsiteY2\"/></a:cxn><a:cxn ang=\"0\"><a:pos x=\"connsiteX3\" y=\"connsiteY3\"/></a:cxn></a:cxnLst><a:rect l=\"l\" t=\"t\" r=\"r\" b=\"b\"/><a:pathLst><a:path w=\"710738\" h=\"1440179\"><a:moveTo><a:pt x=\"0\" y=\"0\"/></a:moveTo><a:cubicBezTo><a:pt x=\"392504\" y=\"0\"/><a:pt x=\"710738\" y=\"322421\"/><a:pt x=\"710738\" y=\"720090\"/></a:cubicBezTo><a:cubicBezTo><a:pt x=\"710738\" y=\"1117759\"/><a:pt x=\"392504\" y=\"1440180\"/><a:pt x=\"0\" y=\"1440180\"/></a:cubicBezTo><a:lnTo><a:pt x=\"0\" y=\"0\"/></a:lnTo><a:close/></a:path></a:pathLst></a:custGeom><a:solidFill><a:schemeClr val=\"accent1\"/></a:solidFill><a:ln w=\"9401\" cap=\"flat\"><a:solidFill><a:srgbClr val=\"FFFFFF\"/></a:solidFill><a:prstDash val=\"solid\"/><a:miter/></a:ln></wps:spPr><wps:bodyPr rot=\"0\" spcFirstLastPara=\"0\" vertOverflow=\"overflow\" horzOverflow=\"overflow\" vert=\"horz\" wrap=\"square\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" numCol=\"1\" spcCol=\"0\" rtlCol=\"0\" fromWordArt=\"0\" anchor=\"ctr\" anchorCtr=\"0\" forceAA=\"0\" compatLnSpc=\"1\"><a:prstTxWarp prst=\"textNoShape\"><a:avLst/></a:prstTxWarp><a:noAutofit/></wps:bodyPr></wps:wsp></a:graphicData></a:graphic><wp14:sizeRelH relativeFrom=\"margin\"><wp14:pctWidth>0</wp14:pctWidth></wp14:sizeRelH><wp14:sizeRelV relativeFrom=\"margin\"><wp14:pctHeight>0</wp14:pctHeight></wp14:sizeRelV></wp:anchor></w:drawing></mc:Choice><mc:Fallback><w:pict><v:shape w14:anchorId=\"3BF23E15\" id=\"Graphic 4\" o:spid=\"_x0000_s1026\" alt=\"&quot;&quot;\" style=\"position:absolute;margin-left:0;margin-top:-14.4pt;width:37.45pt;height:75.7pt;z-index:251659264;visibility:visible;mso-wrap-style:square;mso-width-percent:0;mso-height-percent:0;mso-wrap-distance-left:9pt;mso-wrap-distance-top:0;mso-wrap-distance-right:9pt;mso-wrap-distance-bottom:0;mso-position-horizontal:absolute;mso-position-horizontal-relative:page;mso-position-vertical:absolute;mso-position-vertical-relative:text;mso-width-percent:0;mso-height-percent:0;mso-width-relative:margin;mso-height-relative:margin;v-text-anchor:middle\" coordsize=\"710738,1440179\" o:gfxdata=\"UEsDBBQABgAIAAAAIQC2gziS/gAAAOEBAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbJSRQU7DMBBF&#10;90jcwfIWJU67QAgl6YK0S0CoHGBkTxKLZGx5TGhvj5O2G0SRWNoz/78nu9wcxkFMGNg6quQqL6RA&#10;0s5Y6ir5vt9lD1JwBDIwOMJKHpHlpr69KfdHjyxSmriSfYz+USnWPY7AufNIadK6MEJMx9ApD/oD&#10;OlTrorhX2lFEilmcO2RdNtjC5xDF9pCuTyYBB5bi6bQ4syoJ3g9WQ0ymaiLzg5KdCXlKLjvcW893&#10;SUOqXwnz5DrgnHtJTxOsQfEKIT7DmDSUCaxw7Rqn8787ZsmRM9e2VmPeBN4uqYvTtW7jvijg9N/y&#10;JsXecLq0q+WD6m8AAAD//wMAUEsDBBQABgAIAAAAIQA4/SH/1gAAAJQBAAALAAAAX3JlbHMvLnJl&#10;bHOkkMFqwzAMhu+DvYPRfXGawxijTi+j0GvpHsDYimMaW0Yy2fr2M4PBMnrbUb/Q94l/f/hMi1qR&#10;JVI2sOt6UJgd+ZiDgffL8ekFlFSbvV0oo4EbChzGx4f9GRdb25HMsYhqlCwG5lrLq9biZkxWOiqY&#10;22YiTra2kYMu1l1tQD30/bPm3wwYN0x18gb45AdQl1tp5j/sFB2T0FQ7R0nTNEV3j6o9feQzro1i&#10;OWA14Fm+Q8a1a8+Bvu/d/dMb2JY5uiPbhG/ktn4cqGU/er3pcvwCAAD//wMAUEsDBBQABgAIAAAA&#10;IQDG8uBikAMAAPwIAAAOAAAAZHJzL2Uyb0RvYy54bWysVl1v2zYUfR/Q/0DwscAiyXbq2IhTeAky&#10;DAjaAMnQ7pGmKEsoRXIk/ZH++h1SkkNlHdIOzYNA+n6fe3hvLt8fW0n2wrpGqxUtznJKhOK6bNR2&#10;Rf98vP31ghLnmSqZ1Eqs6JNw9P3Vm18uD2YpJrrWshSWwIlyy4NZ0dp7s8wyx2vRMnemjVAQVtq2&#10;zONqt1lp2QHeW5lN8vxddtC2NFZz4Rx+vemE9Cr6ryrB/ceqcsITuaLIzcevjd9N+GZXl2y5tczU&#10;De/TYP8ji5Y1CkFPrm6YZ2Rnm3+5ahtutdOVP+O6zXRVNVzEGlBNkb+o5qFmRsRaAI4zJ5jcz3PL&#10;P+wfzL0NqTtzp/kXR5S+rpnairUzgA9NDSBlB+OWJ+Vwcb3ZsbJtMEct5BiBfToBK46ecPw4m5/P&#10;LsAEDtHiXVHM5tEnWw7GfOf870JHR2x/53zXlxKniGpJFGtBH66Vco0Xn9HLqpVo1duM5ORA5kU+&#10;n1707Xyp/ddYuybFbJYX88V/qH8uEued41cjjExAzEVOXg0zScK8XkOqHfO/+I4Q0x8KMdYe5Z+B&#10;2kM3WD00iB9V3yGcCEgTOh8aZrQLZEjbhdYPV/QjUIotYRW0XzEGtqlxx8fvNQZsqfHkhyIDkNR4&#10;mhp36fflW7yUMGJkHDGeEowYSwlGzKYjmWE+oBaxwZEcVrSnLKnxxHo+BnGr9+JRR0X/4kEh5LOU&#10;7zYN/018TXWni8l5PotJ96PNRB9DKBQznUxmkwghuvRSOI/MHaocBfhWuMRtURTz+Xn/ojq/STI9&#10;X3sokrISQcBzFFGqtDQ8YWQ/EGeQcamd6LgUEI6kOkEdPT7PFadlU942UgZs44IR19KSPUPfGOdC&#10;+YFZI02pQrMWGBiYXwwrqpLMR5KP1Jzdbk7ubuNfj+NIzVjnb5iru7BR1KHSYqrZrhKJRxHnbTdi&#10;w7Dd6PLp3hKruwXmDL9t4OmOOX/PLMYg4MEW9h/xqaRGwmBRPFFSa/v1W78HfSwSSCk5YAOuqPt7&#10;x6ygRP6hsGIWoTngc7zMzsEN0DqVbFKJ2rXXGkgCJWQXj0Hfy+FYWd1+wrJeh6gQMcURG0PB46F0&#10;l2uPO0RY91ys1/GMNYmG3qkHw4Pz+C5Q+ePxE7OGBDhX1GPPfNDDtmTLYYOAAEGh0w2WSq93XldN&#10;WC8R4Q7X/oIVGwnU/zsQdnh6j1rP/7Rc/QMAAP//AwBQSwMEFAAGAAgAAAAhAEygGl/cAAAABwEA&#10;AA8AAABkcnMvZG93bnJldi54bWxMj8FOwzAQRO9I/IO1SNxahwiVNo1TISSKCidKDxydeJukxLtR&#10;7LTh71lOcBzNaOZNvpl8p844hJbJwN08AYVUsWupNnD4eJ4tQYVoydmOCQ18Y4BNcX2V28zxhd7x&#10;vI+1khIKmTXQxNhnWoeqQW/DnHsk8Y48eBtFDrV2g71Iue90miQL7W1LstDYHp8arL72ozewHV8O&#10;r8fdjsvVp39jqrYcT6kxtzfT4xpUxCn+heEXX9ChEKaSR3JBdQbkSDQwS5dyQOyH+xWoUmJpugBd&#10;5Po/f/EDAAD//wMAUEsBAi0AFAAGAAgAAAAhALaDOJL+AAAA4QEAABMAAAAAAAAAAAAAAAAAAAAA&#10;AFtDb250ZW50X1R5cGVzXS54bWxQSwECLQAUAAYACAAAACEAOP0h/9YAAACUAQAACwAAAAAAAAAA&#10;AAAAAAAvAQAAX3JlbHMvLnJlbHNQSwECLQAUAAYACAAAACEAxvLgYpADAAD8CAAADgAAAAAAAAAA&#10;AAAAAAAuAgAAZHJzL2Uyb0RvYy54bWxQSwECLQAUAAYACAAAACEATKAaX9wAAAAHAQAADwAAAAAA&#10;AAAAAAAAAADqBQAAZHJzL2Rvd25yZXYueG1sUEsFBgAAAAAEAAQA8wAAAPMGAAAAAA==&#10;\" path=\"m,c392504,,710738,322421,710738,720090v,397669,-318234,720090,-710738,720090l,xe\" fillcolor=\"#ab0f1b [3204]\" strokecolor=\"white\" strokeweight=\".26114mm\"><v:stroke joinstyle=\"miter\"/><v:path arrowok=\"t\" o:connecttype=\"custom\" o:connectlocs=\"0,0;475488,480574;0,961148;0,0\" o:connectangles=\"0,0,0,0\"/><o:lock v:ext=\"edit\" aspectratio=\"t\"/><w10:wrap anchorx=\"page\"/><w10:anchorlock/></v:shape></w:pict></mc:Fallback></mc:AlternateContent></w:r></w:p>"
+      },
+      {
+        "kind": "table",
+        "table_id": "tbl_1",
+        "xml_proto_xml": "<w:tbl xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:w14=\"http://schemas.microsoft.com/office/word/2010/wordml\" xmlns:w15=\"http://schemas.microsoft.com/office/word/2012/wordml\"><w:tblPr><w:tblW w:w=\"0\" w:type=\"auto\"/><w:tblCellMar><w:left w:w=\"0\" w:type=\"dxa\"/><w:right w:w=\"0\" w:type=\"dxa\"/></w:tblCellMar><w:tblLook w:val=\"0600\" w:firstRow=\"0\" w:lastRow=\"0\" w:firstColumn=\"0\" w:lastColumn=\"0\" w:noHBand=\"1\" w:noVBand=\"1\"/></w:tblPr><w:tblGrid><w:gridCol w:w=\"3116\"/><w:gridCol w:w=\"3117\"/><w:gridCol w:w=\"157\"/><w:gridCol w:w=\"2960\"/></w:tblGrid><w:tr w:rsidR=\"00372BB5\" w14:paraId=\"08094C44\" w14:textId=\"77777777\" w:rsidTr=\"00365C93\"><w:trPr><w:trHeight w:val=\"1098\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"6390\" w:type=\"dxa\"/><w:gridSpan w:val=\"3\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"2F160937\" w14:textId=\"5DCCAF68\" w:rsidR=\"00372BB5\" w:rsidRDefault=\"00000000\" w:rsidP=\"008C5BB7\"><w:pPr><w:pStyle w:val=\"Title\"/><w:tabs><w:tab w:val=\"left\" w:pos=\"6480\"/></w:tabs></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-380407830\"/><w:placeholder><w:docPart w:val=\"36C5401919A149EA83C26E149A7E3E31\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00DC65EE\"><w:t>JACOB HANCOCK</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"2960\" w:type=\"dxa\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"05E52C75\" w14:textId=\"23A1EE96\" w:rsidR=\"00372BB5\" w:rsidRPr=\"00B824D6\" w:rsidRDefault=\"00000000\" w:rsidP=\"00365C93\"><w:pPr><w:pStyle w:val=\"RedText\"/><w:tabs><w:tab w:val=\"left\" w:pos=\"3150\"/></w:tabs><w:jc w:val=\"right\"/><w:rPr><w:lang w:val=\"fr-FR\"/></w:rPr></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"828719962\"/><w:placeholder><w:docPart w:val=\"7BA0E1597A7A4B28A0FA536F1E031DC2\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00B824D6\"><w:rPr><w:lang w:val=\"fr-FR\"/></w:rPr><w:t>Nashville, TN</w:t></w:r></w:sdtContent></w:sdt><w:r w:rsidR=\"00372BB5\" w:rsidRPr=\"00B824D6\"><w:rPr><w:lang w:val=\"fr-FR\"/></w:rPr><w:t xml:space=\"preserve\"> </w:t></w:r></w:p><w:p w14:paraId=\"4C189689\" w14:textId=\"51EA59B3\" w:rsidR=\"00B824D6\" w:rsidRPr=\"00DC65EE\" w:rsidRDefault=\"00000000\" w:rsidP=\"00B824D6\"><w:pPr><w:pStyle w:val=\"RedText\"/><w:tabs><w:tab w:val=\"left\" w:pos=\"1350\"/></w:tabs><w:jc w:val=\"right\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1664927266\"/><w:placeholder><w:docPart w:val=\"AA51554F7C2342189FE103CF09A13C7B\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00B824D6\"><w:rPr><w:lang w:val=\"fr-FR\"/></w:rPr><w:t xml:space=\"preserve\">805.555.0105 | </w:t></w:r></w:sdtContent></w:sdt><w:sdt><w:sdtPr><w:id w:val=\"1838186234\"/><w:placeholder><w:docPart w:val=\"3E36A1EC2EA6460397BC254DDBE7D1EB\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00B824D6\"><w:t>jacob@example.com</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"7B6C6270\" w14:textId=\"77777777\" w:rsidR=\"00372BB5\" w:rsidRDefault=\"00372BB5\" w:rsidP=\"00365C93\"><w:pPr><w:jc w:val=\"right\"/></w:pPr></w:p></w:tc></w:tr><w:tr w:rsidR=\"00372BB5\" w14:paraId=\"0FCA16B6\" w14:textId=\"77777777\" w:rsidTr=\"00372BB5\"><w:tc><w:tcPr><w:tcW w:w=\"9350\" w:type=\"dxa\"/><w:gridSpan w:val=\"4\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"38437AC8\" w14:textId=\"180ABDC3\" w:rsidR=\"00372BB5\" w:rsidRDefault=\"00000000\" w:rsidP=\"008C5BB7\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-371307467\"/><w:placeholder><w:docPart w:val=\"545F6B8B256A42D3BBB64676E165D8AD\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\"><w:t>Objective</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"00365C93\" w14:paraId=\"3B7684C6\" w14:textId=\"77777777\" w:rsidTr=\"00365C93\"><w:tc><w:tcPr><w:tcW w:w=\"9350\" w:type=\"dxa\"/><w:gridSpan w:val=\"4\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"0A9C655F\" w14:textId=\"3D5DE85D\" w:rsidR=\"00365C93\" w:rsidRPr=\"002466AB\" w:rsidRDefault=\"00000000\" w:rsidP=\"00365C93\"><w:sdt><w:sdtPr><w:id w:val=\"2040854263\"/><w:placeholder><w:docPart w:val=\"CEA57C8EC42C456FAC52AC1EE0E5834F\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\"><w:t>To lead the development of a revolutionary artificial intelligence platform that will disrupt the financial industry and enhance customer experience, by collaborating with cross-functional teams and delivering on time, within budget, and with the highest quality standards.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"6BA1DBB4\" w14:textId=\"6848056E\" w:rsidR=\"00365C93\" w:rsidRDefault=\"00365C93\" w:rsidP=\"00E301C7\"/></w:tc></w:tr><w:tr w:rsidR=\"00365C93\" w14:paraId=\"2748AC3B\" w14:textId=\"77777777\" w:rsidTr=\"00365C93\"><w:tc><w:tcPr><w:tcW w:w=\"9350\" w:type=\"dxa\"/><w:gridSpan w:val=\"4\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"721EEBCB\" w14:textId=\"3531D2E0\" w:rsidR=\"00365C93\" w:rsidRDefault=\"00000000\" w:rsidP=\"008C5BB7\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"1862086791\"/><w:placeholder><w:docPart w:val=\"32AD75D7CCFD448BB81FE0639E326F0D\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\"><w:t>Education</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"00372BB5\" w14:paraId=\"497E011A\" w14:textId=\"77777777\" w:rsidTr=\"00365C93\"><w:tc><w:tcPr><w:tcW w:w=\"6390\" w:type=\"dxa\"/><w:gridSpan w:val=\"3\"/></w:tcPr><w:p w14:paraId=\"2A04130D\" w14:textId=\"0C51EA24\" w:rsidR=\"00372BB5\" w:rsidRDefault=\"00000000\" w:rsidP=\"008C5BB7\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1770613245\"/><w:placeholder><w:docPart w:val=\"8CF610EF99A749C19AD37CE176B50BD4\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E95D2E\"><w:t xml:space=\"preserve\">MBA | </w:t></w:r><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E95D2E\"><w:rPr><w:iCs/></w:rPr><w:t xml:space=\"preserve\">Jasper </w:t></w:r><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"008C5BB7\"><w:t>University</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"2960\" w:type=\"dxa\"/></w:tcPr><w:p w14:paraId=\"795B955D\" w14:textId=\"39724329\" w:rsidR=\"00372BB5\" w:rsidRDefault=\"00000000\" w:rsidP=\"008C5BB7\"><w:pPr><w:pStyle w:val=\"Heading2\"/><w:jc w:val=\"right\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"987517109\"/><w:placeholder><w:docPart w:val=\"028A9270E9A44036850260BED7E67952\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E95D2E\"><w:t>20XX – 20XX</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"00365C93\" w14:paraId=\"52843772\" w14:textId=\"77777777\" w:rsidTr=\"00365C93\"><w:trPr><w:trHeight w:val=\"360\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"9350\" w:type=\"dxa\"/><w:gridSpan w:val=\"4\"/></w:tcPr><w:p w14:paraId=\"51767295\" w14:textId=\"3FBFFF10\" w:rsidR=\"00365C93\" w:rsidRDefault=\"00000000\" w:rsidP=\"00E301C7\"><w:sdt><w:sdtPr><w:id w:val=\"-1905436541\"/><w:placeholder><w:docPart w:val=\"65E2BF250C354B53BFA1982B11905300\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00137914\"><w:t>Participated in a consulting project for a startup that resulted in a recommendation to pivot their business model, which was implemented and led to increased revenue</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"67D0DB91\" w14:textId=\"3EDA22D1\" w:rsidR=\"00365C93\" w:rsidRDefault=\"00365C93\" w:rsidP=\"00E301C7\"/></w:tc></w:tr><w:tr w:rsidR=\"00372BB5\" w14:paraId=\"50095F8C\" w14:textId=\"77777777\" w:rsidTr=\"00365C93\"><w:tc><w:tcPr><w:tcW w:w=\"6390\" w:type=\"dxa\"/><w:gridSpan w:val=\"3\"/></w:tcPr><w:p w14:paraId=\"3550053A\" w14:textId=\"443053A1\" w:rsidR=\"00372BB5\" w:rsidRDefault=\"00000000\" w:rsidP=\"008C5BB7\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1309927247\"/><w:placeholder><w:docPart w:val=\"3B2E28A899594FEEA5A7E2A349E57607\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E95D2E\"><w:t>BS Computer Science | Bellows College</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"2960\" w:type=\"dxa\"/></w:tcPr><w:p w14:paraId=\"59E562BA\" w14:textId=\"77E86D97\" w:rsidR=\"00372BB5\" w:rsidRDefault=\"00000000\" w:rsidP=\"00365C93\"><w:pPr><w:pStyle w:val=\"Heading2\"/><w:jc w:val=\"right\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1979061530\"/><w:placeholder><w:docPart w:val=\"2BB63CE998434A3B80E3A562651DE86F\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E95D2E\"><w:t>20XX – 20XX</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"00365C93\" w14:paraId=\"715BA57F\" w14:textId=\"77777777\" w:rsidTr=\"007840DF\"><w:trPr><w:trHeight w:val=\"657\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"9350\" w:type=\"dxa\"/><w:gridSpan w:val=\"4\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"12718E7C\" w14:textId=\"698CA623\" w:rsidR=\"00365C93\" w:rsidRPr=\"002466AB\" w:rsidRDefault=\"00000000\" w:rsidP=\"00365C93\"><w:sdt><w:sdtPr><w:id w:val=\"-1807071469\"/><w:placeholder><w:docPart w:val=\"EFAF5C3C12814E2F923EAC25FF8EB4C2\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00BE6C4E\"><w:t>Courses included Data Structures, Algorithms, Computer Architecture, Operating Systems, and Software Engineering</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"20A1919B\" w14:textId=\"77777777\" w:rsidR=\"00365C93\" w:rsidRDefault=\"00365C93\" w:rsidP=\"00E301C7\"/></w:tc></w:tr><w:tr w:rsidR=\"00365C93\" w14:paraId=\"0438848A\" w14:textId=\"77777777\" w:rsidTr=\"00365C93\"><w:tc><w:tcPr><w:tcW w:w=\"9350\" w:type=\"dxa\"/><w:gridSpan w:val=\"4\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"7C3123D4\" w14:textId=\"0E57D671\" w:rsidR=\"00365C93\" w:rsidRDefault=\"00000000\" w:rsidP=\"008C5BB7\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1068730653\"/><w:placeholder><w:docPart w:val=\"2712B7B9649E4A25AB20EEEEA7C0BEC3\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\"><w:t>Experience</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"00365C93\" w14:paraId=\"588BA612\" w14:textId=\"77777777\" w:rsidTr=\"00365C93\"><w:tc><w:tcPr><w:tcW w:w=\"6390\" w:type=\"dxa\"/><w:gridSpan w:val=\"3\"/></w:tcPr><w:p w14:paraId=\"591F02FB\" w14:textId=\"0B9B0D4A\" w:rsidR=\"00365C93\" w:rsidRDefault=\"00000000\" w:rsidP=\"008C5BB7\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"1002236151\"/><w:placeholder><w:docPart w:val=\"566B0D6F05834281BB0EB97AFA738CF9\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E95D2E\"><w:t xml:space=\"preserve\">Technical Program Manager | </w:t></w:r><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E95D2E\"><w:rPr><w:iCs/></w:rPr><w:t>Relecloud</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"2960\" w:type=\"dxa\"/></w:tcPr><w:p w14:paraId=\"15C242DC\" w14:textId=\"7A360F92\" w:rsidR=\"00365C93\" w:rsidRDefault=\"00000000\" w:rsidP=\"00365C93\"><w:pPr><w:pStyle w:val=\"Heading2\"/><w:jc w:val=\"right\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"838265141\"/><w:placeholder><w:docPart w:val=\"C1C90368CDC943DF89C7B3514692CDC0\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E95D2E\"><w:t>20XX – 20XX</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"00365C93\" w14:paraId=\"7FDABE3F\" w14:textId=\"77777777\" w:rsidTr=\"000B0ADD\"><w:tc><w:tcPr><w:tcW w:w=\"9350\" w:type=\"dxa\"/><w:gridSpan w:val=\"4\"/></w:tcPr><w:p w14:paraId=\"3D06E02C\" w14:textId=\"2C647582\" w:rsidR=\"00365C93\" w:rsidRPr=\"00565B06\" w:rsidRDefault=\"00000000\" w:rsidP=\"00365C93\"><w:sdt><w:sdtPr><w:id w:val=\"-2122900838\"/><w:placeholder><w:docPart w:val=\"4559EF136BA34D1793D1258D34388531\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"000D4F9C\"><w:t>Oversaw project scope, timelines, and budget, resulting in the successful launch of the new infrastructure and improved site reliability metrics</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"3D06E02C\" w14:textId=\"2C647582\" w:rsidR=\"00365C93\" w:rsidRPr=\"00565B06\" w:rsidRDefault=\"00000000\" w:rsidP=\"00365C93\"><w:sdt><w:sdtPr><w:id w:val=\"-2122900838\"/><w:placeholder><w:docPart w:val=\"4559EF136BA34D1793D1258D34388531\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"000D4F9C\"><w:t>Led program execution for infrastructure improvements, tracking delivery and quality outcomes including improved site reliability metrics.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"1FFB1ED6\" w14:textId=\"77777777\" w:rsidR=\"00365C93\" w:rsidRDefault=\"00365C93\" w:rsidP=\"00E301C7\"/></w:tc></w:tr><w:tr w:rsidR=\"00365C93\" w14:paraId=\"598CF09F\" w14:textId=\"77777777\" w:rsidTr=\"00365C93\"><w:tc><w:tcPr><w:tcW w:w=\"6390\" w:type=\"dxa\"/><w:gridSpan w:val=\"3\"/></w:tcPr><w:p w14:paraId=\"48AAF8FE\" w14:textId=\"39DCA856\" w:rsidR=\"00365C93\" w:rsidRDefault=\"00000000\" w:rsidP=\"008C5BB7\"><w:pPr><w:pStyle w:val=\"Heading2\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1282715737\"/><w:placeholder><w:docPart w:val=\"248BF1CE21FF4C7CB6C58B4F11B0D8AE\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E95D2E\"><w:t>Project Manager | Proseware, Inc.</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"2960\" w:type=\"dxa\"/></w:tcPr><w:p w14:paraId=\"621EFAEB\" w14:textId=\"261470FE\" w:rsidR=\"00365C93\" w:rsidRDefault=\"00000000\" w:rsidP=\"00365C93\"><w:pPr><w:pStyle w:val=\"Heading2\"/><w:jc w:val=\"right\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1355796136\"/><w:placeholder><w:docPart w:val=\"C1DF58B0013A4ABF879F8A7E345C6509\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E95D2E\"><w:t>20XX – 20XX</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"00365C93\" w14:paraId=\"3BA90A71\" w14:textId=\"77777777\" w:rsidTr=\"007840DF\"><w:tc><w:tcPr><w:tcW w:w=\"9350\" w:type=\"dxa\"/><w:gridSpan w:val=\"4\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"7C9CA3CB\" w14:textId=\"5B6BE95C\" w:rsidR=\"007840DF\" w:rsidRPr=\"002466AB\" w:rsidRDefault=\"00000000\" w:rsidP=\"007840DF\"><w:sdt><w:sdtPr><w:id w:val=\"325167758\"/><w:placeholder><w:docPart w:val=\"DD96055218B046D2801FEFFA10695457\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E86787\"><w:t>Managed a team of software developers and quality assurance specialists in the development and launch of a new customer relationship management (CRM) software product</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"7C9CA3CB\" w14:textId=\"5B6BE95C\" w:rsidR=\"007840DF\" w:rsidRPr=\"002466AB\" w:rsidRDefault=\"00000000\" w:rsidP=\"007840DF\"><w:sdt><w:sdtPr><w:id w:val=\"325167758\"/><w:placeholder><w:docPart w:val=\"DD96055218B046D2801FEFFA10695457\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E86787\"><w:t>Coordinated project delivery across development and QA to support release readiness and product quality.</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"270666F8\" w14:textId=\"77777777\" w:rsidR=\"00365C93\" w:rsidRDefault=\"00365C93\" w:rsidP=\"00E301C7\"/></w:tc></w:tr><w:tr w:rsidR=\"007840DF\" w14:paraId=\"42BF22CE\" w14:textId=\"77777777\" w:rsidTr=\"007840DF\"><w:tc><w:tcPr><w:tcW w:w=\"9350\" w:type=\"dxa\"/><w:gridSpan w:val=\"4\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"4549FEC2\" w14:textId=\"50EBD782\" w:rsidR=\"007840DF\" w:rsidRDefault=\"00000000\" w:rsidP=\"008C5BB7\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"164594841\"/><w:placeholder><w:docPart w:val=\"003E9A328C9041EA8910236DFF09FC8B\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"008C5BB7\" w:rsidRPr=\"00E810A5\"><w:t>Skills</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"007840DF\" w14:paraId=\"2E4C290A\" w14:textId=\"77777777\" w:rsidTr=\"007840DF\"><w:tc><w:tcPr><w:tcW w:w=\"3116\" w:type=\"dxa\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"167C3E96\" w14:textId=\"25F6B177\" w:rsidR=\"007840DF\" w:rsidRDefault=\"00000000\" w:rsidP=\"00B97621\"><w:pPr><w:pStyle w:val=\"ListBullet\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"1786538063\"/><w:placeholder><w:docPart w:val=\"33C8A86EF84F40E390D62EB49C7DA962\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C107EE\" w:rsidRPr=\"00B97621\"><w:t>Project management</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"6C742EAC\" w14:textId=\"33CA44C6\" w:rsidR=\"007840DF\" w:rsidRDefault=\"00000000\" w:rsidP=\"00C107EE\"><w:pPr><w:pStyle w:val=\"ListBullet\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1087381788\"/><w:placeholder><w:docPart w:val=\"A398924DAC9C46488725C54CA0412051\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C107EE\"><w:t>Communication</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"10806F00\" w14:textId=\"5FEEEFD9\" w:rsidR=\"007840DF\" w:rsidRDefault=\"007840DF\" w:rsidP=\"007840DF\"><w:pPr><w:pStyle w:val=\"ListBullet\"/></w:pPr></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"3117\" w:type=\"dxa\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"3C800B2E\" w14:textId=\"7EA07B55\" w:rsidR=\"00C107EE\" w:rsidRDefault=\"00000000\" w:rsidP=\"00B97621\"><w:pPr><w:pStyle w:val=\"ListBullet\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"1784838468\"/><w:placeholder><w:docPart w:val=\"A9234ADBB89B41B29AC7DD52EAE8ABB0\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C107EE\" w:rsidRPr=\"00B97621\"><w:t>Technical expertise</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"005117AA\" w14:textId=\"3D56059B\" w:rsidR=\"007840DF\" w:rsidRPr=\"00565B06\" w:rsidRDefault=\"00000000\" w:rsidP=\"00C107EE\"><w:pPr><w:pStyle w:val=\"ListBullet\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"149496944\"/><w:placeholder><w:docPart w:val=\"AEB3AF9155AB4EF2A6D129626138A8FD\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C107EE\"><w:t>Problem-solving</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"2A2EFB9D\" w14:textId=\"6F2B6168\" w:rsidR=\"007840DF\" w:rsidRDefault=\"007840DF\" w:rsidP=\"00C107EE\"><w:pPr><w:pStyle w:val=\"ListBullet\"/><w:spacing w:after=\"80\"/></w:pPr></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=\"3117\" w:type=\"dxa\"/><w:gridSpan w:val=\"2\"/><w:tcBorders><w:bottom w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"18B34F8F\" w14:textId=\"52B9BFAE\" w:rsidR=\"00C107EE\" w:rsidRDefault=\"00000000\" w:rsidP=\"00B97621\"><w:pPr><w:pStyle w:val=\"ListBullet\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1847864195\"/><w:placeholder><w:docPart w:val=\"C38B6CB9924B4B83AEEC8756442A7CB5\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C107EE\"><w:t>Leadership</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"4DDEB1BD\" w14:textId=\"1E9B99F6\" w:rsidR=\"00C107EE\" w:rsidRDefault=\"00000000\" w:rsidP=\"00B97621\"><w:pPr><w:pStyle w:val=\"ListBullet\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-1465350679\"/><w:placeholder><w:docPart w:val=\"A8890A63A8FD4B19A1C13E605B90B43D\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C107EE\"><w:t>Attention to detail</w:t></w:r></w:sdtContent></w:sdt></w:p><w:p w14:paraId=\"190D4CE8\" w14:textId=\"6FBF1658\" w:rsidR=\"007840DF\" w:rsidRDefault=\"007840DF\" w:rsidP=\"00C107EE\"><w:pPr><w:pStyle w:val=\"ListBullet\"/></w:pPr></w:p></w:tc></w:tr><w:tr w:rsidR=\"007840DF\" w14:paraId=\"199AF10A\" w14:textId=\"77777777\" w:rsidTr=\"00281B02\"><w:trPr><w:trHeight w:val=\"723\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"9350\" w:type=\"dxa\"/><w:gridSpan w:val=\"4\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"24\" w:space=\"0\" w:color=\"EF4C58\" w:themeColor=\"accent1\" w:themeTint=\"99\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"6C126ADF\" w14:textId=\"1FF4A7D9\" w:rsidR=\"007840DF\" w:rsidRDefault=\"00000000\" w:rsidP=\"00C107EE\"><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:sdt><w:sdtPr><w:id w:val=\"-210193509\"/><w:placeholder><w:docPart w:val=\"DD62F250DA65423C8A74F5799EB9ED4C\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C107EE\" w:rsidRPr=\"005E6612\"><w:t>Activities</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr><w:tr w:rsidR=\"007840DF\" w14:paraId=\"3EF42D21\" w14:textId=\"77777777\" w:rsidTr=\"005E760C\"><w:trPr><w:trHeight w:val=\"333\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"9350\" w:type=\"dxa\"/><w:gridSpan w:val=\"4\"/></w:tcPr><w:p w14:paraId=\"6A183D4A\" w14:textId=\"57C53591\" w:rsidR=\"007840DF\" w:rsidRDefault=\"00000000\" w:rsidP=\"00E301C7\"><w:sdt><w:sdtPr><w:id w:val=\"-337926859\"/><w:placeholder><w:docPart w:val=\"C4C050B27AC44EAFBAD0B2AB52DDD5E4\"/></w:placeholder><w:temporary/><w:showingPlcHdr/><w15:appearance w15:val=\"hidden\"/></w:sdtPr><w:sdtContent><w:r w:rsidR=\"00C107EE\" w:rsidRPr=\"00DE771E\"><w:t>Participated in several hackathons, including a winning team at the 20</w:t></w:r><w:r w:rsidR=\"00C107EE\"><w:t>XX</w:t></w:r><w:r w:rsidR=\"00C107EE\" w:rsidRPr=\"00DE771E\"><w:t xml:space=\"preserve\"> Hac</w:t></w:r><w:r w:rsidR=\"00C107EE\"><w:t>k</w:t></w:r><w:r w:rsidR=\"00C107EE\" w:rsidRPr=\"00DE771E\"><w:t xml:space=\"preserve\"> event, demonstrating the ability to work under pressure and come up with innovative solutions to technical challenges.</w:t></w:r></w:sdtContent></w:sdt></w:p></w:tc></w:tr></w:tbl>",
+        "para_ids": [
+          "para_2",
+          "para_3",
+          "para_4",
+          "para_5",
+          "para_6",
+          "para_7",
+          "para_8",
+          "para_9",
+          "para_10",
+          "para_11",
+          "para_12",
+          "para_13",
+          "para_14",
+          "para_15",
+          "para_16",
+          "para_17",
+          "para_18",
+          "para_25",
+          "para_26",
+          "para_27",
+          "para_27_ext_1",
+          "para_28",
+          "para_29",
+          "para_30",
+          "para_31",
+          "para_31_ext_1",
+          "para_32",
+          "para_33",
+          "para_34",
+          "para_35",
+          "para_36",
+          "para_37",
+          "para_38",
+          "para_39",
+          "para_40",
+          "para_41",
+          "para_42",
+          "para_43",
+          "para_44"
+        ]
+      }
+    ]
+  }
+}

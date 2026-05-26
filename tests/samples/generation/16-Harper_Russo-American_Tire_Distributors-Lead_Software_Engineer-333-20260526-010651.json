@@ -1,0 +1,1541 @@
+{
+  "company": "American Tire Distributors",
+  "position": "Lead Software Engineer",
+  "structured_resume": {
+    "status": "valid",
+    "validation": {
+      "errors": [],
+      "is_valid": true,
+      "document_id": "181",
+      "section_results": [
+        {
+          "is_valid": true,
+          "section_id": "sec_1",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_2",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_3",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_4",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_5",
+          "error_codes": []
+        },
+        {
+          "is_valid": true,
+          "section_id": "sec_6",
+          "error_codes": []
+        }
+      ]
+    },
+    "repair_input": null,
+    "classification": {
+      "sections": [
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_16",
+              "block_id": "block_1",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_18",
+              "block_id": "block_2",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_20",
+              "block_id": "block_3",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_22",
+              "block_id": "block_4",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "EDUCATION",
+          "section_id": "sec_1",
+          "display_title": "EDUCATION",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_28",
+              "block_id": "block_5",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_29",
+              "block_id": "block_6",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_31",
+              "block_id": "block_7",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            }
+          ],
+          "raw_title": "SKILLS",
+          "section_id": "sec_2",
+          "display_title": "SKILLS",
+          "semantic_type": "skills",
+          "rewrite_policy": "rewrite_body",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_36",
+              "block_id": "block_8",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_38",
+              "block_id": "block_9",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "LANGUAGES",
+          "section_id": "sec_3",
+          "display_title": "LANGUAGES",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_44",
+              "block_id": "block_10",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_46",
+              "block_id": "block_11",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_48",
+              "block_id": "block_12",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_51",
+              "block_id": "block_13",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "REFERENCES",
+          "section_id": "sec_4",
+          "display_title": "REFERENCES",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_59",
+              "block_id": "block_14",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "PROFILE",
+          "section_id": "sec_5",
+          "display_title": "PROFILE",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_82",
+                  "block_id": "block_19",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_84",
+                  "block_id": "block_20",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_85",
+                  "block_id": "block_21",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_76",
+                  "block_id": "block_16",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_78",
+                  "block_id": "block_17",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_80",
+                  "block_id": "block_18",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_74",
+                  "block_id": "block_15",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "EXPERIENCES",
+          "section_id": "sec_6",
+          "display_title": "EXPERIENCES",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        }
+      ],
+      "document_id": "181",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "repair_response": null,
+    "recovery_applied": false,
+    "raw_classification": {
+      "sections": [
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_16",
+              "block_id": "block_1",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_18",
+              "block_id": "block_2",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_20",
+              "block_id": "block_3",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_22",
+              "block_id": "block_4",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "EDUCATION",
+          "section_id": "sec_1",
+          "display_title": "EDUCATION",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_28",
+              "block_id": "block_5",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_29",
+              "block_id": "block_6",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            },
+            {
+              "new": false,
+              "para_id": "para_31",
+              "block_id": "block_7",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            }
+          ],
+          "raw_title": "SKILLS",
+          "section_id": "sec_2",
+          "display_title": "SKILLS",
+          "semantic_type": "skills",
+          "rewrite_policy": "rewrite_body",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_36",
+              "block_id": "block_8",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_38",
+              "block_id": "block_9",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "LANGUAGES",
+          "section_id": "sec_3",
+          "display_title": "LANGUAGES",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_44",
+              "block_id": "block_10",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_46",
+              "block_id": "block_11",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_48",
+              "block_id": "block_12",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_51",
+              "block_id": "block_13",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "REFERENCES",
+          "section_id": "sec_4",
+          "display_title": "REFERENCES",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_59",
+              "block_id": "block_14",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "PROFILE",
+          "section_id": "sec_5",
+          "display_title": "PROFILE",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": false,
+          "preserve_body_structure": false
+        },
+        {
+          "roles": [
+            {
+              "role_id": "role_1",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_82",
+                  "block_id": "block_19",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_84",
+                  "block_id": "block_20",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_85",
+                  "block_id": "block_21",
+                  "semantic_type": "bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_76",
+                  "block_id": "block_16",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_78",
+                  "block_id": "block_17",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_80",
+                  "block_id": "block_18",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_74",
+                  "block_id": "block_15",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "EXPERIENCES",
+          "section_id": "sec_6",
+          "display_title": "EXPERIENCES",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        }
+      ],
+      "document_id": "181",
+      "source_kind": "docx",
+      "classification_version": "v5.8"
+    },
+    "invalid_section_ids": [],
+    "repaired_section_count": 0,
+    "validation_error_count": 0,
+    "validation_after_repair": null,
+    "downgraded_section_count": 0,
+    "invalid_section_count_after_repair": 0,
+    "invalid_section_count_before_repair": 0
+  },
+  "llm_request": {
+    "model": "gpt-5.2",
+    "temperature": 0.3,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "[GENERAL_LAYER v1.2]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n\n21) Generate ONLY the cover letter body.\n    - Do NOT include candidate name, contact information, date, or signature.\n    - Do NOT include a sender header.\n    - Start with \"Dear Hiring Manager,\".\n    - End the content before any closing (e.g., do NOT include \"Sincerely,\" or name).\n\n22) Must explicitly mention the company and role from TASK.\n\n23) Must clearly connect:\n    candidate background → company needs → role responsibilities,\n    using only supported claims (no hallucinations).\n\n24) Keep it 3–5 short paragraphs.\n    - Be specific and concrete.\n    - Avoid verbosity and generic statements.\n\n25) Maintain a professional, concise tone appropriate for the selected generation mode\n    (Conservative / Normal / Aggressive), but do not change structure based on mode.\n\n26) Do NOT include:\n    - work authorization / citizenship statements\n    - availability statements unless explicitly present in input\n    - repeated resume bullet points verbatim\n\nOutput must be plain text only (no JSON inside the body).\n\n[CANDIDATE_LAYER_HARPER_RUSSO v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as DevOps / Infrastructure Engineer (5 years) focused on CI infrastructure, Infrastructure-as-Code, environment optimization, and monitoring-driven performance work.\n- Emphasize “build + operate” credibility: setting up/maintaining CI, improving environments, and monitoring/testing server performance.\n- Keep scope grounded: contributor driving improvements via scripting, IaC, documentation, and cross-functional collaboration; avoid implying sole ownership of enterprise architecture.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface CI/CD architecture explicitly in bullets (pipeline structure, stages, gating, test automation hooks) when supported by source evidence.\n- Surface Infrastructure-as-Code explicitly (what it provisions/manages; how it standardizes environments) without naming specific tools not in evidence.\n- Surface monitoring/performance mechanisms explicitly (what was monitored, how testing was used, what signals/alerts were improved) rather than generic “improved reliability.”\n- Surface security notification/management tooling work as operational security enablement (alerting/notifications/management workflows), not as security architecture ownership.\n\nARCHITECTURE SIGNAL PRIORITIZATION\n1. CI infrastructure setup/maintenance + pipeline development (especially for computer vision applications) with concrete pipeline mechanics.\n2. IaC-driven environment standardization and optimization mechanisms.\n3. Monitoring/testing-driven performance work (server performance monitoring, testing practices).\n4. Architectural changes framed as “contributed to / drove changes” tied to engineering velocity (avoid claiming end-to-end architecture ownership).\n5. Documentation and cross-functional collaboration as supporting signals.\n\nDISTRIBUTED SYSTEM DEPTH\n- Do not force distributed-systems claims (queues, replicas, sharding, etc.) unless present in evidence.\n- If scale/reliability is mentioned, keep it mechanism-based and local to DevOps scope:\n  - Prefer: pipeline gating, environment parity, automated testing stages, monitoring/alerting workflows, performance testing loops.\n  - Avoid: “designed highly distributed microservices” or “built fault-tolerant distributed systems” (not supported).\n\nTECHNICAL DIFFERENTIATION\n- Emphasize: CI infrastructure, pipeline engineering, IaC concepts, scripting-driven automation, environment optimization, performance monitoring/testing, documentation.\n- Keep tooling generic unless explicitly provided (do not name Terraform, Kubernetes, Jenkins, GitHub Actions, etc. without evidence).\n- When mentioning “Databases,” keep it contextual (e.g., monitoring DB-related performance) and avoid claiming DBA or database architecture work.\n\nDOMAIN / INDUSTRY FRAMING\n- Frame experience as infrastructure enablement for product engineering teams, including computer vision application delivery pipelines.\n- Treat “computer vision applications” as an application context for CI pipelines (build/test/deploy workflows), not as ML model development expertise.\n\nSAFE DOMAIN TRANSLATION\n- “Pipelines for computer vision applications” → CI/CD pipelines supporting CV product builds/tests/deployments (no claims of model training/ML research).\n- “Security notification and management tools” → operational security tooling improvements (alerting, notification routing, management workflows); do not translate into security engineering ownership.\n- “Drove architectural changes to improve engineering velocity” → contributed to CI/IaC/environment architecture improvements that reduced friction for delivery (avoid implying org-wide architecture authority).\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do not claim specialization in:\n  - cloud provider-specific architecture (AWS/GCP/Azure) unless explicitly stated\n  - Kubernetes/container orchestration, service mesh, or microservices architecture unless evidenced\n  - security compliance frameworks, IAM design, or threat modeling (not evidenced)\n  - ML/AI model development, training, or evaluation (only CV pipeline context is evidenced)\n- Avoid “owned the architecture” language; prefer “contributed,” “implemented,” “improved,” “maintained,” “partnered with.”\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- Reinterpret safely as platform enablement:\n  - CI infrastructure → reusable delivery platform for multiple teams/projects\n  - IaC → standardized, reproducible environments enabling faster onboarding and consistent deployments\n  - monitoring concepts → feedback loops for performance and operational health\n- Avoid claiming “built an internal developer platform” unless evidence explicitly supports that scope.\n\nLEADERSHIP FRAMING\n- Frame leadership as technical influence and quality focus:\n  - participation in system design discussions\n  - producing technical and user documentation\n  - self-organized execution, quality-focused delivery\n  - cross-functional collaboration with Product\n- Prefer observable artifacts: design discussions, documentation outputs, implementation of pipeline/environment improvements.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep technical mechanisms primary; leadership is supportive.\n- Use leadership phrasing that stays IC-aligned:\n  - “partnered with Product to define delivery/testing requirements”\n  - “documented deployment/runbook procedures”\n  - “drove adoption of improved pipeline practices”\n- Avoid people-management claims (team size, hiring, performance management) since not evidenced.\n\nAI WORK POSITIONING\n- No AI tooling practice is evidenced; do not add AI/LLM tooling claims.\n- If role mentions computer vision, keep it strictly as application domain supported by CI pipelines; do not imply ML engineering responsibilities.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate architecture ownership; avoid “architected the entire platform/system.”\n- Do not invent:\n  - metrics (latency %, cost savings, uptime, deployment frequency) unless provided\n  - specific tools/technologies not listed in evidence\n  - security frameworks/compliance ownership\n  - cloud provider migrations or large-scale distributed architecture\n- Keep claims aligned with “set up/maintained,” “developed pipelines,” “optimized environments,” “monitored performance,” “contributed to documentation,” “strengthened notification/management tooling.”\n\nEVIDENCE SOURCES\n- Only construct bullets from:\n  - MASTER_RESUME (if provided later)\n  - CANDIDATE_PROFILE.summary/headline/domains/role_fit_themes\n  - CANDIDATE_PROFILE.experience_highlights (impact, team_context, skills_applied, architecture_patterns, employer_relationship)\n  - CANDIDATE_PROFILE.technical_skills (infra_devops, backend_systems, observability, datastores)\n  - CANDIDATE_PROFILE.constraints_and_preferences and claim_boundaries\n- If a mechanism/tool/metric is not explicitly present, keep it generic or omit it.\n\nFINAL REMINDER\n- Core differentiation to keep repeating via mechanism-first bullets: DevOps engineer who builds and improves CI + IaC-driven infrastructure, optimizes environments, and uses monitoring/testing feedback loops to raise delivery quality—without overstating architecture ownership.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+      },
+      {
+        "role": "user",
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Infrastructure Development\",\n      \"DevOps Engineering\"\n    ],\n    \"secondary\": [\n      \"Cloud-based Applications\",\n      \"Continuous Integration\"\n    ]\n  },\n  \"contacts\": {\n    \"email\": \"hello@techguruplus.com\",\n    \"phone\": \"+123-456-7890\",\n    \"location\": \"Any City\",\n    \"linkedin_url\": null\n  },\n  \"candidate\": {\n    \"name\": \"Harper Russo\",\n    \"summary\": \"Harper Russo is a skilled DevOps engineer with a strong background in developing and optimizing infrastructure components. With 5 years of experience, Harper has a deep understanding of Infrastructure-as-a-Code concepts and a proven track record in scripting and system optimization.\",\n    \"headline\": \"DevOps Engineer with Infrastructure Expertise\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": null,\n      \"style_keywords\": [\n        \"Self-organized\",\n        \"Quality-focused\"\n      ]\n    },\n    \"practices\": [\n      \"Technical Documentation\",\n      \"System Design\"\n    ],\n    \"risk_management\": []\n  },\n  \"role_fit_themes\": [\n    \"DevOps Engineering\",\n    \"Infrastructure Development\",\n    \"Continuous Integration\",\n    \"System Optimization\",\n    \"Technical Documentation\",\n    \"Cross-functional Collaboration\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate architecture ownership\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Keep claims aligned with actual experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [],\n    \"languages\": [],\n    \"datastores\": [\n      \"Databases\"\n    ],\n    \"api_patterns\": [],\n    \"infra_devops\": [\n      \"Continuous Integration\",\n      \"Infrastructure Optimization\"\n    ],\n    \"observability\": [\n      \"Monitoring Concepts\"\n    ],\n    \"async_messaging\": [],\n    \"backend_systems\": [\n      \"Infrastructure-as-a-Code\"\n    ],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"DevOps Engineering\",\n      \"impact\": [\n        \"Set up and maintained continuous integration infrastructure\",\n        \"Developed pipelines for computer vision applications\",\n        \"Optimized existing environments and structures\",\n        \"Strengthened security notification and management tools\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Participated in technical discussions for system design\"\n      ],\n      \"skills_applied\": [\n        \"Scripting\",\n        \"Infrastructure Optimization\"\n      ],\n      \"architecture_patterns\": [\n        \"Continuous Integration\",\n        \"Security Management\"\n      ],\n      \"employer_relationship\": \"Ginyard International Co.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    },\n    {\n      \"area\": \"DevOps Engineering\",\n      \"impact\": [\n        \"Delivered projects from design to testing\",\n        \"Monitored server performance and conducted testing\",\n        \"Contributed to technical and user documentation\",\n        \"Drove architectural changes to improve engineering velocity\"\n      ],\n      \"market\": null,\n      \"team_context\": [\n        \"Worked closely with the Product team\"\n      ],\n      \"skills_applied\": [\n        \"Infrastructure-as-a-Code\",\n        \"Scripting\"\n      ],\n      \"architecture_patterns\": [\n        \"Infrastructure Optimization\",\n        \"Performance Monitoring\"\n      ],\n      \"employer_relationship\": \"Larana Inc.\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": []\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\"\n    ]\n  }\n}"
+      },
+      {
+        "role": "user",
+        "content": "JOB_DESCRIPTION:\nAre you looking for an opportunity to turn your ambition and your people skills into a rewarding career with an industry leader? Join our team at American Tire Distributors! As the nation's premier tire distributor, ATD’s coast-to-coast distribution network provides approximately 80,000 customers across the U.S. and Canada with rapid and frequent delivery of high quality tires, custom wheels and shop supplies. \n   \nPosition Description: \nThe Lead Software Engineer is responsible for designing, developing and supporting compelling solutions and products that solve customer and end-user problems of a higher complexity. This role carries out impact analyses of development and enhancement requests to define and develop required changes. The role performs unit/integration testing and  provides ongoing support, while exploring opportunities for reuse and scale.\nKey Responsibilities\nCarries out impact analysis of complex development/enhancement requests, understanding the requirements of each piece of development work, and then specifying changes required.\n\n\nCollaboratively implement business value defined in epics/stories created as part of the Agile process.\n\n\nContributes developing solution architecture for large scale software solutions\n\n\nDeliver architectural setup and subsequent high-quality execution of sustainable/maintainable software solutions.\n\n\nDelivers complex customizations, workflows, interfaces, reports and data conversions, which includes unit testing and support functional/integration testing.\n\n\nDesigns, builds, verifies and documents full-fledged software solutions of the highest complexity that addresses scalability, performance, and security requirements across multiple platforms.\n\n\nForesees capacity requirements for component usage and identifies limitations.\n\n\nParticipate in group technical forums (e.g., architecture meetings); Provide feedback in the form of code reviews.\n\n\nPlans large-scale solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt\n\n\nPrioritizes and resolves production issues of the highest complexity and collaborates and/or escalates to others as necessary\n\n\nProduces designs and creative prototypes that meet the agreed requirements and are deliverable and supportable.\n\n\nRecommends viable solutions to processes, technology, and interfaces that address customer and user challenges, improve the effectiveness of the team and reduce technical debt.\nCompetencies\nAction-Oriented - Taking on new opportunities and tough challenges with a sense of urgency, high energy, and enthusiasm. \n\n\nApplication Development - The ability and skill to develop software through use of programming languages required for job responsibilities \n\n\nBalances Stakeholders - Anticipating and balancing the needs of multiple stakeholders. \n\n\nBusiness Data Modeling - Ability to conduct activities to collect, analyze, diagram (model), and report information and data flow, including state changes, to help make strategic decisions, achieve major goals, and solve complex problems;  Data Modeling Languages, State diagrams \n\n\nBusiness Insights - Applying knowledge of business and the marketplace to advance the organization’s goals. \n\n\nCommunicates Effectively - Developing and delivering multi-mode communications that convey a clear understanding of the unique needs of different audiences. \n\n\nCourage - Stepping up to address difficult issues, saying what needs to be said. \n\n\nDecision Quality - Making good and timely decisions that keep the organization moving forward. \n\n\nDevelops Talent - Developing people to meet both their career goals and the organization’s goals. \n\n\nDocument and Model User Requirements - Ability to utilize the appropriate modeling tool(s) to diagram the requirements from data and state changes, process and process improvements, as well as use cases and user stories; affinity diagram, managing changes to reuiqrements and requests, technical writing \n\n\nDrives Results - Consistently achieving results, even under tough circumstances. \n\n\nInstills Trust - Gaining the confidence and trust of others through honesty, integrity, and authenticity. \n\n\nIT Data Management - The ability and skill to develop and execute architectures, policies and practices in order to manage the information lifecycle needs of an organization. \n\n\nIT Testing - The ability and skill to design, execute and report on systems/service tests to ensure that an application functions as specified in the requirements. \n\n\nManages Ambiguity - Operating effectively, even when things are not certain or the way forward is not clear. \n\n\nNimble Learning - Actively learning through experimentation when tackling new problems, using both successes and failures as learning fodder. \n\n\nPattern Design - Ability to prepare process maps, flowcharts, and organizational diagrams using specialized tools and techniques; oncept Modeling, Process Modeling/Mapping, Workflow Modeling Languages \n\n\nPlans & Aligns  - Planning and prioritizing work to meet commitments aligned with organizational goals. \n\n\nProvides Technical Support - Ability to employ customer-oriented behaviors that help engineers connect with their customers in productive and efficient ways, creating positive, defining moments; Communicates confidently during service interaction, Provides relevant product/service updates, Sets appropriate expectations \n\n\nSoftware Development Life Cycle (SDLC) Techniques -  Ability to understand and apply the Software Development Life Cycle (SDLC), including requirements analysis, design, development, testing, and maintenance, to effectively develop software that supports modelling activities \n\n\nTroubleshoots Technical Issues - Ability to employ a systematic process for solving technical issues by identifying the problem and selecting an appropriate solution- defines the problem, Identifies the cause of problems, Isolates the problem, Justifies a solution, Resolves the problem, Verifies the problem \nQualifications\nBachelor’s degree Bachelors.   \n8 years of related experience preferred\nSkills\nBusiness Data Modeling\n\n\nCommunicates Effectively\n\n\nCultivates Innovation\n\n\nDecision Quality\n\n\nCourage\n\n\nDocument and Model User Requirements\n\n\nEnsures Accountability\n\n\nManages Complexity\n\n\nNimble Learning\n\n\nIT Data Management\n\n\nIT Testing\n\n\nPlans & Aligns\n\n\nPattern Design\n\n\nProvides Technical Support\n\n\nSituational Adaptability\n\n\nTech Savvy\n\n\nTroubleshoots Technical Issues\n\n\nSoftware Development Life Cycle (SDLC) Techniques\n\n\nBusiness Insights\n\n\nApplication Development\nPhysical Demands/Working Conditions\nPhysical Demands Category: Office\nPhysical Demands/Work Environment/Travel Requirements: \r\n• Physical demands: While performing the duties of this job, the employee is occasionally required to stand; walk; sit; use hands to finger, handle or feel objects, tools or controls; reach with hands and arms; climb stairs; balance, stoop, kneel, crouch or crawl; talk, hear, taste and/or smell; the employee must occasionally lift and/or move up to 50 pounds. Specific vision abilities required by the job include close vision, distance vision, color vision, peripheral vision, depth perception and the ability to adjust focus. \r\n• Work environment: While performing the duties of this job, the employee is exposed to weather conditions prevalent at the time. The noise level in the work environment is usually moderate. \r\n• Travel required: As required by the position.\nOur people are passionate about what they do, the product they sell, and the customers they serve. If you're looking for an opportunity to be a part of a work family that values collaboration, innovation and dedication, we're the right company for you. \nBuild a challenging and rewarding career with us!\nAmerican Tire Distributors is an Equal Opportunity Employer and Drug Free Workplace\nTo review our Privacy Policy, click \nhere\n."
+      },
+      {
+        "role": "user",
+        "content": "MASTER_RESUME:\n123 Anywhere St., Any City\nhello@techguruplus.com\n@techguruplus\n+123-456-7890\nEDUCATION\nBorcelle University\n2022 - 2024 | Bachelor in Computer Engineering\nUniversity\n2020 - 2021 | Master in Computer Engineering\nSKILLS\nknowledge and hand-on experience with operating systems (maintenance, troubleshooting)\nstrong ops skills and support mindset\ndeep understanding of modern monitoring concepts experience with Databases\nLANGUAGES\nEnglishnative language\nGerman speaking, reading,writing Chinese speaking, reading,\nREFERENCES\nSamira Hadid\nPosition | Company name hello@techguruplus.com +123-456-7890\nHARPER RUSSO\nDEVOPSENGINEER\nPROFILE\nam a strong, skillful, and self-organized DevOps engineer with 5 years experience of developing infrastructure-related components platform, optimizing the existing environments. Have strong scripting knowledge. Good understanding of Infrastructure-as-a-Code concepts.\nEXPERIENCES\n2023Ginyard International Co. Junior software developer\nset-up, maintenance and ongoing development of continuous build/ integration infrastructure developing pipeline for computer vision applications optimize the existing environments/structure establish and strengthen the security notification and management tools\nparticipate in technical discussions to aid system design, analysis, and troubleshooting\n2024Larana. Inc.\nSenior Devops engineer\nDeliver the project from design to testing, including new programs, enhancements, and modifications Monitor the performance and test the server Participate in estimation and planning sessions Work closely with the Product team to deliver quality features in high-quality code and best practices Contribute to development of technical project documentation and user documentation\nDrive major architectural changes as we scale to improve our engineering velocity"
+      },
+      {
+        "role": "user",
+        "content": "MASTER_COVER_LETTER:\nHarper Russo\nDear Hiring Manager,\n\nI am excited to apply for the [Role] role at [Company].\n\n[2-3 short paragraphs connecting candidate background to role/company needs.]\n\nThank you for your time and consideration.\n\nSincerely,\nLeonid Verman\n"
+      },
+      {
+        "role": "user",
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: May 26, 2026\nReturn JSON only.\n"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "llm_response": {
+    "resume": "HARPER RUSSO\nDEVOPS ENGINEER\nAny City | +123-456-7890 | hello@techguruplus.com | @techguruplus\n\nProfessional Summary\nDevOps / Infrastructure Engineer with 5 years of experience building and operating CI infrastructure, developing CI/CD pipelines (including pipelines supporting computer vision application delivery), and improving environment consistency using Infrastructure-as-a-Code concepts. Strong scripting and operations mindset with hands-on experience in monitoring-driven performance testing, troubleshooting, and technical documentation. Collaborative partner in planning/estimation and system design discussions, focused on maintainable delivery workflows and production support.\n\nExperience\n2024 – Present\nLarana Inc. — Senior DevOps Engineer\n- Delivered projects from design through testing, including new programs, enhancements, and modifications within an SDLC workflow.\n- Monitored server performance and executed testing to validate behavior and identify issues during delivery and support.\n- Participated in estimation and planning sessions to clarify scope and delivery approach.\n- Worked closely with the Product team to deliver quality features with high-quality code and best practices.\n- Contributed to technical project documentation and user documentation to support delivery and ongoing maintenance.\n- Drove major architectural changes as the organization scaled to improve engineering velocity.\n\n2023\nGinyard International Co. — Junior Software Developer\n- Set up, maintained, and continuously developed continuous build/integration infrastructure.\n- Developed CI pipelines supporting computer vision applications.\n- Optimized existing environments and infrastructure structure to reduce friction in development and delivery workflows.\n- Established and strengthened security notification and management tools to improve operational awareness and handling.\n- Participated in technical discussions supporting system design, analysis, and troubleshooting.\n\nEducation\nBorcelle University\n2022 – 2024 | Bachelor in Computer Engineering\n\nUniversity\n2020 – 2021 | Master in Computer Engineering\n\nTechnical Skills\nInfrastructure & DevOps: Continuous Integration, Infrastructure Optimization, Infrastructure-as-a-Code\nObservability & Operations: Monitoring Concepts, operating systems (maintenance, troubleshooting), troubleshooting\nData: Databases\nProfessional: technical documentation, support mindset\n\nAdditional\nLanguages: English (native); German (speaking/reading/writing); Chinese (speaking/reading)\nReferences: Samira Hadid — Position | Company name | hello@techguruplus.com | +123-456-7890\n",
+    "cover_letter": "Harper Russo\n+123-456-7890 | hello@techguruplus.com\n\nMay 26, 2026\n\nDear Hiring Manager,\n\nI am excited to apply for the Lead Software Engineer role at American Tire Distributors. My background is in DevOps and infrastructure development, with 5 years of experience building and supporting delivery systems that help teams ship and operate software reliably.\n\nIn my current role as a Senior DevOps Engineer at Larana Inc., I deliver projects from design through testing, including enhancements and modifications, and I support ongoing operations by monitoring and testing server performance. I also participate in estimation and planning sessions and work closely with Product to deliver quality features, while contributing technical and user documentation that helps keep solutions supportable over time.\n\nPreviously, at Ginyard International Co., I set up and maintained continuous build/integration infrastructure and developed CI pipelines supporting computer vision applications. I also strengthened security notification and management tooling and participated in system design and troubleshooting discussions—experience that aligns with ATD’s need for engineers who can support complex solutions and resolve production issues with a strong support mindset.\n\nI would welcome the opportunity to bring my CI/CD, Infrastructure-as-a-Code concepts, monitoring-driven troubleshooting, and documentation practices to help ATD build and support maintainable software solutions for its customers and internal users.\n\nSincerely,\nHarper Russo"
+  },
+  "diff": {
+    "resume": [
+      {
+        "name": "Professional Summary",
+        "after": "DevOps / Infrastructure Engineer with 5 years of experience building and operating CI infrastructure, developing CI/CD pipelines (including pipelines supporting computer vision application delivery), and improving environment consistency using Infrastructure-as-a-Code concepts. Strong scripting and operations mindset with hands-on experience in monitoring-driven performance testing, troubleshooting, and technical documentation. Collaborative partner in planning/estimation and system design discussions, focused on maintainable delivery workflows and production support."
+      },
+      {
+        "name": "Technical Skills",
+        "before": "knowledge and hand-on experience with operating systems (maintenance, troubleshooting)\nstrong ops skills and support mindset\ndeep understanding of modern monitoring concepts experience with Databases\nLANGUAGES\nEnglishnative language\nGerman speaking, reading,writing Chinese speaking, reading,",
+        "after": "Infrastructure & DevOps: Continuous Integration, Infrastructure Optimization, Infrastructure-as-a-Code\nObservability & Operations: Monitoring Concepts, operating systems (maintenance, troubleshooting), troubleshooting\nData: Databases\nProfessional: technical documentation, support mindset\n\nAdditional\nLanguages: English (native); German (speaking/reading/writing); Chinese (speaking/reading)\nReferences: Samira Hadid — Position | Company name | hello@techguruplus.com | +123-456-7890"
+      }
+    ]
+  },
+  "generation_run_id": "333",
+  "updated_ir": {
+    "source_kind": "docx",
+    "header_paras": [
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_1"
+      },
+      {
+        "text": "123 Anywhere St., Any City",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_2"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_3"
+      },
+      {
+        "text": "hello@techguruplus.com",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_4"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_5"
+      },
+      {
+        "text": "@techguruplus",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_6"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_7"
+      },
+      {
+        "text": "+123-456-7890",
+        "semantic": "paragraph",
+        "paragraph_profile": null,
+        "para_id": "para_8"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_9"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_10"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_11"
+      },
+      {
+        "text": "",
+        "semantic": "empty",
+        "paragraph_profile": null,
+        "para_id": "para_12"
+      }
+    ],
+    "sections": [
+      {
+        "title": "EDUCATION",
+        "semantic_type": "education",
+        "heading": {
+          "text": "EDUCATION",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_13"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_14"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_15"
+          },
+          {
+            "text": "Borcelle University",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_16"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_17"
+          },
+          {
+            "text": "2022 - 2024 | Bachelor in Computer Engineering",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_18"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_19"
+          },
+          {
+            "text": "University",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_20"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_21"
+          },
+          {
+            "text": "2020 - 2021 | Master in Computer Engineering",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_22"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_23"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_1"
+      },
+      {
+        "title": "SKILLS",
+        "semantic_type": "skills",
+        "heading": {
+          "text": "SKILLS",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_24"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_25"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_26"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_27"
+          },
+          {
+            "text": "Infrastructure & DevOps: Continuous Integration, Infrastructure Optimization, Infrastructure-as-a-Code",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_28"
+          },
+          {
+            "text": "Observability & Operations: Monitoring Concepts, operating systems (maintenance, troubleshooting), troubleshooting",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_29"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_30"
+          },
+          {
+            "text": "Data: Databases",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_31"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_32"
+          },
+          {
+            "text": "Professional: technical documentation, support mindset",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_31_ext_1"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_2"
+      },
+      {
+        "title": "LANGUAGES",
+        "semantic_type": "languages",
+        "heading": {
+          "text": "LANGUAGES",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_33"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_34"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_35"
+          },
+          {
+            "text": "English native language",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_36"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_37"
+          },
+          {
+            "text": "German speaking, reading,writing Chinese speaking, reading,",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_38"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_39"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_3"
+      },
+      {
+        "title": "REFERENCES",
+        "semantic_type": "other",
+        "heading": {
+          "text": "REFERENCES",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_40"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_41"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_42"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_43"
+          },
+          {
+            "text": "Samira Hadid",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_44"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_45"
+          },
+          {
+            "text": "Position | Company name hello@techguruplus.com +123-456-7890",
+            "semantic": "role_header",
+            "paragraph_profile": null,
+            "para_id": "para_46"
+          },
+          {
+            "text": "\n",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_47"
+          },
+          {
+            "text": "HARPER RUSSO",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_48"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_49"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_50"
+          },
+          {
+            "text": "DEVOPS ENGINEER",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_51"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_52"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_53"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_54"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_55"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_4"
+      },
+      {
+        "title": "PROFILE",
+        "semantic_type": "summary",
+        "heading": {
+          "text": "PROFILE",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_56"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_57"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_58"
+          },
+          {
+            "text": "am a strong, skillful, and self-organized DevOps engineer with 5 years experience of developing infrastructure-related components platform, optimizing the existing environments. Have strong scripting knowledge. Good understanding of Infrastructure-as-a-Code concepts.",
+            "semantic": "bullet",
+            "paragraph_profile": null,
+            "para_id": "para_59"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_60"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_61"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_5"
+      },
+      {
+        "title": "EXPERIENCES",
+        "semantic_type": "experience",
+        "heading": {
+          "text": "EXPERIENCES",
+          "semantic": "section_heading",
+          "paragraph_profile": null,
+          "para_id": "para_62"
+        },
+        "body_paras": [
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_70"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_71"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_72"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_73"
+          },
+          {
+            "text": "2023 Ginyard International Co. Junior software developer",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_74"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_75"
+          },
+          {
+            "text": "set-up, maintenance and ongoing development of continuous build/ integration infrastructure developing pipeline for computer vision applications optimize the existing environments/structure establish and strengthen the security notification and management tools",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_76"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_77"
+          },
+          {
+            "text": "participate in technical discussions to aid system design, analysis, and troubleshooting",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_78"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_79"
+          },
+          {
+            "text": "2024 Larana. Inc.",
+            "semantic": "role_meta",
+            "paragraph_profile": null,
+            "para_id": "para_80"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_81"
+          },
+          {
+            "text": "Set up, maintained, and continuously developed continuous build/integration infrastructure.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_82"
+          },
+          {
+            "text": "",
+            "semantic": "empty",
+            "paragraph_profile": null,
+            "para_id": "para_83"
+          },
+          {
+            "text": "Developed CI pipelines supporting computer vision applications.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_84"
+          },
+          {
+            "text": "Optimized existing environments and infrastructure structure to reduce friction in development and delivery workflows.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_85"
+          },
+          {
+            "text": "Established and strengthened security notification and management tools to improve operational awareness and handling.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_85_ext_1"
+          },
+          {
+            "text": "Participated in technical discussions supporting system design, analysis, and troubleshooting.",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "para_85_ext_2"
+          }
+        ],
+        "roles": [],
+        "section_id": "sec_6"
+      }
+    ],
+    "layout": {
+      "page_width_pt": 596.0,
+      "page_height_pt": 842.25,
+      "margin_top_pt": 26.15,
+      "margin_bottom_pt": 3.45,
+      "margin_left_pt": 27.0,
+      "margin_right_pt": 23.5,
+      "default_font_name": "Calibri",
+      "default_font_size_pt": 11.0,
+      "column_split_x": null,
+      "left_col_width_twips": null,
+      "right_col_width_twips": null,
+      "left_col_bg_color": null,
+      "right_col_bg_color": null,
+      "section_row_table": false,
+      "header_bg_color": null,
+      "footer_bg_color": null
+    },
+    "layout_blocks": [
+      {
+        "kind": "paragraph",
+        "para_id": "para_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"230\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"480\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"444440\"/></w:rPr><w:t>123 Anywhere St., Any City</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_3",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"159\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_4",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"480\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"444440\"/></w:rPr><w:t>hello@techguruplus.com</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_5",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"142\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_6",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"480\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"444440\"/></w:rPr><w:t>@techguruplus</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_7",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"150\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_8",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"480\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"739646\"/></w:rPr><w:t>+123-456-7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_9",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_10",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_11",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_12",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"218\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_13",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"500\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"48\"/><w:szCs w:val=\"48\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>EDUCATION</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_14",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_15",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"387\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_16",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>Borcelle University</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_17",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"151\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_18",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:right=\"319\"/><w:spacing w:after=\"0\" w:line=\"326\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>2022 - 2024 | Bachelor in Computer Engineering</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_19",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"94\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_20",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>University</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_21",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"151\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_22",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:right=\"559\"/><w:spacing w:after=\"0\" w:line=\"339\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>2020 - 2021 | Master in Computer Engineering</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_23",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"76\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_24",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"500\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"48\"/><w:szCs w:val=\"48\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>SKILLS</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_25",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_26",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_27",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"220\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_28",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"340\" w:right=\"1019\"/><w:spacing w:after=\"0\" w:line=\"300\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>knowledge and hand-on experience with operating systems (maintenance, troubleshooting)</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_29",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"340\" w:right=\"759\"/><w:spacing w:after=\"0\" w:line=\"286\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>strong ops skills and support mindset</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_30",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_31",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"340\" w:right=\"519\"/><w:spacing w:after=\"0\" w:line=\"325\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>deep understanding of modern monitoring concepts experience with Databases</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_31_ext_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"340\" w:right=\"519\"/><w:spacing w:after=\"0\" w:line=\"325\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>deep understanding of modern monitoring concepts experience with Databases</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_32",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"128\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_33",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"500\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"48\"/><w:szCs w:val=\"48\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>LANGUAGES</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_34",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_35",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"397\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_36",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"120\"/><w:spacing w:after=\"0\"/><w:tabs><w:tab w:leader=\"none\" w:pos=\"1260\" w:val=\"left\"/></w:tabs><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>English</w:t><w:tab/><w:t>native language</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_37",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"152\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_38",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"120\" w:right=\"279\"/><w:spacing w:after=\"0\" w:line=\"445\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>German speaking, reading,writing Chinese speaking, reading,</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_39",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_40",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"500\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"48\"/><w:szCs w:val=\"48\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>REFERENCES</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_41",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_42",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_43",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"233\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_44",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"120\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"444440\"/></w:rPr><w:t>Samira Hadid</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_45",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"85\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_46",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:jc w:val=\"both\"/><w:ind w:left=\"120\" w:right=\"1539\"/><w:spacing w:after=\"0\" w:line=\"313\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"444440\"/></w:rPr><w:t>Position | Company name hello@techguruplus.com +123-456-7890</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_47",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"20\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr><w:br w:type=\"column\"/></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_48",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:jc w:val=\"center\"/><w:ind w:left=\"-460\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"60\"/><w:szCs w:val=\"60\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>HARPER RUSSO</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_49",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><w:pPr><w:spacing w:after=\"0\" w:line=\"20\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr><w:drawing><wp:anchor simplePos=\"0\" relativeHeight=\"251657728\" behindDoc=\"1\" locked=\"0\" layoutInCell=\"0\" allowOverlap=\"1\"><wp:simplePos x=\"0\" y=\"0\"/><wp:positionH relativeFrom=\"column\"><wp:posOffset>-3554730</wp:posOffset></wp:positionH><wp:positionV relativeFrom=\"paragraph\"><wp:posOffset>-770255</wp:posOffset></wp:positionV><wp:extent cx=\"7562850\" cy=\"10696575\"/><wp:wrapNone/><wp:docPr id=\"1\" name=\"Picture 1\"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></wp:cNvGraphicFramePr><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:nvPicPr><pic:cNvPr id=\"0\" name=\"Picture 1\"/><pic:cNvPicPr><a:picLocks noChangeAspect=\"1\" noChangeArrowheads=\"1\"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"rId12\"><a:extLst><a:ext uri=\"{28A0092B-C50C-407E-A947-70E740481C1C}\"/></a:extLst></a:blip><a:srcRect/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr bwMode=\"auto\"><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"7562850\" cy=\"10696575\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:noFill/></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_50",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"371\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_51",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:jc w:val=\"center\"/><w:ind w:left=\"-460\"/><w:spacing w:after=\"0\"/><w:tabs><w:tab w:leader=\"none\" w:pos=\"260\" w:val=\"left\"/></w:tabs><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"44\"/><w:szCs w:val=\"44\"/><w:color w:val=\"739646\"/></w:rPr><w:t>DEVOPS</w:t></w:r><w:r><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr><w:tab/></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"34\"/><w:szCs w:val=\"34\"/><w:color w:val=\"739646\"/></w:rPr><w:t>ENGINEER</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_52",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_53",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_54",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_55",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"237\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_56",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"341\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"48\"/><w:szCs w:val=\"48\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>PROFILE</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_57",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_58",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"360\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_59",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1\" w:right=\"200\" w:hanging=\"1\"/><w:spacing w:after=\"0\" w:line=\"312\" w:lineRule=\"auto\"/><w:tabs><w:tab w:leader=\"none\" w:pos=\"139\" w:val=\"left\"/></w:tabs><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>am a strong, skillful, and self-organized DevOps engineer with 5 years experience of developing infrastructure-related components platform, optimizing the existing environments. Have strong scripting knowledge. Good understanding of Infrastructure-as-a-Code concepts.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_60",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_61",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"227\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_62",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"341\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"48\"/><w:szCs w:val=\"48\"/><w:b w:val=\"1\"/><w:bCs w:val=\"1\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>EXPERIENCES</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_70",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_71",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_72",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"200\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_73",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"245\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_74",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"801\" w:right=\"2100\" w:hanging=\"799\"/><w:spacing w:after=\"0\" w:line=\"414\" w:lineRule=\"auto\"/><w:tabs><w:tab w:leader=\"none\" w:pos=\"781\" w:val=\"left\"/></w:tabs><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>2023</w:t><w:tab/><w:t>Ginyard International Co. Junior software developer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_75",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"2\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_76",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"381\"/><w:spacing w:after=\"0\" w:line=\"293\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>set-up, maintenance and ongoing development of continuous build/ integration infrastructure developing pipeline for computer vision applications optimize the existing environments/structure establish and strengthen the security notification and management tools</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_77",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"1\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_78",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"381\" w:right=\"400\"/><w:spacing w:after=\"0\" w:line=\"362\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>participate in technical discussions to aid system design, analysis, and troubleshooting</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_79",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"252\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_80",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"1\"/><w:spacing w:after=\"0\"/><w:tabs><w:tab w:leader=\"none\" w:pos=\"781\" w:val=\"left\"/></w:tabs><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>2024</w:t><w:tab/><w:t>Larana. Inc.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_81",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"114\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_82",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"801\"/><w:spacing w:after=\"0\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>Senior Devops engineer</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_83",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:after=\"0\" w:line=\"318\" w:lineRule=\"exact\"/><w:rPr><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_84",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"381\" w:right=\"60\"/><w:spacing w:after=\"0\" w:line=\"291\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>Deliver the project from design to testing, including new programs, enhancements, and modifications Monitor the performance and test the server Participate in estimation and planning sessions Work closely with the Product team to deliver quality features in high-quality code and best practices Contribute to development of technical project documentation and user documentation</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_85",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"381\" w:right=\"440\"/><w:spacing w:after=\"0\" w:line=\"362\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>Drive major architectural changes as we scale to improve our engineering velocity</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_85_ext_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"381\" w:right=\"440\"/><w:spacing w:after=\"0\" w:line=\"362\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>Drive major architectural changes as we scale to improve our engineering velocity</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_85_ext_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:ind w:left=\"381\" w:right=\"440\"/><w:spacing w:after=\"0\" w:line=\"362\" w:lineRule=\"auto\"/><w:rPr><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:color w:val=\"auto\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:cs=\"Arial\" w:eastAsia=\"Arial\" w:hAnsi=\"Arial\"/><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/><w:color w:val=\"3D3D3D\"/></w:rPr><w:t>Drive major architectural changes as we scale to improve our engineering velocity</w:t></w:r></w:p>"
+      }
+    ]
+  }
+}
