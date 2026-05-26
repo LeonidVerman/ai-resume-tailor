@@ -59,7 +59,7 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "87654321")
 JOB_DESCRIPTION_ID = int(os.environ.get("JOB_DESCRIPTION_ID", "97"))
 
 CLASSIFICATION_POLL_INTERVAL = 5   # seconds
-CLASSIFICATION_TIMEOUT = 60        # seconds
+CLASSIFICATION_TIMEOUT = 180       # seconds
 
 # ---------------------------------------------------------------------------
 # API helpers
