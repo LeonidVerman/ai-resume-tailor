@@ -376,8 +376,9 @@ class TestHttpScrapeScraperAPI:
         <meta property="og:title" content="Staff Software Engineer">
         </head><body>{long_body}</body></html>
         """
-        with patch("httpx.get", return_value=_mock_response(html)):
-            result = _http_scrape("https://careers.lululemon.com/en_US/careers/JobDetail/Staff-SWE/59455")
+        lulu_url = "https://careers.lululemon.com/en_US/careers/JobDetail/Staff-SWE/59455"
+        with patch("httpx.get", return_value=_mock_response(html, url=lulu_url)):
+            result = _http_scrape(lulu_url)
 
         assert result.company == "Lululemon"
         assert result.job_title == "Staff Software Engineer"
