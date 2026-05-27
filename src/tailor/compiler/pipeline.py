@@ -25,6 +25,7 @@ from tailor.compiler.updater import apply_tailored
 
 if TYPE_CHECKING:
     from tailor.compiler.classification_models import ClassificationOutput
+    from tailor.compiler.models import ResumeSection
 
 log = logging.getLogger(__name__)
 
@@ -203,6 +204,58 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
             _fix([role.header] + list(role.header_extra) + role.meta_lines + role.bullets)
 
 
+def _estimate_col_section_height(
+    sec: "ResumeSection",
+    col_width_pt: float,
+    default_font_size_pt: float = 10.0,
+) -> float:
+    """Rough height estimate for *sec* rendered in a column *col_width_pt* wide.
+
+    Uses a simple character-count wrapping model: chars_per_line ≈ col_width /
+    (font_size × 0.55).  Each wrapped line costs font_size × 1.3 pt.
+    """
+    import math as _math
+    total = 0.0
+    for pm in [sec.heading, *sec.body_paras]:
+        txt = pm.text or ""
+        if not txt.strip():
+            continue
+        pp = pm.paragraph_profile
+        fs = (pp.font_size_pt if pp and pp.font_size_pt else default_font_size_pt) or default_font_size_pt
+        sp = pp.space_before_pt if pp else 0.0
+        chars_per_line = max(1.0, col_width_pt / (fs * 0.55))
+        n_lines = _math.ceil(len(txt) / chars_per_line)
+        total += sp + fs * 1.3 * max(1, n_lines)
+    return total
+
+
+def _sidebar_overflow_check(
+    sec: "ResumeSection",
+    col_width_pt: float,
+    default_font_size_pt: float = 10.0,
+    max_wrap_lines: int = 3,
+) -> bool:
+    """Return True if any body_para of *sec* wraps more than *max_wrap_lines*.
+
+    Used to detect skills sections that are too verbose for a narrow sidebar.
+    A skills item wrapping more than max_wrap_lines lines in the given column
+    width is a sign of a content/layout mismatch that warrants moving the
+    section to the main content (right) column.
+    """
+    import math as _math
+    for bp in sec.body_paras:
+        txt = bp.text or ""
+        if not txt.strip():
+            continue
+        pp = bp.paragraph_profile
+        fs = (pp.font_size_pt if pp and pp.font_size_pt else default_font_size_pt) or default_font_size_pt
+        chars_per_line = max(1.0, col_width_pt / (fs * 0.55))
+        n_lines = _math.ceil(len(txt) / chars_per_line)
+        if n_lines > max_wrap_lines:
+            return True
+    return False
+
+
 def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocument) -> None:
     """Reassign extra LLM sections from left column to right column.
 
@@ -283,6 +336,10 @@ def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocumen
         else frozenset()
     )
 
+    # Column widths for capacity estimation.
+    left_col_width_pt: float = template_ir.layout.column_split_x or 0.0
+    default_fs_pt: float = template_ir.layout.default_font_size_pt or 10.0
+
     for sec in updated.sections:
         h_pp = sec.heading.paragraph_profile
         if not (h_pp and h_pp.column_id == "left"):
@@ -292,7 +349,30 @@ def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocumen
         if sec.section_id and sec.section_id in template_left_section_ids:
             continue  # originally a left-column section — keep it there
         if sec.semantic_type in _SIDEBAR_SEMANTIC_TYPES:
-            continue  # sidebar content type — always stays in left column
+            # Capacity guard: if any skill item wraps too many lines in the
+            # narrow sidebar, move the section to the right column.
+            if left_col_width_pt > 0.0:
+                overflows = _sidebar_overflow_check(
+                    sec, left_col_width_pt, default_fs_pt, max_wrap_lines=3
+                )
+                sec_h = _estimate_col_section_height(sec, left_col_width_pt, default_fs_pt)
+                if overflows:
+                    log.debug(
+                        "SIDEBAR_CAPACITY: section=%r target=right_column "
+                        "col_width=%.0fpt sec_height_est=%.0fpt "
+                        "fallback=overflow_too_verbose",
+                        sec.title, left_col_width_pt, sec_h,
+                    )
+                    # Fall through to _move() calls below.
+                else:
+                    log.debug(
+                        "SIDEBAR_CAPACITY: section=%r target=left_sidebar "
+                        "col_width=%.0fpt sec_height_est=%.0fpt fallback=none",
+                        sec.title, left_col_width_pt, sec_h,
+                    )
+                    continue  # fits without excessive wrapping — keep in sidebar
+            else:
+                continue  # no column-width info — keep in sidebar
         _move(sec.heading, right_heading_indent)
         for bp in sec.body_paras:
             _move(bp, right_body_indent)
