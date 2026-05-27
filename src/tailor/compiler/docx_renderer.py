@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     pass
 
 _W   = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+_W14 = "http://schemas.microsoft.com/office/word/2010/wordml"
 _WP  = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
 _A   = "http://schemas.openxmlformats.org/drawingml/2006/main"
 _PIC = "http://schemas.openxmlformats.org/drawingml/2006/picture"
@@ -325,10 +326,16 @@ def _strip_text_wrapping_breaks(p_elem, new_text: str = "") -> None:
     """
     if "\n" in new_text:
         return  # preserve intentional line breaks
+    _found_br = False
     for r_elem in list(p_elem.findall(f"{{{_W}}}r")):
+        if _found_br:
+            p_elem.remove(r_elem)
+            continue
         for br in list(r_elem.findall(f"{{{_W}}}br")):
             if br.get(f"{{{_W}}}type") == "textWrapping":
                 r_elem.remove(br)
+                _found_br = True
+                break
 
 
 def _ensure_keep_next(p_elem) -> None:
@@ -3009,8 +3016,11 @@ def _render_block_into_elem(
                 for _sdt_c in list(elem):
                     if _sdt_c.tag != f"{{{_W}}}pPr":
                         elem.remove(_sdt_c)
-        _strip_text_wrapping_breaks(elem, pm.text)
-        _set_para_text(elem, pm.text)
+        _render_text = pm.text
+        if pm.semantic == "role_meta" and "\n" in pm.text:
+            _render_text = pm.text.split("\n")[0]
+        _strip_text_wrapping_breaks(elem, _render_text)
+        _set_para_text(elem, _render_text)
         _clear_sdt_placeholder(elem)
         # Cap oversized font when:
         #   (a) _ext_ blocks cloned from large-font heading protos (original guard), OR
@@ -3063,6 +3073,29 @@ def _render_block_into_elem(
                                 pass
         if _needs_font_cap:
             _cap_para_font_size(elem, max_halfpts=_proto_run_font_cap)
+        # Injected bullet blocks cloned from a Heading-N role-header inherit the
+        # heading paragraph style (e.g. blue bold).  Normalise to "Normal" so the
+        # injected content renders as regular body text.
+        if _needs_font_cap and pm.semantic in ("bullet", "paragraph"):
+            _pPr_norm2 = elem.find(f"{{{_W}}}pPr")
+            if _pPr_norm2 is not None:
+                _pStyle_norm2 = _pPr_norm2.find(f"{{{_W}}}pStyle")
+                if _pStyle_norm2 is not None:
+                    _sval2 = _pStyle_norm2.get(f"{{{_W}}}val", "").lower()
+                    if _sval2.startswith("heading"):
+                        _pStyle_norm2.set(f"{{{_W}}}val", "Normal")
+            # Strip explicit run-level bold/italic/color inherited from anchor proto.
+            for _rPr_ext2 in elem.iter(f"{{{_W}}}rPr"):
+                _r_ext2 = _rPr_ext2.getparent()
+                if _r_ext2 is not None and _r_ext2.tag == f"{{{_W}}}r":
+                    for _ftag_ext2 in (
+                        f"{{{_W}}}b", f"{{{_W}}}bCs",
+                        f"{{{_W}}}i", f"{{{_W}}}iCs",
+                        f"{{{_W}}}color",
+                    ):
+                        _fel_ext2 = _rPr_ext2.find(_ftag_ext2)
+                        if _fel_ext2 is not None:
+                            _rPr_ext2.remove(_fel_ext2)
         # Strip display-only (Symbol/Wingdings/SymbolMT) fonts from run rPr so
         # that injected text renders with normal characters instead of garbled
         # symbol glyphs.  These fonts map codepoints to dingbats/symbols rather
@@ -3467,35 +3500,32 @@ def _render_layout_two_col_table(
     if _rb_start:
         right_blocks = right_blocks[_rb_start:]
 
-    # Collapse runs of 2+ consecutive empty paragraph blocks from both columns.
-    # Native w:cols templates use repeated empty paragraphs between sections to
-    # vertically align section starts across columns.  Inside a table cell these
-    # spacers create visible blank gaps between sections.  A run of N≥2
-    # consecutive empties is collapsed to at most 1 so each column flows
-    # continuously without the original column-alignment padding.
-    def _collapse_empty_runs(blocks, _para_lookup):
-        result = []
-        consecutive = 0
-        for blk in blocks:
-            is_empty = False
+    # Strip trailing empty blocks from both columns.
+    # In native w:cols templates, empty paragraphs at the END of a column are
+    # column-break alignment artifacts — they fill the column to align the
+    # column-break point.  Inside a table cell they add dead vertical space
+    # below the last real section (e.g. sample 22 has 12 trailing empties after
+    # Skills).  Only TRAILING empties are removed; all intra-section empty
+    # paragraphs (section heading → spacing pairs → first content) are preserved,
+    # so the original template's vertical geometry is intact.
+    def _strip_trailing_empty_blocks(blocks, _para_lookup):
+        end = len(blocks)
+        while end > 0:
+            blk = blocks[end - 1]
             if isinstance(blk, LayoutParagraphBlock) and blk.xml_proto_xml:
                 _pm = _para_lookup.get(blk.para_id) if blk.para_id else None
-                is_empty = (
+                if (
                     "<w:t>" not in blk.xml_proto_xml
+                    and "<w:drawing>" not in blk.xml_proto_xml
                     and (_pm is None or not _pm.text.strip())
-                )
-            if is_empty:
-                consecutive += 1
-                if consecutive <= 1:
-                    result.append(blk)
-                # else: skip — alignment spacer
-            else:
-                consecutive = 0
-                result.append(blk)
-        return result
+                ):
+                    end -= 1
+                    continue
+            break
+        return blocks[:end]
 
-    left_blocks = _collapse_empty_runs(left_blocks, para_lookup)
-    right_blocks = _collapse_empty_runs(right_blocks, para_lookup)
+    left_blocks = _strip_trailing_empty_blocks(left_blocks, para_lookup)
+    right_blocks = _strip_trailing_empty_blocks(right_blocks, para_lookup)
 
     # Collect para_ids of right-column name/title paragraphs whose run-level
     # font size is large (> 36 half-pts = 18pt) so the font-cap logic in
@@ -3714,6 +3744,61 @@ def _render_layout_two_col_table(
                 sectPr.addprevious(_hel)
             else:
                 body.append(_hel)
+
+    # Intro-zone extraction (sample 19 pattern): when the left column starts with
+    # an intro zone (title section + contact table + summary) before the first
+    # "real" content section (which has roles), extract the intro zone as body-level
+    # paragraphs so the 2-col table starts at WORK EXPERIENCE level — aligning with
+    # RELEVANT SKILLS in the right column.
+    # Guard: only applies when there is a LayoutTableBlock in the intro zone AND
+    # a content section (with roles) exists in the left column blocks.
+    _sec_with_roles_pids: frozenset[str] = frozenset(
+        sec.heading.para_id
+        for sec in (doc.sections or [])
+        if sec.heading and sec.heading.para_id and sec.roles
+    )
+    _intro_scan_table_seen: bool = False
+    _intro_first_content_idx: "int | None" = None
+    for _ii, _iblk in enumerate(_section_left_blocks):
+        if isinstance(_iblk, LayoutTableBlock):
+            _intro_scan_table_seen = True
+        elif (
+            isinstance(_iblk, LayoutParagraphBlock)
+            and _iblk.para_id
+            and _iblk.para_id in _sec_with_roles_pids
+        ):
+            _intro_first_content_idx = _ii
+            break
+    if (
+        _intro_scan_table_seen
+        and _intro_first_content_idx is not None
+        and 0 < _intro_first_content_idx <= 20
+        and _intro_first_content_idx < len(_section_left_blocks)
+    ):
+        _intro_zone_blocks = _section_left_blocks[:_intro_first_content_idx]
+        _section_left_blocks = _section_left_blocks[_intro_first_content_idx:]
+        for _izblk in _intro_zone_blocks:
+            if isinstance(_izblk, LayoutTableBlock):
+                _iztbl = etree.fromstring(_izblk.xml_proto_xml)
+                for _iz_pid, _iz_pel in zip(_izblk.para_ids, _iztbl.findall(f".//{{{_W}}}p")):
+                    _iz_pm = para_lookup.get(_iz_pid)
+                    if _iz_pm is not None:
+                        _set_para_text(_iz_pel, _iz_pm.text)
+                        _clear_sdt_placeholder(_iz_pel)
+                if sectPr is not None:
+                    sectPr.addprevious(_iztbl)
+                else:
+                    body.append(_iztbl)
+            else:
+                _izel = _render_block_into_elem(
+                    _izblk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn,
+                )
+                if _izel is not None:
+                    if sectPr is not None:
+                        sectPr.addprevious(_izel)
+                    else:
+                        body.append(_izel)
+
     left_blocks = _section_left_blocks
 
     # Build tblPr: inherit borders from source table when available (Task 2).
@@ -3758,6 +3843,13 @@ def _render_layout_two_col_table(
     tr = etree.SubElement(tbl, f"{{{_W}}}tr")
 
     def _fill_cell(tc, blocks, col_x_emu: int, extra_paras=None, exempt_font_cap_ids=None) -> None:
+        _cell_consec_empty: int = 0
+        # Compression guards: only compress BETWEEN section content, never before the
+        # first section heading (prevents collapsing name/title spacers in right cells,
+        # e.g. sample 16 where spacers before PROFILE must be preserved) or right after
+        # a section heading (preserves heading→content breathing room).
+        _cell_section_seen: bool = False
+        _cell_prev_was_section: bool = False
         for blk in blocks:
             if isinstance(blk, LayoutTableBlock):
                 tbl_el = etree.fromstring(blk.xml_proto_xml)
@@ -3767,6 +3859,8 @@ def _render_layout_two_col_table(
                         _set_para_text(p_el, pm.text)
                         _clear_sdt_placeholder(p_el)
                 tc.append(tbl_el)
+                _cell_consec_empty = 0
+                _cell_prev_was_section = False
             else:
                 el = _render_block_into_elem(
                     blk, para_lookup, main_pgSz_w, main_pgSz_h, main_is_multicolumn,
@@ -3777,6 +3871,40 @@ def _render_layout_two_col_table(
                     # BEFORE w:cols is used by LibreOffice: prevents background image
                     # from shifting when the column reference changes (sample 16 fix).
                     _fix_col_relative_anchors(el, col_x_emu)
+                    # Consecutive-empty compression: minimize 2nd+ consecutive empty paras
+                    # to remove blank gaps between roles (sample 22).
+                    # Guards:
+                    # - skip header_para blocks (contact info area, sample 16 left cell)
+                    # - skip when no section_heading seen yet (name/title spacers in right
+                    #   cells must be preserved, sample 16 DEVOPS→PROFILE spacers)
+                    # - skip immediately after a section_heading (preserve heading breathing)
+                    _fc_has_text = any(t.text for t in el.iter(f"{{{_W}}}t"))
+                    _fc_pid = blk.para_id if isinstance(blk, LayoutParagraphBlock) else None
+                    _fc_is_header = bool(_fc_pid and _fc_pid in _header_para_ids)
+                    if _fc_has_text or _fc_is_header:
+                        _fc_pm = para_lookup.get(_fc_pid) if _fc_pid else None
+                        _fc_is_section = bool(
+                            _fc_pm and _fc_pm.semantic == "section_heading"
+                        )
+                        if _fc_is_section:
+                            _cell_section_seen = True
+                            _cell_prev_was_section = True
+                        else:
+                            _cell_prev_was_section = False
+                        _cell_consec_empty = 0
+                    else:
+                        # Empty para: compress only when inside content (after first
+                        # section heading and not immediately following a section heading)
+                        if (
+                            _cell_section_seen
+                            and not _cell_prev_was_section
+                            and not _fc_is_header
+                        ):
+                            _cell_consec_empty += 1
+                            if _cell_consec_empty >= 2:
+                                _minimize_empty_para(el)
+                        else:
+                            _cell_consec_empty = 0
                     tc.append(el)
         # Append extra unbound paragraphs (LLM overflow content)
         if extra_paras:
@@ -3880,6 +4008,11 @@ def _render_layout_two_col_table(
     else:
         body.append(tbl)
 
+    # Register so _split_oversized_table_rows skips this table — splitting it
+    # creates visual gaps because the left cell drives the row height while the
+    # right cell ends short (see _RENDERER_CREATED_TABLES docstring).
+    _RENDERER_CREATED_TABLES.add(tbl)
+
     _log.debug(
         "LAYOUT_TWO_COL_TABLE: left=%d/%d-twips right=%d/%d-twips gap=%d-twips accent=%s",
         len(left_blocks), left_w, len(right_blocks), right_w, _right_col_gap, _accent,
@@ -3980,6 +4113,69 @@ def _render_from_layout_blocks(
             _mnum = _mcols.get(f"{{{_W}}}num")
             if _mnum is not None and int(_mnum) >= 2:
                 _main_is_multicolumn = True
+
+    # Some templates define the 2-column area via an intermediate sectPr (w:pPr/w:sectPr
+    # with w:num≥2) rather than the main body sectPr.  Example: sample 17, where the
+    # main sectPr is 1-column but the intermediate sectPr at body[96] declares
+    # w:num="2".  Detect this pattern: if layout_blocks contain a single col-break AND
+    # an intermediate 2-col sectPr, set _main_is_multicolumn=True and inject the 2-col
+    # widths into the main sectPr so _render_layout_two_col_table reads correct values.
+    if not _main_is_multicolumn and doc.layout_blocks:
+        _lb_colbreak_probe = _find_single_col_break_idx(doc.layout_blocks)  # type: ignore[arg-type]
+        if _lb_colbreak_probe is not None:
+            from copy import deepcopy as _dc_mc
+            _all_lb = list(doc.layout_blocks)  # type: ignore[union-attr]
+            for _ilb_idx, _ilb in enumerate(_all_lb):
+                if not (isinstance(_ilb, LayoutParagraphBlock) and _ilb.xml_proto_xml
+                        and "sectPr" in _ilb.xml_proto_xml):
+                    continue
+                try:
+                    _ilb_el = etree.fromstring(_ilb.xml_proto_xml)
+                    _ilb_pPr = _ilb_el.find(f"{{{_W}}}pPr")
+                    _ilb_sp = _ilb_pPr.find(f"{{{_W}}}sectPr") if _ilb_pPr is not None else None
+                    _ilb_cols = _ilb_sp.find(f"{{{_W}}}cols") if _ilb_sp is not None else None
+                    if _ilb_cols is None:
+                        continue
+                    _ilb_num = _ilb_cols.get(f"{{{_W}}}num")
+                    if _ilb_num is None or int(_ilb_num) < 2:
+                        continue
+                    if len(_ilb_cols.findall(f"{{{_W}}}col")) < 2:
+                        continue
+                    # Guard: if a 1-col sectPr follows this 2-col sectPr, the 2-col
+                    # area is only a sub-section (e.g. sample 26 Education Summary).
+                    # In that case the overall layout is mixed-column — do NOT activate
+                    # the whole-document 2-col table; let native sectPr flow through.
+                    _has_subsequent_1col = False
+                    for _slb in _all_lb[_ilb_idx + 1:]:
+                        if not (isinstance(_slb, LayoutParagraphBlock) and _slb.xml_proto_xml
+                                and "sectPr" in _slb.xml_proto_xml):
+                            continue
+                        try:
+                            _slb_el = etree.fromstring(_slb.xml_proto_xml)
+                            _slb_pPr = _slb_el.find(f"{{{_W}}}pPr")
+                            _slb_sp = _slb_pPr.find(f"{{{_W}}}sectPr") if _slb_pPr is not None else None
+                            _slb_cols = _slb_sp.find(f"{{{_W}}}cols") if _slb_sp is not None else None
+                            if _slb_cols is None:
+                                _has_subsequent_1col = True
+                                break
+                            _slb_num = _slb_cols.get(f"{{{_W}}}num", "1")
+                            if int(_slb_num) < 2:
+                                _has_subsequent_1col = True
+                                break
+                        except Exception:
+                            pass
+                    if _has_subsequent_1col:
+                        break  # sub-section 2-col; skip whole-doc 2-col table
+                    # Found intermediate 2-col sectPr — patch main sectPr and set flag
+                    _main_is_multicolumn = True
+                    if sectPr is not None:
+                        _mc_existing = sectPr.find(f"{{{_W}}}cols")
+                        if _mc_existing is not None:
+                            sectPr.remove(_mc_existing)
+                        sectPr.append(_dc_mc(_ilb_cols))
+                    break
+                except Exception:
+                    pass
 
     # Task 3 — same-lane column continuation: convert native w:cols to a 2-cell
     # table so right-column overflow stays in the right column on the next page.
@@ -4110,7 +4306,13 @@ def _render_from_layout_blocks(
     )
     _compress_remaining: int = 0  # count of subsequent empty paras still to compress
     _spacer_followup_remaining: int = 0  # minimize empty paras following an oversized spacer
+    _consecutive_empty_count: int = 0  # consecutive empty para run; minimize from 2nd onward
     _pending_bg_drawings: list = []  # extracted full-height behindDoc drawings awaiting emit
+    # Header spacers (name/title/contact area) must not be compressed — they provide
+    # the vertical gap between the header section and the first body section.
+    _header_para_ids_rfb: frozenset[str] = frozenset(
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    )
 
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
@@ -4122,6 +4324,10 @@ def _render_from_layout_blocks(
             for para_id, p_elem in zip(block.para_ids, all_p):
                 if para_id:
                     pid_to_pelem[para_id] = p_elem
+                    # Stamp w14:paraId so the grader can re-identify paragraphs
+                    # in templates that have no native w14:paraId attributes.
+                    if not p_elem.get(f"{{{_W14}}}paraId"):
+                        p_elem.set(f"{{{_W14}}}paraId", para_id)
                 pm = para_lookup.get(para_id)
                 if pm is not None:
                     _strip_text_wrapping_breaks(p_elem, pm.text)
@@ -4148,51 +4354,40 @@ def _render_from_layout_blocks(
             # inside the table (legacy behaviour for non-header anchors).
             if _inline_pid and _inline_text and _inline_pid in pid_to_pelem:
                 _ref_p = pid_to_pelem[_inline_pid]
-                _anchor_in_header_row = False
-                _has_body_row = False
-                _ref_tc = _ref_p.getparent()
-                if _ref_tc is not None and _ref_tc.tag == f"{{{_W}}}tc":
-                    _ref_tr = _ref_tc.getparent()
-                    if _ref_tr is not None and _ref_tr.tag == f"{{{_W}}}tr":
-                        _ref_tbl_el = _ref_tr.getparent()
-                        if _ref_tbl_el is not None:
-                            _all_rows = _ref_tbl_el.findall(f"{{{_W}}}tr")
-                            try:
-                                _this_ri = _all_rows.index(_ref_tr)
-                                _anchor_in_header_row = (_this_ri == 0)
-                                _has_body_row = _this_ri + 1 < len(_all_rows)
-                            except ValueError:
-                                pass
-                if _anchor_in_header_row and _has_body_row:
-                    # Skip — adding the summary to either row would push content
-                    # to page 2 (layout collapse).  The template has no summary slot.
-                    _log.debug(
-                        "INLINE_SUMMARY_SKIPPED_HEADER_ROW: anchor_para=%r table has body row",
-                        _inline_pid,
-                    )
-                else:
-                    _new_p = _make_inline_summary_para(_ref_p, _inline_text)
-                    _ref_p.addnext(_new_p)
-                    _log.debug(
-                        "INLINE_SUMMARY_INJECTED: new para after para_id=%r",
-                        getattr(doc, "_inline_summary_pid", "?"),
-                    )
+                # Inject the summary paragraph immediately after the anchor (typically
+                # the role/title line in the header cell, e.g. "registered nurse").
+                # The header row's trHeight is removed below so the row auto-sizes.
+                _new_p = _make_inline_summary_para(_ref_p, _inline_text)
+                _ref_p.addnext(_new_p)
+                _log.debug(
+                    "INLINE_SUMMARY_INJECTED: new para after para_id=%r",
+                    getattr(doc, "_inline_summary_pid", "?"),
+                )
                 _inline_pid = None  # consume once
-            # Remove explicit trHeight and enable row splitting on all rows.
+            # Remove explicit trHeight on oversized rows and enable row splitting.
             # Original template heights were sized for short placeholder text.
             # After LLM injection content grows and locked trHeight values can
             # push the body row to page 2.  Also, LibreOffice defaults to
             # NOT splitting table rows (unlike Word), so rows that are taller
             # than the remaining page space go entirely to page 2 rather than
             # splitting.  Explicitly setting cantSplit='0' overrides this.
+            # Small header rows (e.g. photo+name row) keep their trHeight so
+            # the row stays fixed-height and the photo does not shift downward.
             for _tr_h_elem in tbl_elem.findall(f"{{{_W}}}tr"):
                 _trPr_h = _tr_h_elem.find(f"{{{_W}}}trPr")
                 if _trPr_h is None:
                     _trPr_h = etree.SubElement(_tr_h_elem, f"{{{_W}}}trPr")
                     _tr_h_elem.insert(0, _trPr_h)
-                # Remove locked height
-                for _trH in list(_trPr_h.findall(f"{{{_W}}}trHeight")):
-                    _trPr_h.remove(_trH)
+                # Only remove trHeight for rows that will be split (oversized).
+                # Header rows with a fixed trHeight (e.g. photo cell) must keep
+                # it so the photo stays aligned within the original cell height.
+                _row_max_p = max(
+                    (len(_tc.findall(f"{{{_W}}}p")) for _tc in _tr_h_elem.findall(f"{{{_W}}}tc")),
+                    default=0,
+                )
+                if _row_max_p > _OVERSIZED_ROW_PARA_THRESHOLD:
+                    for _trH in list(_trPr_h.findall(f"{{{_W}}}trHeight")):
+                        _trPr_h.remove(_trH)
                 # Explicitly allow row splitting across pages
                 _csplit = _trPr_h.find(f"{{{_W}}}cantSplit")
                 if _csplit is None:
@@ -4234,6 +4429,7 @@ def _render_from_layout_blocks(
                 _fix_anchor_layout_in_cell(_tc)
             # Once we hit a table block, stop compressing spacers (table started).
             _compress_remaining = 0
+            _consecutive_empty_count = 0
             elem: Any = tbl_elem
             # Schedule background drawings to be inserted before the table.
             # They are emitted in the elem-insertion block below.
@@ -4262,10 +4458,16 @@ def _render_from_layout_blocks(
                         block.para_id,
                     )
                     continue
+                if block.para_id and not elem.get(f"{{{_W14}}}paraId"):
+                    elem.set(f"{{{_W14}}}paraId", block.para_id)
                 pass  # (keepNext injection removed — was causing extra pages)
             else:
                 elem = etree.fromstring(block.xml_proto_xml)
                 _strip_last_rendered_page_breaks(elem)
+                # Stamp w14:paraId so grader can re-identify paragraphs in templates
+                # that have no native w14:paraId (e.g. DOCX-origin templates).
+                if block.para_id and not elem.get(f"{{{_W14}}}paraId"):
+                    elem.set(f"{{{_W14}}}paraId", block.para_id)
                 # Strip single-column sectPr (page-size-only section breaks) to prevent
                 # stale section boundaries from creating forced page breaks.  Multi-column
                 # sectPr (w:cols w:num≥2) are preserved for newspaper-style column layouts.
@@ -4283,8 +4485,11 @@ def _render_from_layout_blocks(
                             for _sdt_c_lb in list(elem):
                                 if _sdt_c_lb.tag != f"{{{_W}}}pPr":
                                     elem.remove(_sdt_c_lb)
-                    _strip_text_wrapping_breaks(elem, pm.text)
-                    _set_para_text(elem, pm.text)
+                    _render_text_lb = pm.text
+                    if pm.semantic == "role_meta" and "\n" in pm.text:
+                        _render_text_lb = pm.text.split("\n")[0]
+                    _strip_text_wrapping_breaks(elem, _render_text_lb)
+                    _set_para_text(elem, _render_text_lb)
                     _clear_sdt_placeholder(elem)
                     # Reuse the expanded font-cap logic from _render_block_into_elem.
                     # The check covers both _ext_ blocks and any block where the XML
@@ -4331,6 +4536,32 @@ def _render_from_layout_blocks(
                                             pass
                     if _needs_cap_lb:
                         _cap_para_font_size(elem, max_halfpts=_cap_lb)
+                    # Injected bullet blocks cloned from a Heading-N role-header
+                    # inherit the heading paragraph style (e.g. blue bold).  When
+                    # the semantic is "bullet" or plain "paragraph", normalise the
+                    # pStyle to "Normal" so the injected content renders as regular
+                    # body text rather than a styled heading.
+                    if _needs_cap_lb and pm.semantic in ("bullet", "paragraph"):
+                        _pPr_norm = elem.find(f"{{{_W}}}pPr")
+                        if _pPr_norm is not None:
+                            _pStyle_norm = _pPr_norm.find(f"{{{_W}}}pStyle")
+                            if _pStyle_norm is not None:
+                                _sval = _pStyle_norm.get(f"{{{_W}}}val", "").lower()
+                                if _sval.startswith("heading"):
+                                    _pStyle_norm.set(f"{{{_W}}}val", "Normal")
+                        # Strip explicit run-level bold/italic/color inherited from
+                        # the anchor proto (e.g. para_21 run0 is bold "Mercor").
+                        for _rPr_ext in elem.iter(f"{{{_W}}}rPr"):
+                            _r_ext = _rPr_ext.getparent()
+                            if _r_ext is not None and _r_ext.tag == f"{{{_W}}}r":
+                                for _ftag_ext in (
+                                    f"{{{_W}}}b", f"{{{_W}}}bCs",
+                                    f"{{{_W}}}i", f"{{{_W}}}iCs",
+                                    f"{{{_W}}}color",
+                                ):
+                                    _fel_ext = _rPr_ext.find(_ftag_ext)
+                                    if _fel_ext is not None:
+                                        _rPr_ext.remove(_fel_ext)
                     # Strip display-only fonts (same as in _render_block_into_elem).
                     _DISPLAY_FONTS_LB = frozenset({
                         "symbol", "wingdings", "wingdings2", "wingdings3",
@@ -4355,21 +4586,45 @@ def _render_from_layout_blocks(
                     if block.para_id:
                         _log.debug("LAYOUT_BLOCK_MISSING_PARA_ID: para_id=%r", block.para_id)
                     # Structural/orphan paragraph — insert verbatim (original text kept)
+                _has_xml_text_ce = any(t.text for t in elem.iter(f"{{{_W}}}t"))
+                _pm_text_ce = (pm.text.strip() if pm else "")
+                _is_empty_ce = not _pm_text_ce and not _has_xml_text_ce
                 _did_collapse = _collapse_oversized_spacer(elem)
                 if _did_collapse:
                     # After collapsing a large spacer, also minimize subsequent
                     # consecutive empty paragraphs (e.g. para_104-109 after para_102
                     # in template 17) that together create the same blank gap.
                     _spacer_followup_remaining = 20
+                    _consecutive_empty_count = 1
                 elif _spacer_followup_remaining > 0:
-                    _has_xml_text = any(t.text for t in elem.iter(f"{{{_W}}}t"))
-                    _pm_text = (pm.text.strip() if pm else "")
-                    if not _pm_text and not _has_xml_text:
+                    if _is_empty_ce:
                         _minimize_empty_para(elem)
                         _spacer_followup_remaining -= 1
+                        _consecutive_empty_count += 1
                         _log.debug("SPACER_FOLLOWUP_MINIMIZED: para_id=%r", block.para_id)
                     else:
                         _spacer_followup_remaining = 0  # hit real content, stop
+                        _consecutive_empty_count = 0
+                elif _is_empty_ce:
+                    # Consecutive-empty compression: the template places several
+                    # empty spacer paragraphs between roles (line=200-400 twips
+                    # each).  Only the first is needed for visual separation;
+                    # minimize all subsequent ones to prevent a large blank gap.
+                    # Skip header_para blocks: those spacers sit between the
+                    # document header section and the first body section and must
+                    # be preserved (sample 28: gap between ENGINEERING and GENERAL INFO).
+                    if block.para_id and block.para_id in _header_para_ids_rfb:
+                        _consecutive_empty_count = 0
+                    else:
+                        _consecutive_empty_count += 1
+                        if _consecutive_empty_count >= 2:
+                            _minimize_empty_para(elem)
+                            _log.debug(
+                                "CONSECUTIVE_EMPTY_MINIMIZED: para_id=%r count=%d",
+                                block.para_id, _consecutive_empty_count,
+                            )
+                else:
+                    _consecutive_empty_count = 0
 
 
             # Post-summary spacer compression: once the summary body anchor para
@@ -4381,14 +4636,17 @@ def _render_from_layout_blocks(
                 _compress_remaining = 8  # compress up to 8 following empty paras
             elif _compress_remaining > 0:
                 _para_text = (pm.text.strip() if pm else "").strip()
-                if not _para_text:
+                _is_header_spacer = bool(
+                    block.para_id and block.para_id in _header_para_ids_rfb
+                )
+                if not _para_text and not _is_header_spacer:
                     _zero_para_spacing(elem)
                     _compress_remaining -= 1
                     _log.debug(
                         "SUMMARY_SPACER_COMPRESSED: para_id=%r spacing zeroed",
                         block.para_id,
                     )
-                else:
+                elif _para_text:
                     _compress_remaining = 0  # non-empty para: stop compressing
 
         # Emit extracted background drawings as zero-height body paragraphs
@@ -4648,6 +4906,73 @@ def _maybe_insert_bg_rect(docx_path: str, body, sectPr) -> None:
         _log.debug("OVERFLOW_BG_RECT_SKIP: %s", exc)
 
 
+def _maybe_clone_solidfill_bg_para(body, sectPr) -> None:
+    """Clone a solid-fill sidebar background paragraph for page 2 continuation.
+
+    Some templates (e.g. sample 11) use a behindDoc solidFill rectangle in the
+    FIRST body paragraph (before the main table) to paint a left-sidebar
+    background.  That paragraph only appears on page 1.  When content overflows
+    to page 2, the sidebar has no background.
+
+    Fix: deep-clone that paragraph and insert it just before sectPr so that it
+    lands on page 2 when content overflows.  On pages where no overflow occurs,
+    the clone and the original overlap with the same fill — visually identical.
+
+    Detects: a direct child <w:p> of <w:body> (not inside a table) that has a
+    <wp:anchor behindDoc="1"> with cy >= 10 M EMU and a solidFill (no blip).
+    """
+    from copy import deepcopy as _deepcopy
+    from lxml import etree as _et
+
+    _WP_NS = _WP
+    _DML_NS = _DML
+
+    for child in list(body):
+        if child.tag != f"{{{_W}}}p":
+            continue
+        for anchor in child.findall(f".//{{{_WP_NS}}}anchor"):
+            if anchor.get("behindDoc") != "1":
+                continue
+            ext = anchor.find(f"{{{_WP_NS}}}extent")
+            if ext is None:
+                continue
+            try:
+                cy_val = int(ext.get("cy", "0"))
+            except ValueError:
+                continue
+            if cy_val < 10_000_000:
+                continue
+            # Must be solidFill with no blip — blip-based backgrounds are
+            # handled separately by _maybe_insert_bg_rect.
+            has_blip = anchor.find(f".//{{{_DML_NS}}}blip") is not None
+            has_solid = anchor.find(f".//{{{_DML_NS}}}solidFill") is not None
+            if has_blip or not has_solid:
+                continue
+            # Found a qualifying solid-fill sidebar background paragraph.
+            clone_p = _deepcopy(child)
+            # Make the cloned anchor page-relative so it appears from the TOP
+            # of whatever page it lands on (not relative to its paragraph, which
+            # would position it mid-page on page 3 content).
+            for clone_anchor in clone_p.findall(f".//{{{_WP_NS}}}anchor"):
+                clone_anchor.set("layoutInCell", "0")
+                _pos_v = clone_anchor.find(f"{{{_WP_NS}}}positionV")
+                if _pos_v is not None:
+                    _pos_v.set("relativeFrom", "page")
+                    _pos_off = _pos_v.find(f"{{{_WP_NS}}}posOffset")
+                    if _pos_off is not None:
+                        _pos_off.text = "0"
+                    else:
+                        _et.SubElement(_pos_v, f"{{{_WP_NS}}}posOffset").text = "0"
+            if sectPr is not None:
+                sectPr.addprevious(clone_p)
+            else:
+                body.append(clone_p)
+            _log.debug(
+                "SIDEBAR_BG_CLONE: cloned solid-fill bg para cy=%d for page 2", cy_val
+            )
+            return  # only one clone needed
+
+
 # ---------------------------------------------------------------------------
 # Glossary cleanup
 # ---------------------------------------------------------------------------
@@ -4742,6 +5067,17 @@ def _clear_docx_glossary(docx_path: str) -> None:
 
 _OVERSIZED_ROW_PARA_THRESHOLD = 14  # trigger row split when any cell exceeds this
 
+# Tables created by our renderer (from column-flow → 2-cell table conversion) are
+# balanced layouts that fit the page naturally.  They must NOT be split by
+# _split_oversized_table_rows — splitting creates a visual gap between content rows
+# because the left cell tends to drive the row height, leaving the right cell short.
+# Store element *references* (not id() integers) — id() values are unreliable across
+# function-call boundaries because the lxml proxy can be GC'd after the creating
+# function returns, letting a new proxy for the same C element get a different id().
+# A strong reference in this set keeps the proxy alive so lxml returns the same
+# object on subsequent findall() calls.  Cleared at the start of each render_docx call.
+_RENDERER_CREATED_TABLES: set[Any] = set()
+
 
 def _trim_trailing_cell_paras(body: Any) -> None:
     """Remove excess trailing empty paragraphs from table cells.
@@ -4760,7 +5096,12 @@ def _trim_trailing_cell_paras(body: Any) -> None:
                     continue
                 trailing: list[Any] = []
                 for p in reversed(paras):
-                    runs = p.findall(f"{{{_W}}}r")
+                    # Use recursive search so runs nested inside w:hyperlink,
+                    # w:sdt, etc. are found.  Injected paragraphs clone the
+                    # anchor element structure where w:r may not be a direct
+                    # child of w:p — direct search would incorrectly classify
+                    # those paragraphs as empty and strip them.
+                    runs = p.findall(f".//{{{_W}}}r")
                     text = "".join(
                         (t.text or "")
                         for r in runs
@@ -4793,6 +5134,10 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
     from lxml import etree as _et
 
     for tbl_elem in list(body.findall(f"{{{_W}}}tbl")):
+        # Skip tables created by _render_layout_two_col_table — those are balanced
+        # 2-cell layouts that fit the page; splitting them creates row-height gaps.
+        if tbl_elem in _RENDERER_CREATED_TABLES:
+            continue
         # Snapshot: newly inserted rows are NOT re-processed in the same pass.
         for row in list(tbl_elem.findall(f"{{{_W}}}tr")):
             cells = row.findall(f"{{{_W}}}tc")
@@ -4804,7 +5149,157 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
             if max_paras <= _OVERSIZED_ROW_PARA_THRESHOLD:
                 continue
 
+            # If any cell contains a nested table, the nested table determines row
+            # height dynamically.  Splitting here creates a height mismatch: the
+            # para-heavy cell is sliced at the threshold while the sibling cell's
+            # nested table is much taller, leaving a large void in the split row.
+            if any(tc.find(f"{{{_W}}}tbl") is not None for tc in cells):
+                continue
+
             tallest_idx = max(range(len(cells)), key=lambda i: len(cell_paras[i]))
+
+            # Independent column flow: if a non-tallest cell has ≥2 Heading2/1
+            # sections it has its own independent section structure (sidebar) rather
+            # than being paired content for the tallest cell.  Splitting at heading
+            # boundaries synchronises row heights and creates large voids: a short
+            # sidebar section is paired with a tall content section, leaving empty
+            # space in the sidebar row while the matching content section grows.
+            # Instead: strip trHeight and allow LibreOffice to split at page breaks.
+            _independent_flow = False
+            for _ci, _ps in enumerate(cell_paras):
+                if _ci == tallest_idx:
+                    continue
+                _h2 = 0
+                for _p in _ps:
+                    _pPr = _p.find(f"{{{_W}}}pPr")
+                    if _pPr is not None:
+                        _pSt = _pPr.find(f"{{{_W}}}pStyle")
+                        if _pSt is not None:
+                            _sv = _pSt.get(f"{{{_W}}}val", "").lower().replace(" ", "")
+                            if _sv in ("heading2", "heading1"):
+                                _h2 += 1
+                if _h2 >= 2:
+                    _independent_flow = True
+                    break
+            # If the sidebar (non-tallest) cell itself exceeds the oversized
+            # threshold, vMerge makes things worse: all sidebar paras land in
+            # sub-row 0, which then overflows and drags low-area-ratio content
+            # (e.g. narrow 2-col skill blocks) onto page 2 alongside the body.
+            # Use proportional standard split instead so sidebar sections are
+            # paired with matching body content and contribute area on the same page.
+            if _independent_flow:
+                _non_tallest_max = max(
+                    len(ps) for ci, ps in enumerate(cell_paras) if ci != tallest_idx
+                )
+                if _non_tallest_max > _OVERSIZED_ROW_PARA_THRESHOLD:
+                    _independent_flow = False
+            if _independent_flow:
+                # Independent sidebar: split ONLY the tallest (right) column at
+                # Heading2 boundaries.  Left sidebar content stays entirely in
+                # sub-row 0; continuation sub-rows use vMerge so the left column
+                # appears as one unified sidebar while the right column paginates.
+                _if_paras = cell_paras[tallest_idx]
+                _if_n = len(_if_paras)
+                _if_split: list[int] = []
+                for _ii, _ip in enumerate(_if_paras):
+                    if _ii == 0:
+                        continue
+                    _ipPr = _ip.find(f"{{{_W}}}pPr")
+                    if _ipPr is not None:
+                        _ipSt = _ipPr.find(f"{{{_W}}}pStyle")
+                        if _ipSt is not None:
+                            _isv = _ipSt.get(f"{{{_W}}}val", "").lower().replace(" ", "")
+                            if _isv in ("heading2", "heading1"):
+                                _if_split.append(_ii)
+                if not _if_split:
+                    _if_split = [_if_n // 2]
+                _if_bounds = [0] + _if_split + [_if_n]
+                _if_slices = [
+                    (_if_bounds[i], _if_bounds[i + 1])
+                    for i in range(len(_if_bounds) - 1)
+                    if _if_bounds[i] < _if_bounds[i + 1]
+                ]
+                if len(_if_slices) <= 1:
+                    # Nothing meaningful to split; just allow splitting.
+                    _if_trPr = row.find(f"{{{_W}}}trPr")
+                    if _if_trPr is None:
+                        _if_trPr = _et.SubElement(row, f"{{{_W}}}trPr")
+                        row.insert(0, _if_trPr)
+                    for _trH in list(_if_trPr.findall(f"{{{_W}}}trHeight")):
+                        _if_trPr.remove(_trH)
+                    _if_cs = _if_trPr.find(f"{{{_W}}}cantSplit")
+                    if _if_cs is None:
+                        _if_cs = _et.SubElement(_if_trPr, f"{{{_W}}}cantSplit")
+                    _if_cs.set(f"{{{_W}}}val", "0")
+                    continue
+                _if_new_rows: list[Any] = []
+                for _if_sn, (_if_ss, _if_se) in enumerate(_if_slices):
+                    _if_nr = deepcopy(row)
+                    _if_ncs = _if_nr.findall(f"{{{_W}}}tc")
+                    # Remove trHeight; allow splitting
+                    _if_nr_trPr = _if_nr.find(f"{{{_W}}}trPr")
+                    if _if_nr_trPr is None:
+                        _if_nr_trPr = _et.SubElement(_if_nr, f"{{{_W}}}trPr")
+                        _if_nr.insert(0, _if_nr_trPr)
+                    for _trH in list(_if_nr_trPr.findall(f"{{{_W}}}trHeight")):
+                        _if_nr_trPr.remove(_trH)
+                    _if_nr_cs = _if_nr_trPr.find(f"{{{_W}}}cantSplit")
+                    if _if_nr_cs is None:
+                        _if_nr_cs = _et.SubElement(_if_nr_trPr, f"{{{_W}}}cantSplit")
+                    _if_nr_cs.set(f"{{{_W}}}val", "0")
+                    for _if_ci, _if_ntc in enumerate(_if_ncs):
+                        _if_ntc_ps = list(_if_ntc.findall(f"{{{_W}}}p"))
+                        _if_orig_ps = cell_paras[_if_ci]
+                        if _if_ci == tallest_idx:
+                            # Right column: keep only the current slice.
+                            _if_para_slice = _if_orig_ps[_if_ss:_if_se]
+                            if not _if_para_slice and _if_orig_ps:
+                                _if_para_slice = [_if_orig_ps[-1]]
+                            _if_keep = {id(p) for p in _if_para_slice}
+                            _if_kidxs = {
+                                i for i, op in enumerate(_if_orig_ps)
+                                if id(op) in _if_keep
+                            }
+                            for _if_idx, _if_np in enumerate(_if_ntc_ps):
+                                if _if_idx not in _if_kidxs:
+                                    _if_ntc.remove(_if_np)
+                        else:
+                            # Left sidebar cell
+                            _if_tc_pr = _if_ntc.find(f"{{{_W}}}tcPr")
+                            if _if_tc_pr is None:
+                                _if_tc_pr = _et.SubElement(_if_ntc, f"{{{_W}}}tcPr")
+                                _if_ntc.insert(0, _if_tc_pr)
+                            for _vm in list(_if_tc_pr.findall(f"{{{_W}}}vMerge")):
+                                _if_tc_pr.remove(_vm)
+                            if _if_sn == 0:
+                                # First sub-row: full sidebar content + vMerge restart
+                                _if_vm = _et.SubElement(_if_tc_pr, f"{{{_W}}}vMerge")
+                                _if_vm.set(f"{{{_W}}}val", "restart")
+                            else:
+                                # Continuation: empty cell with vMerge continue
+                                for _rp in list(_if_ntc.findall(f"{{{_W}}}p")):
+                                    _if_ntc.remove(_rp)
+                                for _rt in list(_if_ntc.findall(f"{{{_W}}}tbl")):
+                                    _if_ntc.remove(_rt)
+                                _et.SubElement(_if_ntc, f"{{{_W}}}p")
+                                _et.SubElement(_if_tc_pr, f"{{{_W}}}vMerge")
+                        # Suppress keepNext/keepLines on all cell paras
+                        for _if_cp in _if_ntc.findall(f"{{{_W}}}p"):
+                            _if_cpPr = _if_cp.find(f"{{{_W}}}pPr")
+                            if _if_cpPr is None:
+                                _if_cpPr = _et.SubElement(_if_cp, f"{{{_W}}}pPr")
+                                _if_cp.insert(0, _if_cpPr)
+                            for _pt in (f"{{{_W}}}keepNext", f"{{{_W}}}keepLines"):
+                                _pp = _if_cpPr.find(_pt)
+                                if _pp is None:
+                                    _pp = _et.SubElement(_if_cpPr, _pt)
+                                _pp.set(f"{{{_W}}}val", "0")
+                    _if_new_rows.append(_if_nr)
+                _if_row_idx = list(tbl_elem).index(row)
+                tbl_elem.remove(row)
+                for _if_i, _if_nr in enumerate(_if_new_rows):
+                    tbl_elem.insert(_if_row_idx + _if_i, _if_nr)
+                continue
             tallest_paras = cell_paras[tallest_idx]
             n = len(tallest_paras)
 
@@ -4826,6 +5321,15 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
             if not split_indices:
                 split_indices = [n // 2]
 
+            # Drop the last split point when it would create a very short final
+            # sub-row (< threshold paras in the tallest cell).  Short trailing
+            # sub-rows produce content-sparse continuation pages because most of
+            # the section content is already on the previous page.  Merging the
+            # short tail into the preceding sub-row gives page 2 more content and
+            # a higher area_ratio.  Only drop when multiple splits exist so we
+            # always keep at least one split point.
+            if len(split_indices) > 1 and (n - split_indices[-1]) < _OVERSIZED_ROW_PARA_THRESHOLD:
+                split_indices = split_indices[:-1]
             boundaries = [0] + split_indices + [n]
             tallest_slices = [
                 (boundaries[i], boundaries[i + 1])
@@ -4863,6 +5367,11 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                 cell_h2_boundaries.append(h2_idx)
 
             new_rows: list[Any] = []
+            # Track the adjusted slice end per non-tallest cell so the next
+            # slice starts where the previous one actually ended (not where the
+            # proportional formula says it should start).  This prevents content
+            # loss when the anti-orphan adjustment moves c_end backward.
+            _cell_prop_prev_end: dict[int, int] = {}
             for slice_num, (slice_start, slice_end) in enumerate(tallest_slices):
                 new_row = deepcopy(row)
                 new_cells_elem = new_row.findall(f"{{{_W}}}tc")
@@ -4874,8 +5383,10 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                         trPr.remove(trH)
 
                 for ci, new_tc in enumerate(new_cells_elem):
-                    for p in list(new_tc.findall(f"{{{_W}}}p")):
-                        new_tc.remove(p)
+                    # Snapshot the deepcopy cell's direct-child paragraphs BEFORE
+                    # removing anything; their order in new_tc mirrors orig_ps order.
+                    new_tc_ps = list(new_tc.findall(f"{{{_W}}}p"))
+
                     # Non-first split rows: remove subtables (nested w:tbl elements).
                     # deepcopy copies all content including nested tables; keeping
                     # them in every split row duplicates header/contact sub-tables
@@ -4912,26 +5423,68 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                             c_end = cell_bounds[slice_num + 1]
                         else:
                             # Fall back to proportional split.
-                            c_start = round(slice_start * c_n / n)
+                            # Use tracked previous slice end (if any) as c_start so
+                            # anti-orphan adjustments don't create coverage gaps.
+                            c_start = _cell_prop_prev_end.get(ci, round(slice_start * c_n / n))
                             c_end = round(slice_end * c_n / n)
                             c_start = min(c_start, c_n - 1)
                             c_end = max(c_end, c_start + 1)
                             c_end = min(c_end, c_n)
+                            # Anti-orphan heading: when the proportional boundary
+                            # falls right after a section heading (bold+text para
+                            # preceded by an empty para), adjust c_end backward so
+                            # the heading stays in the NEXT row with its body.
+                            # Example: sample 18 REFERENCES heading orphaned from
+                            # Philippe Stolvan by the midpoint split.
+                            if slice_num < len(tallest_slices) - 1:
+                                for _back in range(1, min(4, c_end - c_start)):
+                                    _oi = c_end - _back
+                                    if _oi <= c_start:
+                                        break
+                                    _op = orig_ps[_oi]
+                                    _op_text = "".join(
+                                        t.text or "" for t in _op.findall(f".//{{{_W}}}t")
+                                    ).strip()
+                                    if not _op_text:
+                                        continue
+                                    _op_bold = False
+                                    for _or in _op.findall(f".//{{{_W}}}r"):
+                                        _orPr = _or.find(f"{{{_W}}}rPr")
+                                        if _orPr is not None and _orPr.find(f"{{{_W}}}b") is not None:
+                                            _op_bold = True
+                                            break
+                                    if _op_bold and _oi > c_start and not any(
+                                        t.text for t in orig_ps[_oi - 1].findall(f".//{{{_W}}}t")
+                                    ):
+                                        c_end = _oi
+                                        break
+                            _cell_prop_prev_end[ci] = c_end
                         para_slice = orig_ps[c_start:c_end]
 
                     if not para_slice and orig_ps:
                         para_slice = [orig_ps[-1]]
 
-                    for p in para_slice:
-                        new_p = deepcopy(p)
-                        if not _cell_has_text:
-                            # Remove drawings from separator cells so they don't
-                            # force the split row to the drawing's height.
+                    # Determine which original para indices should be kept.
+                    # new_tc_ps[i] is the deepcopy of orig_ps[i], so matching by
+                    # position correctly identifies which deepcopy elements to keep.
+                    _keep_ids = {id(p) for p in para_slice}
+                    _keep_idxs = {
+                        i for i, orig_p in enumerate(orig_ps) if id(orig_p) in _keep_ids
+                    }
+                    # Remove only the deepcopy paragraphs NOT in the slice.
+                    # Paragraphs in the slice stay in new_tc at their original
+                    # position so nested subtables (e.g. contact table) preserve
+                    # their relative order (before or after those paragraphs).
+                    for idx, new_p in enumerate(new_tc_ps):
+                        if idx not in _keep_idxs:
+                            new_tc.remove(new_p)
+                        elif not _cell_has_text:
+                            # Separator cell: strip drawings from kept paragraphs
+                            # so they don't force the row to the drawing's height.
                             for _dw in list(new_p.findall(f".//{{{_W}}}drawing")):
                                 _dw_parent = _dw.getparent()
                                 if _dw_parent is not None:
                                     _dw_parent.remove(_dw)
-                        new_tc.append(new_p)
 
                     # Suppress keepNext/keepLines on all paras so LibreOffice
                     # can paginate between rows without the heading style chain.
@@ -4945,6 +5498,20 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                             if prop is None:
                                 prop = _et.SubElement(cell_pPr, prop_tag)
                             prop.set(f"{{{_W}}}val", "0")
+
+                # Strip leading empty paragraphs from continuation rows to
+                # avoid blank gaps at the top of continuation cells (e.g.
+                # sample 22 right column — the empty spacer between the first
+                # and second Experience roles starts the second split row).
+                if slice_num > 0:
+                    for _strip_tc in new_cells_elem:
+                        while True:
+                            _strip_ps = _strip_tc.findall(f"{{{_W}}}p")
+                            if len(_strip_ps) <= 1:
+                                break
+                            if any(t.text for t in _strip_ps[0].findall(f".//{{{_W}}}t")):
+                                break
+                            _strip_tc.remove(_strip_ps[0])
 
                 new_rows.append(new_row)
 
@@ -5074,19 +5641,24 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         )
         _use_lb = USE_LAYOUT_BLOCK_RENDERER or not _has_runtime_xml
         if _use_lb:
+            _RENDERER_CREATED_TABLES.clear()
             _render_from_layout_blocks(doc, body, sectPr)
             # Split single-row tables that exceed page height so LibreOffice
             # can paginate them naturally (cantSplit='0' alone is insufficient).
+            # Tables created by _render_layout_two_col_table are registered in
+            # _RENDERER_CREATED_TABLES and skipped — they are balanced layouts.
             _split_oversized_table_rows(body, sectPr)
             # The split leaves trailing empty paragraphs at the end of each
             # sub-row's cells (template spacing paragraphs that fell between
             # sections).  Strip them here so rows size to actual content.
             _trim_trailing_cell_paras(body)
-            # Inherit page background color for overflow pages.  Extracts the
-            # dominant edge-pixel color from any behindDoc blip background and
-            # inserts a solid-fill rectangle (no image, no text, no foreground
-            # content) at the body end.  That paragraph lands on page 2 when
-            # content overflows, covering it with the same background fill.
+            # Inherit page background color for overflow pages.
+            # (a) Solid-fill sidebar backgrounds (e.g. sample 11): clone the
+            #     background paragraph from the body start to the body end so
+            #     the sidebar color appears on page 2 when content overflows.
+            _maybe_clone_solidfill_bg_para(body, sectPr)
+            # (b) Blip-image backgrounds (e.g. sample 16): extract dominant
+            #     edge color and insert a solid-fill rectangle at body end.
             _maybe_insert_bg_rect(output_path, body, sectPr)
             d.save(output_path)
             # After saving, remove the glossary document from the ZIP so that
