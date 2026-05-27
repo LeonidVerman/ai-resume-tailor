@@ -209,6 +209,7 @@ class GenerationService:
                 debug_meta=debug_meta,
                 storage_service=self._storage_service,
                 updated_ir_dict=updated_ir_dict,
+                classification_jsonb=resume.classification_jsonb,
             )
 
             # ── Consume quota slot (only on full success) ──────────────────
@@ -494,6 +495,7 @@ def _save_run_data(
     debug_meta: dict,
     storage_service: StorageService,
     updated_ir_dict: dict | None = None,
+    classification_jsonb: dict | None = None,
 ) -> None:
     """Persist the generation debug JSON to object storage (S3 / local)."""
     import json as _json
@@ -501,6 +503,7 @@ def _save_run_data(
         data = {
             "company": company,
             "position": job_title,
+            "structured_resume": classification_jsonb or "",
             "llm_request": debug_meta.get("llm_request"),
             "llm_response": {"resume": result.resume, "cover_letter": result.cover_letter},
             "diff": debug_meta.get("diff"),
