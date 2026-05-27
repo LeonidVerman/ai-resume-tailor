@@ -101,6 +101,16 @@ _VALID_SEMANTIC_TYPES: frozenset[str] = frozenset({
     "projects", "additional", "other",
 })
 
+# Experience role body_block semantic types
+_EXP_REWRITEABLE_BODY_TYPES: frozenset[str] = frozenset({
+    "bullet", "role_achievement_bullet", "role_responsibility_bullet",
+})
+_EXP_PRESERVED_BODY_TYPES: frozenset[str] = frozenset({
+    "role_intro", "role_highlight", "role_project_label", "role_project_context",
+    "role_tech_stack", "role_key_technologies", "role_tools",
+    "role_nested_detail", "role_freeform_note",
+})
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -221,12 +231,21 @@ def _validate_experience(s: dict, sid: str) -> list[dict]:
                               f"role={role_id} block_id={bid}"))
         for b in role.get("body_blocks", []):
             bid = b.get("block_id", "?")
-            if b.get("semantic_type") != "bullet":
+            st = b.get("semantic_type", "")
+            rp = b.get("rewrite_policy", "")
+            if st in _EXP_REWRITEABLE_BODY_TYPES:
+                if rp != "rewrite_text":
+                    e.append(_err(E_EXP_ROLE_BODY_POLICY, sid,
+                                  f"role={role_id} block_id={bid} rewriteable type={st!r} "
+                                  f"requires rewrite_text, got {rp!r}"))
+            elif st in _EXP_PRESERVED_BODY_TYPES:
+                if rp != "preserve":
+                    e.append(_err(E_EXP_ROLE_BODY_POLICY, sid,
+                                  f"role={role_id} block_id={bid} preserved type={st!r} "
+                                  f"requires preserve, got {rp!r}"))
+            else:
                 e.append(_err(E_EXP_ROLE_BODY_TYPE, sid,
-                              f"role={role_id} block_id={bid} type={b.get('semantic_type')!r}"))
-            if b.get("rewrite_policy") != "rewrite_text":
-                e.append(_err(E_EXP_ROLE_BODY_POLICY, sid,
-                              f"role={role_id} block_id={bid}"))
+                              f"role={role_id} block_id={bid} type={st!r}"))
     return e
 
 

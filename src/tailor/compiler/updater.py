@@ -44,7 +44,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from tailor.compiler.models import (
     ParaModel,
@@ -2293,17 +2293,26 @@ def _update_experience_date_first(
     orig: "ResumeSection",
     llm: "LlmSection",
     rebuilt_roles: "list[RoleEntry]",
+    cls_sec: "ClassificationSection | None" = None,
 ) -> "ResumeSection":
     """Apply LLM bullet content to a date-first experience section.
 
     - Resolves LLM roles from pipe or dash format.
     - Matches them to rebuilt IR roles by company similarity (then position).
     - Updates bullet paragraph texts in-place on body_paras ParaModel objects.
+    - Skips body_blocks whose classification rewrite_policy=preserve (adjuncts).
     - Returns the section with roles=[] so the all_paras builder uses body_paras
       in their original template order (date-first layout preserved).
     - Extra LLM roles beyond IR role count are ignored.
     - IR roles with no LLM counterpart keep their original bullet text.
     """
+    # Build para_id → ClassificationBlock for preserved adjunct detection.
+    _date_first_cls_map: dict[str, Any] = {}
+    if cls_sec is not None:
+        for _cr in cls_sec.roles:
+            for _blk in _cr.body_blocks:
+                if _blk.para_id:
+                    _date_first_cls_map[_blk.para_id] = _blk
     # Resolve LLM role list (pipe or dash format)
     llm_roles = llm.roles
     if not llm_roles and llm.body_lines:
@@ -2386,25 +2395,42 @@ def _update_experience_date_first(
                     orig.title, ir_role.role_id, first[:60],
                 )
         targets = ir_role.bullets if ir_role.bullets else ir_role.header_extra
-        for i, bullet_para in enumerate(targets):
-            if i < len(llm_bullets):
+        # Separate rewriteable from preserved adjuncts for this role.
+        rewriteable_targets = [
+            p for p in targets
+            if not (
+                _date_first_cls_map.get(p.para_id) is not None
+                and _date_first_cls_map[p.para_id].rewrite_policy == "preserve"
+            )
+        ]
+        llm_slot = 0
+        for bullet_para in targets:
+            blk = _date_first_cls_map.get(bullet_para.para_id)
+            if blk is not None and blk.rewrite_policy == "preserve":
+                _log.debug(
+                    "date-first: para %r preserved adjunct (%s) — kept verbatim",
+                    bullet_para.para_id, blk.semantic_type,
+                )
+                continue
+            if llm_slot < len(llm_bullets):
                 _log.debug(
                     "date-first: para %r updated  %r → %r",
                     bullet_para.para_id,
                     bullet_para.text[:40],
-                    llm_bullets[i][:40],
+                    llm_bullets[llm_slot][:40],
                 )
-                bullet_para.text = llm_bullets[i]
+                bullet_para.text = llm_bullets[llm_slot]
+                llm_slot += 1
 
-        # Extra LLM bullets beyond the template's existing slots.
+        # Extra LLM bullets beyond the template's rewriteable slots.
         # Clone from the last target paragraph; leave para_id="" — the injection
         # code in apply_tailored assigns IDs and creates layout_blocks only when
         # the anchor block has an xml_proto_xml (real DOCX template).
-        if targets and len(llm_bullets) > len(targets):
-            arch = targets[-1]
+        if rewriteable_targets and len(llm_bullets) > len(rewriteable_targets):
+            arch = rewriteable_targets[-1]
             arch_pid = arch.para_id  # injection anchor: insert after this block
             if arch_pid:
-                for extra_text in llm_bullets[len(targets):]:
+                for extra_text in llm_bullets[len(rewriteable_targets):]:
                     extra_pm = arch.clone_as(extra_text)
                     # para_id intentionally left "" — injector assigns it later
                     _extra_injections.setdefault(arch_pid, []).append(extra_pm)
@@ -2445,6 +2471,17 @@ def _update_experience_date_first(
 # ---------------------------------------------------------------------------
 # Classification-constrained update helpers
 # ---------------------------------------------------------------------------
+
+# Role body_block semantic types by rewrite policy (mirrors classification_validator.py).
+_REWRITEABLE_BODY_TYPES: frozenset[str] = frozenset({
+    "bullet", "role_achievement_bullet", "role_responsibility_bullet",
+})
+_PRESERVED_ADJUNCT_TYPES: frozenset[str] = frozenset({
+    "role_intro", "role_highlight", "role_project_label", "role_project_context",
+    "role_tech_stack", "role_key_technologies", "role_tools",
+    "role_nested_detail", "role_freeform_note",
+})
+
 
 def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
     """Split a classification-rebuilt role into sub-roles when its bullet list
@@ -2524,6 +2561,83 @@ def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
     return result
 
 
+def _update_role_with_adjuncts(
+    orig: "RoleEntry",
+    llm_bullets: "list[str]",
+    cls_body_block_map: "dict[str, Any]",
+    layout_bound: bool = False,
+) -> "RoleEntry":
+    """Like _update_role_bullets_only but preserves role-local adjunct blocks.
+
+    Body blocks with rewrite_policy=preserve keep their original template text
+    verbatim.  Body blocks with rewrite_policy=rewrite_text receive LLM bullets.
+    The relative order of preserved and rewritten blocks within the role is
+    maintained by re-assembling against the original bullets list.
+
+    When no preserved adjuncts are found for this role, delegates to
+    _update_role_bullets_only (identical result, no overhead).
+    """
+    preserved_ids: set[str] = set()
+    for p in orig.bullets:
+        blk = cls_body_block_map.get(p.para_id)
+        if blk is not None and blk.rewrite_policy == "preserve":
+            preserved_ids.add(p.para_id)
+
+    if not preserved_ids:
+        return _update_role_bullets_only(orig, llm_bullets, layout_bound=layout_bound)
+
+    # Diagnostics
+    _log.debug(
+        "ROLE_ADJUNCT_SPLIT: role=%r  rewriteable=[%s]  preserved=[%s]  llm_bullets=%d",
+        orig.role_id,
+        ", ".join(
+            f"{p.para_id}({cls_body_block_map[p.para_id].semantic_type})"
+            for p in orig.bullets
+            if p.para_id and p.para_id not in preserved_ids and p.para_id in cls_body_block_map
+        ),
+        ", ".join(
+            f"{p.para_id}({cls_body_block_map[p.para_id].semantic_type})"
+            for p in orig.bullets
+            if p.para_id in preserved_ids and p.para_id in cls_body_block_map
+        ),
+        len(llm_bullets),
+    )
+
+    rewriteable_paras = [p for p in orig.bullets if p.para_id not in preserved_ids]
+    temp_role = RoleEntry(
+        header=orig.header,
+        header_extra=orig.header_extra,
+        meta_lines=orig.meta_lines,
+        bullets=rewriteable_paras,
+        role_id=orig.role_id,
+        role_id_stable=orig.role_id_stable,
+    )
+    updated_temp = _update_role_bullets_only(temp_role, llm_bullets, layout_bound=layout_bound)
+
+    # Re-assemble in original bullets order: preserved paras stay, rewriteable
+    # slots are replaced with updated text from updated_temp.bullets.
+    updated_iter = iter(updated_temp.bullets)
+    final_bullets: list[ParaModel] = []
+    for p in orig.bullets:
+        if p.para_id in preserved_ids:
+            final_bullets.append(p)
+        else:
+            nxt = next(updated_iter, None)
+            if nxt is not None:
+                final_bullets.append(nxt)
+    # Extra LLM bullets cloned beyond original rewriteable slots
+    final_bullets.extend(updated_iter)
+
+    return RoleEntry(
+        header=updated_temp.header,
+        header_extra=updated_temp.header_extra,
+        meta_lines=updated_temp.meta_lines,
+        bullets=final_bullets,
+        role_id=orig.role_id,
+        role_id_stable=orig.role_id_stable,
+    )
+
+
 def _update_experience_classified(
     orig: ResumeSection,
     llm: LlmSection,
@@ -2599,10 +2713,20 @@ def _update_experience_classified(
             len(llm_roles) - len(orig.roles), orig.title, len(orig.roles),
         )
 
+    # Build para_id → ClassificationBlock map for the whole section so
+    # _update_role_with_adjuncts can distinguish rewriteable from preserved blocks.
+    cls_body_block_map: dict[str, Any] = {}
+    for _cr in cls_sec.roles:
+        for _blk in _cr.body_blocks:
+            if _blk.para_id:
+                cls_body_block_map[_blk.para_id] = _blk
+
     updated_roles: list[RoleEntry] = []
     for i, o_role in enumerate(orig.roles):
         if i < len(llm_roles):
-            updated = _update_role_bullets_only(o_role, llm_roles[i].bullets, layout_bound=layout_bound)
+            updated = _update_role_with_adjuncts(
+                o_role, llm_roles[i].bullets, cls_body_block_map, layout_bound=layout_bound,
+            )
             _log.debug(
                 "classification: role %r → updated %d bullets",
                 o_role.role_id, len(llm_roles[i].bullets),
@@ -3874,7 +3998,7 @@ def apply_tailored(
                     rebuilt.extend(_split_cls_mega_role(_r))
             else:
                 rebuilt = _rebuild_date_first_roles(orig_section)
-            return _update_experience_date_first(orig_section, llm_section, rebuilt)
+            return _update_experience_date_first(orig_section, llm_section, rebuilt, cls_sec=cls_sec)
 
         # Classification-constrained path: look up by section_id with title fallback.
         cls_sec = _resolve_cls_sec(orig_section)

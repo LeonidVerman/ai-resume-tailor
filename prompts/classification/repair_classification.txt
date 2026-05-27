@@ -57,6 +57,17 @@ block.semantic_type:
 - role_header
 - role_meta
 - bullet
+- role_achievement_bullet
+- role_responsibility_bullet
+- role_intro
+- role_highlight
+- role_project_label
+- role_project_context
+- role_tech_stack
+- role_key_technologies
+- role_tools
+- role_nested_detail
+- role_freeform_note
 - education_entry
 - project_entry
 - additional_item
@@ -74,9 +85,7 @@ SUMMARY
 If semantic_type = "summary":
 - rewrite_policy = "rewrite_body"
 - roles[] must be empty
-- all blocks must be:
-  - summary_paragraph
-  - rewrite_text
+- all blocks must be summary_paragraph + rewrite_text
 - preserve_heading = false
 - preserve_body_structure = false
 
@@ -84,9 +93,7 @@ SKILLS
 If semantic_type = "skills":
 - rewrite_policy = "rewrite_body"
 - roles[] must be empty
-- all blocks must be:
-  - skills_paragraph
-  - rewrite_text
+- all blocks must be skills_paragraph + rewrite_text
 - preserve_heading = false
 - preserve_body_structure = false
 
@@ -97,73 +104,140 @@ If semantic_type = "experience":
 - roles[] must be populated
 
 For each role:
-- header_blocks:
-  - semantic_type = "role_header"
-  - rewrite_policy = "preserve"
-- meta_blocks:
-  - semantic_type = "role_meta"
-  - rewrite_policy = "preserve"
-- body_blocks:
-  - semantic_type = "bullet"
-  - rewrite_policy = "rewrite_text"
-
-Experience normalization rules:
-- role title / position name -> header
-- compact employment metadata -> meta
-- dates -> meta
-- company / employer -> meta
-- location -> meta
-- sentence-like responsibility / achievement text -> body
-- do not place sentence-like text into meta
-- do not place date-only text into header
-- do not place metadata into body unless no safer structure exists
+- header_blocks: role_header + preserve
+- meta_blocks: role_meta + preserve
+- body_blocks: allowed role-local body types only
 
 EDUCATION
 If semantic_type = "education":
 - rewrite_policy = "preserve"
 - roles[] must be empty
-- all blocks must be:
-  - education_entry (ONLY — never other_paragraph, never role_header, never role_meta)
-  - preserve
+- all blocks must be education_entry + preserve
+- preserve_heading = true
+- preserve_body_structure = true
 
-Any block in an education section that is role_header, role_meta, other_paragraph,
-summary_paragraph, or skills_paragraph MUST be converted to education_entry.
-This includes pipe-format degree/date lines (e.g. "BACHELOR OF SCIENCE | MAY 2014")
-which the parser may have labelled role_header — inside education they are education_entry.
+Any block in education that is role_header, role_meta, other_paragraph, summary_paragraph, or skills_paragraph MUST be converted to education_entry.
 
 PROJECTS
 If semantic_type = "projects":
 - rewrite_policy = "preserve"
 - roles[] must be empty
-- all blocks must be:
-  - project_entry OR other_paragraph
-  - preserve
+- all blocks must be project_entry or other_paragraph + preserve
 
 ADDITIONAL
 If semantic_type = "additional":
 - rewrite_policy = "preserve"
 - roles[] must be empty
-- all blocks must be:
-  - additional_item OR other_paragraph
-  - preserve
+- all blocks must be additional_item or other_paragraph + preserve
 
 OTHER
 If semantic_type = "other":
 - rewrite_policy = "preserve"
 - roles[] must be empty
-- all blocks must be:
-  - other_paragraph
-  - preserve
+- all blocks must be other_paragraph + preserve
+
+==================================================
+ROLE-LOCAL BODY BLOCK REPAIR
+==================================================
+
+Experience body_blocks may contain both rewriteable content and preserved role-local adjuncts.
+
+REWRITE FROM LLM:
+Use rewrite_policy = "rewrite_text" for:
+- bullet
+- role_achievement_bullet
+- role_responsibility_bullet
+
+PRESERVE FROM TEMPLATE:
+Use rewrite_policy = "preserve" for:
+- role_intro
+- role_highlight
+- role_project_label
+- role_project_context
+- role_tech_stack
+- role_key_technologies
+- role_tools
+- role_nested_detail
+- role_freeform_note
+
+Repair rules:
+
+If a body block starts with or clearly represents:
+- "Tech Stack:"
+- "Technology Stack:"
+- "Key technologies:"
+- "Technologies:"
+- "Tools:"
+- "Stack:"
+- "Application level:"
+- "Persistence level:"
+- "Containers:"
+- "DevOps:"
+- "Infrastructure:"
+- "Monitoring and metrics:"
+- "Security:"
+
+Then classify it as the closest preserved tech/tool block:
+- role_tech_stack
+- role_key_technologies
+- role_tools
+with rewrite_policy = "preserve".
+
+If a body block is a project label, such as:
+- "OTA project"
+- "Vehicle simulation project"
+- short standalone project/subsection name
+
+Then classify it as:
+- role_project_label
+- rewrite_policy = "preserve"
+
+If a body block starts with "Highlights:" or is a role-level highlight/context paragraph:
+- semantic_type = "role_highlight"
+- rewrite_policy = "preserve"
+
+If a body block is a nested bullet under a preserved project/tech/highlight block:
+- semantic_type = "role_nested_detail"
+- rewrite_policy = "preserve"
+
+If a body block is a normal role achievement/responsibility bullet:
+- semantic_type = "role_achievement_bullet" or "role_responsibility_bullet"
+- rewrite_policy = "rewrite_text"
+
+If unsure whether a body block is a normal rewrite bullet or a preserved adjunct:
+- prefer preserve using role_freeform_note
+
+IMPORTANT:
+- Do NOT convert tech stacks, highlights, project labels, or nested details into rewrite bullets.
+- Do NOT put role_header or role_meta inside body_blocks.
+
+==================================================
+EXPERIENCE NORMALIZATION
+==================================================
+
+When repairing experience sections:
+
+1. role title / position name -> header_blocks
+2. compact employment metadata -> meta_blocks
+3. dates -> meta_blocks
+4. company / employer -> meta_blocks
+5. location -> meta_blocks
+6. sentence-like ordinary responsibility / achievement text -> body_blocks with rewrite_text
+7. tech stack / key technologies / tools / highlights / project labels -> body_blocks with preserve
+
+Do not place sentence-like text into meta.
+Do not place date-only text into header.
+Do not place metadata into body unless no safer structure exists.
 
 ==================================================
 REPAIR PRIORITIES
 ==================================================
 
 When repairing experience sections, fix these problems first:
-1. wrong block type in meta
-2. wrong block policy in meta
-3. wrong block type in header
-4. wrong block type in body
+1. role_header or role_meta incorrectly placed in body_blocks
+2. tech stack / key technologies incorrectly classified as rewrite bullets
+3. project labels or highlights incorrectly classified as rewrite bullets
+4. wrong block policy in meta/header
 5. mixed semantics across header/meta/body
 
 Prefer conservative normalization.
