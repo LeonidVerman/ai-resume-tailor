@@ -5120,6 +5120,18 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
                 if _h2 >= 2:
                     _independent_flow = True
                     break
+            # If the sidebar (non-tallest) cell itself exceeds the oversized
+            # threshold, vMerge makes things worse: all sidebar paras land in
+            # sub-row 0, which then overflows and drags low-area-ratio content
+            # (e.g. narrow 2-col skill blocks) onto page 2 alongside the body.
+            # Use proportional standard split instead so sidebar sections are
+            # paired with matching body content and contribute area on the same page.
+            if _independent_flow:
+                _non_tallest_max = max(
+                    len(ps) for ci, ps in enumerate(cell_paras) if ci != tallest_idx
+                )
+                if _non_tallest_max > _OVERSIZED_ROW_PARA_THRESHOLD:
+                    _independent_flow = False
             if _independent_flow:
                 # Independent sidebar: split ONLY the tallest (right) column at
                 # Heading2 boundaries.  Left sidebar content stays entirely in
@@ -5248,6 +5260,15 @@ def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
             if not split_indices:
                 split_indices = [n // 2]
 
+            # Drop the last split point when it would create a very short final
+            # sub-row (< threshold paras in the tallest cell).  Short trailing
+            # sub-rows produce content-sparse continuation pages because most of
+            # the section content is already on the previous page.  Merging the
+            # short tail into the preceding sub-row gives page 2 more content and
+            # a higher area_ratio.  Only drop when multiple splits exist so we
+            # always keep at least one split point.
+            if len(split_indices) > 1 and (n - split_indices[-1]) < _OVERSIZED_ROW_PARA_THRESHOLD:
+                split_indices = split_indices[:-1]
             boundaries = [0] + split_indices + [n]
             tallest_slices = [
                 (boundaries[i], boundaries[i + 1])
