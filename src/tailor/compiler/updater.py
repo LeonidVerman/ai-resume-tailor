@@ -3576,11 +3576,15 @@ def apply_tailored(
     """
     # Build fast lookup indices from classification (empty dicts when absent).
     _sec_cls: dict[str, ClassificationSection] = {}
+    _sec_cls_by_title: dict[str, ClassificationSection] = {}
     _role_cls: dict[str, ClassificationRole] = {}
     if classification is not None:
         for _cs in classification.sections:
             if _cs.section_id:
                 _sec_cls[_cs.section_id] = _cs
+            _title_key = (_cs.raw_title or "").lower().strip()
+            if _title_key and _title_key not in _sec_cls_by_title:
+                _sec_cls_by_title[_title_key] = _cs
             for _cr in _cs.roles:
                 if _cr.role_id:
                     _role_cls[_cr.role_id] = _cr
@@ -3588,6 +3592,31 @@ def apply_tailored(
             "apply_tailored: classification loaded — %d sections, %d roles indexed",
             len(_sec_cls), len(_role_cls),
         )
+
+    def _resolve_cls_sec(orig_section: "ResumeSection") -> "ClassificationSection | None":
+        """Look up classification for orig_section, with title-based fallback.
+
+        PDF-origin IRs assign section_ids sequentially from only the sections
+        the parser detects (header paragraphs are not sections), while the
+        classification was built from a DOCX parse that includes header elements
+        as extra sections. This shifts all section_ids. The title-based fallback
+        corrects the mismatch when semantic_types disagree.
+        """
+        by_id = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+        if by_id is not None and by_id.semantic_type == orig_section.semantic_type:
+            return by_id
+        title_key = (orig_section.title or "").lower().strip()
+        by_title = _sec_cls_by_title.get(title_key)
+        if by_title is not None:
+            if by_id is not None:
+                _log.debug(
+                    "apply_tailored: section_id %r resolved to %r (%s) but "
+                    "semantic_type mismatch (cls=%s, ir=%s); using title match %r instead",
+                    orig_section.section_id, by_id.raw_title, by_id.section_id,
+                    by_id.semantic_type, orig_section.semantic_type, by_title.section_id,
+                )
+            return by_title
+        return by_id
 
     # Layout-bound mode: active when layout_blocks are present and the flag is on.
     # normalize_llm_sections runs whenever layout_blocks exist (flag-independent):
@@ -3623,7 +3652,7 @@ def apply_tailored(
                 sum(1 for p in orig_section.body_paras
                     if p.text.strip() and p.semantic == "role_meta"),
             )
-            cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+            cls_sec = _resolve_cls_sec(orig_section)
             if cls_sec is not None and cls_sec.rewrite_policy == "preserve":
                 return orig_section
             # When classification has roles, use them to reconstruct role
@@ -3634,8 +3663,8 @@ def apply_tailored(
                 rebuilt = _rebuild_date_first_roles(orig_section)
             return _update_experience_date_first(orig_section, llm_section, rebuilt)
 
-        # Classification-constrained path: look up by stable section_id.
-        cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+        # Classification-constrained path: look up by section_id with title fallback.
+        cls_sec = _resolve_cls_sec(orig_section)
         if cls_sec is not None:
             return _apply_section_classified(
                 orig_section, llm_section, cls_sec, _role_cls, layout_bound=_layout_bound
