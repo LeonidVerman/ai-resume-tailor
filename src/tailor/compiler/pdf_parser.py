@@ -3072,6 +3072,19 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
 
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
 
+    # Strip the PDF structure/accessibility tree from the in-memory document.
+    # LibreOffice sometimes emits a malformed StructTreeRoot ("No common ancestor
+    # in structure tree").  PyMuPDF logs this to stderr on every get_pixmap() call,
+    # flooding output with noise.  The structure tree is not used for text
+    # extraction or rendering; removing it is harmless.
+    try:
+        _cat = doc.pdf_catalog()
+        if _cat and doc.xref_get_key(_cat, "StructTreeRoot")[0] != "null":
+            doc.xref_set_key(_cat, "StructTreeRoot", "null")
+            doc.xref_set_key(_cat, "MarkInfo", "null")
+    except Exception:
+        pass
+
     # Scanned document detection
     total_chars = sum(len(page.get_text()) for page in doc)
     if total_chars < _SCANNED_CHAR_THRESHOLD:

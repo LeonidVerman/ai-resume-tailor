@@ -62,6 +62,18 @@ def _pdf_first_page_to_image(pdf_path: Path, zoom: float = 2.0):
     doc = fitz.open(str(pdf_path))
     if doc.page_count == 0:
         raise ValueError(f"PDF has no pages: {pdf_path}")
+
+    # Strip malformed accessibility tree — LibreOffice sometimes emits a broken
+    # StructTreeRoot that causes MuPDF to log "No common ancestor in structure
+    # tree" on every get_pixmap() call.  The structure tree is unused for rendering.
+    try:
+        _cat = doc.pdf_catalog()
+        if _cat and doc.xref_get_key(_cat, "StructTreeRoot")[0] != "null":
+            doc.xref_set_key(_cat, "StructTreeRoot", "null")
+            doc.xref_set_key(_cat, "MarkInfo", "null")
+    except Exception:
+        pass
+
     page = doc[0]
     mat = fitz.Matrix(zoom, zoom)
     pix = page.get_pixmap(matrix=mat, alpha=False)
