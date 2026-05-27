@@ -162,8 +162,14 @@ def _check_ir_summary_missing(
         candidate = ps_match.group(1).strip()
         summary_text = candidate[:200]
     if not summary_text:
+        _heading_re = re.compile(r"^[A-Z][A-Z\s&/]{3,}$")
         for line in llm_text.split("\n"):
             line = line.strip()
+            if not line:
+                continue
+            # Stop at a section heading — content below it is body, not a summary
+            if _heading_re.match(line):
+                break
             if len(line) >= 60 and not re.match(r"^[A-Z][a-z]+ [A-Z][a-z]+$", line):
                 summary_text = line[:200]
                 break
