@@ -3064,6 +3064,17 @@ def _render_block_into_elem(
                                 pass
         if _needs_font_cap:
             _cap_para_font_size(elem, max_halfpts=_proto_run_font_cap)
+        # Injected bullet blocks cloned from a Heading-N role-header inherit the
+        # heading paragraph style (e.g. blue bold).  Normalise to "Normal" so the
+        # injected content renders as regular body text.
+        if _needs_font_cap and pm.semantic in ("bullet", "paragraph"):
+            _pPr_norm2 = elem.find(f"{{{_W}}}pPr")
+            if _pPr_norm2 is not None:
+                _pStyle_norm2 = _pPr_norm2.find(f"{{{_W}}}pStyle")
+                if _pStyle_norm2 is not None:
+                    _sval2 = _pStyle_norm2.get(f"{{{_W}}}val", "").lower()
+                    if _sval2.startswith("heading"):
+                        _pStyle_norm2.set(f"{{{_W}}}val", "Normal")
         # Strip display-only (Symbol/Wingdings/SymbolMT) fonts from run rPr so
         # that injected text renders with normal characters instead of garbled
         # symbol glyphs.  These fonts map codepoints to dingbats/symbols rather
@@ -4501,6 +4512,19 @@ def _render_from_layout_blocks(
                                             pass
                     if _needs_cap_lb:
                         _cap_para_font_size(elem, max_halfpts=_cap_lb)
+                    # Injected bullet blocks cloned from a Heading-N role-header
+                    # inherit the heading paragraph style (e.g. blue bold).  When
+                    # the semantic is "bullet" or plain "paragraph", normalise the
+                    # pStyle to "Normal" so the injected content renders as regular
+                    # body text rather than a styled heading.
+                    if _needs_cap_lb and pm.semantic in ("bullet", "paragraph"):
+                        _pPr_norm = elem.find(f"{{{_W}}}pPr")
+                        if _pPr_norm is not None:
+                            _pStyle_norm = _pPr_norm.find(f"{{{_W}}}pStyle")
+                            if _pStyle_norm is not None:
+                                _sval = _pStyle_norm.get(f"{{{_W}}}val", "").lower()
+                                if _sval.startswith("heading"):
+                                    _pStyle_norm.set(f"{{{_W}}}val", "Normal")
                     # Strip display-only fonts (same as in _render_block_into_elem).
                     _DISPLAY_FONTS_LB = frozenset({
                         "symbol", "wingdings", "wingdings2", "wingdings3",

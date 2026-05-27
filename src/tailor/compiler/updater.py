@@ -293,7 +293,17 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     else:
         for i, meta_text in enumerate(llm_meta):
             if i < len(orig.meta_lines):
-                new_meta.append(orig.meta_lines[i].with_text(meta_text))
+                _orig_m = orig.meta_lines[i]
+                # Keep verbatim when the template meta spans multiple visual lines
+                # (w:br soft-return embedded in a single paragraph, indicated by \n
+                # in the parsed text).  Proportional run distribution on a shorter
+                # LLM string would mis-allocate text across bold/italic runs, e.g.
+                # losing the company-name bold on the first run.  The original
+                # paragraph already carries the correct content and formatting.
+                if layout_bound and "\n" in _orig_m.text:
+                    new_meta.append(_orig_m)
+                else:
+                    new_meta.append(_orig_m.with_text(meta_text))
             elif not layout_bound:
                 src = orig.meta_lines[-1] if orig.meta_lines else orig.header
                 new_meta.append(src.clone_as(meta_text, "role_meta"))
@@ -306,7 +316,14 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     # destroys visual layout (one huge paragraph where the template has one bullet).
     # Conservative single-line merge is allowed only when the combined length stays
     # within 1.25× the original paragraph's text length and contains no newlines.
-    arch = orig.bullets[0] if orig.bullets else orig.header
+    # Prefer a meta_line para as bullet archetype when no template bullet slots
+    # exist.  Cloning from the role header (a Heading-N para) inherits heading
+    # colour/bold; a meta_line carries Body-style formatting for regular text.
+    arch = (
+        orig.bullets[0] if orig.bullets
+        else orig.meta_lines[0] if orig.meta_lines
+        else orig.header
+    )
     new_bullets: list[ParaModel] = []
 
     if layout_bound and orig.bullets:
@@ -342,6 +359,7 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
 
     return RoleEntry(
         header=new_header,
+        header_extra=list(orig.header_extra),
         meta_lines=new_meta,
         bullets=new_bullets,
         role_id=orig.role_id,

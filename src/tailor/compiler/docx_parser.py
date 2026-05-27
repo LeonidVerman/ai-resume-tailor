@@ -615,12 +615,15 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 state = "bullets"
             elif s == "paragraph":
                 _txt = pm.text.strip()
-                # Date-range line in header state (e.g. "January 20xx - Current"):
-                # route to meta so it doesn't appear in the rendered role header.
-                if (
-                    (_YEAR_RE.search(_txt) or _DATE_PLACEHOLDER_RE.search(_txt))
-                    and len(_txt) <= 80
-                ):
+                # Date-range / company-meta line in header state.  A paragraph
+                # immediately following a role_header that contains a year is
+                # structurally a meta line (company name, date, location) even
+                # when its text exceeds 80 chars — templates that embed an italic
+                # role description in the same paragraph (e.g. sample 34) produce
+                # long Body-style paragraphs.  The 80-char guard is intentionally
+                # dropped here: being in "header" state already provides the
+                # contextual guarantee that this is not a random body sentence.
+                if _YEAR_RE.search(_txt) or _DATE_PLACEHOLDER_RE.search(_txt):
                     pm.semantic = "role_meta"
                     meta.append(pm)
                     state = "meta"
