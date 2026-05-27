@@ -3348,14 +3348,10 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     )
     # Raster images (profile photos, footer bars, etc.)
     raster_images = _extract_page_images(doc, page_index=0)
-    # Solid-color overlays from large vector drawing regions (sidebars, header/footer bands).
+    # Solid-color overlays from vector drawing regions (sidebars, header/footer bands).
+    # Prepended so they render behind raster images and text.
     vector_images = _extract_decorative_vector_images(doc[0])
-    # Thin rule lines (horizontal/vertical section dividers, column separators).
-    vector_lines = _extract_vector_lines(doc[0])
-    # Stroked rectangle borders (contact boxes, section frames with white/no fill).
-    vector_borders = _extract_vector_borders(doc[0])
-    # Order: background fills first, then borders, then lines, then raster photos on top.
-    resume_doc.page_images = vector_images + vector_borders + vector_lines + raster_images
+    resume_doc.page_images = vector_images + raster_images
     from tailor.compiler.models import assign_stable_ids
     assign_stable_ids(resume_doc)
     return resume_doc
