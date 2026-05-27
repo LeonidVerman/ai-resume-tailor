@@ -326,10 +326,16 @@ def _strip_text_wrapping_breaks(p_elem, new_text: str = "") -> None:
     """
     if "\n" in new_text:
         return  # preserve intentional line breaks
+    _found_br = False
     for r_elem in list(p_elem.findall(f"{{{_W}}}r")):
+        if _found_br:
+            p_elem.remove(r_elem)
+            continue
         for br in list(r_elem.findall(f"{{{_W}}}br")):
             if br.get(f"{{{_W}}}type") == "textWrapping":
                 r_elem.remove(br)
+                _found_br = True
+                break
 
 
 def _ensure_keep_next(p_elem) -> None:
@@ -3010,8 +3016,11 @@ def _render_block_into_elem(
                 for _sdt_c in list(elem):
                     if _sdt_c.tag != f"{{{_W}}}pPr":
                         elem.remove(_sdt_c)
-        _strip_text_wrapping_breaks(elem, pm.text)
-        _set_para_text(elem, pm.text)
+        _render_text = pm.text
+        if pm.semantic == "role_meta" and "\n" in pm.text:
+            _render_text = pm.text.split("\n")[0]
+        _strip_text_wrapping_breaks(elem, _render_text)
+        _set_para_text(elem, _render_text)
         _clear_sdt_placeholder(elem)
         # Cap oversized font when:
         #   (a) _ext_ blocks cloned from large-font heading protos (original guard), OR
@@ -3075,6 +3084,18 @@ def _render_block_into_elem(
                     _sval2 = _pStyle_norm2.get(f"{{{_W}}}val", "").lower()
                     if _sval2.startswith("heading"):
                         _pStyle_norm2.set(f"{{{_W}}}val", "Normal")
+            # Strip explicit run-level bold/italic/color inherited from anchor proto.
+            for _rPr_ext2 in elem.iter(f"{{{_W}}}rPr"):
+                _r_ext2 = _rPr_ext2.getparent()
+                if _r_ext2 is not None and _r_ext2.tag == f"{{{_W}}}r":
+                    for _ftag_ext2 in (
+                        f"{{{_W}}}b", f"{{{_W}}}bCs",
+                        f"{{{_W}}}i", f"{{{_W}}}iCs",
+                        f"{{{_W}}}color",
+                    ):
+                        _fel_ext2 = _rPr_ext2.find(_ftag_ext2)
+                        if _fel_ext2 is not None:
+                            _rPr_ext2.remove(_fel_ext2)
         # Strip display-only (Symbol/Wingdings/SymbolMT) fonts from run rPr so
         # that injected text renders with normal characters instead of garbled
         # symbol glyphs.  These fonts map codepoints to dingbats/symbols rather
@@ -4464,8 +4485,11 @@ def _render_from_layout_blocks(
                             for _sdt_c_lb in list(elem):
                                 if _sdt_c_lb.tag != f"{{{_W}}}pPr":
                                     elem.remove(_sdt_c_lb)
-                    _strip_text_wrapping_breaks(elem, pm.text)
-                    _set_para_text(elem, pm.text)
+                    _render_text_lb = pm.text
+                    if pm.semantic == "role_meta" and "\n" in pm.text:
+                        _render_text_lb = pm.text.split("\n")[0]
+                    _strip_text_wrapping_breaks(elem, _render_text_lb)
+                    _set_para_text(elem, _render_text_lb)
                     _clear_sdt_placeholder(elem)
                     # Reuse the expanded font-cap logic from _render_block_into_elem.
                     # The check covers both _ext_ blocks and any block where the XML
@@ -4525,6 +4549,19 @@ def _render_from_layout_blocks(
                                 _sval = _pStyle_norm.get(f"{{{_W}}}val", "").lower()
                                 if _sval.startswith("heading"):
                                     _pStyle_norm.set(f"{{{_W}}}val", "Normal")
+                        # Strip explicit run-level bold/italic/color inherited from
+                        # the anchor proto (e.g. para_21 run0 is bold "Mercor").
+                        for _rPr_ext in elem.iter(f"{{{_W}}}rPr"):
+                            _r_ext = _rPr_ext.getparent()
+                            if _r_ext is not None and _r_ext.tag == f"{{{_W}}}r":
+                                for _ftag_ext in (
+                                    f"{{{_W}}}b", f"{{{_W}}}bCs",
+                                    f"{{{_W}}}i", f"{{{_W}}}iCs",
+                                    f"{{{_W}}}color",
+                                ):
+                                    _fel_ext = _rPr_ext.find(_ftag_ext)
+                                    if _fel_ext is not None:
+                                        _rPr_ext.remove(_fel_ext)
                     # Strip display-only fonts (same as in _render_block_into_elem).
                     _DISPLAY_FONTS_LB = frozenset({
                         "symbol", "wingdings", "wingdings2", "wingdings3",

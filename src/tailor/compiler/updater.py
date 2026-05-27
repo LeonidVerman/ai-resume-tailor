@@ -316,14 +316,7 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     # destroys visual layout (one huge paragraph where the template has one bullet).
     # Conservative single-line merge is allowed only when the combined length stays
     # within 1.25× the original paragraph's text length and contains no newlines.
-    # Prefer a meta_line para as bullet archetype when no template bullet slots
-    # exist.  Cloning from the role header (a Heading-N para) inherits heading
-    # colour/bold; a meta_line carries Body-style formatting for regular text.
-    arch = (
-        orig.bullets[0] if orig.bullets
-        else orig.meta_lines[0] if orig.meta_lines
-        else orig.header
-    )
+    arch = orig.bullets[0] if orig.bullets else orig.header
     new_bullets: list[ParaModel] = []
 
     if layout_bound and orig.bullets:
@@ -4790,7 +4783,11 @@ def apply_tailored(
                 # Prefer the last bound bullet as anchor (overflow case);
                 # fall back to the role header when the template has NO bullet slots
                 # (all bullets are unbound).
-                _anchor = _bound_bullets[-1] if _bound_bullets else _role.header
+                _anchor = (
+                    _bound_bullets[-1] if _bound_bullets
+                    else _role.meta_lines[-1] if (_role.meta_lines and _role.meta_lines[-1].para_id)
+                    else _role.header
+                )
                 if _anchor.para_id:
                     _exp_extras.setdefault(_anchor.para_id, []).extend(_unbound_bullets)
         if _exp_extras:
