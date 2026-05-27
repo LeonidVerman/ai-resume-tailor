@@ -3665,6 +3665,17 @@ def apply_tailored(
 
         # Classification-constrained path: look up by section_id with title fallback.
         cls_sec = _resolve_cls_sec(orig_section)
+        # Pattern C guard: LLM classifier sometimes labels OBJECTIVE/PROFILE
+        # sections as other/preserve when it doesn't recognise the heading.
+        # The PDF parser already set semantic_type="summary", so trust the IR and
+        # bypass classification to let the unclassified path rewrite the content.
+        if (
+            cls_sec is not None
+            and cls_sec.rewrite_policy == "preserve"
+            and orig_section.semantic_type == "summary"
+            and cls_sec.semantic_type != "summary"
+        ):
+            cls_sec = None
         if cls_sec is not None:
             return _apply_section_classified(
                 orig_section, llm_section, cls_sec, _role_cls, layout_bound=_layout_bound
@@ -4093,20 +4104,6 @@ def apply_tailored(
                 _log.debug(
                     "apply_tailored: discarding other-type extra %r "
                     "(verbatim other sections exist)", llm_s.heading,
-                )
-            elif (
-                not _layout_bound
-                and llm_s.semantic_type == "skills"
-                and not template_has_skills
-                and header_skill_target is None
-            ):
-                # PDF path (non-layout-bound): template has no skills section and no
-                # header skills block.  Appending an orphan "Technical Skills" at the
-                # end clashes with the template's original design (e.g. nurse templates
-                # that embed competencies as narrative paragraphs).  Drop silently.
-                _log.debug(
-                    "apply_tailored: discarding PDF orphan skills %r "
-                    "(no template skills section or header target)", llm_s.heading,
                 )
             elif not llm_s.body_lines and not llm_s.roles:
                 # Empty extra section (no content, no roles) — discard.  These arise
