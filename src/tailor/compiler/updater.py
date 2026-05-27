@@ -2264,6 +2264,19 @@ def _update_experience_date_first(
             )
             continue
         llm_bullets = llm_roles[llm_idx].bullets
+        # When the matched LLM role has no bullets (e.g. the em-dash parser
+        # split a "Company Name – City" line into a header-only role), fall
+        # through to the adjacent LLM role whose header is the job-title line
+        # and whose bullets hold the actual content.
+        if not llm_bullets and llm_idx + 1 < len(llm_roles):
+            next_role = llm_roles[llm_idx + 1]
+            if next_role.bullets:
+                _log.debug(
+                    "date-first: LLM[%d] has no bullets — using LLM[%d] bullets "
+                    "for IR role %r",
+                    llm_idx, llm_idx + 1, ir_role.role_id,
+                )
+                llm_bullets = next_role.bullets
         # Warn when first LLM bullet looks like a role title rather than body content.
         if llm_bullets:
             first = llm_bullets[0]
@@ -2336,6 +2349,84 @@ def _update_experience_date_first(
 # Classification-constrained update helpers
 # ---------------------------------------------------------------------------
 
+def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
+    """Split a classification-rebuilt role into sub-roles when its bullet list
+    contains company-separator paragraphs.
+
+    Detects pattern: paragraph (company_name) + optional-empty* + role_meta
+    within role.bullets.  When found, splits into multiple sub-roles:
+    - First sub-role: uses meta_lines[0] as header when meta_lines are present
+      (handles the case where classification assigned a wrong para as the role
+      header but the actual company name is in meta_lines[0]).
+    - Subsequent sub-roles: company_para as header, leading role_meta as meta.
+    """
+    bullets = role.bullets
+    if not bullets:
+        return [role]
+
+    boundaries: list[int] = []
+    for i, p in enumerate(bullets):
+        if p.semantic not in ("paragraph", "role_header"):
+            continue
+        j = i + 1
+        while j < len(bullets) and not bullets[j].text.strip():
+            j += 1
+        if j < len(bullets) and bullets[j].semantic == "role_meta":
+            boundaries.append(i)
+
+    if not boundaries:
+        return [role]
+
+    cut_points = boundaries + [len(bullets)]
+    result: list[RoleEntry] = []
+
+    # For the first sub-role, prefer meta_lines[0] as header (company name)
+    # and meta_lines[1:] as remaining meta, since classification may have
+    # assigned a wrong para (e.g. a bullet) as the role's header_block.
+    if role.meta_lines:
+        first_header = role.meta_lines[0]
+        first_meta = role.meta_lines[1:]
+    else:
+        first_header = role.header
+        first_meta = []
+
+    result.append(RoleEntry(
+        header=first_header,
+        header_extra=role.header_extra,
+        meta_lines=first_meta,
+        bullets=bullets[: boundaries[0]],
+        role_id=first_header.text.strip(),
+        role_id_stable=first_header.para_id or first_header.text.strip(),
+    ))
+
+    for k in range(len(boundaries)):
+        company_para = bullets[boundaries[k]]
+        chunk = bullets[boundaries[k] + 1 : cut_points[k + 1]]
+
+        meta: list["ParaModel"] = []
+        bullet_start = 0
+        for m, p in enumerate(chunk):
+            if not p.text.strip():
+                bullet_start = m + 1
+                continue
+            if p.semantic == "role_meta":
+                meta.append(p)
+                bullet_start = m + 1
+            else:
+                break
+
+        result.append(RoleEntry(
+            header=company_para,
+            header_extra=[],
+            meta_lines=meta,
+            bullets=chunk[bullet_start:],
+            role_id=company_para.text.strip(),
+            role_id_stable=company_para.para_id or company_para.text.strip(),
+        ))
+
+    return result
+
+
 def _update_experience_classified(
     orig: ResumeSection,
     llm: LlmSection,
@@ -2349,15 +2440,37 @@ def _update_experience_classified(
     which is handled upstream):
     - Role header and meta lines are NEVER modified.
     - Only bullet text is updated.
+    - When classification provides more role structure than the parser (e.g.
+      a mega-role spanning multiple companies), expand via _split_cls_mega_role.
     - IR role count is authoritative: extra LLM roles are ignored; extra IR
       roles beyond the LLM output are kept verbatim.
 
-    When the template stores experience as flat body_paras (orig.roles=[]),
-    falls back to _update_body_classified so the LLM content is not silently
-    dropped.
+    Falls back to _update_body_classified when no role structure can be derived
+    from either the parser or classification.
     """
-    # Template has no role structure — treat like a body section so LLM
-    # content is applied to body_paras rather than silently dropped.
+    # Prefer classification-based role structure when it provides more
+    # granularity than the parser (e.g. mega-role spanning multiple companies).
+    if cls_sec.roles:
+        rebuilt = _rebuild_roles_from_classification(orig, cls_sec)
+        if rebuilt:
+            expanded: list[RoleEntry] = []
+            for r in rebuilt:
+                expanded.extend(_split_cls_mega_role(r))
+            if len(expanded) > len(orig.roles):
+                _log.debug(
+                    "classification: expanding %d parser roles → %d cls roles "
+                    "for section %r",
+                    len(orig.roles), len(expanded), orig.title,
+                )
+                orig = ResumeSection(
+                    title=orig.title,
+                    heading=orig.heading,
+                    semantic_type=orig.semantic_type,
+                    body_paras=orig.body_paras,
+                    roles=expanded,
+                    section_id=orig.section_id,
+                )
+
     if not orig.roles:
         _log.debug(
             "classification: experience section %r has no roles → delegating to body update",
@@ -2407,11 +2520,25 @@ def _update_experience_classified(
         "classification: section %r preserve_heading=%s rewrite_policy=%s",
         orig.title, cls_sec.preserve_heading, cls_sec.rewrite_policy,
     )
+    # Filter body_paras to exclude para_ids already claimed by roles, preventing
+    # SPLIT_BRAIN_BODY_PARAS validator failures.  Spacer paragraphs (empty or no
+    # para_id) are kept so layout_blocks renderer can find them via body_paras.
+    _role_para_ids: set[str] = set()
+    for r in updated_roles:
+        if r.header.para_id:
+            _role_para_ids.add(r.header.para_id)
+        for _p in r.header_extra + r.meta_lines + r.bullets:
+            if _p.para_id:
+                _role_para_ids.add(_p.para_id)
+    filtered_body = [
+        p for p in orig.body_paras
+        if not p.para_id or p.para_id not in _role_para_ids
+    ]
     return ResumeSection(
         title=orig.title,
         heading=orig.heading,
         semantic_type=orig.semantic_type,
-        body_paras=orig.body_paras,
+        body_paras=filtered_body,
         roles=updated_roles,
         section_id=orig.section_id,
     )
@@ -3612,8 +3739,13 @@ def apply_tailored(
                 return orig_section
             # When classification has roles, use them to reconstruct role
             # boundaries instead of the deterministic date-first heuristic.
+            # Expand any mega-role (e.g. multiple companies under one cls role)
+            # so each company gets its own role entry matched to an LLM role.
             if cls_sec is not None and cls_sec.roles:
-                rebuilt = _rebuild_roles_from_classification(orig_section, cls_sec)
+                rebuilt_raw = _rebuild_roles_from_classification(orig_section, cls_sec)
+                rebuilt: list[RoleEntry] = []
+                for _r in rebuilt_raw:
+                    rebuilt.extend(_split_cls_mega_role(_r))
             else:
                 rebuilt = _rebuild_date_first_roles(orig_section)
             return _update_experience_date_first(orig_section, llm_section, rebuilt)

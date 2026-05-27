@@ -151,7 +151,6 @@ def _ensure_rendering(triple: _Triple) -> bool:
         pair = SamplePair(
             prefix=triple.prefix,
             source_kind="docx",
-            cls_path=triple.cls_path,
             resume_path=triple.template_docx,
             gen_path=triple.gen_path,
         )
