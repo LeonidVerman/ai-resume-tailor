@@ -113,9 +113,12 @@ class TemplateContainer:
     semantic_type: str      # 'experience'|'summary'|'skills'|'education'|'other'
     subkind: str            # ""  |  "languages" | "certifications" | "links" | "awards"
     region: str             # "main" | "sidebar" | "unknown"
-    orig_para_count: int    # number of non-empty body paragraphs
+    orig_para_count: int    # number of non-empty body paragraphs (or role+bullet count for experience)
     orig_char_count: int    # total character count of non-empty body text
     is_narrow: bool         # heuristic: few/short paras → narrow / sidebar
+    # Experience-specific capacity fields (both None for non-experience sections)
+    orig_bullets_per_role: list[int] = field(default_factory=list)  # bullet count per role, in order
+    orig_role_count: int = 0          # number of roles in original section
 
 
 def _is_narrow(section: ResumeSection) -> bool:
@@ -125,6 +128,20 @@ def _is_narrow(section: ResumeSection) -> bool:
         return False
     total_chars = sum(len(p.text) for p in non_empty)
     return len(non_empty) <= 8 and total_chars <= 300
+
+
+def _is_compact_template(original: ResumeDocument) -> bool:
+    """True when the template uses compact bullet density (avg ≤ 3 bullets/role).
+
+    Compact/minimalist templates lose their visual rhythm when LLM injects
+    the typical 4–6 bullets per role.  Stricter limits apply.
+    """
+    exp_sections = [s for s in original.sections if s.semantic_type == "experience"]
+    all_roles = [r for s in exp_sections for r in s.roles]
+    if not all_roles:
+        return False
+    avg_bullets = sum(len(r.bullets) for r in all_roles) / len(all_roles)
+    return avg_bullets <= 3.0
 
 
 def extract_containers(original: ResumeDocument) -> list[TemplateContainer]:
@@ -138,6 +155,29 @@ def extract_containers(original: ResumeDocument) -> list[TemplateContainer]:
 
         if section.semantic_type == "experience":
             region = "main"
+            # For experience sections, orig_para_count reflects the total
+            # rendered line count (1 role header + N bullets per role) so that
+            # estimate_fit's para_ratio is meaningful against the same metric.
+            orig_bullets_per_role = [len(r.bullets) for r in section.roles]
+            orig_role_count = len(section.roles)
+            exp_para_count = sum(1 + bc for bc in orig_bullets_per_role)
+            exp_char_count = sum(
+                len(r.header.text) + sum(len(b.text) for b in r.bullets)
+                for r in section.roles
+            )
+            containers.append(TemplateContainer(
+                section_idx=idx,
+                title=section.title,
+                semantic_type=section.semantic_type,
+                subkind=subkind,
+                region=region,
+                orig_para_count=exp_para_count or len(non_empty),
+                orig_char_count=exp_char_count or total_chars,
+                is_narrow=narrow,
+                orig_bullets_per_role=orig_bullets_per_role,
+                orig_role_count=orig_role_count,
+            ))
+            continue
         elif section.semantic_type == "summary":
             region = "main"
         elif subkind:
@@ -255,6 +295,57 @@ def compact_skills(
     if len([l for l in body_lines if l.strip()]) <= target_count:
         return body_lines
     return non_empty
+
+
+def compact_experience_bullets(
+    llm_roles: list[LlmRole],
+    container: "TemplateContainer",
+    compact_template: bool = False,
+) -> list[LlmRole]:
+    """Trim LLM experience bullets per role to match original template density.
+
+    For each LLM role, the per-role bullet limit is derived from the
+    corresponding original role's bullet count.  When the template is compact
+    (avg ≤ 3 bullets/role) a stricter headroom factor is applied.
+
+    Rules:
+    - Matched role (same position in list): max = orig_count, floor = 1
+    - Unmatched role (LLM has more roles): max = avg original bullets, floor = 1
+    - Compact template: floor raised to at least 1, ceiling kept to orig_count
+    - Non-compact template with medium risk: allow up to orig_count * 1.25
+    - Non-compact template with high risk: cap to orig_count
+
+    Returns a new list; original LlmRole objects are reused or replaced.
+    """
+    orig_counts = container.orig_bullets_per_role
+    if not orig_counts and not llm_roles:
+        return llm_roles
+
+    avg_orig = sum(orig_counts) / len(orig_counts) if orig_counts else 3.0
+
+    result: list[LlmRole] = []
+    for i, llm_role in enumerate(llm_roles):
+        orig_count = orig_counts[i] if i < len(orig_counts) else int(round(avg_orig))
+        # Compact templates: strict cap to preserve visual rhythm
+        # Normal templates: allow 1 extra bullet beyond original
+        headroom = 0 if compact_template else 1
+        max_bullets = max(1, orig_count + headroom)
+
+        if len(llm_role.bullets) > max_bullets:
+            log.debug(
+                "compact_experience: role %r %d→%d bullets (orig=%d, compact=%s)",
+                llm_role.header[:40], len(llm_role.bullets), max_bullets,
+                orig_count, compact_template,
+            )
+            result.append(LlmRole(
+                header=llm_role.header,
+                meta_lines=llm_role.meta_lines,
+                bullets=llm_role.bullets[:max_bullets],
+            ))
+        else:
+            result.append(llm_role)
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -797,6 +888,7 @@ def _find_container_by_title(
 def apply_layout_fitting(
     original: ResumeDocument,
     llm_sections: list[LlmSection],
+    skip_compaction: bool = False,
 ) -> list[LlmSection]:
     """Normalise *llm_sections* for layout-aware rendering against *original*.
 
@@ -806,16 +898,20 @@ def apply_layout_fitting(
     2. Extract source container capacities.
     3. Redistribute Additional subgroup content (Languages / Certifications /
        Links) from Technical Skills to dedicated source containers.
-    4. Compact oversized sections for narrow containers:
-       - Summary → sentence-level compaction.
-       - Skills   → line-level (tail-drop) compaction.
+    4. Compact oversized sections for narrow containers (skipped when
+       *skip_compaction* is True, e.g. PDF-origin path where geometry is
+       already fixed and overflow is preferred over truncation):
+       - Summary    → sentence-level compaction.
+       - Skills     → line-level (tail-drop) compaction.
+       - Experience → bullet-level compaction (per-role, capacity-aware).
     5. Validate and log warnings.
 
     Returns a (possibly modified) list of LlmSection objects.
     The *original* ResumeDocument is never modified.
     """
-    tpl_class  = classify_template(original)
-    containers = extract_containers(original)
+    tpl_class      = classify_template(original)
+    containers     = extract_containers(original)
+    compact_tpl    = _is_compact_template(original)
 
     log.debug("apply_layout_fitting: template_class=%s, containers=%d",
               tpl_class, len(containers))
@@ -827,69 +923,89 @@ def apply_layout_fitting(
     # Step 3: Additional redistribution
     result = redistribute_additional(result, containers)
 
-    # Step 4: Compaction for narrow containers
-    compacted: list[LlmSection] = []
-    for llm_s in result:
-        orig_section = _find_source_section(llm_s, original.sections)
-        if orig_section is None:
-            compacted.append(llm_s)
-            continue
-
-        container = _find_container_by_title(orig_section, containers)
-        if container is None:
-            compacted.append(llm_s)
-            continue
-
-        fit = estimate_fit(container, llm_s)
-
-        if llm_s.semantic_type == "summary" and container.is_narrow:
-            if fit.risk in ("medium", "high") and tpl_class == "table_sidebar":
-                # Fixed-cell layout: sentence count must be capped to prevent
-                # height overflow.  For linear/multi-column templates the two-
-                # column table renderer handles overflow; don't truncate there.
-                new_lines = compact_summary(llm_s.body_lines, _SUMMARY_MAX_SENTENCES_NARROW)
-                log.debug(
-                    "compact_summary: '%s' %d→%d lines (fit=%s)",
-                    llm_s.heading, len(llm_s.body_lines), len(new_lines), fit.risk,
-                )
-                compacted.append(LlmSection(
-                    heading=llm_s.heading,
-                    semantic_type=llm_s.semantic_type,
-                    body_lines=new_lines,
-                    roles=llm_s.roles,
-                ))
+    # Step 4: Compaction for narrow containers (disabled for PDF-origin path)
+    if skip_compaction:
+        compacted = list(result)
+    else:
+        compacted = []
+        for llm_s in result:
+            orig_section = _find_source_section(llm_s, original.sections)
+            if orig_section is None:
+                compacted.append(llm_s)
                 continue
 
-        elif llm_s.semantic_type == "skills" and (
-            container.is_narrow or tpl_class == "table_sidebar"
-        ):
-            if fit.risk in ("medium", "high"):
-                # table_sidebar: fixed cell height — hard count cap is required.
-                # linear (native columns): overflow is handled by the two-column
-                # table renderer; only apply per-line char limits, not count cap.
-                if tpl_class == "table_sidebar":
-                    target = max(container.orig_para_count, 3)
-                else:
-                    # Allow all lines through; updater injects overflow as extra
-                    # layout_blocks so they appear in-column, not at end-of-doc.
-                    target = max(
-                        len([l for l in llm_s.body_lines if l.strip()]), 1
+            container = _find_container_by_title(orig_section, containers)
+            if container is None:
+                compacted.append(llm_s)
+                continue
+
+            fit = estimate_fit(container, llm_s)
+
+            if llm_s.semantic_type == "summary" and container.is_narrow:
+                if fit.risk in ("medium", "high") and tpl_class == "table_sidebar":
+                    # Fixed-cell layout: sentence count must be capped to prevent
+                    # height overflow.  For linear/multi-column templates the two-
+                    # column table renderer handles overflow; don't truncate there.
+                    new_lines = compact_summary(llm_s.body_lines, _SUMMARY_MAX_SENTENCES_NARROW)
+                    log.debug(
+                        "compact_summary: '%s' %d→%d lines (fit=%s)",
+                        llm_s.heading, len(llm_s.body_lines), len(new_lines), fit.risk,
                     )
-                new_lines = compact_skills(llm_s.body_lines, target)
-                log.debug(
-                    "compact_skills: '%s' %d→%d lines (fit=%s, target=%d)",
-                    llm_s.heading, len(llm_s.body_lines), len(new_lines),
-                    fit.risk, target,
-                )
-                compacted.append(LlmSection(
-                    heading=llm_s.heading,
-                    semantic_type=llm_s.semantic_type,
-                    body_lines=new_lines,
-                    roles=llm_s.roles,
-                ))
-                continue
+                    compacted.append(LlmSection(
+                        heading=llm_s.heading,
+                        semantic_type=llm_s.semantic_type,
+                        body_lines=new_lines,
+                        roles=llm_s.roles,
+                    ))
+                    continue
 
-        compacted.append(llm_s)
+            elif llm_s.semantic_type == "skills" and (
+                container.is_narrow or tpl_class == "table_sidebar"
+            ):
+                if fit.risk in ("medium", "high"):
+                    # table_sidebar: fixed cell height — hard count cap is required.
+                    # linear (native columns): overflow is handled by the two-column
+                    # table renderer; only apply per-line char limits, not count cap.
+                    if tpl_class == "table_sidebar":
+                        target = max(container.orig_para_count, 3)
+                    else:
+                        # Allow all lines through; updater injects overflow as extra
+                        # layout_blocks so they appear in-column, not at end-of-doc.
+                        target = max(
+                            len([l for l in llm_s.body_lines if l.strip()]), 1
+                        )
+                    new_lines = compact_skills(llm_s.body_lines, target)
+                    log.debug(
+                        "compact_skills: '%s' %d→%d lines (fit=%s, target=%d)",
+                        llm_s.heading, len(llm_s.body_lines), len(new_lines),
+                        fit.risk, target,
+                    )
+                    compacted.append(LlmSection(
+                        heading=llm_s.heading,
+                        semantic_type=llm_s.semantic_type,
+                        body_lines=new_lines,
+                        roles=llm_s.roles,
+                    ))
+                    continue
+
+            elif llm_s.semantic_type == "experience" and llm_s.roles:
+                if fit.risk in ("medium", "high") and container.orig_bullets_per_role:
+                    new_roles = compact_experience_bullets(
+                        llm_s.roles, container, compact_tpl
+                    )
+                    log.debug(
+                        "compact_experience: '%s' %d roles (fit=%s, compact_tpl=%s)",
+                        llm_s.heading, len(new_roles), fit.risk, compact_tpl,
+                    )
+                    compacted.append(LlmSection(
+                        heading=llm_s.heading,
+                        semantic_type=llm_s.semantic_type,
+                        body_lines=llm_s.body_lines,
+                        roles=new_roles,
+                    ))
+                    continue
+
+            compacted.append(llm_s)
 
     # Step 4.5: Skills content sanitization (spec §6).
     # Remove internal-marker lines, "Additional" lines, and full-sentence lines

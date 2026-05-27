@@ -1,5 +1,20 @@
 # Release Notes
 
+## 0.8.8.BETA — 2026-05-27
+
+### Bug fixes
+- **#43 Failed scraping**: Playwright + Chromium added for JS-heavy SPA scraping (Taleo ATS, HiBob career pages); company name now extracted from hostname for SSR pages that omit `og:site_name`.
+- **#67 PDF rendering - some regular text is bold**: skills font size corrected for extra-section columns; line-spacing compression removed and layout compaction disabled for PDF-origin templates so body text no longer inherits bold weight from role headers.
+- **#98 PDF rendering - general improvements**: four infrastructure improvements — (1) template-capacity-aware experience bullet compaction, (2) experience `body_paras` cleared for all PDF templates before injection, (3) relaxed spacing caps to restore visual breathing room, (4) right-column fallback for unassigned body paragraphs. Phase 1: raster images extracted and re-inserted as floating shapes at their original page positions. Phase 2: decorative region preservation and column detection refinements. Vector lines and rectangle borders extracted as floating images; left-column paragraph backgrounds pixel-sampled from raster backgrounds. Raster header bands detected from page-top offset; dark header bands merged into body table for correct LibreOffice shading. Bold ALL-CAPS role titles no longer misclassified by cross-column block position.
+- **#100 DOCX rendering - remaining issues**: sample 11 — vMerge-based independent column flow split, header row height preserved, page-2 background cloned, summary and skills injected; sample 14 — header spacer spacing preserved after summary injection; samples 16 and 22 — structural spacers preserved and renderer-table split guard added; sample 17 — two-column layout detected from intermediate `sectPr` when main `sectPr` is single-column; samples 19, 22, 28 — three layout fixes for column overflow and row splitting; sample 26 — work history bullets and contact-info skills injected into table columns, `EMPTY_PARA_ID` guard and `w14:paraId` stamping added; sample 34 — role order corrected, template descriptions stripped, meta lines restored, bullet style normalized; general — anti-orphan content-loss prevention, continuation-page leading empties stripped.
+- **#100/#103 DOCX rendering - sample 36 content injection**: classification-driven mega-role splitting added via `_split_cls_mega_role`; date-first layout path extended to use classification role structure; `body_paras` filtered to exclude para_ids already claimed by roles, eliminating `SPLIT_BRAIN_BODY_PARAS` validator failures; grader false-positive `SUMMARY_MISSING` suppressed when education body prose precedes the first section heading.
+
+### New features
+- **#101 Automated debug data generation scripts**: `generate_run_data.cmd` / `generate_run_data.sh` added to the `tests/` directory; scripts upload a resume, generate a profile, trigger generation against a configurable job description, and download the run data to `tests/samples/generation/`. Generation samples regenerated with embedded classification JSON.
+- **#102 Classification JSON in generation debug data**: `structured_resumes.classification_jsob` is now embedded in every debug-run generation JSON and consumed by `test_rendering` for classification-driven rendering, confirming classification reaches the renderer end-to-end.
+
+---
+
 ## 0.8.7.BETA — 2026-05-24
 
 ### Bug fixes

@@ -20,6 +20,10 @@ Discovery:
   classification/pdf/{N}-*_input.json   ← PDF classified templates (skipped)
   generation/{N}-*.json                 ← LLM tailoring output
 
+Classification is loaded from the "structured_resume" field of the generation
+JSON file (populated by generate_run_data).  If the field is absent or empty,
+rendering proceeds without classification constraints.
+
 Matching is by numeric prefix N.  If multiple files share the same N within the
 same source kind, the script aborts with a disambiguation error.
 
@@ -43,8 +47,6 @@ _REPO = Path(__file__).resolve().parents[2]
 _TESTS = _REPO / "tests"
 _SAMPLES = _TESTS / "samples"
 
-_CLS_DOCX_DIR = _SAMPLES / "classification" / "docx"
-_CLS_PDF_DIR  = _SAMPLES / "classification" / "pdf"
 _GEN_DIR      = _SAMPLES / "generation"
 _RES_DOCX_DIR = _SAMPLES / "resume" / "docx"
 _RES_PDF_DIR  = _SAMPLES / "resume" / "pfd"   # note: legacy typo preserved
@@ -73,10 +75,8 @@ _NUM_RE = re.compile(r"^(\d+)-")
 class SamplePair:
     prefix: str
     source_kind: str           # "docx" or "pdf"
-    cls_path: Path             # *_input.json classification file
     resume_path: Path          # actual .docx / .pdf template file
     gen_path: Path             # generation JSON
-    cls_output_path: Optional[Path] = None  # *_cls_output.json (ClassificationOutput)
 
 
 # ---------------------------------------------------------------------------
@@ -88,25 +88,16 @@ def _num_prefix(name: str) -> Optional[str]:
     return m.group(1) if m else None
 
 
-def _stem_to_resume(cls_stem: str, source_kind: str) -> Optional[Path]:
-    """Derive the actual resume file path from a classification file stem.
-
-    Classification file: ``{stem}_input.json``  →  resume: ``{stem}.docx/.pdf``
-    """
-    # Strip trailing "_input" suffix that the classification files use
-    resume_stem = re.sub(r"_input$", "", cls_stem)
-    if source_kind == "docx":
-        p = _RES_DOCX_DIR / (resume_stem + ".docx")
-    else:
-        p = _RES_PDF_DIR / (resume_stem + ".pdf")
-    return p if p.exists() else None
-
-
 def discover(filter_arg: Optional[str] = None) -> tuple[list[SamplePair], list[str]]:
     """Return (matched_pairs, skip_messages).
 
-    *filter_arg* narrows to a single numeric prefix or filename fragment.
-    Raises ValueError on ambiguous multi-file conflicts within one source kind.
+    Pairs a generation JSON with the resume DOCX/PDF that shares its numeric prefix.
+    Each prefix yields up to two pairs: one DOCX-origin and one PDF-origin.
+    Classification is read from the generation JSON's ``structured_resume`` field
+    at render time — no external classification files are required.
+
+    *filter_arg* narrows to one or more numeric prefixes or a filename fragment.
+    Raises ValueError on ambiguous multi-file conflicts.
     """
     # Index generation files by numeric prefix
     gen_index: dict[str, list[Path]] = {}
@@ -115,90 +106,60 @@ def discover(filter_arg: Optional[str] = None) -> tuple[list[SamplePair], list[s
         if n:
             gen_index.setdefault(n, []).append(p)
 
-    # Index classification files by (prefix, source_kind)
-    cls_index: dict[tuple[str, str], list[Path]] = {}
-    for kind, d in (("docx", _CLS_DOCX_DIR), ("pdf", _CLS_PDF_DIR)):
-        if not d.is_dir():
-            continue
-        for p in sorted(d.glob("*_input.json")):
-            n = _num_prefix(p.name)
-            if n:
-                cls_index.setdefault((n, kind), []).append(p)
+    # Index DOCX resume files by numeric prefix
+    res_docx_index: dict[str, list[Path]] = {}
+    for p in _RES_DOCX_DIR.glob("*.docx"):
+        n = _num_prefix(p.name)
+        if n:
+            res_docx_index.setdefault(n, []).append(p)
+
+    # Index PDF resume files by numeric prefix
+    res_pdf_index: dict[str, list[Path]] = {}
+    for p in _RES_PDF_DIR.glob("*.pdf"):
+        n = _num_prefix(p.name)
+        if n:
+            res_pdf_index.setdefault(n, []).append(p)
 
     # Check for ambiguous multi-file conflicts
-    for (n, kind), paths in cls_index.items():
-        if len(paths) > 1:
-            raise ValueError(
-                f"Ambiguous: prefix {n!r} has {len(paths)} {kind.upper()} classification files: "
-                + ", ".join(p.name for p in paths)
-            )
     for n, paths in gen_index.items():
         if len(paths) > 1:
             raise ValueError(
                 f"Ambiguous: prefix {n!r} has {len(paths)} generation files: "
                 + ", ".join(p.name for p in paths)
             )
+    for idx_name, idx in [("DOCX", res_docx_index), ("PDF", res_pdf_index)]:
+        for n, paths in idx.items():
+            if len(paths) > 1:
+                raise ValueError(
+                    f"Ambiguous: prefix {n!r} has {len(paths)} {idx_name} resume files: "
+                    + ", ".join(p.name for p in paths)
+                )
 
-    # Build matched pairs
     pairs: list[SamplePair] = []
     skips: list[str] = []
 
-    # Only iterate over prefixes where we have a generation file (the rest are silent skips)
-    gen_prefixes = sorted(gen_index.keys(), key=int)
-    cls_prefixes = {k for k, _ in cls_index.keys()}
-
-    for n in gen_prefixes:
+    for n in sorted(gen_index.keys(), key=int):
         gen_path = gen_index[n][0]
-        matched_any = False
-
-        for kind in ("docx", "pdf"):
-            key = (n, kind)
-            if key not in cls_index:
-                continue
-
-            cls_path = cls_index[key][0]
-            cls_stem = cls_path.stem   # e.g. "1-Leonid_Verman_Resume_Template_input"
-            resume_path = _stem_to_resume(cls_stem, kind)
-            if resume_path is None:
-                skips.append(
-                    f"[{n}/{kind}] skip - resume file not found for {cls_stem!r}"
-                )
-                continue
-
-            # Look for companion ClassificationOutput file (*_cls_output.json).
-            output_stem = re.sub(r"_input$", "", cls_stem)
-            cls_output_path = cls_path.parent / f"{output_stem}_cls_output.json"
-            if not cls_output_path.exists():
-                cls_output_path = None
-
+        if n in res_docx_index:
             pairs.append(SamplePair(
                 prefix=n,
-                source_kind=kind,
-                cls_path=cls_path,
-                resume_path=resume_path,
+                source_kind="docx",
+                resume_path=res_docx_index[n][0],
                 gen_path=gen_path,
-                cls_output_path=cls_output_path,
             ))
-            matched_any = True
-
-        if not matched_any:
-            skips.append(
-                f"[{n}] skip - generation file exists but no matching DOCX classification"
-            )
-
-    # Note classification-only prefixes (no generation file) as informational skips
-    unmatched_cls = sorted(cls_prefixes - set(gen_prefixes), key=int)
-    if unmatched_cls:
-        skips.append(
-            f"[{', '.join(unmatched_cls)}] skip - classification exists but no generation file"
-        )
+        else:
+            skips.append(f"[{n}] skip - no resume DOCX found for prefix {n}")
+        if n in res_pdf_index:
+            pairs.append(SamplePair(
+                prefix=n,
+                source_kind="pdf",
+                resume_path=res_pdf_index[n][0],
+                gen_path=gen_path,
+            ))
 
     # Filter by user argument(s).  Multiple numeric prefixes may be passed
-    # (e.g. "2 3 4 14 25") and are treated as an OR filter: any sample whose
-    # numeric prefix matches one of the supplied values is included.
+    # (e.g. "2 3 4 14 25") and are treated as an OR filter.
     if filter_arg:
-        # Support space-separated or comma-separated multiple numeric prefixes
-        # that may have been joined into a single string by the caller.
         _tokens = [t.strip() for t in filter_arg.replace(",", " ").split() if t.strip()]
         _num_matches: set[str] = set()
         _fragments: list[str] = []
@@ -216,8 +177,7 @@ def discover(filter_arg: Optional[str] = None) -> tuple[list[SamplePair], list[s
             skips = [s for s in skips if any(f"[{nm}]" in s for nm in _num_matches)]
         elif _fragments:
             pairs = [p for p in pairs
-                     if any(frag in p.cls_path.name.lower()
-                            or frag in p.gen_path.name.lower()
+                     if any(frag in p.gen_path.name.lower()
                             or frag in p.resume_path.name.lower()
                             for frag in _fragments)]
             skips = []
@@ -272,11 +232,11 @@ def render_sample(pair: SamplePair, verbose: bool = True, screenshots: bool = Tr
 
     if verbose:
         print(f"\n{tag} -- rendering ------------------------------------------")
-        print(f"  cls:    {pair.cls_path.relative_to(_REPO)}")
         print(f"  resume: {pair.resume_path.relative_to(_REPO)}")
         print(f"  gen:    {pair.gen_path.relative_to(_REPO)}")
 
-    # ── Stage 1: load LLM text ─────────────────────────────────────────────
+    # ── Stage 1: load LLM text and structured_resume ──────────────────────
+    structured_resume_data = None
     try:
         with open(pair.gen_path, encoding="utf-8") as f:
             gen = json.load(f)
@@ -284,6 +244,7 @@ def render_sample(pair: SamplePair, verbose: bool = True, screenshots: bool = Tr
         if not llm_text or not llm_text.strip():
             print(f"{tag} SKIP — empty LLM resume text in generation file")
             return False
+        structured_resume_data = gen.get("structured_resume") or None
     except Exception as e:
         print(f"{tag} FAIL [stage=load-llm] {type(e).__name__}: {e}")
         return False
@@ -311,17 +272,17 @@ def render_sample(pair: SamplePair, verbose: bool = True, screenshots: bool = Tr
     out_docx = out_rend_dir / f"{stem}.docx"
     out_pdf  = out_rend_dir / f"{stem}.pdf"
 
-    # ── Stage 3: load classification if a companion *_cls_output.json exists ─
+    # ── Stage 3: load classification from structured_resume in debug data ────
     classification = None
-    if pair.cls_output_path is not None:
+    if structured_resume_data:
         try:
             sys.path.insert(0, str(_REPO / "src"))
             from tailor.compiler.classification_models import ClassificationOutput
-            with open(pair.cls_output_path, encoding="utf-8") as f:
-                cls_dict = json.load(f)
-            classification = ClassificationOutput.from_dict(cls_dict)
-            if verbose:
-                print(f"  cls_output: {pair.cls_output_path.relative_to(_REPO)}")
+            cls_dict = structured_resume_data.get("classification")
+            if cls_dict:
+                classification = ClassificationOutput.from_dict(cls_dict)
+                if verbose:
+                    print(f"  classification: loaded from structured_resume in debug data")
         except Exception as e:
             print(f"{tag} WARN [stage=load-classification] {type(e).__name__}: {e} — rendering without classification")
             classification = None

@@ -363,6 +363,13 @@ _KNOWN_BAD_DOCX: dict[str, str] = {
         "The roundtrip sees a table block where the original had native w:cols — "
         "this is intentional structural change.  Real LLM rendering is visually correct."
     ),
+    "17-Mechanical-Engineer-Editable-Resume-Template-Download-in-docx.docx": (
+        "Two-column layout defined via intermediate sectPr (w:num=2 at body[96]): "
+        "the renderer now detects the 2-col area and converts it to a 2-cell table "
+        "(Task 3: same-lane continuation).  The roundtrip sees a table block where "
+        "the original had native w:cols — this is an intentional structural change. "
+        "Real LLM rendering is visually correct (2-column layout preserved)."
+    ),
     "14-Nurse-templage4.docx": (
         "Two-column sidebar template: PDF→DOCX pass is clean, but DOCX-of-DOCX "
         "stability check fails because the sidebar (CONTACT INFO, SKILLS & ABILITIES) "

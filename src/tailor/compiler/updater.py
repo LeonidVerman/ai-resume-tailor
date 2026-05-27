@@ -66,7 +66,7 @@ _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 # Semantic types that are NEVER modified regardless of LLM output (spec §3).
 # Only "summary", "experience", and "skills" are editable (spec §1).
 _LOCKED_SEMANTIC_TYPES: frozenset[str] = frozenset({
-    "education", "certifications", "languages", "websites",
+    "education", "certifications", "languages", "websites", "contact",
 })
 
 # Major resume content sections — a synthetic summary should appear before these,
@@ -143,9 +143,14 @@ def _match_sections(
                 break
 
     # Pass 3: skill-title similarity — match LLM "skills" sections to template
-    # sections whose title contains "skill" (e.g. "Skills & Abilities").  Handles
-    # templates where the skills section is classified as "other" rather than "skills"
-    # because its heading ("Skills & Abilities") was not in the parser's exact list.
+    # sections whose title contains skills-related keywords.  Handles templates
+    # where the skills section uses a different name ("Skills & Abilities",
+    # "Proficiency", "Competencies", "Technical Expertise", "Tools", etc.) and
+    # was classified as "other" rather than "skills" by the semantic parser.
+    _SKILL_TITLE_KWS = (
+        "skill", "proficien", "abilit", "competenc", "expertise",
+        "technolog", "tools", "stack", "technical",
+    )
     for li, ls in enumerate(llm):
         if li in used_llm:
             continue
@@ -154,10 +159,15 @@ def _match_sections(
         for oi, os_ in enumerate(orig):
             if oi in used_orig:
                 continue
-            if "skill" in os_.title.lower():
+            title_lo = os_.title.lower()
+            if any(kw in title_lo for kw in _SKILL_TITLE_KWS):
                 pairs.append((oi, li))
                 used_orig.add(oi)
                 used_llm.add(li)
+                _log.debug(
+                    "SKILLS_TITLE_MATCH: LLM %r → template %r (semantic=%s)",
+                    ls.heading, os_.title, os_.semantic_type,
+                )
                 break
 
     unmatched_llm = [li for li in range(len(llm)) if li not in used_llm]
@@ -172,7 +182,9 @@ def _match_sections(
         _verbatim_only = frozenset({"other"}) | _LOCKED_SEMANTIC_TYPES
         unmatched_content_orig = [
             oi for oi in range(len(orig))
-            if oi not in used_orig and orig[oi].semantic_type not in _verbatim_only
+            if oi not in used_orig
+            and orig[oi].semantic_type not in _verbatim_only
+            and (orig[oi].body_paras or orig[oi].roles)  # empty sections have nothing to inject
         ]
         all_orig_matched = len(unmatched_content_orig) == 0
         if not all_orig_matched:
@@ -211,6 +223,24 @@ def _match_sections(
         else:
             result_pairs.append((os_, None))
             llm_indices.append(None)
+
+    # Diagnostic: emit one log line per section showing the mapping result.
+    for os_, ls in result_pairs:
+        if ls is not None:
+            _log.debug(
+                "SECTION_MAP: template=%r(type=%s) → llm=%r(type=%s)",
+                os_.title[:40], os_.semantic_type, ls.heading[:40], ls.semantic_type,
+            )
+        else:
+            _log.debug(
+                "SECTION_MAP: template=%r(type=%s) → [verbatim, no llm match]",
+                os_.title[:40], os_.semantic_type,
+            )
+    for ls in extras:
+        _log.debug(
+            "SECTION_MAP: llm=%r(type=%s) → [extra, no template match]",
+            ls.heading[:40], ls.semantic_type,
+        )
 
     return _MatchResult(pairs=result_pairs, extras=extras, llm_indices=llm_indices)
 
@@ -291,7 +321,17 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     else:
         for i, meta_text in enumerate(llm_meta):
             if i < len(orig.meta_lines):
-                new_meta.append(orig.meta_lines[i].with_text(meta_text))
+                _orig_m = orig.meta_lines[i]
+                # Keep verbatim when the template meta spans multiple visual lines
+                # (w:br soft-return embedded in a single paragraph, indicated by \n
+                # in the parsed text).  Proportional run distribution on a shorter
+                # LLM string would mis-allocate text across bold/italic runs, e.g.
+                # losing the company-name bold on the first run.  The original
+                # paragraph already carries the correct content and formatting.
+                if layout_bound and "\n" in _orig_m.text:
+                    new_meta.append(_orig_m)
+                else:
+                    new_meta.append(_orig_m.with_text(meta_text))
             elif not layout_bound:
                 src = orig.meta_lines[-1] if orig.meta_lines else orig.header
                 new_meta.append(src.clone_as(meta_text, "role_meta"))
@@ -340,6 +380,7 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
 
     return RoleEntry(
         header=new_header,
+        header_extra=list(orig.header_extra),
         meta_lines=new_meta,
         bullets=new_bullets,
         role_id=orig.role_id,
@@ -840,6 +881,21 @@ def _update_body_section(
 
     # Build updated versions of each content para (paired by position with LLM lines).
     _is_skills = orig.semantic_type == "skills"
+
+    # For PDF-origin skills sections, compute the dominant font size to guard against
+    # anomalous sizes from PDF extraction artifacts (e.g. 15.8pt when body is 9.3pt).
+    _skills_dominant_font: "float | None" = None
+    if _is_skills:
+        _pdf_fsizes = [
+            p.paragraph_profile.font_size_pt
+            for p in content_paras
+            if p.paragraph_profile and p.paragraph_profile.font_size_pt
+            and p.paragraph_profile.font_size_pt > 0
+        ]
+        if len(_pdf_fsizes) >= 2:
+            import statistics as _stats
+            _skills_dominant_font = _stats.median(_pdf_fsizes)
+
     updated: list[ParaModel] = []
     for i, line in enumerate(packed_llm):
         if i < len(content_paras):
@@ -850,6 +906,25 @@ def _update_body_section(
             # render at normal paragraph indent like the GENERAL INFO section.
             if _is_skills and (pm.style.indent_left or 0) > 0:
                 pm = _clear_left_indent(pm)
+            # Normalize anomalous font sizes in PDF-origin skills sections.
+            # PDF extraction sometimes produces outlier sizes (e.g. 15.8pt mixed
+            # with 9.3pt body text); clamp to the dominant size so LLM replacement
+            # text renders at a consistent size.
+            if (
+                _skills_dominant_font is not None
+                and pm.paragraph_profile is not None
+                and pm.paragraph_profile.font_size_pt is not None
+                and pm.paragraph_profile.font_size_pt > _skills_dominant_font * 1.25
+            ):
+                from tailor.compiler.models import ParagraphProfile as _PPFS
+                _pp_norm = _PPFS.from_dict(pm.paragraph_profile.to_dict())
+                _pp_norm.font_size_pt = _skills_dominant_font
+                _pm_norm = ParaModel(
+                    text=pm.text, style=pm.style, semantic=pm.semantic,
+                    paragraph_profile=_pp_norm,
+                )
+                _pm_norm.para_id = pm.para_id
+                pm = _pm_norm
             updated.append(pm)
             _log.debug("UPDATER_LAYOUT_BOUND_REPLACEMENT: para_id=%r → %r",
                        content_paras[i].para_id, line[:60])
@@ -904,6 +979,27 @@ def _update_body_section(
         if _anchor_pid:
             _body_extra_injections.setdefault(_anchor_pid, []).append(extra_pm)
         new_body.append(extra_pm)
+
+    # When no content_paras existed (empty section body), every LLM line was
+    # cloned via clone_as() and carries para_id="".  Assign synthetic IDs so
+    # ir_validator's empty-para_id check (_epi_count > 2 → hard fail) passes.
+    if not content_paras:
+        _synth_i = 0
+        for _bp in new_body:
+            if _bp.text.strip() and not _bp.para_id:
+                _bp.para_id = f"_synth_{orig.section_id}_{_synth_i}"
+                _synth_i += 1
+
+    # Diagnostic: section replacement summary.
+    _n_orig = len(content_paras)
+    _n_inserted = min(len(updated), _n_orig)
+    _n_extra = max(0, len(updated) - _n_orig)
+    _n_dropped = max(0, _n_orig - len(updated))
+    _log.debug(
+        "BODY_REPLACE: section=%r orig_content=%d llm_lines=%d "
+        "replaced=%d extra=%d dropped=%d",
+        orig.title[:40], _n_orig, len(llm_lines), _n_inserted, _n_extra, _n_dropped,
+    )
 
     # Defensive copy of the heading ParaModel so that any later in-place
     # mutation of orig.heading.text (e.g. by apply_tailored's extras path
@@ -1080,6 +1176,30 @@ def _make_extra_section(
     for line in llm.body_lines:
         if line.strip():
             body_paras.append(_normalise_body_pm(body_arch.clone_as(line, "paragraph")))
+
+    # For PDF two-column docs: body_arch may come from the opposite column to
+    # the heading_arch (e.g. heading from a left sidebar section, body from a
+    # right-column education section).  Normalize all body_paras to the heading's
+    # column_id and indent so the section renders as a unit in one column.
+    _hcol = new_heading.paragraph_profile.column_id if new_heading.paragraph_profile else None
+    _hind = new_heading.paragraph_profile.indent_left_pt if new_heading.paragraph_profile else None
+    if _hcol is not None:
+        from tailor.compiler.models import ParagraphProfile as _PP_ec
+        _norm_bps = []
+        for _bp in body_paras:
+            if (_bp.paragraph_profile is not None
+                    and _bp.paragraph_profile.column_id != _hcol):
+                _pp_d = _bp.paragraph_profile.to_dict()
+                _pp_d["column_id"] = _hcol
+                if _hind is not None:
+                    _pp_d["indent_left_pt"] = _hind
+                _norm_bps.append(ParaModel(
+                    text=_bp.text, style=_bp.style, semantic=_bp.semantic,
+                    paragraph_profile=_PP_ec.from_dict(_pp_d),
+                ))
+            else:
+                _norm_bps.append(_bp)
+        body_paras = _norm_bps
 
     return ResumeSection(
         title=llm.heading,
@@ -2241,6 +2361,19 @@ def _update_experience_date_first(
             )
             continue
         llm_bullets = llm_roles[llm_idx].bullets
+        # When the matched LLM role has no bullets (e.g. the em-dash parser
+        # split a "Company Name – City" line into a header-only role), fall
+        # through to the adjacent LLM role whose header is the job-title line
+        # and whose bullets hold the actual content.
+        if not llm_bullets and llm_idx + 1 < len(llm_roles):
+            next_role = llm_roles[llm_idx + 1]
+            if next_role.bullets:
+                _log.debug(
+                    "date-first: LLM[%d] has no bullets — using LLM[%d] bullets "
+                    "for IR role %r",
+                    llm_idx, llm_idx + 1, ir_role.role_id,
+                )
+                llm_bullets = next_role.bullets
         # Warn when first LLM bullet looks like a role title rather than body content.
         if llm_bullets:
             first = llm_bullets[0]
@@ -2313,6 +2446,84 @@ def _update_experience_date_first(
 # Classification-constrained update helpers
 # ---------------------------------------------------------------------------
 
+def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
+    """Split a classification-rebuilt role into sub-roles when its bullet list
+    contains company-separator paragraphs.
+
+    Detects pattern: paragraph (company_name) + optional-empty* + role_meta
+    within role.bullets.  When found, splits into multiple sub-roles:
+    - First sub-role: uses meta_lines[0] as header when meta_lines are present
+      (handles the case where classification assigned a wrong para as the role
+      header but the actual company name is in meta_lines[0]).
+    - Subsequent sub-roles: company_para as header, leading role_meta as meta.
+    """
+    bullets = role.bullets
+    if not bullets:
+        return [role]
+
+    boundaries: list[int] = []
+    for i, p in enumerate(bullets):
+        if p.semantic not in ("paragraph", "role_header"):
+            continue
+        j = i + 1
+        while j < len(bullets) and not bullets[j].text.strip():
+            j += 1
+        if j < len(bullets) and bullets[j].semantic == "role_meta":
+            boundaries.append(i)
+
+    if not boundaries:
+        return [role]
+
+    cut_points = boundaries + [len(bullets)]
+    result: list[RoleEntry] = []
+
+    # For the first sub-role, prefer meta_lines[0] as header (company name)
+    # and meta_lines[1:] as remaining meta, since classification may have
+    # assigned a wrong para (e.g. a bullet) as the role's header_block.
+    if role.meta_lines:
+        first_header = role.meta_lines[0]
+        first_meta = role.meta_lines[1:]
+    else:
+        first_header = role.header
+        first_meta = []
+
+    result.append(RoleEntry(
+        header=first_header,
+        header_extra=role.header_extra,
+        meta_lines=first_meta,
+        bullets=bullets[: boundaries[0]],
+        role_id=first_header.text.strip(),
+        role_id_stable=first_header.para_id or first_header.text.strip(),
+    ))
+
+    for k in range(len(boundaries)):
+        company_para = bullets[boundaries[k]]
+        chunk = bullets[boundaries[k] + 1 : cut_points[k + 1]]
+
+        meta: list["ParaModel"] = []
+        bullet_start = 0
+        for m, p in enumerate(chunk):
+            if not p.text.strip():
+                bullet_start = m + 1
+                continue
+            if p.semantic == "role_meta":
+                meta.append(p)
+                bullet_start = m + 1
+            else:
+                break
+
+        result.append(RoleEntry(
+            header=company_para,
+            header_extra=[],
+            meta_lines=meta,
+            bullets=chunk[bullet_start:],
+            role_id=company_para.text.strip(),
+            role_id_stable=company_para.para_id or company_para.text.strip(),
+        ))
+
+    return result
+
+
 def _update_experience_classified(
     orig: ResumeSection,
     llm: LlmSection,
@@ -2326,15 +2537,37 @@ def _update_experience_classified(
     which is handled upstream):
     - Role header and meta lines are NEVER modified.
     - Only bullet text is updated.
+    - When classification provides more role structure than the parser (e.g.
+      a mega-role spanning multiple companies), expand via _split_cls_mega_role.
     - IR role count is authoritative: extra LLM roles are ignored; extra IR
       roles beyond the LLM output are kept verbatim.
 
-    When the template stores experience as flat body_paras (orig.roles=[]),
-    falls back to _update_body_classified so the LLM content is not silently
-    dropped.
+    Falls back to _update_body_classified when no role structure can be derived
+    from either the parser or classification.
     """
-    # Template has no role structure — treat like a body section so LLM
-    # content is applied to body_paras rather than silently dropped.
+    # Prefer classification-based role structure when it provides more
+    # granularity than the parser (e.g. mega-role spanning multiple companies).
+    if cls_sec.roles:
+        rebuilt = _rebuild_roles_from_classification(orig, cls_sec)
+        if rebuilt:
+            expanded: list[RoleEntry] = []
+            for r in rebuilt:
+                expanded.extend(_split_cls_mega_role(r))
+            if len(expanded) > len(orig.roles):
+                _log.debug(
+                    "classification: expanding %d parser roles → %d cls roles "
+                    "for section %r",
+                    len(orig.roles), len(expanded), orig.title,
+                )
+                orig = ResumeSection(
+                    title=orig.title,
+                    heading=orig.heading,
+                    semantic_type=orig.semantic_type,
+                    body_paras=orig.body_paras,
+                    roles=expanded,
+                    section_id=orig.section_id,
+                )
+
     if not orig.roles:
         _log.debug(
             "classification: experience section %r has no roles → delegating to body update",
@@ -2384,11 +2617,25 @@ def _update_experience_classified(
         "classification: section %r preserve_heading=%s rewrite_policy=%s",
         orig.title, cls_sec.preserve_heading, cls_sec.rewrite_policy,
     )
+    # Filter body_paras to exclude para_ids already claimed by roles, preventing
+    # SPLIT_BRAIN_BODY_PARAS validator failures.  Spacer paragraphs (empty or no
+    # para_id) are kept so layout_blocks renderer can find them via body_paras.
+    _role_para_ids: set[str] = set()
+    for r in updated_roles:
+        if r.header.para_id:
+            _role_para_ids.add(r.header.para_id)
+        for _p in r.header_extra + r.meta_lines + r.bullets:
+            if _p.para_id:
+                _role_para_ids.add(_p.para_id)
+    filtered_body = [
+        p for p in orig.body_paras
+        if not p.para_id or p.para_id not in _role_para_ids
+    ]
     return ResumeSection(
         title=orig.title,
         heading=orig.heading,
         semantic_type=orig.semantic_type,
-        body_paras=orig.body_paras,
+        body_paras=filtered_body,
         roles=updated_roles,
         section_id=orig.section_id,
     )
@@ -3495,6 +3742,7 @@ def apply_anchor_budgets(
         source_kind=updated.source_kind,
         layout_blocks=updated.layout_blocks,
         body_items=updated.body_items,
+        page_images=getattr(updated, "page_images", []),
     )
 
 
@@ -3536,11 +3784,15 @@ def apply_tailored(
     """
     # Build fast lookup indices from classification (empty dicts when absent).
     _sec_cls: dict[str, ClassificationSection] = {}
+    _sec_cls_by_title: dict[str, ClassificationSection] = {}
     _role_cls: dict[str, ClassificationRole] = {}
     if classification is not None:
         for _cs in classification.sections:
             if _cs.section_id:
                 _sec_cls[_cs.section_id] = _cs
+            _title_key = (_cs.raw_title or "").lower().strip()
+            if _title_key and _title_key not in _sec_cls_by_title:
+                _sec_cls_by_title[_title_key] = _cs
             for _cr in _cs.roles:
                 if _cr.role_id:
                     _role_cls[_cr.role_id] = _cr
@@ -3548,6 +3800,31 @@ def apply_tailored(
             "apply_tailored: classification loaded — %d sections, %d roles indexed",
             len(_sec_cls), len(_role_cls),
         )
+
+    def _resolve_cls_sec(orig_section: "ResumeSection") -> "ClassificationSection | None":
+        """Look up classification for orig_section, with title-based fallback.
+
+        PDF-origin IRs assign section_ids sequentially from only the sections
+        the parser detects (header paragraphs are not sections), while the
+        classification was built from a DOCX parse that includes header elements
+        as extra sections. This shifts all section_ids. The title-based fallback
+        corrects the mismatch when semantic_types disagree.
+        """
+        by_id = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+        if by_id is not None and by_id.semantic_type == orig_section.semantic_type:
+            return by_id
+        title_key = (orig_section.title or "").lower().strip()
+        by_title = _sec_cls_by_title.get(title_key)
+        if by_title is not None:
+            if by_id is not None:
+                _log.debug(
+                    "apply_tailored: section_id %r resolved to %r (%s) but "
+                    "semantic_type mismatch (cls=%s, ir=%s); using title match %r instead",
+                    orig_section.section_id, by_id.raw_title, by_id.section_id,
+                    by_id.semantic_type, orig_section.semantic_type, by_title.section_id,
+                )
+            return by_title
+        return by_id
 
     # Layout-bound mode: active when layout_blocks are present and the flag is on.
     # normalize_llm_sections runs whenever layout_blocks exist (flag-independent):
@@ -3583,19 +3860,35 @@ def apply_tailored(
                 sum(1 for p in orig_section.body_paras
                     if p.text.strip() and p.semantic == "role_meta"),
             )
-            cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+            cls_sec = _resolve_cls_sec(orig_section)
             if cls_sec is not None and cls_sec.rewrite_policy == "preserve":
                 return orig_section
             # When classification has roles, use them to reconstruct role
             # boundaries instead of the deterministic date-first heuristic.
+            # Expand any mega-role (e.g. multiple companies under one cls role)
+            # so each company gets its own role entry matched to an LLM role.
             if cls_sec is not None and cls_sec.roles:
-                rebuilt = _rebuild_roles_from_classification(orig_section, cls_sec)
+                rebuilt_raw = _rebuild_roles_from_classification(orig_section, cls_sec)
+                rebuilt: list[RoleEntry] = []
+                for _r in rebuilt_raw:
+                    rebuilt.extend(_split_cls_mega_role(_r))
             else:
                 rebuilt = _rebuild_date_first_roles(orig_section)
             return _update_experience_date_first(orig_section, llm_section, rebuilt)
 
-        # Classification-constrained path: look up by stable section_id.
-        cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+        # Classification-constrained path: look up by section_id with title fallback.
+        cls_sec = _resolve_cls_sec(orig_section)
+        # Pattern C guard: LLM classifier sometimes labels OBJECTIVE/PROFILE
+        # sections as other/preserve when it doesn't recognise the heading.
+        # The PDF parser already set semantic_type="summary", so trust the IR and
+        # bypass classification to let the unclassified path rewrite the content.
+        if (
+            cls_sec is not None
+            and cls_sec.rewrite_policy == "preserve"
+            and orig_section.semantic_type == "summary"
+            and cls_sec.semantic_type != "summary"
+        ):
+            cls_sec = None
         if cls_sec is not None:
             return _apply_section_classified(
                 orig_section, llm_section, cls_sec, _role_cls, layout_bound=_layout_bound
@@ -3957,12 +4250,25 @@ def apply_tailored(
                                 break
                         # Guard: if there are template sections AFTER the first
                         # experience section (e.g. References), technical skills
-                        # belong at the document end (right column, after References),
-                        # not crowded into the left sidebar alongside narrative
-                        # sections like Communication / Leadership (sample 12).
+                        # belong at the document end, unless the template is a
+                        # 2-row sidebar layout (header row + one body row with a
+                        # sidebar cell containing multiple independent sections).
+                        # For 2-row sidebar layouts the left cell has all sidebar
+                        # sections in one place and is the correct injection target.
                         _post_exp_sections = original.sections[_left_col_end + 1:]
                         if _post_exp_sections and _left_sec is not None:
-                            _left_sec = None  # fall back to document-end placement
+                            from tailor.compiler.models import LayoutTableBlock as _LTB
+                            _main_tbl_rows = 0
+                            for _lb in (original.layout_blocks or []):
+                                if isinstance(_lb, _LTB):
+                                    from lxml import etree as _etree_g
+                                    _W_g = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+                                    _te = _etree_g.fromstring(_lb.xml_proto_xml)
+                                    _main_tbl_rows = len(_te.findall(f"{{{_W_g}}}tr"))
+                                    break
+                            # 2-row table = header row + sidebar body row: safe to inject
+                            if _main_tbl_rows != 2:
+                                _left_sec = None  # fall back to document-end placement
                         if _left_sec is not None:
                             if _anchor_bp is not None:
                                 _skill_lines = _sanitize_skills_lines(
@@ -4024,6 +4330,13 @@ def apply_tailored(
                 _log.debug(
                     "apply_tailored: discarding other-type extra %r "
                     "(verbatim other sections exist)", llm_s.heading,
+                )
+            elif not llm_s.body_lines and not llm_s.roles:
+                # Empty extra section (no content, no roles) — discard.  These arise
+                # when the LLM emits a stale section marker (e.g. "Additional") whose
+                # real body lines were emitted as child sections that matched originals.
+                _log.debug(
+                    "apply_tailored: discarding empty extra section %r", llm_s.heading,
                 )
             else:
                 llm_order_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
@@ -4746,7 +5059,11 @@ def apply_tailored(
                 # Prefer the last bound bullet as anchor (overflow case);
                 # fall back to the role header when the template has NO bullet slots
                 # (all bullets are unbound).
-                _anchor = _bound_bullets[-1] if _bound_bullets else _role.header
+                _anchor = (
+                    _bound_bullets[-1] if _bound_bullets
+                    else _role.meta_lines[-1] if (_role.meta_lines and _role.meta_lines[-1].para_id)
+                    else _role.header
+                )
                 if _anchor.para_id:
                     _exp_extras.setdefault(_anchor.para_id, []).extend(_unbound_bullets)
         if _exp_extras:
@@ -4760,6 +5077,220 @@ def apply_tailored(
         _ei = getattr(_sec, "_extra_injections", None)
         if _ei:
             _all_extra_injections.update(_ei)
+
+    # ── Experience synth-body injection: WH-column vMerge restart cells ─────
+    # For experience sections where all non-empty body_paras carry synthetic
+    # para_ids (template had no original body anchors), inject LLM bullets
+    # after the vMerge=restart date cells in the WH column of the table.
+    if _result_layout_blocks:
+        from tailor.compiler.models import LayoutTableBlock as _LTBWHI
+        from lxml import etree as _etrwhi
+        from copy import deepcopy as _dcwhi
+        _W_WH = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        for _whi_sec in new_sections:
+            if _whi_sec.semantic_type != "experience" or not _whi_sec.body_paras:
+                continue
+            _whi_nonmt = [bp for bp in _whi_sec.body_paras if bp.text.strip()]
+            if not _whi_nonmt or not all(bp.para_id.startswith("_synth_") for bp in _whi_nonmt):
+                continue
+            _whi_head_pid = _whi_sec.heading.para_id
+            _whi_tbl = next(
+                (b for b in _result_layout_blocks
+                 if isinstance(b, _LTBWHI) and _whi_head_pid in b.para_ids),
+                None,
+            )
+            if not _whi_tbl or not _whi_tbl.xml_proto_xml:
+                continue
+            _whi_xml = _etrwhi.fromstring(_whi_tbl.xml_proto_xml.encode("utf-8"))
+            _whi_all_p = _whi_xml.findall(f".//{{{_W_WH}}}p")
+            _whi_pelem2pid = {id(p): pid for pid, p in zip(_whi_tbl.para_ids, _whi_all_p)}
+            # Find WH heading column(s).
+            _whi_cols: "set[int]" = set()
+            for _whi_tr in _whi_xml.findall(f"{{{_W_WH}}}tr"):
+                _whi_co = 0
+                for _whi_tc in _whi_tr.findall(f"{{{_W_WH}}}tc"):
+                    _whi_tcpr = _whi_tc.find(f"{{{_W_WH}}}tcPr")
+                    _whi_gs = 1
+                    if _whi_tcpr is not None:
+                        _whi_gse = _whi_tcpr.find(f"{{{_W_WH}}}gridSpan")
+                        if _whi_gse is not None:
+                            _whi_gs = int(_whi_gse.get(f"{{{_W_WH}}}val", 1))
+                    if _whi_head_pid in [_whi_pelem2pid.get(id(p)) for p in _whi_tc.findall(f"{{{_W_WH}}}p")]:
+                        _whi_cols = set(range(_whi_co, _whi_co + _whi_gs))
+                    _whi_co += _whi_gs
+            if not _whi_cols:
+                continue
+            # Build para text lookup from all sections.
+            _whi_plookup: "dict[str, str]" = {}
+            for _s in new_sections:
+                if _s.heading:
+                    _whi_plookup[_s.heading.para_id] = _s.heading.text.strip()
+                for _bp in (_s.body_paras or []):
+                    if _bp.text.strip():
+                        _whi_plookup[_bp.para_id] = _bp.text.strip()
+            # Collect vMerge=restart cells and all non-empty WH-column texts.
+            _whi_restarts: "list[tuple]" = []
+            _whi_col_texts: "set[str]" = set()
+            for _whi_tr in _whi_xml.findall(f"{{{_W_WH}}}tr"):
+                _whi_co = 0
+                for _whi_tc in _whi_tr.findall(f"{{{_W_WH}}}tc"):
+                    _whi_tcpr = _whi_tc.find(f"{{{_W_WH}}}tcPr")
+                    _whi_gs, _whi_vm = 1, None
+                    if _whi_tcpr is not None:
+                        _whi_gse = _whi_tcpr.find(f"{{{_W_WH}}}gridSpan")
+                        if _whi_gse is not None:
+                            _whi_gs = int(_whi_gse.get(f"{{{_W_WH}}}val", 1))
+                        _whi_vme = _whi_tcpr.find(f"{{{_W_WH}}}vMerge")
+                        if _whi_vme is not None:
+                            _whi_vm = _whi_vme.get(f"{{{_W_WH}}}val", "continue")
+                    if set(range(_whi_co, _whi_co + _whi_gs)) & _whi_cols:
+                        for _whi_p in _whi_tc.findall(f"{{{_W_WH}}}p"):
+                            _whi_ppid = _whi_pelem2pid.get(id(_whi_p))
+                            if _whi_ppid:
+                                _whi_pt = _whi_plookup.get(_whi_ppid, "")
+                                if _whi_pt:
+                                    _whi_col_texts.add(_whi_pt)
+                                if _whi_vm == "restart" and _whi_ppid != _whi_head_pid:
+                                    _whi_restarts.append((_whi_ppid, _whi_pt, _whi_p))
+                    _whi_co += _whi_gs
+            if not _whi_restarts:
+                continue
+            # Build body-text proto from first restart cell, stripping bold/italic.
+            _whi_body_proto = _dcwhi(_whi_restarts[0][2])
+            for _whi_rpr in _whi_body_proto.findall(f".//{{{_W_WH}}}rPr"):
+                for _whi_tag in ("b", "bCs", "i", "iCs"):
+                    _whi_el = _whi_rpr.find(f"{{{_W_WH}}}{_whi_tag}")
+                    if _whi_el is not None:
+                        _whi_rpr.remove(_whi_el)
+            for _whi_t in _whi_body_proto.findall(f".//{{{_W_WH}}}t"):
+                _whi_t.text = ""
+            # Group body_paras by role; match date text to restart cell text.
+            # Paras whose text is a substring of (or contains) any WH-column text
+            # are already shown (title/company) and are skipped.
+            _whi_role_groups: "list[tuple]" = []
+            _whi_cur_anchor: "str | None" = None
+            _whi_cur_bullets: "list" = []
+            for _whi_bp in _whi_sec.body_paras:
+                _whi_bt = _whi_bp.text.strip()
+                if not _whi_bt:
+                    continue
+                _whi_dmatch = next(
+                    (_rpid for _rpid, _rtext, _ in _whi_restarts if _whi_bt == _rtext),
+                    None,
+                )
+                if _whi_dmatch:
+                    if _whi_cur_anchor and _whi_cur_bullets:
+                        _whi_role_groups.append((_whi_cur_anchor, list(_whi_cur_bullets)))
+                    _whi_cur_anchor = _whi_dmatch
+                    _whi_cur_bullets = []
+                elif any(
+                    _whi_bt.lower() in _ct.lower() or _ct.lower() in _whi_bt.lower()
+                    for _ct in _whi_col_texts
+                ):
+                    pass  # already shown as title/company in WH column
+                else:
+                    if _whi_cur_anchor:
+                        _whi_bp.style.xml_proto = _whi_body_proto
+                        _whi_cur_bullets.append(_whi_bp)
+            if _whi_cur_anchor and _whi_cur_bullets:
+                _whi_role_groups.append((_whi_cur_anchor, list(_whi_cur_bullets)))
+            for _whi_anc, _whi_blts in _whi_role_groups:
+                if _whi_blts:
+                    _all_extra_injections.setdefault(_whi_anc, []).extend(_whi_blts)
+                    _log.debug(
+                        "WH_SYNTH_BULLETS: anchor=%r bullets=%d",
+                        _whi_anc, len(_whi_blts),
+                    )
+
+    # ── Skills-unbound table injection ───────────────────────────────────────
+    # Place Technical Skills inside the CI column of the table instead of
+    # appending full-width LayoutParagraphBlocks after the table.
+    _skills_in_table = False
+    if _result_layout_blocks:
+        from tailor.compiler.models import LayoutTableBlock as _LTBSKI
+        from lxml import etree as _etrski
+        from copy import deepcopy as _dcski
+        _W_SK = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        _ski_unbound = [
+            s for s in new_sections
+            if s.section_id == "sec_skills_unbound" and s.semantic_type == "skills"
+        ]
+        if _ski_unbound:
+            _ski_csecs = [s for s in new_sections if s.semantic_type == "contact"]
+            if _ski_csecs:
+                _ski_ci_hpid = _ski_csecs[0].heading.para_id
+                _ski_tbl = next(
+                    (b for b in _result_layout_blocks
+                     if isinstance(b, _LTBSKI) and _ski_ci_hpid in b.para_ids),
+                    None,
+                )
+                if _ski_tbl and _ski_tbl.xml_proto_xml:
+                    _ski_xml = _etrski.fromstring(_ski_tbl.xml_proto_xml.encode("utf-8"))
+                    _ski_all_p = _ski_xml.findall(f".//{{{_W_SK}}}p")
+                    _ski_pelem2pid = {id(p): pid for pid, p in zip(_ski_tbl.para_ids, _ski_all_p)}
+                    # Find CI column(s) from the CI section heading cell.
+                    _ski_ci_cols: "set[int]" = set()
+                    for _ski_tr in _ski_xml.findall(f"{{{_W_SK}}}tr"):
+                        _ski_co = 0
+                        for _ski_tc in _ski_tr.findall(f"{{{_W_SK}}}tc"):
+                            _ski_tcpr = _ski_tc.find(f"{{{_W_SK}}}tcPr")
+                            _ski_gs = 1
+                            if _ski_tcpr is not None:
+                                _ski_gse = _ski_tcpr.find(f"{{{_W_SK}}}gridSpan")
+                                if _ski_gse is not None:
+                                    _ski_gs = int(_ski_gse.get(f"{{{_W_SK}}}val", 1))
+                            if _ski_ci_hpid in [_ski_pelem2pid.get(id(p)) for p in _ski_tc.findall(f"{{{_W_SK}}}p")]:
+                                _ski_ci_cols = set(range(_ski_co, _ski_co + _ski_gs))
+                            _ski_co += _ski_gs
+                    if _ski_ci_cols:
+                        # Collect CI column para_ids in document order.
+                        _ski_ci_pids: "list[tuple]" = []
+                        _ski_ci_hpelem = None
+                        _ski_ci_bpelem = None
+                        for _ski_tr in _ski_xml.findall(f"{{{_W_SK}}}tr"):
+                            _ski_co = 0
+                            for _ski_tc in _ski_tr.findall(f"{{{_W_SK}}}tc"):
+                                _ski_tcpr = _ski_tc.find(f"{{{_W_SK}}}tcPr")
+                                _ski_gs = 1
+                                if _ski_tcpr is not None:
+                                    _ski_gse = _ski_tcpr.find(f"{{{_W_SK}}}gridSpan")
+                                    if _ski_gse is not None:
+                                        _ski_gs = int(_ski_gse.get(f"{{{_W_SK}}}val", 1))
+                                if set(range(_ski_co, _ski_co + _ski_gs)) & _ski_ci_cols:
+                                    for _ski_p in _ski_tc.findall(f"{{{_W_SK}}}p"):
+                                        _ski_ppid = _ski_pelem2pid.get(id(_ski_p))
+                                        if _ski_ppid:
+                                            _ski_ci_pids.append((_ski_ppid, _ski_p))
+                                            if _ski_ppid == _ski_ci_hpid:
+                                                _ski_ci_hpelem = _ski_p
+                                            elif _ski_ci_bpelem is None and _ski_p.find(f"{{{_W_SK}}}r") is not None:
+                                                _ski_ci_bpelem = _ski_p
+                                _ski_co += _ski_gs
+                        if _ski_ci_pids and _ski_ci_hpelem is not None:
+                            _ski_anchor_pid = _ski_ci_pids[-1][0]
+                            # Heading proto from CI section heading element.
+                            _ski_h_proto = _dcski(_ski_ci_hpelem)
+                            for _ski_t in _ski_h_proto.findall(f".//{{{_W_SK}}}t"):
+                                _ski_t.text = ""
+                            # Body proto from first CI body cell that has runs, bold/italic stripped.
+                            _ski_b_src = _ski_ci_bpelem if _ski_ci_bpelem is not None else _ski_ci_hpelem
+                            _ski_b_proto = _dcski(_ski_b_src)
+                            for _ski_rpr in _ski_b_proto.findall(f".//{{{_W_SK}}}rPr"):
+                                for _ski_tag in ("b", "bCs", "i", "iCs"):
+                                    _ski_el = _ski_rpr.find(f"{{{_W_SK}}}{_ski_tag}")
+                                    if _ski_el is not None:
+                                        _ski_rpr.remove(_ski_el)
+                            for _ski_t in _ski_b_proto.findall(f".//{{{_W_SK}}}t"):
+                                _ski_t.text = ""
+                            for _su in _ski_unbound:
+                                _su.heading.style.xml_proto = _ski_h_proto
+                                _ski_paras: "list[ParaModel]" = [_su.heading]
+                                for _sbp in _su.body_paras:
+                                    if _sbp.text.strip():
+                                        _sbp.style.xml_proto = _ski_b_proto
+                                        _ski_paras.append(_sbp)
+                                _all_extra_injections.setdefault(_ski_anchor_pid, []).extend(_ski_paras)
+                            _skills_in_table = True
 
     if _all_extra_injections and _result_layout_blocks:
         from tailor.compiler.models import LayoutParagraphBlock as _LPB, LayoutTableBlock as _LTB
@@ -4882,7 +5413,8 @@ def apply_tailored(
     # synthetic para_id so the layout-blocks renderer looks it up via para_lookup
     # and renders it using the paragraph's style.xml_proto at document end.
     # Rule 2/4: content pushes to next page naturally if it overflows.
-    if _result_layout_blocks is not None:
+    # Skip when skills were already injected into the table CI column.
+    if _result_layout_blocks is not None and not _skills_in_table:
         _skills_unbound_secs = [
             s for s in new_sections
             if s.section_id == "sec_skills_unbound" and s.semantic_type == "skills"
@@ -4915,6 +5447,7 @@ def apply_tailored(
         source_kind=original.source_kind,
         body_items=original.body_items if (has_table_blocks and not has_unhandled_extras) else None,
         layout_blocks=_result_layout_blocks,
+        page_images=getattr(original, "page_images", []),
     )
 
     # Apply per-slot text-length budgets in layout-bound mode.  Runs last so
