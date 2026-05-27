@@ -881,6 +881,21 @@ def _update_body_section(
 
     # Build updated versions of each content para (paired by position with LLM lines).
     _is_skills = orig.semantic_type == "skills"
+
+    # For PDF-origin skills sections, compute the dominant font size to guard against
+    # anomalous sizes from PDF extraction artifacts (e.g. 15.8pt when body is 9.3pt).
+    _skills_dominant_font: "float | None" = None
+    if _is_skills:
+        _pdf_fsizes = [
+            p.paragraph_profile.font_size_pt
+            for p in content_paras
+            if p.paragraph_profile and p.paragraph_profile.font_size_pt
+            and p.paragraph_profile.font_size_pt > 0
+        ]
+        if len(_pdf_fsizes) >= 2:
+            import statistics as _stats
+            _skills_dominant_font = _stats.median(_pdf_fsizes)
+
     updated: list[ParaModel] = []
     for i, line in enumerate(packed_llm):
         if i < len(content_paras):
@@ -891,6 +906,25 @@ def _update_body_section(
             # render at normal paragraph indent like the GENERAL INFO section.
             if _is_skills and (pm.style.indent_left or 0) > 0:
                 pm = _clear_left_indent(pm)
+            # Normalize anomalous font sizes in PDF-origin skills sections.
+            # PDF extraction sometimes produces outlier sizes (e.g. 15.8pt mixed
+            # with 9.3pt body text); clamp to the dominant size so LLM replacement
+            # text renders at a consistent size.
+            if (
+                _skills_dominant_font is not None
+                and pm.paragraph_profile is not None
+                and pm.paragraph_profile.font_size_pt is not None
+                and pm.paragraph_profile.font_size_pt > _skills_dominant_font * 1.25
+            ):
+                from tailor.compiler.models import ParagraphProfile as _PPFS
+                _pp_norm = _PPFS.from_dict(pm.paragraph_profile.to_dict())
+                _pp_norm.font_size_pt = _skills_dominant_font
+                _pm_norm = ParaModel(
+                    text=pm.text, style=pm.style, semantic=pm.semantic,
+                    paragraph_profile=_pp_norm,
+                )
+                _pm_norm.para_id = pm.para_id
+                pm = _pm_norm
             updated.append(pm)
             _log.debug("UPDATER_LAYOUT_BOUND_REPLACEMENT: para_id=%r → %r",
                        content_paras[i].para_id, line[:60])
@@ -1142,6 +1176,30 @@ def _make_extra_section(
     for line in llm.body_lines:
         if line.strip():
             body_paras.append(_normalise_body_pm(body_arch.clone_as(line, "paragraph")))
+
+    # For PDF two-column docs: body_arch may come from the opposite column to
+    # the heading_arch (e.g. heading from a left sidebar section, body from a
+    # right-column education section).  Normalize all body_paras to the heading's
+    # column_id and indent so the section renders as a unit in one column.
+    _hcol = new_heading.paragraph_profile.column_id if new_heading.paragraph_profile else None
+    _hind = new_heading.paragraph_profile.indent_left_pt if new_heading.paragraph_profile else None
+    if _hcol is not None:
+        from tailor.compiler.models import ParagraphProfile as _PP_ec
+        _norm_bps = []
+        for _bp in body_paras:
+            if (_bp.paragraph_profile is not None
+                    and _bp.paragraph_profile.column_id != _hcol):
+                _pp_d = _bp.paragraph_profile.to_dict()
+                _pp_d["column_id"] = _hcol
+                if _hind is not None:
+                    _pp_d["indent_left_pt"] = _hind
+                _norm_bps.append(ParaModel(
+                    text=_bp.text, style=_bp.style, semantic=_bp.semantic,
+                    paragraph_profile=_PP_ec.from_dict(_pp_d),
+                ))
+            else:
+                _norm_bps.append(_bp)
+        body_paras = _norm_bps
 
     return ResumeSection(
         title=llm.heading,
