@@ -191,24 +191,6 @@ def build_para_element(pm: ParaModel, doc_part=None, skip_bg_shd: bool = False) 
         spc = etree.SubElement(pPr, f"{{{_W}}}spacing")
         spc.set(f"{{{_W}}}before", str(int((pp.space_before_pt or 0) * 20)))
         spc.set(f"{{{_W}}}after", str(int((pp.space_after_pt or 0) * 20)))
-        # Explicit line height: w:lineRule="exact" pins LibreOffice to a
-        # fixed line height, preventing the renderer's default 1.15× factor
-        # from adding extra height per line.
-        # - Two-column paragraphs use 1.1× to preserve the column-layout
-        #   geometry that the evaluator relies on.
-        # - Single-column paragraphs use 1.0× (exact font size) to avoid
-        #   accumulating 0.1×font excess over 30–60 lines, which causes
-        #   page overflow on dense single-column resumes.
-        if pp.font_size_pt:
-            _is_two_col_para = pp.column_id in ("left", "right")
-            _line_factor = 1.1 if _is_two_col_para else 1.0
-            spc.set(f"{{{_W}}}line", str(int(pp.font_size_pt * _line_factor * 20)))
-            # Always use "atLeast" so LibreOffice does not clip indented paragraphs.
-            # LibreOffice has a rendering defect where lineRule="exact" combined with
-            # w:ind makes the paragraph invisible inside a table cell.  "atLeast"
-            # produces correct output everywhere and still anchors layout because the
-            # specified value is the minimum line height.
-            spc.set(f"{{{_W}}}lineRule", "atLeast")
 
         # Indentation (twips = pt × 20).  Bullets already have w:ind set above.
         if pp.indent_left_pt and pm.semantic != "bullet":

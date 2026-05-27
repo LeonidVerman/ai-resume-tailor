@@ -570,10 +570,37 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
     Additionally:
     - For sections with roles, all body_paras are cleared (original role-header
       lines and bullets already encoded in role objects cause double-rendering).
+      This runs for ALL PDF docs (single- and two-column) to prevent duplication
+      in experience sections where the updater preserves orig.body_paras verbatim.
     - Stale cloned meta_lines are cleared for pipe-format role headers (company
       and dates are already in the header; the meta_line copy is redundant).
     """
+    # Phase 2 Priority 2: clear body_paras for any PDF section that has roles.
+    # _update_experience_section returns body_paras=orig.body_paras in non-layout-
+    # bound mode (all PDF paths), so original role text duplicates the LLM roles.
+    # Run unconditionally before the two-column guard so single-column PDFs benefit.
+    _body_cleared = False
+    for sec in doc.sections:
+        if sec.roles and sec.body_paras:
+            sec.body_paras = []
+            _body_cleared = True
+            for role in sec.roles:
+                if role.header.text and "|" in role.header.text:
+                    role.meta_lines.clear()
+
     if doc.layout.column_split_x is None:
+        if _body_cleared:
+            from tailor.compiler.models import ParaModel as _PM
+            new_all: "list[_PM]" = list(doc.header_paras)
+            for sec in doc.sections:
+                new_all.append(sec.heading)
+                new_all.extend(sec.body_paras)
+                for role in sec.roles:
+                    new_all.append(role.header)
+                    new_all.extend(role.header_extra)
+                    new_all.extend(role.meta_lines)
+                    new_all.extend(role.bullets)
+            doc.all_paras = new_all
         return
 
     def _is_category_heading(title: str) -> bool:
@@ -615,23 +642,6 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
         if _is_orphan(s) and _col_of(s) == "right"
     }
     orphan_idxs = left_orphan_idxs | right_orphan_idxs
-
-    # Clear stale body_paras for sections that have role objects.  PDF-sourced
-    # experience sections often have body_paras containing the original role-header
-    # lines and bullets (not recognised as role objects due to non-standard
-    # formatting) alongside proper role objects for entries the parser DID parse.
-    # Keeping both causes duplicate or misplaced rendering; since the role objects
-    # carry the LLM-updated content, the body_paras are redundant.
-    # Run unconditionally (before the orphan early-return) so section-row table
-    # layouts with no orphans still benefit from this cleanup.
-    _body_cleared = False
-    for sec in doc.sections:
-        if sec.roles and sec.body_paras:
-            sec.body_paras = []
-            _body_cleared = True
-            for role in sec.roles:
-                if role.header.text and "|" in role.header.text:
-                    role.meta_lines.clear()
 
     if not orphan_idxs:
         if _body_cleared:
@@ -989,7 +999,7 @@ def compile_resume_from_pdf(
         template_ir.footer_paras = _footer_paras
 
     llm_sections = parse_llm_output(llm_text)
-    llm_sections = apply_layout_fitting(template_ir, llm_sections)
+    llm_sections = apply_layout_fitting(template_ir, llm_sections, skip_compaction=True)
     updated = apply_tailored(template_ir, llm_sections, classification=classification)
 
     # Re-inject footer paras if they were lost during apply_tailored

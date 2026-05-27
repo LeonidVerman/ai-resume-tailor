@@ -1745,12 +1745,17 @@ def _render_pdf_single_col_dark_header(doc: "ResumeDocument", body, sectPr, doc_
 def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> None:
     """Render a two-column PDF-sourced document as a borderless DOCX table.
 
-    Creates a full-page-width single-row w:tbl pushed to the page left edge
-    via a negative w:tblInd (bypassing the left margin).  Left cell width =
+    Creates a full-page-width w:tbl pushed to the page left edge via a negative
+    w:tblInd (bypassing the left margin).  Left cell width =
     layout.left_col_width_twips (from the visual sidebar boundary); right cell
     fills the remainder.  The left cell receives cell shading from
     layout.left_col_bg_color when available.  All paragraphs tagged
     column_id='left' go into the left cell; everything else goes right.
+
+    When a dark header band is detected the header paragraphs are placed in a
+    merged first row (gridSpan across all columns) inside the SAME table.
+    This avoids the two-separate-tables-with-negative-tblInd structure that
+    causes LibreOffice to strip cell shading on the standalone header band.
     """
     from lxml import etree
     from tailor.compiler.para_builder import build_para_element
@@ -1781,74 +1786,9 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     right_w = max(right_w, 2000)  # floor: prevent degenerate right cell
     total_w = left_w + right_w
 
-    # Table element
-    tbl = etree.Element(f"{{{_W}}}tbl")
-
-    # Table properties: full page width, negative indent to reach the page
-    # left edge (past the left margin), fixed layout, no borders, no cell margins.
-    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
-    tblW = etree.SubElement(tblPr, f"{{{_W}}}tblW")
-    tblW.set(f"{{{_W}}}w", str(total_w))
-    tblW.set(f"{{{_W}}}type", "dxa")
-
-    # Negative tblInd pushes the table left by left_margin_twips so the
-    # sidebar reaches the physical page edge (matching the PDF visual).
-    tblInd = etree.SubElement(tblPr, f"{{{_W}}}tblInd")
-    tblInd.set(f"{{{_W}}}w", str(-left_margin_twips))
-    tblInd.set(f"{{{_W}}}type", "dxa")
-
-    # Fixed layout so Word honours the explicit column widths.
-    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
-    tblLayout.set(f"{{{_W}}}type", "fixed")
-
-    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
-    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
-        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
-        brd.set(f"{{{_W}}}val", "none")
-
-    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
-    for side in ("top", "left", "bottom", "right"):
-        m = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
-        m.set(f"{{{_W}}}w", "0")
-        m.set(f"{{{_W}}}type", "dxa")
-
-    # Single row
-    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
-
-    # Left cell
-    left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
-    left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
-    left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
-    left_tcW.set(f"{{{_W}}}w", str(left_w))
-    left_tcW.set(f"{{{_W}}}type", "dxa")
-    if layout.left_col_bg_color:
-        shd = etree.SubElement(left_tcPr, f"{{{_W}}}shd")
-        shd.set(f"{{{_W}}}val", "clear")
-        shd.set(f"{{{_W}}}color", "auto")
-        shd.set(f"{{{_W}}}fill", layout.left_col_bg_color)
-
-    # Right cell
-    right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
-    right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
-    right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
-    right_tcW.set(f"{{{_W}}}w", str(right_w))
-    right_tcW.set(f"{{{_W}}}type", "dxa")
-    if layout.right_col_bg_color:
-        shd = etree.SubElement(right_tcPr, f"{{{_W}}}shd")
-        shd.set(f"{{{_W}}}val", "clear")
-        shd.set(f"{{{_W}}}color", "auto")
-        shd.set(f"{{{_W}}}fill", layout.right_col_bg_color)
-
-    # Separate doc.header_paras into:
-    #   above_paras  — full-width above-table items (dark-background name/title,
-    #                  or items with no column assignment)
-    #   hdr_left/right — light-background header items that belong in a cell
-    #                    (e.g. LLM-injected summary placed in the right column)
-    # This handles templates where the dark header band contains name+title
-    # whose column_id was set to "right" by the PDF parser (text past the
-    # sidebar boundary) while the LLM summary should land in the right cell.
+    # Classify header_paras early so we know whether a dark header row is needed
+    # before building the table element.
     _header_ids: frozenset[int] = frozenset(id(pm) for pm in doc.header_paras)
-    _LIGHT_BG = frozenset(("ffffff", "fefefe", "f8f8f8"))
 
     def _is_dark_bg(pm) -> bool:
         pp = pm.paragraph_profile
@@ -1857,10 +1797,6 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         bg = pp.background_color
         if not bg:
             return False
-        # Use luminance threshold: dark = average channel < 128.
-        # This correctly classifies near-white light backgrounds (e.g. fdf3eb peach,
-        # fafafa light gray) as NOT dark, preventing them from triggering the
-        # full-width dark-header-band rendering that is only for truly dark bands.
         try:
             r = int(bg[0:2], 16)
             g = int(bg[2:4], 16)
@@ -1890,10 +1826,130 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         pm for pm in body_paras
         if pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
     ]
+    # column_id=None body paras (cross-column or unassigned) fall back to the
+    # right column so LLM-injected sections whose archetype was a full-width
+    # header para are not silently dropped from the rendered output.
     right_paras = _hdr_right + [
         pm for pm in body_paras
-        if pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
+        if not pm.paragraph_profile
+        or pm.paragraph_profile.column_id in ("right", None)
     ]
+
+    # Detect dark header band color (first above_para with a background color).
+    header_bg = next(
+        (pm.paragraph_profile.background_color
+         for pm in above_paras
+         if pm.paragraph_profile and pm.paragraph_profile.background_color),
+        None,
+    )
+    has_dark_hdr = bool(header_bg and above_paras)
+
+    # When a dark header band is present the table is extended to the full
+    # physical page width (page_w_twips) so the merged header row covers both
+    # page margins.  A right-margin padding column (pad_w) fills the extra grid
+    # slot in the body row without widening the content cells.
+    pad_w = max(0, page_w_twips - total_w) if has_dark_hdr else 0
+    _use_pad = has_dark_hdr and pad_w > 0
+    n_grid_cols = 3 if _use_pad else 2
+    actual_tbl_w = page_w_twips if has_dark_hdr else total_w
+
+    # Table element
+    tbl = etree.Element(f"{{{_W}}}tbl")
+
+    # Table properties: width, negative indent to reach physical left page edge,
+    # fixed layout, no borders, no cell margins.
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW.set(f"{{{_W}}}w", str(actual_tbl_w))
+    tblW.set(f"{{{_W}}}type", "dxa")
+
+    tblInd = etree.SubElement(tblPr, f"{{{_W}}}tblInd")
+    tblInd.set(f"{{{_W}}}w", str(-left_margin_twips))
+    tblInd.set(f"{{{_W}}}type", "dxa")
+
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+
+    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+        brd.set(f"{{{_W}}}val", "none")
+
+    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        m = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+        m.set(f"{{{_W}}}w", "0")
+        m.set(f"{{{_W}}}type", "dxa")
+
+    # Grid column definitions — required for gridSpan in the merged header row.
+    tblGrid = etree.SubElement(tbl, f"{{{_W}}}tblGrid")
+    for cw in ([left_w, right_w, pad_w] if _use_pad else [left_w, right_w]):
+        gc = etree.SubElement(tblGrid, f"{{{_W}}}gridCol")
+        gc.set(f"{{{_W}}}w", str(cw))
+
+    # Header row — merged cell spanning all grid columns with dark shading.
+    # Placed inside this table (not a separate table) so LibreOffice reliably
+    # renders the cell shading when converting DOCX → PDF.
+    if has_dark_hdr:
+        if sectPr is not None:
+            _pgMar = sectPr.find(f"{{{_W}}}pgMar")
+            if _pgMar is not None:
+                _pgMar.set(f"{{{_W}}}top", "0")
+                _pgMar.set(f"{{{_W}}}header", "0")
+
+        hdr_tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+        hdr_tc = etree.SubElement(hdr_tr, f"{{{_W}}}tc")
+        hdr_tcPr = etree.SubElement(hdr_tc, f"{{{_W}}}tcPr")
+        hdr_tcW = etree.SubElement(hdr_tcPr, f"{{{_W}}}tcW")
+        hdr_tcW.set(f"{{{_W}}}w", str(actual_tbl_w))
+        hdr_tcW.set(f"{{{_W}}}type", "dxa")
+        hdr_gs = etree.SubElement(hdr_tcPr, f"{{{_W}}}gridSpan")
+        hdr_gs.set(f"{{{_W}}}val", str(n_grid_cols))
+        hdr_shd = etree.SubElement(hdr_tcPr, f"{{{_W}}}shd")
+        hdr_shd.set(f"{{{_W}}}val", "clear")
+        hdr_shd.set(f"{{{_W}}}color", "auto")
+        hdr_shd.set(f"{{{_W}}}fill", header_bg)
+        for pm in above_paras:
+            hdr_tc.append(build_para_element(pm, doc_part=doc_part, skip_bg_shd=False))
+        if not above_paras:
+            etree.SubElement(hdr_tc, f"{{{_W}}}p")
+
+    # Body row
+    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+    # Left cell
+    left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
+    left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
+    left_tcW.set(f"{{{_W}}}w", str(left_w))
+    left_tcW.set(f"{{{_W}}}type", "dxa")
+    if layout.left_col_bg_color:
+        shd = etree.SubElement(left_tcPr, f"{{{_W}}}shd")
+        shd.set(f"{{{_W}}}val", "clear")
+        shd.set(f"{{{_W}}}color", "auto")
+        shd.set(f"{{{_W}}}fill", layout.left_col_bg_color)
+
+    # Right cell
+    right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+    right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
+    right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
+    right_tcW.set(f"{{{_W}}}w", str(right_w))
+    right_tcW.set(f"{{{_W}}}type", "dxa")
+    if layout.right_col_bg_color:
+        shd = etree.SubElement(right_tcPr, f"{{{_W}}}shd")
+        shd.set(f"{{{_W}}}val", "clear")
+        shd.set(f"{{{_W}}}color", "auto")
+        shd.set(f"{{{_W}}}fill", layout.right_col_bg_color)
+
+    # Right-margin padding cell — empty spacer filling the third grid column so
+    # the body row accounts for all grid columns defined in tblGrid.
+    if _use_pad:
+        pad_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+        pad_tcPr = etree.SubElement(pad_tc, f"{{{_W}}}tcPr")
+        pad_tcW = etree.SubElement(pad_tcPr, f"{{{_W}}}tcW")
+        pad_tcW.set(f"{{{_W}}}w", str(pad_w))
+        pad_tcW.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(pad_tc, f"{{{_W}}}p")
 
     # Pre-compute each left para's "section heading indent" so body paras that
     # are more indented than their section heading can be capped to the heading
@@ -1929,7 +1985,6 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
                 new_ind.set(f"{{{_W}}}left", str(left_margin_twips))
         left_tc.append(p_elem)
-    # DOCX requires at least one paragraph per cell
     if not left_paras:
         etree.SubElement(left_tc, f"{{{_W}}}p")
 
@@ -1938,43 +1993,19 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     if not right_paras:
         etree.SubElement(right_tc, f"{{{_W}}}p")
 
-    # Build header element(s): if any above-table paragraph has a background
-    # colour, wrap all above_paras in a single-cell full-page-width table so
-    # the shading is applied at cell level (one continuous band).
-    header_bg = next(
-        (pm.paragraph_profile.background_color
-         for pm in above_paras
-         if pm.paragraph_profile and pm.paragraph_profile.background_color),
-        None,
+    # When there is no dark header band, above_paras are plain full-width
+    # paragraphs (e.g. contact info with no background) inserted before the table.
+    above_elems = (
+        [] if has_dark_hdr
+        else [build_para_element(pm, doc_part=doc_part) for pm in above_paras]
     )
-    if header_bg and above_paras:
-        # Dark header band: zero the top page margin so the header table
-        # starts at the physical page top (y=0), matching the source PDF where
-        # the dark rectangle starts at y=0 above the text area margin.
-        if sectPr is not None:
-            pgMar = sectPr.find(f"{{{_W}}}pgMar")
-            if pgMar is not None:
-                pgMar.set(f"{{{_W}}}top", "0")
-                pgMar.set(f"{{{_W}}}header", "0")
 
-        # Header table spans the FULL page width (including right margin) so the
-        # dark band reaches both page edges.  Body table uses total_w which
-        # respects the right margin; header overrides this with page_w_twips.
-        hdr_tbl = _make_full_width_dark_band(
-            header_bg, page_w_twips, left_margin_twips,
-            above_paras, doc_part=doc_part, center_text=False,
-        )
-        header_elements = [hdr_tbl]
-    else:
-        header_elements = [build_para_element(pm, doc_part=doc_part) for pm in above_paras]
-
-    # Insert header element(s) before the body table, then the body table itself.
     if sectPr is not None:
-        for elem in header_elements:
+        for elem in above_elems:
             sectPr.addprevious(elem)
         sectPr.addprevious(tbl)
     else:
-        for elem in header_elements:
+        for elem in above_elems:
             body.append(elem)
         body.append(tbl)
 
@@ -2018,8 +2049,8 @@ def _zero_para_spacing(p_elem) -> None:
         spacing = _etree.SubElement(pPr, f"{{{_W}}}spacing")
     spacing.set(f"{{{_W}}}before", "0")
     spacing.set(f"{{{_W}}}after", "0")
-    spacing.set(f"{{{_W}}}line", "1")
-    spacing.set(f"{{{_W}}}lineRule", "exact")
+    spacing.set(f"{{{_W}}}line", "240")
+    spacing.set(f"{{{_W}}}lineRule", "auto")
 
 
 def _make_inline_summary_para(reference_p_elem, text: str):

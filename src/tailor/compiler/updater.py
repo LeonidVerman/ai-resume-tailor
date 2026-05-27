@@ -143,9 +143,14 @@ def _match_sections(
                 break
 
     # Pass 3: skill-title similarity — match LLM "skills" sections to template
-    # sections whose title contains "skill" (e.g. "Skills & Abilities").  Handles
-    # templates where the skills section is classified as "other" rather than "skills"
-    # because its heading ("Skills & Abilities") was not in the parser's exact list.
+    # sections whose title contains skills-related keywords.  Handles templates
+    # where the skills section uses a different name ("Skills & Abilities",
+    # "Proficiency", "Competencies", "Technical Expertise", "Tools", etc.) and
+    # was classified as "other" rather than "skills" by the semantic parser.
+    _SKILL_TITLE_KWS = (
+        "skill", "proficien", "abilit", "competenc", "expertise",
+        "technolog", "tools", "stack", "technical",
+    )
     for li, ls in enumerate(llm):
         if li in used_llm:
             continue
@@ -154,10 +159,15 @@ def _match_sections(
         for oi, os_ in enumerate(orig):
             if oi in used_orig:
                 continue
-            if "skill" in os_.title.lower():
+            title_lo = os_.title.lower()
+            if any(kw in title_lo for kw in _SKILL_TITLE_KWS):
                 pairs.append((oi, li))
                 used_orig.add(oi)
                 used_llm.add(li)
+                _log.debug(
+                    "SKILLS_TITLE_MATCH: LLM %r → template %r (semantic=%s)",
+                    ls.heading, os_.title, os_.semantic_type,
+                )
                 break
 
     unmatched_llm = [li for li in range(len(llm)) if li not in used_llm]
@@ -213,6 +223,24 @@ def _match_sections(
         else:
             result_pairs.append((os_, None))
             llm_indices.append(None)
+
+    # Diagnostic: emit one log line per section showing the mapping result.
+    for os_, ls in result_pairs:
+        if ls is not None:
+            _log.debug(
+                "SECTION_MAP: template=%r(type=%s) → llm=%r(type=%s)",
+                os_.title[:40], os_.semantic_type, ls.heading[:40], ls.semantic_type,
+            )
+        else:
+            _log.debug(
+                "SECTION_MAP: template=%r(type=%s) → [verbatim, no llm match]",
+                os_.title[:40], os_.semantic_type,
+            )
+    for ls in extras:
+        _log.debug(
+            "SECTION_MAP: llm=%r(type=%s) → [extra, no template match]",
+            ls.heading[:40], ls.semantic_type,
+        )
 
     return _MatchResult(pairs=result_pairs, extras=extras, llm_indices=llm_indices)
 
@@ -853,6 +881,21 @@ def _update_body_section(
 
     # Build updated versions of each content para (paired by position with LLM lines).
     _is_skills = orig.semantic_type == "skills"
+
+    # For PDF-origin skills sections, compute the dominant font size to guard against
+    # anomalous sizes from PDF extraction artifacts (e.g. 15.8pt when body is 9.3pt).
+    _skills_dominant_font: "float | None" = None
+    if _is_skills:
+        _pdf_fsizes = [
+            p.paragraph_profile.font_size_pt
+            for p in content_paras
+            if p.paragraph_profile and p.paragraph_profile.font_size_pt
+            and p.paragraph_profile.font_size_pt > 0
+        ]
+        if len(_pdf_fsizes) >= 2:
+            import statistics as _stats
+            _skills_dominant_font = _stats.median(_pdf_fsizes)
+
     updated: list[ParaModel] = []
     for i, line in enumerate(packed_llm):
         if i < len(content_paras):
@@ -863,6 +906,25 @@ def _update_body_section(
             # render at normal paragraph indent like the GENERAL INFO section.
             if _is_skills and (pm.style.indent_left or 0) > 0:
                 pm = _clear_left_indent(pm)
+            # Normalize anomalous font sizes in PDF-origin skills sections.
+            # PDF extraction sometimes produces outlier sizes (e.g. 15.8pt mixed
+            # with 9.3pt body text); clamp to the dominant size so LLM replacement
+            # text renders at a consistent size.
+            if (
+                _skills_dominant_font is not None
+                and pm.paragraph_profile is not None
+                and pm.paragraph_profile.font_size_pt is not None
+                and pm.paragraph_profile.font_size_pt > _skills_dominant_font * 1.25
+            ):
+                from tailor.compiler.models import ParagraphProfile as _PPFS
+                _pp_norm = _PPFS.from_dict(pm.paragraph_profile.to_dict())
+                _pp_norm.font_size_pt = _skills_dominant_font
+                _pm_norm = ParaModel(
+                    text=pm.text, style=pm.style, semantic=pm.semantic,
+                    paragraph_profile=_pp_norm,
+                )
+                _pm_norm.para_id = pm.para_id
+                pm = _pm_norm
             updated.append(pm)
             _log.debug("UPDATER_LAYOUT_BOUND_REPLACEMENT: para_id=%r → %r",
                        content_paras[i].para_id, line[:60])
@@ -927,6 +989,17 @@ def _update_body_section(
             if _bp.text.strip() and not _bp.para_id:
                 _bp.para_id = f"_synth_{orig.section_id}_{_synth_i}"
                 _synth_i += 1
+
+    # Diagnostic: section replacement summary.
+    _n_orig = len(content_paras)
+    _n_inserted = min(len(updated), _n_orig)
+    _n_extra = max(0, len(updated) - _n_orig)
+    _n_dropped = max(0, _n_orig - len(updated))
+    _log.debug(
+        "BODY_REPLACE: section=%r orig_content=%d llm_lines=%d "
+        "replaced=%d extra=%d dropped=%d",
+        orig.title[:40], _n_orig, len(llm_lines), _n_inserted, _n_extra, _n_dropped,
+    )
 
     # Defensive copy of the heading ParaModel so that any later in-place
     # mutation of orig.heading.text (e.g. by apply_tailored's extras path
@@ -1103,6 +1176,30 @@ def _make_extra_section(
     for line in llm.body_lines:
         if line.strip():
             body_paras.append(_normalise_body_pm(body_arch.clone_as(line, "paragraph")))
+
+    # For PDF two-column docs: body_arch may come from the opposite column to
+    # the heading_arch (e.g. heading from a left sidebar section, body from a
+    # right-column education section).  Normalize all body_paras to the heading's
+    # column_id and indent so the section renders as a unit in one column.
+    _hcol = new_heading.paragraph_profile.column_id if new_heading.paragraph_profile else None
+    _hind = new_heading.paragraph_profile.indent_left_pt if new_heading.paragraph_profile else None
+    if _hcol is not None:
+        from tailor.compiler.models import ParagraphProfile as _PP_ec
+        _norm_bps = []
+        for _bp in body_paras:
+            if (_bp.paragraph_profile is not None
+                    and _bp.paragraph_profile.column_id != _hcol):
+                _pp_d = _bp.paragraph_profile.to_dict()
+                _pp_d["column_id"] = _hcol
+                if _hind is not None:
+                    _pp_d["indent_left_pt"] = _hind
+                _norm_bps.append(ParaModel(
+                    text=_bp.text, style=_bp.style, semantic=_bp.semantic,
+                    paragraph_profile=_PP_ec.from_dict(_pp_d),
+                ))
+            else:
+                _norm_bps.append(_bp)
+        body_paras = _norm_bps
 
     return ResumeSection(
         title=llm.heading,
@@ -3687,11 +3784,15 @@ def apply_tailored(
     """
     # Build fast lookup indices from classification (empty dicts when absent).
     _sec_cls: dict[str, ClassificationSection] = {}
+    _sec_cls_by_title: dict[str, ClassificationSection] = {}
     _role_cls: dict[str, ClassificationRole] = {}
     if classification is not None:
         for _cs in classification.sections:
             if _cs.section_id:
                 _sec_cls[_cs.section_id] = _cs
+            _title_key = (_cs.raw_title or "").lower().strip()
+            if _title_key and _title_key not in _sec_cls_by_title:
+                _sec_cls_by_title[_title_key] = _cs
             for _cr in _cs.roles:
                 if _cr.role_id:
                     _role_cls[_cr.role_id] = _cr
@@ -3699,6 +3800,31 @@ def apply_tailored(
             "apply_tailored: classification loaded — %d sections, %d roles indexed",
             len(_sec_cls), len(_role_cls),
         )
+
+    def _resolve_cls_sec(orig_section: "ResumeSection") -> "ClassificationSection | None":
+        """Look up classification for orig_section, with title-based fallback.
+
+        PDF-origin IRs assign section_ids sequentially from only the sections
+        the parser detects (header paragraphs are not sections), while the
+        classification was built from a DOCX parse that includes header elements
+        as extra sections. This shifts all section_ids. The title-based fallback
+        corrects the mismatch when semantic_types disagree.
+        """
+        by_id = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+        if by_id is not None and by_id.semantic_type == orig_section.semantic_type:
+            return by_id
+        title_key = (orig_section.title or "").lower().strip()
+        by_title = _sec_cls_by_title.get(title_key)
+        if by_title is not None:
+            if by_id is not None:
+                _log.debug(
+                    "apply_tailored: section_id %r resolved to %r (%s) but "
+                    "semantic_type mismatch (cls=%s, ir=%s); using title match %r instead",
+                    orig_section.section_id, by_id.raw_title, by_id.section_id,
+                    by_id.semantic_type, orig_section.semantic_type, by_title.section_id,
+                )
+            return by_title
+        return by_id
 
     # Layout-bound mode: active when layout_blocks are present and the flag is on.
     # normalize_llm_sections runs whenever layout_blocks exist (flag-independent):
@@ -3734,7 +3860,7 @@ def apply_tailored(
                 sum(1 for p in orig_section.body_paras
                     if p.text.strip() and p.semantic == "role_meta"),
             )
-            cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+            cls_sec = _resolve_cls_sec(orig_section)
             if cls_sec is not None and cls_sec.rewrite_policy == "preserve":
                 return orig_section
             # When classification has roles, use them to reconstruct role
@@ -3750,8 +3876,19 @@ def apply_tailored(
                 rebuilt = _rebuild_date_first_roles(orig_section)
             return _update_experience_date_first(orig_section, llm_section, rebuilt)
 
-        # Classification-constrained path: look up by stable section_id.
-        cls_sec = _sec_cls.get(orig_section.section_id) if _sec_cls else None
+        # Classification-constrained path: look up by section_id with title fallback.
+        cls_sec = _resolve_cls_sec(orig_section)
+        # Pattern C guard: LLM classifier sometimes labels OBJECTIVE/PROFILE
+        # sections as other/preserve when it doesn't recognise the heading.
+        # The PDF parser already set semantic_type="summary", so trust the IR and
+        # bypass classification to let the unclassified path rewrite the content.
+        if (
+            cls_sec is not None
+            and cls_sec.rewrite_policy == "preserve"
+            and orig_section.semantic_type == "summary"
+            and cls_sec.semantic_type != "summary"
+        ):
+            cls_sec = None
         if cls_sec is not None:
             return _apply_section_classified(
                 orig_section, llm_section, cls_sec, _role_cls, layout_bound=_layout_bound
@@ -4193,6 +4330,13 @@ def apply_tailored(
                 _log.debug(
                     "apply_tailored: discarding other-type extra %r "
                     "(verbatim other sections exist)", llm_s.heading,
+                )
+            elif not llm_s.body_lines and not llm_s.roles:
+                # Empty extra section (no content, no roles) — discard.  These arise
+                # when the LLM emits a stale section marker (e.g. "Additional") whose
+                # real body lines were emitted as child sections that matched originals.
+                _log.debug(
+                    "apply_tailored: discarding empty extra section %r", llm_s.heading,
                 )
             else:
                 llm_order_sections.append(_make_extra_section(llm_s, heading_arch, body_arch))
