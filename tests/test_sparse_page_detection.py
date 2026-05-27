@@ -198,10 +198,12 @@ class TestComputeSparsePageScore:
         assert evidence == []
 
     def test_sparse_page_score_zero(self):
-        """Score is 0 when a qualifying sparse page is found."""
+        """Score is 0 when a qualifying sparse page (non-last) is found."""
         p1 = _fake_page(1, 842, 50, 757)
         p2 = _fake_page(2, 842, 50, 400, n_lines=20)
-        score, hard_fail, evidence = self._call(p1, p2)
+        # p3 makes page 2 a non-last page; the last-page gate must not suppress it
+        p3 = _fake_page(3, 842, 50, 757, n_lines=25)
+        score, hard_fail, evidence = self._call(p1, p2, p3)
         assert score == 0.0
         assert len(evidence) == 1
         assert "Sparse continuation page" in evidence[0]
@@ -215,7 +217,8 @@ class TestComputeSparsePageScore:
         """
         p1 = _fake_page(1, 842, 50, 757)
         p2 = _fake_page(2, 842, 50, 400, n_lines=20)
-        _, _, evidence = self._call(p1, p2)
+        p3 = _fake_page(3, 842, 50, 757, n_lines=25)
+        _, _, evidence = self._call(p1, p2, p3)
         msg = evidence[0]
         assert "text covers" in msg, f"Expected 'text covers' in evidence; got: {msg}"
         assert "visually empty" in msg, f"Expected 'visually empty' in evidence; got: {msg}"

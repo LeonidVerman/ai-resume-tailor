@@ -66,7 +66,7 @@ _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 # Semantic types that are NEVER modified regardless of LLM output (spec §3).
 # Only "summary", "experience", and "skills" are editable (spec §1).
 _LOCKED_SEMANTIC_TYPES: frozenset[str] = frozenset({
-    "education", "certifications", "languages", "websites",
+    "education", "certifications", "languages", "websites", "contact",
 })
 
 # Major resume content sections — a synthetic summary should appear before these,
@@ -182,7 +182,9 @@ def _match_sections(
         _verbatim_only = frozenset({"other"}) | _LOCKED_SEMANTIC_TYPES
         unmatched_content_orig = [
             oi for oi in range(len(orig))
-            if oi not in used_orig and orig[oi].semantic_type not in _verbatim_only
+            if oi not in used_orig
+            and orig[oi].semantic_type not in _verbatim_only
+            and (orig[oi].body_paras or orig[oi].roles)  # empty sections have nothing to inject
         ]
         all_orig_matched = len(unmatched_content_orig) == 0
         if not all_orig_matched:
@@ -319,7 +321,17 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
     else:
         for i, meta_text in enumerate(llm_meta):
             if i < len(orig.meta_lines):
-                new_meta.append(orig.meta_lines[i].with_text(meta_text))
+                _orig_m = orig.meta_lines[i]
+                # Keep verbatim when the template meta spans multiple visual lines
+                # (w:br soft-return embedded in a single paragraph, indicated by \n
+                # in the parsed text).  Proportional run distribution on a shorter
+                # LLM string would mis-allocate text across bold/italic runs, e.g.
+                # losing the company-name bold on the first run.  The original
+                # paragraph already carries the correct content and formatting.
+                if layout_bound and "\n" in _orig_m.text:
+                    new_meta.append(_orig_m)
+                else:
+                    new_meta.append(_orig_m.with_text(meta_text))
             elif not layout_bound:
                 src = orig.meta_lines[-1] if orig.meta_lines else orig.header
                 new_meta.append(src.clone_as(meta_text, "role_meta"))
@@ -368,6 +380,7 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
 
     return RoleEntry(
         header=new_header,
+        header_extra=list(orig.header_extra),
         meta_lines=new_meta,
         bullets=new_bullets,
         role_id=orig.role_id,
@@ -932,6 +945,16 @@ def _update_body_section(
         if _anchor_pid:
             _body_extra_injections.setdefault(_anchor_pid, []).append(extra_pm)
         new_body.append(extra_pm)
+
+    # When no content_paras existed (empty section body), every LLM line was
+    # cloned via clone_as() and carries para_id="".  Assign synthetic IDs so
+    # ir_validator's empty-para_id check (_epi_count > 2 → hard fail) passes.
+    if not content_paras:
+        _synth_i = 0
+        for _bp in new_body:
+            if _bp.text.strip() and not _bp.para_id:
+                _bp.para_id = f"_synth_{orig.section_id}_{_synth_i}"
+                _synth_i += 1
 
     # Diagnostic: section replacement summary.
     _n_orig = len(content_paras)
@@ -4037,12 +4060,25 @@ def apply_tailored(
                                 break
                         # Guard: if there are template sections AFTER the first
                         # experience section (e.g. References), technical skills
-                        # belong at the document end (right column, after References),
-                        # not crowded into the left sidebar alongside narrative
-                        # sections like Communication / Leadership (sample 12).
+                        # belong at the document end, unless the template is a
+                        # 2-row sidebar layout (header row + one body row with a
+                        # sidebar cell containing multiple independent sections).
+                        # For 2-row sidebar layouts the left cell has all sidebar
+                        # sections in one place and is the correct injection target.
                         _post_exp_sections = original.sections[_left_col_end + 1:]
                         if _post_exp_sections and _left_sec is not None:
-                            _left_sec = None  # fall back to document-end placement
+                            from tailor.compiler.models import LayoutTableBlock as _LTB
+                            _main_tbl_rows = 0
+                            for _lb in (original.layout_blocks or []):
+                                if isinstance(_lb, _LTB):
+                                    from lxml import etree as _etree_g
+                                    _W_g = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+                                    _te = _etree_g.fromstring(_lb.xml_proto_xml)
+                                    _main_tbl_rows = len(_te.findall(f"{{{_W_g}}}tr"))
+                                    break
+                            # 2-row table = header row + sidebar body row: safe to inject
+                            if _main_tbl_rows != 2:
+                                _left_sec = None  # fall back to document-end placement
                         if _left_sec is not None:
                             if _anchor_bp is not None:
                                 _skill_lines = _sanitize_skills_lines(
@@ -4833,7 +4869,11 @@ def apply_tailored(
                 # Prefer the last bound bullet as anchor (overflow case);
                 # fall back to the role header when the template has NO bullet slots
                 # (all bullets are unbound).
-                _anchor = _bound_bullets[-1] if _bound_bullets else _role.header
+                _anchor = (
+                    _bound_bullets[-1] if _bound_bullets
+                    else _role.meta_lines[-1] if (_role.meta_lines and _role.meta_lines[-1].para_id)
+                    else _role.header
+                )
                 if _anchor.para_id:
                     _exp_extras.setdefault(_anchor.para_id, []).extend(_unbound_bullets)
         if _exp_extras:
@@ -4847,6 +4887,220 @@ def apply_tailored(
         _ei = getattr(_sec, "_extra_injections", None)
         if _ei:
             _all_extra_injections.update(_ei)
+
+    # ── Experience synth-body injection: WH-column vMerge restart cells ─────
+    # For experience sections where all non-empty body_paras carry synthetic
+    # para_ids (template had no original body anchors), inject LLM bullets
+    # after the vMerge=restart date cells in the WH column of the table.
+    if _result_layout_blocks:
+        from tailor.compiler.models import LayoutTableBlock as _LTBWHI
+        from lxml import etree as _etrwhi
+        from copy import deepcopy as _dcwhi
+        _W_WH = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        for _whi_sec in new_sections:
+            if _whi_sec.semantic_type != "experience" or not _whi_sec.body_paras:
+                continue
+            _whi_nonmt = [bp for bp in _whi_sec.body_paras if bp.text.strip()]
+            if not _whi_nonmt or not all(bp.para_id.startswith("_synth_") for bp in _whi_nonmt):
+                continue
+            _whi_head_pid = _whi_sec.heading.para_id
+            _whi_tbl = next(
+                (b for b in _result_layout_blocks
+                 if isinstance(b, _LTBWHI) and _whi_head_pid in b.para_ids),
+                None,
+            )
+            if not _whi_tbl or not _whi_tbl.xml_proto_xml:
+                continue
+            _whi_xml = _etrwhi.fromstring(_whi_tbl.xml_proto_xml.encode("utf-8"))
+            _whi_all_p = _whi_xml.findall(f".//{{{_W_WH}}}p")
+            _whi_pelem2pid = {id(p): pid for pid, p in zip(_whi_tbl.para_ids, _whi_all_p)}
+            # Find WH heading column(s).
+            _whi_cols: "set[int]" = set()
+            for _whi_tr in _whi_xml.findall(f"{{{_W_WH}}}tr"):
+                _whi_co = 0
+                for _whi_tc in _whi_tr.findall(f"{{{_W_WH}}}tc"):
+                    _whi_tcpr = _whi_tc.find(f"{{{_W_WH}}}tcPr")
+                    _whi_gs = 1
+                    if _whi_tcpr is not None:
+                        _whi_gse = _whi_tcpr.find(f"{{{_W_WH}}}gridSpan")
+                        if _whi_gse is not None:
+                            _whi_gs = int(_whi_gse.get(f"{{{_W_WH}}}val", 1))
+                    if _whi_head_pid in [_whi_pelem2pid.get(id(p)) for p in _whi_tc.findall(f"{{{_W_WH}}}p")]:
+                        _whi_cols = set(range(_whi_co, _whi_co + _whi_gs))
+                    _whi_co += _whi_gs
+            if not _whi_cols:
+                continue
+            # Build para text lookup from all sections.
+            _whi_plookup: "dict[str, str]" = {}
+            for _s in new_sections:
+                if _s.heading:
+                    _whi_plookup[_s.heading.para_id] = _s.heading.text.strip()
+                for _bp in (_s.body_paras or []):
+                    if _bp.text.strip():
+                        _whi_plookup[_bp.para_id] = _bp.text.strip()
+            # Collect vMerge=restart cells and all non-empty WH-column texts.
+            _whi_restarts: "list[tuple]" = []
+            _whi_col_texts: "set[str]" = set()
+            for _whi_tr in _whi_xml.findall(f"{{{_W_WH}}}tr"):
+                _whi_co = 0
+                for _whi_tc in _whi_tr.findall(f"{{{_W_WH}}}tc"):
+                    _whi_tcpr = _whi_tc.find(f"{{{_W_WH}}}tcPr")
+                    _whi_gs, _whi_vm = 1, None
+                    if _whi_tcpr is not None:
+                        _whi_gse = _whi_tcpr.find(f"{{{_W_WH}}}gridSpan")
+                        if _whi_gse is not None:
+                            _whi_gs = int(_whi_gse.get(f"{{{_W_WH}}}val", 1))
+                        _whi_vme = _whi_tcpr.find(f"{{{_W_WH}}}vMerge")
+                        if _whi_vme is not None:
+                            _whi_vm = _whi_vme.get(f"{{{_W_WH}}}val", "continue")
+                    if set(range(_whi_co, _whi_co + _whi_gs)) & _whi_cols:
+                        for _whi_p in _whi_tc.findall(f"{{{_W_WH}}}p"):
+                            _whi_ppid = _whi_pelem2pid.get(id(_whi_p))
+                            if _whi_ppid:
+                                _whi_pt = _whi_plookup.get(_whi_ppid, "")
+                                if _whi_pt:
+                                    _whi_col_texts.add(_whi_pt)
+                                if _whi_vm == "restart" and _whi_ppid != _whi_head_pid:
+                                    _whi_restarts.append((_whi_ppid, _whi_pt, _whi_p))
+                    _whi_co += _whi_gs
+            if not _whi_restarts:
+                continue
+            # Build body-text proto from first restart cell, stripping bold/italic.
+            _whi_body_proto = _dcwhi(_whi_restarts[0][2])
+            for _whi_rpr in _whi_body_proto.findall(f".//{{{_W_WH}}}rPr"):
+                for _whi_tag in ("b", "bCs", "i", "iCs"):
+                    _whi_el = _whi_rpr.find(f"{{{_W_WH}}}{_whi_tag}")
+                    if _whi_el is not None:
+                        _whi_rpr.remove(_whi_el)
+            for _whi_t in _whi_body_proto.findall(f".//{{{_W_WH}}}t"):
+                _whi_t.text = ""
+            # Group body_paras by role; match date text to restart cell text.
+            # Paras whose text is a substring of (or contains) any WH-column text
+            # are already shown (title/company) and are skipped.
+            _whi_role_groups: "list[tuple]" = []
+            _whi_cur_anchor: "str | None" = None
+            _whi_cur_bullets: "list" = []
+            for _whi_bp in _whi_sec.body_paras:
+                _whi_bt = _whi_bp.text.strip()
+                if not _whi_bt:
+                    continue
+                _whi_dmatch = next(
+                    (_rpid for _rpid, _rtext, _ in _whi_restarts if _whi_bt == _rtext),
+                    None,
+                )
+                if _whi_dmatch:
+                    if _whi_cur_anchor and _whi_cur_bullets:
+                        _whi_role_groups.append((_whi_cur_anchor, list(_whi_cur_bullets)))
+                    _whi_cur_anchor = _whi_dmatch
+                    _whi_cur_bullets = []
+                elif any(
+                    _whi_bt.lower() in _ct.lower() or _ct.lower() in _whi_bt.lower()
+                    for _ct in _whi_col_texts
+                ):
+                    pass  # already shown as title/company in WH column
+                else:
+                    if _whi_cur_anchor:
+                        _whi_bp.style.xml_proto = _whi_body_proto
+                        _whi_cur_bullets.append(_whi_bp)
+            if _whi_cur_anchor and _whi_cur_bullets:
+                _whi_role_groups.append((_whi_cur_anchor, list(_whi_cur_bullets)))
+            for _whi_anc, _whi_blts in _whi_role_groups:
+                if _whi_blts:
+                    _all_extra_injections.setdefault(_whi_anc, []).extend(_whi_blts)
+                    _log.debug(
+                        "WH_SYNTH_BULLETS: anchor=%r bullets=%d",
+                        _whi_anc, len(_whi_blts),
+                    )
+
+    # ── Skills-unbound table injection ───────────────────────────────────────
+    # Place Technical Skills inside the CI column of the table instead of
+    # appending full-width LayoutParagraphBlocks after the table.
+    _skills_in_table = False
+    if _result_layout_blocks:
+        from tailor.compiler.models import LayoutTableBlock as _LTBSKI
+        from lxml import etree as _etrski
+        from copy import deepcopy as _dcski
+        _W_SK = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        _ski_unbound = [
+            s for s in new_sections
+            if s.section_id == "sec_skills_unbound" and s.semantic_type == "skills"
+        ]
+        if _ski_unbound:
+            _ski_csecs = [s for s in new_sections if s.semantic_type == "contact"]
+            if _ski_csecs:
+                _ski_ci_hpid = _ski_csecs[0].heading.para_id
+                _ski_tbl = next(
+                    (b for b in _result_layout_blocks
+                     if isinstance(b, _LTBSKI) and _ski_ci_hpid in b.para_ids),
+                    None,
+                )
+                if _ski_tbl and _ski_tbl.xml_proto_xml:
+                    _ski_xml = _etrski.fromstring(_ski_tbl.xml_proto_xml.encode("utf-8"))
+                    _ski_all_p = _ski_xml.findall(f".//{{{_W_SK}}}p")
+                    _ski_pelem2pid = {id(p): pid for pid, p in zip(_ski_tbl.para_ids, _ski_all_p)}
+                    # Find CI column(s) from the CI section heading cell.
+                    _ski_ci_cols: "set[int]" = set()
+                    for _ski_tr in _ski_xml.findall(f"{{{_W_SK}}}tr"):
+                        _ski_co = 0
+                        for _ski_tc in _ski_tr.findall(f"{{{_W_SK}}}tc"):
+                            _ski_tcpr = _ski_tc.find(f"{{{_W_SK}}}tcPr")
+                            _ski_gs = 1
+                            if _ski_tcpr is not None:
+                                _ski_gse = _ski_tcpr.find(f"{{{_W_SK}}}gridSpan")
+                                if _ski_gse is not None:
+                                    _ski_gs = int(_ski_gse.get(f"{{{_W_SK}}}val", 1))
+                            if _ski_ci_hpid in [_ski_pelem2pid.get(id(p)) for p in _ski_tc.findall(f"{{{_W_SK}}}p")]:
+                                _ski_ci_cols = set(range(_ski_co, _ski_co + _ski_gs))
+                            _ski_co += _ski_gs
+                    if _ski_ci_cols:
+                        # Collect CI column para_ids in document order.
+                        _ski_ci_pids: "list[tuple]" = []
+                        _ski_ci_hpelem = None
+                        _ski_ci_bpelem = None
+                        for _ski_tr in _ski_xml.findall(f"{{{_W_SK}}}tr"):
+                            _ski_co = 0
+                            for _ski_tc in _ski_tr.findall(f"{{{_W_SK}}}tc"):
+                                _ski_tcpr = _ski_tc.find(f"{{{_W_SK}}}tcPr")
+                                _ski_gs = 1
+                                if _ski_tcpr is not None:
+                                    _ski_gse = _ski_tcpr.find(f"{{{_W_SK}}}gridSpan")
+                                    if _ski_gse is not None:
+                                        _ski_gs = int(_ski_gse.get(f"{{{_W_SK}}}val", 1))
+                                if set(range(_ski_co, _ski_co + _ski_gs)) & _ski_ci_cols:
+                                    for _ski_p in _ski_tc.findall(f"{{{_W_SK}}}p"):
+                                        _ski_ppid = _ski_pelem2pid.get(id(_ski_p))
+                                        if _ski_ppid:
+                                            _ski_ci_pids.append((_ski_ppid, _ski_p))
+                                            if _ski_ppid == _ski_ci_hpid:
+                                                _ski_ci_hpelem = _ski_p
+                                            elif _ski_ci_bpelem is None and _ski_p.find(f"{{{_W_SK}}}r") is not None:
+                                                _ski_ci_bpelem = _ski_p
+                                _ski_co += _ski_gs
+                        if _ski_ci_pids and _ski_ci_hpelem is not None:
+                            _ski_anchor_pid = _ski_ci_pids[-1][0]
+                            # Heading proto from CI section heading element.
+                            _ski_h_proto = _dcski(_ski_ci_hpelem)
+                            for _ski_t in _ski_h_proto.findall(f".//{{{_W_SK}}}t"):
+                                _ski_t.text = ""
+                            # Body proto from first CI body cell that has runs, bold/italic stripped.
+                            _ski_b_src = _ski_ci_bpelem if _ski_ci_bpelem is not None else _ski_ci_hpelem
+                            _ski_b_proto = _dcski(_ski_b_src)
+                            for _ski_rpr in _ski_b_proto.findall(f".//{{{_W_SK}}}rPr"):
+                                for _ski_tag in ("b", "bCs", "i", "iCs"):
+                                    _ski_el = _ski_rpr.find(f"{{{_W_SK}}}{_ski_tag}")
+                                    if _ski_el is not None:
+                                        _ski_rpr.remove(_ski_el)
+                            for _ski_t in _ski_b_proto.findall(f".//{{{_W_SK}}}t"):
+                                _ski_t.text = ""
+                            for _su in _ski_unbound:
+                                _su.heading.style.xml_proto = _ski_h_proto
+                                _ski_paras: "list[ParaModel]" = [_su.heading]
+                                for _sbp in _su.body_paras:
+                                    if _sbp.text.strip():
+                                        _sbp.style.xml_proto = _ski_b_proto
+                                        _ski_paras.append(_sbp)
+                                _all_extra_injections.setdefault(_ski_anchor_pid, []).extend(_ski_paras)
+                            _skills_in_table = True
 
     if _all_extra_injections and _result_layout_blocks:
         from tailor.compiler.models import LayoutParagraphBlock as _LPB, LayoutTableBlock as _LTB
@@ -4969,7 +5223,8 @@ def apply_tailored(
     # synthetic para_id so the layout-blocks renderer looks it up via para_lookup
     # and renders it using the paragraph's style.xml_proto at document end.
     # Rule 2/4: content pushes to next page naturally if it overflows.
-    if _result_layout_blocks is not None:
+    # Skip when skills were already injected into the table CI column.
+    if _result_layout_blocks is not None and not _skills_in_table:
         _skills_unbound_secs = [
             s for s in new_sections
             if s.section_id == "sec_skills_unbound" and s.semantic_type == "skills"

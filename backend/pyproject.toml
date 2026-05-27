@@ -40,6 +40,9 @@ dependencies = [
     "xhtml2pdf>=0.2",
     # HTML parsing (used by job scraper HTTP fallback)
     "beautifulsoup4>=4.12",
+    # Browser automation for JS-heavy job pages (HiBob, Wellfound, etc.)
+    "playwright>=1.40",
+    "playwright-stealth>=1.0.6",
     # Environment
     "python-dotenv>=1.0",
 ]

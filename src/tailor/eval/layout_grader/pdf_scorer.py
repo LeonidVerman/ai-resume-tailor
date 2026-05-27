@@ -676,6 +676,10 @@ def _compute_sparse_page_score(
                 _op_area, *_ = _compute_effective_area_metrics(_op)
                 _template_page_area[_op.page_number] = _op_area
 
+    # Last page of the document — free space at the end is expected; content
+    # simply ends before the page is full.  This is not a layout defect.
+    _last_page_number = max(p.page_number for p in gen_extracted.pages)
+
     for page_num, fill_frac, bottom_empty, area_ratio, n_lines, n_blocks, nearest_sec in sparse_pages:
         area_pct = area_ratio * 100
         # visual_empty = complement of area_ratio: fraction of page NOT covered by
@@ -685,6 +689,11 @@ def _compute_sparse_page_score(
         # geometrically different metric and is NOT reported here to avoid the
         # contradictory appearance of "23% occupied vs. only 33% empty".
         visual_empty_pct = (1.0 - area_ratio) * 100
+        # Last-page gate: the final page of a resume will always have trailing
+        # whitespace — content ends where it ends.  Free space on the last page
+        # is not a forced-break artefact; it is not penalised.
+        if page_num == _last_page_number:
+            continue
         # Template-comparison gate: if the template's same page has similarly
         # low area coverage (< hard-fail threshold), the sparse continuation is
         # structural (the template design inherently produces a sparse page there)
@@ -715,7 +724,8 @@ def _compute_sparse_page_score(
             ev += sev
         evidence.append(ev)
 
-    return 0.0, hard_fail, evidence
+    score = 0.0 if evidence else 100.0
+    return score, hard_fail, evidence
 
 
 # ---------------------------------------------------------------------------

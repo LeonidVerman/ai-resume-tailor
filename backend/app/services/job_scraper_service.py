@@ -136,8 +136,9 @@ def _http_scrape(url: str) -> JobScrapedData:
       1. JSON-LD JobPosting structured data  (inline, no tailor dep)
       2. Next.js __NEXT_DATA__ page props    (HiringCafe and similar SSR SPAs)
       3. Open Graph / meta tags + full visible text (catch-all for SSR pages)
-      4. ScraperAPI JS render (when SCRAPER_API_KEY is set and step 3 yields
-         too little text — handles React/Vue SPAs like HiBob)
+      4. ScraperAPI JS render (when SCRAPER_API_KEY is set and step 3 yielded
+         thin text OR no company — handles React/Vue SPAs like HiBob and
+         server-partial pages like Oracle Taleo ATS)
     """
     import os
 
@@ -190,17 +191,21 @@ def _http_scrape(url: str) -> JobScrapedData:
         og_title = og_site = None
         raw_text = re.sub(r"<[^>]+>", " ", html)
 
-    if len(raw_text.strip()) >= 300:
+    # Return only when both text and company are present.  When company is
+    # absent the page is likely a JS SPA whose content has not yet loaded;
+    # fall through to ScraperAPI (step 4) to get the fully-rendered DOM.
+    if len(raw_text.strip()) >= 300 and og_site:
         return JobScrapedData(
             url=final_url,
-            company=og_site or None,
+            company=og_site,
             job_title=og_title or None,
             raw_text=raw_text,
             source="http_fallback",
         )
 
-    # 4. ScraperAPI JS render — for React/Vue SPAs where plain HTTP gives only a shell.
-    #    Only attempted when SCRAPER_API_KEY is configured and step 3 yielded thin text.
+    # 4. ScraperAPI JS render — triggered when step 3 produced thin text OR no
+    #    company (e.g. Oracle Taleo shell has nav-chrome text but no og:site_name;
+    #    HiBob shell is a pure SPA with minimal text and generic og:title).
     scraper_api_key = os.environ.get("SCRAPER_API_KEY", "").strip()
     if scraper_api_key:
         try:
@@ -212,28 +217,113 @@ def _http_scrape(url: str) -> JobScrapedData:
             logger.info("HTTP fallback: trying ScraperAPI render for SPA: %s", url)
             spa_resp = httpx.get(proxy_url, timeout=60, follow_redirects=True)
             if spa_resp.status_code == 200:
-                spa_text = _extract_text_from_html(spa_resp.text)
+                rendered_html = spa_resp.text
+
+                # Try JSON-LD from the fully-rendered page first.  Oracle Taleo and
+                # similar ATSes inject JSON-LD only after JS execution.
+                jld = _extract_jsonld(rendered_html)
+                if jld.get("description"):
+                    logger.info("ScraperAPI: JSON-LD found in rendered HTML")
+                    return JobScrapedData(
+                        url=final_url,
+                        company=jld["company"] if jld["company"] != "Unknown" else None,
+                        job_title=jld["job_title"] if jld["job_title"] != "Unknown" else None,
+                        raw_text=jld["description"],
+                        source="http_fallback",
+                    )
+
+                # Fall back to visible text + metadata re-extracted from the
+                # rendered DOM.  JS hydration updates og:title and h1 with the
+                # real job title (e.g. HiBob shell shows "Careers"; rendered
+                # page shows the actual role name).
+                spa_text = _extract_text_from_html(rendered_html)
                 if len(spa_text.strip()) >= 300:
+                    rendered_company, rendered_title = _extract_rendered_meta(
+                        rendered_html,
+                        og_site or _company_from_hostname(url),
+                        og_title,
+                    )
                     logger.info("ScraperAPI SPA render succeeded, text_len=%d", len(spa_text))
                     return JobScrapedData(
                         url=final_url,
-                        company=og_site or None,
-                        job_title=og_title or None,
+                        company=rendered_company,
+                        job_title=rendered_title,
                         raw_text=spa_text,
                         source="http_fallback",
                     )
         except Exception as exc:
             logger.warning("ScraperAPI SPA render failed for %s: %s", url, exc)
 
-    if not raw_text.strip():
-        raise RuntimeError(f"No text content found at {url}")
-    return JobScrapedData(
-        url=final_url,
-        company=og_site or None,
-        job_title=og_title or None,
-        raw_text=raw_text,
-        source="http_fallback",
-    )
+    # Fall through: return whatever step 3 produced (may be partial).
+    if raw_text.strip():
+        # When company is absent but we captured substantial content, derive it
+        # from the hostname (e.g. careers.lululemon.com → "Lululemon").
+        # Only applies to real content (≥300 chars) to avoid misleading metadata
+        # on thin SPA shells where the company name would also be wrong.
+        company = og_site
+        if not company and len(raw_text.strip()) >= 300:
+            company = _company_from_hostname(final_url)
+        return JobScrapedData(
+            url=final_url,
+            company=company or None,
+            job_title=og_title or None,
+            raw_text=raw_text,
+            source="http_fallback",
+        )
+
+    raise RuntimeError(f"No text content found at {url}")
+
+
+def _company_from_hostname(url: str) -> str | None:
+    """Derive a company name from the job-page hostname as a last resort.
+
+    Strips common career-site subdomain prefixes and the TLD, then returns
+    the next meaningful segment, title-cased.  Examples:
+      careers.lululemon.com  → "Lululemon"
+      jobs.example.com       → "Example"
+    Returns None if no meaningful segment is found.
+    """
+    from urllib.parse import urlparse
+    host = urlparse(url).netloc.lower()
+    SKIP = {"careers", "career", "jobs", "job", "join", "work", "hiring",
+            "apply", "talent", "recruit", "www"}
+    parts = host.split(".")
+    # Always skip the TLD (last segment, e.g. "com", "io", "cafe")
+    for part in parts[:-1]:
+        if part not in SKIP and len(part) > 2:
+            return part.replace("-", " ").title()
+    return None
+
+
+def _h1_text(soup) -> str | None:
+    """Return the text of the first non-empty <h1>, or None."""
+    h1 = soup.find("h1")
+    return h1.get_text(strip=True) if h1 else None
+
+
+def _extract_rendered_meta(
+    rendered_html: str,
+    fallback_company: str | None,
+    fallback_title: str | None,
+) -> tuple[str | None, str | None]:
+    """Extract company and title from a fully JS-rendered page.
+
+    Checks og:site_name, og:title, and <h1> in the rendered DOM.
+    Falls back to the plain-HTTP values when nothing better is found.
+    """
+    try:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(rendered_html, "html.parser")
+        company = _og_meta(soup, "og:site_name") or fallback_company
+        title = (
+            _og_meta(soup, "og:title")
+            or _h1_text(soup)
+            or _meta(soup, "title")
+            or fallback_title
+        )
+        return company, title
+    except Exception:
+        return fallback_company, fallback_title
 
 
 def _extract_jsonld(html: str) -> dict:
