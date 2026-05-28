@@ -39,6 +39,19 @@ if str(_TESTS) not in sys.path:
 from tailor.eval.layout_grader.grader import SampleGrade, _detect_pdf_method, grade_sample
 from tailor.eval.layout_grader.report import build_aggregate, compare_baseline, write_summary_txt
 
+
+def _ev_severity(msg: str) -> int:
+    """Sort key for evidence messages: 0=HARD FAIL, 1=WARN, 2=INFO."""
+    if "HARD FAIL" in msg:
+        return 0
+    if "suppressed" in msg or "well-preserved" in msg or "No Summary" in msg:
+        return 2
+    return 1
+
+
+def _ev_tag(msg: str) -> str:
+    return ("[HARD FAIL]", "[WARN]", "[INFO]")[_ev_severity(msg)]
+
 _SAMPLES = _TESTS / "samples"
 _CLS_DOCX_DIR = _SAMPLES / "classification" / "docx"
 _GEN_DIR = _SAMPLES / "generation"
@@ -260,9 +273,10 @@ def main(argv: list[str] | None = None) -> int:
 
         flag = " [HARD FAIL]" if grade.hard_fail else ""
         print(f"  score={grade.composite_score:.1f}  {grade.status}{flag}")
-        for ev in grade.evidence[:4]:
+        sorted_ev = sorted(grade.evidence, key=_ev_severity)[:4]
+        for ev in sorted_ev:
             safe_ev = ev.encode("ascii", "replace").decode("ascii")
-            print(f"         {safe_ev}")
+            print(f"         {_ev_tag(safe_ev)} {safe_ev}")
 
         grades.append(grade)
 

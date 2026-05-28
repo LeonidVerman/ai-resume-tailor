@@ -433,11 +433,13 @@ def check_content_injection(
     elif sim_llm >= 1.0:
         pass  # Perfect — all target-section LLM content is reflected
     elif sim_llm >= 0.80:
-        # Minor gap — note it but no score penalty
-        evidence.append(
-            f"Minor content gap in target sections: sim_llm={sim_llm:.2f} "
-            f"(~{round((1.0 - sim_llm) * 100)}% of LLM target vocabulary not reflected)"
-        )
+        # Suppress aggregate note when per-section items already explain the gap —
+        # showing both would be redundant and confusing.
+        if not _section_ev:
+            evidence.append(
+                f"Minor content gap in target sections: sim_llm={sim_llm:.2f} "
+                f"(~{round((1.0 - sim_llm) * 100)}% of LLM target vocabulary not reflected)"
+            )
     elif sim_llm >= 0.50:
         score -= 15.0
         evidence.append(
