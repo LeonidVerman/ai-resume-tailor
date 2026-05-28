@@ -30,9 +30,12 @@ not interleaved with main-column content.
 """
 from __future__ import annotations
 
+import logging
 import re
 from collections import Counter
 from dataclasses import dataclass, field
+
+log = logging.getLogger(__name__)
 
 from tailor.compiler.models import (
     LayoutProfile,
@@ -491,6 +494,8 @@ def _pixel_sample_col_bg(
     r, g, b = dominant
     if (r + g + b) / 3 >= 225:
         return None
+    if (r + g + b) / 3 < 15:  # near-black → text pixels, not a sidebar background
+        return None
     return f"{r:02x}{g:02x}{b:02x}"
 
 
@@ -540,6 +545,10 @@ def _extract_col_info(
         # Skip full-width bands (header/footer bars spanning >80% page width) —
         # they are not column backgrounds.
         if (x1 - x0) > pw * 0.80:
+            continue
+        # Skip rects that start below the top 40% of the page — sidebar
+        # backgrounds always start near the top; lower rects are decorative.
+        if y0 > ph * 0.40:
             continue
         hex_color = _fitz_color_to_hex(fill)
         if hex_color is None:
@@ -845,22 +854,35 @@ def _extract_decorative_vector_images(page) -> "list":
         if (r_c + g_c + b_c) / 3 >= 240:
             continue
 
+        # Fix B: Near-full-page vector shapes (≥85% of page in both dimensions) are
+        # reclassified as "full_page_bg" rather than skipped outright.  Single-column
+        # templates need them as floating page backgrounds; two-column templates have
+        # Fix A filter them when cell shading already handles the column fill.
+        # Near-white full-page shapes are skipped (virtual canvas, nothing to add).
+        _is_full_page = w >= pw * 0.85 and h >= ph * 0.85
+
+        if _is_full_page:
+            # Near-white full-page shape → skip (no visual contribution)
+            if min(r_c, g_c, b_c) > 240:
+                continue
+            category = "full_page_bg"
+        else:
+            # Normal classification for partial shapes
+            is_full_w = w > pw * 0.75
+            is_sidebar = (x0 < pw * 0.10 or x1 > pw * 0.90) and w < pw * 0.65 and h > ph * 0.12
+            if is_full_w and y0 < ph * 0.20:
+                category = "header_band"
+            elif is_full_w and y1 > ph * 0.75:
+                category = "footer_band"
+            elif is_sidebar:
+                category = "sidebar_bg"
+            else:
+                category = "body_decor"
+
         key = (round(x0), round(y0), round(x1), round(y1))
         if key in seen:
             continue
         seen.add(key)
-
-        # Classify
-        is_full_w = w > pw * 0.75
-        is_sidebar = (x0 < pw * 0.10 or x1 > pw * 0.90) and w < pw * 0.65 and h > ph * 0.12
-        if is_full_w and y0 < ph * 0.20:
-            category = "header_band"
-        elif is_full_w and y1 > ph * 0.75:
-            category = "footer_band"
-        elif is_sidebar:
-            category = "sidebar_bg"
-        else:
-            category = "body_decor"
 
         try:
             png_bytes = _make_solid_color_png(w, h, hex_color)
@@ -1163,25 +1185,45 @@ def _extract_page_images(fitz_doc, page_index: int = 0) -> "list":
         x0 = float(bbox.x0)
         y0 = float(bbox.y0)
 
-        # --- Filtering ---
+        # --- Filtering / Classification ---
+        # Fix 13: Distinguish blank virtual-canvas images from decorative full-page
+        # backgrounds.  Previously all images ≥85% page size were skipped, which
+        # silently dropped legitimate decorative backgrounds (sample 13 gradient).
+        # Now we sample the center pixel: near-white (luminance > 200) → skip,
+        # otherwise preserve as 'full_page_bg' behind-text floating image.
+        category = ""
         if bw >= pw * 0.85 and bh >= ph * 0.85:
-            continue  # full-page background
+            try:
+                _pix_check = _fitz.Pixmap(fitz_doc, xref)
+                if _pix_check.n > 4 or _pix_check.colorspace != _fitz.csRGB:
+                    _pix_check = _fitz.Pixmap(_fitz.csRGB, _pix_check)
+                _cx = _pix_check.width // 2
+                _cy = _pix_check.height // 2
+                _px = _pix_check.pixel(_cx, _cy)
+                # Skip when ALL channels are near-maximum (blank/white canvas).
+                # Using min-channel > 240 rather than average-luminance > 200
+                # avoids false-filtering of pastel backgrounds like (161,225,225)
+                # which have high average luminance but visible teal/green color.
+                if min(_px[0], _px[1], _px[2]) > 240:
+                    continue  # effectively white full-page image → skip
+                category = "full_page_bg"
+            except Exception:
+                continue  # cannot sample → skip safely
 
-        if bw < 25.0 or bh < 25.0:
-            continue  # tiny icon (handled by _extract_icon_map)
+        if not category:
+            if bw < 25.0 or bh < 25.0:
+                continue  # tiny icon (handled by _extract_icon_map)
+            if bh < 4.0:
+                continue  # separator / ruling line
 
-        if bh < 4.0:
-            continue  # separator / ruling line
-
-        # --- Classification ---
-        aspect = max(bw, bh) / max(min(bw, bh), 1.0)
-        is_squarish = aspect < 2.5
-        if is_squarish and bw < pw * 0.45 and bh < ph * 0.40:
-            category = "profile_photo"
-        elif y0 < ph * 0.25 or (y0 + bh) > ph * 0.78:
-            category = "header_footer_decor"
-        else:
-            category = "body_decor"
+            aspect = max(bw, bh) / max(min(bw, bh), 1.0)
+            is_squarish = aspect < 2.5
+            if is_squarish and bw < pw * 0.45 and bh < ph * 0.40:
+                category = "profile_photo"
+            elif y0 < ph * 0.25 or (y0 + bh) > ph * 0.78:
+                category = "header_footer_decor"
+            else:
+                category = "body_decor"
 
         # --- Extraction ---
         try:
@@ -3586,7 +3628,220 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     # Solid-color overlays from vector drawing regions (sidebars, header/footer bands).
     # Prepended so they render behind raster images and text.
     vector_images = _extract_decorative_vector_images(doc[0])
+
+    # Fix A: When a two-column layout with left column background color is detected,
+    # filter out vector images representing that column background.  The two-column
+    # table renderer (_render_pdf_two_col) already applies the color as w:shd cell
+    # shading; re-inserting the same region as a floating image creates a z-order
+    # conflict where a second dark shape appears over the content (sample 32).
+    # "body_decor" in the left-column area is also filtered — in templates like
+    # sample 32 the sidebar background spans two separate vector rects (a header
+    # portion and a body portion), and the body portion gets classified as body_decor.
+    if resume_doc.layout.column_split_x is not None:
+        _split_x = resume_doc.layout.column_split_x
+        _page_h = doc[0].rect.height
+        _before = len(vector_images)
+        # Always filter tall body_decor images in the column area — these are
+        # decorative background fills (e.g. sample 32's black lower-left rect) that
+        # belong to the original template design but should not appear as floating
+        # images over rendered content, regardless of whether cell shading is active.
+        vector_images = [
+            img for img in vector_images
+            if not (
+                img.category == "body_decor"
+                and img.x_pt + img.width_pt <= _split_x * 1.2
+                and img.height_pt >= _page_h * 0.30
+            )
+        ]
+        # Additional filtering when cell shading is active: the table renderer
+        # (_render_pdf_two_col) applies left_col_bg_color as w:shd cell shading,
+        # so floating images covering the same area add no value and create z-order
+        # conflicts (double-rendering the column background).
+        if resume_doc.layout.left_col_bg_color:
+            vector_images = [
+                img for img in vector_images
+                if not (img.category == "full_page_bg")
+                and not (
+                    img.category in ("sidebar_bg", "body_decor")
+                    and img.x_pt + img.width_pt <= _split_x * 1.2
+                    and img.height_pt >= _page_h * 0.30
+                ) and not (
+                    img.category in ("header_band", "footer_band")
+                    and img.height_pt >= _page_h * 0.30
+                )
+            ]
+        if len(vector_images) < _before:
+            log.debug(
+                "VECTOR_BG_FILTERED: removed %d column-bg images",
+                _before - len(vector_images),
+            )
+
     resume_doc.page_images = vector_images + raster_images
+
+    # Fix 15: Infer column_split_x from a tall narrow sidebar image when text-gap
+    # detection failed.  Templates with sparse sidebar content (a few contact lines)
+    # produce insufficient text density for gap detection, but a sidebar background
+    # vector shape is still extracted.  Use its dimensions to establish the column split.
+    # Handles both left-side sidebars (x_pt near 0) and right-side sidebars (x_pt+w near pw).
+    if resume_doc.layout.column_split_x is None:
+        _page0 = doc[0]
+        _pw = _page0.rect.width
+        _ph = _page0.rect.height
+        _sidebar_img = None
+        _sidebar_side: str = "left"
+        for _img in resume_doc.page_images:
+            if _img.category != "sidebar_bg":
+                continue
+            if _img.height_pt < _ph * 0.70:   # must cover most of page height
+                continue
+            if _img.width_pt > _pw * 0.35:    # must be narrow
+                continue
+            if _img.x_pt < _pw * 0.08:        # left-side sidebar
+                _sidebar_img = _img
+                _sidebar_side = "left"
+                break
+            if _img.x_pt + _img.width_pt > _pw * 0.92:  # right-side sidebar
+                _sidebar_img = _img
+                _sidebar_side = "right"
+                break
+
+        if _sidebar_img is not None:
+            # Content-verification guard: count paragraphs that would land in the
+            # sidebar zone.  A decorative edge-stripe (sample 15) has 0 content
+            # paragraphs in its zone; a true sidebar has ≥3.  Suppress the inference
+            # when fewer than 3 paragraphs are found in the sidebar zone so decorative
+            # background accents don't create false two-column layouts.
+            _all_doc_paras_check = list(resume_doc.header_paras) + list(resume_doc.all_paras)
+            if _sidebar_side == "left":
+                _check_split = _sidebar_img.x_pt + _sidebar_img.width_pt
+                _in_zone = sum(
+                    1 for _pm in _all_doc_paras_check
+                    if _pm.paragraph_profile and 0 < _pm.paragraph_profile.body_text_x0_pt < _check_split
+                )
+            else:
+                _check_split = _sidebar_img.x_pt
+                _in_zone = sum(
+                    1 for _pm in _all_doc_paras_check
+                    if _pm.paragraph_profile and _pm.paragraph_profile.body_text_x0_pt >= _check_split
+                )
+            if _in_zone < 3:
+                log.debug(
+                    "SIDEBAR_INFERENCE_SUPPRESSED: only %d para(s) in sidebar zone — likely decorative",
+                    _in_zone,
+                )
+                _sidebar_img = None
+
+        if _sidebar_img is not None:
+            # For a left sidebar: split = right edge; left cell = sidebar, right cell = body.
+            # For a right sidebar: split = left edge; left cell = body, right cell = sidebar.
+            if _sidebar_side == "left":
+                _inferred_split = _sidebar_img.x_pt + _sidebar_img.width_pt
+                _left_col_w = _inferred_split
+                _right_col_w = _pw - _inferred_split
+                _bg_attr = "left_col_bg_color"
+            else:
+                _inferred_split = _sidebar_img.x_pt
+                _left_col_w = _inferred_split
+                _right_col_w = _pw - _inferred_split
+                _bg_attr = "right_col_bg_color"
+
+            resume_doc.layout.column_split_x = _inferred_split
+            resume_doc.layout.left_col_width_twips = int(_left_col_w * 20)
+            resume_doc.layout.right_col_width_twips = int(_right_col_w * 20)
+            if resume_doc.layout.table_layout_mode is None:
+                resume_doc.layout.table_layout_mode = "sidebar_layout"
+            # Extract sidebar color from center pixel of the solid-color PNG
+            try:
+                import fitz as _fitz_local
+                import io as _io_local
+                _spix = _fitz_local.Pixmap(_io_local.BytesIO(_sidebar_img.image_bytes))
+                _spx = _spix.pixel(_spix.width // 2, _spix.height // 2)
+                _sidebar_hex = f"{_spx[0]:02x}{_spx[1]:02x}{_spx[2]:02x}"
+                if (_spx[0] + _spx[1] + _spx[2]) / 3 < 240:
+                    setattr(resume_doc.layout, _bg_attr, _sidebar_hex)
+            except Exception:
+                pass
+            # Re-assign column_ids for all paragraphs using body_text_x0_pt vs split.
+            # Right-column indent is adjusted to be column-relative.
+            # Paragraphs without a valid body_text_x0_pt default to the BODY column
+            # ("left" for right-sidebar layouts, "left" for left-sidebar layouts
+            # since the body content is always "left" in the renderer's view).
+            # This prevents them from falling into the sidebar column via the
+            # renderer's column_id=None → right fallback.
+            _body_col = "left"   # the wide body cell is always the "left" column
+            _all_doc_paras = list(resume_doc.header_paras) + list(resume_doc.all_paras)
+            for _pm in _all_doc_paras:
+                _pp = _pm.paragraph_profile
+                if _pp is None:
+                    continue
+                if _pp.body_text_x0_pt <= 0.0:
+                    # No valid x position — default to body column
+                    _pp.column_id = _body_col
+                    continue
+                _x = _pp.body_text_x0_pt
+                if _x < _inferred_split:
+                    _pp.column_id = "left"
+                else:
+                    _pp.column_id = "right"
+                    _pp.indent_left_pt = max(0.0, _x - _inferred_split)
+            # Re-sort all_paras: left column sections before right column sections
+            resume_doc.all_paras.sort(
+                key=lambda _pm: (
+                    1 if (_pm.paragraph_profile and _pm.paragraph_profile.column_id == "left")
+                    else 2 if (_pm.paragraph_profile and _pm.paragraph_profile.column_id == "right")
+                    else 0
+                )
+            )
+            # Remove the sidebar image — column cell shading renders the background
+            resume_doc.page_images = [
+                img for img in resume_doc.page_images if img is not _sidebar_img
+            ]
+            log.debug(
+                "SIDEBAR_COLUMN_INFERRED: side=%s split_x=%.1f from sidebar_bg %.0fx%.0f %s=%r",
+                _sidebar_side, _inferred_split,
+                _sidebar_img.width_pt, _sidebar_img.height_pt,
+                _bg_attr, getattr(resume_doc.layout, _bg_attr),
+            )
+
     from tailor.compiler.models import assign_stable_ids
     assign_stable_ids(resume_doc)
+
+    # --- PDF asset preservation diagnostics ---
+    from collections import Counter as _Counter
+    _img_cats = dict(_Counter(img.category for img in resume_doc.page_images))
+    _sidebar_inferred = (
+        resume_doc.layout.column_split_x is not None
+        and not any(img.category == "sidebar_bg" for img in resume_doc.page_images)
+        # sidebar image was removed after inference
+    )
+    resume_doc.pdf_diagnostics = {
+        "raster_images_raw": len(raster_images),
+        "vector_images_raw": len(vector_images),
+        "page_images_final": len(resume_doc.page_images),
+        "image_categories": _img_cats,
+        "column_split_x": resume_doc.layout.column_split_x,
+        "table_layout_mode": resume_doc.layout.table_layout_mode,
+        "header_bg_color": resume_doc.layout.header_bg_color,
+        "footer_bg_color": resume_doc.layout.footer_bg_color,
+        "left_col_bg_color": resume_doc.layout.left_col_bg_color,
+        "right_col_bg_color": resume_doc.layout.right_col_bg_color,
+        "sidebar_detected": resume_doc.layout.column_split_x is not None,
+        "sidebar_inferred": _sidebar_inferred,
+        "page_bg_detected": "full_page_bg" in _img_cats,
+    }
+    log.info(
+        "PDF_ASSET_DIAGNOSTICS: raster=%d vector=%d final=%d cats=%s "
+        "col_split=%.1f mode=%r hdr_bg=%r left_bg=%r sidebar=%s bg=%s",
+        resume_doc.pdf_diagnostics["raster_images_raw"],
+        resume_doc.pdf_diagnostics["vector_images_raw"],
+        resume_doc.pdf_diagnostics["page_images_final"],
+        resume_doc.pdf_diagnostics["image_categories"],
+        resume_doc.layout.column_split_x or 0.0,
+        resume_doc.pdf_diagnostics["table_layout_mode"],
+        resume_doc.pdf_diagnostics["header_bg_color"],
+        resume_doc.pdf_diagnostics["left_col_bg_color"],
+        "inferred" if _sidebar_inferred else ("yes" if resume_doc.layout.column_split_x else "no"),
+        "yes" if resume_doc.pdf_diagnostics["page_bg_detected"] else "no",
+    )
+
     return resume_doc

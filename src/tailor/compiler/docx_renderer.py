@@ -62,6 +62,7 @@ def _make_floating_image_para(
     doc_part,
     img_id: int,
     behind_doc: bool = False,
+    relative_height: int = 2,
 ) -> "Any | None":
     """Return a ``w:p`` containing a floating (page-anchored) image, or None on error.
 
@@ -96,7 +97,7 @@ def _make_floating_image_para(
     anchor = etree.SubElement(
         drawing, f"{{{_WP}}}anchor",
         distT="0", distB="0", distL="0", distR="0",
-        simplePos="0", relativeHeight="2",
+        simplePos="0", relativeHeight=str(relative_height),
         behindDoc="1" if behind_doc else "0",
         locked="0", layoutInCell="1", allowOverlap="0",
     )
@@ -150,6 +151,37 @@ def _make_floating_image_para(
     return p
 
 
+def _apply_docx_page_background(d, hex_color: str) -> None:
+    """Set the DOCX page background color via <w:background>.
+
+    Adds <w:background w:color="RRGGBB"/> before <w:body> and enables
+    displayBackgroundShape in settings.xml.  LibreOffice renders this as a
+    solid page fill — more reliable than a behind-text floating image for
+    single-column templates whose entire page is a dark color.
+    """
+    from lxml import etree as _etree
+    hex_upper = hex_color.upper()
+    doc_elem = d.element
+    existing = doc_elem.find(f"{{{_W}}}background")
+    if existing is not None:
+        doc_elem.remove(existing)
+    bg = _etree.Element(f"{{{_W}}}background")
+    bg.set(f"{{{_W}}}color", hex_upper)
+    body_elem = doc_elem.find(f"{{{_W}}}body")
+    if body_elem is not None:
+        body_idx = list(doc_elem).index(body_elem)
+        doc_elem.insert(body_idx, bg)
+    else:
+        doc_elem.insert(0, bg)
+    try:
+        settings_elem = d.settings.element
+        disp_tag = f"{{{_W}}}displayBackgroundShape"
+        if settings_elem.find(disp_tag) is None:
+            _etree.SubElement(settings_elem, disp_tag)
+    except Exception:
+        pass
+
+
 def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
     """Append floating image paragraphs for every extracted ``PageImageBlock``.
 
@@ -170,8 +202,20 @@ def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
         # the document spans multiple pages.
         body.insert(0, elem)
 
+    # Fix C: Deterministic z-ordering by category so background layers remain stable
+    # regardless of document insertion order.  Lower relativeHeight = further back.
+    _CATEGORY_Z: dict[str, int] = {
+        "full_page_bg": 2,       # page-level decorative background — furthest back
+        "header_band": 3,        # header/footer color bands
+        "footer_band": 3,
+        "sidebar_bg": 4,         # column sidebar background
+        "body_decor": 5,         # mid-page decorative elements
+        "header_footer_decor": 5,
+        "profile_photo": 10,     # foreground — on top of everything
+    }
     for i, img in enumerate(doc.page_images):
         behind = img.category != "profile_photo"
+        z = _CATEGORY_Z.get(img.category, 5 if behind else 10)
         para = _make_floating_image_para(
             img.image_bytes,
             img.x_pt, img.y_pt,
@@ -179,6 +223,7 @@ def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
             doc_part,
             img_id=1000 + i,
             behind_doc=behind,
+            relative_height=z,
         )
         if para is not None:
             _add(para)
@@ -5603,6 +5648,17 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         sectPr = body.find(f"{{{_W}}}sectPr")
         _apply_pdf_page_geometry(sectPr, doc.layout)
         _render_pdf_single_col_dark_header(doc, body, sectPr, doc_part=d.part)
+        # When the entire page has a dark background (full_page_bg in page_images),
+        # use the DOCX page background color instead of a floating image.  Behind-text
+        # floating images are not reliably rendered by LibreOffice for single-column
+        # documents; <w:background> produces a reliable solid page fill.
+        _full_bg_list = [
+            img for img in (getattr(doc, "page_images", None) or [])
+            if img.category == "full_page_bg"
+        ]
+        if _full_bg_list and doc.layout.header_bg_color:
+            _apply_docx_page_background(d, doc.layout.header_bg_color)
+            doc.page_images = [img for img in doc.page_images if img.category != "full_page_bg"]
         _insert_page_images(doc, body, sectPr, d.part)
         d.save(output_path)
         return

@@ -484,6 +484,11 @@ class ResumeDocument:
     # Raster images extracted from the source PDF (profile photos, decorative
     # headers/footers, etc.).  Runtime-only — not serialised to JSON.
     page_images: list["PageImageBlock"] = field(default_factory=list)
+    # Diagnostics populated by parse_pdf() — runtime-only, not serialised.
+    # Keys: raster_images_raw, vector_images_raw, page_images_final, image_categories,
+    #       column_split_x, table_layout_mode, header_bg_color, left_col_bg_color,
+    #       sidebar_detected, sidebar_inferred, page_bg_detected.
+    pdf_diagnostics: "dict | None" = field(default=None, repr=False)
     body_items: list[Any] | None = None  # list[ParaModel | TableBlock]; None for PDF/deserialised
     label_column_fixed: bool = False     # True when label-column layout reordering was applied
     table_column_layout_fixed: bool = False  # True when newspaper/table multi-column fix applied

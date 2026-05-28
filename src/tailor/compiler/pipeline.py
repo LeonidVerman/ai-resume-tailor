@@ -189,12 +189,22 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
     # Also ensure white text color on dark backgrounds: PDF parsers often fail to
     # extract the white color for dark-background text, leaving text_color=None
     # which renders as default (black) — invisible on a dark band.
+    #
+    # Fix 22: Two triggers for dark-background detection on header paragraphs:
+    #   (a) per-paragraph background_color (explicit in PDF extraction)
+    #   (b) layout.header_bg_color as fallback — covers paragraphs whose background
+    #       comes from a vector shape drawn below them (not captured as a per-para
+    #       fill).  Without this fallback, header text on a red/dark header band
+    #       renders as default black → invisible.
+    _layout_header_bg = (doc.layout.header_bg_color if doc.layout else None) or ""
     for _pm in doc.header_paras:
         _pp = _pm.paragraph_profile
-        if _pp and _pp.background_color and _pp.background_color not in _LIGHT_BG_SET:
+        if _pp is None:
+            continue
+        _bg = _pp.background_color or _layout_header_bg
+        if _bg and _bg not in _LIGHT_BG_SET:
             if _pp.font_size_pt and _pp.font_size_pt >= 20.0:
                 _pp.alignment = "center"
-            # Set white text on dark background when no color was extracted
             if _pp.text_color is None:
                 _pp.text_color = "ffffff"
 
@@ -202,6 +212,45 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
         _fix(sec.body_paras)
         for role in sec.roles:
             _fix([role.header] + list(role.header_extra) + role.meta_lines + role.bullets)
+        # Fix 22 (section extension): set white text on section paragraphs that have a
+        # dark per-paragraph background_color (e.g. white text on black sidebar in sample 32).
+        for _pm in [sec.heading, *sec.body_paras]:
+            _pp = _pm.paragraph_profile
+            if _pp and _pp.background_color and _pp.background_color not in _LIGHT_BG_SET:
+                if _pp.text_color is None:
+                    _pp.text_color = "ffffff"
+        for _role in sec.roles:
+            for _pm in [_role.header, *_role.header_extra, *_role.meta_lines, *_role.bullets]:
+                _pp = _pm.paragraph_profile
+                if _pp and _pp.background_color and _pp.background_color not in _LIGHT_BG_SET:
+                    if _pp.text_color is None:
+                        _pp.text_color = "ffffff"
+
+    # Full-page dark background (sample 15 style): when a full_page_bg image is
+    # present AND the page background is dark AND the layout is single-column,
+    # apply white text to all section content so it is readable over the dark fill.
+    # Two-column templates with full_page_bg (e.g. sample 22) use cell shading
+    # instead and must NOT have body text forced to white.
+    _has_full_page_bg = (
+        doc.layout.column_split_x is None
+        and _layout_header_bg
+        and _layout_header_bg not in _LIGHT_BG_SET
+        and any(
+            getattr(_img, "category", None) == "full_page_bg"
+            for _img in (getattr(doc, "page_images", None) or [])
+        )
+    )
+    if _has_full_page_bg:
+        for sec in doc.sections:
+            for _pm in [sec.heading, *sec.body_paras]:
+                _pp = _pm.paragraph_profile
+                if _pp and _pp.text_color is None:
+                    _pp.text_color = "ffffff"
+            for _role in sec.roles:
+                for _pm in [_role.header, *_role.header_extra, *_role.meta_lines, *_role.bullets]:
+                    _pp = _pm.paragraph_profile
+                    if _pp and _pp.text_color is None:
+                        _pp.text_color = "ffffff"
 
 
 def _estimate_col_section_height(
