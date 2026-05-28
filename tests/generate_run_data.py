@@ -30,11 +30,13 @@ Configuration (environment variables, all optional)
   JOB_DESCRIPTION_ID default: 97
 """
 
+import io
 import json
 import os
 import re
 import sys
 import time
+import zipfile
 from pathlib import Path
 
 import requests
@@ -182,7 +184,13 @@ def run_generation(token: str, resume_id: int) -> int:
 
 
 def download_run_data(admin_token: str, run_id: int) -> tuple[str, bytes]:
-    """Download run-data JSON; return (api_filename, raw_bytes)."""
+    """Download run-data; return (json_filename, raw_json_bytes).
+
+    The API may return a raw JSON file or a ZIP archive.  When a ZIP is
+    received the JSON debug file inside (identified by run_id in its name)
+    is extracted automatically so callers always see a plain JSON filename
+    and bytes regardless of transport format.
+    """
     resp = requests.get(
         f"{BASE}/admin/run-data/download/{run_id}",
         headers=_auth_headers(admin_token),
@@ -195,7 +203,31 @@ def download_run_data(admin_token: str, run_id: int) -> tuple[str, bytes]:
     m = re.search(r'filename="([^"]+)"', cd)
     if not m:
         raise RuntimeError(f"No filename in Content-Disposition: {cd!r}")
-    return m.group(1), resp.content
+    outer_filename = m.group(1)
+    content = resp.content
+
+    # If the response is a ZIP, extract the JSON run-data file from inside it.
+    is_zip = outer_filename.lower().endswith(".zip") or content[:2] == b"PK"
+    if is_zip:
+        with zipfile.ZipFile(io.BytesIO(content)) as zf:
+            run_id_str = str(run_id)
+            # Prefer JSON entries whose name contains the run_id
+            candidates = [
+                name for name in zf.namelist()
+                if name.endswith(".json") and run_id_str in name
+            ]
+            if not candidates:
+                candidates = [name for name in zf.namelist() if name.endswith(".json")]
+            if not candidates:
+                raise RuntimeError(
+                    f"No JSON file found in zip {outer_filename!r}. "
+                    f"Contents: {zf.namelist()}"
+                )
+            json_path = candidates[0]
+            json_name = json_path.split("/")[-1].split("\\")[-1]
+            return json_name, zf.read(json_path)
+
+    return outer_filename, content
 
 
 def _prefix_before_run_id(filename: str, run_id: int) -> str:
