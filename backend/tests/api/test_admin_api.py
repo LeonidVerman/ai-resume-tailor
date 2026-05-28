@@ -94,7 +94,15 @@ class TestSystemStats:
     def test_stats_counts_are_non_negative(self, admin_client):
         data = admin_client.get(API_STATS).json()
         for key, value in data.items():
-            assert value >= 0, f"{key} should be non-negative"
+            if isinstance(value, int):
+                assert value >= 0, f"{key} should be non-negative"
+
+    def test_stats_includes_version(self, admin_client):
+        data = admin_client.get(API_STATS).json()
+        assert "app_version" in data
+        assert isinstance(data["app_version"], str)
+        assert "build_date" in data
+        assert isinstance(data["build_date"], str)
 
     def test_non_admin_returns_403(self, client):
         """Regular user client should be refused."""

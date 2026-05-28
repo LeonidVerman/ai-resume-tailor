@@ -140,7 +140,12 @@ def evaluate_run(request: EvaluationRequest, _admin: AdminDep, db: DbDep):
 @router.get("/system-stats", response_model=SystemStats)
 def system_stats(_admin: AdminDep, db: DbDep):
     """Return aggregate counts across all users for admin dashboard."""
-    return StatsService(db).get_system_stats()
+    settings = get_settings()
+    stats = StatsService(db).get_system_stats()
+    return stats.model_copy(update={
+        "app_version": settings.app_version,
+        "build_date": settings.build_date,
+    })
 
 
 @router.get("/generation-config", response_model=GenerationConfigResponse)
