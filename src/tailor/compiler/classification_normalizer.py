@@ -6,6 +6,14 @@ the LLM classifier is called, and post-classification synthetic para_id
 resolution.
 
 Normalization pipeline (applied in order per section):
+  0. Pre-classification text cleanup — removes extraction noise BEFORE any
+     structural analysis so that downstream steps operate on clean text:
+       • Stage C — known link artifacts ("a link", "a link <content>") stripped.
+       • Stage B — repeated short prefix detected document-locally and stripped
+                   (e.g. the "f " fake-bullet from PDF→DOCX converters).
+       • Stage A — leading visual bullet glyphs (•, ◦, ▪, …) stripped from
+                   paragraph text; the bullet signal is carried by parser_semantic
+                   and semantic_hint, not by the glyph character.
   1. Remove section_heading paragraphs — already captured in raw_title.
      Headings used as role headers (pattern-C layouts) are preserved.
   2. Clear roles[] for non-experience sections — prevents the LLM from
@@ -39,6 +47,7 @@ Post-classification:
 Normalization report (returned as third element):
     {
       "structure_confidence":          "high" | "medium" | "low",
+      "artifact_cleanups":             [{para_id, stage, before, after}],
       "headings_removed":              [{section_id, para_id, text_preview}],
       "roles_cleared":                 [{section_id, raw_title, role_count}],
       "compound_paras_split":          [{source_para_id, text_preview, split_count, split_kind}],
@@ -50,6 +59,7 @@ Normalization report (returned as third element):
 
 from __future__ import annotations
 
+import dataclasses
 import re
 from typing import TYPE_CHECKING
 
@@ -468,6 +478,149 @@ def _split_overmerged_role(
 
 
 # ---------------------------------------------------------------------------
+# Pre-classification text cleanup (Stage A / B / C)
+# ---------------------------------------------------------------------------
+
+# Stage C — known extraction artifacts produced by PDF→DOCX converters
+_LINK_ARTIFACT_RE = re.compile(r"^a\s+link\s*", re.IGNORECASE)
+_LINK_ARTIFACT_SOLO = frozenset({"a link", "a link.", "link"})
+
+# Stage A — leading visual-bullet glyphs that the LLM doesn't need to see
+# (parser_semantic / semantic_hint already carry the bullet signal)
+_LEADING_BULLET_STRIP_RE = re.compile(r"^[•◦▪▸●►▶·]\s+")
+
+# Common short English prepositions / conjunctions that happen to be 2 chars;
+# they must NOT be treated as artifact prefixes even if they're frequent.
+_COMMON_WORD_PREFIXES: frozenset[str] = frozenset({
+    "in", "on", "at", "to", "of", "by", "an", "as", "or", "up", "do",
+    "is", "it", "be", "we", "he", "if", "so",
+})
+
+
+def _detect_repeated_artifact_prefix(
+    paras: "list[ClassificationParaInput]",
+) -> str | None:
+    """Detect a short prefix that appears repeatedly as a PDF-extraction artifact.
+
+    Scans all eligible paragraphs (non-heading, non-empty, text ≥ 4 chars).
+    Returns the prefix string (including trailing space) when ALL hold:
+      - Appears in ≥ 3 paragraphs
+      - Covers ≥ 20% of eligible paragraphs
+      - Is exactly 1 or 2 non-space chars followed by one space
+      - Single-char prefix: must be lowercase (uppercase → alphabetic list item)
+      - Two-char prefix: must not be a common English short word
+      - Remaining text after stripping is ≥ 3 chars for every occurrence
+
+    Returns None when no artifact prefix is found.
+    This is document-local and conservative — no global substitution.
+    """
+    eligible = [
+        p for p in paras
+        if p.parser_semantic not in ("section_heading", "empty")
+        and len(p.text.strip()) >= 4
+    ]
+    if len(eligible) < 3:
+        return None
+
+    prefix_counts: dict[str, int] = {}
+    for p in eligible:
+        t = p.text.strip()
+        for plen in (1, 2):
+            if len(t) > plen and t[plen] == " ":
+                prefix_counts[t[:plen + 1]] = prefix_counts.get(t[:plen + 1], 0) + 1
+
+    for prefix, count in sorted(prefix_counts.items(), key=lambda x: -x[1]):
+        if count < 3 or count / len(eligible) < 0.20:
+            continue
+        p_chars = prefix.rstrip()
+        if len(p_chars) == 1:
+            if p_chars.isupper():  # "A ", "B " → alphabetic list, not artifact
+                continue
+        elif len(p_chars) == 2:
+            if not p_chars.isalpha():
+                pass  # non-alpha 2-char prefix — could be an artifact
+            elif p_chars.lower() in _COMMON_WORD_PREFIXES:
+                continue  # "in ", "on " etc. are real words
+        else:
+            continue  # > 2 chars — too risky
+
+        # Every occurrence must leave substantive remaining text
+        occurrences = [
+            p.text.strip()[len(prefix):]
+            for p in eligible
+            if p.text.strip().startswith(prefix)
+        ]
+        if not occurrences or any(len(r) < 3 for r in occurrences):
+            continue
+
+        return prefix
+
+    return None
+
+
+def _cleanup_para_text(
+    para: "ClassificationParaInput",
+    artifact_prefix: str | None,
+    cleanup_log: list,
+) -> "ClassificationParaInput":
+    """Apply staged text cleanup to one paragraph; return cleaned copy or original.
+
+    Stages applied in priority order:
+      C — Known extraction artifacts ("a link" standalone or as a prefix)
+      B — Repeated artifact prefix (computed document-locally by caller)
+      A — Leading visual-bullet glyph on a non-bullet paragraph
+
+    para_id and all other fields are preserved; only .text and (when the cleaned
+    text is empty) .parser_semantic are changed.  Uses dataclasses.replace() so
+    the original object is never mutated.
+    """
+    t = para.text.strip()
+    if not t:
+        return para
+
+    new_text: str | None = None
+    stage: str = ""
+
+    # Stage C: standalone "a link" artifact (entire paragraph is the artifact)
+    if t.lower() in _LINK_ARTIFACT_SOLO:
+        new_text = ""
+        stage = "C_link_standalone"
+
+    # Stage C: "a link <content>" as a leading prefix
+    elif _LINK_ARTIFACT_RE.match(t):
+        suffix = _LINK_ARTIFACT_RE.sub("", t).strip()
+        new_text = suffix  # may be ""
+        stage = "C_link_prefix"
+
+    # Stage B: repeated document-local artifact prefix (e.g. "f " in PDF→DOCX)
+    elif artifact_prefix and t.startswith(artifact_prefix):
+        remainder = t[len(artifact_prefix):].strip()
+        new_text = remainder  # may be "" (shouldn't happen per detection criteria)
+        stage = f"B_repeated_prefix:{artifact_prefix!r}"
+
+    # Stage A: leading visual-bullet glyph on a paragraph (not already a bullet)
+    elif para.parser_semantic == "paragraph":
+        m = _LEADING_BULLET_STRIP_RE.match(t)
+        if m:
+            remainder = t[m.end():].strip()
+            if remainder:
+                new_text = remainder
+                stage = "A_bullet_glyph_strip"
+
+    if new_text is None:
+        return para
+
+    cleanup_log.append({
+        "para_id": para.para_id,
+        "stage": stage,
+        "before": t[:80],
+        "after": new_text[:80],
+    })
+    new_sem = "empty" if not new_text else para.parser_semantic
+    return dataclasses.replace(para, text=new_text, parser_semantic=new_sem)
+
+
+# ---------------------------------------------------------------------------
 # Semantic hint detection
 # ---------------------------------------------------------------------------
 
@@ -591,11 +744,19 @@ def normalize_classification_input(
         ClassificationRoleInput,
     )
 
-    import dataclasses
     sidecar: dict[str, str] = {}
     structure_confidence = _detect_structure_confidence(ci)
+
+    # Doc-level artifact prefix detection — runs on original paragraphs so the
+    # frequency count is unaffected by per-section biases.
+    _all_paras: list[ClassificationParaInput] = [
+        p for sec in ci.sections for p in sec.paragraphs
+    ]
+    doc_artifact_prefix: str | None = _detect_repeated_artifact_prefix(_all_paras)
+
     report: dict = {
         "structure_confidence": structure_confidence,
+        "artifact_cleanups": [],
         "headings_removed": [],
         "roles_cleared": [],
         "compound_paras_split": [],
@@ -611,9 +772,16 @@ def normalize_classification_input(
             pid for role in sec.roles for pid in role.header_para_ids
         }
 
+        # ── Step 0: pre-classification text cleanup ────────────────────────
+        paras_s0: list[ClassificationParaInput] = []
+        for p in sec.paragraphs:
+            paras_s0.append(
+                _cleanup_para_text(p, doc_artifact_prefix, report["artifact_cleanups"])
+            )
+
         # ── Step 1: remove section_heading paras not used as role headers ──
         paras_s1: list[ClassificationParaInput] = []
-        for p in sec.paragraphs:
+        for p in paras_s0:
             if p.parser_semantic == "section_heading" and p.para_id not in role_header_ids:
                 report["headings_removed"].append({
                     "section_id": sec.section_id,

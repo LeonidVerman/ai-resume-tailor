@@ -489,6 +489,11 @@ def _relabel_implicit_role_headers(body_paras: list[ParaModel]) -> None:
             continue
         if text[0] in "-\u2022\u00b7\u2013*":
             continue
+        # Sentence-like lines (ending with a full stop, question mark, or
+        # exclamation) are body content, NOT role headers.  Role titles
+        # ("Senior Engineer", "Lead Developer") never end with a period.
+        if text[-1] in ".!?":
+            continue
         words = set(re.split(r"\W+", text.lower()))
         if not (words & _JOB_TITLE_WORDS):
             continue
