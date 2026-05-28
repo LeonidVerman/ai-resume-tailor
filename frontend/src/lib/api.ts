@@ -426,7 +426,7 @@ export const admin = {
     return downloadBlob(`/admin/run-data/download?${params}`, "run-data.zip");
   },
   downloadRunDataById: (runId: string) =>
-    downloadBlob(`/admin/run-data/download/${runId}`, `run-data-${runId}.json`),
+    downloadBlob(`/admin/run-data/download/${runId}`, `run-data-${runId}.zip`),
 
   // Benchmark
   startBenchmark: (client_id: string, assess_model: string, generation_mode?: string) =>
