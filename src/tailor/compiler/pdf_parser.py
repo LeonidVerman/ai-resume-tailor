@@ -1339,6 +1339,21 @@ def _extract_layout(doc) -> LayoutProfile:
         left_bg = right_bg = None
         col_boundary = None
 
+    # Infer semantic table layout mode (B1).
+    # "synchronized_rows" is set later in parse_pdf after section_row_table is known.
+    table_layout_mode: str | None = None
+    if col_boundary is not None:
+        left_frac = (col_boundary / rect.width) if rect.width > 0 else 0.5
+        if left_bg is not None or right_bg is not None:
+            # Column with a background colour → visually distinct coloured sidebar
+            table_layout_mode = "sidebar_layout"
+        elif left_frac <= 0.40 or left_frac >= 0.60:
+            # Notably asymmetric column widths → narrow sidebar on one side
+            table_layout_mode = "sidebar_layout"
+        else:
+            # Roughly balanced columns with no background → independent flows
+            table_layout_mode = "independent_columns"
+
     return LayoutProfile(
         page_width_pt=rect.width,
         page_height_pt=rect.height,
@@ -1353,6 +1368,7 @@ def _extract_layout(doc) -> LayoutProfile:
         right_col_width_twips=right_col_width_twips,
         left_col_bg_color=left_bg,
         right_col_bg_color=right_bg,
+        table_layout_mode=table_layout_mode,
     )
 
 
@@ -1569,6 +1585,56 @@ def _detect_column_split(
                     return x0_mid
                 # No non-wide, non-footer content left of the gap: only full-width
                 # blocks or footer items on the left — not a real sidebar column.
+
+    # Secondary detection: right sidebar by vertical content band.
+    # Used when the gap-based method fails because wide body text blocks bridge
+    # the gap (e.g. experience paragraphs that physically span into the right
+    # sidebar x-zone even though they visually stay in the left column).
+    #
+    # Look for body spans with x0 in [45%, 85%] of page width that collectively
+    # span a significant vertical extent AND are not simply right-aligned dates
+    # (date columns pair their items tightly with left-column content at the same Y).
+    if page_height > 0:
+        _body_h = max(page_height - top_cutoff, 1.0)
+        _sbar_lo = page_width * 0.45
+        _sbar_hi = page_width * 0.85
+        _sbar_spans: list[tuple[float, float]] = []  # (x0, y0)
+        _left_y_buckets: set[int] = set()
+        for _blk in blocks:
+            if _blk.get("type") != 0 or _blk["bbox"][1] < top_cutoff:
+                continue
+            for _line in _blk.get("lines", []):
+                for _span in _line.get("spans", []):
+                    if not _span.get("text", "").strip():
+                        continue
+                    _sx0 = _span["bbox"][0]
+                    _sy0 = _span["bbox"][1]
+                    if _sy0 < top_cutoff:
+                        continue
+                    if _sbar_lo <= _sx0 <= _sbar_hi:
+                        _sbar_spans.append((_sx0, _sy0))
+                    elif _sx0 < page_width * 0.40:
+                        _left_y_buckets.add(round(_sy0 / 10))
+
+        if len(_sbar_spans) >= 3:
+            _sbar_ys = [y for _, y in _sbar_spans]
+            _sbar_coverage = (max(_sbar_ys) - min(_sbar_ys)) / _body_h
+            if _sbar_coverage >= 0.25:
+                # Guard: reject if the majority of sidebar spans are Y-paired
+                # with left-column content — that pattern is a date column, not
+                # a sidebar (dates appear alongside role headers at the same Y).
+                _paired = sum(
+                    1 for _, y in _sbar_spans
+                    if round(y / 10) in _left_y_buckets
+                )
+                if _paired / len(_sbar_spans) < 0.45:
+                    # Require at least 3 distinct Y buckets (20 pt grid).
+                    _y_buckets = {round(y / 20) for _, y in _sbar_spans}
+                    if len(_y_buckets) >= 3:
+                        _min_x0 = min(x for x, _ in _sbar_spans)
+                        _split = max(_min_x0 - 15.0, page_width * 0.20)
+                        if _split <= page_width * 0.85:
+                            return _split
     return None
 
 
@@ -3216,6 +3282,7 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
             # Filter contact/footer items (phone, email) from the label list;
             # they are not section headings and would create spurious sections.
             layout.section_row_table = True
+            layout.table_layout_mode = "synchronized_rows"
             label_left = [pm for pm in merged_left_raw if not _FOOTER_ITEM_RE.search(pm.text)]
             merged = _interleave_section_label_column(label_left, right_raw)
             above_hdrs, above_secs = _group_sections(above_raw)
@@ -3241,6 +3308,9 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
         # Store on layout so the renderer can create a full-width header band
         # even for single-column PDFs (column_split_x=None).
         layout.header_bg_color = _hdr_bg_color
+        # A full-width dark header above independent body columns → header_body_split.
+        if layout.column_split_x is not None:
+            layout.table_layout_mode = "header_body_split"
         for _pm in header_paras:
             _pp = _pm.paragraph_profile
             if _pp is None:

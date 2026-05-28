@@ -1122,6 +1122,12 @@ def compile_resume_from_pdf(
 
     with open(pdf_path, "rb") as f:
         template_ir = parse_pdf(f.read())
+    log.debug(
+        "TABLE_LAYOUT_MODE_DETECTED: mode=%r column_split_x=%s section_row_table=%s",
+        template_ir.layout.table_layout_mode,
+        template_ir.layout.column_split_x,
+        template_ir.layout.section_row_table,
+    )
     # Remove contact/footer items (phone, email) that landed in role bullets on
     # single-page PDFs — they would otherwise become LLM bullet archetypes and
     # produce wrong size, indent, and italic on generated bullets.

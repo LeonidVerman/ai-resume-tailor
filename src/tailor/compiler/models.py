@@ -322,6 +322,10 @@ class LayoutProfile:
     section_row_table: bool = False          # True when left column is section-label only (one row per section)
     header_bg_color: str | None = None       # hex RRGGBB for full-width dark header band (single-col PDFs)
     footer_bg_color: str | None = None       # hex RRGGBB for full-width dark footer band (single-col PDFs)
+    # Semantic table layout mode (B1): inferred from structural cues; None for non-two-column docs.
+    # Values: "synchronized_rows" | "sidebar_layout" | "header_body_split" |
+    #         "asymmetric_columns" | "independent_columns"
+    table_layout_mode: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -341,6 +345,7 @@ class LayoutProfile:
             "section_row_table": self.section_row_table,
             "header_bg_color": self.header_bg_color,
             "footer_bg_color": self.footer_bg_color,
+            "table_layout_mode": self.table_layout_mode,
         }
 
     @classmethod
@@ -362,6 +367,7 @@ class LayoutProfile:
             section_row_table=bool(d.get("section_row_table", False)),
             header_bg_color=d.get("header_bg_color"),
             footer_bg_color=d.get("footer_bg_color"),
+            table_layout_mode=d.get("table_layout_mode"),
         )
 
 
