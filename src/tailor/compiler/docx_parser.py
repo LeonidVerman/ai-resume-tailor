@@ -434,6 +434,19 @@ def _infer_semantic(pm: ParaModel) -> str:
     if re.match(r"^(19|20)\d{2}[A-Za-z]", text) and len(text) <= 80 and "|" not in text:
         return "role_meta"
 
+    # "Title (Date range)" pattern: year appears only inside trailing parentheses.
+    # e.g. "Senior Software Engineer (September 2023 – Present)" → role_header.
+    # Guard: text before the parens must contain no year and be short (≤ 60 chars).
+    _m_tparen = _TRAILING_DATE_PAREN_RE.match(text)
+    if _m_tparen:
+        _title_part = _m_tparen.group(1).strip()
+        if (
+            not _YEAR_RE.search(_title_part)
+            and len(_title_part) <= 60
+            and _title_part[-1:] not in ".!?,;"
+        ):
+            return "role_header"
+
     # NBSP/space-column role header: job title and date/company are placed on
     # the same paragraph and aligned using non-breaking spaces (\\xa0) or tab
     # stops instead of a "|" separator.  Detect by splitting on 3+ consecutive
@@ -481,6 +494,15 @@ def _relabel_implicit_role_headers(body_paras: list[ParaModel]) -> None:
     """
     _relabel_implicit_role_headers_impl(body_paras)
 
+
+# Hyperlink / symbol artifacts injected by some DOCX renderers before the
+# visible text of a hyperlink run ("a link ") or a Font-Awesome icon ("f ").
+# Stripped at text-extraction time so downstream heuristics see clean text.
+_ARTIFACT_PREFIX_RE = re.compile(r"^(?:a link |f (?=[A-Z]))")
+
+# Trailing-paren date pattern: "Senior Software Engineer (September 2023 – Present)"
+# The year appears only inside the trailing parentheses; the text before them is the title.
+_TRAILING_DATE_PAREN_RE = re.compile(r"^(.+?)\s*\(([^)]*(?:19|20)\d{2}[^)]*)\)\s*$")
 
 # First words that typically open a body sentence, never a job title.
 _ROLE_BODY_FIRST_WORDS: frozenset[str] = frozenset({
@@ -760,6 +782,134 @@ def _relabel_implicit_role_headers_impl(body_paras: list) -> None:
                 )
                 pm.semantic = "role_header"
                 break
+
+
+# ---------------------------------------------------------------------------
+# Compound role paragraph splitting (Problem #1)
+# ---------------------------------------------------------------------------
+
+# Body-section openers that appear mid-paragraph in compound role paragraphs.
+# e.g. "Senior Engineer, Acme Corp, Vancouver Highlights: Led a team..."
+_COMPOUND_BODY_OPENER_RE = re.compile(
+    r"(?<!\w)(Highlights|Summary|Overview|Key Achievements|"
+    r"Responsibilities|Key Responsibilities):\s+",
+    re.IGNORECASE,
+)
+
+
+def _try_split_compound_role(pm: ParaModel) -> list[ParaModel] | None:
+    """Split a compound paragraph into [role_header, role_meta, paragraph].
+
+    Detects "Title, Company[, Location] OPENER: body..." and splits.
+    Returns None if the paragraph doesn't match the pattern.
+    """
+    text = pm.text.strip()
+    m = _COMPOUND_BODY_OPENER_RE.search(text)
+    if m is None:
+        return None
+
+    prefix = text[: m.start()].strip().rstrip(",").strip()
+    body_text = text[m.end() :].strip()
+
+    if len(prefix) > 120 or not body_text:
+        return None
+
+    _comma_idx = prefix.find(",")
+    if _comma_idx == -1:
+        return None
+
+    title = prefix[:_comma_idx].strip()
+    meta = prefix[_comma_idx + 1 :].strip()
+
+    if not meta:
+        return None
+
+    # Validate: title must be short, have a job-title word, and contain no year.
+    if (
+        len(title) > 50
+        or _YEAR_RE.search(title)
+        or not (set(re.split(r"\W+", title.lower())) - {""}) & _JOB_TITLE_WORDS
+    ):
+        return None
+
+    title_pm = ParaModel(text=title, style=pm.style, semantic="role_header")
+    meta_pm = ParaModel(text=meta, style=pm.style, semantic="role_meta")
+    body_pm = ParaModel(text=body_text, style=pm.style, semantic="paragraph")
+
+    _logger.debug(
+        "COMPOUND_ROLE_SPLIT: %r → title=%r meta=%r body=%r",
+        text[:80], title, meta, body_text[:40],
+    )
+    return [title_pm, meta_pm, body_pm]
+
+
+def _decompose_compound_role_paras(body_paras: list[ParaModel]) -> None:
+    """Expand compound role paragraphs in place into role_header + role_meta + body."""
+    i = 0
+    while i < len(body_paras):
+        pm = body_paras[i]
+        if pm.semantic == "paragraph":
+            parts = _try_split_compound_role(pm)
+            if parts:
+                body_paras[i : i + 1] = parts
+                i += len(parts)
+                continue
+        i += 1
+
+
+# ---------------------------------------------------------------------------
+# Company/location paragraph promotion (Problem #2)
+# ---------------------------------------------------------------------------
+
+
+def _promote_preceding_company_paras(body_paras: list[ParaModel]) -> None:
+    """Detect company/location paragraphs that precede role_headers and promote them.
+
+    In Pattern-B documents (e.g. Sample 36) the company name appears as a
+    standalone paragraph BEFORE the role title+date.  After
+    _relabel_implicit_role_headers runs (which may promote "Title (Date)" to
+    role_header), we scan backward from each role_header, find the company
+    paragraph, promote it to role_meta, and move it to just after the
+    role_header so _group_roles sees the canonical role_header → role_meta order.
+    """
+    i = 0
+    while i < len(body_paras):
+        if body_paras[i].semantic != "role_header":
+            i += 1
+            continue
+
+        # Scan backward past empty paragraphs.
+        j = i - 1
+        while j >= 0 and not body_paras[j].text.strip():
+            j -= 1
+
+        if j < 0:
+            i += 1
+            continue
+
+        candidate = body_paras[j]
+        ctext = candidate.text.strip()
+
+        if (
+            candidate.semantic == "paragraph"
+            and ctext
+            and len(ctext) <= 70
+            and not _YEAR_RE.search(ctext)
+            and ctext[-1] not in ".!?"
+            and not ctext.startswith(("-", "•", "·", "–", "*"))
+            and (ctext.split()[0].lower() if ctext.split() else "") not in _ROLE_BODY_FIRST_WORDS
+        ):
+            candidate.semantic = "role_meta"
+            body_paras.pop(j)
+            i -= 1  # role_header shifted left by one
+            body_paras.insert(i + 1, candidate)
+            _logger.debug(
+                "ROLE_META_COMPANY_DETECTED: %r promoted before role_header %r",
+                ctext, body_paras[i].text[:60],
+            )
+            i += 2  # skip past role_header and the newly inserted role_meta
+        else:
+            i += 1
 
 
 _EDUCATION_INSTITUTION_WORDS = frozenset(
@@ -1069,7 +1219,7 @@ def parse_docx(path: str) -> ResumeDocument:
     for child in body:
         local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
         if local == "p":
-            text = _get_para_text(child)
+            text = _ARTIFACT_PREFIX_RE.sub("", _get_para_text(child))
             # Label-column tab-split guard: when the LEFT side of a tab-split is a
             # known section name but the RIGHT side is not (e.g. sample 28's
             # "SUMMARY\tMaster Degree of Project Engineering"), extract only the left
@@ -1091,7 +1241,7 @@ def parse_docx(path: str) -> ResumeDocument:
         elif local == "tbl":
             table_paras: list[ParaModel] = []
             for p_elem in child.findall(f".//{{{_W}}}p"):
-                text = _get_para_text(p_elem)
+                text = _ARTIFACT_PREFIX_RE.sub("", _get_para_text(p_elem))
                 style = _parse_para_style(p_elem, style_map)
                 pm = ParaModel(text=text, style=style, semantic="")
                 pm.semantic = _infer_semantic(pm)
@@ -2180,5 +2330,7 @@ def _finalise(section: ResumeSection) -> None:
                     and "|" not in p.text
                 ):
                     p.semantic = "role_meta"
+        _decompose_compound_role_paras(section.body_paras)
         _relabel_implicit_role_headers(section.body_paras)
+        _promote_preceding_company_paras(section.body_paras)
         section.roles = _group_roles(section.body_paras)

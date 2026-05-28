@@ -17,10 +17,13 @@ Key scenarios:
 from __future__ import annotations
 
 from tailor.compiler.docx_parser import (
+    _ARTIFACT_PREFIX_RE,
     _ROLE_BOUNDARY_MEDIUM,
     _ROLE_BOUNDARY_STRONG,
+    _decompose_compound_role_paras,
     _detect_doc_role_pattern,
     _infer_semantic,
+    _promote_preceding_company_paras,
     _relabel_implicit_role_headers,
     _score_role_boundary,
 )
@@ -504,3 +507,199 @@ class TestInferSemanticYearTerminal:
             "Project Alpha, Building a distributed system for processing events, 2019-2021"
         )
         assert _infer_semantic(pm) == "role_meta"
+
+
+# ---------------------------------------------------------------------------
+# Round 3 tests
+# ---------------------------------------------------------------------------
+
+
+def _plain_para(text: str, semantic: str = "paragraph") -> ParaModel:
+    style = ParaStyle(
+        style_name=None, alignment=None,
+        indent_left=None, indent_right=None, hanging=None,
+        spacing_before=None, spacing_after=None, line_spacing=None,
+        keep_with_next=None, numbering=None,
+        bold=None, italic=None, font_name=None, font_size_pt=None,
+        color=None, xml_proto=None,
+    )
+    return ParaModel(text=text, style=style, semantic=semantic)
+
+
+class TestArtifactPrefixCleanup:
+    """Problem #4: strip hyperlink/symbol artifacts from extracted text."""
+
+    def test_strip_a_link_prefix(self):
+        assert _ARTIFACT_PREFIX_RE.sub("", "a link GitHub") == "GitHub"
+
+    def test_strip_f_uppercase_prefix(self):
+        assert _ARTIFACT_PREFIX_RE.sub("", "f Email") == "Email"
+
+    def test_f_lowercase_not_stripped(self):
+        """'f ' before lowercase is not an artifact — it could be content."""
+        assert _ARTIFACT_PREFIX_RE.sub("", "f email") == "f email"
+
+    def test_no_artifact_unchanged(self):
+        assert _ARTIFACT_PREFIX_RE.sub("", "Senior Engineer") == "Senior Engineer"
+
+    def test_empty_string_unchanged(self):
+        assert _ARTIFACT_PREFIX_RE.sub("", "") == ""
+
+
+class TestTitleDateParenNormalization:
+    """Problem #3: 'Title (Date range)' → role_header."""
+
+    def _make_pm(self, text: str, bold: bool = True) -> ParaModel:
+        style = ParaStyle(
+            style_name=None, alignment=None,
+            indent_left=None, indent_right=None, hanging=None,
+            spacing_before=None, spacing_after=None, line_spacing=None,
+            keep_with_next=None, numbering=None,
+            bold=bold, italic=None, font_name=None, font_size_pt=None,
+            color=None, xml_proto=None,
+        )
+        return ParaModel(text=text, style=style, semantic="paragraph")
+
+    def test_title_with_date_range_paren_becomes_role_header(self):
+        pm = self._make_pm("Senior Software Engineer (September 2023 – Present)")
+        assert _infer_semantic(pm) == "role_header"
+
+    def test_title_with_year_only_paren_becomes_role_header(self):
+        pm = self._make_pm("Software Developer (2021)")
+        assert _infer_semantic(pm) == "role_header"
+
+    def test_title_with_year_range_paren_becomes_role_header(self):
+        pm = self._make_pm("Backend Engineer (2019 – 2022)")
+        assert _infer_semantic(pm) == "role_header"
+
+    def test_title_with_year_before_parens_stays_role_meta(self):
+        """Year in main text (before parens) → falls through to role_meta."""
+        pm = self._make_pm("Senior Engineer 2021 (Remote)")
+        # _YEAR_RE fires in title part → condition guards against this
+        assert _infer_semantic(pm) == "role_meta"
+
+    def test_plain_bold_title_no_parens_is_still_paragraph(self):
+        """No parens → does not match; falls through normally."""
+        pm = self._make_pm("Senior Software Engineer", bold=False)
+        assert _infer_semantic(pm) == "paragraph"
+
+
+class TestDecomposeCompoundRoleParagraphs:
+    """Problem #1: split 'Title, Company, Location Highlights: body' into 3 paras."""
+
+    def test_basic_split(self):
+        para = _plain_para(
+            "Senior Engineer, Acme Corp, Vancouver, BC Highlights: Led a team of 5 engineers."
+        )
+        body = [para]
+        _decompose_compound_role_paras(body)
+        assert len(body) == 3
+        assert body[0].semantic == "role_header"
+        assert body[0].text == "Senior Engineer"
+        assert body[1].semantic == "role_meta"
+        assert "Acme Corp" in body[1].text
+        assert body[2].semantic == "paragraph"
+        assert "Led a team" in body[2].text
+
+    def test_summary_opener_split(self):
+        para = _plain_para("Software Developer, StartupXYZ, Remote Summary: Built the core API layer.")
+        body = [para]
+        _decompose_compound_role_paras(body)
+        assert len(body) == 3
+        assert body[0].text == "Software Developer"
+        assert body[0].semantic == "role_header"
+
+    def test_no_opener_unchanged(self):
+        para = _plain_para("Senior Engineer, Acme Corp, Vancouver")
+        body = [para]
+        _decompose_compound_role_paras(body)
+        assert len(body) == 1
+
+    def test_non_title_word_in_title_not_split(self):
+        """First segment with no job-title word → not split."""
+        para = _plain_para("Project Alpha, Acme Corp, NYC Highlights: did stuff")
+        body = [para]
+        _decompose_compound_role_paras(body)
+        assert len(body) == 1
+
+    def test_multiple_compound_paras_all_split(self):
+        body = [
+            _plain_para("Senior Engineer, Acme Corp Highlights: Built systems."),
+            _plain_para("Normal paragraph without an opener"),
+            _plain_para("Lead Developer, Beta Inc Summary: Improved performance."),
+        ]
+        _decompose_compound_role_paras(body)
+        assert body[0].semantic == "role_header"
+        assert body[3].semantic == "paragraph"  # "Normal paragraph..."
+        assert body[4].semantic == "role_header"  # "Lead Developer"
+
+    def test_already_split_paras_unchanged(self):
+        body = [
+            _plain_para("Senior Engineer", semantic="role_header"),
+            _plain_para("Acme Corp, Remote", semantic="role_meta"),
+        ]
+        _decompose_compound_role_paras(body)
+        assert len(body) == 2
+
+
+class TestPromotePrecedingCompanyParas:
+    """Problem #2: company/location paragraphs before role_headers → role_meta, swapped."""
+
+    def test_company_before_role_header_promoted_and_moved(self):
+        body = [
+            _plain_para("T-Systems Iberia", semantic="paragraph"),
+            _plain_para("", semantic="empty"),
+            _plain_para("Software Engineer (May 2024 – Present)", semantic="role_header"),
+        ]
+        _promote_preceding_company_paras(body)
+        # role_header is now at index 1 (or 2), company follows it
+        rh_idx = next(i for i, p in enumerate(body) if p.semantic == "role_header")
+        assert body[rh_idx + 1].semantic == "role_meta"
+        assert "T-Systems" in body[rh_idx + 1].text
+
+    def test_company_with_dash_promoted(self):
+        body = [
+            _plain_para("GlobalLogic – Krakow, Poland", semantic="paragraph"),
+            _plain_para("Senior Software Engineer (2022 – 2024)", semantic="role_header"),
+        ]
+        _promote_preceding_company_paras(body)
+        rh_idx = next(i for i, p in enumerate(body) if p.semantic == "role_header")
+        assert body[rh_idx + 1].semantic == "role_meta"
+        assert "GlobalLogic" in body[rh_idx + 1].text
+
+    def test_no_preceding_para_unchanged(self):
+        body = [
+            _plain_para("Software Engineer (May 2024)", semantic="role_header"),
+            _plain_para("Acme Corp", semantic="paragraph"),
+        ]
+        original_len = len(body)
+        _promote_preceding_company_paras(body)
+        # Nothing should be promoted (company is AFTER, not before role_header)
+        assert all(p.semantic != "role_meta" or p.text != "Acme Corp" for p in body)
+        assert len(body) == original_len
+
+    def test_body_first_word_not_promoted(self):
+        body = [
+            _plain_para("Mentoring junior specialists.", semantic="paragraph"),
+            _plain_para("Software Engineer (May 2024)", semantic="role_header"),
+        ]
+        _promote_preceding_company_paras(body)
+        assert body[0].semantic == "paragraph"  # not promoted
+
+    def test_long_candidate_not_promoted(self):
+        """Paragraph > 70 chars before role_header is not a company name."""
+        body = [
+            _plain_para("A" * 71, semantic="paragraph"),
+            _plain_para("Senior Engineer (2023)", semantic="role_header"),
+        ]
+        _promote_preceding_company_paras(body)
+        assert body[0].semantic == "paragraph"
+
+    def test_year_in_candidate_not_promoted(self):
+        """Paragraph with a year is not a company name."""
+        body = [
+            _plain_para("Acme Corp 2021", semantic="paragraph"),
+            _plain_para("Senior Engineer (2023)", semantic="role_header"),
+        ]
+        _promote_preceding_company_paras(body)
+        assert body[0].semantic == "paragraph"
