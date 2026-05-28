@@ -367,9 +367,18 @@ def _infer_semantic(pm: ParaModel) -> str:
     if style_name.lower() == "heading" and text.lower() in _ALL_HEADING_NAMES:
         return "section_heading"
 
+    # SDT placeholder paragraphs (w:showingPlcHdr) are template input slots whose
+    # placeholder text must not trigger name-based section-heading detection.
+    # Only the heading-name rules below are suppressed; year, bullet, and other
+    # content-based rules still apply so dates and bullets are classified correctly.
+    _is_sdt_placeholder = (
+        pm.style.xml_proto is not None
+        and pm.style.xml_proto.find(f".//{{{_W}}}showingPlcHdr") is not None
+    )
+
     # Known section names (bold): bold paragraph exactly matching a recognized
     # section name is a heading regardless of font size or spacing.
-    if pm.style.bold and text.lower() in _ALL_HEADING_NAMES:
+    if pm.style.bold and text.lower() in _ALL_HEADING_NAMES and not _is_sdt_placeholder:
         return "section_heading"
 
     # Known section names (plain paragraph, no formatting at all): a paragraph
@@ -383,6 +392,7 @@ def _infer_semantic(pm: ParaModel) -> str:
         and not pm.style.bold
         and pm.style.spacing_before is None
         and text.lower() in _ALL_HEADING_NAMES
+        and not _is_sdt_placeholder
     ):
         return "section_heading"
 

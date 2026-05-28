@@ -61,6 +61,15 @@ _STOP_SECTION_KEYWORDS: frozenset[str] = frozenset((
     "project", "publication", "additional", "interest", "achievement", "honor",
 ))
 
+# Per-section recall thresholds below which a HARD FAIL is raised.
+# Experience allows 20% gap for verbatim role headers from the template;
+# Summary and Skills require perfect recall (any missing vocabulary = HARD FAIL).
+_SECTION_HARD_FAIL_THRESHOLD: dict[str, float] = {
+    "summary": 1.0,
+    "experience": 0.80,
+    "skills": 1.0,
+}
+
 
 @dataclass
 class ContentInjectionResult:
@@ -395,16 +404,19 @@ def check_content_injection(
             # Summary may have been injected into a non-standard section
             # (merged header etc.) — absence here is not necessarily a gap.
             if _sec_key != "summary":
+                hard_fail = True
                 _section_ev.append(
-                    f"{_sec_name} section: no rendered {_sec_name.lower()} content found for comparison"
+                    f"{_sec_name} section: no rendered {_sec_name.lower()} content found for comparison -- HARD FAIL"
                 )
             continue
         _sec_recall = _recall(_tokenize(_ir_sec), _tokenize(_llm_sec))
-        if _sec_recall < 0.30:
+        _sec_threshold = _SECTION_HARD_FAIL_THRESHOLD[_sec_key]
+        if _sec_recall < _sec_threshold:
+            hard_fail = True
             _section_ev.append(
                 f"{_sec_name} section: sim={_sec_recall:.2f} "
                 f"({round((1 - _sec_recall) * 100)}% of LLM {_sec_name.lower()} "
-                f"vocabulary not reflected in rendered output)"
+                f"vocabulary not reflected in rendered output) -- HARD FAIL"
             )
 
     # ── sim_template: non-target sections vs original template ────────────────

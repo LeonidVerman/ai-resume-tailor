@@ -3872,6 +3872,16 @@ def apply_tailored(
                 rebuilt: list[RoleEntry] = []
                 for _r in rebuilt_raw:
                     rebuilt.extend(_split_cls_mega_role(_r))
+                # Fallback: if classification produced roles with no bullet or
+                # header_extra slots (e.g. body_blocks=[] in all roles), the
+                # updater has nothing to write into.  Use the heuristic date-first
+                # rebuild which places placeholder body_paras into header_extra.
+                if not any(r.bullets or r.header_extra for r in rebuilt):
+                    rebuilt = _rebuild_date_first_roles(orig_section)
+                    _log.debug(
+                        "date-first cls-fallback: all cls roles have no bullet/header_extra "
+                        "slots — using heuristic rebuild for %r", orig_section.title,
+                    )
             else:
                 rebuilt = _rebuild_date_first_roles(orig_section)
             return _update_experience_date_first(orig_section, llm_section, rebuilt)
@@ -4692,11 +4702,11 @@ def apply_tailored(
             # Overflow to a second page is acceptable; truncated bullets lose meaning.
             # (Previous cap: max(orig_len, 60).  Removed per content-preservation policy.)
             #
-            # Skills sections in table cells: apply a moderate cap of max(orig_len*2, 60).
-            # This allows 2× the original content (meaningful improvement over the original
-            # severe cap at orig_len) while preventing the narrow left sidebar cell from
-            # growing so large that it causes column layout collapse or table ejection to
-            # page 2.  Full skills in unconstrained (non-table) templates are never capped.
+            # Skills sections in table cells: apply a moderate cap of max(orig_len*2, 200).
+            # The 200-char minimum prevents aggressive truncation when the template uses
+            # short placeholder text (e.g. "Data analysis" = 13 chars) but the LLM
+            # produces long categorised skill lines ("Category: item1, item2, …").
+            # Overflow to a second page is still preferable to silently clipping content.
             _is_skills_section = (
                 _ns.semantic_type == "skills"
                 or "skill" in _ns.title.lower()
@@ -4706,7 +4716,7 @@ def apply_tailored(
                 _bp_changed = False
                 for _nbp in _ns.body_paras:
                     _olen = _orig_bp_len.get(_nbp.para_id, 0)
-                    _skills_cap = max(_olen * 2, 60) if _olen > 0 else 0
+                    _skills_cap = max(_olen * 2, 200) if _olen > 0 else 0
                     if _skills_cap > 0 and len(_nbp.text.strip()) > _skills_cap:
                         _bpcut = _nbp.text.rfind(" ", 0, _skills_cap)
                         _capped_bps.append(_nbp.with_text(
