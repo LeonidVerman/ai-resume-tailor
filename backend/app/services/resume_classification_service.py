@@ -63,6 +63,16 @@ logger = logging.getLogger(__name__)
 _PROMPT_NAME = "classification/classify_template_resume"
 _REPAIR_PROMPT_NAME = "classification/repair_classification"
 
+# Experience role body block type sets (mirrors classification_validator.py)
+_EXP_REWRITEABLE_BODY_TYPES: frozenset[str] = frozenset({
+    "bullet", "role_achievement_bullet", "role_responsibility_bullet",
+})
+_EXP_PRESERVED_BODY_TYPES: frozenset[str] = frozenset({
+    "role_intro", "role_highlight", "role_project_label", "role_project_context",
+    "role_tech_stack", "role_key_technologies", "role_tools",
+    "role_nested_detail", "role_freeform_note",
+})
+
 
 def _load_schema() -> dict:
     from tailor.config import PROMPTS_DIR
@@ -208,6 +218,151 @@ class ResumeClassificationService:
             sec = dict(sec)
             sec["blocks"] = fixed_blocks
             new_sections.append(sec)
+        result["sections"] = new_sections
+        return result
+
+    @staticmethod
+    def _normalize_experience_blocks(classification: dict) -> dict:
+        """Auto-correct common LLM mistakes in experience sections.
+
+        Applied after each LLM call to ensure the experience section always
+        passes the validator without needing a repair round-trip:
+          - Forces rewrite_policy = "rewrite_bullets_only"
+          - Forces preserve_heading / preserve_body_structure = True
+          - Clears top-level blocks[] (must be empty for experience)
+          - Fixes header_blocks → type=role_header, policy=preserve
+          - Fixes meta_blocks  → type=role_meta,   policy=preserve
+          - Fixes body_blocks  → correct policy per type;
+            unknown types are converted to role_achievement_bullet
+        """
+        sections = classification.get("sections", [])
+        if not any(
+            s.get("semantic_type") == "experience"
+            for s in sections
+            if isinstance(s, dict)
+        ):
+            return classification
+
+        result = dict(classification)
+        new_sections = []
+        for sec in sections:
+            if not isinstance(sec, dict) or sec.get("semantic_type") != "experience":
+                new_sections.append(sec)
+                continue
+
+            sec = dict(sec)
+            sec["rewrite_policy"] = "rewrite_bullets_only"
+            sec["preserve_heading"] = True
+            sec["preserve_body_structure"] = True
+            sec["blocks"] = []
+
+            new_roles = []
+            for role in sec.get("roles", []):
+                if not isinstance(role, dict):
+                    new_roles.append(role)
+                    continue
+                role = dict(role)
+
+                fixed_headers = []
+                for b in role.get("header_blocks", []):
+                    b = dict(b)
+                    b["semantic_type"] = "role_header"
+                    b["rewrite_policy"] = "preserve"
+                    fixed_headers.append(b)
+                role["header_blocks"] = fixed_headers
+
+                fixed_meta = []
+                for b in role.get("meta_blocks", []):
+                    b = dict(b)
+                    b["semantic_type"] = "role_meta"
+                    b["rewrite_policy"] = "preserve"
+                    fixed_meta.append(b)
+                role["meta_blocks"] = fixed_meta
+
+                fixed_body = []
+                for b in role.get("body_blocks", []):
+                    b = dict(b)
+                    st = b.get("semantic_type", "")
+                    if st in _EXP_REWRITEABLE_BODY_TYPES:
+                        b["rewrite_policy"] = "rewrite_text"
+                    elif st in _EXP_PRESERVED_BODY_TYPES:
+                        b["rewrite_policy"] = "preserve"
+                    else:
+                        b["semantic_type"] = "role_achievement_bullet"
+                        b["rewrite_policy"] = "rewrite_text"
+                    fixed_body.append(b)
+                role["body_blocks"] = fixed_body
+
+                new_roles.append(role)
+            sec["roles"] = new_roles
+            new_sections.append(sec)
+
+        result["sections"] = new_sections
+        return result
+
+    @staticmethod
+    def _normalize_projects_blocks(classification: dict) -> dict:
+        """Auto-correct common LLM mistakes in projects sections.
+
+        Applied after each LLM call:
+          - Forces rewrite_policy = "preserve"
+          - Flattens any roles[] into top-level blocks with type project_entry
+          - Normalises all block types to project_entry or other_paragraph
+          - Clears roles[]
+        """
+        sections = classification.get("sections", [])
+        if not any(
+            s.get("semantic_type") == "projects"
+            for s in sections
+            if isinstance(s, dict)
+        ):
+            return classification
+
+        result = dict(classification)
+        new_sections = []
+        for sec in sections:
+            if not isinstance(sec, dict) or sec.get("semantic_type") != "projects":
+                new_sections.append(sec)
+                continue
+
+            sec = dict(sec)
+            sec["rewrite_policy"] = "preserve"
+
+            seen_pids: set[str] = set()
+            merged_blocks: list[dict] = []
+
+            for b in sec.get("blocks", []):
+                if not isinstance(b, dict):
+                    continue
+                pid = b.get("para_id", "")
+                if pid not in seen_pids:
+                    seen_pids.add(pid)
+                    merged_blocks.append(b)
+
+            for role in sec.get("roles", []):
+                if not isinstance(role, dict):
+                    continue
+                for group in ("header_blocks", "meta_blocks", "body_blocks"):
+                    for b in role.get(group, []):
+                        if not isinstance(b, dict):
+                            continue
+                        pid = b.get("para_id", "")
+                        if pid not in seen_pids:
+                            seen_pids.add(pid)
+                            merged_blocks.append(b)
+
+            fixed_blocks = []
+            for b in merged_blocks:
+                b = dict(b)
+                if b.get("semantic_type") not in ("project_entry", "other_paragraph"):
+                    b["semantic_type"] = "project_entry"
+                b["rewrite_policy"] = "preserve"
+                fixed_blocks.append(b)
+
+            sec["blocks"] = fixed_blocks
+            sec["roles"] = []
+            new_sections.append(sec)
+
         result["sections"] = new_sections
         return result
 
@@ -408,6 +563,8 @@ class ResumeClassificationService:
 
         raw_classification = json.loads(result.content)
         raw_classification = self._normalize_education_blocks(raw_classification)
+        raw_classification = self._normalize_experience_blocks(raw_classification)
+        raw_classification = self._normalize_projects_blocks(raw_classification)
         logger.debug(
             "Classification complete resume=%s sections=%d tokens=%d",
             resume_id,
@@ -442,6 +599,8 @@ class ResumeClassificationService:
                     raw_classification, repaired_sections, set(invalid_ids_before)
                 )
                 merged = self._normalize_education_blocks(merged)
+                merged = self._normalize_experience_blocks(merged)
+                merged = self._normalize_projects_blocks(merged)
                 # ── Step 4: revalidate merged result ──────────────────────
                 validation_after_repair = validate_classification(merged)
                 logger.info(

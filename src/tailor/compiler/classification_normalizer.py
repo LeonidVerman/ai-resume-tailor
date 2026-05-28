@@ -95,6 +95,122 @@ def _is_non_experience_title(raw_title: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Experience section title keywords (for flat-role reconstruction)
+# ---------------------------------------------------------------------------
+
+_EXPERIENCE_TITLE_KEYWORDS: frozenset[str] = frozenset({
+    "experience", "work experience", "professional experience",
+    "employment", "work history", "career history",
+    "employment history", "professional background",
+    "career", "relevant experience", "relevant work experience",
+    "professional experience & achievements",
+})
+
+
+def _is_experience_title(raw_title: str) -> bool:
+    t = raw_title.strip().lower()
+    if t in _EXPERIENCE_TITLE_KEYWORDS:
+        return True
+    for kw in _EXPERIENCE_TITLE_KEYWORDS:
+        if t.startswith(kw):
+            return True
+    return False
+
+
+# ---------------------------------------------------------------------------
+# Role-header heuristic for flat experience reconstruction
+# ---------------------------------------------------------------------------
+
+_ROLE_TITLE_KEYWORDS_RE = re.compile(
+    r'\b(?:Engineer|Developer|Lead|Manager|Director|Analyst|Architect|'
+    r'Scientist|Designer|Consultant|Specialist|Administrator|Coordinator|'
+    r'Officer|President|VP|CTO|CEO|CIO|Head|Principal|Staff|'
+    r'Intern|Associate|Assistant|Programmer|Technician|Writer|Researcher|'
+    r'Founder|Co-Founder|Partner|Strategist)\b',
+    re.IGNORECASE,
+)
+
+
+def _is_role_header_heuristic(para: "ClassificationParaInput") -> bool:
+    """True if the paragraph text looks like a job-title / role-header line.
+
+    Strips any embedded "Highlights: ..." suffix before applying rules so that
+    paragraphs that merge a title with highlights text are still detected.
+    """
+    t = para.text.strip()
+    hl_idx = t.lower().find("highlights:")
+    if hl_idx > 0:
+        t = t[:hl_idx].strip()
+    if not t or len(t) > 150:
+        return False
+    if t.lower().startswith(("f ", "highlights:", "•", "-", "*")):
+        return False
+    return "," in t and bool(_ROLE_TITLE_KEYWORDS_RE.search(t))
+
+
+# ---------------------------------------------------------------------------
+# Flat-experience role reconstructor
+# ---------------------------------------------------------------------------
+
+def _rebuild_flat_experience_roles(
+    paras: "list[ClassificationParaInput]",
+    sec_id: str,
+    report_list: list,
+) -> "list[ClassificationRoleInput]":
+    """Group flat experience paragraphs into roles.
+
+    A role header is any paragraph with parser_semantic == 'role_header' OR
+    one that passes _is_role_header_heuristic().  Each detected header starts
+    a new role; immediately following role_meta paras become meta_para_ids
+    and everything else (non-empty) becomes bullet_para_ids.
+
+    Returns [] when no role headers are detectable (caller keeps roles=[]).
+    """
+    from tailor.compiler.classification_models import ClassificationRoleInput as CRI
+
+    header_indices = [
+        i for i, p in enumerate(paras)
+        if p.parser_semantic == "role_header" or _is_role_header_heuristic(p)
+    ]
+    if not header_indices:
+        return []
+
+    roles: list["ClassificationRoleInput"] = []
+    for k, start in enumerate(header_indices):
+        end = header_indices[k + 1] if k + 1 < len(header_indices) else len(paras)
+        role_paras = paras[start:end]
+
+        header_ids = [role_paras[0].para_id]
+        meta_ids: list[str] = []
+        bullet_ids: list[str] = []
+
+        in_meta = True
+        for p in role_paras[1:]:
+            if p.parser_semantic == "empty":
+                continue
+            if in_meta and p.parser_semantic == "role_meta":
+                meta_ids.append(p.para_id)
+            else:
+                in_meta = False
+                bullet_ids.append(p.para_id)
+
+        roles.append(CRI(
+            role_id=f"{sec_id}_rebuilt_{k + 1}",
+            header_para_ids=header_ids,
+            meta_para_ids=meta_ids,
+            bullet_para_ids=bullet_ids,
+        ))
+
+    report_list.append({
+        "section_id": sec_id,
+        "para_count": len(paras),
+        "roles_rebuilt": len(roles),
+        "role_ids": [r.role_id for r in roles],
+    })
+    return roles
+
+
+# ---------------------------------------------------------------------------
 # Compound paragraph line classifier (for newline splits)
 # ---------------------------------------------------------------------------
 
@@ -377,6 +493,7 @@ def normalize_classification_input(
         "roles_cleared": [],
         "compound_paras_split": [],
         "overmerged_roles_split": [],
+        "flat_experience_roles_rebuilt": [],
     }
     new_sections: list[ClassificationSectionInput] = []
 
@@ -462,6 +579,14 @@ def normalize_classification_input(
             roles_s4.extend(
                 _split_overmerged_role(role, full_para_map, sec.section_id, report["overmerged_roles_split"])
             )
+
+        # ── Step 5: rebuild flat experience roles ──────────────────────────
+        if not roles_s4 and paras_s3 and _is_experience_title(sec.raw_title):
+            rebuilt = _rebuild_flat_experience_roles(
+                paras_s3, sec.section_id, report["flat_experience_roles_rebuilt"]
+            )
+            if rebuilt:
+                roles_s4 = rebuilt
 
         new_sections.append(ClassificationSectionInput(
             section_id=sec.section_id,
