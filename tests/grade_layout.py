@@ -260,7 +260,7 @@ def main(argv: list[str] | None = None) -> int:
 
         flag = " [HARD FAIL]" if grade.hard_fail else ""
         print(f"  score={grade.composite_score:.1f}  {grade.status}{flag}")
-        for ev in grade.evidence[:2]:
+        for ev in grade.evidence[:4]:
             safe_ev = ev.encode("ascii", "replace").decode("ascii")
             print(f"         {safe_ev}")
 

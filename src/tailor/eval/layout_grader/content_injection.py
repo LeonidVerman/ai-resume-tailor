@@ -48,6 +48,13 @@ _LLM_SECTION_KEYWORDS: tuple[str, ...] = (
     "skill", "competenc", "technolog", "expertise",
 )
 
+# Maps heading keywords to canonical per-section comparison keys
+_LLM_SECTION_TYPE_MAP: tuple[tuple[str, str], ...] = (
+    ("summary", "summary"), ("profile", "summary"), ("objective", "summary"), ("about", "summary"),
+    ("experience", "experience"), ("employment", "experience"), ("history", "experience"),
+    ("skill", "skills"), ("competenc", "skills"), ("technolog", "skills"), ("expertise", "skills"),
+)
+
 
 @dataclass
 class ContentInjectionResult:
@@ -146,6 +153,94 @@ def _parse_llm_target_text(llm_text: str) -> str:
             parts.append(stripped)
 
     return " ".join(parts)
+
+
+def _parse_llm_sections(llm_text: str) -> dict[str, str]:
+    """Split LLM output into per-section text keyed by canonical type.
+
+    Returns a subset of {"summary", "experience", "skills"} — only keys for
+    which content was found.  Uses the same heading-detection heuristic as
+    _parse_llm_target_text.
+    """
+    lines = llm_text.splitlines()
+    current_key: str | None = None
+    parts: dict[str, list[str]] = {}
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        words = stripped.split()
+        _alpha_only = re.sub(r"[^a-zA-Z ]", "", stripped).strip()
+        is_heading = (
+            1 <= len(words) <= 5
+            and len(_alpha_only) >= len(stripped) * 0.80
+            and not any(ch in stripped for ch in "@|0123456789+")
+        )
+        if is_heading:
+            heading_lower = stripped.lower()
+            current_key = None
+            for kw, key in _LLM_SECTION_TYPE_MAP:
+                if kw in heading_lower:
+                    current_key = key
+                    break
+        elif current_key is not None:
+            parts.setdefault(current_key, []).append(stripped)
+
+    return {k: " ".join(v) for k, v in parts.items()}
+
+
+def _ir_text_by_section_type(ir: dict) -> dict[str, str]:
+    """Return rendered IR body text keyed by canonical section type.
+
+    Only covers sections with unambiguous semantic types:
+      "summary"    → semantic_type in {"summary", "profile"} or
+                     section_id contains "summary_inserted"
+      "experience" → semantic_type == "experience"
+      "skills"     → semantic_type in {"skills", "competencies"} or
+                     heading matches a skill keyword
+    """
+    _SUMMARY_TYPES = frozenset({"summary", "profile"})
+    _SKILLS_TYPES = frozenset({"skills", "competencies", "competency"})
+    _SKILLS_KEYWORDS = ("skill", "competenc", "technolog", "expertise")
+
+    parts: dict[str, list[str]] = {}
+
+    for sec in ir.get("sections", []):
+        sec_type = (sec.get("semantic_type") or "").lower()
+        sec_id = sec.get("section_id") or ""
+        heading_obj = sec.get("heading") or {}
+        heading = heading_obj.get("text", "").strip().lower() if heading_obj else ""
+
+        if sec_type in _SUMMARY_TYPES or "summary_inserted" in sec_id:
+            key = "summary"
+        elif sec_type == "experience":
+            key = "experience"
+        elif sec_type in _SKILLS_TYPES or any(kw in heading for kw in _SKILLS_KEYWORDS):
+            key = "skills"
+        else:
+            continue
+
+        bucket = parts.setdefault(key, [])
+
+        for p in sec.get("body_paras", []):
+            t = (p.get("text", "") if isinstance(p, dict) else str(p)).strip()
+            if t:
+                bucket.append(t)
+
+        for role in sec.get("roles", []):
+            rh = role.get("header")
+            if rh:
+                t = rh.get("text", "").strip()
+                if t:
+                    bucket.append(t)
+            for list_key in ("meta_lines", "bullets"):
+                for p in role.get(list_key, []):
+                    t = (p.get("text", "") if isinstance(p, dict) else str(p)).strip()
+                    if t:
+                        bucket.append(t)
+
+    return {k: " ".join(v) for k, v in parts.items()}
 
 
 def _ir_split_text(ir: dict) -> tuple[str, str]:
@@ -271,6 +366,35 @@ def check_content_injection(
     else:
         sim_llm = 0.0
 
+    # ── Per-section breakdown ─────────────────────────────────────────────────
+    # Whole-doc recall can mask a completely unreplaced section when another
+    # section shares vocabulary (e.g. summary tokens covering experience tokens).
+    # Compare each LLM section against its corresponding rendered IR section
+    # independently and surface per-section gaps in evidence.
+    _section_ev: list[str] = []
+    _llm_sections = _parse_llm_sections(llm_text)
+    _ir_sections = _ir_text_by_section_type(ir_dict)
+    for _sec_key, _sec_name in (("summary", "Summary"), ("experience", "Experience"), ("skills", "Skills")):
+        _llm_sec = _llm_sections.get(_sec_key, "")
+        _ir_sec = _ir_sections.get(_sec_key, "")
+        if not _llm_sec:
+            continue
+        if not _ir_sec:
+            # Summary may have been injected into a non-standard section
+            # (merged header etc.) — absence here is not necessarily a gap.
+            if _sec_key != "summary":
+                _section_ev.append(
+                    f"{_sec_name} section: no rendered {_sec_name.lower()} content found for comparison"
+                )
+            continue
+        _sec_recall = _recall(_tokenize(_ir_sec), _tokenize(_llm_sec))
+        if _sec_recall < 0.30:
+            _section_ev.append(
+                f"{_sec_name} section: sim={_sec_recall:.2f} "
+                f"({round((1 - _sec_recall) * 100)}% of LLM {_sec_name.lower()} "
+                f"vocabulary not reflected in rendered output)"
+            )
+
     # ── sim_template: non-target sections vs original template ────────────────
     # Measures whether Education / Languages / References were preserved verbatim.
     # 1.0 = perfect carry-over (desired). Low = unexpected modification.
@@ -337,5 +461,5 @@ def check_content_injection(
         hard_fail=hard_fail,
         sim_llm=round(sim_llm, 3),
         sim_template=round(sim_template, 3),
-        evidence=evidence,
+        evidence=_section_ev + evidence,
     )

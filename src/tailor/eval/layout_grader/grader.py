@@ -314,6 +314,16 @@ def _check_misplaced_llm_summary(
     if not llm_text or not ir:
         return False, []
 
+    # When the template has no dedicated summary section, the production code
+    # intentionally places the summary in the best available slot (merged header,
+    # top of a column, etc.).  We cannot distinguish that from a genuine
+    # misplacement, so skip the check entirely.
+    if not any(
+        sec.get("semantic_type", "") in {"summary", "profile"}
+        for sec in ir.get("sections", [])
+    ):
+        return False, []
+
     # ── Step 1: extract LLM summary text ─────────────────────────────────────
     summary_text = ""
     # Look for an explicit section heading
@@ -559,7 +569,7 @@ def grade_sample(
                     failure_classes.append("E_CONTENT_INJECTION")
                 elif ci_result.evidence and ci_score < 75:
                     failure_classes.append("E_INJECTION_PARTIAL")
-                evidence.extend(ci_result.evidence[:3])
+                evidence.extend(ci_result.evidence[:6])
 
                 # ── IR-based summary contamination check ─────────────────────
                 sc_hard_fail, sc_ev = _check_misplaced_llm_summary(ir, llm_text)
