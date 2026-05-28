@@ -118,6 +118,31 @@ def compile_resume_from_ir(
     return updated
 
 
+def _lum_hex(h: str) -> float:
+    """Return average RGB luminance (0–255) for a hex color string."""
+    h = (h or "").lstrip("#").lower()
+    if len(h) != 6:
+        return -1.0
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return (r + g + b) / 3.0
+
+
+def _is_dark_hex(h: str) -> bool:
+    """Return True if hex color has average luminance < 128 (i.e. is visually dark)."""
+    l = _lum_hex(h)
+    return l >= 0 and l < 128
+
+
+def _contrast_score(fg: str | None, bg: str | None) -> float:
+    """Return a simple contrast score (0–255) between two hex colors.
+
+    Higher is better.  Values below ~50 indicate poor readability.
+    """
+    if not fg or not bg:
+        return 255.0  # unknown — assume OK
+    return abs(_lum_hex(fg) - _lum_hex(bg))
+
+
 def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
     """Normalize styling on LLM-generated content paragraphs in a PDF-sourced doc.
 
@@ -151,10 +176,11 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
                 continue
             if pm.semantic in ("section_heading", "role_header"):
                 continue  # keep template accent colors on structural headings
-            # Keep text_color for paragraphs on a dark background (e.g. white text
-            # on the header band) — stripping it would make the text invisible.
+            # Keep text_color only for truly dark backgrounds (e.g. white text on a
+            # dark header band).  Light-tinted backgrounds (beige, pale-blue) must
+            # NOT be treated as dark — use luminance < 128 as the threshold.
             bg = pp.background_color
-            if bg and bg not in ("ffffff", "fefefe", "f8f8f8"):
+            if bg and _is_dark_hex(bg):
                 continue
             # Strip color from LLM-replaced content (bullets, body paragraphs, meta).
             # PDF-extracted colors bleed onto new content via clone_as; clearing them
@@ -180,29 +206,23 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
     _fix(doc.header_paras)
     _fix(doc.all_paras)
 
-    _LIGHT_BG_SET = frozenset(("ffffff", "fefefe", "f8f8f8"))
-
-    # Apply center alignment to large-font header paragraphs on a dark background
-    # (e.g. "CHARLES MCTURLAND" on the dark header bar in sample 3).  These
-    # typically appear centred in the original template but alignment is not
-    # reliably extracted from PDF spans.  Threshold: 20pt+ font AND dark fill.
-    # Also ensure white text color on dark backgrounds: PDF parsers often fail to
-    # extract the white color for dark-background text, leaving text_color=None
-    # which renders as default (black) — invisible on a dark band.
+    # Fix 22: Apply white text ONLY on genuinely dark backgrounds (luminance < 128).
+    # Previous code used a hardcoded _LIGHT_BG_SET of 3 pure-white values; any
+    # light-tinted background (beige fdf3eb, pale-blue d9e4ec) fell through and
+    # incorrectly received white text.  The luminance threshold is consistent with
+    # _is_dark_bg in docx_renderer.py.
     #
-    # Fix 22: Two triggers for dark-background detection on header paragraphs:
+    # Two triggers for dark-background detection on header paragraphs:
     #   (a) per-paragraph background_color (explicit in PDF extraction)
-    #   (b) layout.header_bg_color as fallback — covers paragraphs whose background
-    #       comes from a vector shape drawn below them (not captured as a per-para
-    #       fill).  Without this fallback, header text on a red/dark header band
-    #       renders as default black → invisible.
+    #   (b) layout.header_bg_color as fallback — covers vector-shape backgrounds
+    #       not captured as per-para fills.
     _layout_header_bg = (doc.layout.header_bg_color if doc.layout else None) or ""
     for _pm in doc.header_paras:
         _pp = _pm.paragraph_profile
         if _pp is None:
             continue
         _bg = _pp.background_color or _layout_header_bg
-        if _bg and _bg not in _LIGHT_BG_SET:
+        if _bg and _is_dark_hex(_bg):
             if _pp.font_size_pt and _pp.font_size_pt >= 20.0:
                 _pp.alignment = "center"
             if _pp.text_color is None:
@@ -212,29 +232,27 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
         _fix(sec.body_paras)
         for role in sec.roles:
             _fix([role.header] + list(role.header_extra) + role.meta_lines + role.bullets)
-        # Fix 22 (section extension): set white text on section paragraphs that have a
-        # dark per-paragraph background_color (e.g. white text on black sidebar in sample 32).
+        # Fix 22 (section extension): white text only on dark per-paragraph backgrounds.
         for _pm in [sec.heading, *sec.body_paras]:
             _pp = _pm.paragraph_profile
-            if _pp and _pp.background_color and _pp.background_color not in _LIGHT_BG_SET:
+            if _pp and _pp.background_color and _is_dark_hex(_pp.background_color):
                 if _pp.text_color is None:
                     _pp.text_color = "ffffff"
         for _role in sec.roles:
             for _pm in [_role.header, *_role.header_extra, *_role.meta_lines, *_role.bullets]:
                 _pp = _pm.paragraph_profile
-                if _pp and _pp.background_color and _pp.background_color not in _LIGHT_BG_SET:
+                if _pp and _pp.background_color and _is_dark_hex(_pp.background_color):
                     if _pp.text_color is None:
                         _pp.text_color = "ffffff"
 
-    # Full-page dark background (sample 15 style): when a full_page_bg image is
-    # present AND the page background is dark AND the layout is single-column,
-    # apply white text to all section content so it is readable over the dark fill.
-    # Two-column templates with full_page_bg (e.g. sample 22) use cell shading
-    # instead and must NOT have body text forced to white.
+    # Full-page dark background (sample 15 style): single-column + dark header_bg +
+    # full_page_bg image → apply white to all section content.
+    # Two-column templates with full_page_bg (e.g. sample 22) use cell shading and
+    # must NOT have body text forced to white.
     _has_full_page_bg = (
         doc.layout.column_split_x is None
         and _layout_header_bg
-        and _layout_header_bg not in _LIGHT_BG_SET
+        and _is_dark_hex(_layout_header_bg)
         and any(
             getattr(_img, "category", None) == "full_page_bg"
             for _img in (getattr(doc, "page_images", None) or [])
@@ -251,6 +269,29 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
                     _pp = _pm.paragraph_profile
                     if _pp and _pp.text_color is None:
                         _pp.text_color = "ffffff"
+
+    # Contrast diagnostics: log any paragraph where text and background produce
+    # poor contrast (score < 50 out of 255).  Pure informational — no correction.
+    import logging as _logging
+    _clog = _logging.getLogger("tailor.contrast")
+    _default_fg = "000000"
+    for _pm in [*doc.header_paras, *doc.all_paras]:
+        _pp = _pm.paragraph_profile
+        if _pp is None:
+            continue
+        _fg = _pp.text_color or _default_fg
+        _bg = _pp.background_color or _layout_header_bg or ""
+        if not _bg:
+            continue
+        _score = _contrast_score(_fg, _bg)
+        if _score < 50:
+            _clog.debug(
+                "LOW_CONTRAST para=%r TEXT_COLOR=#%s BG_COLOR=#%s CONTRAST=%.0f",
+                (_pm.text or "")[:40],
+                _fg,
+                _bg,
+                _score,
+            )
 
 
 def _estimate_col_section_height(
