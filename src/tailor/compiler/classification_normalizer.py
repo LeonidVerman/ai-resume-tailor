@@ -38,10 +38,13 @@ Post-classification:
 
 Normalization report (returned as third element):
     {
-      "headings_removed":       [{section_id, para_id, text_preview}],
-      "roles_cleared":          [{section_id, raw_title, role_count}],
-      "compound_paras_split":   [{source_para_id, text_preview, split_count, split_kind}],
-      "overmerged_roles_split": [{section_id, original_role_id, split_into, split_count}],
+      "structure_confidence":          "high" | "medium" | "low",
+      "headings_removed":              [{section_id, para_id, text_preview}],
+      "roles_cleared":                 [{section_id, raw_title, role_count}],
+      "compound_paras_split":          [{source_para_id, text_preview, split_count, split_kind}],
+      "overmerged_roles_split":        [{section_id, original_role_id, split_into, split_count}],
+      "flat_experience_roles_rebuilt": [{section_id, para_count, roles_rebuilt, role_ids}],
+      "semantic_hints_added":          int,   # total paragraphs that received a hint
     }
 """
 
@@ -465,6 +468,107 @@ def _split_overmerged_role(
 
 
 # ---------------------------------------------------------------------------
+# Semantic hint detection
+# ---------------------------------------------------------------------------
+
+_TECH_STACK_RE = re.compile(
+    r'^(?:Tech(?:nology|nologies)?\s+Stack|Key\s+Tech(?:nologies)?|'
+    r'Technologies|Tools|Infrastructure|Dev(?:Ops|Tools)|Stack|Frameworks?|'
+    r'Languages?|Platforms?)\s*:',
+    re.IGNORECASE,
+)
+_HIGHLIGHT_RE = re.compile(r'^Highlights?\s*:', re.IGNORECASE)
+_STRONG_BULLET_GLYPHS: frozenset[str] = frozenset('•◦▪▸●►')
+# PDF-converted fake bullet: "f " followed by an uppercase letter
+_PDF_FAKE_BULLET_RE = re.compile(r'^f [A-Z]')
+
+
+def _detect_structure_confidence(ci: "ClassificationInput") -> str:
+    """Estimate structure reliability by counting PDF-conversion artifacts.
+
+    A high ratio of paragraphs starting with the fake-bullet pattern "f <Uppercase>"
+    (a common PDF→DOCX artifact where the bullet glyph becomes the letter "f")
+    signals a low-trust converted document.
+
+    Returns "low" | "medium" | "high".
+    """
+    f_count = 0
+    total = 0
+    for sec in ci.sections:
+        for para in sec.paragraphs:
+            if para.parser_semantic in ("empty", "section_heading"):
+                continue
+            total += 1
+            if _PDF_FAKE_BULLET_RE.match(para.text.strip()):
+                f_count += 1
+    if total == 0:
+        return "high"
+    ratio = f_count / total
+    if ratio > 0.05:
+        return "low"
+    if ratio > 0.01:
+        return "medium"
+    return "high"
+
+
+def _classify_para_hint(
+    para: "ClassificationParaInput",
+    structure_confidence: str,
+    is_rebuilt_role_header: bool = False,
+) -> tuple[str, str]:
+    """Return (semantic_hint, bullet_confidence) for a paragraph.
+
+    Returns ("", "") when no hint is warranted.
+    Hints are ADVISORY — the LLM decides final semantics.
+    """
+    t = para.text.strip()
+    sem = para.parser_semantic
+
+    if sem in ("section_heading", "empty") or not t:
+        return "", ""
+
+    # Tech-stack line always wins regardless of parser_semantic
+    if _TECH_STACK_RE.match(t):
+        return "tech_stack_candidate", ""
+
+    # Highlight / contextual summary line
+    if _HIGHLIGHT_RE.match(t):
+        return "highlight_candidate", ""
+
+    # Italic role intro/description (*text* notation from some exporters)
+    if t.startswith("*") and t.endswith("*") and len(t) >= 3:
+        return "intro_candidate", ""
+
+    # DOCX list bullet or text-inferred bullet (from compound splitting)
+    if sem == "bullet":
+        if para.synthetic:
+            # parser_semantic came from _classify_nl_line() text analysis, not DOCX metadata
+            confidence = "weak" if structure_confidence == "low" else "medium"
+        else:
+            # Came from real DOCX numId/ListParagraph metadata
+            confidence = "medium" if structure_confidence == "low" else "strong"
+        return "bullet_candidate", confidence
+
+    # PDF-converted fake bullet ("f " + uppercase word)
+    if _PDF_FAKE_BULLET_RE.match(t):
+        return "bullet_candidate", "weak"
+
+    # Visual bullet glyph
+    if t[0] in _STRONG_BULLET_GLYPHS:
+        return "bullet_candidate", "medium"
+
+    # Dash-prefixed pseudo-bullet
+    if t.startswith("- ") or t.startswith("– "):
+        return "bullet_candidate", "medium"
+
+    # Paragraph promoted to role header during flat-experience reconstruction
+    if is_rebuilt_role_header and sem != "role_header":
+        return "role_header_candidate", ""
+
+    return "", ""
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -487,13 +591,17 @@ def normalize_classification_input(
         ClassificationRoleInput,
     )
 
+    import dataclasses
     sidecar: dict[str, str] = {}
+    structure_confidence = _detect_structure_confidence(ci)
     report: dict = {
+        "structure_confidence": structure_confidence,
         "headings_removed": [],
         "roles_cleared": [],
         "compound_paras_split": [],
         "overmerged_roles_split": [],
         "flat_experience_roles_rebuilt": [],
+        "semantic_hints_added": 0,
     }
     new_sections: list[ClassificationSectionInput] = []
 
@@ -588,16 +696,30 @@ def normalize_classification_input(
             if rebuilt:
                 roles_s4 = rebuilt
 
+        # ── Step 6: populate semantic hints ───────────────────────────────
+        rebuilt_header_pids: set[str] = {
+            pid for role in roles_s4 for pid in role.header_para_ids
+        }
+        paras_final: list[ClassificationParaInput] = []
+        for para in paras_s3:
+            is_rh = para.para_id in rebuilt_header_pids
+            hint, confidence = _classify_para_hint(para, structure_confidence, is_rh)
+            if hint:
+                para = dataclasses.replace(para, semantic_hint=hint, bullet_confidence=confidence)
+                report["semantic_hints_added"] += 1
+            paras_final.append(para)
+
         new_sections.append(ClassificationSectionInput(
             section_id=sec.section_id,
             raw_title=sec.raw_title,
-            paragraphs=paras_s3,
+            paragraphs=paras_final,
             roles=roles_s4,
         ))
 
     return ClassificationInput(
         document_id=ci.document_id,
         source_kind=ci.source_kind,
+        structure_confidence=structure_confidence,
         sections=new_sections,
     ), sidecar, report
 
