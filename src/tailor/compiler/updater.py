@@ -1449,6 +1449,10 @@ def _inject_fragmented_experience(
 
 # Strategy 1: LLMs sometimes format roles as "Title — Company" (em/en/figure dash).
 _ROLE_BODY_SEP_RE = re.compile(r'\s—\s|\s–\s|\s‒\s')
+# Exclude lines where the only dash is part of a trailing date-range paren, e.g.
+# "Senior Software Engineer (September 2023 – Present)".  These are job-title lines
+# written in "Company – Location\nTitle (Date – Date)" format, not role separators.
+_TITLE_DATE_PAREN_RE = re.compile(r'\([^)]*(?:–|—|‒)[^)]*\)\s*$')
 
 # Strategy 2: standalone date-line boundaries.
 #   A "date line" is a line whose entire content is a date range, e.g.
@@ -1499,6 +1503,7 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
         i for i, ln in enumerate(body_lines)
         if _ROLE_BODY_SEP_RE.search(ln)
         and not _STANDALONE_DATE_LINE_RE.match(ln.strip())
+        and not _TITLE_DATE_PAREN_RE.search(ln)
     ]
     date_bounds = [
         i for i, ln in enumerate(body_lines)
@@ -1537,19 +1542,73 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
     return []
 
 
+_COLON_KEY_RE = re.compile(r'^[A-Za-z][\w\s]{0,25}:')
+
+
 def _roles_from_dash_boundaries(
     body_lines: list[str], boundaries: list[int]
 ) -> list[LlmRole]:
-    """Em/en-dash boundary parser (factored out of original _reparse function)."""
+    """Em/en-dash boundary parser (factored out of original _reparse function).
+
+    Handles two common LLM formats:
+
+    A. "Company – Location" boundary (classic):
+       Each boundary line IS the role identifier; title/date may follow it.
+
+    B. "Title-first" format — "Title\\nCompany; Date – Date; Location":
+       The job title appears on the line immediately before the boundary.
+       In this case the boundary line (company; date) becomes a meta line
+       and the preceding title line becomes the role header.  The title line
+       is also removed from the preceding role's bullet list to avoid
+       misattribution.
+    """
+    # Detect title-first format: find boundaries that have a job-title-like
+    # line immediately before them (last non-empty line, no year, no dash, no
+    # bullet marker, no "Key: value" colon-prefix, no trailing sentence punctuation).
+    # Regular bullet text ends with "." and is long; job titles are short and bare.
+    _title_at: dict[int, str] = {}
+    for bi in boundaries:
+        j = bi - 1
+        while j >= 0 and not body_lines[j].strip():
+            j -= 1
+        if j < 0:
+            continue
+        prev = body_lines[j].strip()
+        if (
+            prev
+            and len(prev) <= 80
+            and not _ROLE_BODY_SEP_RE.search(prev)
+            and not _YEAR_RE.search(prev)
+            and not prev.startswith(("-", "•", "*", "f "))
+            and not _COLON_KEY_RE.match(prev)
+            and prev[-1:] not in ".!?,"
+        ):
+            _title_at[bi] = prev
+
     roles: list[LlmRole] = []
     for idx, boundary_i in enumerate(boundaries):
         end_i = boundaries[idx + 1] if idx + 1 < len(boundaries) else len(body_lines)
-        header = body_lines[boundary_i]
-        meta: list[str] = []
+        boundary_line = body_lines[boundary_i]
+        pre_title = _title_at.get(boundary_i, "")
+        next_title = _title_at.get(boundaries[idx + 1], "") if idx + 1 < len(boundaries) else ""
+
+        if pre_title:
+            # Title-first: pre-boundary line is the role header; boundary
+            # line (company/date) becomes the first meta entry.
+            header = pre_title
+            meta: list[str] = [boundary_line.strip()] if boundary_line.strip() else []
+        else:
+            header = boundary_line
+            meta = []
+
         bullets: list[str] = []
         for line in body_lines[boundary_i + 1: end_i]:
             s = line.strip()
             if not s:
+                continue
+            # Skip the title line that belongs to the next role — it appears at
+            # the end of the current role's range in title-first format.
+            if next_title and s == next_title:
                 continue
             if (
                 _YEAR_RE.search(s)
@@ -2581,6 +2640,11 @@ def _update_role_with_adjuncts(
     for p in orig.bullets:
         blk = cls_body_block_map.get(p.para_id)
         if blk is not None and blk.rewrite_policy == "preserve":
+            # Freeform notes are content (multi-line descriptions), not structural
+            # elements.  They get rewritten into proper bullets by the LLM, so
+            # preserving them produces stale duplicates alongside the new bullets.
+            if blk.semantic_type == "role_freeform_note":
+                continue
             preserved_ids.add(p.para_id)
 
     if not preserved_ids:
