@@ -454,11 +454,28 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     # match so that sidebar templates (e.g. sample 25) inject the LLM summary
     # into the sidebar and clean up old template placeholder text there, rather
     # than mixing left and right columns and producing an ambiguous target_col.
-    _sum_left = {
+
+    # For the LEFT column use CONTIGUOUS block detection: find the first run of
+    # consecutive left-col lines that look like summary prose and stop at the
+    # first gap.  Scanning all left-col lines would misidentify role bullets as
+    # summary text when the PDF parser places experience sections in header_paras
+    # alongside the summary (e.g. templates where the whole left column is parsed
+    # as a header region).  Contiguous detection limits the match to the actual
+    # profile paragraph at the start of the left column, not scattered bullets.
+    _left_col_idxs = [
         j for j, hp in enumerate(doc.header_paras)
         if hp.paragraph_profile and hp.paragraph_profile.column_id == "left"
-        and _is_original_summary_line(hp.text)
-    }
+    ]
+    _sum_left: set[int] = set()
+    _in_block = False
+    for _j in _left_col_idxs:
+        _hp = doc.header_paras[_j]
+        if _is_original_summary_line(_hp.text):
+            _sum_left.add(_j)
+            _in_block = True
+        elif _in_block:
+            break  # first non-summary line after block started → stop
+
     _sum_right = {
         j for j, hp in enumerate(doc.header_paras)
         if hp.paragraph_profile and hp.paragraph_profile.column_id == "right"
@@ -475,15 +492,34 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     if _sum_left:
         summary_indices: set[int] = _sum_left
         _target_col: "str | None" = "left"
+        log.debug(
+            "SUMMARY_ANCHOR_SELECTED: col=left summary_lines=%d "
+            "rejected=[right:%d, none:%d]",
+            len(_sum_left), len(_sum_right), len(_sum_none),
+        )
     elif _sum_right:
         summary_indices = _sum_right
         _target_col = "right"
+        log.debug(
+            "SUMMARY_ANCHOR_SELECTED: col=right summary_lines=%d "
+            "rejected=[left:0, none:%d]",
+            len(_sum_right), len(_sum_none),
+        )
     elif _sum_none:
         summary_indices = _sum_none
         _target_col = None  # full-width above table or single-column
+        log.debug(
+            "SUMMARY_ANCHOR_SELECTED: col=None summary_lines=%d "
+            "rejected=[left:0, right:0]",
+            len(_sum_none),
+        )
     else:
         summary_indices = set()
         _target_col = None  # determined below
+        log.debug(
+            "SUMMARY_ANCHOR_SELECTED: no-match — will append to header "
+            "using existing-col heuristic",
+        )
 
     summary_sec = doc.sections[summary_idx]
 
@@ -512,6 +548,13 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
         else:
             _target_col = None  # place above the two-column table
 
+        log.debug(
+            "SUMMARY_ANCHOR_SELECTED: no-match append col=%r "
+            "existing_col_counts=left:%d right:%d",
+            _target_col,
+            _existing_cols.count("left"),
+            _existing_cols.count("right"),
+        )
         for bp in summary_sec.body_paras:
             if bp.paragraph_profile:
                 bp.paragraph_profile.column_id = _target_col
@@ -536,34 +579,35 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
                     bp.paragraph_profile.alignment = "center"
 
         if _target_col == "left":
-            # Sidebar layout: the summary replaces the original profile text in the
-            # left column.  Also remove any remaining original left-column AND
-            # right-column header items that are template placeholders — dates,
-            # old section headings, experience fragments.  Items with para_id set
-            # are from the original template; items with para_id='' were created
-            # by apply_tailored and must be kept.
-            # Exception: preserve original items that are clearly the candidate
-            # name/title (large font ≥ 20pt, or above-table col=None items).
-            # These must appear in the rendered output regardless of column.
-            # All other original col=left/right template placeholders are dropped
-            # (dates, old education fragments, experience descriptions).
-            _kept = []
-            for j, hp in enumerate(doc.header_paras):
-                if j in summary_indices:
-                    continue
-                pp = hp.paragraph_profile
-                col = pp.column_id if pp else None
-                if pp and hp.para_id and col in ("left", "right"):
-                    # Keep only very large items (name, full-page title).
-                    # 20pt threshold separates names (~24-40pt) from body text.
-                    pp_size = pp.font_size_pt or 0.0
-                    if pp_size >= 20.0 and hp.text.strip():
-                        _kept.append(hp)
-                    # else: original placeholder — drop
-                else:
-                    # col=None (above-table) items always kept; LLM items (para_id='') kept
-                    _kept.append(hp)
-            doc.header_paras = _kept + list(summary_sec.body_paras)
+            # Sidebar layout: replace the original summary lines with the LLM
+            # summary IN PLACE (at the same position), so the summary still
+            # appears near the top of the left column rather than at the end.
+            # Only items in summary_indices are removed; all other header content
+            # — contact labels, section headings, role content placed in
+            # header_paras by the PDF parser — is preserved.
+            _first_sum_pos = min(summary_indices)
+            # Count how many non-summary items fall before the first summary line.
+            _n_before = sum(
+                1 for j in range(_first_sum_pos)
+                if j not in summary_indices
+            )
+            _kept_hp = [
+                hp for j, hp in enumerate(doc.header_paras)
+                if j not in summary_indices
+            ]
+            # Splice the LLM summary body_paras at the original summary position.
+            _with_summary = (
+                _kept_hp[:_n_before]
+                + list(summary_sec.body_paras)
+                + _kept_hp[_n_before:]
+            )
+            log.debug(
+                "SUMMARY_ANCHOR_SELECTED: col=left injection summary_lines=%d "
+                "preserved_hp=%d llm_body_paras=%d insert_at=%d",
+                len(summary_indices), len(_kept_hp),
+                len(summary_sec.body_paras), _n_before,
+            )
+            doc.header_paras = _with_summary
             doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
         elif _target_col == "right":
             # Right-column injection.
