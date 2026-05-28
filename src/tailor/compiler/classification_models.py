@@ -133,9 +133,17 @@ class ClassificationParaInput:
     para_id: str
     text: str
     parser_semantic: str  # section_heading | role_header | role_meta | bullet | paragraph | empty
+    source_para_id: str = ""   # original para_id when this is a synthetic split product
+    synthetic: bool = False    # True when created by pre-classification normalization
+    split_kind: str = ""       # "compound_meta_nl" | "compound_meta_pipe" | "overmerged_role"
 
     def to_dict(self) -> dict:
-        return {"para_id": self.para_id, "text": self.text, "parser_semantic": self.parser_semantic}
+        d: dict = {"para_id": self.para_id, "text": self.text, "parser_semantic": self.parser_semantic}
+        if self.synthetic:
+            d["source_para_id"] = self.source_para_id
+            d["synthetic"] = True
+            d["split_kind"] = self.split_kind
+        return d
 
 
 @dataclass

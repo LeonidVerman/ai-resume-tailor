@@ -27,6 +27,7 @@ Stored envelope (classification_jsonb):
 {
   "llm_input":                  {...},   # normalized input actually sent to the classifier LLM
   "llm_input_raw":              {...},   # pre-normalization input (before heading removal / role clearing / meta split)
+  "classification_input_normalization_report": {...},  # what normalization did (splits, clears, removals)
   "raw_classification":         {...},   # verbatim initial LLM output (para_ids may be synthetic)
   "validation":                 {...},   # validate_classification() result (initial)
   "repair_input":               {...|null},  # repair request payload (null if no repair needed)
@@ -388,7 +389,7 @@ class ResumeClassificationService:
             normalize_classification_input,
             resolve_synthetic_para_ids,
         )
-        cls_input_normalized, sidecar = normalize_classification_input(cls_input)
+        cls_input_normalized, sidecar, norm_report = normalize_classification_input(cls_input)
         llm_input_dict = cls_input_normalized.to_dict()
 
         prompt_template = _load_prompt(_PROMPT_NAME)
@@ -495,6 +496,7 @@ class ResumeClassificationService:
         envelope: dict = {
             "llm_input": llm_input_dict,
             "llm_input_raw": raw_llm_input_dict,
+            "classification_input_normalization_report": norm_report,
             "raw_classification": raw_classification,
             "validation": initial_validation,
             "repair_input": repair_input,

@@ -1,29 +1,48 @@
 """
 src/tailor/compiler/classification_normalizer.py
 
-Pre-classification normalizations applied to ClassificationInput before LLM
-classification, and post-classification resolution of synthetic para_ids.
+Pre-classification input normalization applied to ClassificationInput before
+the LLM classifier is called, and post-classification synthetic para_id
+resolution.
 
-Normalization pipeline (applied in order):
-  1. Remove section_heading paragraphs — text already captured in raw_title.
-  2. Clear roles[] for non-experience sections — prevents the LLM from treating
-     education/skills role-like structures as experience roles.
-  3. Split compound role_meta paragraphs — pipe-delimited meta lines are split
-     into individual parts so the LLM classifies each part cleanly.
+Normalization pipeline (applied in order per section):
+  1. Remove section_heading paragraphs — already captured in raw_title.
+     Headings used as role headers (pattern-C layouts) are preserved.
+  2. Clear roles[] for non-experience sections — prevents the LLM from
+     treating education / skills / projects role-like structures as experience.
+  3. Split compound paragraphs — role_meta paragraphs whose text contains
+     embedded content are split into individual synthetic units:
+       • Newline split  ("compound_meta_nl")  — para text contains \\n;
+         each line is classified (role_meta / paragraph / bullet) and
+         emitted as a separate synthetic paragraph.
+       • Pipe split  ("compound_meta_pipe")  — para text contains " | "
+         but no newlines; each token becomes a synthetic role_meta.
+  4. Split over-merged roles — detects roles where bullet_para_ids contains
+     paragraphs with parser_semantic == "role_meta" (a new job boundary
+     signal) and splits the role into N sub-roles at each such boundary.
+     Preceding company-name paragraphs are moved to the new role's meta.
 
-Synthetic para IDs use the format:  {source_para_id}__meta_{index}
-e.g.  para_25__meta_0, para_25__meta_1
+Synthetic para IDs:
+    {source_para_id}__nl_{index}    — newline split
+    {source_para_id}__pipe_{index}  — pipe split
 
-The sidecar_map (synthetic_id -> source_id) is returned alongside the
-normalized input and used in post-processing to replace synthetic para_ids
-in the LLM output back to source para_ids.
+Sidecar map: synthetic_para_id -> source_para_id
+Used by resolve_synthetic_para_ids() after classification.
 
 Post-classification:
-  resolve_synthetic_para_ids(classification, sidecar) — replaces synthetic
-  para_ids in preserved-type blocks with their source para_ids.
-  Rewriteable blocks (role_achievement_bullet, role_responsibility_bullet)
-  keep their synthetic para_ids; they have no matching IR paragraph until
-  a future IR-split feature.
+    resolve_synthetic_para_ids(classification, sidecar) — replaces synthetic
+    para_ids in preserved-type blocks with source para_ids.  Duplicate
+    resolutions for the same source (first wins) are deduplicated.
+    Rewriteable blocks (role_achievement_bullet, role_responsibility_bullet)
+    keep their synthetic para_ids.
+
+Normalization report (returned as third element):
+    {
+      "headings_removed":       [{section_id, para_id, text_preview}],
+      "roles_cleared":          [{section_id, raw_title, role_count}],
+      "compound_paras_split":   [{source_para_id, text_preview, split_count, split_kind}],
+      "overmerged_roles_split": [{section_id, original_role_id, split_into, split_count}],
+    }
 """
 
 from __future__ import annotations
@@ -40,7 +59,7 @@ if TYPE_CHECKING:
     )
 
 # ---------------------------------------------------------------------------
-# Non-experience section title heuristics
+# Non-experience section title keywords (lowercased)
 # ---------------------------------------------------------------------------
 
 _NON_EXP_KEYWORDS: frozenset[str] = frozenset({
@@ -59,6 +78,7 @@ _NON_EXP_KEYWORDS: frozenset[str] = frozenset({
     "interests", "hobbies", "activities", "extracurricular",
     "affiliations", "memberships",
     "publications", "research", "presentations", "conferences",
+    "projects", "project",
     "additional", "additional information", "additional skills",
     "other", "other information", "miscellaneous",
 })
@@ -75,22 +95,257 @@ def _is_non_experience_title(raw_title: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Compound role_meta splitter
+# Compound paragraph line classifier (for newline splits)
 # ---------------------------------------------------------------------------
 
-_PIPE_RE = re.compile(r"\s*\|\s*")
+_DATE_TOKEN_RE = re.compile(
+    r'\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?'
+    r'|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
+    r'\s*\d{4}|\b\d{4}\b',
+    re.IGNORECASE,
+)
+_YEAR_RANGE_PARENS_RE = re.compile(r'\(\d{4}[^\)]{1,30}\d{4}\)')
+_PIPE_RE = re.compile(r'\s*\|\s*')
 
 
-def _split_compound_meta(text: str) -> list[str] | None:
-    """Split a pipe-delimited meta line into individual parts.
+def _classify_nl_line(line: str) -> str:
+    """Classify a single non-empty line extracted from a newline-split compound paragraph.
 
-    Returns None when the text contains no ' | ' or yields fewer than 2 parts.
+    Returns one of: "role_meta" | "paragraph" | "bullet" | "empty"
     """
-    if " | " not in text:
-        return None
-    parts = [p.strip() for p in _PIPE_RE.split(text)]
-    parts = [p for p in parts if p]
-    return parts if len(parts) >= 2 else None
+    s = line.strip()
+    if not s:
+        return "empty"
+
+    # Italic role description / intro  (*text*)
+    if s.startswith("*") and s.endswith("*") and len(s) >= 3:
+        return "paragraph"
+
+    # Tech stack header
+    if re.match(r"Tech\s+Stack\s*:", s, re.IGNORECASE):
+        return "paragraph"
+
+    # Company ; Date ; Location metadata line  (semicolons + recognisable date token)
+    if ";" in s and _DATE_TOKEN_RE.search(s):
+        return "role_meta"
+
+    # Section header embedded within body text (short line with year range in parens)
+    # e.g. "Backend & Full-Stack Development (2007–2019)"
+    if len(s) < 100 and _YEAR_RANGE_PARENS_RE.search(s):
+        return "paragraph"
+
+    return "bullet"
+
+
+# ---------------------------------------------------------------------------
+# Compound paragraph splitters
+# ---------------------------------------------------------------------------
+
+def _split_compound_nl(
+    para: "ClassificationParaInput",
+    sidecar: "dict[str, str]",
+    report_list: list,
+) -> "tuple[list[ClassificationParaInput], list[str], list[str]]":
+    """Newline-split a compound role_meta paragraph.
+
+    Returns (new_paras, meta_synth_ids, body_synth_ids).
+    meta_synth_ids  → should replace the source in role.meta_para_ids
+    body_synth_ids  → should be appended to role.bullet_para_ids
+    """
+    from tailor.compiler.classification_models import ClassificationParaInput as CPI
+
+    lines = [ln for ln in para.text.split("\n") if ln.strip()]
+    if len(lines) <= 1:
+        return [para], [para.para_id], []
+
+    new_paras: list[CPI] = []
+    meta_ids: list[str] = []
+    body_ids: list[str] = []
+
+    for idx, line in enumerate(lines):
+        sem = _classify_nl_line(line)
+        if sem == "empty":
+            continue
+        synth_id = f"{para.para_id}__nl_{idx}"
+        sidecar[synth_id] = para.para_id
+        synth = CPI(
+            para_id=synth_id,
+            text=line.strip(),
+            parser_semantic=sem,
+            source_para_id=para.para_id,
+            synthetic=True,
+            split_kind="compound_meta_nl",
+        )
+        new_paras.append(synth)
+        if sem == "role_meta":
+            meta_ids.append(synth_id)
+        else:
+            body_ids.append(synth_id)
+
+    if not new_paras:
+        return [para], [para.para_id], []
+
+    report_list.append({
+        "source_para_id": para.para_id,
+        "text_preview": para.text[:80].replace("\n", " / "),
+        "split_count": len(new_paras),
+        "split_kind": "compound_meta_nl",
+    })
+    return new_paras, meta_ids, body_ids
+
+
+def _split_compound_pipe(
+    para: "ClassificationParaInput",
+    sidecar: "dict[str, str]",
+    report_list: list,
+) -> "tuple[list[ClassificationParaInput], list[str], list[str]]":
+    """Pipe-split a compound role_meta paragraph (no newlines present).
+
+    Returns (new_paras, meta_synth_ids, []).
+    All pipe-split tokens are role_meta.
+    """
+    from tailor.compiler.classification_models import ClassificationParaInput as CPI
+
+    if " | " not in para.text:
+        return [para], [para.para_id], []
+
+    parts = [p.strip() for p in _PIPE_RE.split(para.text) if p.strip()]
+    if len(parts) < 2:
+        return [para], [para.para_id], []
+
+    new_paras: list[CPI] = []
+    meta_ids: list[str] = []
+
+    for idx, part in enumerate(parts):
+        synth_id = f"{para.para_id}__pipe_{idx}"
+        sidecar[synth_id] = para.para_id
+        synth = CPI(
+            para_id=synth_id,
+            text=part,
+            parser_semantic="role_meta",
+            source_para_id=para.para_id,
+            synthetic=True,
+            split_kind="compound_meta_pipe",
+        )
+        new_paras.append(synth)
+        meta_ids.append(synth_id)
+
+    report_list.append({
+        "source_para_id": para.para_id,
+        "text_preview": para.text[:80],
+        "split_count": len(new_paras),
+        "split_kind": "compound_meta_pipe",
+    })
+    return new_paras, meta_ids, []
+
+
+def _compound_split_kind(para: "ClassificationParaInput") -> str:
+    """Return 'nl', 'pipe', or '' indicating which compound split to apply."""
+    if para.parser_semantic != "role_meta":
+        return ""
+    if "\n" in para.text:
+        return "nl"
+    if " | " in para.text:
+        return "pipe"
+    return ""
+
+
+# ---------------------------------------------------------------------------
+# Over-merged role splitter
+# ---------------------------------------------------------------------------
+
+def _looks_like_company_line(para: "ClassificationParaInput") -> bool:
+    """True if para looks like a standalone company/location name (not a tech line)."""
+    if para.parser_semantic != "paragraph":
+        return False
+    # Tech-stack and tool lines typically contain ":"
+    return ":" not in para.text
+
+
+def _split_overmerged_role(
+    role: "ClassificationRoleInput",
+    para_map: "dict[str, ClassificationParaInput]",
+    section_id: str,
+    report_list: list,
+) -> "list[ClassificationRoleInput]":
+    """Split an over-merged role at role_meta boundaries within bullet_para_ids.
+
+    A role is over-merged when bullet_para_ids contains paragraphs whose
+    parser_semantic is "role_meta" — these signal the start of a new job.
+
+    Returns the original role (trimmed) plus any split roles.  The first
+    result keeps the original role_id; subsequent splits get __split_N suffix.
+    """
+    from tailor.compiler.classification_models import ClassificationRoleInput as CRI
+
+    has_meta_in_bullets = any(
+        para_map.get(pid) is not None and para_map[pid].parser_semantic == "role_meta"
+        for pid in role.bullet_para_ids
+    )
+    if not has_meta_in_bullets:
+        return [role]
+
+    result: list[CRI] = []
+    cur_header: list[str] = list(role.header_para_ids)
+    cur_meta: list[str] = list(role.meta_para_ids)
+    cur_bullets: list[str] = []
+    split_idx = 0
+
+    for pid in role.bullet_para_ids:
+        para = para_map.get(pid)
+        if para is not None and para.parser_semantic == "role_meta":
+            # Collect immediately preceding company-name paragraph(s) from current bullets.
+            # We look back through up to 2 consecutive paragraph-typed paras that lack ":"
+            # (company/location lines don't contain colons; tech-stack lines do).
+            new_role_meta: list[str] = []
+            temp_bullets = list(cur_bullets)
+            while temp_bullets and len(new_role_meta) < 2:
+                last = temp_bullets[-1]
+                lp = para_map.get(last)
+                if lp is not None and _looks_like_company_line(lp):
+                    new_role_meta.insert(0, temp_bullets.pop())
+                else:
+                    break
+
+            # Save current role
+            role_id = role.role_id if split_idx == 0 else f"{role.role_id}__split_{split_idx}"
+            result.append(CRI(
+                role_id=role_id,
+                header_para_ids=list(cur_header),
+                meta_para_ids=list(cur_meta),
+                bullet_para_ids=list(temp_bullets),
+            ))
+            split_idx += 1
+
+            # New role: the role_meta para becomes the header; preceding para(s) = meta
+            cur_header = [pid]
+            cur_meta = new_role_meta
+            cur_bullets = []
+        else:
+            cur_bullets.append(pid)
+
+    # Flush last accumulated role
+    if cur_header or cur_meta or cur_bullets:
+        role_id = role.role_id if split_idx == 0 else f"{role.role_id}__split_{split_idx}"
+        result.append(CRI(
+            role_id=role_id,
+            header_para_ids=list(cur_header),
+            meta_para_ids=list(cur_meta),
+            bullet_para_ids=list(cur_bullets),
+        ))
+
+    if not result:
+        return [role]
+
+    if len(result) > 1:
+        report_list.append({
+            "section_id": section_id,
+            "original_role_id": role.role_id,
+            "split_into": [r.role_id for r in result],
+            "split_count": len(result),
+        })
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -99,15 +354,15 @@ def _split_compound_meta(text: str) -> list[str] | None:
 
 def normalize_classification_input(
     ci: "ClassificationInput",
-) -> "tuple[ClassificationInput, dict[str, str]]":
+) -> "tuple[ClassificationInput, dict[str, str], dict]":
     """Apply pre-classification normalizations to a ClassificationInput.
 
     Returns
     -------
-    (normalized_input, sidecar_map)
+    (normalized_input, sidecar_map, normalization_report)
 
-    sidecar_map maps synthetic_para_id -> source_para_id.
-    Empty dict when no synthetic paragraphs were created.
+    sidecar_map  — synthetic_para_id -> source_para_id
+    normalization_report — summary of all transformations applied
     """
     from tailor.compiler.classification_models import (
         ClassificationInput,
@@ -117,89 +372,109 @@ def normalize_classification_input(
     )
 
     sidecar: dict[str, str] = {}
+    report: dict = {
+        "headings_removed": [],
+        "roles_cleared": [],
+        "compound_paras_split": [],
+        "overmerged_roles_split": [],
+    }
     new_sections: list[ClassificationSectionInput] = []
 
     for sec in ci.sections:
-        # Para ids used as role headers — must survive step 1
+        # Para ids that appear as role headers (must NOT be removed by step 1)
         role_header_ids: set[str] = {
             pid for role in sec.roles for pid in role.header_para_ids
         }
 
-        # Step 1: drop section_heading paras that are not role headers
-        paras_s1: list[ClassificationParaInput] = [
-            p for p in sec.paragraphs
-            if p.parser_semantic != "section_heading" or p.para_id in role_header_ids
-        ]
+        # ── Step 1: remove section_heading paras not used as role headers ──
+        paras_s1: list[ClassificationParaInput] = []
+        for p in sec.paragraphs:
+            if p.parser_semantic == "section_heading" and p.para_id not in role_header_ids:
+                report["headings_removed"].append({
+                    "section_id": sec.section_id,
+                    "para_id": p.para_id,
+                    "text_preview": p.text[:60],
+                })
+            else:
+                paras_s1.append(p)
 
-        # Step 2: clear roles for non-experience sections
-        roles_s2 = (
-            [] if _is_non_experience_title(sec.raw_title) and sec.roles
-            else sec.roles
-        )
+        # ── Step 2: clear roles for non-experience sections ────────────────
+        if _is_non_experience_title(sec.raw_title) and sec.roles:
+            report["roles_cleared"].append({
+                "section_id": sec.section_id,
+                "raw_title": sec.raw_title,
+                "role_count": len(sec.roles),
+            })
+            roles_s2: list[ClassificationRoleInput] = []
+        else:
+            roles_s2 = list(sec.roles)
 
-        # Step 3: split compound role_meta paragraphs referenced in roles_s2
-        meta_ids_in_roles: set[str] = {
+        # ── Step 3: split compound paragraphs in role meta_para_ids ───────
+        role_meta_pids: set[str] = {
             pid for role in roles_s2 for pid in role.meta_para_ids
         }
+
         paras_s3: list[ClassificationParaInput] = []
-        split_map: dict[str, list[str]] = {}  # source_id -> [synth_id, ...]
+        split_meta_map: dict[str, list[str]] = {}   # source_pid -> [meta_synth_ids]
+        split_body_map: dict[str, list[str]] = {}   # source_pid -> [body_synth_ids]
 
         for p in paras_s1:
-            if p.parser_semantic == "role_meta" and p.para_id in meta_ids_in_roles:
-                parts = _split_compound_meta(p.text)
-                if parts is not None:
-                    synth_ids: list[str] = []
-                    for idx, part_text in enumerate(parts):
-                        synth_id = f"{p.para_id}__meta_{idx}"
-                        sidecar[synth_id] = p.para_id
-                        synth_ids.append(synth_id)
-                        paras_s3.append(ClassificationParaInput(
-                            para_id=synth_id,
-                            text=part_text,
-                            parser_semantic="role_meta",
-                        ))
-                    split_map[p.para_id] = synth_ids
-                    continue
-            paras_s3.append(p)
+            if p.para_id in role_meta_pids:
+                sk = _compound_split_kind(p)
+                if sk == "nl":
+                    new_ps, meta_ids, body_ids = _split_compound_nl(p, sidecar, report["compound_paras_split"])
+                    paras_s3.extend(new_ps)
+                    if meta_ids:
+                        split_meta_map[p.para_id] = meta_ids
+                    if body_ids:
+                        split_body_map[p.para_id] = body_ids
+                elif sk == "pipe":
+                    new_ps, meta_ids, _ = _split_compound_pipe(p, sidecar, report["compound_paras_split"])
+                    paras_s3.extend(new_ps)
+                    if meta_ids:
+                        split_meta_map[p.para_id] = meta_ids
+                else:
+                    paras_s3.append(p)
+            else:
+                paras_s3.append(p)
 
-        roles_s3 = _remap_role_meta_ids(roles_s2, split_map)
+        # Update role meta/bullet para_ids with split results
+        roles_s3: list[ClassificationRoleInput] = []
+        for role in roles_s2:
+            new_meta: list[str] = []
+            extra_bullets: list[str] = []
+            for pid in role.meta_para_ids:
+                new_meta.extend(split_meta_map.get(pid, [pid]))
+                extra_bullets.extend(split_body_map.get(pid, []))
+            roles_s3.append(ClassificationRoleInput(
+                role_id=role.role_id,
+                header_para_ids=role.header_para_ids,
+                meta_para_ids=new_meta,
+                bullet_para_ids=list(role.bullet_para_ids) + extra_bullets,
+            ))
+
+        # ── Step 4: split over-merged roles ───────────────────────────────
+        full_para_map: dict[str, ClassificationParaInput] = {
+            p.para_id: p for p in paras_s3
+        }
+        roles_s4: list[ClassificationRoleInput] = []
+        for role in roles_s3:
+            roles_s4.extend(
+                _split_overmerged_role(role, full_para_map, sec.section_id, report["overmerged_roles_split"])
+            )
 
         new_sections.append(ClassificationSectionInput(
             section_id=sec.section_id,
             raw_title=sec.raw_title,
             paragraphs=paras_s3,
-            roles=roles_s3,
+            roles=roles_s4,
         ))
 
     return ClassificationInput(
         document_id=ci.document_id,
         source_kind=ci.source_kind,
         sections=new_sections,
-    ), sidecar
-
-
-def _remap_role_meta_ids(
-    roles: "list[ClassificationRoleInput]",
-    split_map: "dict[str, list[str]]",
-) -> "list[ClassificationRoleInput]":
-    """Return roles with meta_para_ids expanded per split_map."""
-    if not split_map:
-        return roles
-
-    from tailor.compiler.classification_models import ClassificationRoleInput
-
-    result: list[ClassificationRoleInput] = []
-    for role in roles:
-        new_meta: list[str] = []
-        for pid in role.meta_para_ids:
-            new_meta.extend(split_map.get(pid, [pid]))
-        result.append(ClassificationRoleInput(
-            role_id=role.role_id,
-            header_para_ids=role.header_para_ids,
-            meta_para_ids=new_meta,
-            bullet_para_ids=role.bullet_para_ids,
-        ))
-    return result
+    ), sidecar, report
 
 
 # ---------------------------------------------------------------------------
@@ -207,7 +482,7 @@ def _remap_role_meta_ids(
 # ---------------------------------------------------------------------------
 
 # Semantic types that are preserved in the IR — synthetic para_ids for these
-# blocks should be resolved back to their source para_ids.
+# get resolved back to the source para_id.
 _PRESERVED_TYPES: frozenset[str] = frozenset({
     "role_meta",
     "role_header",
@@ -232,17 +507,16 @@ _PRESERVED_TYPES: frozenset[str] = frozenset({
 
 def resolve_synthetic_para_ids(
     classification: dict,
-    sidecar: dict[str, str],
+    sidecar: "dict[str, str]",
 ) -> dict:
-    """Replace synthetic para_ids in the classification output with source para_ids.
+    """Replace synthetic para_ids in preserved-type blocks with source para_ids.
 
-    Only preserved-type blocks are resolved.  When multiple synthetic children
-    of the same source are all classified as preserved, duplicates are removed
-    (first occurrence wins).
+    When multiple synthetic children of the same source are all preserved,
+    duplicates are removed (first occurrence wins).
 
     Rewriteable synthetic blocks (role_achievement_bullet,
-    role_responsibility_bullet) are left unchanged — they have no corresponding
-    IR paragraph until a future feature adds IR-level para splitting.
+    role_responsibility_bullet) keep their synthetic para_ids — they have no
+    corresponding IR paragraph until a future IR-split feature.
 
     The input dict is not modified; a deep copy is returned.
     """
@@ -266,8 +540,8 @@ def resolve_synthetic_para_ids(
     return result
 
 
-def _resolve_block_list(blocks: list, sidecar: dict[str, str]) -> None:
-    """In-place: resolve synthetic para_ids and deduplicate same-source blocks."""
+def _resolve_block_list(blocks: list, sidecar: "dict[str, str]") -> None:
+    """In-place: resolve synthetic para_ids; deduplicate same-source blocks."""
     emitted_source_ids: set[str] = set()
     i = 0
     while i < len(blocks):
@@ -284,7 +558,7 @@ def _resolve_block_list(blocks: list, sidecar: dict[str, str]) -> None:
             i += 1
             continue
         if source_id in emitted_source_ids:
-            blocks.pop(i)  # duplicate — remove
+            blocks.pop(i)   # duplicate — remove
         else:
             block["para_id"] = source_id
             emitted_source_ids.add(source_id)
