@@ -2671,10 +2671,50 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
     return roles
 
 
+def _merge_split_section_headings(paras: list[ParaModel]) -> list[ParaModel]:
+    """Merge consecutive short ALL-CAPS paragraph pairs that form a known heading.
+
+    Handles templates where a section heading like "WORK HISTORY" is split
+    across two PDF text blocks: ["WORK", "HISTORY"].  Each word alone is not
+    recognised as a section heading, but together they are.
+
+    Only paragraph-typed (non-heading, non-bullet) items are candidates.
+    The check is safe because the combined text must appear verbatim in
+    _ALL_HEADING_NAMES_NOSPACE, making accidental merges very unlikely.
+    """
+    result: list[ParaModel] = []
+    _alpha_upper = re.compile(r"^[A-Z\s\xa0]+$")
+    for pm in paras:
+        _txt = pm.text.strip()
+        if (
+            pm.semantic == "paragraph"
+            and _txt
+            and len(_txt) < 20
+            and _alpha_upper.match(_txt)
+            and result
+            and result[-1].semantic == "paragraph"
+        ):
+            _prev_txt = result[-1].text.strip()
+            if (
+                _prev_txt
+                and len(_prev_txt) < 20
+                and _alpha_upper.match(_prev_txt)
+                and _normalize_heading_text(_prev_txt + _txt) in _ALL_HEADING_NAMES_NOSPACE
+            ):
+                _prev = result.pop()
+                _merged = _prev.with_text(_prev_txt + " " + _txt)
+                _merged.semantic = "section_heading"
+                result.append(_merged)
+                continue
+        result.append(pm)
+    return result
+
+
 def _group_sections(
     paras: list[ParaModel],
 ) -> tuple[list[ParaModel], list[ResumeSection]]:
     """Split flat paragraph list into header_paras + sections."""
+    paras = _merge_split_section_headings(paras)
     header_paras: list[ParaModel] = []
     sections: list[ResumeSection] = []
     current: ResumeSection | None = None
@@ -2698,8 +2738,22 @@ def _group_sections(
             # comparison so ALL-CAPS, letter-spaced, and numbered headings are
             # matched the same way as in _infer_semantic.
             if not found_section and _normalize_heading_text(pm.text) not in _ALL_HEADING_NAMES_NOSPACE:
-                header_paras.append(pm)
-                continue
+                # Try combining with the last header_para if it is also a
+                # section_heading — handles split headings like "WORK" + "HISTORY"
+                # → "WORK HISTORY" that are each unrecognised individually.
+                if (
+                    header_paras
+                    and header_paras[-1].semantic == "section_heading"
+                    and _normalize_heading_text(header_paras[-1].text + pm.text)
+                    in _ALL_HEADING_NAMES_NOSPACE
+                ):
+                    _prev = header_paras.pop()
+                    pm = _prev.with_text(_prev.text.strip() + " " + pm.text.strip())
+                    pm.semantic = "section_heading"
+                    # Fall through to section processing below.
+                else:
+                    header_paras.append(pm)
+                    continue
 
             # Two-column / table PDF layout: the experience section label
             # ("WORK EXPERIENCE") appears alone as a heading with no body
