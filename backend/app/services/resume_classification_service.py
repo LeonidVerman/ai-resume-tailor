@@ -483,6 +483,7 @@ class ResumeClassificationService:
             logger.debug("Classification validation passed for resume=%s", resume_id)
 
         envelope: dict = {
+            "llm_input": llm_input_dict,
             "raw_classification": raw_classification,
             "validation": initial_validation,
             "repair_input": repair_input,

@@ -30,6 +30,7 @@ Configuration (environment variables, all optional)
   JOB_DESCRIPTION_ID default: 97
 """
 
+import json
 import os
 import re
 import sys
@@ -46,6 +47,7 @@ SCRIPT_DIR = Path(__file__).parent
 REPO_ROOT = SCRIPT_DIR.parent
 DOCX_DIR = SCRIPT_DIR / "samples" / "resume" / "docx"
 GENERATION_DIR = SCRIPT_DIR / "samples" / "generation"
+CLASSIFIER_DIR = REPO_ROOT / "tmp" / "artefacts" / "generate_run_test"
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -125,8 +127,8 @@ def save_profile(token: str, draft: dict) -> bool:
     return resp.json()["onboarding_completed"]
 
 
-def poll_classification(admin_token: str, resume_id: int) -> None:
-    """Poll until classification_jsonb is present; hard-fail after CLASSIFICATION_TIMEOUT s."""
+def poll_classification(admin_token: str, resume_id: int) -> dict:
+    """Poll until classification_jsonb is present; return the envelope; hard-fail after CLASSIFICATION_TIMEOUT s."""
     deadline = time.time() + CLASSIFICATION_TIMEOUT
     while True:
         resp = requests.get(
@@ -135,7 +137,7 @@ def poll_classification(admin_token: str, resume_id: int) -> None:
             timeout=15,
         )
         if resp.status_code == 200:
-            return
+            return resp.json()
         if resp.status_code != 404:
             raise RuntimeError(
                 f"Classification check failed: HTTP {resp.status_code} — {resp.text}"
@@ -145,6 +147,22 @@ def poll_classification(admin_token: str, resume_id: int) -> None:
                 f"Classification not available after {CLASSIFICATION_TIMEOUT}s for resume {resume_id}"
             )
         time.sleep(CLASSIFICATION_POLL_INTERVAL)
+
+
+def save_classifier_file(sample_num: int, api_filename: str, run_id: int, classification_envelope: dict) -> Path:
+    """Save classifier input+output to CLASSIFIER_DIR as <stem>-classifier.json."""
+    # Derive the same stem used for the generation file: everything before -{run_id}-
+    gen_name = f"{sample_num}-{api_filename}"
+    stem = _prefix_before_run_id(gen_name, run_id)
+    dest_name = f"{stem}-{run_id}-classifier.json"
+
+    CLASSIFIER_DIR.mkdir(parents=True, exist_ok=True)
+    dest = CLASSIFIER_DIR / dest_name
+    dest.write_text(
+        json.dumps(classification_envelope, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return dest
 
 
 def run_generation(token: str, resume_id: int) -> int:
@@ -242,7 +260,7 @@ def process_sample(sample_num: int, user_token: str, admin_token: str) -> None:
         raise RuntimeError("onboarding_completed=False — profile setup is incomplete for this user")
 
     print("  Waiting for classification...")
-    poll_classification(admin_token, resume_id)
+    classification_envelope = poll_classification(admin_token, resume_id)
     print("  Classification ready")
 
     print("  Running generation...")
@@ -254,6 +272,9 @@ def process_sample(sample_num: int, user_token: str, admin_token: str) -> None:
 
     dest = save_generation_file(sample_num, run_id, api_filename, raw)
     print(f"  Saved: {dest.name}")
+
+    cls_dest = save_classifier_file(sample_num, api_filename, run_id, classification_envelope)
+    print(f"  Classifier: {cls_dest.name}")
 
 
 # ---------------------------------------------------------------------------
