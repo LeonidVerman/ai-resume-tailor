@@ -1318,8 +1318,11 @@ def _extract_layout(doc) -> LayoutProfile:
 
             # Suppress when right zone is thin: few chars, narrow x-span, and
             # left zone dominates in character count.
+            # Threshold: 150 chars rather than 200 so that a narrow SKILLS
+            # sidebar (~10 items, ~150–200 chars) is not suppressed when it
+            # falls in the 60–80 % x-range zone introduced by the 0.80 guard.
             if (
-                _right_chars < 200
+                _right_chars < 150
                 and _right_range < 100
                 and _left_chars > _right_chars * 2.5
             ):
@@ -1499,7 +1502,7 @@ def _detect_column_split(
     for i in range(len(x0s) - 1):
         gap = x0s[i + 1] - x0s[i]
         right_edge = x0s[i + 1]
-        if gap >= min_gap and page_width * 0.20 <= right_edge <= page_width * 0.70:
+        if gap >= min_gap and page_width * 0.20 <= right_edge <= page_width * 0.80:
             # Require the right-side content cluster to span a meaningful
             # fraction of the page height so that a handful of right-aligned
             # header items (contact, date) don't trigger false column detection.
@@ -1532,7 +1535,7 @@ def _detect_column_split(
             # cross-column design elements, not evidence of a single column.
             bridge_x1_threshold = right_edge * 1.05
             bridging = any(
-                b["bbox"][0] <= x0s[i]
+                round(b["bbox"][0]) <= x0s[i]
                 and b["bbox"][2] >= bridge_x1_threshold
                 and b["bbox"][1] >= top_cutoff
                 and (b["bbox"][2] - b["bbox"][0]) < wide_block_min
