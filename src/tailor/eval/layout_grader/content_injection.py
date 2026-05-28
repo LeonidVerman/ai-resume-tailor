@@ -55,6 +55,12 @@ _LLM_SECTION_TYPE_MAP: tuple[tuple[str, str], ...] = (
     ("skill", "skills"), ("competenc", "skills"), ("technolog", "skills"), ("expertise", "skills"),
 )
 
+# Non-target section keywords that stop content collection (LLM section boundaries)
+_STOP_SECTION_KEYWORDS: frozenset[str] = frozenset((
+    "education", "certif", "reference", "award", "language", "volunteer",
+    "project", "publication", "additional", "interest", "achievement", "honor",
+))
+
 
 @dataclass
 class ContentInjectionResult:
@@ -179,11 +185,17 @@ def _parse_llm_sections(llm_text: str) -> dict[str, str]:
         )
         if is_heading:
             heading_lower = stripped.lower()
-            current_key = None
+            matched_key = None
             for kw, key in _LLM_SECTION_TYPE_MAP:
                 if kw in heading_lower:
-                    current_key = key
+                    matched_key = key
                     break
+            if matched_key is not None:
+                current_key = matched_key  # switch to a known target section
+            elif any(kw in heading_lower for kw in _STOP_SECTION_KEYWORDS):
+                current_key = None          # explicit stop at a non-target section
+            # else: unrecognised heading (role title, company name, short bullet
+            # fragment) — keep collecting into the current section
         elif current_key is not None:
             parts.setdefault(current_key, []).append(stripped)
 

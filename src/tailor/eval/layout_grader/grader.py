@@ -36,9 +36,10 @@ HARD FAIL triggers (semantic / IR fallback — work without PDF extraction):
 HARD FAIL triggers (continued):
   SPARSE_CONTINUATION_PAGE    non-first sparse page with area_ratio < 30%.
   BLANK_PAGE_CONTENT_LOSS     trailing blank page when page count matches template
-                              (generated_pages == original_pages) or when the only
-                              rendered page is blank — signals content loss, not
-                              tail overflow.
+                              (generated_pages == original_pages), grew by exactly 1
+                              (generated_pages == original_pages + 1), or when the
+                              only rendered page is blank — signals content loss or
+                              rendering artefact, not legitimate tail overflow.
   SPARSE_FIRST_PAGE           page 1 area_ratio < 8% while page 2+ has real
                               content — rendering artefact displaced content.
   COLUMN_CONTINUITY_BREAK     median x-centre of content on page 1 (lower half)

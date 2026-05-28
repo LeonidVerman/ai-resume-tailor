@@ -227,8 +227,15 @@ def _compute_blank_page_score(  # noqa: C901  (complex but cohesive)
         # Skip if template page at the same position is also blank
         if pg_num in template_blank_pages:
             continue
-        # Skip if page count differs from template (tail overflow — expected)
-        page_count_preserved = (orig_pages > 0 and gen_pages == orig_pages) or gen_pages == 1
+        # Skip if page count grew by more than 1 (legitimate tail overflow).
+        # When count grew by exactly 1, still flag a blank trailing page: a
+        # document that grew by one page AND that page is empty is a rendering
+        # artefact (e.g. content pushed off the last page into a blank extra page).
+        page_count_preserved = (
+            (orig_pages > 0 and gen_pages == orig_pages)       # exact match
+            or gen_pages == 1                                   # single-page edge case
+            or (orig_pages > 0 and gen_pages == orig_pages + 1)  # grew by one
+        )
         if not page_count_preserved:
             continue
         # Require near-zero content (not just < 150-char extraction artifact)
@@ -241,9 +248,13 @@ def _compute_blank_page_score(  # noqa: C901  (complex but cohesive)
             content_loss_pages.append(pg_num)
 
     if content_loss_pages:
+        if orig_pages > 0 and gen_pages == orig_pages + 1:
+            _loss_ctx = f"page count grew by 1 ({orig_pages}→{gen_pages})"
+        else:
+            _loss_ctx = f"page count matches template ({orig_pages}→{gen_pages})"
         evidence.append(
             f"Blank trailing page(s) {content_loss_pages} -- HARD FAIL: "
-            f"page count matches template ({orig_pages}→{gen_pages}) but page is empty"
+            f"{_loss_ctx} but trailing page is empty"
         )
         return 0.0, True, evidence, blank
 
