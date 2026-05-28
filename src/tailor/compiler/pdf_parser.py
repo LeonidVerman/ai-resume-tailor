@@ -2487,10 +2487,18 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 pre_header_meta.clear()
             state = "header"
         elif state == "init":
-            if s == "paragraph" and not has_pipe_role_headers:
+            # Allow Pattern B (date already buffered → paragraph is the title)
+            # even when pipe-format role_headers exist elsewhere in this section.
+            # Sections can mix formats: the first role may lack a pipe separator
+            # while later roles use "Title | Company" (e.g. sample 27).
+            _allow_with_pipe = bool(pre_header_meta)
+            if s == "paragraph" and (not has_pipe_role_headers or _allow_with_pipe):
                 _txt_init = pm.text.strip()
                 _can_promote = (
-                    has_explicit_bullets
+                    # When pipe-format roles exist, only promote via an explicit
+                    # buffered date (Pattern B) — suppress heuristics that could
+                    # mis-classify preamble text as a role title.
+                    (not has_pipe_role_headers and has_explicit_bullets)
                     # Pattern B: a date line was already buffered — this paragraph
                     # is the role title that follows the date.
                     or bool(pre_header_meta)
@@ -2498,7 +2506,8 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                     # starts with a capital letter (job titles start with capitals;
                     # preamble/description fragments start with lowercase).
                     or (
-                        has_role_meta
+                        not has_pipe_role_headers
+                        and has_role_meta
                         and _peek(idx + 1) == "role_meta"
                         and bool(_txt_init) and _txt_init[0].isupper()
                     )
@@ -2525,8 +2534,11 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 else:
                     # Not promotable — buffer as pre-role meta so it is not lost.
                     pre_header_meta.append(pm)
-            elif s == "role_meta" and not has_pipe_role_headers:
+            elif s == "role_meta":
                 # Pattern B: date appears before the title — buffer it.
+                # Buffer even when pipe-format role headers exist elsewhere in
+                # this section (mixed-format sections need date signal for the
+                # non-pipe roles that precede the pipe-format ones).
                 pre_header_meta.append(pm)
         elif state == "header":
             if s == "role_meta":
