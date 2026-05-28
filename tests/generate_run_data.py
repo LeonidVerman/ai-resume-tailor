@@ -14,11 +14,16 @@ For each sample the script:
   8. Saves it to tests/samples/generation/ with the sample-number prefix,
      replacing any previous file for the same sample+job combination
 
+  With --classification-only, steps 6-8 are skipped.  Only the classifier
+  debug file is written (to tmp/artefacts/generate_run_test/).
+
 Usage
 -----
-  python generate_run_data.py             # all samples 1-40
-  python generate_run_data.py 4           # sample 4 only
-  python generate_run_data.py 4 16 18     # samples 4, 16, 18
+  python generate_run_data.py                         # all samples 1-40
+  python generate_run_data.py 4                       # sample 4 only
+  python generate_run_data.py 4 16 18                 # samples 4, 16, 18
+  python generate_run_data.py --classification-only   # all samples, classify only
+  python generate_run_data.py --classification-only 4 16 18
 
 Configuration (environment variables, all optional)
 ---------------------------------------------------
@@ -167,6 +172,22 @@ def save_classifier_file(sample_num: int, api_filename: str, run_id: int, classi
     return dest
 
 
+def save_classifier_file_only(resume_path: Path, classification_envelope: dict) -> Path:
+    """Save classifier output when running in --classification-only mode.
+
+    Uses the resume DOCX stem (which already includes the sample number) as the
+    filename base so multiple runs for the same sample overwrite each other.
+    """
+    dest_name = f"{resume_path.stem}-classifier.json"
+    CLASSIFIER_DIR.mkdir(parents=True, exist_ok=True)
+    dest = CLASSIFIER_DIR / dest_name
+    dest.write_text(
+        json.dumps(classification_envelope, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return dest
+
+
 def run_generation(token: str, resume_id: int) -> int:
     """Trigger generation; return run_id."""
     resp = requests.post(
@@ -272,7 +293,12 @@ def find_resume_file(sample_num: int) -> Path:
     return matches[0]
 
 
-def process_sample(sample_num: int, user_token: str, admin_token: str) -> None:
+def process_sample(
+    sample_num: int,
+    user_token: str,
+    admin_token: str,
+    classification_only: bool = False,
+) -> None:
     print(f"\n[Sample {sample_num}]")
 
     resume_path = find_resume_file(sample_num)
@@ -295,6 +321,11 @@ def process_sample(sample_num: int, user_token: str, admin_token: str) -> None:
     classification_envelope = poll_classification(admin_token, resume_id)
     print("  Classification ready")
 
+    if classification_only:
+        cls_dest = save_classifier_file_only(resume_path, classification_envelope)
+        print(f"  Classifier: {cls_dest.name}")
+        return
+
     print("  Running generation...")
     run_id = run_generation(user_token, resume_id)
     print(f"  run_id={run_id}")
@@ -315,6 +346,10 @@ def process_sample(sample_num: int, user_token: str, admin_token: str) -> None:
 
 def main() -> None:
     args = sys.argv[1:]
+
+    classification_only = "--classification-only" in args
+    args = [a for a in args if a != "--classification-only"]
+
     if args:
         try:
             sample_numbers = [int(a) for a in args]
@@ -324,11 +359,12 @@ def main() -> None:
     else:
         sample_numbers = list(range(1, 41))
 
-    print(f"Service URL : {SERVICE_URL}")
-    print(f"User        : {USER_LOGIN}")
-    print(f"Admin       : {ADMIN_LOGIN}")
-    print(f"JD ID       : {JOB_DESCRIPTION_ID}")
-    print(f"Samples     : {sample_numbers}")
+    print(f"Service URL         : {SERVICE_URL}")
+    print(f"User                : {USER_LOGIN}")
+    print(f"Admin               : {ADMIN_LOGIN}")
+    print(f"JD ID               : {JOB_DESCRIPTION_ID}")
+    print(f"Samples             : {sample_numbers}")
+    print(f"Classification only : {classification_only}")
 
     print("\nLogging in...")
     user_token, user_id = login(USER_LOGIN, USER_PASSWORD)
@@ -339,7 +375,7 @@ def main() -> None:
     failed: list[tuple[int, str]] = []
     for num in sample_numbers:
         try:
-            process_sample(num, user_token, admin_token)
+            process_sample(num, user_token, admin_token, classification_only=classification_only)
         except Exception as exc:
             print(f"  ERROR: {exc}", file=sys.stderr)
             failed.append((num, str(exc)))

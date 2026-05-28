@@ -4,9 +4,11 @@ rem
 rem Generate debug run-data JSONs for resume samples by calling the service API.
 rem
 rem Usage:
-rem   generate_run_data.cmd              -- regenerate all samples (1-40)
-rem   generate_run_data.cmd 4            -- sample 4 only
-rem   generate_run_data.cmd 4 16 18      -- samples 4, 16, 18
+rem   generate_run_data.cmd                          -- regenerate all samples (1-40)
+rem   generate_run_data.cmd 4                        -- sample 4 only
+rem   generate_run_data.cmd 4 16 18                  -- samples 4, 16, 18
+rem   generate_run_data.cmd --classification-only    -- classify all, skip generation
+rem   generate_run_data.cmd --classification-only 4 16 18
 rem
 rem Optional env vars (all have defaults):
 rem   SERVICE_URL        -- backend base URL  (default: http://localhost:8000)
