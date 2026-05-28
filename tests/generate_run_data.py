@@ -8,7 +8,7 @@ For each sample the script:
   2. Uploads the sample resume DOCX
   3. Generates a candidate profile draft via LLM autofill
   4. Saves the draft as the user's profile (PUT)
-  5. Polls until classification_jsonb is filled (every 5 s, timeout 60 s)
+  5. Polls until classification_jsonb is filled (every 5 s, timeout 600 s)
   6. Runs generation against the configured job description
   7. Logs in as admin, downloads the run-data JSON
   8. Saves it to tests/samples/generation/ with the sample-number prefix,
@@ -59,7 +59,7 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "87654321")
 JOB_DESCRIPTION_ID = int(os.environ.get("JOB_DESCRIPTION_ID", "97"))
 
 CLASSIFICATION_POLL_INTERVAL = 5   # seconds
-CLASSIFICATION_TIMEOUT = 180       # seconds
+CLASSIFICATION_TIMEOUT = 600       # seconds
 
 # ---------------------------------------------------------------------------
 # API helpers
