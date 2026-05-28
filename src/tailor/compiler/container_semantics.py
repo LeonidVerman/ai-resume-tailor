@@ -101,8 +101,9 @@ _PRESERVE_SEMANTIC_TYPES = frozenset({
     "contact", "skills", "certifications", "other",
 })
 
-_EXPERIENCE_SEMANTIC_TYPES = frozenset({
-    "experience",
+# Semantic types whose content the LLM may rewrite.
+_REWRITEABLE_SEMANTIC_TYPES = frozenset({
+    "experience", "summary",
 })
 
 _SECTION_LABEL_ONLY = frozenset({
@@ -120,6 +121,9 @@ _PRESERVE_TITLE_KEYWORDS = frozenset({
 
 def _section_is_preserve(sec: "ResumeSection") -> bool:
     """True when a section should not be freely rewritten by the LLM."""
+    # Experience and summary are always rewriteable regardless of title.
+    if sec.semantic_type in _REWRITEABLE_SEMANTIC_TYPES:
+        return False
     title_lower = sec.title.lower()
     if any(kw in title_lower for kw in _PRESERVE_TITLE_KEYWORDS):
         return True
@@ -216,7 +220,7 @@ def infer_container_semantics(doc: "ResumeDocument") -> ContainerTree:
                 section_ids=[sec.section_id or sec.title],
                 column_side=sec.heading.paragraph_profile.column_id
                     if sec.heading.paragraph_profile else None,
-                rewriteable=sec.semantic_type in _EXPERIENCE_SEMANTIC_TYPES,
+                rewriteable=sec.semantic_type in _REWRITEABLE_SEMANTIC_TYPES,
             )
             tree.containers.append(node)
         log.debug(
@@ -275,7 +279,7 @@ def infer_container_semantics(doc: "ResumeDocument") -> ContainerTree:
             rewriteable=True,
         )
         for sec in left_secs:
-            if sec.semantic_type in _EXPERIENCE_SEMANTIC_TYPES:
+            if sec.semantic_type in _REWRITEABLE_SEMANTIC_TYPES:
                 sec.container_type = "rewriteable_region"
                 log.debug(
                     "REGION_OWNERSHIP_ASSIGNED: section=%r → rewriteable_region",
@@ -307,7 +311,7 @@ def infer_container_semantics(doc: "ResumeDocument") -> ContainerTree:
                     "REGION_OWNERSHIP_ASSIGNED: section=%r → preserve_region (right sidebar)",
                     sec.title,
                 )
-            elif sec.semantic_type in _EXPERIENCE_SEMANTIC_TYPES:
+            elif sec.semantic_type in _REWRITEABLE_SEMANTIC_TYPES:
                 sec.container_type = "rewriteable_region"
             else:
                 sec.container_type = col_type
@@ -321,7 +325,7 @@ def infer_container_semantics(doc: "ResumeDocument") -> ContainerTree:
 
     # --- Single-column documents ---
     for sec in doc.sections:
-        if sec.semantic_type in _EXPERIENCE_SEMANTIC_TYPES:
+        if sec.semantic_type in _REWRITEABLE_SEMANTIC_TYPES:
             sec.container_type = "rewriteable_region"
         elif _section_is_preserve(sec):
             sec.container_type = "preserve_region"
