@@ -2179,6 +2179,13 @@ def _infer_semantic(pm: ParaModel) -> str:
     # Section heading: bold, short, title-case, 2+ words, larger or spaced.
     # Exclude commas: company/location lines ("Software Inc, Vancouver") have
     # commas; resume section headings do not.
+    # Exclude lines ending with a preposition/conjunction ("Graduated with",
+    # "University of") and lines ending with a mid-sentence period followed
+    # by more text ("Design." fragments from body sentences).
+    _HEADING_TRAILING_STOPWORDS = frozenset({
+        "with", "and", "the", "for", "of", "in", "at", "to", "by",
+        "or", "a", "an", "on", "as", "is", "are", "was", "were",
+    })
     if (
         bold
         and len(text) <= 60
@@ -2187,7 +2194,10 @@ def _infer_semantic(pm: ParaModel) -> str:
         and not text.startswith(("-", "•", "·", "–", "*"))
     ):
         words = text.split()
-        if len(words) >= 2:
+        _last_word = words[-1].lower().rstrip(".,;:") if words else ""
+        # Sentence fragments end with "." — real headings never do.
+        _ends_with_period = bool(words) and words[-1].endswith(".")
+        if len(words) >= 2 and _last_word not in _HEADING_TRAILING_STOPWORDS and not _ends_with_period:
             cap_ratio = (
                 sum(1 for w in words if w and w[0].isupper()) / len(words)
             )
@@ -2788,6 +2798,70 @@ def _merge_split_section_headings(paras: list[ParaModel]) -> list[ParaModel]:
     return result
 
 
+def _rescue_cross_col_paras(
+    left_secs: "list[ResumeSection]",
+    right_secs: "list[ResumeSection]",
+) -> None:
+    """Fix region ownership when PDFs store blocks in column-cell order.
+
+    Some PDFs (e.g. templates with internal Education-Summary sub-tables)
+    store their right sub-column blocks *after* the sidebar section heading
+    in the document's byte-order.  This causes `_group_sections` to assign
+    those paragraphs to the wrong section (e.g. Education bullets land in
+    Contact Info body).
+
+    Detection: a body paragraph whose y_top_pt is ≥ 30 pt *above* its
+    section heading's y_top_pt was placed there by column-cell ordering, not
+    by semantic proximity.  We re-attribute it to the left-column section
+    whose y-range best contains the paragraph.
+
+    Operates in-place; removed paragraphs' column_id is set to "left".
+    """
+    if not left_secs or not right_secs:
+        return
+
+    # Build y-extent for each left section (heading y + body para y-values).
+    left_extents: list[tuple[float, float, "ResumeSection"]] = []
+    for ls in left_secs:
+        ys: list[float] = []
+        if ls.heading.paragraph_profile and ls.heading.paragraph_profile.y_top_pt:
+            ys.append(ls.heading.paragraph_profile.y_top_pt)
+        for pm in ls.body_paras:
+            if pm.paragraph_profile and pm.paragraph_profile.y_top_pt:
+                ys.append(pm.paragraph_profile.y_top_pt)
+        if ys:
+            left_extents.append((min(ys), max(ys), ls))
+
+    if not left_extents:
+        return
+
+    for rs in right_secs:
+        heading_y = (
+            rs.heading.paragraph_profile.y_top_pt
+            if rs.heading.paragraph_profile else 0.0
+        )
+        normal_body: list["ParaModel"] = []
+        for pm in rs.body_paras:
+            para_y = pm.paragraph_profile.y_top_pt if pm.paragraph_profile else 0.0
+            if para_y > 0 and heading_y > 0 and para_y < heading_y - 30.0:
+                # Paragraph is significantly above its section heading →
+                # mis-assigned due to column-cell ordering.  Find the best
+                # left-column owner by y-range containment.
+                best: "ResumeSection | None" = None
+                for y_min, y_max, ls in left_extents:
+                    # Allow 40 pt tolerance on each side.
+                    if y_min - 40.0 <= para_y <= y_max + 40.0:
+                        best = ls
+                        break
+                if best is not None:
+                    if pm.paragraph_profile is not None:
+                        pm.paragraph_profile.column_id = "left"
+                    best.body_paras.append(pm)
+                    continue  # do not keep in right section
+            normal_body.append(pm)
+        rs.body_paras = normal_body
+
+
 def _group_sections(
     paras: list[ParaModel],
 ) -> tuple[list[ParaModel], list[ResumeSection]]:
@@ -3305,6 +3379,13 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
             above_hdrs, above_secs = _group_sections(above_raw)
             left_hdrs,  left_secs  = _group_sections(left_raw)
             right_hdrs, right_secs = _group_sections(right_raw)
+            # Cross-column ownership rescue: PDFs that store blocks in
+            # column-cell order (not y-order) may place the right sub-column
+            # of an Education Summary table *after* the Contact Info heading
+            # in the block sequence.  Detect body paragraphs whose y_top_pt is
+            # significantly above their section heading's y and re-associate
+            # them with the contextual left-column section.
+            _rescue_cross_col_paras(left_secs, right_secs)
             header_paras = above_hdrs + left_hdrs + right_hdrs
             sections     = above_secs + left_secs + right_secs
     else:

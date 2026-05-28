@@ -278,6 +278,11 @@ class ResumeSection:
     roles: list[RoleEntry] = field(default_factory=list)        # experience sections only
     # Stable synthetic ID assigned by assign_stable_ids(); "" until assigned.
     section_id: str = ""
+    # Container semantics assigned by infer_container_semantics().
+    # Values: "independent_vertical_stack" | "synchronized_row" |
+    #         "local_column_pair" | "paired_sidebar_region" |
+    #         "rewriteable_region" | "preserve_region" | None
+    container_type: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -287,6 +292,7 @@ class ResumeSection:
             "body_paras": [p.to_dict() for p in self.body_paras],
             "roles": [r.to_dict() for r in self.roles],
             "section_id": self.section_id,
+            "container_type": self.container_type,
         }
 
     @classmethod
@@ -298,6 +304,7 @@ class ResumeSection:
             body_paras=[ParaModel.from_dict(p) for p in d.get("body_paras", [])],
             roles=[RoleEntry.from_dict(r) for r in d.get("roles", [])],
             section_id=d.get("section_id", ""),
+            container_type=d.get("container_type"),
         )
 
 

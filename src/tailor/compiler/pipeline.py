@@ -1128,6 +1128,17 @@ def compile_resume_from_pdf(
         template_ir.layout.column_split_x,
         template_ir.layout.section_row_table,
     )
+    # Infer container semantics: annotates each section with a container_type
+    # (rewriteable_region, preserve_region, independent_vertical_stack, etc.)
+    # and returns a ContainerTree for renderer + diagnostic consumption.
+    from tailor.compiler.container_semantics import infer_container_semantics
+    _container_tree = infer_container_semantics(template_ir)
+    log.debug(
+        "CONTAINER_SEMANTICS: mode=%r containers=%d sections_annotated=%d",
+        _container_tree.document_mode,
+        len(_container_tree.containers),
+        sum(1 for s in template_ir.sections if s.container_type),
+    )
     # Remove contact/footer items (phone, email) that landed in role bullets on
     # single-page PDFs — they would otherwise become LLM bullet archetypes and
     # produce wrong size, indent, and italic on generated bullets.
