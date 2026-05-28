@@ -1039,7 +1039,8 @@ def _inject_skills_into_section_body(doc: ResumeDocument) -> None:
         return
 
     # Find a parent section whose body_paras contain a skills sub-heading.
-    _SKILL_KEYWORDS = ("skill", "abilit", "competenc", "expertise")
+    # "proficien" handles "Proficiency" / "Proficiencies" headings.
+    _SKILL_KEYWORDS = ("skill", "abilit", "competenc", "expertise", "proficien")
     parent_sec = None
     skill_start_idx: int | None = None
     for sec in doc.sections:
@@ -1067,6 +1068,23 @@ def _inject_skills_into_section_body(doc: ResumeDocument) -> None:
         else:
             break
 
+    # Scan for non-skills sub-sections embedded after the skills block (e.g.
+    # "Language", "Interests").  Preserve those trailing paragraphs so they are
+    # not silently dropped when we replace the skills content.
+    _END_MARKERS = (
+        "language", "interest", "hobby", "hobbies",
+        "reference", "award", "honor", "honour",
+    )
+    skill_block_end = len(parent_sec.body_paras)
+    for j in range(heading_end, len(parent_sec.body_paras)):
+        bp_txt = parent_sec.body_paras[j].text.strip()
+        if (
+            len(bp_txt) < 25
+            and any(m in bp_txt.lower() for m in _END_MARKERS)
+        ):
+            skill_block_end = j
+            break
+
     # Use the first non-heading body_para as clone archetype for the skill lines.
     archetype = (
         parent_sec.body_paras[heading_end]
@@ -1080,7 +1098,9 @@ def _inject_skills_into_section_body(doc: ResumeDocument) -> None:
     ]
 
     parent_sec.body_paras = (
-        list(parent_sec.body_paras[:heading_end]) + new_skill_paras
+        list(parent_sec.body_paras[:heading_end])
+        + new_skill_paras
+        + list(parent_sec.body_paras[skill_block_end:])
     )
 
     # Remove the extra skills section so its heading doesn't appear twice.
