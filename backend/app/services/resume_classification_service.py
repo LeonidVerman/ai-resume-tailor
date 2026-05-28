@@ -25,12 +25,14 @@ Schema (repair):    prompts/classification/repair_classification_schema.json
 
 Stored envelope (classification_jsonb):
 {
-  "raw_classification":         {...},   # verbatim initial LLM output
+  "llm_input":                  {...},   # normalized input actually sent to the classifier LLM
+  "llm_input_raw":              {...},   # pre-normalization input (before heading removal / role clearing / meta split)
+  "raw_classification":         {...},   # verbatim initial LLM output (para_ids may be synthetic)
   "validation":                 {...},   # validate_classification() result (initial)
   "repair_input":               {...|null},  # repair request payload (null if no repair needed)
   "repair_response":            {...|null},  # verbatim repair LLM output (null if not attempted / failed)
   "validation_after_repair":    {...|null},  # validate_classification() after repair merge (null if no repair)
-  "classification":             {...},   # final contract-safe classification
+  "classification":             {...},   # final contract-safe classification (synthetic para_ids resolved)
   "status":                     "valid" | "repaired" | "repaired_and_downgraded" | "downgraded" | "failed",
   "validation_error_count":     int,     # errors in initial validation
   "invalid_section_count_before_repair": int,
@@ -380,7 +382,14 @@ class ResumeClassificationService:
         doc = _build_ir(norm_data, template_ir_dict)
         document_id = str(resume_id)
         cls_input = build_classification_input(doc, document_id)
-        llm_input_dict = cls_input.to_dict()
+        raw_llm_input_dict = cls_input.to_dict()
+
+        from tailor.compiler.classification_normalizer import (
+            normalize_classification_input,
+            resolve_synthetic_para_ids,
+        )
+        cls_input_normalized, sidecar = normalize_classification_input(cls_input)
+        llm_input_dict = cls_input_normalized.to_dict()
 
         prompt_template = _load_prompt(_PROMPT_NAME)
         input_json = json.dumps(llm_input_dict, ensure_ascii=False)
@@ -455,6 +464,7 @@ class ResumeClassificationService:
         invalid_set_after = set(invalid_ids_after)
 
         final = downgrade_invalid_sections(merged, invalid_set_after)
+        final = resolve_synthetic_para_ids(final, sidecar)
 
         # ── Step 6: compute status and counts ────────────────────────────
         repaired_count = invalid_count_before - invalid_count_after
@@ -484,6 +494,7 @@ class ResumeClassificationService:
 
         envelope: dict = {
             "llm_input": llm_input_dict,
+            "llm_input_raw": raw_llm_input_dict,
             "raw_classification": raw_classification,
             "validation": initial_validation,
             "repair_input": repair_input,
