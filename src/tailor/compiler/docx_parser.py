@@ -453,6 +453,18 @@ def _infer_semantic(pm: ParaModel) -> str:
     if _YEAR_RE.search(text) and len(text) <= 80 and "|" not in text:
         return "role_meta"
 
+    # "Name, Description, Year" project-entry pattern — the terminal
+    # comma-segment is a standalone 4-digit year (or year-range).  The 80-char
+    # limit above is too tight for entries like
+    #   "Apache Incubator – NLPCraft, API to convert natural language into actions, 2020"
+    # Extend to 150 chars when the year sits at the very end.
+    if _YEAR_RE.search(text) and "|" not in text and 80 < len(text) <= 150:
+        _lc = text.rfind(",")
+        if _lc != -1:
+            _terminal = text[_lc + 1:].strip()
+            if re.fullmatch(r"(19|20)\d{2}(?:[–\-](19|20)\d{2})?", _terminal):
+                return "role_meta"
+
     return "paragraph"
 
 
@@ -531,8 +543,9 @@ def _score_role_boundary(
     boundary; negative values oppose it.
 
     Signal groups:
-      visual      – DOCX formatting (bold, paragraph spacing)
-      pattern     – text shape (short, title-case, job-title vocabulary)
+      visual      – DOCX formatting (bold, paragraph spacing, font size)
+      pattern     – text shape (short, title-case, job-title vocabulary,
+                    "Title, Company[, Location]" comma structure)
       neighborhood – paragraphs before and after the candidate
       doc_local   – consistency with already-confirmed role headers
       negative    – strong penalties opposing a role boundary
@@ -545,6 +558,11 @@ def _score_role_boundary(
         signals["visual_bold"] = 2
     if pm.style.spacing_before and pm.style.spacing_before >= 80:
         signals["visual_spacing"] = 1
+    # Explicit font size ≥ 10pt is a mild formatting cue: role titles in
+    # plain-text DOCX templates often have an explicit larger font while body
+    # paragraphs inherit from their paragraph style (font_size_pt=None).
+    if pm.style.font_size_pt is not None and pm.style.font_size_pt >= 10.0:
+        signals["visual_font_size"] = 1
 
     # ── Text-pattern ──────────────────────────────────────────────────────
     words = set(re.split(r"\W+", text.lower())) - {""}
@@ -557,6 +575,21 @@ def _score_role_boundary(
         cap_ratio = sum(1 for w in alpha_words if w[0].isupper()) / len(alpha_words)
         if cap_ratio >= 0.6:
             signals["pattern_title_case"] = 1
+
+    # "Title, Company[, Location]" pattern: commas delimit role-title prefix
+    # from company and city, which is common in plain unformatted resumes.
+    # Guard: first comma-segment ≤ 30 chars (pure title, not a sentence),
+    # all subsequent segments ≤ 35 chars (company/location, not long desc),
+    # and no year (else _infer_semantic would already call it role_meta).
+    if "," in text and not _YEAR_RE.search(text):
+        _parts = [p.strip() for p in text.split(",")]
+        if (
+            2 <= len(_parts) <= 4
+            and len(_parts[0]) <= 30
+            and all(len(p) <= 35 for p in _parts[1:])
+            and (set(re.split(r"\W+", _parts[0].lower())) - {""}) & _JOB_TITLE_WORDS
+        ):
+            signals["text_company_pattern"] = 2
 
     # ── Neighbourhood ─────────────────────────────────────────────────────
     n_paras = len(body_paras)

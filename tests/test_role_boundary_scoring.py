@@ -20,6 +20,7 @@ from tailor.compiler.docx_parser import (
     _ROLE_BOUNDARY_MEDIUM,
     _ROLE_BOUNDARY_STRONG,
     _detect_doc_role_pattern,
+    _infer_semantic,
     _relabel_implicit_role_headers,
     _score_role_boundary,
 )
@@ -367,3 +368,139 @@ class TestRelabelImplicitRoleHeaders:
         # So it DOES get promoted even with pattern_b penalty.
         # The penalty just makes it slightly harder; doesn't block MEDIUM cases.
         assert body[3].semantic == "role_header"
+
+
+# ---------------------------------------------------------------------------
+# New signal tests (Round 2)
+# ---------------------------------------------------------------------------
+
+class TestVisualFontSize:
+    def _score(self, pm, body, idx, doc_pat=None):
+        doc_pat = doc_pat or {"count": 0, "pattern_b": False, "bold": False, "pipe": False}
+        return _score_role_boundary(pm, body, idx, doc_pat)
+
+    def test_font_size_gte_10_contributes(self):
+        """Explicit font_size_pt ≥ 10 adds visual_font_size signal."""
+        body = [_para("Senior Engineer", font_size_pt=11.0), _role_meta("Corp; 2021")]
+        _, sigs = self._score(body[0], body, 0)
+        assert "visual_font_size" in sigs
+        assert sigs["visual_font_size"] == 1
+
+    def test_font_size_below_10_no_signal(self):
+        body = [_para("Senior Engineer", font_size_pt=6.0), _role_meta("Corp; 2021")]
+        _, sigs = self._score(body[0], body, 0)
+        assert "visual_font_size" not in sigs
+
+    def test_font_size_none_no_signal(self):
+        body = [_para("Senior Engineer", font_size_pt=None), _role_meta("Corp; 2021")]
+        _, sigs = self._score(body[0], body, 0)
+        assert "visual_font_size" not in sigs
+
+    def test_font_size_pushes_score_to_medium(self):
+        """Plain 'Title, Company, City' without neighborhood should reach MEDIUM
+        when font_size_pt=11.0 fires alongside text-pattern signals."""
+        body = [
+            _para("Associate software engineer, ITIVITI, St. Petersburg", font_size_pt=11.0),
+            _para("Highlights: body text"),
+        ]
+        score, _ = self._score(body[0], body, 0)
+        assert score >= _ROLE_BOUNDARY_MEDIUM
+
+
+class TestTextCompanyPattern:
+    def _score(self, pm, body, idx, doc_pat=None):
+        doc_pat = doc_pat or {"count": 0, "pattern_b": False, "bold": False, "pipe": False}
+        return _score_role_boundary(pm, body, idx, doc_pat)
+
+    def test_title_company_city_fires(self):
+        """'Title, Company, City' (no year) fires text_company_pattern."""
+        body = [_para("Senior Backend Engineer, Ondo Perps, Remote"), _para("Highlights")]
+        _, sigs = self._score(body[0], body, 0)
+        assert "text_company_pattern" in sigs
+        assert sigs["text_company_pattern"] == 2
+
+    def test_title_company_only_fires(self):
+        body = [_para("Associate Engineer, ITIVITI"), _para("Highlights")]
+        _, sigs = self._score(body[0], body, 0)
+        assert "text_company_pattern" in sigs
+
+    def test_no_comma_no_signal(self):
+        body = [_para("Senior Engineer"), _role_meta("Corp; 2021")]
+        _, sigs = self._score(body[0], body, 0)
+        assert "text_company_pattern" not in sigs
+
+    def test_year_in_text_no_signal(self):
+        """Year present → text is role_meta territory, no company_pattern."""
+        body = [_para("Senior Engineer, Corp, 2021"), _para("body")]
+        _, sigs = self._score(body[0], body, 0)
+        assert "text_company_pattern" not in sigs
+
+    def test_first_part_too_long_no_signal(self):
+        """First segment > 30 chars (sentence-like, not a title) → no signal."""
+        long_first = "Senior software engineering specialist and lead"  # > 30 chars
+        body = [_para(f"{long_first}, Acme Corp"), _para("body")]
+        _, sigs = self._score(body[0], body, 0)
+        assert "text_company_pattern" not in sigs
+
+    def test_promotes_plain_title_company_city(self):
+        """Integration: 'Title, Company, City' without meta or bullets →
+        text_company_pattern + visual_font_size reach MEDIUM."""
+        body = [
+            _para("Senior Backend Engineer, Ondo Perps, Remote", font_size_pt=11.0),
+            _para("Highlights: body"),
+            _para("f task one"),
+            _para("f task two"),
+        ]
+        _relabel_implicit_role_headers(body)
+        assert body[0].semantic == "role_header"
+
+
+class TestInferSemanticYearTerminal:
+    """Tests for the year-terminal project-entry path in _infer_semantic."""
+
+    def _make_pm(self, text: str) -> "ParaModel":
+        style = ParaStyle(
+            style_name=None, alignment=None,
+            indent_left=None, indent_right=None, hanging=None,
+            spacing_before=None, spacing_after=None, line_spacing=None,
+            keep_with_next=None, numbering=None,
+            bold=None, italic=None, font_name=None, font_size_pt=None,
+            color=None, xml_proto=None,
+        )
+        return ParaModel(text=text, style=style, semantic="paragraph")
+
+    def test_short_year_line_still_role_meta(self):
+        """Original path: year-containing text ≤ 80 chars → role_meta."""
+        pm = self._make_pm("Scaffold Registry Indexer, smart contract indexer, 2026")
+        assert _infer_semantic(pm) == "role_meta"
+
+    def test_long_year_terminal_becomes_role_meta(self):
+        """New path: year at very end, text 81–150 chars → role_meta."""
+        text = "Open Source Project, A fairly detailed description of what this project does, 2020"
+        assert len(text) > 80
+        pm = self._make_pm(text)
+        assert _infer_semantic(pm) == "role_meta"
+
+    def test_bachelor_thesis_long_entry_becomes_role_meta(self):
+        pm = self._make_pm(
+            "Bachelor Thesis, Learning similarity of social network communities"
+            " with embeddings application, 2019"
+        )
+        assert len(pm.text) > 80
+        assert _infer_semantic(pm) == "role_meta"
+
+    def test_year_not_terminal_stays_paragraph(self):
+        """Year in middle, not at terminal comma → stays paragraph (too long)."""
+        pm = self._make_pm(
+            "In 2020 I worked on an API to convert natural language into actions using NLPCraft library"
+        )
+        assert len(pm.text) > 80
+        # year is not the last comma-segment → should NOT be role_meta
+        assert _infer_semantic(pm) != "role_meta"
+
+    def test_year_range_terminal_becomes_role_meta(self):
+        """Year-range (e.g. 2019-2021) at terminal position is accepted."""
+        pm = self._make_pm(
+            "Project Alpha, Building a distributed system for processing events, 2019-2021"
+        )
+        assert _infer_semantic(pm) == "role_meta"
