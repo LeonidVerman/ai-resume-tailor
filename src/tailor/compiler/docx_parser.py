@@ -500,6 +500,10 @@ def _relabel_implicit_role_headers(body_paras: list[ParaModel]) -> None:
 # Stripped at text-extraction time so downstream heuristics see clean text.
 _ARTIFACT_PREFIX_RE = re.compile(r"^(?:a link |f (?=[A-Z]))")
 
+# Identifies icon-bullets specifically: "f " followed by an uppercase letter.
+# Used to re-classify stripped paragraphs as bullets (the icon WAS the bullet marker).
+_F_ICON_PREFIX_RE = re.compile(r"^f (?=[A-Z])")
+
 # Trailing-paren date pattern: "Senior Software Engineer (September 2023 – Present)"
 # The year appears only inside the trailing parentheses; the text before them is the title.
 _TRAILING_DATE_PAREN_RE = re.compile(r"^(.+?)\s*\(([^)]*(?:19|20)\d{2}[^)]*)\)\s*$")
@@ -1219,7 +1223,9 @@ def parse_docx(path: str) -> ResumeDocument:
     for child in body:
         local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
         if local == "p":
-            text = _ARTIFACT_PREFIX_RE.sub("", _get_para_text(child))
+            _raw = _get_para_text(child).strip()
+            _icon_bullet = bool(_F_ICON_PREFIX_RE.match(_raw))
+            text = _ARTIFACT_PREFIX_RE.sub("", _raw)
             # Label-column tab-split guard: when the LEFT side of a tab-split is a
             # known section name but the RIGHT side is not (e.g. sample 28's
             # "SUMMARY\tMaster Degree of Project Engineering"), extract only the left
@@ -1233,18 +1239,27 @@ def parse_docx(path: str) -> ResumeDocument:
                     and _rt.strip().lower() not in _KNOWN_SECTION_NAMES_LOWER
                 ):
                     text = _lt.strip()
+                    _icon_bullet = False
             style = _parse_para_style(child, style_map)
             pm = ParaModel(text=text, style=style, semantic="")
             pm.semantic = _infer_semantic(pm)
+            if _icon_bullet and pm.semantic == "paragraph" and text.strip():
+                pm.semantic = "bullet"
+                _logger.debug("ICON_BULLET_DETECTED: %r", text[:60])
             all_paras.append(pm)
             body_items.append(pm)
         elif local == "tbl":
             table_paras: list[ParaModel] = []
             for p_elem in child.findall(f".//{{{_W}}}p"):
-                text = _ARTIFACT_PREFIX_RE.sub("", _get_para_text(p_elem))
+                _raw = _get_para_text(p_elem).strip()
+                _icon_bullet = bool(_F_ICON_PREFIX_RE.match(_raw))
+                text = _ARTIFACT_PREFIX_RE.sub("", _raw)
                 style = _parse_para_style(p_elem, style_map)
                 pm = ParaModel(text=text, style=style, semantic="")
                 pm.semantic = _infer_semantic(pm)
+                if _icon_bullet and pm.semantic == "paragraph" and text.strip():
+                    pm.semantic = "bullet"
+                    _logger.debug("ICON_BULLET_DETECTED (table): %r", text[:60])
                 all_paras.append(pm)
                 table_paras.append(pm)
             body_items.append(TableBlock(xml_proto=deepcopy(child), para_models=table_paras))
@@ -2311,6 +2326,52 @@ def _apply_multicolumn_newspaper_fix(
     }
 
 
+_CONJUNCTION_CONTINUATIONS: frozenset[str] = frozenset({
+    "and", "or", "but", "while", "including", "with", "for", "as", "such",
+})
+
+
+def _mark_bullet_continuations(paras: list[ParaModel]) -> None:
+    """Reclassify paragraphs that are continuations of the preceding bullet.
+
+    A paragraph is a bullet continuation when:
+      1. Its semantic is 'paragraph' (not already a bullet).
+      2. The nearest preceding non-empty paragraph is a bullet.
+      3. That bullet does NOT end with sentence-terminal punctuation (.!?).
+         Terminal punctuation indicates a complete sentence; the next line
+         is a new item, not a continuation.
+      4. One of the visual continuation signals fires:
+         - text starts with '(' (parenthetical continuation, very reliable)
+         - text starts with a lowercase letter (mid-sentence wrap)
+         - text starts with a known conjunction / preposition
+    """
+    for i, pm in enumerate(paras):
+        if pm.semantic != "paragraph":
+            continue
+        text = pm.text.strip()
+        if not text:
+            continue
+        prev_bullet = None
+        for j in range(i - 1, -1, -1):
+            if paras[j].text.strip():
+                prev_bullet = paras[j]
+                break
+        if prev_bullet is None or prev_bullet.semantic != "bullet":
+            continue
+        # Guard: preceding bullet ended with a full sentence — the next line is new.
+        if prev_bullet.text.rstrip()[-1:] in ".!?":
+            continue
+        first_char = text[0]
+        first_word = text.split()[0].lower() if text.split() else ""
+        if (
+            first_char == "("
+            or first_char.islower()
+            or first_word in _CONJUNCTION_CONTINUATIONS
+        ):
+            pm.semantic = "bullet"
+            _logger.debug("BULLET_CONTINUATION_DETECTED: %r", text[:60])
+
+
 def _finalise(section: ResumeSection) -> None:
     if section.semantic_type == "experience":
         # Pre-pass: promote plain-paragraph date lines with placeholder years
@@ -2334,3 +2395,5 @@ def _finalise(section: ResumeSection) -> None:
         _relabel_implicit_role_headers(section.body_paras)
         _promote_preceding_company_paras(section.body_paras)
         section.roles = _group_roles(section.body_paras)
+        for _role in section.roles:
+            _mark_bullet_continuations(_role.bullets)

@@ -18,11 +18,13 @@ from __future__ import annotations
 
 from tailor.compiler.docx_parser import (
     _ARTIFACT_PREFIX_RE,
+    _F_ICON_PREFIX_RE,
     _ROLE_BOUNDARY_MEDIUM,
     _ROLE_BOUNDARY_STRONG,
     _decompose_compound_role_paras,
     _detect_doc_role_pattern,
     _infer_semantic,
+    _mark_bullet_continuations,
     _promote_preceding_company_paras,
     _relabel_implicit_role_headers,
     _score_role_boundary,
@@ -703,3 +705,102 @@ class TestPromotePrecedingCompanyParas:
         ]
         _promote_preceding_company_paras(body)
         assert body[0].semantic == "paragraph"
+
+
+# ---------------------------------------------------------------------------
+# Round 4 tests: icon-bullet detection and bullet continuation
+# ---------------------------------------------------------------------------
+
+
+class TestFIconPrefixRegex:
+    """_F_ICON_PREFIX_RE matches Font-Awesome icon prefix only."""
+
+    def test_matches_f_uppercase(self):
+        assert _F_ICON_PREFIX_RE.match("f Leading tech debt")
+
+    def test_does_not_match_f_lowercase(self):
+        assert not _F_ICON_PREFIX_RE.match("f leading")
+
+    def test_does_not_match_plain_text(self):
+        assert not _F_ICON_PREFIX_RE.match("Senior Engineer")
+
+    def test_does_not_match_a_link(self):
+        assert not _F_ICON_PREFIX_RE.match("a link GitHub")
+
+
+class TestMarkBulletContinuations:
+    """_mark_bullet_continuations promotes wrapped bullet fragments."""
+
+    def _bullet(self, text: str) -> ParaModel:
+        return _plain_para(text, semantic="bullet")
+
+    def _para(self, text: str) -> ParaModel:
+        return _plain_para(text, semantic="paragraph")
+
+    def test_paren_continuation_promoted(self):
+        paras = [
+            self._bullet("Covered new architecture design, planning, cross-team collaboration"),
+            self._para("(including time management and task management), internal docs"),
+        ]
+        _mark_bullet_continuations(paras)
+        assert paras[1].semantic == "bullet"
+
+    def test_lowercase_continuation_promoted(self):
+        paras = [
+            self._bullet("Built the core API layer using async patterns"),
+            self._para("and extended it with WebSocket support"),
+        ]
+        _mark_bullet_continuations(paras)
+        assert paras[1].semantic == "bullet"
+
+    def test_conjunction_continuation_promoted(self):
+        paras = [
+            self._bullet("Designed the cache invalidation strategy"),
+            self._para("including cache warming and TTL configuration"),
+        ]
+        _mark_bullet_continuations(paras)
+        assert paras[1].semantic == "bullet"
+
+    def test_terminal_punct_blocks_continuation(self):
+        """Bullet ending with '.' → the next paragraph is NOT a continuation."""
+        paras = [
+            self._bullet("Improved test coverage to 95%."),
+            self._para("(additional CI integration also added)"),
+        ]
+        _mark_bullet_continuations(paras)
+        assert paras[1].semantic == "paragraph"
+
+    def test_uppercase_non_continuation_unchanged(self):
+        """Paragraph starting with uppercase is not a continuation."""
+        paras = [
+            self._bullet("Led backend refactoring initiative"),
+            self._para("Key technologies: Java, Spring Boot"),
+        ]
+        _mark_bullet_continuations(paras)
+        assert paras[1].semantic == "paragraph"
+
+    def test_no_preceding_bullet_unchanged(self):
+        paras = [
+            self._para("Some description paragraph"),
+            self._para("(additional information)"),
+        ]
+        _mark_bullet_continuations(paras)
+        assert paras[1].semantic == "paragraph"
+
+    def test_non_paragraph_unchanged(self):
+        paras = [
+            self._bullet("First bullet"),
+            _plain_para("already a bullet", semantic="bullet"),
+        ]
+        _mark_bullet_continuations(paras)
+        assert paras[1].semantic == "bullet"
+
+    def test_multiple_continuations(self):
+        paras = [
+            self._bullet("Designed architecture covering multiple layers"),
+            self._para("(caching, auth, and rate limiting)"),
+            self._para("and integrated with three external APIs"),
+        ]
+        _mark_bullet_continuations(paras)
+        assert paras[1].semantic == "bullet"
+        assert paras[2].semantic == "bullet"
