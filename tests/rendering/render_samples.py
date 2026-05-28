@@ -34,11 +34,16 @@ Usage:
 """
 from __future__ import annotations
 
+import gc
 import json
+import os
 import re
 import shutil
+import subprocess
 import sys
+import tempfile
 import traceback
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -61,6 +66,9 @@ _OUT_REND_PDF  = _REPO / "tmp" / "artefacts" / "rendering" / "pdf"
 # (which causes PermissionError [WinError 32] on Windows).
 _OUT_STAGE_PDF = _OUT_REND_PDF / "_stage"
 
+# Batch conversion: all DOCXs are converted in one LO invocation, PDFs land here.
+_OUT_BATCH_PDF = _OUT_REND_PDF / "_batch"
+
 _OUT_SS_DOCX = _OUT_REND_DOCX / "screenshots"
 _OUT_SS_PDF  = _OUT_REND_PDF  / "screenshots"
 
@@ -68,7 +76,7 @@ _NUM_RE = re.compile(r"^(\d+)-")
 
 
 # ---------------------------------------------------------------------------
-# Data model
+# Data models
 # ---------------------------------------------------------------------------
 
 @dataclass
@@ -77,6 +85,16 @@ class SamplePair:
     source_kind: str           # "docx" or "pdf"
     resume_path: Path          # actual .docx / .pdf template file
     gen_path: Path             # generation JSON
+
+
+@dataclass
+class _Compiled:
+    """Intermediate result from compile phase (stages 1–5a)."""
+    pair: SamplePair
+    out_docx: Path       # compiled DOCX ready for LO conversion
+    out_ir: Path         # saved IR JSON
+    grader_pdf: Path     # final PDF destination for grade_layout.py
+    tag: str             # log prefix
 
 
 # ---------------------------------------------------------------------------
@@ -222,16 +240,15 @@ def _generate_screenshot(
 
 
 # ---------------------------------------------------------------------------
-# Rendering
+# Rendering — three-phase pipeline
 # ---------------------------------------------------------------------------
 
-def render_sample(pair: SamplePair, verbose: bool = True, screenshots: bool = True,
-                  screenshot_zoom: float = 2.0) -> bool:
-    """Run the full pipeline for one sample.  Returns True on success."""
+def _compile_sample(pair: SamplePair, verbose: bool = True) -> _Compiled | None:
+    """Stages 1–5a: load JSON, compile DOCX, save IR.  Returns None on failure."""
     tag = f"[{pair.prefix}/{pair.source_kind.upper()}]"
 
     if verbose:
-        print(f"\n{tag} -- rendering ------------------------------------------")
+        print(f"\n{tag} -- compiling ------------------------------------------")
         print(f"  resume: {pair.resume_path.relative_to(_REPO)}")
         print(f"  gen:    {pair.gen_path.relative_to(_REPO)}")
 
@@ -243,11 +260,11 @@ def render_sample(pair: SamplePair, verbose: bool = True, screenshots: bool = Tr
         llm_text: str = gen["llm_response"]["resume"]
         if not llm_text or not llm_text.strip():
             print(f"{tag} SKIP — empty LLM resume text in generation file")
-            return False
+            return None
         structured_resume_data = gen.get("structured_resume") or None
     except Exception as e:
         print(f"{tag} FAIL [stage=load-llm] {type(e).__name__}: {e}")
-        return False
+        return None
 
     if verbose:
         print(f"  llm_text length: {len(llm_text)} chars")
@@ -270,7 +287,7 @@ def render_sample(pair: SamplePair, verbose: bool = True, screenshots: bool = Tr
 
     out_ir   = out_ir_dir   / f"{stem}_IR.json"
     out_docx = out_rend_dir / f"{stem}.docx"
-    out_pdf  = out_rend_dir / f"{stem}.pdf"
+    grader_pdf = _OUT_REND_PDF / f"{stem}.pdf"
 
     # ── Stage 3: load classification from structured_resume in debug data ────
     classification = None
@@ -304,7 +321,7 @@ def render_sample(pair: SamplePair, verbose: bool = True, screenshots: bool = Tr
             style_docx = _RES_DOCX_DIR / (stem + ".docx")
             if not style_docx.exists():
                 print(f"{tag} SKIP — no companion DOCX style template for {stem!r}")
-                return False
+                return None
             updated = compile_resume_from_pdf(
                 pdf_path=str(pair.resume_path),
                 llm_text=llm_text,
@@ -316,83 +333,131 @@ def render_sample(pair: SamplePair, verbose: bool = True, screenshots: bool = Tr
         print(f"{tag} FAIL [stage=compile-resume] {type(e).__name__}: {e}")
         if verbose:
             traceback.print_exc()
-        return False
+        return None
 
     if verbose:
         print(f"  DOCX  -> {out_docx.relative_to(_REPO)}")
 
-    # ── Stage 5: save fresh IR ─────────────────────────────────────────────
+    # ── Stage 5a: save fresh IR ────────────────────────────────────────────
     try:
         with open(out_ir, "w", encoding="utf-8") as f:
             json.dump(updated.to_dict(), f, indent=2, ensure_ascii=False)
     except Exception as e:
         print(f"{tag} FAIL [stage=save-ir] {type(e).__name__}: {e}")
-        return False
+        return None
 
     if verbose:
         print(f"  IR    -> {out_ir.relative_to(_REPO)}")
 
-    # ── Stage 5: DOCX → PDF via LibreOffice ───────────────────────────────
+    return _Compiled(pair=pair, out_docx=out_docx, out_ir=out_ir,
+                     grader_pdf=grader_pdf, tag=tag)
+
+
+def _batch_docx_to_pdf(compiled_list: list[_Compiled]) -> dict[Path, Path]:
+    """Convert all compiled DOCXs to PDF in a single LibreOffice invocation.
+
+    Returns a mapping of {out_docx: pdf_path} for every successfully converted
+    file.  Any files missing from the batch output are retried individually so
+    the caller always gets a best-effort result.
+    """
+    if not compiled_list:
+        return {}
+
+    _OUT_BATCH_PDF.mkdir(parents=True, exist_ok=True)
+    _OUT_REND_PDF.mkdir(parents=True, exist_ok=True)
+
+    sys.path.insert(0, str(_REPO / "src"))
+    from tailor.docx.pdf import _find_libreoffice_exe
+    lo_exe = _find_libreoffice_exe()
+
+    docx_paths = [c.out_docx for c in compiled_list]
+
+    gc.collect()  # release lingering python-docx / lxml handles before LO
+
+    profile_dir = os.path.join(tempfile.gettempdir(), f"lo_profile_{uuid.uuid4().hex}")
+    profile_uri = Path(profile_dir).as_uri()
+
+    cmd = [
+        lo_exe, "--headless",
+        f"-env:UserInstallation={profile_uri}",
+        "--convert-to", "pdf",
+        *[str(p) for p in docx_paths],
+        "--outdir", str(_OUT_BATCH_PDF),
+    ]
+
+    print(f"\n  Batch PDF: converting {len(docx_paths)} DOCX(s) in one LibreOffice call...")
     try:
-        import gc
-        gc.collect()  # release any lingering python-docx / lxml handles before LibreOffice
-
-        from tailor.docx.pdf import _docx_to_pdf_subprocess
-
-        _docx_to_pdf_subprocess(str(out_docx))
-        lo_pdf = out_docx.with_suffix(".pdf")
-        grader_pdf = _OUT_REND_PDF / lo_pdf.name
-        if lo_pdf.exists():
-            # The grader reads PDFs from _OUT_REND_PDF.  Always copy the freshly
-            # rendered PDF there so the grader uses the latest version.
-            # For PDF-path, out_docx is in _OUT_STAGE_PDF so lo_pdf != grader_pdf
-            # and shutil.copy2 is a genuine different-file copy (no WinError 32).
-            _OUT_REND_PDF.mkdir(parents=True, exist_ok=True)
-            if lo_pdf.resolve() != grader_pdf.resolve():
-                shutil.copy2(str(lo_pdf), str(grader_pdf))
-            # Keep the docx-dir / staging copy in place (used by test_sparse_page_detection)
-        elif grader_pdf.exists():
-            # lo_pdf wasn't created by LibreOffice but the grader already has a copy.
-            if verbose:
-                print(f"{tag} WARN: PDF not refreshed — LibreOffice did not produce {lo_pdf.name}")
-        else:
-            raise FileNotFoundError(f"PDF not found at {grader_pdf}")
+        subprocess.run(cmd, capture_output=True, text=True, timeout=600, check=False)
     except Exception as e:
-        print(f"{tag} FAIL [stage=docx-to-pdf] {type(e).__name__}: {e}")
-        if verbose:
-            traceback.print_exc()
-        return False
+        print(f"  WARN [batch-pdf] LO subprocess error: {type(e).__name__}: {e} — falling back to per-file conversion")
 
-    if verbose:
-        print(f"  PDF   -> {grader_pdf.relative_to(_REPO)}")
+    # Collect successful outputs
+    output_map: dict[Path, Path] = {}
+    for docx_path in docx_paths:
+        pdf = _OUT_BATCH_PDF / (docx_path.stem + ".pdf")
+        if pdf.exists():
+            output_map[docx_path] = pdf
+
+    # Per-file fallback for any DOCX whose PDF wasn't produced
+    missing = [p for p in docx_paths if p not in output_map]
+    if missing:
+        print(f"  WARN [batch-pdf] {len(missing)} PDF(s) missing from batch output — retrying per-file:")
+        from tailor.docx.pdf import _docx_to_pdf_subprocess
+        for docx_path in missing:
+            try:
+                _docx_to_pdf_subprocess(str(docx_path))
+                lo_pdf = docx_path.with_suffix(".pdf")
+                if lo_pdf.exists():
+                    target = _OUT_BATCH_PDF / lo_pdf.name
+                    shutil.copy2(str(lo_pdf), str(target))
+                    output_map[docx_path] = target
+                    print(f"    fallback OK: {docx_path.name}")
+            except Exception as e:
+                print(f"    fallback FAIL: {docx_path.name}: {type(e).__name__}: {e}")
+
+    print(f"  Batch PDF: {len(output_map)}/{len(docx_paths)} converted.")
+    return output_map
+
+
+def _finish_sample(compiled: _Compiled, batch_pdf_map: dict[Path, Path],
+                   verbose: bool = True, screenshots: bool = True,
+                   screenshot_zoom: float = 2.0) -> bool:
+    """Stage 5b + 6: place PDF in grader dir and generate screenshot."""
+    tag = compiled.tag
+
+    # ── Stage 5b: copy batch PDF to grader destination ─────────────────────
+    batch_pdf = batch_pdf_map.get(compiled.out_docx)
+    if batch_pdf and batch_pdf.exists():
+        if batch_pdf.resolve() != compiled.grader_pdf.resolve():
+            shutil.copy2(str(batch_pdf), str(compiled.grader_pdf))
+        if verbose:
+            print(f"  PDF   -> {compiled.grader_pdf.relative_to(_REPO)}")
+    elif compiled.grader_pdf.exists():
+        # PDF wasn't refreshed but a previous version exists — warn, don't fail.
+        if verbose:
+            print(f"{tag} WARN: PDF not refreshed — LibreOffice did not produce {compiled.out_docx.stem}.pdf")
+    else:
+        print(f"{tag} FAIL [stage=docx-to-pdf] PDF not found at {compiled.grader_pdf}")
+        return False
 
     # ── Stage 6: side-by-side screenshot ──────────────────────────────────
     if screenshots:
-        if pair.source_kind == "docx":
+        if compiled.pair.source_kind == "docx":
             ss_dir = _OUT_SS_DOCX
-            # Compare original DOCX template → rendered PDF (best visual fidelity)
-            _generate_screenshot(
-                original_path=pair.resume_path,
-                rendered_path=grader_pdf,
-                out_path=ss_dir / f"{stem}.png",
-                zoom=screenshot_zoom,
-                verbose=verbose,
-                tag=tag,
-            )
         else:
             ss_dir = _OUT_SS_PDF
-            _generate_screenshot(
-                original_path=pair.resume_path,
-                rendered_path=grader_pdf,
-                out_path=ss_dir / f"{stem}.png",
-                zoom=screenshot_zoom,
-                verbose=verbose,
-                tag=tag,
-            )
+        ss_dir.mkdir(parents=True, exist_ok=True)
+        _generate_screenshot(
+            original_path=compiled.pair.resume_path,
+            rendered_path=compiled.grader_pdf,
+            out_path=ss_dir / f"{compiled.out_docx.stem}.png",
+            zoom=screenshot_zoom,
+            verbose=verbose,
+            tag=tag,
+        )
 
     if verbose:
         print(f"{tag} OK")
-
     return True
 
 
@@ -458,9 +523,25 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  [{p.prefix}/{p.source_kind.upper()}] {p.resume_path.name}")
 
     n_ok = n_fail = 0
+
+    # ── Phase 1: compile all samples (pure Python, no LO calls) ───────────
+    compiled_list: list[_Compiled] = []
     for pair in pairs:
-        if render_sample(pair, verbose=True, screenshots=screenshots,
-                         screenshot_zoom=zoom):
+        c = _compile_sample(pair, verbose=True)
+        if c:
+            compiled_list.append(c)
+        else:
+            n_fail += 1
+
+    # ── Phase 2: batch-convert all compiled DOCXs → PDFs (one LO call) ────
+    batch_pdf_map: dict[Path, Path] = {}
+    if compiled_list:
+        batch_pdf_map = _batch_docx_to_pdf(compiled_list)
+
+    # ── Phase 3: finish each sample (copy PDF, screenshots, report) ────────
+    for c in compiled_list:
+        if _finish_sample(c, batch_pdf_map, verbose=True,
+                          screenshots=screenshots, screenshot_zoom=zoom):
             n_ok += 1
         else:
             n_fail += 1
