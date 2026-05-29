@@ -545,7 +545,17 @@ class ResumeClassificationService:
             resolve_synthetic_para_ids,
         )
         cls_input_normalized, sidecar, norm_report = normalize_classification_input(cls_input)
-        llm_input_dict = cls_input_normalized.to_dict()
+
+        from tailor.compiler.semantic_enricher import enrich_semantics
+        cls_input_enriched, enrich_diags = enrich_semantics(cls_input_normalized)
+        if enrich_diags:
+            logger.debug(
+                "Semantic enrichment resume=%s count=%d events=%s",
+                document_id, len(enrich_diags),
+                [d["event"] for d in enrich_diags],
+            )
+
+        llm_input_dict = cls_input_enriched.to_dict()
 
         prompt_template = _load_prompt(_PROMPT_NAME)
         input_json = json.dumps(llm_input_dict, ensure_ascii=False)
