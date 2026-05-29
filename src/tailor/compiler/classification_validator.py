@@ -162,11 +162,17 @@ def _check_blocks_uniform(
 
 def _validate_summary(s: dict, sid: str) -> list[dict]:
     e: list[dict] = []
+    if s.get("rewrite_policy") != "rewrite_body":
+        e.append(_err(E_SUMMARY_REWRITE_POLICY, sid, f"got {s.get('rewrite_policy')!r}"))
+    if s.get("preserve_heading") is not False:
+        e.append(_err(E_SUMMARY_PRESERVE_HEADING, sid, "must be false"))
+    if s.get("preserve_body_structure") is not False:
+        e.append(_err(E_SUMMARY_PRESERVE_BODY, sid, "must be false"))
     e += _check_roles_empty(s.get("roles", []), sid, E_SUMMARY_ROLES_PRESENT)
     e += _check_blocks_non_empty(s.get("blocks", []), sid, E_SUMMARY_BLOCKS_EMPTY)
     e += _check_blocks_uniform(
         s.get("blocks", []), sid,
-        frozenset({"summary_paragraph"}), None,
+        frozenset({"summary_paragraph"}), "rewrite_text",
         E_SUMMARY_BLOCK_TYPE, E_SUMMARY_BLOCK_POLICY,
         new_must_be_false=True, new_code=E_SUMMARY_BLOCK_NEW,
     )
@@ -175,11 +181,13 @@ def _validate_summary(s: dict, sid: str) -> list[dict]:
 
 def _validate_skills(s: dict, sid: str) -> list[dict]:
     e: list[dict] = []
+    if s.get("rewrite_policy") != "rewrite_body":
+        e.append(_err(E_SKILLS_REWRITE_POLICY, sid, f"got {s.get('rewrite_policy')!r}"))
     e += _check_roles_empty(s.get("roles", []), sid, E_SKILLS_ROLES_PRESENT)
     if s.get("blocks"):
         e += _check_blocks_uniform(
             s.get("blocks", []), sid,
-            frozenset({"skills_paragraph", "other_paragraph"}), None,
+            frozenset({"skills_paragraph"}), None,
             E_SKILLS_BLOCK_TYPE, E_SKILLS_BLOCK_POLICY,
             new_must_be_false=True, new_code=E_SKILLS_BLOCK_NEW,
         )
