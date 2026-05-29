@@ -44,7 +44,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from tailor.compiler.models import (
     ParaModel,
@@ -1449,6 +1449,24 @@ def _inject_fragmented_experience(
 
 # Strategy 1: LLMs sometimes format roles as "Title — Company" (em/en/figure dash).
 _ROLE_BODY_SEP_RE = re.compile(r'\s—\s|\s–\s|\s‒\s')
+# Matches a trailing date-range paren, e.g. "(September 2023 – Present)".
+# Used by _is_title_line_with_date_paren to exclude job-title lines from dash_bounds.
+_TITLE_DATE_PAREN_RE = re.compile(r'\([^)]*(?:–|—|‒)[^)]*\)\s*$')
+
+
+def _is_title_line_with_date_paren(ln: str) -> bool:
+    """True when *ln* is a job-title line whose only em/en-dash is in a trailing paren.
+
+    Excludes "Senior Software Engineer (September 2023 – Present)" (title-only,
+    dash is inside the date paren) while preserving "Wardiere Inc. – Software
+    Engineering (2014–Present)" (has a main-body separator dash before the paren).
+    """
+    m = _TITLE_DATE_PAREN_RE.search(ln)
+    if m is None:
+        return False
+    # If there is a main-body separator (space–dash–space) in the prefix, the
+    # line is a legitimate role boundary — keep it.
+    return not _ROLE_BODY_SEP_RE.search(ln[:m.start()])
 
 # Strategy 2: standalone date-line boundaries.
 #   A "date line" is a line whose entire content is a date range, e.g.
@@ -1499,6 +1517,7 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
         i for i, ln in enumerate(body_lines)
         if _ROLE_BODY_SEP_RE.search(ln)
         and not _STANDALONE_DATE_LINE_RE.match(ln.strip())
+        and not _is_title_line_with_date_paren(ln)
     ]
     date_bounds = [
         i for i, ln in enumerate(body_lines)
@@ -1537,19 +1556,73 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
     return []
 
 
+_COLON_KEY_RE = re.compile(r'^[A-Za-z][\w\s]{0,25}:')
+
+
 def _roles_from_dash_boundaries(
     body_lines: list[str], boundaries: list[int]
 ) -> list[LlmRole]:
-    """Em/en-dash boundary parser (factored out of original _reparse function)."""
+    """Em/en-dash boundary parser (factored out of original _reparse function).
+
+    Handles two common LLM formats:
+
+    A. "Company – Location" boundary (classic):
+       Each boundary line IS the role identifier; title/date may follow it.
+
+    B. "Title-first" format — "Title\\nCompany; Date – Date; Location":
+       The job title appears on the line immediately before the boundary.
+       In this case the boundary line (company; date) becomes a meta line
+       and the preceding title line becomes the role header.  The title line
+       is also removed from the preceding role's bullet list to avoid
+       misattribution.
+    """
+    # Detect title-first format: find boundaries that have a job-title-like
+    # line immediately before them (last non-empty line, no year, no dash, no
+    # bullet marker, no "Key: value" colon-prefix, no trailing sentence punctuation).
+    # Regular bullet text ends with "." and is long; job titles are short and bare.
+    _title_at: dict[int, str] = {}
+    for bi in boundaries:
+        j = bi - 1
+        while j >= 0 and not body_lines[j].strip():
+            j -= 1
+        if j < 0:
+            continue
+        prev = body_lines[j].strip()
+        if (
+            prev
+            and len(prev) <= 80
+            and not _ROLE_BODY_SEP_RE.search(prev)
+            and not _YEAR_RE.search(prev)
+            and not prev.startswith(("-", "•", "*", "f "))
+            and not _COLON_KEY_RE.match(prev)
+            and prev[-1:] not in ".!?,"
+        ):
+            _title_at[bi] = prev
+
     roles: list[LlmRole] = []
     for idx, boundary_i in enumerate(boundaries):
         end_i = boundaries[idx + 1] if idx + 1 < len(boundaries) else len(body_lines)
-        header = body_lines[boundary_i]
-        meta: list[str] = []
+        boundary_line = body_lines[boundary_i]
+        pre_title = _title_at.get(boundary_i, "")
+        next_title = _title_at.get(boundaries[idx + 1], "") if idx + 1 < len(boundaries) else ""
+
+        if pre_title:
+            # Title-first: pre-boundary line is the role header; boundary
+            # line (company/date) becomes the first meta entry.
+            header = pre_title
+            meta: list[str] = [boundary_line.strip()] if boundary_line.strip() else []
+        else:
+            header = boundary_line
+            meta = []
+
         bullets: list[str] = []
         for line in body_lines[boundary_i + 1: end_i]:
             s = line.strip()
             if not s:
+                continue
+            # Skip the title line that belongs to the next role — it appears at
+            # the end of the current role's range in title-first format.
+            if next_title and s == next_title:
                 continue
             if (
                 _YEAR_RE.search(s)
@@ -2293,17 +2366,26 @@ def _update_experience_date_first(
     orig: "ResumeSection",
     llm: "LlmSection",
     rebuilt_roles: "list[RoleEntry]",
+    cls_sec: "ClassificationSection | None" = None,
 ) -> "ResumeSection":
     """Apply LLM bullet content to a date-first experience section.
 
     - Resolves LLM roles from pipe or dash format.
     - Matches them to rebuilt IR roles by company similarity (then position).
     - Updates bullet paragraph texts in-place on body_paras ParaModel objects.
+    - Skips body_blocks whose classification rewrite_policy=preserve (adjuncts).
     - Returns the section with roles=[] so the all_paras builder uses body_paras
       in their original template order (date-first layout preserved).
     - Extra LLM roles beyond IR role count are ignored.
     - IR roles with no LLM counterpart keep their original bullet text.
     """
+    # Build para_id → ClassificationBlock for preserved adjunct detection.
+    _date_first_cls_map: dict[str, Any] = {}
+    if cls_sec is not None:
+        for _cr in cls_sec.roles:
+            for _blk in _cr.body_blocks:
+                if _blk.para_id:
+                    _date_first_cls_map[_blk.para_id] = _blk
     # Resolve LLM role list (pipe or dash format)
     llm_roles = llm.roles
     if not llm_roles and llm.body_lines:
@@ -2386,25 +2468,42 @@ def _update_experience_date_first(
                     orig.title, ir_role.role_id, first[:60],
                 )
         targets = ir_role.bullets if ir_role.bullets else ir_role.header_extra
-        for i, bullet_para in enumerate(targets):
-            if i < len(llm_bullets):
+        # Separate rewriteable from preserved adjuncts for this role.
+        rewriteable_targets = [
+            p for p in targets
+            if not (
+                _date_first_cls_map.get(p.para_id) is not None
+                and _date_first_cls_map[p.para_id].rewrite_policy == "preserve"
+            )
+        ]
+        llm_slot = 0
+        for bullet_para in targets:
+            blk = _date_first_cls_map.get(bullet_para.para_id)
+            if blk is not None and blk.rewrite_policy == "preserve":
+                _log.debug(
+                    "date-first: para %r preserved adjunct (%s) — kept verbatim",
+                    bullet_para.para_id, blk.semantic_type,
+                )
+                continue
+            if llm_slot < len(llm_bullets):
                 _log.debug(
                     "date-first: para %r updated  %r → %r",
                     bullet_para.para_id,
                     bullet_para.text[:40],
-                    llm_bullets[i][:40],
+                    llm_bullets[llm_slot][:40],
                 )
-                bullet_para.text = llm_bullets[i]
+                bullet_para.text = llm_bullets[llm_slot]
+                llm_slot += 1
 
-        # Extra LLM bullets beyond the template's existing slots.
+        # Extra LLM bullets beyond the template's rewriteable slots.
         # Clone from the last target paragraph; leave para_id="" — the injection
         # code in apply_tailored assigns IDs and creates layout_blocks only when
         # the anchor block has an xml_proto_xml (real DOCX template).
-        if targets and len(llm_bullets) > len(targets):
-            arch = targets[-1]
+        if rewriteable_targets and len(llm_bullets) > len(rewriteable_targets):
+            arch = rewriteable_targets[-1]
             arch_pid = arch.para_id  # injection anchor: insert after this block
             if arch_pid:
-                for extra_text in llm_bullets[len(targets):]:
+                for extra_text in llm_bullets[len(rewriteable_targets):]:
                     extra_pm = arch.clone_as(extra_text)
                     # para_id intentionally left "" — injector assigns it later
                     _extra_injections.setdefault(arch_pid, []).append(extra_pm)
@@ -2445,6 +2544,17 @@ def _update_experience_date_first(
 # ---------------------------------------------------------------------------
 # Classification-constrained update helpers
 # ---------------------------------------------------------------------------
+
+# Role body_block semantic types by rewrite policy (mirrors classification_validator.py).
+_REWRITEABLE_BODY_TYPES: frozenset[str] = frozenset({
+    "bullet", "role_achievement_bullet", "role_responsibility_bullet",
+})
+_PRESERVED_ADJUNCT_TYPES: frozenset[str] = frozenset({
+    "role_intro", "role_highlight", "role_project_label", "role_project_context",
+    "role_tech_stack", "role_key_technologies", "role_tools",
+    "role_nested_detail", "role_freeform_note",
+})
+
 
 def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
     """Split a classification-rebuilt role into sub-roles when its bullet list
@@ -2571,6 +2681,88 @@ def _split_role_by_meta_dates(role: "RoleEntry") -> "list[RoleEntry]":
     ]
 
 
+def _update_role_with_adjuncts(
+    orig: "RoleEntry",
+    llm_bullets: "list[str]",
+    cls_body_block_map: "dict[str, Any]",
+    layout_bound: bool = False,
+) -> "RoleEntry":
+    """Like _update_role_bullets_only but preserves role-local adjunct blocks.
+
+    Body blocks with rewrite_policy=preserve keep their original template text
+    verbatim.  Body blocks with rewrite_policy=rewrite_text receive LLM bullets.
+    The relative order of preserved and rewritten blocks within the role is
+    maintained by re-assembling against the original bullets list.
+
+    When no preserved adjuncts are found for this role, delegates to
+    _update_role_bullets_only (identical result, no overhead).
+    """
+    preserved_ids: set[str] = set()
+    for p in orig.bullets:
+        blk = cls_body_block_map.get(p.para_id)
+        if blk is not None and blk.rewrite_policy == "preserve":
+            # Freeform notes are content (multi-line descriptions), not structural
+            # elements.  They get rewritten into proper bullets by the LLM, so
+            # preserving them produces stale duplicates alongside the new bullets.
+            if blk.semantic_type == "role_freeform_note":
+                continue
+            preserved_ids.add(p.para_id)
+
+    if not preserved_ids:
+        return _update_role_bullets_only(orig, llm_bullets, layout_bound=layout_bound)
+
+    # Diagnostics
+    _log.debug(
+        "ROLE_ADJUNCT_SPLIT: role=%r  rewriteable=[%s]  preserved=[%s]  llm_bullets=%d",
+        orig.role_id,
+        ", ".join(
+            f"{p.para_id}({cls_body_block_map[p.para_id].semantic_type})"
+            for p in orig.bullets
+            if p.para_id and p.para_id not in preserved_ids and p.para_id in cls_body_block_map
+        ),
+        ", ".join(
+            f"{p.para_id}({cls_body_block_map[p.para_id].semantic_type})"
+            for p in orig.bullets
+            if p.para_id in preserved_ids and p.para_id in cls_body_block_map
+        ),
+        len(llm_bullets),
+    )
+
+    rewriteable_paras = [p for p in orig.bullets if p.para_id not in preserved_ids]
+    temp_role = RoleEntry(
+        header=orig.header,
+        header_extra=orig.header_extra,
+        meta_lines=orig.meta_lines,
+        bullets=rewriteable_paras,
+        role_id=orig.role_id,
+        role_id_stable=orig.role_id_stable,
+    )
+    updated_temp = _update_role_bullets_only(temp_role, llm_bullets, layout_bound=layout_bound)
+
+    # Re-assemble in original bullets order: preserved paras stay, rewriteable
+    # slots are replaced with updated text from updated_temp.bullets.
+    updated_iter = iter(updated_temp.bullets)
+    final_bullets: list[ParaModel] = []
+    for p in orig.bullets:
+        if p.para_id in preserved_ids:
+            final_bullets.append(p)
+        else:
+            nxt = next(updated_iter, None)
+            if nxt is not None:
+                final_bullets.append(nxt)
+    # Extra LLM bullets cloned beyond original rewriteable slots
+    final_bullets.extend(updated_iter)
+
+    return RoleEntry(
+        header=updated_temp.header,
+        header_extra=updated_temp.header_extra,
+        meta_lines=updated_temp.meta_lines,
+        bullets=final_bullets,
+        role_id=orig.role_id,
+        role_id_stable=orig.role_id_stable,
+    )
+
+
 def _update_experience_classified(
     orig: ResumeSection,
     llm: LlmSection,
@@ -2646,10 +2838,20 @@ def _update_experience_classified(
             len(llm_roles) - len(orig.roles), orig.title, len(orig.roles),
         )
 
+    # Build para_id → ClassificationBlock map for the whole section so
+    # _update_role_with_adjuncts can distinguish rewriteable from preserved blocks.
+    cls_body_block_map: dict[str, Any] = {}
+    for _cr in cls_sec.roles:
+        for _blk in _cr.body_blocks:
+            if _blk.para_id:
+                cls_body_block_map[_blk.para_id] = _blk
+
     updated_roles: list[RoleEntry] = []
     for i, o_role in enumerate(orig.roles):
         if i < len(llm_roles):
-            updated = _update_role_bullets_only(o_role, llm_roles[i].bullets, layout_bound=layout_bound)
+            updated = _update_role_with_adjuncts(
+                o_role, llm_roles[i].bullets, cls_body_block_map, layout_bound=layout_bound,
+            )
             _log.debug(
                 "classification: role %r → updated %d bullets",
                 o_role.role_id, len(llm_roles[i].bullets),
@@ -3938,7 +4140,7 @@ def apply_tailored(
                     )
             else:
                 rebuilt = _rebuild_date_first_roles(orig_section)
-            return _update_experience_date_first(orig_section, llm_section, rebuilt)
+            return _update_experience_date_first(orig_section, llm_section, rebuilt, cls_sec=cls_sec)
 
         # Classification-constrained path: look up by section_id with title fallback.
         cls_sec = _resolve_cls_sec(orig_section)

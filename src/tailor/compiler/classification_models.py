@@ -133,9 +133,23 @@ class ClassificationParaInput:
     para_id: str
     text: str
     parser_semantic: str  # section_heading | role_header | role_meta | bullet | paragraph | empty
+    source_para_id: str = ""   # original para_id when this is a synthetic split product
+    synthetic: bool = False    # True when created by pre-classification normalization
+    split_kind: str = ""       # "compound_meta_nl" | "compound_meta_pipe" | "overmerged_role"
+    semantic_hint: str = ""    # advisory hint for the LLM classifier (bullet_candidate | intro_candidate | …)
+    bullet_confidence: str = ""  # strong | medium | weak (only when semantic_hint=="bullet_candidate")
 
     def to_dict(self) -> dict:
-        return {"para_id": self.para_id, "text": self.text, "parser_semantic": self.parser_semantic}
+        d: dict = {"para_id": self.para_id, "text": self.text, "parser_semantic": self.parser_semantic}
+        if self.synthetic:
+            d["source_para_id"] = self.source_para_id
+            d["synthetic"] = True
+            d["split_kind"] = self.split_kind
+        if self.semantic_hint:
+            d["semantic_hint"] = self.semantic_hint
+            if self.bullet_confidence:
+                d["bullet_confidence"] = self.bullet_confidence
+        return d
 
 
 @dataclass
@@ -174,14 +188,18 @@ class ClassificationSectionInput:
 class ClassificationInput:
     document_id: str
     source_kind: str
+    structure_confidence: str = ""  # high | medium | low — inferred reliability of parser structure
     sections: list[ClassificationSectionInput] = field(default_factory=list)
 
     def to_dict(self) -> dict:
-        return {
+        d: dict = {
             "document_id": self.document_id,
             "source_kind": self.source_kind,
             "sections": [s.to_dict() for s in self.sections],
         }
+        if self.structure_confidence:
+            d["structure_confidence"] = self.structure_confidence
+        return d
 
 
 def build_classification_input(doc: ResumeDocument, document_id: str) -> ClassificationInput:

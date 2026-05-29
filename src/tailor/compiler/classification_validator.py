@@ -101,6 +101,16 @@ _VALID_SEMANTIC_TYPES: frozenset[str] = frozenset({
     "projects", "additional", "other",
 })
 
+# Experience role body_block semantic types
+_EXP_REWRITEABLE_BODY_TYPES: frozenset[str] = frozenset({
+    "bullet", "role_achievement_bullet", "role_responsibility_bullet",
+})
+_EXP_PRESERVED_BODY_TYPES: frozenset[str] = frozenset({
+    "role_intro", "role_highlight", "role_project_label", "role_project_context",
+    "role_tech_stack", "role_key_technologies", "role_tools",
+    "role_nested_detail", "role_freeform_note",
+})
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -126,7 +136,7 @@ def _check_blocks_uniform(
     blocks: list,
     section_id: str,
     allowed_types: frozenset[str],
-    required_policy: str,
+    required_policy: str | None,
     type_code: str,
     policy_code: str,
     new_must_be_false: bool = False,
@@ -138,7 +148,7 @@ def _check_blocks_uniform(
         if b.get("semantic_type", "") not in allowed_types:
             errors.append(_err(type_code, section_id,
                                f"block_id={bid} semantic_type={b.get('semantic_type')!r}"))
-        if b.get("rewrite_policy", "") != required_policy:
+        if required_policy is not None and b.get("rewrite_policy", "") != required_policy:
             errors.append(_err(policy_code, section_id,
                                f"block_id={bid} rewrite_policy={b.get('rewrite_policy')!r}"))
         if new_must_be_false and b.get("new", False) is True:
@@ -173,18 +183,14 @@ def _validate_skills(s: dict, sid: str) -> list[dict]:
     e: list[dict] = []
     if s.get("rewrite_policy") != "rewrite_body":
         e.append(_err(E_SKILLS_REWRITE_POLICY, sid, f"got {s.get('rewrite_policy')!r}"))
-    if s.get("preserve_heading") is not False:
-        e.append(_err(E_SKILLS_PRESERVE_HEADING, sid, "must be false"))
-    if s.get("preserve_body_structure") is not False:
-        e.append(_err(E_SKILLS_PRESERVE_BODY, sid, "must be false"))
     e += _check_roles_empty(s.get("roles", []), sid, E_SKILLS_ROLES_PRESENT)
-    e += _check_blocks_non_empty(s.get("blocks", []), sid, E_SKILLS_BLOCKS_EMPTY)
-    e += _check_blocks_uniform(
-        s.get("blocks", []), sid,
-        frozenset({"skills_paragraph"}), "rewrite_text",
-        E_SKILLS_BLOCK_TYPE, E_SKILLS_BLOCK_POLICY,
-        new_must_be_false=True, new_code=E_SKILLS_BLOCK_NEW,
-    )
+    if s.get("blocks"):
+        e += _check_blocks_uniform(
+            s.get("blocks", []), sid,
+            frozenset({"skills_paragraph"}), None,
+            E_SKILLS_BLOCK_TYPE, E_SKILLS_BLOCK_POLICY,
+            new_must_be_false=True, new_code=E_SKILLS_BLOCK_NEW,
+        )
     return e
 
 
@@ -221,12 +227,21 @@ def _validate_experience(s: dict, sid: str) -> list[dict]:
                               f"role={role_id} block_id={bid}"))
         for b in role.get("body_blocks", []):
             bid = b.get("block_id", "?")
-            if b.get("semantic_type") != "bullet":
+            st = b.get("semantic_type", "")
+            rp = b.get("rewrite_policy", "")
+            if st in _EXP_REWRITEABLE_BODY_TYPES:
+                if rp != "rewrite_text":
+                    e.append(_err(E_EXP_ROLE_BODY_POLICY, sid,
+                                  f"role={role_id} block_id={bid} rewriteable type={st!r} "
+                                  f"requires rewrite_text, got {rp!r}"))
+            elif st in _EXP_PRESERVED_BODY_TYPES:
+                if rp != "preserve":
+                    e.append(_err(E_EXP_ROLE_BODY_POLICY, sid,
+                                  f"role={role_id} block_id={bid} preserved type={st!r} "
+                                  f"requires preserve, got {rp!r}"))
+            else:
                 e.append(_err(E_EXP_ROLE_BODY_TYPE, sid,
-                              f"role={role_id} block_id={bid} type={b.get('semantic_type')!r}"))
-            if b.get("rewrite_policy") != "rewrite_text":
-                e.append(_err(E_EXP_ROLE_BODY_POLICY, sid,
-                              f"role={role_id} block_id={bid}"))
+                              f"role={role_id} block_id={bid} type={st!r}"))
     return e
 
 

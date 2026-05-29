@@ -5,9 +5,12 @@ heuristics — no dependency on specific heading names or style IDs.
 """
 from __future__ import annotations
 
+import logging
 import re
 from copy import deepcopy
 from typing import Any
+
+_logger = logging.getLogger(__name__)
 
 from docx import Document
 from docx.oxml.ns import qn
@@ -457,6 +460,19 @@ def _infer_semantic(pm: ParaModel) -> str:
     if re.match(r"^(19|20)\d{2}[A-Za-z]", text) and len(text) <= 80 and "|" not in text:
         return "role_meta"
 
+    # "Title (Date range)" pattern: year appears only inside trailing parentheses.
+    # e.g. "Senior Software Engineer (September 2023 – Present)" → role_header.
+    # Guard: text before the parens must contain no year and be short (≤ 60 chars).
+    _m_tparen = _TRAILING_DATE_PAREN_RE.match(text)
+    if _m_tparen:
+        _title_part = _m_tparen.group(1).strip()
+        if (
+            not _YEAR_RE.search(_title_part)
+            and len(_title_part) <= 60
+            and _title_part[-1:] not in ".!?,;"
+        ):
+            return "role_header"
+
     # NBSP/space-column role header: job title and date/company are placed on
     # the same paragraph and aligned using non-breaking spaces (\\xa0) or tab
     # stops instead of a "|" separator.  Detect by splitting on 3+ consecutive
@@ -476,6 +492,18 @@ def _infer_semantic(pm: ParaModel) -> str:
     if _YEAR_RE.search(text) and len(text) <= 80 and "|" not in text:
         return "role_meta"
 
+    # "Name, Description, Year" project-entry pattern — the terminal
+    # comma-segment is a standalone 4-digit year (or year-range).  The 80-char
+    # limit above is too tight for entries like
+    #   "Apache Incubator – NLPCraft, API to convert natural language into actions, 2020"
+    # Extend to 150 chars when the year sits at the very end.
+    if _YEAR_RE.search(text) and "|" not in text and 80 < len(text) <= 150:
+        _lc = text.rfind(",")
+        if _lc != -1:
+            _terminal = text[_lc + 1:].strip()
+            if re.fullmatch(r"(19|20)\d{2}(?:[–\-](19|20)\d{2})?", _terminal):
+                return "role_meta"
+
     return "paragraph"
 
 
@@ -484,43 +512,251 @@ def _infer_semantic(pm: ParaModel) -> str:
 # ---------------------------------------------------------------------------
 
 def _relabel_implicit_role_headers(body_paras: list[ParaModel]) -> None:
-    """Relabel 'paragraph' semantics to 'role_header' for standalone job-title
-    lines that lack the usual |/NBSP/tab marker but precede a date/meta line.
+    """Promote standalone job-title paragraphs to 'role_header' using confidence scoring.
 
-    Many resume templates place the job title on its own paragraph and the
-    company + date either immediately below or one paragraph below (company
-    name sandwiched between title and date).  This pass detects that pattern
-    before _group_roles() runs so the grouping state-machine finds the correct
-    role boundaries.
+    Delegates to _relabel_implicit_role_headers_impl which implements a
+    multi-signal scoring model (visual, pattern, neighbourhood, document-local,
+    negative signals).  Mutations are applied in place.
+    """
+    _relabel_implicit_role_headers_impl(body_paras)
 
-    A paragraph is relabeled when ALL of the following hold:
-      1. Current semantic is 'paragraph' (not already detected as something else)
-      2. Text is short (≤ 60 chars), contains no year, and does not start with
-         a bullet character
-      3. The text contains at least one word from _JOB_TITLE_WORDS (job title
-         signal; guards against relabeling company-name or content lines)
-      4. The FIRST non-empty paragraph that follows is NOT already a role_header
-         (avoids double-marking when the company|date line already has a pipe)
-      5. Within the next two non-empty paragraphs there is either a role_meta
-         paragraph OR a paragraph whose text contains a four-digit year
 
-    Mutations are applied in place; no new ParaModel objects are created.
+# Hyperlink / symbol artifacts injected by some DOCX renderers before the
+# visible text of a hyperlink run ("a link ") or a Font-Awesome icon ("f ").
+# Stripped at text-extraction time so downstream heuristics see clean text.
+_ARTIFACT_PREFIX_RE = re.compile(r"^(?:a link |f (?=[A-Z]))")
+
+# Identifies icon-bullets specifically: "f " followed by an uppercase letter.
+# Used to re-classify stripped paragraphs as bullets (the icon WAS the bullet marker).
+_F_ICON_PREFIX_RE = re.compile(r"^f (?=[A-Z])")
+
+# Trailing-paren date pattern: "Senior Software Engineer (September 2023 – Present)"
+# The year appears only inside the trailing parentheses; the text before them is the title.
+_TRAILING_DATE_PAREN_RE = re.compile(r"^(.+?)\s*\(([^)]*(?:19|20)\d{2}[^)]*)\)\s*$")
+
+# First words that typically open a body sentence, never a job title.
+_ROLE_BODY_FIRST_WORDS: frozenset[str] = frozenset({
+    "mentoring", "working", "responsible", "reporting", "managing",
+    "collaborating", "participating", "providing", "ensuring",
+    "overseeing", "supporting", "handling", "assisting", "performing",
+    "leading", "helping", "coordinating", "contributing", "developing",
+    "implementing", "maintaining", "conducting", "preparing", "reviewing",
+})
+
+# Confidence thresholds for role-boundary promotion.
+_ROLE_BOUNDARY_MEDIUM: int = 6   # promote if score >= this (requires neighborhood evidence)
+_ROLE_BOUNDARY_STRONG: int = 8   # promote if score >= this (high confidence)
+
+
+def _detect_doc_role_pattern(body_paras: list) -> dict:
+    """Scan confirmed role_header paragraphs to learn the document format.
+
+    Returns a dict with:
+      count     – number of confirmed role_header paragraphs
+      pattern_b – True when the first role boundary is a role_meta (Pattern B)
+      bold      – True when the majority of confirmed headers are bold
+      pipe      – True when the majority use '|' separator
+    """
+    first_boundary_is_meta = False
+    confirmed = []
+    for pm in body_paras:
+        if pm.semantic == "role_meta" and not confirmed:
+            first_boundary_is_meta = True
+            break
+        if pm.semantic == "role_header":
+            confirmed.append(pm)
+
+    n = len(confirmed)
+    if n == 0:
+        return {
+            "count": 0,
+            "pattern_b": first_boundary_is_meta,
+            "bold": False,
+            "pipe": False,
+        }
+    threshold = n // 2 + 1
+    return {
+        "count": n,
+        "pattern_b": first_boundary_is_meta,
+        "bold": sum(1 for p in confirmed if p.style.bold) >= threshold,
+        "pipe": sum(1 for p in confirmed if "|" in p.text) >= threshold,
+    }
+
+
+def _score_role_boundary(
+    pm,
+    body_paras: list,
+    idx: int,
+    doc_pattern: dict,
+) -> tuple:
+    """Multi-signal confidence score for starting a new role at *pm*.
+
+    Returns (total_score, signals_dict).  Positive values support a new
+    boundary; negative values oppose it.
+
+    Signal groups:
+      visual      – DOCX formatting (bold, paragraph spacing, font size)
+      pattern     – text shape (short, title-case, job-title vocabulary,
+                    "Title, Company[, Location]" comma structure)
+      neighborhood – paragraphs before and after the candidate
+      doc_local   – consistency with already-confirmed role headers
+      negative    – strong penalties opposing a role boundary
+    """
+    text = pm.text.strip()
+    signals: dict = {}
+
+    # ── Visual / style ────────────────────────────────────────────────────
+    if pm.style.bold:
+        signals["visual_bold"] = 2
+    if pm.style.spacing_before and pm.style.spacing_before >= 80:
+        signals["visual_spacing"] = 1
+    # Explicit font size ≥ 10pt is a mild formatting cue: role titles in
+    # plain-text DOCX templates often have an explicit larger font while body
+    # paragraphs inherit from their paragraph style (font_size_pt=None).
+    if pm.style.font_size_pt is not None and pm.style.font_size_pt >= 10.0:
+        signals["visual_font_size"] = 1
+
+    # ── Text-pattern ──────────────────────────────────────────────────────
+    words = set(re.split(r"\W+", text.lower())) - {""}
+    if words & _JOB_TITLE_WORDS:
+        signals["pattern_title_word"] = 3
+    if len(text) <= 60:
+        signals["pattern_short"] = 1
+    alpha_words = [w for w in text.split() if w and w[0].isalpha()]
+    if alpha_words:
+        cap_ratio = sum(1 for w in alpha_words if w[0].isupper()) / len(alpha_words)
+        if cap_ratio >= 0.6:
+            signals["pattern_title_case"] = 1
+
+    # "Title, Company[, Location]" pattern: commas delimit role-title prefix
+    # from company and city, which is common in plain unformatted resumes.
+    # Guard: first comma-segment ≤ 30 chars (pure title, not a sentence),
+    # all subsequent segments ≤ 35 chars (company/location, not long desc),
+    # and no year (else _infer_semantic would already call it role_meta).
+    if "," in text and not _YEAR_RE.search(text):
+        _parts = [p.strip() for p in text.split(",")]
+        if (
+            2 <= len(_parts) <= 4
+            and len(_parts[0]) <= 30
+            and all(len(p) <= 35 for p in _parts[1:])
+            and (set(re.split(r"\W+", _parts[0].lower())) - {""}) & _JOB_TITLE_WORDS
+        ):
+            signals["text_company_pattern"] = 2
+
+    # ── Neighbourhood ─────────────────────────────────────────────────────
+    n_paras = len(body_paras)
+    ahead = []
+    for j in range(idx + 1, min(idx + 14, n_paras)):
+        if body_paras[j].text.strip():
+            ahead.append(body_paras[j])
+            if len(ahead) >= 4:
+                break
+
+    if ahead:
+        a0 = ahead[0]
+        if a0.semantic == "role_meta":
+            signals["nbhd_next_meta"] = 4
+        elif _YEAR_RE.search(a0.text) or _DATE_PLACEHOLDER_RE.search(a0.text):
+            signals["nbhd_next_year"] = 3
+
+        # Bullet density in the next 4 paragraphs.
+        bullet_n = sum(1 for p in ahead[:4] if p.semantic == "bullet")
+        if bullet_n >= 3:
+            signals["nbhd_bullets_strong"] = 2
+        elif bullet_n >= 1:
+            signals["nbhd_bullets_weak"] = 1
+
+        # Followed immediately by another short job-title paragraph → likely
+        # still inside a role body, not at a new boundary.
+        a0_words = set(re.split(r"\W+", a0.text.lower())) - {""}
+        if (
+            a0.semantic == "paragraph"
+            and (a0_words & _JOB_TITLE_WORDS)
+            and len(a0.text.strip()) <= 60
+            and not _YEAR_RE.search(a0.text)
+        ):
+            signals["nbhd_next_title_like"] = -1
+
+    # A blank line immediately before the candidate is a structural cue that
+    # a new block is starting.
+    for j in range(idx - 1, max(-1, idx - 4), -1):
+        prev = body_paras[j]
+        if not prev.text.strip():
+            signals["nbhd_blank_before"] = 1
+        elif prev.semantic == "section_heading":
+            signals["nbhd_heading_before"] = 1
+        break
+
+    # ── Document-local pattern learning ───────────────────────────────────
+    if doc_pattern["count"] >= 2:
+        if doc_pattern["bold"]:
+            if pm.style.bold:
+                signals["doc_bold_match"] = 2
+            else:
+                signals["doc_bold_mismatch"] = -1
+        # Confirmed headers all use '|'; this one does not → suspicious.
+        if doc_pattern["pipe"] and "|" not in text:
+            signals["doc_pipe_mismatch"] = -2
+
+    # Pattern B: doc uses role_meta as primary boundaries → raise skepticism.
+    if doc_pattern.get("pattern_b"):
+        signals["doc_pattern_b"] = -2
+
+    # ── Negative signals ──────────────────────────────────────────────────
+    # Gerund / passive openers typical of bullet body text, never job titles.
+    first_word = text.split()[0].lower() if text.split() else ""
+    if first_word in _ROLE_BODY_FIRST_WORDS:
+        signals["negative_verb_prefix"] = -3
+
+    if len(text) > 80:
+        signals["negative_long"] = -1
+
+    return sum(signals.values()), signals
+
+
+def _relabel_implicit_role_headers_impl(body_paras: list) -> None:
+    """Confidence-scored relabeling of 'paragraph' semantics to 'role_header'.
+
+    Replaces the earlier single-heuristic check with a multi-signal scoring
+    model (visual, pattern, neighbourhood, document-local, negative).
+
+    Hard prerequisites (checked before scoring — early exits):
+      1. Semantic is currently 'paragraph'
+      2. Text is non-empty, ≤ 80 chars, contains no year
+      3. Text does not start with a bullet character
+      4. Text does not end with sentence-closing punctuation (.!?)
+      5. Text contains at least one word from _JOB_TITLE_WORDS
+      6. First non-empty successor is not already a role_header
+
+    Confidence levels:
+      STRONG (score ≥ 8) → promote
+      MEDIUM (score ≥ 4) → promote
+      WEAK   (score < 4) → do not promote; legacy fallback for meta/year ahead
+
+    Diagnostics emitted at DEBUG level with full signal breakdown.
     """
     n = len(body_paras)
+    doc_pattern = _detect_doc_role_pattern(body_paras)
+    _logger.debug("ROLE_BOUNDARY doc_pattern=%s", doc_pattern)
+
     for i, pm in enumerate(body_paras):
         if pm.semantic != "paragraph":
             continue
         text = pm.text.strip()
-        if not text or len(text) > 60 or _YEAR_RE.search(text):
+        if not text or len(text) > 80 or _YEAR_RE.search(text):
             continue
         if text[0] in "-\u2022\u00b7\u2013*":
             continue
+        # Hard reject: sentence-closing punctuation → body content, not a title.
+        if text[-1] in ".!?":
+            continue
+        # Hard reject: no job-title vocabulary.
         words = set(re.split(r"\W+", text.lower()))
         if not (words & _JOB_TITLE_WORDS):
             continue
 
-        # Collect the next two non-empty paragraphs.
-        ahead: list[ParaModel] = []
+        # Collect next two non-empty paragraphs (for guard + fallback).
+        ahead = []
         for j in range(i + 1, min(i + 8, n)):
             nxt = body_paras[j]
             if nxt.text.strip():
@@ -530,20 +766,39 @@ def _relabel_implicit_role_headers(body_paras: list[ParaModel]) -> None:
 
         if not ahead:
             continue
-        # Guard: if immediately followed by an existing role_header, the
-        # company|date line is already correctly labeled — skip to avoid
-        # creating a duplicate boundary.
+        # Guard: immediately followed by existing role_header → skip.
         if ahead[0].semantic == "role_header":
             continue
-        # Relabel if any of the next two substantive paragraphs is role_meta
-        # or contains a year.  The placeholder check ("20xx") is restricted to
-        # the FIRST lookahead only — checking the second would falsely promote
-        # a job title whose first lookahead is content and whose second is the
-        # *next* role's date (e.g. 6-Template1 / "Jan 20XX - Current" pattern).
+
+        # ── Confidence scoring ────────────────────────────────────────────
+        score, signals = _score_role_boundary(pm, body_paras, i, doc_pattern)
+        confidence = (
+            "STRONG" if score >= _ROLE_BOUNDARY_STRONG
+            else "MEDIUM" if score >= _ROLE_BOUNDARY_MEDIUM
+            else "WEAK"
+        )
+        _logger.debug(
+            "ROLE_BOUNDARY_SCORE %s score=%d text=%r signals=%s",
+            confidence, score, text[:70], signals,
+        )
+
+        if confidence in ("STRONG", "MEDIUM"):
+            pm.semantic = "role_header"
+            continue
+
+        # WEAK fallback: legacy exact behaviour for the "role_meta or year in
+        # next 2 paragraphs" case.  Preserves correct detection for templates
+        # where surrounding context is sparse.  The placeholder check is
+        # restricted to the FIRST lookahead only — checking the second would
+        # falsely promote a job title whose first lookahead is content and
+        # whose second is the next role's date.
         for a in ahead:
             if a.semantic == "role_meta" or (
                 a.semantic == "paragraph" and _YEAR_RE.search(a.text)
             ):
+                _logger.debug(
+                    "ROLE_BOUNDARY_SCORE WEAK_FALLBACK text=%r", text[:70]
+                )
                 pm.semantic = "role_header"
                 break
             if (
@@ -551,8 +806,140 @@ def _relabel_implicit_role_headers(body_paras: list[ParaModel]) -> None:
                 and a.semantic == "paragraph"
                 and _DATE_PLACEHOLDER_RE.search(a.text)
             ):
+                _logger.debug(
+                    "ROLE_BOUNDARY_SCORE WEAK_FALLBACK(placeholder) text=%r",
+                    text[:70],
+                )
                 pm.semantic = "role_header"
                 break
+
+
+# ---------------------------------------------------------------------------
+# Compound role paragraph splitting (Problem #1)
+# ---------------------------------------------------------------------------
+
+# Body-section openers that appear mid-paragraph in compound role paragraphs.
+# e.g. "Senior Engineer, Acme Corp, Vancouver Highlights: Led a team..."
+_COMPOUND_BODY_OPENER_RE = re.compile(
+    r"(?<!\w)(Highlights|Summary|Overview|Key Achievements|"
+    r"Responsibilities|Key Responsibilities):\s+",
+    re.IGNORECASE,
+)
+
+
+def _try_split_compound_role(pm: ParaModel) -> list[ParaModel] | None:
+    """Split a compound paragraph into [role_header, role_meta, paragraph].
+
+    Detects "Title, Company[, Location] OPENER: body..." and splits.
+    Returns None if the paragraph doesn't match the pattern.
+    """
+    text = pm.text.strip()
+    m = _COMPOUND_BODY_OPENER_RE.search(text)
+    if m is None:
+        return None
+
+    prefix = text[: m.start()].strip().rstrip(",").strip()
+    body_text = text[m.end() :].strip()
+
+    if len(prefix) > 120 or not body_text:
+        return None
+
+    _comma_idx = prefix.find(",")
+    if _comma_idx == -1:
+        return None
+
+    title = prefix[:_comma_idx].strip()
+    meta = prefix[_comma_idx + 1 :].strip()
+
+    if not meta:
+        return None
+
+    # Validate: title must be short, have a job-title word, and contain no year.
+    if (
+        len(title) > 50
+        or _YEAR_RE.search(title)
+        or not (set(re.split(r"\W+", title.lower())) - {""}) & _JOB_TITLE_WORDS
+    ):
+        return None
+
+    title_pm = ParaModel(text=title, style=pm.style, semantic="role_header")
+    meta_pm = ParaModel(text=meta, style=pm.style, semantic="role_meta")
+    body_pm = ParaModel(text=body_text, style=pm.style, semantic="paragraph")
+
+    _logger.debug(
+        "COMPOUND_ROLE_SPLIT: %r → title=%r meta=%r body=%r",
+        text[:80], title, meta, body_text[:40],
+    )
+    return [title_pm, meta_pm, body_pm]
+
+
+def _decompose_compound_role_paras(body_paras: list[ParaModel]) -> None:
+    """Expand compound role paragraphs in place into role_header + role_meta + body."""
+    i = 0
+    while i < len(body_paras):
+        pm = body_paras[i]
+        if pm.semantic == "paragraph":
+            parts = _try_split_compound_role(pm)
+            if parts:
+                body_paras[i : i + 1] = parts
+                i += len(parts)
+                continue
+        i += 1
+
+
+# ---------------------------------------------------------------------------
+# Company/location paragraph promotion (Problem #2)
+# ---------------------------------------------------------------------------
+
+
+def _promote_preceding_company_paras(body_paras: list[ParaModel]) -> None:
+    """Detect company/location paragraphs that precede role_headers and promote them.
+
+    In Pattern-B documents (e.g. Sample 36) the company name appears as a
+    standalone paragraph BEFORE the role title+date.  After
+    _relabel_implicit_role_headers runs (which may promote "Title (Date)" to
+    role_header), we scan backward from each role_header, find the company
+    paragraph, promote it to role_meta, and move it to just after the
+    role_header so _group_roles sees the canonical role_header → role_meta order.
+    """
+    i = 0
+    while i < len(body_paras):
+        if body_paras[i].semantic != "role_header":
+            i += 1
+            continue
+
+        # Scan backward past empty paragraphs.
+        j = i - 1
+        while j >= 0 and not body_paras[j].text.strip():
+            j -= 1
+
+        if j < 0:
+            i += 1
+            continue
+
+        candidate = body_paras[j]
+        ctext = candidate.text.strip()
+
+        if (
+            candidate.semantic == "paragraph"
+            and ctext
+            and len(ctext) <= 70
+            and not _YEAR_RE.search(ctext)
+            and ctext[-1] not in ".!?"
+            and not ctext.startswith(("-", "•", "·", "–", "*"))
+            and (ctext.split()[0].lower() if ctext.split() else "") not in _ROLE_BODY_FIRST_WORDS
+        ):
+            candidate.semantic = "role_meta"
+            body_paras.pop(j)
+            i -= 1  # role_header shifted left by one
+            body_paras.insert(i + 1, candidate)
+            _logger.debug(
+                "ROLE_META_COMPANY_DETECTED: %r promoted before role_header %r",
+                ctext, body_paras[i].text[:60],
+            )
+            i += 2  # skip past role_header and the newly inserted role_meta
+        else:
+            i += 1
 
 
 _EDUCATION_INSTITUTION_WORDS = frozenset(
@@ -862,7 +1249,9 @@ def parse_docx(path: str) -> ResumeDocument:
     for child in body:
         local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
         if local == "p":
-            text = _get_para_text(child)
+            _raw = _get_para_text(child).strip()
+            _icon_bullet = bool(_F_ICON_PREFIX_RE.match(_raw))
+            text = _ARTIFACT_PREFIX_RE.sub("", _raw)
             # Label-column tab-split guard: when the LEFT side of a tab-split is a
             # known section name but the RIGHT side is not (e.g. sample 28's
             # "SUMMARY\tMaster Degree of Project Engineering"), extract only the left
@@ -876,18 +1265,27 @@ def parse_docx(path: str) -> ResumeDocument:
                     and _rt.strip().lower() not in _KNOWN_SECTION_NAMES_LOWER
                 ):
                     text = _lt.strip()
+                    _icon_bullet = False
             style = _parse_para_style(child, style_map)
             pm = ParaModel(text=text, style=style, semantic="")
             pm.semantic = _infer_semantic(pm)
+            if _icon_bullet and pm.semantic == "paragraph" and text.strip():
+                pm.semantic = "bullet"
+                _logger.debug("ICON_BULLET_DETECTED: %r", text[:60])
             all_paras.append(pm)
             body_items.append(pm)
         elif local == "tbl":
             table_paras: list[ParaModel] = []
             for p_elem in child.findall(f".//{{{_W}}}p"):
-                text = _get_para_text(p_elem)
+                _raw = _get_para_text(p_elem).strip()
+                _icon_bullet = bool(_F_ICON_PREFIX_RE.match(_raw))
+                text = _ARTIFACT_PREFIX_RE.sub("", _raw)
                 style = _parse_para_style(p_elem, style_map)
                 pm = ParaModel(text=text, style=style, semantic="")
                 pm.semantic = _infer_semantic(pm)
+                if _icon_bullet and pm.semantic == "paragraph" and text.strip():
+                    pm.semantic = "bullet"
+                    _logger.debug("ICON_BULLET_DETECTED (table): %r", text[:60])
                 all_paras.append(pm)
                 table_paras.append(pm)
             body_items.append(TableBlock(xml_proto=deepcopy(child), para_models=table_paras))
@@ -1955,6 +2353,52 @@ def _apply_multicolumn_newspaper_fix(
     }
 
 
+_CONJUNCTION_CONTINUATIONS: frozenset[str] = frozenset({
+    "and", "or", "but", "while", "including", "with", "for", "as", "such",
+})
+
+
+def _mark_bullet_continuations(paras: list[ParaModel]) -> None:
+    """Reclassify paragraphs that are continuations of the preceding bullet.
+
+    A paragraph is a bullet continuation when:
+      1. Its semantic is 'paragraph' (not already a bullet).
+      2. The nearest preceding non-empty paragraph is a bullet.
+      3. That bullet does NOT end with sentence-terminal punctuation (.!?).
+         Terminal punctuation indicates a complete sentence; the next line
+         is a new item, not a continuation.
+      4. One of the visual continuation signals fires:
+         - text starts with '(' (parenthetical continuation, very reliable)
+         - text starts with a lowercase letter (mid-sentence wrap)
+         - text starts with a known conjunction / preposition
+    """
+    for i, pm in enumerate(paras):
+        if pm.semantic != "paragraph":
+            continue
+        text = pm.text.strip()
+        if not text:
+            continue
+        prev_bullet = None
+        for j in range(i - 1, -1, -1):
+            if paras[j].text.strip():
+                prev_bullet = paras[j]
+                break
+        if prev_bullet is None or prev_bullet.semantic != "bullet":
+            continue
+        # Guard: preceding bullet ended with a full sentence — the next line is new.
+        if prev_bullet.text.rstrip()[-1:] in ".!?":
+            continue
+        first_char = text[0]
+        first_word = text.split()[0].lower() if text.split() else ""
+        if (
+            first_char == "("
+            or first_char.islower()
+            or first_word in _CONJUNCTION_CONTINUATIONS
+        ):
+            pm.semantic = "bullet"
+            _logger.debug("BULLET_CONTINUATION_DETECTED: %r", text[:60])
+
+
 def _finalise(section: ResumeSection) -> None:
     if section.semantic_type == "experience":
         # Pre-pass: promote plain-paragraph date lines with placeholder years
@@ -1974,5 +2418,9 @@ def _finalise(section: ResumeSection) -> None:
                     and "|" not in p.text
                 ):
                     p.semantic = "role_meta"
+        _decompose_compound_role_paras(section.body_paras)
         _relabel_implicit_role_headers(section.body_paras)
+        _promote_preceding_company_paras(section.body_paras)
         section.roles = _group_roles(section.body_paras)
+        for _role in section.roles:
+            _mark_bullet_continuations(_role.bullets)
