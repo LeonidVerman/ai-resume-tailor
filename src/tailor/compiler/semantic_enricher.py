@@ -9,10 +9,12 @@ using semantic_hint values set by the normalizer and text/context heuristics.
 
 Guardrails
 ----------
-- Only modifies paragraphs whose parser_semantic == "paragraph", plus
-  role_meta entries in Projects sections (promoted to project_entry only).
-- Never touches role boundaries, section boundaries, or structural elements
-  (role_header, bullet, section_heading, empty).
+- Modifies paragraphs (parser_semantic == "paragraph").
+- Also promotes bullet entries whose semantic_hint == "tech_stack_candidate"
+  (normalizer has already validated these as tech stacks).
+- Also promotes role_meta entries in Projects sections to project_entry
+  (does not change role ownership, only the semantic label).
+- Never touches role_header, section_heading, or empty entries.
 - Conservative: keeps original semantic when confidence < 0.80.
 """
 from __future__ import annotations
@@ -225,7 +227,7 @@ def _conf_internal_project(
     # Exclude tech_stack lines (colon in first 40 chars handled earlier)
     if ":" in t[:20]:
         return 0.0
-    return 0.80
+    return 0.84
 
 
 def _conf_role_intro(
@@ -286,6 +288,11 @@ def _conf_project_intro_continuation(
     Targets split project descriptions like:
       para_160: "Contribution to the internal project..."  → project_intro
       para_162: "technical growth and helps manage it..."  → project_intro (continuation)
+
+    Requires the text to start with a lowercase letter: genuine mid-sentence
+    splits always continue lowercase.  Standalone responsibilities ("Mentoring
+    junior specialists.", "Implemented REST API.") start uppercase and must not
+    be promoted.
     """
     if prev_sem != "project_intro":
         return 0.0
@@ -299,6 +306,9 @@ def _conf_project_intro_continuation(
     if _PDF_FAKE_BULLET_RE.match(t):
         return 0.0
     if len(t) < 10:
+        return 0.0
+    # Standalone responsibilities start with uppercase; continuations start lowercase.
+    if t[0].isupper():
         return 0.0
     return 0.82
 
@@ -317,6 +327,13 @@ def _enrich_para(
     is_projects_section: bool,
 ) -> "tuple[ClassificationParaInput, float, str]":
     """Return (result, confidence, event_name).  result is original when no enrichment."""
+    # Bullets with an explicit normalizer tech-stack hint are promoted directly.
+    # The normalizer already validated the pattern; the bullet label is incidental.
+    if para.parser_semantic == "bullet" and para.semantic_hint == "tech_stack_candidate":
+        if para.text.strip():
+            return dataclasses.replace(para, parser_semantic="tech_stack"), 0.95, ENRICH_TECH_STACK
+        return para, 0.0, ""
+
     if para.parser_semantic != "paragraph" or not para.text.strip():
         return para, 0.0, ""
 

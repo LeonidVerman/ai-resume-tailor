@@ -130,10 +130,19 @@ class TestTechStack:
         ts = next(d for d in diags if d["event"] == ENRICH_TECH_STACK)
         assert ts["confidence"] >= 0.90
 
-    def test_bullet_not_touched(self):
+    def test_bullet_with_hint_promoted_to_tech_stack(self):
+        # Bullets with tech_stack_candidate hint from the normalizer are promoted.
+        # The normalizer already validated the pattern; bullet label is incidental.
         paras, _ = _enrich([
             _para("p1", "Tech Stack: Java", parser_semantic="bullet",
                   semantic_hint="tech_stack_candidate"),
+        ])
+        assert _sem(paras) == "tech_stack"
+
+    def test_bullet_without_hint_not_touched(self):
+        # Bullets without a normalizer hint are never modified.
+        paras, _ = _enrich([
+            _para("p1", "Implemented distributed caching layer.", parser_semantic="bullet"),
         ])
         assert _sem(paras) == "bullet"
 
@@ -875,3 +884,83 @@ class TestProjectIntroContinuation:
         assert _sem(paras, 0) == "project_intro"
         assert _sem(paras, 1) == "project_intro"
         assert _sem(paras, 2) == "project_intro"
+
+    def test_uppercase_start_blocks_continuation(self):
+        # Standalone responsibilities start uppercase and must not be promoted.
+        # e.g. "Mentoring junior specialists." after a project_intro stays paragraph.
+        role = _role("r1", bullet_ids=["p1", "p2"])
+        paras, _ = _enrich(
+            [
+                _para("p1", "Contribution to the internal project - a self service portal "
+                      "which holds the information on employee technical development"),
+                _para("p2", "Mentoring junior specialists and reviewing their code regularly."),
+            ],
+            roles=[role],
+        )
+        assert _sem(paras, 0) == "project_intro"
+        assert _sem(paras, 1) == "paragraph"
+
+    def test_implemented_action_blocks_continuation(self):
+        # "Implemented REST API." starts uppercase → not a continuation.
+        role = _role("r1", bullet_ids=["p1", "p2"])
+        paras, _ = _enrich(
+            [
+                _para("p1", "Contribution to the internal project - a self service portal "
+                      "which holds the information on employee technical development"),
+                _para("p2", "Implemented REST API and Swagger documentation."),
+            ],
+            roles=[role],
+        )
+        assert _sem(paras, 1) == "paragraph"
+
+
+# ---------------------------------------------------------------------------
+# Bullet tech_stack promotion (Precision Sprint)
+# ---------------------------------------------------------------------------
+
+class TestBulletTechStackPromotion:
+    def test_bullet_with_hint_promoted(self):
+        # Bullets identified as tech_stack_candidate by normalizer are promoted.
+        paras, _ = _enrich([
+            _para("p1", "Technologies: React, Next.js, TypeScript",
+                  parser_semantic="bullet", semantic_hint="tech_stack_candidate"),
+        ])
+        assert _sem(paras) == "tech_stack"
+
+    def test_devops_bullet_with_hint_promoted(self):
+        paras, _ = _enrich([
+            _para("p1", "DevOps: GitLab, Jenkins",
+                  parser_semantic="bullet", semantic_hint="tech_stack_candidate"),
+        ])
+        assert _sem(paras) == "tech_stack"
+
+    def test_bullet_without_hint_stays_bullet(self):
+        paras, _ = _enrich([
+            _para("p1", "Technologies: React, TypeScript", parser_semantic="bullet"),
+        ])
+        assert _sem(paras) == "bullet"
+
+    def test_bullet_hint_diagnostic_emitted(self):
+        _, diags = _enrich([
+            _para("p1", "Technologies: React, TypeScript",
+                  parser_semantic="bullet", semantic_hint="tech_stack_candidate"),
+        ])
+        assert any(d["event"] == ENRICH_TECH_STACK for d in diags)
+        d = next(d for d in diags if d["event"] == ENRICH_TECH_STACK)
+        assert d["original_semantic"] == "bullet"
+        assert d["enriched_semantic"] == "tech_stack"
+
+    def test_project_intro_confidence_beats_role_intro(self):
+        # project_intro (0.84) must beat role_intro positional (0.82) when both fire.
+        # Setup: para has "project" keyword (61-250 chars), is in role, and follows role_header.
+        role = _role("r1", meta_ids=["p1"])
+        paras, _ = _enrich(
+            [
+                _para("p0", "Senior Software Engineer", parser_semantic="role_header"),
+                _para("p1", "Contribution to the internal project - a self service portal "
+                      "which holds the information on employee development activities."),
+            ],
+            roles=[role],
+        )
+        # project_intro should win (0.84 > role_intro 0.82)
+        assert _sem(paras, 1) == "project_intro"
