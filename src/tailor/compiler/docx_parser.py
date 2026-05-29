@@ -346,6 +346,20 @@ def _build_style_map(doc) -> dict[str, str]:
 # Semantic type inference
 # ---------------------------------------------------------------------------
 
+def _normalize_spaced_heading(text: str) -> str:
+    """Collapse space-separated single-letter headings to their compact form.
+
+    Converts decorative headings like 'E X P E R I E N C E' → 'EXPERIENCE'
+    so they can be matched against _ALL_HEADING_NAMES.  Only fires when every
+    whitespace-separated token is a single alphabetic character and there are
+    at least three such tokens (to avoid collapsing abbreviations like 'I.T.').
+    """
+    words = text.strip().split()
+    if len(words) >= 3 and all(len(w) == 1 and w.isalpha() for w in words):
+        return "".join(words)
+    return text
+
+
 def _infer_semantic(pm: ParaModel) -> str:
     text = pm.text.strip()
     style_name = (pm.style.style_name or "").strip()
@@ -377,8 +391,10 @@ def _infer_semantic(pm: ParaModel) -> str:
     )
 
     # Known section names (bold): bold paragraph exactly matching a recognized
-    # section name is a heading regardless of font size or spacing.
-    if pm.style.bold and text.lower() in _ALL_HEADING_NAMES and not _is_sdt_placeholder:
+    # section name is a heading regardless of font size or spacing.  Also
+    # normalise decorative 'E X P E R I E N C E'-style spaced headings.
+    _text_norm = _normalize_spaced_heading(text)
+    if pm.style.bold and _text_norm.lower() in _ALL_HEADING_NAMES and not _is_sdt_placeholder:
         return "section_heading"
 
     # Known section names (plain paragraph, no formatting at all): a paragraph
@@ -906,7 +922,8 @@ def parse_docx(path: str) -> ResumeDocument:
             # "HARPER RUSSO") from becoming bogus sections while still allowing
             # job-title headings ("Software Engineer", "Senior Developer") that
             # will later be consolidated into a synthetic experience section.
-            if not found_heading and pm.text.strip().lower() not in _ALL_HEADING_NAMES:
+            _pm_norm = _normalize_spaced_heading(pm.text.strip())
+            if not found_heading and _pm_norm.lower() not in _ALL_HEADING_NAMES:
                 _guard_words = set(re.split(r"\W+", pm.text.strip().lower())) - {""}
                 if not (_guard_words & _JOB_TITLE_WORDS):
                     header_paras.append(pm)
@@ -992,7 +1009,7 @@ def parse_docx(path: str) -> ResumeDocument:
             current = ResumeSection(
                 title=pm.text.strip(),
                 heading=pm,
-                semantic_type=_classify_section(pm.text),
+                semantic_type=_classify_section(_normalize_spaced_heading(pm.text)),
             )
         elif not found_heading:
             header_paras.append(pm)
