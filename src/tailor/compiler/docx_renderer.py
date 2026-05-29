@@ -1880,14 +1880,91 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         or pm.paragraph_profile.column_id in ("right", None)
     ]
 
-    # Detect dark header band color (first above_para with a background color).
+    def _y_of(pm):
+        pp = pm.paragraph_profile
+        return (pp.y_top_pt or 0.0) if pp is not None else 0.0
+
+    # Sort each column by original y_top_pt so paragraphs render in visual
+    # top-to-bottom order.  The IR can store paras out of y-order when a section
+    # boundary is detected (e.g. "Education" at y=263) before earlier content
+    # (e.g. contact icons at y=86) that was classified in the same column later
+    # during parsing.  Without sorting, those paras render in the wrong order.
+    above_paras.sort(key=_y_of)
+    left_paras.sort(key=_y_of)
+    right_paras.sort(key=_y_of)
+
+    # Geometry diagnostics: log column assignments and y-positions for
+    # layout drift analysis.
+    import logging as _rlog
+    _glog = _rlog.getLogger("tailor.layout_geometry")
+    _glog.debug(
+        "GEOMETRY_REPORT sample=%s page=%.0fx%.0fpt "
+        "split_x=%.1fpt left_w=%.1fpt right_w=%.1fpt above=%d left=%d right=%d",
+        getattr(doc, "source_filename", "?"),
+        layout.page_width_pt or 0,
+        layout.page_height_pt or 0,
+        layout.column_split_x or 0,
+        left_w / 20.0,
+        right_w / 20.0,
+        len(above_paras),
+        len(left_paras),
+        len(right_paras),
+    )
+    for _pm in left_paras[:3]:
+        _glog.debug("  LEFT  y=%.1f %r", _y_of(_pm), (_pm.text or "")[:30])
+    for _pm in right_paras[:3]:
+        _glog.debug("  RIGHT y=%.1f %r", _y_of(_pm), (_pm.text or "")[:30])
+
+    # Background promotion: if all paragraphs in the left column share the same
+    # background_color and the layout has no explicit left_col_bg_color, use
+    # that color as cell shading so the background is continuous across
+    # space_before/space_after gaps rather than showing white between sections.
+    _eff_left_bg = layout.left_col_bg_color
+    if not _eff_left_bg and left_paras:
+        _left_bgs = {
+            pm.paragraph_profile.background_color
+            for pm in left_paras
+            if pm.paragraph_profile and pm.paragraph_profile.background_color
+        }
+        if len(_left_bgs) == 1:
+            _candidate = _left_bgs.pop()
+            _h = _candidate.lstrip("#").lower()
+            if len(_h) == 6:
+                _r, _g, _b = int(_h[0:2], 16), int(_h[2:4], 16), int(_h[4:6], 16)
+                if (_r + _g + _b) / 3 >= 128:  # light backgrounds only
+                    _eff_left_bg = _candidate
+                    _glog.debug("LAYOUT_BG_PROMOTED left_cell_bg=#%s (from uniform para bg)", _eff_left_bg)
+
+    _eff_right_bg = layout.right_col_bg_color
+    if not _eff_right_bg and right_paras:
+        _right_bgs = {
+            pm.paragraph_profile.background_color
+            for pm in right_paras
+            if pm.paragraph_profile and pm.paragraph_profile.background_color
+        }
+        if len(_right_bgs) == 1:
+            _candidate = _right_bgs.pop()
+            _h = _candidate.lstrip("#").lower()
+            if len(_h) == 6:
+                _r, _g, _b = int(_h[0:2], 16), int(_h[2:4], 16), int(_h[4:6], 16)
+                if (_r + _g + _b) / 3 >= 128:  # light backgrounds only
+                    _eff_right_bg = _candidate
+                    _glog.debug("LAYOUT_BG_PROMOTED right_cell_bg=#%s (from uniform para bg)", _eff_right_bg)
+
+    # Detect header band color (first above_para with a background color).
     header_bg = next(
         (pm.paragraph_profile.background_color
          for pm in above_paras
          if pm.paragraph_profile and pm.paragraph_profile.background_color),
         None,
     )
-    has_dark_hdr = bool(header_bg and above_paras)
+    # has_dark_hdr: True only when the header band is visually dark (lum < 128).
+    # Controls full-page-width extension, top-margin zeroing, and whether
+    # above_paras go inside the table header row (dark) or before the table as
+    # regular paragraphs (light/unassigned).  Light-background templates with
+    # col=None paragraphs at the top (e.g. the candidate name) should NOT
+    # trigger dark-header behavior — they render before the table via above_elems.
+    has_dark_hdr = any(_is_dark_bg(pm) for pm in above_paras)
 
     # When a dark header band is present the table is extended to the full
     # physical page width (page_w_twips) so the merged header row covers both
@@ -1968,11 +2045,11 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
     left_tcW.set(f"{{{_W}}}w", str(left_w))
     left_tcW.set(f"{{{_W}}}type", "dxa")
-    if layout.left_col_bg_color:
+    if _eff_left_bg:
         shd = etree.SubElement(left_tcPr, f"{{{_W}}}shd")
         shd.set(f"{{{_W}}}val", "clear")
         shd.set(f"{{{_W}}}color", "auto")
-        shd.set(f"{{{_W}}}fill", layout.left_col_bg_color)
+        shd.set(f"{{{_W}}}fill", _eff_left_bg)
 
     # Right cell
     right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
@@ -1980,11 +2057,11 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
     right_tcW.set(f"{{{_W}}}w", str(right_w))
     right_tcW.set(f"{{{_W}}}type", "dxa")
-    if layout.right_col_bg_color:
+    if _eff_right_bg:
         shd = etree.SubElement(right_tcPr, f"{{{_W}}}shd")
         shd.set(f"{{{_W}}}val", "clear")
         shd.set(f"{{{_W}}}color", "auto")
-        shd.set(f"{{{_W}}}fill", layout.right_col_bg_color)
+        shd.set(f"{{{_W}}}fill", _eff_right_bg)
 
     # Right-margin padding cell — empty spacer filling the third grid column so
     # the body row accounts for all grid columns defined in tblGrid.
