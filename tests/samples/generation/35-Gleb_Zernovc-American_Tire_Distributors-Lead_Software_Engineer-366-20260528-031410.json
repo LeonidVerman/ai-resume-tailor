@@ -2,17 +2,11 @@
   "company": "American Tire Distributors",
   "position": "Lead Software Engineer",
   "structured_resume": {
-    "status": "repaired_and_downgraded",
+    "status": "valid",
     "validation": {
-      "errors": [
-        {
-          "code": "SKILLS_BLOCKS_EMPTY",
-          "detail": "blocks[] must be non-empty",
-          "section_id": "sec_4"
-        }
-      ],
-      "is_valid": false,
-      "document_id": "200",
+      "errors": [],
+      "is_valid": true,
+      "document_id": "215",
       "section_results": [
         {
           "is_valid": true,
@@ -30,57 +24,13 @@
           "error_codes": []
         },
         {
-          "is_valid": false,
+          "is_valid": true,
           "section_id": "sec_4",
-          "error_codes": [
-            "SKILLS_BLOCKS_EMPTY"
-          ]
+          "error_codes": []
         }
       ]
     },
-    "repair_input": {
-      "document_id": "200",
-      "source_kind": "docx",
-      "invalid_sections": [
-        {
-          "parser_section": {
-            "roles": [],
-            "raw_title": "Skills (used in professional projects)",
-            "paragraphs": [
-              {
-                "text": "Skills (used in professional projects)",
-                "para_id": "para_110",
-                "parser_semantic": "section_heading"
-              },
-              {
-                "text": "",
-                "para_id": "para_111",
-                "parser_semantic": "empty"
-              }
-            ],
-            "section_id": "sec_4"
-          },
-          "validation_errors": [
-            {
-              "code": "SKILLS_BLOCKS_EMPTY",
-              "detail": "blocks[] must be non-empty",
-              "section_id": "sec_4"
-            }
-          ],
-          "classified_section": {
-            "roles": [],
-            "blocks": [],
-            "raw_title": "Skills (used in professional projects)",
-            "section_id": "sec_4",
-            "display_title": "Skills (used in professional projects)",
-            "semantic_type": "skills",
-            "rewrite_policy": "rewrite_body",
-            "preserve_heading": false,
-            "preserve_body_structure": false
-          }
-        }
-      ]
-    },
+    "repair_input": null,
     "classification": {
       "sections": [
         {
@@ -88,93 +38,100 @@
           "blocks": [
             {
               "new": false,
+              "para_id": "para_64",
+              "block_id": "para_64",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
               "para_id": "para_65",
               "block_id": "para_65",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             },
             {
               "new": false,
               "para_id": "para_66",
               "block_id": "para_66",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             },
             {
               "new": false,
               "para_id": "para_67",
               "block_id": "para_67",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             },
             {
               "new": false,
               "para_id": "para_68",
               "block_id": "para_68",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             },
             {
               "new": false,
               "para_id": "para_69",
               "block_id": "para_69",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             },
             {
               "new": false,
               "para_id": "para_70",
               "block_id": "para_70",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             },
             {
               "new": false,
               "para_id": "para_71",
               "block_id": "para_71",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             },
             {
               "new": false,
               "para_id": "para_72",
               "block_id": "para_72",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             },
             {
               "new": false,
               "para_id": "para_73",
               "block_id": "para_73",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             },
             {
               "new": false,
               "para_id": "para_74",
               "block_id": "para_74",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             },
             {
               "new": false,
               "para_id": "para_75",
               "block_id": "para_75",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             },
             {
               "new": false,
               "para_id": "para_76",
               "block_id": "para_76",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             },
             {
               "new": false,
               "para_id": "para_77",
               "block_id": "para_77",
-              "semantic_type": "project_entry",
+              "semantic_type": "other_paragraph",
               "rewrite_policy": "preserve"
             }
           ],
@@ -195,169 +152,36 @@
                   "new": false,
                   "para_id": "para_80",
                   "block_id": "para_80",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
+                  "semantic_type": "role_highlight",
+                  "rewrite_policy": "preserve"
                 },
                 {
                   "new": false,
                   "para_id": "para_81",
                   "block_id": "para_81",
-                  "semantic_type": "bullet",
+                  "semantic_type": "role_responsibility_bullet",
                   "rewrite_policy": "rewrite_text"
                 },
                 {
                   "new": false,
                   "para_id": "para_82",
                   "block_id": "para_82",
-                  "semantic_type": "bullet",
+                  "semantic_type": "role_responsibility_bullet",
                   "rewrite_policy": "rewrite_text"
                 },
                 {
                   "new": false,
                   "para_id": "para_83",
                   "block_id": "para_83",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_84",
-                  "block_id": "para_84",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_85",
-                  "block_id": "para_85",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_86",
-                  "block_id": "para_86",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_87",
-                  "block_id": "para_87",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_88",
-                  "block_id": "para_88",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_89",
-                  "block_id": "para_89",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_90",
-                  "block_id": "para_90",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_91",
-                  "block_id": "para_91",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_92",
-                  "block_id": "para_92",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_93",
-                  "block_id": "para_93",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_94",
-                  "block_id": "para_94",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_95",
-                  "block_id": "para_95",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_96",
-                  "block_id": "para_96",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_97",
-                  "block_id": "para_97",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_98",
-                  "block_id": "para_98",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_99",
-                  "block_id": "para_99",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_100",
-                  "block_id": "para_100",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_101",
-                  "block_id": "para_101",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_102",
-                  "block_id": "para_102",
-                  "semantic_type": "bullet",
+                  "semantic_type": "role_responsibility_bullet",
                   "rewrite_policy": "rewrite_text"
                 }
               ],
               "meta_blocks": [
                 {
                   "new": false,
-                  "para_id": "para_78",
-                  "block_id": "para_78",
+                  "para_id": "para_79",
+                  "block_id": "para_79",
                   "semantic_type": "role_meta",
                   "rewrite_policy": "preserve"
                 }
@@ -367,6 +191,219 @@
                   "new": false,
                   "para_id": "para_79",
                   "block_id": "para_79",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "sec_2_role_2",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_85",
+                  "block_id": "para_85",
+                  "semantic_type": "role_highlight",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_86",
+                  "block_id": "para_86",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_87",
+                  "block_id": "para_87",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_88",
+                  "block_id": "para_88",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_84",
+                  "block_id": "para_84",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_84",
+                  "block_id": "para_84",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "sec_2_role_3",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_90",
+                  "block_id": "para_90",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_91",
+                  "block_id": "para_91",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_92",
+                  "block_id": "para_92",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_93",
+                  "block_id": "para_93",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_94",
+                  "block_id": "para_94",
+                  "semantic_type": "role_freeform_note",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_89",
+                  "block_id": "para_89",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_89",
+                  "block_id": "para_89",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "sec_2_role_4",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_100",
+                  "block_id": "para_100",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_101",
+                  "block_id": "para_101",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_102",
+                  "block_id": "para_102",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_99",
+                  "block_id": "para_99",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_99",
+                  "block_id": "para_99",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "sec_2_role_5",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_105",
+                  "block_id": "para_105",
+                  "semantic_type": "role_highlight",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_104",
+                  "block_id": "para_104",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_104",
+                  "block_id": "para_104",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "sec_2_role_6",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_107",
+                  "block_id": "para_107",
+                  "semantic_type": "role_highlight",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_106",
+                  "block_id": "para_106",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_106",
+                  "block_id": "para_106",
                   "semantic_type": "role_header",
                   "rewrite_policy": "preserve"
                 }
@@ -403,360 +440,15 @@
         },
         {
           "roles": [],
-          "blocks": [],
-          "raw_title": "Skills (used in professional projects)",
-          "section_id": "sec_4",
-          "display_title": "Skills (used in professional projects)",
-          "semantic_type": "other",
-          "rewrite_policy": "preserve",
-          "preserve_heading": true,
-          "preserve_body_structure": true
-        }
-      ],
-      "document_id": "200",
-      "source_kind": "docx",
-      "classification_version": "v5.8"
-    },
-    "repair_response": {
-      "sections": [
-        {
-          "roles": [],
-          "blocks": [],
-          "raw_title": "Skills (used in professional projects)",
-          "section_id": "sec_4",
-          "display_title": "Skills (used in professional projects)",
-          "semantic_type": "other",
-          "rewrite_policy": "preserve",
-          "preserve_heading": false,
-          "preserve_body_structure": false
-        }
-      ],
-      "document_id": "200"
-    },
-    "recovery_applied": true,
-    "raw_classification": {
-      "sections": [
-        {
-          "roles": [],
           "blocks": [
             {
               "new": false,
-              "para_id": "para_65",
-              "block_id": "para_65",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
-            },
-            {
-              "new": false,
-              "para_id": "para_66",
-              "block_id": "para_66",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
-            },
-            {
-              "new": false,
-              "para_id": "para_67",
-              "block_id": "para_67",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
-            },
-            {
-              "new": false,
-              "para_id": "para_68",
-              "block_id": "para_68",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
-            },
-            {
-              "new": false,
-              "para_id": "para_69",
-              "block_id": "para_69",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
-            },
-            {
-              "new": false,
-              "para_id": "para_70",
-              "block_id": "para_70",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
-            },
-            {
-              "new": false,
-              "para_id": "para_71",
-              "block_id": "para_71",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
-            },
-            {
-              "new": false,
-              "para_id": "para_72",
-              "block_id": "para_72",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
-            },
-            {
-              "new": false,
-              "para_id": "para_73",
-              "block_id": "para_73",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
-            },
-            {
-              "new": false,
-              "para_id": "para_74",
-              "block_id": "para_74",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
-            },
-            {
-              "new": false,
-              "para_id": "para_75",
-              "block_id": "para_75",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
-            },
-            {
-              "new": false,
-              "para_id": "para_76",
-              "block_id": "para_76",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
-            },
-            {
-              "new": false,
-              "para_id": "para_77",
-              "block_id": "para_77",
-              "semantic_type": "project_entry",
-              "rewrite_policy": "preserve"
+              "para_id": "para_110",
+              "block_id": "para_110",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
             }
           ],
-          "raw_title": "Projects",
-          "section_id": "sec_1",
-          "display_title": "Projects",
-          "semantic_type": "projects",
-          "rewrite_policy": "preserve",
-          "preserve_heading": true,
-          "preserve_body_structure": true
-        },
-        {
-          "roles": [
-            {
-              "role_id": "sec_2_role_1",
-              "body_blocks": [
-                {
-                  "new": false,
-                  "para_id": "para_80",
-                  "block_id": "para_80",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_81",
-                  "block_id": "para_81",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_82",
-                  "block_id": "para_82",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_83",
-                  "block_id": "para_83",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_84",
-                  "block_id": "para_84",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_85",
-                  "block_id": "para_85",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_86",
-                  "block_id": "para_86",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_87",
-                  "block_id": "para_87",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_88",
-                  "block_id": "para_88",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_89",
-                  "block_id": "para_89",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_90",
-                  "block_id": "para_90",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_91",
-                  "block_id": "para_91",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_92",
-                  "block_id": "para_92",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_93",
-                  "block_id": "para_93",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_94",
-                  "block_id": "para_94",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_95",
-                  "block_id": "para_95",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_96",
-                  "block_id": "para_96",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_97",
-                  "block_id": "para_97",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_98",
-                  "block_id": "para_98",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_99",
-                  "block_id": "para_99",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_100",
-                  "block_id": "para_100",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_101",
-                  "block_id": "para_101",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                },
-                {
-                  "new": false,
-                  "para_id": "para_102",
-                  "block_id": "para_102",
-                  "semantic_type": "bullet",
-                  "rewrite_policy": "rewrite_text"
-                }
-              ],
-              "meta_blocks": [
-                {
-                  "new": false,
-                  "para_id": "para_78",
-                  "block_id": "para_78",
-                  "semantic_type": "role_meta",
-                  "rewrite_policy": "preserve"
-                }
-              ],
-              "header_blocks": [
-                {
-                  "new": false,
-                  "para_id": "para_79",
-                  "block_id": "para_79",
-                  "semantic_type": "role_header",
-                  "rewrite_policy": "preserve"
-                }
-              ]
-            }
-          ],
-          "blocks": [],
-          "raw_title": "Experience",
-          "section_id": "sec_2",
-          "display_title": "Experience",
-          "semantic_type": "experience",
-          "rewrite_policy": "rewrite_bullets_only",
-          "preserve_heading": true,
-          "preserve_body_structure": true
-        },
-        {
-          "roles": [],
-          "blocks": [
-            {
-              "new": false,
-              "para_id": "para_109",
-              "block_id": "para_109",
-              "semantic_type": "education_entry",
-              "rewrite_policy": "preserve"
-            }
-          ],
-          "raw_title": "Education",
-          "section_id": "sec_3",
-          "display_title": "Education",
-          "semantic_type": "education",
-          "rewrite_policy": "preserve",
-          "preserve_heading": true,
-          "preserve_body_structure": true
-        },
-        {
-          "roles": [],
-          "blocks": [],
           "raw_title": "Skills (used in professional projects)",
           "section_id": "sec_4",
           "display_title": "Skills (used in professional projects)",
@@ -766,53 +458,450 @@
           "preserve_body_structure": false
         }
       ],
-      "document_id": "200",
+      "document_id": "215",
       "source_kind": "docx",
-      "classification_version": "v5.8"
+      "classification_version": "v6.1-role-boundary-fix"
     },
-    "invalid_section_ids": [
-      "sec_4"
-    ],
-    "repaired_section_count": 0,
-    "validation_error_count": 1,
-    "validation_after_repair": {
-      "errors": [
+    "repair_response": null,
+    "recovery_applied": false,
+    "raw_classification": {
+      "sections": [
         {
-          "code": "OTHER_BLOCKS_EMPTY",
-          "detail": "blocks[] must be non-empty",
-          "section_id": "sec_4"
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_64",
+              "block_id": "para_64",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_65",
+              "block_id": "para_65",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_66",
+              "block_id": "para_66",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_67",
+              "block_id": "para_67",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_68",
+              "block_id": "para_68",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_69",
+              "block_id": "para_69",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_70",
+              "block_id": "para_70",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_71",
+              "block_id": "para_71",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_72",
+              "block_id": "para_72",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_73",
+              "block_id": "para_73",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_74",
+              "block_id": "para_74",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_75",
+              "block_id": "para_75",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_76",
+              "block_id": "para_76",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            },
+            {
+              "new": false,
+              "para_id": "para_77",
+              "block_id": "para_77",
+              "semantic_type": "other_paragraph",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Projects",
+          "section_id": "sec_1",
+          "display_title": "Projects",
+          "semantic_type": "projects",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [
+            {
+              "role_id": "sec_2_role_1",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_80",
+                  "block_id": "para_80",
+                  "semantic_type": "role_highlight",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_81",
+                  "block_id": "para_81",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_82",
+                  "block_id": "para_82",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_83",
+                  "block_id": "para_83",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_79",
+                  "block_id": "para_79",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_79",
+                  "block_id": "para_79",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "sec_2_role_2",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_85",
+                  "block_id": "para_85",
+                  "semantic_type": "role_highlight",
+                  "rewrite_policy": "preserve"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_86",
+                  "block_id": "para_86",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_87",
+                  "block_id": "para_87",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_88",
+                  "block_id": "para_88",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_84",
+                  "block_id": "para_84",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_84",
+                  "block_id": "para_84",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "sec_2_role_3",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_90",
+                  "block_id": "para_90",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_91",
+                  "block_id": "para_91",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_92",
+                  "block_id": "para_92",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_93",
+                  "block_id": "para_93",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_94",
+                  "block_id": "para_94",
+                  "semantic_type": "role_freeform_note",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_89",
+                  "block_id": "para_89",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_89",
+                  "block_id": "para_89",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "sec_2_role_4",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_100",
+                  "block_id": "para_100",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_101",
+                  "block_id": "para_101",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                },
+                {
+                  "new": false,
+                  "para_id": "para_102",
+                  "block_id": "para_102",
+                  "semantic_type": "role_responsibility_bullet",
+                  "rewrite_policy": "rewrite_text"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_99",
+                  "block_id": "para_99",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_99",
+                  "block_id": "para_99",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "sec_2_role_5",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_105",
+                  "block_id": "para_105",
+                  "semantic_type": "role_highlight",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_104",
+                  "block_id": "para_104",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_104",
+                  "block_id": "para_104",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            },
+            {
+              "role_id": "sec_2_role_6",
+              "body_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_107",
+                  "block_id": "para_107",
+                  "semantic_type": "role_highlight",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_106",
+                  "block_id": "para_106",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve"
+                }
+              ],
+              "header_blocks": [
+                {
+                  "new": false,
+                  "para_id": "para_106",
+                  "block_id": "para_106",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve"
+                }
+              ]
+            }
+          ],
+          "blocks": [],
+          "raw_title": "Experience",
+          "section_id": "sec_2",
+          "display_title": "Experience",
+          "semantic_type": "experience",
+          "rewrite_policy": "rewrite_bullets_only",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_109",
+              "block_id": "para_109",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve"
+            }
+          ],
+          "raw_title": "Education",
+          "section_id": "sec_3",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true
+        },
+        {
+          "roles": [],
+          "blocks": [
+            {
+              "new": false,
+              "para_id": "para_110",
+              "block_id": "para_110",
+              "semantic_type": "skills_paragraph",
+              "rewrite_policy": "rewrite_text"
+            }
+          ],
+          "raw_title": "Skills (used in professional projects)",
+          "section_id": "sec_4",
+          "display_title": "Skills (used in professional projects)",
+          "semantic_type": "skills",
+          "rewrite_policy": "rewrite_body",
+          "preserve_heading": false,
+          "preserve_body_structure": false
         }
       ],
-      "is_valid": false,
-      "document_id": "200",
-      "section_results": [
-        {
-          "is_valid": true,
-          "section_id": "sec_1",
-          "error_codes": []
-        },
-        {
-          "is_valid": true,
-          "section_id": "sec_2",
-          "error_codes": []
-        },
-        {
-          "is_valid": true,
-          "section_id": "sec_3",
-          "error_codes": []
-        },
-        {
-          "is_valid": false,
-          "section_id": "sec_4",
-          "error_codes": [
-            "OTHER_BLOCKS_EMPTY"
-          ]
-        }
-      ]
+      "document_id": "215",
+      "source_kind": "docx",
+      "classification_version": "v6.1-role-boundary-fix"
     },
-    "downgraded_section_count": 1,
-    "invalid_section_count_after_repair": 1,
-    "invalid_section_count_before_repair": 1
+    "invalid_section_ids": [],
+    "repaired_section_count": 0,
+    "validation_error_count": 0,
+    "validation_after_repair": null,
+    "downgraded_section_count": 0,
+    "invalid_section_count_after_repair": 0,
+    "invalid_section_count_before_repair": 0
   },
   "llm_request": {
     "model": "gpt-5.2",
@@ -820,11 +909,11 @@
     "messages": [
       {
         "role": "developer",
-        "content": "[GENERAL_LAYER v1.2]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n\n21) Generate ONLY the cover letter body.\n    - Do NOT include candidate name, contact information, date, or signature.\n    - Do NOT include a sender header.\n    - Start with \"Dear Hiring Manager,\".\n    - End the content before any closing (e.g., do NOT include \"Sincerely,\" or name).\n\n22) Must explicitly mention the company and role from TASK.\n\n23) Must clearly connect:\n    candidate background → company needs → role responsibilities,\n    using only supported claims (no hallucinations).\n\n24) Keep it 3–5 short paragraphs.\n    - Be specific and concrete.\n    - Avoid verbosity and generic statements.\n\n25) Maintain a professional, concise tone appropriate for the selected generation mode\n    (Conservative / Normal / Aggressive), but do not change structure based on mode.\n\n26) Do NOT include:\n    - work authorization / citizenship statements\n    - availability statements unless explicitly present in input\n    - repeated resume bullet points verbatim\n\nOutput must be plain text only (no JSON inside the body).\n\n[CANDIDATE_LAYER_GLEB_ZERNOVC v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Senior Backend Engineer focused on production backend systems for financial/transaction platforms (exchange + payments-adjacent), with strong integration and platform delivery experience.\n- Emphasize: backend feature ownership for launches, performance optimization for real-time market data delivery, and pragmatic tech-debt repayment that improves delivery velocity.\n- Highlight languages as credibility anchors: Go + Rust (primary), plus Java/Kotlin; SQL for data access; cloud exposure across AWS/Azure/GCP.\n- Keep domain framing: “financial systems / exchange platforms / Stellar ecosystem integrations” without overstating protocol-level specialization.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface explicitly (when writing bullets for relevant roles):\n  - WebSocket market data streaming as a real-time delivery mechanism; include the “reduced traffic by 30%” outcome only when tied to that mechanism.\n  - Kafka usage as asynchronous messaging (do not invent event-driven architecture details beyond “Kafka used” unless present in source).\n  - Cloud-based platform development for SDK / Anchor Platform work; emphasize integration architecture and developer enablement.\n- Convert “designed architecture” claims into concrete artifacts/mechanisms whenever possible (service boundaries, API contracts, migration steps, test strategy changes), but do not invent specifics.\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- Prefer bullets that show concrete mechanisms first:\n  1) WebSocket streaming implementation and its traffic reduction impact.\n  2) Migration leadership (MoneyGram) with integration steps and risk controls (only if supported by MASTER_RESUME/details).\n  3) SDK / platform architecture enabling partner integrations (Wallet SDK tool, Anchor Platform).\n  4) Tech-debt repayment initiatives tied to specific refactors, test improvements, or reduced onboarding time for new currency support (avoid vague “refactored codebase”).\n  5) Mentorship and cross-functional collaboration as secondary support.\n- Ensure at least one mechanism-forward bullet appears in the most recent role section (if evidence exists in MASTER_RESUME).\n\nDISTRIBUTED SYSTEM DEPTH\n- When describing exchange/backend work, explicitly include distributed-systems-adjacent mechanics only if supported:\n  - Real-time streaming via WebSockets (supported).\n  - Kafka as async messaging (supported).\n- If MASTER_RESUME provides details, prefer adding:\n  - Backpressure handling, fan-out strategy, connection management, retry/idempotency, traffic isolation, or failure-mode handling.\n- Avoid claiming:\n  - read replicas, multi-layer caching, stateless architecture, distributed session validation, idempotent workflows, tracing/metrics—unless explicitly present in MASTER_RESUME or additional evidence.\n\nTECHNICAL DIFFERENTIATION\n- Emphasize:\n  - Go/Rust backend services for financial/exchange contexts.\n  - WebSocket APIs for market data streaming.\n  - Kafka for messaging (keep scope minimal unless detailed).\n  - SQL + relational DB experience (PostgreSQL/MySQL) and BigQuery exposure.\n  - Cloud + IaC exposure: AWS/Azure/GCP, AWS CDK; containerization with Docker.\n- Do not overplay frontend: React is secondary; only include if role requires it and evidence exists.\n\nDOMAIN / INDUSTRY FRAMING\n- Primary domain credibility: financial systems and exchange platforms; integration-heavy platform work in the Stellar ecosystem.\n- Translate “crypto exchange” carefully as: high-throughput transaction/market-data systems with correctness and uptime expectations.\n- For Stellar Development Foundation work, frame as: building developer/platform tooling and partner integrations (Wallet SDK, Anchor Platform), not as “core protocol engineering” unless explicitly supported.\n\nSAFE DOMAIN TRANSLATION\n- Use conservative translations:\n  - “Exchange platform” → real-time trading/market-data backend services.\n  - “WebSocket market data streaming” → real-time data delivery channel reducing redundant polling/HTTP traffic.\n  - “Stellar ecosystem / Anchor Platform” → partner integration platform supporting Stellar-based rails (avoid claiming authorship of Stellar protocol).\n  - “MoneyGram migration” → enterprise integration/migration project with stakeholder impact (avoid compliance/regulatory claims unless supported).\n- Keep outcomes tied to mechanisms; do not generalize into unrelated SaaS categories.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim or imply expertise in:\n  - blockchain protocol design/consensus, cryptography, or smart contract engineering (not evidenced).\n  - security/auth frameworks, IAM, SOC2/PCI, or formal compliance ownership (not evidenced).\n  - data engineering/ETL platform ownership (BigQuery listed, but no pipeline ownership evidence).\n  - observability stack ownership (no tools listed).\n- Avoid turning “architecture design” into “owned end-to-end platform architecture” unless MASTER_RESUME explicitly supports ownership scope.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- Reinterpret integration/platform work as extensibility mechanisms when supported:\n  - Wallet SDK tool → developer enablement + stable API/SDK contracts for partners.\n  - Anchor Platform → integration-oriented backend platform enabling external stakeholders.\n  - Reduced developer time for new currency support → modularization/standardization of onboarding workflow (only describe mechanisms if evidenced; otherwise keep as “streamlined process/tooling”).\n- Prefer phrasing that shows boundaries and interfaces (APIs, SDKs, migration playbooks) rather than vague “built platform”.\n\nLEADERSHIP FRAMING\n- Frame leadership as technical leadership:\n  - Led tech-debt repayment with explicit tradeoff management (feature delivery vs stability).\n  - Mentored junior engineers with concrete activities if available (reviews, pairing, onboarding docs).\n  - Improved test practices: describe what changed (e.g., introduced CI gates, added integration tests) only if supported by MASTER_RESUME.\n- Keep leadership tied to delivery artifacts and engineering mechanisms, not people-management claims.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Maintain IC-first narrative:\n  - 70–85% bullets should be technical/mechanism-driven.\n  - 15–30% can cover mentorship, cross-functional collaboration, and tech-debt prioritization.\n- Avoid implying formal management responsibility (hiring, performance reviews) unless explicitly evidenced.\n\nAI WORK POSITIONING\n- No AI tooling practice is provided.\n- Do not add AI/LLM claims, prompt engineering, model building, or AI platform ownership.\n- If a job requires AI exposure, only mention “no explicit AI experience provided” (or omit entirely in resume output).\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate architecture ownership; use calibrated verbs:\n  - Prefer “designed and implemented,” “contributed to architecture,” “led initiative,” “owned feature delivery” based on evidence.\n- Do not invent:\n  - metrics (except the provided “reduced traffic by 30% with websocket support”).\n  - scale numbers (QPS, DAUs, latency) or reliability claims (99.9%) unless in MASTER_RESUME.\n  - security/compliance frameworks, auth mechanisms, or observability tooling.\n  - technologies not listed (e.g., Kubernetes, Redis, gRPC) unless present in MASTER_RESUME.\n- Maintain accuracy of roles/dates/employment relationships as provided by MASTER_RESUME.\n\nEVIDENCE SOURCES\n- Only construct bullets from:\n  - MASTER_RESUME (primary source for role scope, dates, concrete mechanisms, and tech stack per role)\n  - CANDIDATE_PROFILE.experience_highlights (Ondo Perps, Enclave Markets, Stellar Development Foundation, CardinalChain Software)\n  - Explicit skills lists in CANDIDATE_PROFILE.technical_skills (Go, Rust, Kotlin, TS, SQL, Kafka, WebSocket, AWS/Azure/GCP, AWS CDK, Docker, Postgres/MySQL, BigQuery)\n  - CANDIDATE_PROFILE.leadership and constraints_and_preferences for leadership framing and tradeoffs\n- If a mechanism is not explicitly evidenced, do not add it; instead write a narrower, truthful bullet.\n\nFINAL REMINDER\n- Core differentiation to keep visible: Go/Rust senior backend engineer for financial/exchange platforms, strongest proof via real-time WebSocket market-data streaming (traffic reduction) plus integration/platform delivery (Stellar ecosystem) and pragmatic tech-debt leadership without inflated architecture ownership.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
+        "content": "[GENERAL_LAYER v1.2]\n\nYou are a senior technical recruiter and resume strategist specializing in software engineering roles.\n\nINPUTS (provided in separate messages):\n- CANDIDATE_PROFILE (verified background details; may include leadership scope, domains, constraints)\n- JOB_DESCRIPTION (role requirements and company context)\n- MASTER_RESUME (source of truth for employment history, titles, dates, and factual claims)\n- MASTER_COVER_LETTER (source of truth for writing style and baseline structure)\n- TASK (company + role + special instructions)\n\nPRIMARY GOAL\nGenerate a tailored resume and cover letter optimized for the specific role in TASK, while preserving factual accuracy and integrity.\n\nOUTPUT FORMAT\nReturn JSON only with exactly these keys:\n{\n  \"resume\": \"...\",\n  \"cover_letter\": \"...\"\n}\n\nHARD CONSTRAINTS (truth / safety)\n1) Do NOT invent employers, titles, dates, products, technologies, tools, metrics, or responsibilities not supported by MASTER_RESUME or CANDIDATE_PROFILE.\n2) Strengthen impact framing and clarity, but do NOT fabricate numbers or outcomes.\n3) No invented causality: do not add \"resulting in / leading to / enabling\" unless the causal link is explicitly supported by the source text.\n4) Evidence constraint: each rewritten bullet must be traceable to a source bullet and/or a specific statement in CANDIDATE_PROFILE.\n5) Maintain reverse chronological order of roles; do not reorder roles.\n6) You may reorder bullet points WITHIN a role.\n7) Bullet integrity: each bullet should describe one coherent initiative; do not merge unrelated achievements into one bullet.\n8) Do not echo/paraphrase JOB_DESCRIPTION responsibilities unless the candidate demonstrably performed them; when not supported, emphasize adjacent transferable experience without implying direct execution.\n9) Preserve seniority honesty: do not inflate scope (e.g., \"owned company-wide strategy\", \"executive stakeholder management\", \"P&L ownership\") unless explicitly supported.\n\nSECTION ORDER CONSTRAINT (STRICT)\n\nThe resume MUST preserve the same top-level section order as MASTER_RESUME.\n\nDo NOT reorder, rename, or move sections.\n\nRequired section order:\n\n1. Professional Summary\n2. Experience\n3. Education\n4. Technical Skills\n5. Additional (if present)\n\nRules:\n- You may modify bullet wording within sections.\n- You may reorder bullets inside a role.\n- You may add or remove bullets within a role.\n- You may reorganize categories inside Technical Skills.\n\nHowever:\n- Do NOT move Technical Skills above Experience.\n- Do NOT move Education.\n- Do NOT introduce new top-level sections.\n\nTAILORING REQUIREMENTS (must do)\n10) Extract the 5 most critical competency themes from JOB_DESCRIPTION (e.g., leadership, SaaS/cloud, delivery excellence, AI adoption, security/compliance).\n11) Ensure those themes are reflected across:\n    - Professional Summary\n    - Experience bullets (especially latest 2-3 roles)\n    - Technical Skills (reordered and renamed categories allowed)\n12) Avoid cosmetic-only edits. Changes must materially improve role fit by:\n    - shifting emphasis toward relevant initiatives\n    - improving seniority framing where supported\n    - foregrounding domain-relevant scope\n13) Reduce or compress content that is not relevant to the role (especially older roles), without deleting important credibility signals.\n\nSTYLE / QUALITY\n14) Prefer concise, high-signal bullets. Start with action verbs. Keep tense consistent (past for past roles, present for current).\n15) Avoid buzzword stuffing. Use job-relevant terminology only when grounded in demonstrated experience.\n16) Remove redundant phrases and filler (\"responsible for\", \"worked on\").\n17) Keep the resume readable by ATS: plain text, consistent headings, no tables.\n\nSKILLS SECTION NORMALIZATION (validator-friendly, still truthful)\n18) If you are instructed to include a \"required skill\" that is already supported by MASTER_RESUME or CANDIDATE_PROFILE, you MUST include the exact string verbatim somewhere in the Technical Skills section.\n19) If a required skill does not cleanly fit an existing category, add it under:\n    Other: <comma-separated list of items>\n20) If a required skill is NOT supported by MASTER_RESUME or CANDIDATE_PROFILE, do NOT include it (do not guess). Instead, omit it and keep the skills section honest.\n\nCOVER LETTER RULES\n\n21) Generate ONLY the cover letter body.\n    - Do NOT include candidate name, contact information, date, or signature.\n    - Do NOT include a sender header.\n    - Start with \"Dear Hiring Manager,\".\n    - End the content before any closing (e.g., do NOT include \"Sincerely,\" or name).\n\n22) Must explicitly mention the company and role from TASK.\n\n23) Must clearly connect:\n    candidate background → company needs → role responsibilities,\n    using only supported claims (no hallucinations).\n\n24) Keep it 3–5 short paragraphs.\n    - Be specific and concrete.\n    - Avoid verbosity and generic statements.\n\n25) Maintain a professional, concise tone appropriate for the selected generation mode\n    (Conservative / Normal / Aggressive), but do not change structure based on mode.\n\n26) Do NOT include:\n    - work authorization / citizenship statements\n    - availability statements unless explicitly present in input\n    - repeated resume bullet points verbatim\n\nOutput must be plain text only (no JSON inside the body).\n\n[CANDIDATE_LAYER_GLEB_ZERNOVC v1.0]\n\nCORE POSITIONING ANCHORS\n- Position as: Senior Backend Engineer / Backend-focused Tech Lead with fintech/crypto-adjacent transaction systems experience.\n- Emphasize: backend feature delivery for critical launches, performance optimization, and partner/integration-facing platform work.\n- Anchor strengths in: Go/Rust backend development + cloud platform engineering + pragmatic technical leadership (mentorship, tech-debt payoff).\n- Keep scope accurate: senior IC with some tech-lead responsibilities (team up to ~10); do not imply org-wide architecture ownership.\n\nARCHITECTURAL DIFFERENTIATION (MANDATORY SURFACING)\n- Surface explicitly (when tailoring bullets) these evidence-backed mechanisms/themes:\n  - WebSocket support to reduce traffic (include the 30% reduction only when referencing Enclave Markets highlight).\n  - Migration architecture and execution for a major partner (MoneyGram) (describe as system migration + integration coordination; avoid compliance claims).\n  - Wallet SDK architecture + Anchor Platform / cloud-based platform development (describe as SDK/service boundary design + integration enablement).\n  - Exchange feature development and “new currency support” enablement (describe as extensibility workflow/tooling/process improvements; avoid inventing plugin frameworks).\n- Prefer to express “architecture” as concrete boundaries, interfaces, rollout strategy, and operational constraints (not abstract “designed scalable architecture”).\n\nARCHITECTURE SIGNAL PRIORITIZATION\n- When selecting bullets, prioritize in this order:\n  1) Concrete mechanisms with measurable effect (e.g., WebSocket support → 30% traffic reduction).\n  2) Integration/migration architecture (MoneyGram migration; Wallet SDK; Anchor Platform).\n  3) Extensibility enablement (reduced developer time for new currency support).\n  4) Tech-debt repayment initiative tied to delivery safety/velocity.\n  5) Mentorship/collaboration (keep secondary to technical depth).\n- Ensure at least one mechanism-forward bullet appears in the most recent role section if evidence exists (e.g., tech-debt initiative framed as specific refactors, deprecations, or reliability improvements—only if present in source).\n\nDISTRIBUTED SYSTEM DEPTH\n- Treat exchange / financial-system work as distributed backend systems with correctness + latency constraints; describe with concrete mechanics.\n- If the source resume provides details, prefer mentioning:\n  - real-time update paths (WebSocket vs REST polling),\n  - traffic reduction strategies,\n  - API boundary design,\n  - data consistency considerations (only if evidenced),\n  - rollout/compatibility strategies for migrations and SDK changes.\n- Do not invent: read replicas, caching layers, idempotency, retry workflows, tracing/metrics, or queue semantics unless explicitly present in MASTER_RESUME or profile evidence.\n\nTECHNICAL DIFFERENTIATION\n- Primary languages to foreground for backend roles: Go, Rust, SQL (plus Java/Kotlin where relevant).\n- Platform/infra signals to use when supported by the role context: AWS/Azure/GCP, Docker, Kafka, MySQL/Postgres/BigQuery.\n- API patterns: REST + WebSocket (WebSocket is a key differentiator due to the traffic reduction outcome).\n- Keep frontend (React) secondary unless the job explicitly needs it.\n\nDOMAIN / INDUSTRY FRAMING\n- Frame domain credibility as “financial systems / exchange-like transaction platforms” without over-claiming trading, quant, or market-making expertise.\n- Translate “crypto exchange” experience into: high-throughput, real-time transaction and account systems with reliability and safety constraints.\n- For Stellar Development Foundation work, frame as: partner-facing platform + SDK enabling integrations (Wallet SDK, Anchor Platform, migration project).\n\nSAFE DOMAIN TRANSLATION\n- Use conservative translations:\n  - “Exchange core features” → core backend features for a real-time financial platform.\n  - “Liquidity/slippage constraints” → performance and user-experience constraints in execution/quote flows (do not claim ownership of pricing models).\n  - “MoneyGram migration” → partner integration migration project with cross-functional coordination and backward compatibility.\n  - “Wallet SDK architecture” → SDK/API design enabling external developers/partners to integrate.\n- If a target role is non-financial, translate to generic system terms: real-time backend services, partner integrations, SDK/platform engineering, performance optimization.\n\nDOMAIN MISINTERPRETATION GUARDRAILS\n- Do NOT claim or imply:\n  - ownership of enterprise-wide architecture strategy, principal/architect title, or “company-wide platform ownership” unless explicitly evidenced.\n  - security/compliance frameworks (SOC2, PCI, ISO, KYC/AML) or cryptography/protocol design unless present in evidence.\n  - deep data engineering/ETL specialization from BigQuery alone.\n  - Kubernetes, Terraform, service mesh, distributed tracing, caching/replication patterns, or SRE ownership unless supported.\n  - product management ownership (roadmaps, P&L) beyond engineering collaboration.\n- Avoid overstating “tech lead” as people management; keep it as technical direction + mentoring.\n\nEXTENSIBILITY AND INTEGRATION POSITIONING\n- Reinterpret “reduced developer time for new currency support” as extensibility enablement:\n  - Prefer: standardized integration interfaces, templates, automation, validation tooling, or modularization—ONLY if such mechanisms exist in evidence.\n  - Safe phrasing when details are missing: “streamlined the workflow for adding new currency support by improving internal abstractions and test coverage” (do not name specific frameworks).\n- For Wallet SDK / Anchor Platform:\n  - Emphasize stable interfaces, versioning/backward compatibility, partner onboarding, and integration reliability (only as supported).\n- For Telegram bot:\n  - Frame as an integration surface / operational interface for users; avoid claiming it was a full customer-support platform.\n\nLEADERSHIP FRAMING\n- Frame leadership as hands-on technical leadership:\n  - mentoring juniors,\n  - leading technical initiatives (tech-debt repayment, migrations),\n  - coordinating cross-functionally for integration success,\n  - improving engineering practices (test practices).\n- Prefer leadership bullets that include an observable mechanism (e.g., introduced test standards, created migration runbooks, established review practices) only if evidenced.\n\nLEADERSHIP BALANCE FOR SENIOR ROLE\n- Keep narrative IC-heavy: ~70–85% technical execution/architecture, ~15–30% leadership/process.\n- Avoid generic leadership phrasing (“led team”, “drove alignment”) unless paired with concrete artifacts (design docs, migration plans, review standards) and supported by evidence.\n- When tailoring for Staff/Lead roles, elevate architecture/integration decision-making but keep scope bounded to team/project level.\n\nAI WORK POSITIONING\n- No AI tooling or AI project evidence is provided.\n- Do not add AI/ML claims, LLM tooling, prompt engineering, model evaluation, or “AI-powered” features unless present in MASTER_RESUME or explicit user-provided additions.\n\nCLAIM BOUNDARIES / PROHIBITED INFLATION\n- Do not overstate architecture ownership: say “designed architecture for X project/component” rather than “architected the platform/company system” unless evidence supports broader scope.\n- Do not exaggerate leadership scope: keep team size and role scope consistent (max ~10; mentorship/tech lead, not people manager unless evidenced).\n- Do not invent metrics (latency, throughput, cost savings) beyond the explicit “reduced traffic by 30%” item.\n- Do not add technologies, security/auth patterns, observability stacks, or reliability mechanisms not listed in evidence sources.\n- Keep employer relationship wording accurate (Senior Backend Engineer / Senior Engineer / Tech Lead as provided).\n\nEVIDENCE SOURCES\n- Only construct bullets from:\n  - MASTER_RESUME (if provided at generation time)\n  - CANDIDATE_PROFILE.experience_highlights (Ondo Perps, Enclave Markets, Stellar Development Foundation, CardinalChain Software)\n  - Listed skills in CANDIDATE_PROFILE.technical_skills\n  - Explicit constraints/tradeoffs in experience_highlights.constraints_and_tradeoffs\n- Use the explicit quantified outcome only where stated: “Reduced traffic by 30% with WebSocket support” (Enclave Markets).\n- If a bullet needs a mechanism not present, either omit it or phrase it as a responsibility without inventing implementation details.\n\nFINAL REMINDER\n- Core differentiation to keep visible: Go/Rust senior backend engineer with real-time financial/exchange systems + partner/platform integration architecture, delivering critical features and performance improvements with pragmatic technical leadership—without inflating scope.\n\n[ROLE_LEVEL_TUNING v2.0]\n\nYou will receive role_level.\n\nrole_level is one of:\ndirector, manager, principal, staff, senior, mid, junior.\n\nApply guidance to BOTH resume and cover letter.\n\nGENERAL RULES\n- Prefer concrete artifacts and outcomes over adjectives.\n- Avoid generic phrases unless followed by specific system or process detail.\n- Avoid stacking multiple mechanisms in one sentence.\n- Avoid vague claims like “mission-critical systems” without specifics.\n- Do not inflate scope beyond evidence.\n\nGENERIC LANGUAGE SUPPRESSION\nDo not use:\n- scalable platform\n- robust system\n- cutting-edge\n- innovative solution\nunless followed by specific mechanism and measurable outcome.\n\nMECHANISM DEPTH RULE\nEvery mechanism bullet must include:\n- The mechanism itself\n- The system boundary or component it affected\n- A constraint, tradeoff, or context\n- A measurable or observable outcome (if supported)\n\n---------------------------------------------------------------------\n\nDIRECTOR\n\nFocus:\n- Organizational impact\n- Strategy\n- Cross-team coordination\n- Delivery governance\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Governance Artifact\n   - Release cadence definition\n   - Process transformation\n   - Quality or predictability improvement\n   - Escalation framework\n   - Risk management mechanism\n\n2) Organizational Leadership Artifact\n   - Hiring decisions or headcount growth\n   - Team structure evolution\n   - Mentorship or leadership development program\n   - Performance management system\n\n3) Cross-Functional Alignment Artifact\n   - Roadmap alignment with Product\n   - Executive reporting\n   - Dependency coordination across teams\n   - Stakeholder negotiation\n\n4) Strategic Technical Direction Artifact\n   - Platform standardization\n   - Architectural direction setting\n   - Long-term modernization initiative\n   - Governance of shared components\n\nRules:\n- Do not describe leadership abstractly.\n- At least one artifact must include measurable impact or observable change.\n- Mechanisms must support strategic direction, not implementation detail.\n\n---------------------------------------------------------------------\n\nMANAGER\n\nFocus:\n- Team execution\n- Delivery ownership\n- People development\n- Operational reliability\n\nArtifact Enforcement (MANDATORY if supported by evidence):\nInclude at least 3 of the following artifact types across the resume:\n\n1) Delivery Execution Artifact\n   - Sprint planning ownership\n   - Milestone delivery\n   - Incident leadership\n   - Backlog prioritization\n   - Reduction of spillover or missed commitments\n\n2) People Development Artifact\n   - Hiring participation\n   - Mentoring engineers\n   - Performance reviews\n   - Career growth guidance\n   - Onboarding improvements\n\n3) Cross-Functional Coordination Artifact\n   - Collaboration with Product or Design\n   - Stakeholder updates\n   - Risk communication\n   - Requirement clarification cycles\n\n4) Operational Improvement Artifact\n   - Process optimization\n   - Test coverage increase\n   - Deployment pipeline improvement\n   - Observability or reliability enhancement\n\nRules:\n- At least one artifact must show execution accountability (not just participation).\n- At least one artifact must show people leadership.\n- Mechanisms should reinforce delivery credibility, not dominate.\n\n---------------------------------------------------------------------\n\nPRINCIPAL\n\nFocus:\n- Architecture standards\n- Cross-team influence\n- Technical leadership without direct org management\n\nArtifact Expectations:\nInclude at least 2 of:\n- Architecture review process\n- Cross-team standard adoption\n- Design RFC leadership\n- System boundary clarification\n- Platform-level design tradeoff\n\nMechanisms must illustrate architectural direction.\n\n---------------------------------------------------------------------\n\nSTAFF\n\nFocus:\n- High-leverage execution\n- Mentorship\n- Influence within team or domain\n\nInclude at least:\n- 1 cross-team contribution\n- 1 technical depth artifact\n- 1 reliability or scalability artifact\n\n---------------------------------------------------------------------\n\nSENIOR\n\nFocus:\n- Strong technical ownership\n- Performance and reliability impact\n\nInclude:\n- 1 significant technical initiative\n- 1 performance or reliability improvement\n- 1 collaboration signal\n\n---------------------------------------------------------------------\n\nMID / JUNIOR\n\nFocus:\n- Execution quality\n- Learning velocity\n- Growing ownership\n\nMechanisms framed as contribution, not strategy.\n\n---------------------------------------------------------------------\n\nFINAL CHECK\n- Tone matches role_level.\n- Artifacts are concrete, not abstract.\n- No scope inflation.\n- Mechanisms are contextual and relevant.\n- Leadership claims are supported by operational evidence."
       },
       {
         "role": "user",
-        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Backend systems\",\n      \"Cloud-based applications\",\n      \"Financial systems\"\n    ],\n    \"secondary\": [\n      \"Web applications\",\n      \"Enterprise software\",\n      \"Technical support systems\"\n    ]\n  },\n  \"contacts\": {\n    \"email\": \"gzernov@proton.me\",\n    \"phone\": \"+1 236 863 3698\",\n    \"location\": \"Vancouver, BC, Canada\",\n    \"linkedin_url\": null\n  },\n  \"candidate\": {\n    \"name\": \"Gleb Zernovć\",\n    \"summary\": \"Experienced Senior Backend Engineer with a strong background in designing and implementing critical features for exchange platforms. Proven track record in leading tech debt repayment initiatives and mentoring junior team members. Skilled in architecture design and integration with external partners, particularly in the Stellar ecosystem.\",\n    \"headline\": \"Senior Backend Engineer\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": 10,\n      \"style_keywords\": [\n        \"Collaborative\",\n        \"Mentorship\",\n        \"Execution-focused\"\n      ]\n    },\n    \"practices\": [\n      \"Tech debt management\",\n      \"Cross-functional collaboration\",\n      \"Mentorship\"\n    ],\n    \"risk_management\": [\n      \"Balancing feature development with tech debt\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Backend development\",\n    \"Software development\",\n    \"Cloud-based applications\",\n    \"Technical support\",\n    \"Cross-functional collaboration\",\n    \"Performance optimization\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate architecture ownership\",\n      \"Keep claims aligned with actual experience\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Avoid claiming unsupported technologies\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [\n      \"React\"\n    ],\n    \"languages\": [\n      \"Go\",\n      \"Rust\",\n      \"Java\",\n      \"Kotlin\",\n      \"Typescript\",\n      \"SQL\",\n      \"Bash\"\n    ],\n    \"datastores\": [\n      \"BigQuery\"\n    ],\n    \"api_patterns\": [\n      \"Websocket\"\n    ],\n    \"infra_devops\": [\n      \"AWS\",\n      \"Azure\",\n      \"GCP\",\n      \"AWS CDK\",\n      \"Docker\"\n    ],\n    \"observability\": [],\n    \"async_messaging\": [\n      \"Kafka\"\n    ],\n    \"backend_systems\": [\n      \"Spring\",\n      \"MySQL\",\n      \"PostgreSQL\",\n      \"Docker\"\n    ],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Backend Engineering\",\n      \"impact\": [\n        \"Led tech debt repayment initiative\",\n        \"Owned critical features for launch\",\n        \"Mentored junior team members\"\n      ],\n      \"market\": \"Financial Systems\",\n      \"team_context\": [\n        \"Remote team collaboration\"\n      ],\n      \"skills_applied\": [\n        \"Go\",\n        \"Rust\",\n        \"SQL\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\"\n      ],\n      \"employer_relationship\": \"Ondo Perps\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Balancing feature development with tech debt management\"\n      ]\n    },\n    {\n      \"area\": \"Backend Engineering\",\n      \"impact\": [\n        \"Added core features like websocket market data streaming\",\n        \"Built a telegram bot for exchange\",\n        \"Reduced traffic by 30% with websocket support\"\n      ],\n      \"market\": \"Financial Systems\",\n      \"team_context\": [\n        \"Small engineering team\"\n      ],\n      \"skills_applied\": [\n        \"Go\",\n        \"Rust\",\n        \"SQL\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\"\n      ],\n      \"employer_relationship\": \"Enclave Markets\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Improving liquidity and reducing slippage\"\n      ]\n    },\n    {\n      \"area\": \"Software Engineering\",\n      \"impact\": [\n        \"Led migration project for MoneyGram\",\n        \"Designed architecture for Wallet SDK tool\",\n        \"Developed Anchor Platform supporting Stellar Protocols\"\n      ],\n      \"market\": \"Stellar Ecosystem\",\n      \"team_context\": [\n        \"Cross-functional collaboration\"\n      ],\n      \"skills_applied\": [\n        \"Kotlin\",\n        \"Typescript\",\n        \"Flutter\"\n      ],\n      \"architecture_patterns\": [\n        \"Cloud-based platform development\"\n      ],\n      \"employer_relationship\": \"Stellar Development Foundation\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Integration success affecting stakeholders\"\n      ]\n    },\n    {\n      \"area\": \"Technical Leadership\",\n      \"impact\": [\n        \"Designed architecture for crypto exchange backend\",\n        \"Improved test practices for stable software\",\n        \"Reduced developer time for new currency support\"\n      ],\n      \"market\": \"Cryptocurrency Exchange\",\n      \"team_context\": [\n        \"Growing team from 3 to 10 developers\"\n      ],\n      \"skills_applied\": [\n        \"Go\",\n        \"Rust\",\n        \"SQL\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\"\n      ],\n      \"employer_relationship\": \"CardinalChain Software\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Balancing legacy system redesign with new feature development\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\",\n      \"Agile software environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\",\n      \"Problem solving\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
+        "content": "CANDIDATE_PROFILE:\n{\n  \"domains\": {\n    \"primary\": [\n      \"Backend systems\",\n      \"Cloud-based applications\"\n    ],\n    \"secondary\": [\n      \"Web applications\",\n      \"Enterprise software\"\n    ]\n  },\n  \"contacts\": {\n    \"email\": \"gzernov@proton.me\",\n    \"phone\": \"+1 236 863 3698\",\n    \"location\": \"Vancouver, BC, Canada\",\n    \"linkedin_url\": null\n  },\n  \"candidate\": {\n    \"name\": \"Gleb Zernovć\",\n    \"summary\": \"Experienced Senior Backend Engineer with a strong background in developing and maintaining complex systems. Proven track record in leading technical initiatives, mentoring junior developers, and collaborating with cross-functional teams. Skilled in designing architecture for critical projects and integrating with external partners.\",\n    \"headline\": \"Senior Backend Engineer\"\n  },\n  \"leadership\": {\n    \"scope\": {\n      \"team_size_max\": 10,\n      \"style_keywords\": [\n        \"Mentorship\",\n        \"Collaboration\",\n        \"Technical leadership\"\n      ]\n    },\n    \"practices\": [\n      \"Mentoring junior developers\",\n      \"Leading technical initiatives\"\n    ],\n    \"risk_management\": [\n      \"Balancing tech debt with feature development\"\n    ]\n  },\n  \"role_fit_themes\": [\n    \"Backend development\",\n    \"Software development\",\n    \"Cloud-based applications\",\n    \"Technical support\",\n    \"Cross-functional collaboration\",\n    \"Performance optimization\"\n  ],\n  \"claim_boundaries\": {\n    \"domain_limits\": [\n      \"Do not overstate architecture ownership\",\n      \"Do not exaggerate leadership scope\"\n    ],\n    \"security_auth\": [],\n    \"employment_constraints\": [\n      \"Keep claims aligned with actual experience\"\n    ]\n  },\n  \"technical_skills\": {\n    \"frontend\": [\n      \"React\"\n    ],\n    \"languages\": [\n      \"Go\",\n      \"Rust\",\n      \"Java\",\n      \"Kotlin\",\n      \"Typescript\",\n      \"SQL\",\n      \"Bash\"\n    ],\n    \"datastores\": [\n      \"MySQL\",\n      \"PG/SQL\",\n      \"BigQuery\"\n    ],\n    \"api_patterns\": [\n      \"Websocket\",\n      \"REST\"\n    ],\n    \"infra_devops\": [\n      \"AWS\",\n      \"Azure\",\n      \"GCP\",\n      \"Docker\"\n    ],\n    \"observability\": [],\n    \"async_messaging\": [\n      \"Kafka\"\n    ],\n    \"backend_systems\": [\n      \"Spring\",\n      \"MySQL\",\n      \"PG/SQL\",\n      \"BigQuery\",\n      \"Docker\"\n    ],\n    \"security_auth_patterns\": [],\n    \"scalability_reliability_patterns\": []\n  },\n  \"ai_tooling_practice\": {\n    \"principles\": [],\n    \"hands_on_tools\": [],\n    \"usage_patterns\": [],\n    \"concepts_familiarity\": []\n  },\n  \"experience_highlights\": [\n    {\n      \"area\": \"Backend Engineering\",\n      \"impact\": [\n        \"Led tech debt repayment initiative\",\n        \"Owned critical features for launch\",\n        \"Mentored junior team members\"\n      ],\n      \"market\": \"Financial Systems\",\n      \"team_context\": [\n        \"Remote team\"\n      ],\n      \"skills_applied\": [\n        \"Go\",\n        \"Rust\",\n        \"SQL\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\"\n      ],\n      \"employer_relationship\": \"Senior Backend Engineer, Ondo Perps\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Balancing feature development with tech debt management\"\n      ]\n    },\n    {\n      \"area\": \"Backend Engineering\",\n      \"impact\": [\n        \"Added core features to the exchange\",\n        \"Built a telegram bot for the exchange\",\n        \"Reduced traffic by 30% with websocket support\"\n      ],\n      \"market\": \"Financial Systems\",\n      \"team_context\": [\n        \"Small engineering team\"\n      ],\n      \"skills_applied\": [\n        \"Go\",\n        \"Rust\",\n        \"SQL\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\"\n      ],\n      \"employer_relationship\": \"Senior Backend Engineer, Enclave Markets\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Improving liquidity and reducing slippage\"\n      ]\n    },\n    {\n      \"area\": \"Software Engineering\",\n      \"impact\": [\n        \"Led migration project for MoneyGram\",\n        \"Designed architecture for Wallet SDK\",\n        \"Developed Anchor Platform\"\n      ],\n      \"market\": \"Financial Systems\",\n      \"team_context\": [\n        \"Cross-functional collaboration\"\n      ],\n      \"skills_applied\": [\n        \"Kotlin\",\n        \"Typescript\",\n        \"Flutter\"\n      ],\n      \"architecture_patterns\": [\n        \"Cloud-based platform development\"\n      ],\n      \"employer_relationship\": \"Senior Engineer, Stellar Development Foundation\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Integration success affecting stakeholders\"\n      ]\n    },\n    {\n      \"area\": \"Software Engineering\",\n      \"impact\": [\n        \"Designed architecture for crypto exchange\",\n        \"Improved test practices\",\n        \"Reduced developer time for new currency support\"\n      ],\n      \"market\": \"Cryptocurrency\",\n      \"team_context\": [\n        \"Growing team from 3 to 10 developers\"\n      ],\n      \"skills_applied\": [\n        \"Go\",\n        \"Rust\",\n        \"SQL\"\n      ],\n      \"architecture_patterns\": [\n        \"Backend application development\"\n      ],\n      \"employer_relationship\": \"Tech Lead, CardinalChain Software\",\n      \"security_auth_patterns\": [],\n      \"constraints_and_tradeoffs\": [\n        \"Maintaining security and stability\"\n      ]\n    }\n  ],\n  \"candidate_profile_version\": \"2.0\",\n  \"constraints_and_preferences\": {\n    \"work_context\": [\n      \"Collaborative engineering teams\",\n      \"Product development environments\",\n      \"Agile software environments\"\n    ],\n    \"communication\": [\n      \"Cross-functional collaboration\",\n      \"Technical documentation\",\n      \"Problem solving\"\n    ],\n    \"resume_constraint\": [\n      \"Maintain accuracy of roles and dates\",\n      \"Avoid exaggerating responsibilities\",\n      \"Keep claims aligned with actual experience\"\n    ]\n  }\n}"
       },
       {
         "role": "user",
@@ -840,7 +929,7 @@
       },
       {
         "role": "user",
-        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: May 26, 2026\nReturn JSON only.\n"
+        "content": "TASK:\nTailor BOTH documents for:\n- Company: American Tire Distributors\n- Role: Lead Software Engineer\n\nProduce a tailored resume and a tailored cover letter following the rules from the developer message.\nUse CURRENT_DATE: May 28, 2026\nReturn JSON only.\n"
       }
     ],
     "response_format": {
@@ -848,22 +937,22 @@
     }
   },
   "llm_response": {
-    "resume": "Professional Summary\nSenior Backend Engineer with 8+ years of experience designing, building, and supporting production backend systems in financial/exchange and integration-heavy platforms. Strong track record owning complex features end-to-end (design, development, testing, and support), improving performance via real-time WebSocket delivery, and driving pragmatic tech-debt repayment to improve maintainability and delivery. Experienced collaborating across teams and with external partners (including Stellar ecosystem wallet/anchor integrations), mentoring engineers, and delivering Kotlin/TypeScript/Go/Rust services across AWS/Azure/GCP environments.\n\nExperience\nSenior Backend Engineer, Ondo Perps, Remote | February 2026 – current\n- Leading a tech-debt repayment initiative to improve maintainability while balancing ongoing exchange feature development.\n- Owning critical backend features required for launch, including design, development, and coordination with the team to deliver against launch needs.\n- Mentoring junior team members through day-to-day technical guidance and reviews.\n\nSenior Backend Engineer, Enclave Markets, Remote | March 2025 – February 2026\n- Added core exchange features including WebSocket market data streaming, advanced order types (TWAP), and off-platform hedging for strategies traded on the exchange.\n- Added WebSocket support to multiple endpoints to reduce unnecessary traffic by 30% by shifting clients from redundant request patterns to streaming updates.\n- Built a Telegram bot as an alternative exchange client; after the first week of launch, 70% of AVAX-USD volume was going through it.\n\nSenior Engineer, Stellar Development Foundation, Vancouver, BC, Remote | November 2022 – March 2025\n- Led an initiative migrating a major partner (MoneyGram), including architecture design, planning, development, internal documentation, and migration tooling; collaborated with management and multiple teams within MoneyGram.\n- Served as tech lead/project lead and sole developer for a new version of an existing product implementing SEP-24, migrating from a legacy in-house implementation to the Anchor Platform.\n- Designed the architecture of the Wallet SDK tool; wrote the Kotlin implementation and oversaw development of TypeScript and Flutter implementations.\n- Contributed to the Anchor Platform, including delivering SEP-24 support as one of two engineers responsible for that workstream.\n- Contributed to stellar-cli by designing and implementing new commands and improving existing functionality based on developer feedback and changes in underlying Stellar libraries.\n- Worked directly with 30+ wallet partners and 20+ anchor partners, collaborating with partner tech leads on integration architecture using Stellar protocols and tools.\n\nSoftware Engineer → Tech Lead, CardinalChain Software, Vancouver, BC | October 2019 – November 2022\n- Designed fundamental backend architecture and oversaw development of full-stack cold wallet transfer and browser extension projects.\n- Re-designed legacy parts of the system to make them easier for other developers to use; developer time spent on new currency support was cut by more than 40%.\n- Improved test practices before production release, leading to more stable and secure software.\n- Provided technical leadership for a team that grew from 3 to 10 junior/middle developers.\n\nSoftware Engineer (Junior/Middle), FitechSource, St. Petersburg, Russia | July 2018 – October 2019\n- Maintained 3 core currencies (+ forks) and added support for 2 additional currencies.\n- Re-wrote parts of the codebase, reducing the number of supported versions from 6 to 2.\n\nAssociate Software Engineer, ITIVITI, St. Petersburg | July 2017 – March 2018\n- Contributed to an internal market-simulator testing tool used in integration and performance testing pipelines.\n- Worked on core simulator logic and the connectivity layer simulating exchange protocols (e.g., Nasdaq, LSE).\n- Increased exchange coverage by adding support for 2 additional protocols.\n\nEducation\nBachelor’s degree in applied mathematics and computer science, ITMO University, Saint Petersburg, Russia, Information Technologies and Programming Faculty, Computer Technology Department\n\nTechnical Skills\nLanguages: Go, Rust, Java, Kotlin, Typescript, SQL, Bash, Python, Solidity\nBackend & Frameworks: Spring, Ktor\nDatastores & Query: MySQL, PostgreSQL, BigQuery\nMessaging & Streaming: Kafka, Websocket\nCloud & DevOps: AWS, Azure, GCP, AWS CDK, Docker, Terraform, Kubernetes, Nix\nBuild & Tooling: git, Maven/Gradle, NodeJS, Hardhat\nFrontend (supporting): React\nAI Tools (used): Claude, Gemini\n\nAdditional\nProjects\n- Scaffold Registry Indexer, Stellar smart contract indexer (2026): Goldsky pipeline using SQL/AWS; serverless backend (and a bit of front end) for indexing smart contract events.\n- Scaffold Stellar, Stellar smart contract developer tool (2025–2026): Supported Soroban example contracts import into scaffold project; cleared tech debt on team request; added various smaller commands.\n- Cargo, Rust build tool (2024): Added --lockfile-path flag supported by all manifest commands; fixed several bugs in upstream applications; worked on stabilizing cargo-script features.\n- LastFm scrobbler, BeatSaber mod (2021): Built UI for configuration/authentication and scrobbling logic submitting played-track data to Last.fm.\n- Apache Incubator – NLPCraft (2020): Implemented auto-enricher using BERT masked word prediction and FastText synonyms filter; added example Minecraft mod using NLPCraft server.\n- Bachelor Thesis (2019): Implemented similarity learning for social network communities using embeddings; graded Excellent (A).\n",
-    "cover_letter": "Gleb Zernovć\n+1 236 863 3698 | gzernov@proton.me\n\nMay 26, 2026\n\nDear Hiring Manager,\n\nI am excited to apply for the Lead Software Engineer role at American Tire Distributors. My background is in designing, building, and supporting production backend systems where correctness, performance, and maintainability matter—most recently for exchange and integration-heavy platforms.\n\nAcross my recent roles, I’ve owned complex features end-to-end (design through implementation, testing, and support) and driven tech-debt repayment initiatives to improve maintainability while continuing to deliver new functionality. At Enclave Markets, I implemented WebSocket-based market data delivery and expanded WebSocket support across endpoints, reducing unnecessary traffic by 30% by shifting clients from redundant request patterns to streaming updates.\n\nI also bring strong integration and cross-team delivery experience. At Stellar Development Foundation, I led a major partner migration (MoneyGram), covering architecture design, planning, development, internal documentation, and migration tooling while coordinating with multiple teams. I also designed the architecture for a Wallet SDK tool (Kotlin implementation, with TypeScript and Flutter implementations delivered with the team), which required clear interfaces and developer-focused documentation.\n\nAmerican Tire Distributors’ focus on building and supporting higher-complexity solutions in an Agile environment aligns well with how I work: impact analysis up front, clear technical designs, disciplined testing, and pragmatic improvements that reduce technical debt. I’d welcome the chance to bring that approach to ATD’s products and internal users.\n\nThank you for your time and consideration.\n\nSincerely,\nGleb Zernovć"
+    "resume": "Professional Summary\nSenior Backend Engineer / backend-focused tech lead with 8+ years building and supporting complex backend systems for financial and partner-facing platforms. Strong hands-on delivery in Go/Rust/SQL across real-time APIs (REST/WebSocket), integrations/migrations, and cloud-based services (AWS/Azure/GCP, Docker, Kafka). Known for leading technical initiatives (tech-debt repayment, launch-critical features), mentoring engineers, and collaborating cross-functionally to ship maintainable solutions.\n\nExperience\nSenior Backend Engineer, Ondo Perps, Remote | February 2026 – current\n- Led a tech-debt repayment initiative while continuing development on a perpetuals exchange backend.\n- Owned launch-critical backend features end-to-end (design, development, and coordination with the team).\n- Mentored junior team members through reviews and day-to-day technical guidance.\n\nSenior Backend Engineer, Enclave Markets, Remote | March 2025 – February 2026\n- Added core exchange backend features, including WebSocket market data streaming, advanced order types (TWAP), and off-platform hedging capabilities for strategies traded on the exchange.\n- Added WebSocket support to multiple endpoints, reducing unnecessary traffic by 30%.\n- Built a Telegram bot as an alternative client for the exchange; 70% of AVAX-USD volume went through it after the first week of launch.\n\nSenior Engineer, Stellar Development Foundation, Vancouver, BC, Remote | November 2022 – March 2025\n- Contributed to stellar-cli by designing and implementing new commands and improving existing functionality based on developer feedback and changes in underlying Stellar libraries.\n- Led a migration initiative for a critical partner (MoneyGram), coordinating integration work across teams.\n- Served as tech lead/project lead and sole developer for a new version of an existing product implementing SEP-24, migrating from a legacy in-house implementation to the Anchor Platform.\n- Produced architecture/design, planning, development, internal documentation, and migration tooling; collaborated with management and multiple teams within MoneyGram.\n- Designed the architecture for a Wallet SDK; implemented the Kotlin version and oversaw Typescript and Flutter implementations.\n- Drove development of the Anchor Platform; as one of two engineers, delivered SEP-24 support.\n- Worked directly with 30+ wallet partners and 20+ anchor partners, collaborating with partner tech leads on integration architecture using Stellar protocols and tools.\n\nSoftware Engineer → Tech Lead, CardinalChain Software, Vancouver, BC | October 2019 – November 2022\n- Tech lead on a centralized crypto exchange backend; provided architecture design, maintenance, and technical leadership for a team that grew from 3 to 10 junior/mid developers.\n- Designed core architecture and oversaw development of full-stack cold wallet transfer and browser extension projects.\n- Re-designed legacy components to improve maintainability and developer usability; reduced developer time for adding new currency support by more than 40%.\n- Improved test practices prior to production release, contributing to more stable and secure software.\n\nSoftware Engineer (Junior/Middle), FitechSource, St. Petersburg, Russia | July 2018 – October 2019\n- Maintained 3 core currencies (+ forks) and added support for 2 additional currencies as a sole developer alongside a project manager.\n- Re-wrote parts of the codebase, reducing the number of supported versions from 6 to 2.\n\nAssociate Software Engineer, ITIVITI, St. Petersburg | July 2017 – March 2018\n- Contributed to an internal market-simulator testing tool, working on core logic and a connectivity layer simulating exchange protocols (e.g., Nasdaq, LSE).\n- Increased exchange coverage by adding 2 new protocols used in integration and performance testing pipelines.\n\nEducation\nBachelor’s degree in applied mathematics and computer science, ITMO University, Saint Petersburg, Russia, Information Technologies and Programming Faculty, Computer Technology Department\n\nTechnical Skills\nLanguages: Go, Rust, Java, Kotlin, Typescript, SQL, Bash, Python, Solidity\nBackend & Frameworks: Spring, NodeJS\nAPIs: REST, Websocket\nData & Messaging: MySQL, PG/SQL, BigQuery, Kafka\nCloud & DevOps: AWS, Azure, GCP, Docker, AWS CDK\nBuild/Tooling: git, Maven/Gradle\nFrontend (as needed): React\nOther: Claude, Gemini\n\nAdditional\nProjects\n- Scaffold Registry Indexer, Stellar smart contract indexer (2026): Goldsky pipeline using SQL/AWS; serverless backend (plus some frontend) for indexing smart contract events.\n- Scaffold Stellar, Stellar smart contract developer tool (2025–2026): Added Soroban example contract import support; addressed team-requested tech debt; implemented additional commands.\n- Cargo, Rust build tool (2024): Added --lockfile-path flag across manifest commands; fixed upstream bugs; worked on stabilizing cargo-script features.\n- LastFm scrobbler, BeatSaber mod (2021): Built in-game UI for configuration/authentication and scrobbling logic to Last.fm.\n- Apache Incubator – NLPCraft (2020): Implemented model auto-enricher using BERT masked word prediction and FastText synonym filtering; built an example Minecraft mod using NLPCraft.\n- Bachelor Thesis (2019): Implemented an embeddings-based algorithm for learning similarity of social network communities; graded Excellent (A).\n",
+    "cover_letter": "Gleb Zernovć\n+1 236 863 3698 | gzernov@proton.me\n\nMay 28, 2026\n\nDear Hiring Manager,\n\nI am excited to apply for the Lead Software Engineer role at American Tire Distributors. My background is in building and supporting complex backend systems, with a focus on delivering maintainable solutions, reducing technical debt, and collaborating closely with cross-functional teams.\n\nIn my recent roles, I’ve owned end-to-end delivery for higher-complexity backend work—covering design, implementation, and support. At Ondo Perps, I’ve led a tech-debt repayment initiative while owning launch-critical features and coordinating execution with the team. Previously at Enclave Markets, I delivered real-time WebSocket capabilities and added WebSocket support across multiple endpoints to reduce unnecessary traffic by 30%, alongside building an alternative client surface (a Telegram bot) used heavily immediately after launch.\n\nI also bring partner-facing integration and migration experience that maps well to impact analysis, interface design, documentation, and support expectations. At Stellar Development Foundation, I led a major partner migration (MoneyGram), produced architecture and migration tooling, and designed a Wallet SDK with implementations across Kotlin, Typescript, and Flutter—work that required careful interface boundaries and coordination across teams.\n\nI’d welcome the chance to bring this mix of hands-on backend engineering, technical leadership, and integration-focused delivery to ATD—helping design, build, test, and support software solutions that improve reliability and maintainability across your platforms.\n\nSincerely,\nGleb Zernovć"
   },
   "diff": {
     "resume": [
       {
         "name": "Professional Summary",
-        "after": "Senior Backend Engineer with 8+ years of experience designing, building, and supporting production backend systems in financial/exchange and integration-heavy platforms. Strong track record owning complex features end-to-end (design, development, testing, and support), improving performance via real-time WebSocket delivery, and driving pragmatic tech-debt repayment to improve maintainability and delivery. Experienced collaborating across teams and with external partners (including Stellar ecosystem wallet/anchor integrations), mentoring engineers, and delivering Kotlin/TypeScript/Go/Rust services across AWS/Azure/GCP environments."
+        "after": "Senior Backend Engineer / backend-focused tech lead with 8+ years building and supporting complex backend systems for financial and partner-facing platforms. Strong hands-on delivery in Go/Rust/SQL across real-time APIs (REST/WebSocket), integrations/migrations, and cloud-based services (AWS/Azure/GCP, Docker, Kafka). Known for leading technical initiatives (tech-debt repayment, launch-critical features), mentoring engineers, and collaborating cross-functionally to ship maintainable solutions."
       },
       {
         "name": "Technical Skills",
-        "after": "Languages: Go, Rust, Java, Kotlin, Typescript, SQL, Bash, Python, Solidity\nBackend & Frameworks: Spring, Ktor\nDatastores & Query: MySQL, PostgreSQL, BigQuery\nMessaging & Streaming: Kafka, Websocket\nCloud & DevOps: AWS, Azure, GCP, AWS CDK, Docker, Terraform, Kubernetes, Nix\nBuild & Tooling: git, Maven/Gradle, NodeJS, Hardhat\nFrontend (supporting): React\nAI Tools (used): Claude, Gemini\n\nAdditional"
+        "after": "Languages: Go, Rust, Java, Kotlin, Typescript, SQL, Bash, Python, Solidity\nBackend & Frameworks: Spring, NodeJS\nAPIs: REST, Websocket\nData & Messaging: MySQL, PG/SQL, BigQuery, Kafka\nCloud & DevOps: AWS, Azure, GCP, Docker, AWS CDK\nBuild/Tooling: git, Maven/Gradle\nFrontend (as needed): React\nOther: Claude, Gemini\n\nAdditional"
       }
     ]
   },
-  "generation_run_id": "352",
+  "generation_run_id": "366",
   "updated_ir": {
     "source_kind": "docx",
     "header_paras": [
@@ -1350,102 +1439,6 @@
         },
         "body_paras": [
           {
-            "text": "Senior Backend Engineer, Ondo Perps, Remote",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_79"
-          },
-          {
-            "text": "Highlights: Continuing work on the perps exchange",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_80"
-          },
-          {
-            "text": "f Leading tech debt repayment initiative.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_81"
-          },
-          {
-            "text": "f Direct ownership over critical features required for launch (design, development, team coordination)",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_82"
-          },
-          {
-            "text": "f Mentoring junior team members",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_83"
-          },
-          {
-            "text": "Senior Backend Engineer, Enclave Markets, Remote",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_84"
-          },
-          {
-            "text": "Highlights: Member of a small engineering team, focused primarily on the new features and code main-tainability with a relatively big (roughly 1/2 Linux kernel) codebase.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_85"
-          },
-          {
-            "text": "f Added core features to the exchange, such as websocket market data streaming, advanced order types (TWAP), off platform hedging for strategies traded on the exchange, improving liquidity and reducing slippage for big orders.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_86"
-          },
-          {
-            "text": "f Built a telegram bot serving as an alternative client for the exchange: 70% of AVAX-USD volume was going through it after the first week of the launch.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_87"
-          },
-          {
-            "text": "f Add websocket support to various endpoints, reducing unnecessary traﬀic by 30%",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_88"
-          },
-          {
-            "text": "Senior Engineer, Stellar Development Foundation, Vancouver, BC, Remote Highlights: Leading migration project of one of the critical partners (MoneyGram). Architecture design and implementation of external facing tools. Ecosystem protocol design. Responsible for wallet and anchor partners integrations.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_89"
-          },
-          {
-            "text": "f One of core contributors to the stellar-cli. Designing and implementing new commands, participating in existing functionality improvements based on developers feedback and changes of underlying Stellar libraries.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_90"
-          },
-          {
-            "text": "f Leading initiative of migrating one of the biggest SDF partners – MoneyGram. Integration success directly affects SDF, as one of MoneyGram’s stakeholder.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_91"
-          },
-          {
-            "text": "Tech lead/project lead and the sole developer on the new version of the existing product (implements SEP-24 protocol), migrating from legacy in-house implementation to the use of the Anchor Platform.",
-            "semantic": "bullet",
-            "paragraph_profile": null,
-            "para_id": "para_92"
-          },
-          {
-            "text": "Working with management and multiple teams (including Engineering) within MoneyGram.",
-            "semantic": "bullet",
-            "paragraph_profile": null,
-            "para_id": "para_93"
-          },
-          {
-            "text": "Covered new architecture design, planning, development of the product, cross-team collaboration",
-            "semantic": "bullet",
-            "paragraph_profile": null,
-            "para_id": "para_94"
-          },
-          {
             "text": "(including time management and task management), internal documentation and migration tooling.",
             "semantic": "paragraph",
             "paragraph_profile": null,
@@ -1470,61 +1463,296 @@
             "para_id": "para_98"
           },
           {
-            "text": "Software Engineer → Tech Lead, CardinalChain Software, Vancouver, BC Highlights: Tech lead on Japanese centralized crypto exchange backend. Responsible for architecture design, maintenance and technical leadership of a team growing in size from 3 to 10 of junior/middle level developers. Supported over 35 different crypto currencies.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_99"
-          },
-          {
-            "text": "f Designed fundamental architecture and was overseeing development of full-stack cold wallet transfer and browser extension projects.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_100"
-          },
-          {
-            "text": "f Re-designed various legacy parts of the project, making it easily used by other developers. As a result, developer time spent on a new currency support was cut by more than 40%.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_101"
-          },
-          {
-            "text": "f Improved test practices before production release, leading to more stable and secure software.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_102"
-          },
-          {
             "text": "",
             "semantic": "empty",
             "paragraph_profile": null,
             "para_id": "para_103"
-          },
-          {
-            "text": "\nSoftware Engineer (Junior/Middle), FitechSource, St. Petersburg, Russia",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_104"
-          },
-          {
-            "text": "Highlights: Prior to internal transfer to CardinalChain I was working on the same project in the Car-dinalChain’s child company.Worked as a sole developer alongside the project manager. Responsible for maintaining 3 core currencies (+ forks), added support of 2 more currencies. Re-wrote parts of the code, reducing the number of supported versions from 6 to just 2.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_105"
-          },
-          {
-            "text": "Associate software engineer, ITIVITI, St. Petersburg",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_106"
-          },
-          {
-            "text": "Highlights: Was working on an internal testing tool (market simulator). Was contributing to the tool’s core logic, as well as connectivity layer, that was responsible for simulating protocols of various exchanges (e.g. Nasdaq, LSE, etc.), Simulator was used in the testing pipeline for integration and performance tests. Increased exchange coverage by adding 2 new protocols.",
-            "semantic": "paragraph",
-            "paragraph_profile": null,
-            "para_id": "para_107"
           }
         ],
-        "roles": [],
+        "roles": [
+          {
+            "header": {
+              "text": "Senior Backend Engineer, Ondo Perps, Remote",
+              "semantic": "paragraph",
+              "paragraph_profile": null,
+              "para_id": "para_79"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "Senior Backend Engineer, Ondo Perps, Remote",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_79"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Highlights: Continuing work on the perps exchange",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_80"
+              },
+              {
+                "text": "Led a tech-debt repayment initiative while continuing development on a perpetuals exchange backend.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_81"
+              },
+              {
+                "text": "Owned launch-critical backend features end-to-end (design, development, and coordination with the team).",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_82"
+              },
+              {
+                "text": "Mentored junior team members through reviews and day-to-day technical guidance.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_83"
+              }
+            ],
+            "role_id": "Senior Backend Engineer, Ondo Perps, Remote",
+            "role_id_stable": "para_79"
+          },
+          {
+            "header": {
+              "text": "Senior Backend Engineer, Enclave Markets, Remote",
+              "semantic": "paragraph",
+              "paragraph_profile": null,
+              "para_id": "para_84"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "Senior Backend Engineer, Enclave Markets, Remote",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_84"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Highlights: Member of a small engineering team, focused primarily on the new features and code main-tainability with a relatively big (roughly 1/2 Linux kernel) codebase.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_85"
+              },
+              {
+                "text": "Added core exchange backend features, including WebSocket market data streaming, advanced order types (TWAP), and off-platform hedging capabilities for strategies traded on the exchange.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_86"
+              },
+              {
+                "text": "Added WebSocket support to multiple endpoints, reducing unnecessary traffic by 30%.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_87"
+              },
+              {
+                "text": "Built a Telegram bot as an alternative client for the exchange; 70% of AVAX-USD volume went through it after the first week of launch.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_88"
+              }
+            ],
+            "role_id": "Senior Backend Engineer, Enclave Markets, Remote",
+            "role_id_stable": "para_84"
+          },
+          {
+            "header": {
+              "text": "Senior Engineer, Stellar Development Foundation, Vancouver, BC, Remote Highlights: Leading migration project of one of the critical partners (MoneyGram). Architecture design and implementation of external facing tools. Ecosystem protocol design. Responsible for wallet and anchor partners integrations.",
+              "semantic": "paragraph",
+              "paragraph_profile": null,
+              "para_id": "para_89"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "Senior Engineer, Stellar Development Foundation, Vancouver, BC, Remote Highlights: Leading migration project of one of the critical partners (MoneyGram). Architecture design and implementation of external facing tools. Ecosystem protocol design. Responsible for wallet and anchor partners integrations.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_89"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Contributed to stellar-cli by designing and implementing new commands and improving existing functionality based on developer feedback and changes in underlying Stellar libraries.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_90"
+              },
+              {
+                "text": "Led a migration initiative for a critical partner (MoneyGram), coordinating integration work across teams.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_91"
+              },
+              {
+                "text": "Served as tech lead/project lead and sole developer for a new version of an existing product implementing SEP-24, migrating from a legacy in-house implementation to the Anchor Platform.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_92"
+              },
+              {
+                "text": "Produced architecture/design, planning, development, internal documentation, and migration tooling; collaborated with management and multiple teams within MoneyGram.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_93"
+              },
+              {
+                "text": "Covered new architecture design, planning, development of the product, cross-team collaboration",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_94"
+              },
+              {
+                "text": "Designed the architecture for a Wallet SDK; implemented the Kotlin version and oversaw Typescript and Flutter implementations.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_94_ext_1"
+              },
+              {
+                "text": "Drove development of the Anchor Platform; as one of two engineers, delivered SEP-24 support.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_94_ext_2"
+              },
+              {
+                "text": "Worked directly with 30+ wallet partners and 20+ anchor partners, collaborating with partner tech leads on integration architecture using Stellar protocols and tools.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_94_ext_3"
+              }
+            ],
+            "role_id": "Senior Engineer, Stellar Development Foundation, Vancouver, BC, Remote Highlights: Leading migration project of one of the critical partners (MoneyGram). Architecture design and implementation of external facing tools. Ecosystem protocol design. Responsible for wallet and anchor partners integrations.",
+            "role_id_stable": "para_89"
+          },
+          {
+            "header": {
+              "text": "Software Engineer → Tech Lead, CardinalChain Software, Vancouver, BC Highlights: Tech lead on Japanese centralized crypto exchange backend. Responsible for architecture design, maintenance and technical leadership of a team growing in size from 3 to 10 of junior/middle level developers. Supported over 35 different crypto currencies.",
+              "semantic": "paragraph",
+              "paragraph_profile": null,
+              "para_id": "para_99"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "Software Engineer → Tech Lead, CardinalChain Software, Vancouver, BC Highlights: Tech lead on Japanese centralized crypto exchange backend. Responsible for architecture design, maintenance and technical leadership of a team growing in size from 3 to 10 of junior/middle level developers. Supported over 35 different crypto currencies.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_99"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Tech lead on a centralized crypto exchange backend; provided architecture design, maintenance, and technical leadership for a team that grew from 3 to 10 junior/mid developers.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_100"
+              },
+              {
+                "text": "Designed core architecture and oversaw development of full-stack cold wallet transfer and browser extension projects.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_101"
+              },
+              {
+                "text": "Re-designed legacy components to improve maintainability and developer usability; reduced developer time for adding new currency support by more than 40%.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_102"
+              },
+              {
+                "text": "Improved test practices prior to production release, contributing to more stable and secure software.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_102_ext_1"
+              }
+            ],
+            "role_id": "Software Engineer → Tech Lead, CardinalChain Software, Vancouver, BC Highlights: Tech lead on Japanese centralized crypto exchange backend. Responsible for architecture design, maintenance and technical leadership of a team growing in size from 3 to 10 of junior/middle level developers. Supported over 35 different crypto currencies.",
+            "role_id_stable": ""
+          },
+          {
+            "header": {
+              "text": "\nSoftware Engineer (Junior/Middle), FitechSource, St. Petersburg, Russia",
+              "semantic": "paragraph",
+              "paragraph_profile": null,
+              "para_id": "para_104"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "\nSoftware Engineer (Junior/Middle), FitechSource, St. Petersburg, Russia",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_104"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Highlights: Prior to internal transfer to CardinalChain I was working on the same project in the Car-dinalChain’s child company.Worked as a sole developer alongside the project manager. Responsible for maintaining 3 core currencies (+ forks), added support of 2 more currencies. Re-wrote parts of the code, reducing the number of supported versions from 6 to just 2.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_105"
+              },
+              {
+                "text": "Maintained 3 core currencies (+ forks) and added support for 2 additional currencies as a sole developer alongside a project manager.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_105_ext_1"
+              },
+              {
+                "text": "Re-wrote parts of the codebase, reducing the number of supported versions from 6 to 2.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_105_ext_2"
+              }
+            ],
+            "role_id": "Software Engineer (Junior/Middle), FitechSource, St. Petersburg, Russia",
+            "role_id_stable": "para_104"
+          },
+          {
+            "header": {
+              "text": "Associate software engineer, ITIVITI, St. Petersburg",
+              "semantic": "paragraph",
+              "paragraph_profile": null,
+              "para_id": "para_106"
+            },
+            "header_extra": [],
+            "meta_lines": [
+              {
+                "text": "Associate software engineer, ITIVITI, St. Petersburg",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_106"
+              }
+            ],
+            "bullets": [
+              {
+                "text": "Highlights: Was working on an internal testing tool (market simulator). Was contributing to the tool’s core logic, as well as connectivity layer, that was responsible for simulating protocols of various exchanges (e.g. Nasdaq, LSE, etc.), Simulator was used in the testing pipeline for integration and performance tests. Increased exchange coverage by adding 2 new protocols.",
+                "semantic": "paragraph",
+                "paragraph_profile": null,
+                "para_id": "para_107"
+              },
+              {
+                "text": "Contributed to an internal market-simulator testing tool, working on core logic and a connectivity layer simulating exchange protocols (e.g., Nasdaq, LSE).",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_107_ext_1"
+              },
+              {
+                "text": "Increased exchange coverage by adding 2 new protocols used in integration and performance testing pipelines.",
+                "semantic": "bullet",
+                "paragraph_profile": null,
+                "para_id": "para_107_ext_2"
+              }
+            ],
+            "role_id": "Associate software engineer, ITIVITI, St. Petersburg",
+            "role_id_stable": "para_106"
+          }
+        ],
         "section_id": "sec_2"
       },
       {
@@ -1562,6 +1790,54 @@
             "semantic": "empty",
             "paragraph_profile": null,
             "para_id": "para_111"
+          },
+          {
+            "text": "Languages: Go, Rust, Java, Kotlin, Typescript, SQL, Bash, Python, Solidity",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "_synth_sec_4_0"
+          },
+          {
+            "text": "Backend & Frameworks: Spring, NodeJS",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "_synth_sec_4_1"
+          },
+          {
+            "text": "APIs: REST, Websocket",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "_synth_sec_4_2"
+          },
+          {
+            "text": "Data & Messaging: MySQL, PG/SQL, BigQuery, Kafka",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "_synth_sec_4_3"
+          },
+          {
+            "text": "Cloud & DevOps: AWS, Azure, GCP, Docker, AWS CDK",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "_synth_sec_4_4"
+          },
+          {
+            "text": "Build/Tooling: git, Maven/Gradle",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "_synth_sec_4_5"
+          },
+          {
+            "text": "Frontend (as needed): React",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "_synth_sec_4_6"
+          },
+          {
+            "text": "Other: Claude, Gemini",
+            "semantic": "paragraph",
+            "paragraph_profile": null,
+            "para_id": "_synth_sec_4_7"
           }
         ],
         "roles": [],
@@ -1894,6 +2170,21 @@
       },
       {
         "kind": "paragraph",
+        "para_id": "para_94_ext_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"ListParagraph\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:tabs><w:tab w:pos=\"499\" w:val=\"left\" w:leader=\"none\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"exact\" w:before=\"0\" w:after=\"0\"/><w:ind w:left=\"499\" w:right=\"0\" w:hanging=\"196\"/><w:jc w:val=\"left\"/><w:rPr><w:sz w:val=\"20\"/></w:rPr></w:pPr><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>Covered</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>new</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>architecture</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>design,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>planning,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>development</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>product,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>cross-team</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>collaboration</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_94_ext_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"ListParagraph\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:tabs><w:tab w:pos=\"499\" w:val=\"left\" w:leader=\"none\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"exact\" w:before=\"0\" w:after=\"0\"/><w:ind w:left=\"499\" w:right=\"0\" w:hanging=\"196\"/><w:jc w:val=\"left\"/><w:rPr><w:sz w:val=\"20\"/></w:rPr></w:pPr><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>Covered</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>new</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>architecture</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>design,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>planning,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>development</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>product,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>cross-team</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>collaboration</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_94_ext_3",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"ListParagraph\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr><w:tabs><w:tab w:pos=\"499\" w:val=\"left\" w:leader=\"none\"/></w:tabs><w:spacing w:line=\"271\" w:lineRule=\"exact\" w:before=\"0\" w:after=\"0\"/><w:ind w:left=\"499\" w:right=\"0\" w:hanging=\"196\"/><w:jc w:val=\"left\"/><w:rPr><w:sz w:val=\"20\"/></w:rPr></w:pPr><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>Covered</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>new</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>architecture</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>design,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>planning,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>development</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>product,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>cross-team</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/><w:sz w:val=\"20\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/><w:sz w:val=\"20\"/></w:rPr><w:t>collaboration</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
         "para_id": "para_95",
         "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"223\" w:lineRule=\"exact\"/><w:ind w:left=\"492\"/></w:pPr><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>(including</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>time</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>management</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>and</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>task</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>management), internal</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>documentation</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>and</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>migration</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>tooling.</w:t></w:r></w:p>"
       },
@@ -1930,6 +2221,11 @@
       {
         "kind": "paragraph",
         "para_id": "para_102",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"240\" w:lineRule=\"exact\"/><w:ind w:left=\"53\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\"/><w:spacing w:val=\"-6\"/><w:sz w:val=\"12\"/></w:rPr><w:t>f</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\"/><w:spacing w:val=\"68\"/><w:sz w:val=\"12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>Improved</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>test</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>practices</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>before</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>production</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>release,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>leading</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>to</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>more</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>stable</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>and</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>secure</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>software.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_102_ext_1",
         "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"240\" w:lineRule=\"exact\"/><w:ind w:left=\"53\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\"/><w:spacing w:val=\"-6\"/><w:sz w:val=\"12\"/></w:rPr><w:t>f</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Times New Roman\"/><w:spacing w:val=\"68\"/><w:sz w:val=\"12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>Improved</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>test</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>practices</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>before</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>production</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>release,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>leading</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>to</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>more</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>stable</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>and</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>secure</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-3\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>software.</w:t></w:r></w:p>"
       },
       {
@@ -2019,12 +2315,32 @@
       },
       {
         "kind": "paragraph",
+        "para_id": "para_105_ext_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"230\" w:lineRule=\"auto\"/><w:ind w:left=\"61\" w:right=\"7\"/><w:jc w:val=\"both\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial Black\" w:hAnsi=\"Arial Black\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>Highlights</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>:</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>Prior</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>to</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>internal</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>transfer</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>to</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>CardinalChain</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>I</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>working</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>on</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>same</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>project</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>in</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>Car-</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>dinalChain’s</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>child</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>company.Worked</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>as</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>a</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>sole</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>developer</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>alongside</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>project</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>manager.</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"23\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>Responsible</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>for </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>maintaining</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>3</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>core</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>currencies</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>(+</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>forks),</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>added</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>support</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>2</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>more</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>currencies.</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>Re-wrote</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>parts</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>code, </w:t></w:r><w:r><w:rPr/><w:t>reducing</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>number</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>supported</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>versions</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>from</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"33\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>6</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>to</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>just</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>2.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_105_ext_2",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"230\" w:lineRule=\"auto\"/><w:ind w:left=\"61\" w:right=\"7\"/><w:jc w:val=\"both\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial Black\" w:hAnsi=\"Arial Black\"/><w:spacing w:val=\"-2\"/></w:rPr><w:t>Highlights</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>:</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"12\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>Prior</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>to</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>internal</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>transfer</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>to</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>CardinalChain</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>I</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>working</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>on</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>same</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>project</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>in</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/></w:rPr><w:t>Car-</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>dinalChain’s</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>child</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>company.Worked</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>as</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>a</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>sole</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>developer</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>alongside</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>project</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>manager.</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"23\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>Responsible</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>for </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>maintaining</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>3</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>core</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>currencies</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>(+</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>forks),</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>added</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>support</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>2</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>more</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>currencies.</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>Re-wrote</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>parts</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-7\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>code, </w:t></w:r><w:r><w:rPr/><w:t>reducing</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>number</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>supported</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>versions</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>from</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"33\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>6</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>to</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>just</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-15\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr/><w:t>2.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
         "para_id": "para_106",
         "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:spacing w:line=\"302\" w:lineRule=\"exact\" w:before=\"26\"/><w:ind w:left=\"61\" w:right=\"0\" w:firstLine=\"0\"/><w:jc w:val=\"both\"/><w:rPr><w:sz w:val=\"22\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial Black\"/><w:w w:val=\"85\"/><w:sz w:val=\"22\"/></w:rPr><w:t>Associate</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial Black\"/><w:spacing w:val=\"21\"/><w:sz w:val=\"22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial Black\"/><w:w w:val=\"85\"/><w:sz w:val=\"22\"/></w:rPr><w:t>software</w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial Black\"/><w:spacing w:val=\"21\"/><w:sz w:val=\"22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Arial Black\"/><w:w w:val=\"85\"/><w:sz w:val=\"22\"/></w:rPr><w:t>engineer</w:t></w:r><w:r><w:rPr><w:w w:val=\"85\"/><w:sz w:val=\"22\"/></w:rPr><w:t>,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"17\"/><w:sz w:val=\"22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:rFonts w:ascii=\"Palatino Linotype\"/><w:w w:val=\"85\"/><w:sz w:val=\"22\"/></w:rPr><w:t>ITIVITI</w:t></w:r><w:r><w:rPr><w:w w:val=\"85\"/><w:sz w:val=\"22\"/></w:rPr><w:t>,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"17\"/><w:sz w:val=\"22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:w w:val=\"85\"/><w:sz w:val=\"22\"/></w:rPr><w:t>St.</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"47\"/><w:sz w:val=\"22\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-2\"/><w:w w:val=\"85\"/><w:sz w:val=\"22\"/></w:rPr><w:t>Petersburg</w:t></w:r></w:p>"
       },
       {
         "kind": "paragraph",
         "para_id": "para_107",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"230\" w:lineRule=\"auto\"/><w:ind w:left=\"53\" w:right=\"2\" w:firstLine=\"7\"/><w:jc w:val=\"both\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial Black\" w:hAnsi=\"Arial Black\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>Highlights</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>:</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>Was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>working</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>on</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>an</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>internal</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>testing</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>tool</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>(market</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>simulator).</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>Was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>contributing</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>to</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>tool’s </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>core</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>logic,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>as</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>well</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>as</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>connectivity</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>layer,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>that</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>responsible</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>for</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>simulating</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>protocols</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>various</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>exchanges (e.g.</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"19\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>Nasdaq, LSE,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>etc.), Simulator</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>used</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>in</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>testing</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>pipeline</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>for</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>integration</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>and</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>performance</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>tests. </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>Increased</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>exchange</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>coverage</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>by</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>adding</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>2</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>new</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>protocols.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_107_ext_1",
+        "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"230\" w:lineRule=\"auto\"/><w:ind w:left=\"53\" w:right=\"2\" w:firstLine=\"7\"/><w:jc w:val=\"both\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial Black\" w:hAnsi=\"Arial Black\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>Highlights</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>:</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>Was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>working</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>on</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>an</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>internal</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>testing</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>tool</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>(market</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>simulator).</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>Was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>contributing</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>to</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>tool’s </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>core</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>logic,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>as</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>well</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>as</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>connectivity</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>layer,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>that</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>responsible</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>for</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>simulating</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>protocols</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>various</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>exchanges (e.g.</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"19\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>Nasdaq, LSE,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>etc.), Simulator</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>used</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>in</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>testing</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>pipeline</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>for</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>integration</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>and</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>performance</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>tests. </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>Increased</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>exchange</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>coverage</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>by</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>adding</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>2</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>new</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>protocols.</w:t></w:r></w:p>"
+      },
+      {
+        "kind": "paragraph",
+        "para_id": "para_107_ext_2",
         "xml_proto_xml": "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:pPr><w:pStyle w:val=\"BodyText\"/><w:spacing w:line=\"230\" w:lineRule=\"auto\"/><w:ind w:left=\"53\" w:right=\"2\" w:firstLine=\"7\"/><w:jc w:val=\"both\"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial Black\" w:hAnsi=\"Arial Black\"/><w:spacing w:val=\"-4\"/></w:rPr><w:t>Highlights</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>:</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>Was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>working</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>on</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>an</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>internal</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>testing</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>tool</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>(market</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>simulator).</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>Was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-11\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>contributing</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>to</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>tool’s </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>core</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>logic,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>as</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>well</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>as</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>connectivity</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>layer,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>that</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>responsible</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>for</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>simulating</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>protocols</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>of</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-9\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>various</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-10\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>exchanges (e.g.</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"19\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>Nasdaq, LSE,</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>etc.), Simulator</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>was</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>used</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>in</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>the</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>testing</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>pipeline</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>for</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>integration</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>and</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>performance</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-6\"/></w:rPr><w:t>tests. </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>Increased</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>exchange</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>coverage</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>by</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>adding</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>2</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>new</w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-8\"/></w:rPr><w:t> </w:t></w:r><w:r><w:rPr><w:spacing w:val=\"-4\"/></w:rPr><w:t>protocols.</w:t></w:r></w:p>"
       },
       {

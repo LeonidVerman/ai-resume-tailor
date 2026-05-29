@@ -27,11 +27,13 @@ CORE RULES
 
 4. Repair only the provided invalid sections.
 
-5. If a section cannot be repaired safely, downgrade that section to:
+5. Valid structure is more important than preserving the invalid classified structure.
+
+6. If a section cannot be repaired safely, downgrade that section to:
 - semantic_type = "other"
 - rewrite_policy = "preserve"
 
-6. Valid structure is more important than aggressive classification.
+7. For experience sections, prefer structural repair over downgrade.
 
 ==================================================
 ALLOWED VALUES
@@ -57,6 +59,17 @@ block.semantic_type:
 - role_header
 - role_meta
 - bullet
+- role_achievement_bullet
+- role_responsibility_bullet
+- role_intro
+- role_highlight
+- role_project_label
+- role_project_context
+- role_tech_stack
+- role_key_technologies
+- role_tools
+- role_nested_detail
+- role_freeform_note
 - education_entry
 - project_entry
 - additional_item
@@ -70,107 +83,223 @@ block.rewrite_policy:
 SECTION CONTRACTS
 ==================================================
 
-SUMMARY
-If semantic_type = "summary":
-- rewrite_policy = "rewrite_body"
-- roles[] must be empty
-- all blocks must be:
-  - summary_paragraph
-  - rewrite_text
+SUMMARY:
+- semantic_type = summary
+- rewrite_policy = rewrite_body
+- roles[] empty
+- blocks[] non-empty
+- all blocks = summary_paragraph + rewrite_text
 - preserve_heading = false
 - preserve_body_structure = false
 
-SKILLS
-If semantic_type = "skills":
-- rewrite_policy = "rewrite_body"
-- roles[] must be empty
-- all blocks must be:
-  - skills_paragraph
-  - rewrite_text
+SKILLS:
+- semantic_type = skills
+- rewrite_policy = rewrite_body
+- roles[] empty
+- blocks[] non-empty
+- all blocks = skills_paragraph + rewrite_text
 - preserve_heading = false
 - preserve_body_structure = false
 
-EXPERIENCE
-If semantic_type = "experience":
-- rewrite_policy = "rewrite_bullets_only"
-- blocks[] must be empty
-- roles[] must be populated
+If skills has no usable skill body text and only an empty paragraph:
+- downgrade to other
+- rewrite_policy = preserve
+- blocks = fallback other_paragraph + preserve
 
-For each role:
-- header_blocks:
-  - semantic_type = "role_header"
-  - rewrite_policy = "preserve"
-- meta_blocks:
-  - semantic_type = "role_meta"
-  - rewrite_policy = "preserve"
-- body_blocks:
-  - semantic_type = "bullet"
-  - rewrite_policy = "rewrite_text"
+EXPERIENCE:
+- semantic_type = experience
+- rewrite_policy = rewrite_bullets_only
+- blocks[] empty
+- roles[] populated
+- preserve_heading = true
+- preserve_body_structure = true
 
-Experience normalization rules:
-- role title / position name -> header
-- compact employment metadata -> meta
-- dates -> meta
-- company / employer -> meta
-- location -> meta
-- sentence-like responsibility / achievement text -> body
-- do not place sentence-like text into meta
-- do not place date-only text into header
-- do not place metadata into body unless no safer structure exists
+EDUCATION:
+- semantic_type = education
+- rewrite_policy = preserve
+- roles[] empty
+- all blocks = education_entry + preserve
+- preserve_heading = true
+- preserve_body_structure = true
 
-EDUCATION
-If semantic_type = "education":
-- rewrite_policy = "preserve"
-- roles[] must be empty
-- all blocks must be:
-  - education_entry (ONLY — never other_paragraph, never role_header, never role_meta)
-  - preserve
+PROJECTS:
+- semantic_type = projects
+- rewrite_policy = preserve
+- roles[] empty
+- blocks = project_entry or other_paragraph + preserve
 
-Any block in an education section that is role_header, role_meta, other_paragraph,
-summary_paragraph, or skills_paragraph MUST be converted to education_entry.
-This includes pipe-format degree/date lines (e.g. "BACHELOR OF SCIENCE | MAY 2014")
-which the parser may have labelled role_header — inside education they are education_entry.
+ADDITIONAL:
+- semantic_type = additional
+- rewrite_policy = preserve
+- roles[] empty
+- blocks = additional_item or other_paragraph + preserve
 
-PROJECTS
-If semantic_type = "projects":
-- rewrite_policy = "preserve"
-- roles[] must be empty
-- all blocks must be:
-  - project_entry OR other_paragraph
-  - preserve
-
-ADDITIONAL
-If semantic_type = "additional":
-- rewrite_policy = "preserve"
-- roles[] must be empty
-- all blocks must be:
-  - additional_item OR other_paragraph
-  - preserve
-
-OTHER
-If semantic_type = "other":
-- rewrite_policy = "preserve"
-- roles[] must be empty
-- all blocks must be:
-  - other_paragraph
-  - preserve
+OTHER:
+- semantic_type = other
+- rewrite_policy = preserve
+- roles[] empty
+- blocks = other_paragraph + preserve
 
 ==================================================
-REPAIR PRIORITIES
+EXPERIENCE ROLE CONTRACT
 ==================================================
 
-When repairing experience sections, fix these problems first:
-1. wrong block type in meta
-2. wrong block policy in meta
-3. wrong block type in header
-4. wrong block type in body
-5. mixed semantics across header/meta/body
+header_blocks:
+- role_header + preserve
 
-Prefer conservative normalization.
+meta_blocks:
+- role_meta + preserve
 
-If unsure:
-- preserve the section structure conservatively
-- or downgrade the section to other/preserve
+body_blocks may contain ONLY:
+
+Rewriteable blocks:
+- bullet + rewrite_text
+- role_achievement_bullet + rewrite_text
+- role_responsibility_bullet + rewrite_text
+
+Preserved role-local body blocks:
+- role_intro + preserve
+- role_highlight + preserve
+- role_project_label + preserve
+- role_project_context + preserve
+- role_tech_stack + preserve
+- role_key_technologies + preserve
+- role_tools + preserve
+- role_nested_detail + preserve
+- role_freeform_note + preserve
+
+Forbidden in body_blocks:
+- role_header
+- role_meta
+- summary_paragraph
+- skills_paragraph
+- education_entry
+
+==================================================
+MANDATORY REPAIR: ROLE_HEADER OR ROLE_META INSIDE BODY_BLOCKS
+==================================================
+
+If validation error says EXPERIENCE_ROLE_BODY_BLOCK_TYPE because role_header or role_meta appears inside body_blocks:
+
+Do NOT downgrade the section.
+Do NOT relabel a true new role boundary as role_intro or role_freeform_note.
+
+Instead, split the role structurally.
+
+Algorithm:
+1. Iterate through the experience parser_section paragraphs in original order.
+2. Rebuild roles from scratch.
+3. When a paragraph looks like a new role header or role meta, close the current role and start a new role.
+4. Put that paragraph into header_blocks or meta_blocks.
+5. Put following role-local content into body_blocks until the next role boundary.
+
+A paragraph starts a new role if it looks like:
+- job title / employer / location line
+- company/location line
+- date range / title line
+- title with dates in parentheses
+- parser_semantic role_header or role_meta after body content started
+
+Examples that MUST start new roles:
+- "Senior Backend Engineer, Enclave Markets, Remote"
+- "Senior Engineer, Stellar Development Foundation, Vancouver, BC, Remote"
+- "Software Engineer -> Tech Lead, CardinalChain Software, Vancouver, BC"
+- "Software Engineer (Junior/Middle), FitechSource, St. Petersburg, Russia"
+- "Associate software engineer, ITIVITI, St. Petersburg"
+- "GlobalLogic - Krakow, Poland"
+- "Masterdata - Moscow, Russia"
+- "Rostelecom - St. Petersburg, Russia"
+- "IGA Technologies - Moscow, Russia"
+- "Sberbank - Saint-Petersburg, Russia"
+- "Full Stack Software Engineer (March 2021 - December 2021)"
+- "Java Developer (September 2019 - July 2020)"
+- "Junior Java Developer (March 2019 - September 2019)"
+
+==================================================
+ROLE-LOCAL BODY CLASSIFICATION DURING REPAIR
+==================================================
+
+Rewriteable body blocks:
+
+Normal responsibility or achievement bullets:
+- role_responsibility_bullet + rewrite_text
+- role_achievement_bullet + rewrite_text
+- bullet + rewrite_text if uncertain
+
+Preserved body blocks:
+
+Starts with "Highlights:"
+- role_highlight + preserve
+
+Starts with "Tech Stack:"
+- role_tech_stack + preserve
+
+Starts with "Key technologies:"
+- role_key_technologies + preserve
+
+Starts with "Technologies:"
+- role_key_technologies + preserve
+
+Starts with any of:
+- "Tools:"
+- "DevOps tools:"
+- "Application level:"
+- "Persistence level:"
+- "Infrastructure:"
+- "Monitoring and metrics:"
+- "Security:"
+- "Containers:"
+- "Storage of large files:"
+- "ELK Stack"
+- "Kafka -"
+- "Redis Streams -"
+- "Mqtt"
+- "LWM2M"
+- role_tools + preserve OR role_nested_detail + preserve
+
+Project/subsection labels:
+- "OTA project"
+- "Vehicle simulation project"
+- short standalone project labels
+=> role_project_label + preserve
+
+Descriptive project/role context that is not a new role boundary:
+- role_project_context or role_intro + preserve
+
+Continuation/nested details under project labels or technical sections:
+- role_nested_detail + preserve
+
+Other role-local text that is not a normal rewrite bullet and not a new role boundary:
+- role_freeform_note + preserve
+
+==================================================
+CRITICAL DISTINCTION: PRESERVED NOTE VS NEW ROLE
+==================================================
+
+Do NOT classify employer/title/date lines as role_freeform_note.
+They must become new role header/meta.
+
+If a paragraph contains company/employer/location/date/title pattern and appears after existing role content:
+- close current role
+- start a new role
+
+If a paragraph is a tech stack/tool/project/context line inside the same job:
+- keep inside current role body as preserved role-local body block
+
+==================================================
+SKILLS REPAIR
+==================================================
+
+If a skills section contains an empty paragraph as its only body:
+- downgrade to other + preserve
+- use fallback other_paragraph
+
+If a skills section contains actual skill text:
+- all blocks must be skills_paragraph + rewrite_text
+
+Never leave skills section with:
+- other_paragraph + preserve
+unless downgraded to other.
 
 ==================================================
 INPUT
@@ -204,3 +333,17 @@ Return JSON only in this shape:
     }
   ]
 }
+
+==================================================
+FINAL VALIDATION
+==================================================
+
+Before output, ensure:
+
+1. No role_header or role_meta appears in body_blocks.
+2. Experience sections use roles[] and empty blocks[].
+3. Non-experience sections use blocks[] and empty roles[].
+4. Skills sections either have skills_paragraph + rewrite_text blocks or are downgraded to other.
+5. Education uses education_entry + preserve.
+6. No non-experience blocks[] is empty.
+7. Do not return the same invalid structure that was provided.
