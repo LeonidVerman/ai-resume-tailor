@@ -1820,10 +1820,11 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
 
     # Column widths.  The table is pushed to the physical page left edge via
     # tblInd=-left_margin, so the table spans from x=0 to x=left_w+right_w.
-    # right_w must not exceed page_w - right_margin - left_w; otherwise the
-    # table overflows the right margin and LibreOffice clips the right cell.
+    # right_w_max uses full page width (no right-margin deduction): the table
+    # already occupies to the physical page right edge via tblInd offset, so
+    # subtracting the right margin would incorrectly shrink the right column.
     left_w = layout.left_col_width_twips or (page_w_twips // 3)
-    right_w_max = page_w_twips - right_margin_twips - left_w
+    right_w_max = page_w_twips - left_w
     right_w = min(
         layout.right_col_width_twips or right_w_max,
         right_w_max,
