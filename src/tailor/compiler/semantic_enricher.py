@@ -9,9 +9,10 @@ using semantic_hint values set by the normalizer and text/context heuristics.
 
 Guardrails
 ----------
-- Only modifies paragraphs whose parser_semantic == "paragraph".
+- Only modifies paragraphs whose parser_semantic == "paragraph", plus
+  role_meta entries in Projects sections (promoted to project_entry only).
 - Never touches role boundaries, section boundaries, or structural elements
-  (role_header, role_meta, bullet, section_heading, empty).
+  (role_header, bullet, section_heading, empty).
 - Conservative: keeps original semantic when confidence < 0.80.
 """
 from __future__ import annotations
@@ -31,14 +32,15 @@ if TYPE_CHECKING:
 # Diagnostic event names (exported so callers can filter by constant)
 # ---------------------------------------------------------------------------
 
-ENRICH_TECH_STACK            = "ENRICH_TECH_STACK"
-ENRICH_TECH_STACK_DETAIL     = "ENRICH_TECH_STACK_DETAIL"
-ENRICH_HIGHLIGHT_HEADER      = "ENRICH_HIGHLIGHT_HEADER"
-ENRICH_PROJECT_HEADER        = "ENRICH_PROJECT_HEADER"
-ENRICH_PROJECT_ENTRY         = "ENRICH_PROJECT_ENTRY"
-ENRICH_INTERNAL_PROJECT      = "ENRICH_INTERNAL_PROJECT"
-ENRICH_ROLE_INTRO            = "ENRICH_ROLE_INTRO"
-ENRICH_SPECIALIZATION_HEADER = "ENRICH_SPECIALIZATION_HEADER"
+ENRICH_TECH_STACK                 = "ENRICH_TECH_STACK"
+ENRICH_TECH_STACK_DETAIL          = "ENRICH_TECH_STACK_DETAIL"
+ENRICH_HIGHLIGHT_HEADER           = "ENRICH_HIGHLIGHT_HEADER"
+ENRICH_PROJECT_HEADER             = "ENRICH_PROJECT_HEADER"
+ENRICH_PROJECT_ENTRY              = "ENRICH_PROJECT_ENTRY"
+ENRICH_INTERNAL_PROJECT           = "ENRICH_INTERNAL_PROJECT"
+ENRICH_ROLE_INTRO                 = "ENRICH_ROLE_INTRO"
+ENRICH_SPECIALIZATION_HEADER      = "ENRICH_SPECIALIZATION_HEADER"
+ENRICH_PROJECT_INTRO_CONTINUATION = "ENRICH_PROJECT_INTRO_CONTINUATION"
 
 # ---------------------------------------------------------------------------
 # Internal patterns
@@ -54,6 +56,8 @@ _A_LINK_RE = re.compile(r"^a link\s", re.IGNORECASE)
 _PROJECTS_SECTION_RE = re.compile(r"project", re.IGNORECASE)
 # PDF-converted fake bullet prefix: "f " followed by uppercase letter
 _PDF_FAKE_BULLET_RE = re.compile(r"^f [A-Z]")
+# Year at end of line: "2024" or "2025-2026" or "2019-20"
+_YEAR_AT_END_RE = re.compile(r"\b(?:19|20)\d{2}(?:-(?:19|20)?\d{2})?\s*$")
 
 # Technical domain keywords — presence is required for specialization_header.
 _DOMAIN_KW_RE = re.compile(
@@ -66,7 +70,8 @@ _DOMAIN_KW_RE = re.compile(
 # Tech-layer key words for the extended tech_stack detection.
 # Covers patterns NOT already caught by the normalizer's _TECH_STACK_RE:
 #   "Application level:", "Persistence level:", "Containers:", "Monitoring and metrics:",
-#   "Cache:", "Message:", "Queue:", "Deploy:", "Logging:", "Auth:", "ELK:"
+#   "Cache:", "Message:", "Queue:", "Deploy:", "Logging:", "Auth:", "ELK:",
+#   "DevOps tools:", "Databases:"
 _TECH_LAYER_FIRST_WORDS: frozenset[str] = frozenset({
     "application", "persistence",
     "container", "containers",
@@ -80,10 +85,16 @@ _TECH_LAYER_FIRST_WORDS: frozenset[str] = frozenset({
     "logging", "log", "logs",
     "authentication", "authorization", "auth",
     "elk",
+    "devops",
+    "databases", "database",
 })
 
-# parser_semantic values considered "role structural" for role_intro context
-_ROLE_STRUCTURAL_SEMS = frozenset({"role_header", "role_meta", "role_intro"})
+# parser_semantic values considered "role structural" for role_intro context.
+# project_entry is included so that project descriptions following a project
+# entry are promoted to role_intro (chained enrichment in Projects sections).
+_ROLE_STRUCTURAL_SEMS = frozenset({
+    "role_header", "role_meta", "role_intro", "project_entry",
+})
 
 _MIN_CONFIDENCE = 0.80
 
@@ -100,6 +111,8 @@ def _is_tech_layer_line(text: str) -> bool:
       "Monitoring and metrics: Prometheus, Grafana"
       "Containers: Amazon EKS, Kubernetes, Docker"
       "Persistence level: PostgreSQL, Hibernate"
+      "DevOps tools: GitLab, Jenkins, Docker"
+      "Databases: MySQL, Oracle, PostgreSQL"
     """
     colon_idx = text.find(":")
     if colon_idx < 1 or colon_idx > 40:
@@ -142,17 +155,22 @@ def _conf_project_entry(
     is_projects_section: bool,
     is_unowned: bool,
 ) -> float:
-    """Project-section entry not attached to any role group.
+    """Unowned project-section entry (paragraph type only).
 
-    Targets hyperlinked project names that survive PDF→DOCX conversion as
-    "a link <name>, <year>" plain text.
+    Catches two patterns:
+    1. Pre-normalization "a link <name>" prefix still present in text.
+    2. Post-normalization: entry ending with a year (normalizer strips "a link").
     """
     if not is_projects_section:
         return 0.0
     if not is_unowned:
         return 0.0
-    if _A_LINK_RE.match(para.text.strip()):
+    t = para.text.strip()
+    if _A_LINK_RE.match(t):
         return 0.90
+    # Year-ending project entry: "Name, description, 2020" or "Name, tool, 2025-2026"
+    if _YEAR_AT_END_RE.search(t):
+        return 0.85
     return 0.0
 
 
@@ -258,6 +276,33 @@ def _conf_specialization_header(
     return conf
 
 
+def _conf_project_intro_continuation(
+    para: "ClassificationParaInput",
+    prev_sem: str,
+    in_role: bool,
+) -> float:
+    """Continuation paragraph immediately after a project_intro.
+
+    Targets split project descriptions like:
+      para_160: "Contribution to the internal project..."  → project_intro
+      para_162: "technical growth and helps manage it..."  → project_intro (continuation)
+    """
+    if prev_sem != "project_intro":
+        return 0.0
+    if not in_role:
+        return 0.0
+    t = para.text.strip()
+    if not t:
+        return 0.0
+    if t[0] in _BULLET_GLYPHS:
+        return 0.0
+    if _PDF_FAKE_BULLET_RE.match(t):
+        return 0.0
+    if len(t) < 10:
+        return 0.0
+    return 0.82
+
+
 # ---------------------------------------------------------------------------
 # Core per-paragraph enrichment
 # ---------------------------------------------------------------------------
@@ -296,7 +341,7 @@ def _enrich_para(
     if c:
         candidates.append((c, "tech_stack", ENRICH_TECH_STACK_DETAIL))
 
-    # Project section entry (hyperlinked, unowned)
+    # Project section entry (hyperlinked or year-ending, unowned)
     c = _conf_project_entry(para, is_projects_section, is_unowned)
     if c:
         candidates.append((c, "project_entry", ENRICH_PROJECT_ENTRY))
@@ -316,6 +361,11 @@ def _enrich_para(
     if c:
         candidates.append((c, "project_intro", ENRICH_INTERNAL_PROJECT))
 
+    # Continuation of a project_intro block
+    c = _conf_project_intro_continuation(para, prev_sem, in_role)
+    if c:
+        candidates.append((c, "project_intro", ENRICH_PROJECT_INTRO_CONTINUATION))
+
     # Specialization header (domain keyword, short, no punct)
     c = _conf_specialization_header(para, next_para)
     if c:
@@ -330,6 +380,31 @@ def _enrich_para(
         return para, 0.0, ""
 
     return dataclasses.replace(para, parser_semantic=new_sem), conf, event
+
+
+# ---------------------------------------------------------------------------
+# role_meta promotion in Projects sections
+# ---------------------------------------------------------------------------
+
+
+def _try_enrich_projects_meta(
+    para: "ClassificationParaInput",
+    is_projects_section: bool,
+) -> "tuple[ClassificationParaInput, float, str]":
+    """Promote role_meta → project_entry inside a Projects section.
+
+    The parser groups project name lines as role_meta (mirroring experience
+    structure). In Projects sections these are project entries, not role
+    metadata. This does not alter role ownership — the para_id remains in
+    meta_para_ids; only the semantic label changes.
+    """
+    if not is_projects_section:
+        return para, 0.0, ""
+    if para.parser_semantic != "role_meta":
+        return para, 0.0, ""
+    if not para.text.strip():
+        return para, 0.0, ""
+    return dataclasses.replace(para, parser_semantic="project_entry"), 0.90, ENRICH_PROJECT_ENTRY
 
 
 # ---------------------------------------------------------------------------
@@ -354,10 +429,16 @@ def _enrich_section(
 
     for i, para in enumerate(sec.paragraphs):
         next_para = sec.paragraphs[i + 1] if i + 1 < len(sec.paragraphs) else None
-        enriched, conf, event = _enrich_para(
-            para, prev_sem, next_para,
-            meta_para_id_set, bullet_para_id_set, is_projects_section,
-        )
+
+        # Special case: role_meta in Projects sections → project_entry
+        if para.parser_semantic == "role_meta" and is_projects_section:
+            enriched, conf, event = _try_enrich_projects_meta(para, is_projects_section)
+        else:
+            enriched, conf, event = _enrich_para(
+                para, prev_sem, next_para,
+                meta_para_id_set, bullet_para_id_set, is_projects_section,
+            )
+
         new_paras.append(enriched)
         prev_sem = enriched.parser_semantic
         if event:
@@ -386,8 +467,9 @@ def enrich_semantics(
     Returns
     -------
     (enriched_input, diagnostics)
-        enriched_input  — new ClassificationInput; only parser_semantic on
-                          paragraph-typed paras may differ from the input.
+        enriched_input  — new ClassificationInput; parser_semantic may differ
+                          on paragraph-typed paras and role_meta paras in
+                          Projects sections.
         diagnostics     — list of {event, para_id, text, confidence,
                           original_semantic, enriched_semantic} records.
     """
