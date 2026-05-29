@@ -75,6 +75,19 @@ _SECTION_HARD_FAIL_THRESHOLD: dict[str, float] = {
     "skills": 0.35,
 }
 
+# Jaccard similarity between a rendered section and the original template section
+# above which the section is considered unchanged (LLM content not injected).
+# 0.95 allows for minor rendering normalisation differences while reliably catching
+# cases where the template text was preserved verbatim despite similar LLM vocabulary.
+_TEMPLATE_UNCHANGED_THRESHOLD = 0.95
+
+# When rendered section looks like the template (sim_to_orig >= threshold above),
+# also require that the rendered section fails to reflect the LLM's own vocabulary
+# before raising a HARD FAIL.  This avoids false positives for the case where the
+# LLM produced content identical to the template (e.g. same company, same bullets).
+# recall_llm >= this value means the LLM content IS reflected → injection succeeded.
+_TEMPLATE_UNCHANGED_MAX_LLM_RECALL = 0.80
+
 
 @dataclass
 class ContentInjectionResult:
@@ -321,6 +334,21 @@ def _ir_split_text(ir: dict) -> tuple[str, str]:
     return " ".join(llm_parts), " ".join(tmpl_parts)
 
 
+def _original_template_sections(template_docx_path: str) -> dict[str, str]:
+    """Parse the original template DOCX and return per-section text for each target type.
+
+    Used to detect sections whose rendered content is unchanged from the template,
+    indicating that LLM injection was silently skipped.  Returns an empty dict on
+    any failure so the caller can safely skip the check.
+    """
+    try:
+        from tailor.compiler.docx_parser import parse_docx
+        original_ir = parse_docx(template_docx_path)
+        return _ir_text_by_section_type(original_ir.to_dict())
+    except Exception:
+        return {}
+
+
 def _docx_to_text(docx_path: str) -> str:
     """Extract flat text from a DOCX template."""
     try:
@@ -403,6 +431,7 @@ def check_content_injection(
     _section_ev: list[str] = []
     _llm_sections = _parse_llm_sections(llm_text)
     _ir_sections = _ir_text_by_section_type(ir_dict)
+    _orig_sections = _original_template_sections(template_docx_path)
     for _sec_key, _sec_name in (("summary", "Summary"), ("experience", "Experience"), ("skills", "Skills")):
         _llm_sec = _llm_sections.get(_sec_key, "")
         _ir_sec = _ir_sections.get(_sec_key, "")
@@ -431,6 +460,30 @@ def check_content_injection(
                 f"({round((1 - _sec_recall) * 100)}% of LLM {_sec_name.lower()} "
                 f"vocabulary not reflected in rendered output) -- HARD FAIL"
             )
+
+        # Check whether the rendered section is unchanged from the original template.
+        # A high Jaccard with the template means LLM content was not injected — even
+        # when the recall check above passes because the LLM happened to use similar
+        # vocabulary (e.g. same company, past-tense rewrite of same bullets).
+        # Second guard: if recall_llm is already high the LLM content IS present in
+        # the rendered output, so "looks like template" means the LLM genuinely
+        # reproduced the template text — not an injection failure.
+        _orig_sec = _orig_sections.get(_sec_key, "")
+        if _orig_sec:
+            _orig_tok = _tokenize(_orig_sec)
+            _ir_tok = _tokenize(_ir_sec)
+            if _orig_tok and _ir_tok:
+                _sim_to_orig = _jaccard(_ir_tok, _orig_tok)
+                if (
+                    _sim_to_orig >= _TEMPLATE_UNCHANGED_THRESHOLD
+                    and _sec_recall < _TEMPLATE_UNCHANGED_MAX_LLM_RECALL
+                ):
+                    hard_fail = True
+                    _section_ev.append(
+                        f"{_sec_name} section content unchanged from template "
+                        f"(sim_to_original={_sim_to_orig:.2f}, "
+                        f"llm_recall={_sec_recall:.2f}) -- HARD FAIL"
+                    )
 
     # ── sim_template: non-target sections vs original template ────────────────
     # Measures whether Education / Languages / References were preserved verbatim.
