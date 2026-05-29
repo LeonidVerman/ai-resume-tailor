@@ -567,6 +567,7 @@ def _update_experience_section(
                 body_paras=clean_body_d,
                 roles=updated_roles,
                 section_id=orig.section_id,
+                container_type=orig.container_type,
             )
         # Reparse found no role structure — preserve original roles verbatim to
         # prevent the zip(orig.roles, llm.roles=[]) fallthrough wiping all roles.
@@ -582,6 +583,7 @@ def _update_experience_section(
             body_paras=orig.body_paras,
             roles=list(orig.roles),
             section_id=orig.section_id,
+            container_type=orig.container_type,
         )
 
     # Normal path: pipe-separated LLM roles matched by position.
@@ -718,6 +720,7 @@ def _update_experience_section(
         body_paras=clean_body,
         roles=updated_roles,
         section_id=orig.section_id,
+        container_type=orig.container_type,
     )
 
 
@@ -1014,6 +1017,7 @@ def _update_body_section(
         body_paras=new_body,
         roles=[],
         section_id=orig.section_id,
+        container_type=orig.container_type,
     )
     if _body_extra_injections:
         result._extra_injections = _body_extra_injections  # type: ignore[attr-defined]
@@ -2402,6 +2406,7 @@ def _update_experience_date_first(
             body_paras=orig.body_paras,
             roles=[],
             section_id=orig.section_id,
+            container_type=orig.container_type,
         )
 
     match_map = _match_llm_to_ir_roles(llm_roles, rebuilt_roles)
@@ -2535,6 +2540,7 @@ def _update_experience_date_first(
         body_paras=result_body,
         roles=[],
         section_id=orig.section_id,
+        container_type=orig.container_type,
     )
     if _extra_injections:
         result._extra_injections = _extra_injections  # type: ignore[attr-defined]
@@ -2805,6 +2811,7 @@ def _update_experience_classified(
                     body_paras=orig.body_paras,
                     roles=expanded,
                     section_id=orig.section_id,
+                    container_type=orig.container_type,
                 )
 
     if not orig.roles:
@@ -2887,6 +2894,7 @@ def _update_experience_classified(
         body_paras=filtered_body,
         roles=updated_roles,
         section_id=orig.section_id,
+        container_type=orig.container_type,
     )
 
 
@@ -2940,6 +2948,7 @@ def _update_body_classified(
             body_paras=new_body,
             roles=[],
             section_id=orig.section_id,
+            container_type=orig.container_type,
         )
 
     # No structure constraint — use existing body update.
@@ -3969,6 +3978,7 @@ def apply_anchor_budgets(
             body_paras=[_t(p) for p in sec.body_paras],
             roles=new_roles,
             section_id=sec.section_id,
+            container_type=sec.container_type,
         ))
 
     # Rebuild all_paras in canonical order

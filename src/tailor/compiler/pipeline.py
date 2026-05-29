@@ -25,6 +25,7 @@ from tailor.compiler.updater import apply_tailored
 
 if TYPE_CHECKING:
     from tailor.compiler.classification_models import ClassificationOutput
+    from tailor.compiler.models import ResumeSection
 
 log = logging.getLogger(__name__)
 
@@ -117,6 +118,31 @@ def compile_resume_from_ir(
     return updated
 
 
+def _lum_hex(h: str) -> float:
+    """Return average RGB luminance (0–255) for a hex color string."""
+    h = (h or "").lstrip("#").lower()
+    if len(h) != 6:
+        return -1.0
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return (r + g + b) / 3.0
+
+
+def _is_dark_hex(h: str) -> bool:
+    """Return True if hex color has average luminance < 128 (i.e. is visually dark)."""
+    l = _lum_hex(h)
+    return l >= 0 and l < 128
+
+
+def _contrast_score(fg: str | None, bg: str | None) -> float:
+    """Return a simple contrast score (0–255) between two hex colors.
+
+    Higher is better.  Values below ~50 indicate poor readability.
+    """
+    if not fg or not bg:
+        return 255.0  # unknown — assume OK
+    return abs(_lum_hex(fg) - _lum_hex(bg))
+
+
 def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
     """Normalize styling on LLM-generated content paragraphs in a PDF-sourced doc.
 
@@ -150,10 +176,11 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
                 continue
             if pm.semantic in ("section_heading", "role_header"):
                 continue  # keep template accent colors on structural headings
-            # Keep text_color for paragraphs on a dark background (e.g. white text
-            # on the header band) — stripping it would make the text invisible.
+            # Keep text_color only for truly dark backgrounds (e.g. white text on a
+            # dark header band).  Light-tinted backgrounds (beige, pale-blue) must
+            # NOT be treated as dark — use luminance < 128 as the threshold.
             bg = pp.background_color
-            if bg and bg not in ("ffffff", "fefefe", "f8f8f8"):
+            if bg and _is_dark_hex(bg):
                 continue
             # Strip color from LLM-replaced content (bullets, body paragraphs, meta).
             # PDF-extracted colors bleed onto new content via clone_as; clearing them
@@ -179,21 +206,25 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
     _fix(doc.header_paras)
     _fix(doc.all_paras)
 
-    _LIGHT_BG_SET = frozenset(("ffffff", "fefefe", "f8f8f8"))
-
-    # Apply center alignment to large-font header paragraphs on a dark background
-    # (e.g. "CHARLES MCTURLAND" on the dark header bar in sample 3).  These
-    # typically appear centred in the original template but alignment is not
-    # reliably extracted from PDF spans.  Threshold: 20pt+ font AND dark fill.
-    # Also ensure white text color on dark backgrounds: PDF parsers often fail to
-    # extract the white color for dark-background text, leaving text_color=None
-    # which renders as default (black) — invisible on a dark band.
+    # Fix 22: Apply white text ONLY on genuinely dark backgrounds (luminance < 128).
+    # Previous code used a hardcoded _LIGHT_BG_SET of 3 pure-white values; any
+    # light-tinted background (beige fdf3eb, pale-blue d9e4ec) fell through and
+    # incorrectly received white text.  The luminance threshold is consistent with
+    # _is_dark_bg in docx_renderer.py.
+    #
+    # Two triggers for dark-background detection on header paragraphs:
+    #   (a) per-paragraph background_color (explicit in PDF extraction)
+    #   (b) layout.header_bg_color as fallback — covers vector-shape backgrounds
+    #       not captured as per-para fills.
+    _layout_header_bg = (doc.layout.header_bg_color if doc.layout else None) or ""
     for _pm in doc.header_paras:
         _pp = _pm.paragraph_profile
-        if _pp and _pp.background_color and _pp.background_color not in _LIGHT_BG_SET:
+        if _pp is None:
+            continue
+        _bg = _pp.background_color or _layout_header_bg
+        if _bg and _is_dark_hex(_bg):
             if _pp.font_size_pt and _pp.font_size_pt >= 20.0:
                 _pp.alignment = "center"
-            # Set white text on dark background when no color was extracted
             if _pp.text_color is None:
                 _pp.text_color = "ffffff"
 
@@ -201,6 +232,118 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
         _fix(sec.body_paras)
         for role in sec.roles:
             _fix([role.header] + list(role.header_extra) + role.meta_lines + role.bullets)
+        # Fix 22 (section extension): white text only on dark per-paragraph backgrounds.
+        for _pm in [sec.heading, *sec.body_paras]:
+            _pp = _pm.paragraph_profile
+            if _pp and _pp.background_color and _is_dark_hex(_pp.background_color):
+                if _pp.text_color is None:
+                    _pp.text_color = "ffffff"
+        for _role in sec.roles:
+            for _pm in [_role.header, *_role.header_extra, *_role.meta_lines, *_role.bullets]:
+                _pp = _pm.paragraph_profile
+                if _pp and _pp.background_color and _is_dark_hex(_pp.background_color):
+                    if _pp.text_color is None:
+                        _pp.text_color = "ffffff"
+
+    # Full-page dark background (sample 15 style): single-column + dark header_bg +
+    # full_page_bg image → apply white to all section content.
+    # Two-column templates with full_page_bg (e.g. sample 22) use cell shading and
+    # must NOT have body text forced to white.
+    _has_full_page_bg = (
+        doc.layout.column_split_x is None
+        and _layout_header_bg
+        and _is_dark_hex(_layout_header_bg)
+        and any(
+            getattr(_img, "category", None) == "full_page_bg"
+            for _img in (getattr(doc, "page_images", None) or [])
+        )
+    )
+    if _has_full_page_bg:
+        for sec in doc.sections:
+            for _pm in [sec.heading, *sec.body_paras]:
+                _pp = _pm.paragraph_profile
+                if _pp and _pp.text_color is None:
+                    _pp.text_color = "ffffff"
+            for _role in sec.roles:
+                for _pm in [_role.header, *_role.header_extra, *_role.meta_lines, *_role.bullets]:
+                    _pp = _pm.paragraph_profile
+                    if _pp and _pp.text_color is None:
+                        _pp.text_color = "ffffff"
+
+    # Contrast diagnostics: log any paragraph where text and background produce
+    # poor contrast (score < 50 out of 255).  Pure informational — no correction.
+    import logging as _logging
+    _clog = _logging.getLogger("tailor.contrast")
+    _default_fg = "000000"
+    for _pm in [*doc.header_paras, *doc.all_paras]:
+        _pp = _pm.paragraph_profile
+        if _pp is None:
+            continue
+        _fg = _pp.text_color or _default_fg
+        _bg = _pp.background_color or _layout_header_bg or ""
+        if not _bg:
+            continue
+        _score = _contrast_score(_fg, _bg)
+        if _score < 50:
+            _clog.debug(
+                "LOW_CONTRAST para=%r TEXT_COLOR=#%s BG_COLOR=#%s CONTRAST=%.0f",
+                (_pm.text or "")[:40],
+                _fg,
+                _bg,
+                _score,
+            )
+
+
+def _estimate_col_section_height(
+    sec: "ResumeSection",
+    col_width_pt: float,
+    default_font_size_pt: float = 10.0,
+) -> float:
+    """Rough height estimate for *sec* rendered in a column *col_width_pt* wide.
+
+    Uses a simple character-count wrapping model: chars_per_line ≈ col_width /
+    (font_size × 0.55).  Each wrapped line costs font_size × 1.3 pt.
+    """
+    import math as _math
+    total = 0.0
+    for pm in [sec.heading, *sec.body_paras]:
+        txt = pm.text or ""
+        if not txt.strip():
+            continue
+        pp = pm.paragraph_profile
+        fs = (pp.font_size_pt if pp and pp.font_size_pt else default_font_size_pt) or default_font_size_pt
+        sp = pp.space_before_pt if pp else 0.0
+        chars_per_line = max(1.0, col_width_pt / (fs * 0.55))
+        n_lines = _math.ceil(len(txt) / chars_per_line)
+        total += sp + fs * 1.3 * max(1, n_lines)
+    return total
+
+
+def _sidebar_overflow_check(
+    sec: "ResumeSection",
+    col_width_pt: float,
+    default_font_size_pt: float = 10.0,
+    max_wrap_lines: int = 3,
+) -> bool:
+    """Return True if any body_para of *sec* wraps more than *max_wrap_lines*.
+
+    Used to detect skills sections that are too verbose for a narrow sidebar.
+    A skills item wrapping more than max_wrap_lines lines in the given column
+    width is a sign of a content/layout mismatch that warrants moving the
+    section to the main content (right) column.
+    """
+    import math as _math
+    for bp in sec.body_paras:
+        txt = bp.text or ""
+        if not txt.strip():
+            continue
+        pp = bp.paragraph_profile
+        fs = (pp.font_size_pt if pp and pp.font_size_pt else default_font_size_pt) or default_font_size_pt
+        chars_per_line = max(1.0, col_width_pt / (fs * 0.55))
+        n_lines = _math.ceil(len(txt) / chars_per_line)
+        if n_lines > max_wrap_lines:
+            return True
+    return False
 
 
 def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocument) -> None:
@@ -283,6 +426,10 @@ def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocumen
         else frozenset()
     )
 
+    # Column widths for capacity estimation.
+    left_col_width_pt: float = template_ir.layout.column_split_x or 0.0
+    default_fs_pt: float = template_ir.layout.default_font_size_pt or 10.0
+
     for sec in updated.sections:
         h_pp = sec.heading.paragraph_profile
         if not (h_pp and h_pp.column_id == "left"):
@@ -292,7 +439,30 @@ def _fix_extra_left_sections(template_ir: ResumeDocument, updated: ResumeDocumen
         if sec.section_id and sec.section_id in template_left_section_ids:
             continue  # originally a left-column section — keep it there
         if sec.semantic_type in _SIDEBAR_SEMANTIC_TYPES:
-            continue  # sidebar content type — always stays in left column
+            # Capacity guard: if any skill item wraps too many lines in the
+            # narrow sidebar, move the section to the right column.
+            if left_col_width_pt > 0.0:
+                overflows = _sidebar_overflow_check(
+                    sec, left_col_width_pt, default_fs_pt, max_wrap_lines=3
+                )
+                sec_h = _estimate_col_section_height(sec, left_col_width_pt, default_fs_pt)
+                if overflows:
+                    log.debug(
+                        "SIDEBAR_CAPACITY: section=%r target=right_column "
+                        "col_width=%.0fpt sec_height_est=%.0fpt "
+                        "fallback=overflow_too_verbose",
+                        sec.title, left_col_width_pt, sec_h,
+                    )
+                    # Fall through to _move() calls below.
+                else:
+                    log.debug(
+                        "SIDEBAR_CAPACITY: section=%r target=left_sidebar "
+                        "col_width=%.0fpt sec_height_est=%.0fpt fallback=none",
+                        sec.title, left_col_width_pt, sec_h,
+                    )
+                    continue  # fits without excessive wrapping — keep in sidebar
+            else:
+                continue  # no column-width info — keep in sidebar
         _move(sec.heading, right_heading_indent)
         for bp in sec.body_paras:
             _move(bp, right_body_indent)
@@ -374,11 +544,28 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     # match so that sidebar templates (e.g. sample 25) inject the LLM summary
     # into the sidebar and clean up old template placeholder text there, rather
     # than mixing left and right columns and producing an ambiguous target_col.
-    _sum_left = {
+
+    # For the LEFT column use CONTIGUOUS block detection: find the first run of
+    # consecutive left-col lines that look like summary prose and stop at the
+    # first gap.  Scanning all left-col lines would misidentify role bullets as
+    # summary text when the PDF parser places experience sections in header_paras
+    # alongside the summary (e.g. templates where the whole left column is parsed
+    # as a header region).  Contiguous detection limits the match to the actual
+    # profile paragraph at the start of the left column, not scattered bullets.
+    _left_col_idxs = [
         j for j, hp in enumerate(doc.header_paras)
         if hp.paragraph_profile and hp.paragraph_profile.column_id == "left"
-        and _is_original_summary_line(hp.text)
-    }
+    ]
+    _sum_left: set[int] = set()
+    _in_block = False
+    for _j in _left_col_idxs:
+        _hp = doc.header_paras[_j]
+        if _is_original_summary_line(_hp.text):
+            _sum_left.add(_j)
+            _in_block = True
+        elif _in_block:
+            break  # first non-summary line after block started → stop
+
     _sum_right = {
         j for j, hp in enumerate(doc.header_paras)
         if hp.paragraph_profile and hp.paragraph_profile.column_id == "right"
@@ -395,15 +582,34 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     if _sum_left:
         summary_indices: set[int] = _sum_left
         _target_col: "str | None" = "left"
+        log.debug(
+            "SUMMARY_ANCHOR_SELECTED: col=left summary_lines=%d "
+            "rejected=[right:%d, none:%d]",
+            len(_sum_left), len(_sum_right), len(_sum_none),
+        )
     elif _sum_right:
         summary_indices = _sum_right
         _target_col = "right"
+        log.debug(
+            "SUMMARY_ANCHOR_SELECTED: col=right summary_lines=%d "
+            "rejected=[left:0, none:%d]",
+            len(_sum_right), len(_sum_none),
+        )
     elif _sum_none:
         summary_indices = _sum_none
         _target_col = None  # full-width above table or single-column
+        log.debug(
+            "SUMMARY_ANCHOR_SELECTED: col=None summary_lines=%d "
+            "rejected=[left:0, right:0]",
+            len(_sum_none),
+        )
     else:
         summary_indices = set()
         _target_col = None  # determined below
+        log.debug(
+            "SUMMARY_ANCHOR_SELECTED: no-match — will append to header "
+            "using existing-col heuristic",
+        )
 
     summary_sec = doc.sections[summary_idx]
 
@@ -432,6 +638,13 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
         else:
             _target_col = None  # place above the two-column table
 
+        log.debug(
+            "SUMMARY_ANCHOR_SELECTED: no-match append col=%r "
+            "existing_col_counts=left:%d right:%d",
+            _target_col,
+            _existing_cols.count("left"),
+            _existing_cols.count("right"),
+        )
         for bp in summary_sec.body_paras:
             if bp.paragraph_profile:
                 bp.paragraph_profile.column_id = _target_col
@@ -456,34 +669,35 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
                     bp.paragraph_profile.alignment = "center"
 
         if _target_col == "left":
-            # Sidebar layout: the summary replaces the original profile text in the
-            # left column.  Also remove any remaining original left-column AND
-            # right-column header items that are template placeholders — dates,
-            # old section headings, experience fragments.  Items with para_id set
-            # are from the original template; items with para_id='' were created
-            # by apply_tailored and must be kept.
-            # Exception: preserve original items that are clearly the candidate
-            # name/title (large font ≥ 20pt, or above-table col=None items).
-            # These must appear in the rendered output regardless of column.
-            # All other original col=left/right template placeholders are dropped
-            # (dates, old education fragments, experience descriptions).
-            _kept = []
-            for j, hp in enumerate(doc.header_paras):
-                if j in summary_indices:
-                    continue
-                pp = hp.paragraph_profile
-                col = pp.column_id if pp else None
-                if pp and hp.para_id and col in ("left", "right"):
-                    # Keep only very large items (name, full-page title).
-                    # 20pt threshold separates names (~24-40pt) from body text.
-                    pp_size = pp.font_size_pt or 0.0
-                    if pp_size >= 20.0 and hp.text.strip():
-                        _kept.append(hp)
-                    # else: original placeholder — drop
-                else:
-                    # col=None (above-table) items always kept; LLM items (para_id='') kept
-                    _kept.append(hp)
-            doc.header_paras = _kept + list(summary_sec.body_paras)
+            # Sidebar layout: replace the original summary lines with the LLM
+            # summary IN PLACE (at the same position), so the summary still
+            # appears near the top of the left column rather than at the end.
+            # Only items in summary_indices are removed; all other header content
+            # — contact labels, section headings, role content placed in
+            # header_paras by the PDF parser — is preserved.
+            _first_sum_pos = min(summary_indices)
+            # Count how many non-summary items fall before the first summary line.
+            _n_before = sum(
+                1 for j in range(_first_sum_pos)
+                if j not in summary_indices
+            )
+            _kept_hp = [
+                hp for j, hp in enumerate(doc.header_paras)
+                if j not in summary_indices
+            ]
+            # Splice the LLM summary body_paras at the original summary position.
+            _with_summary = (
+                _kept_hp[:_n_before]
+                + list(summary_sec.body_paras)
+                + _kept_hp[_n_before:]
+            )
+            log.debug(
+                "SUMMARY_ANCHOR_SELECTED: col=left injection summary_lines=%d "
+                "preserved_hp=%d llm_body_paras=%d insert_at=%d",
+                len(summary_indices), len(_kept_hp),
+                len(summary_sec.body_paras), _n_before,
+            )
+            doc.header_paras = _with_summary
             doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
         elif _target_col == "right":
             # Right-column injection.
@@ -915,7 +1129,8 @@ def _inject_skills_into_section_body(doc: ResumeDocument) -> None:
         return
 
     # Find a parent section whose body_paras contain a skills sub-heading.
-    _SKILL_KEYWORDS = ("skill", "abilit", "competenc", "expertise")
+    # "proficien" handles "Proficiency" / "Proficiencies" headings.
+    _SKILL_KEYWORDS = ("skill", "abilit", "competenc", "expertise", "proficien")
     parent_sec = None
     skill_start_idx: int | None = None
     for sec in doc.sections:
@@ -943,6 +1158,23 @@ def _inject_skills_into_section_body(doc: ResumeDocument) -> None:
         else:
             break
 
+    # Scan for non-skills sub-sections embedded after the skills block (e.g.
+    # "Language", "Interests").  Preserve those trailing paragraphs so they are
+    # not silently dropped when we replace the skills content.
+    _END_MARKERS = (
+        "language", "interest", "hobby", "hobbies",
+        "reference", "award", "honor", "honour",
+    )
+    skill_block_end = len(parent_sec.body_paras)
+    for j in range(heading_end, len(parent_sec.body_paras)):
+        bp_txt = parent_sec.body_paras[j].text.strip()
+        if (
+            len(bp_txt) < 25
+            and any(m in bp_txt.lower() for m in _END_MARKERS)
+        ):
+            skill_block_end = j
+            break
+
     # Use the first non-heading body_para as clone archetype for the skill lines.
     archetype = (
         parent_sec.body_paras[heading_end]
@@ -956,7 +1188,9 @@ def _inject_skills_into_section_body(doc: ResumeDocument) -> None:
     ]
 
     parent_sec.body_paras = (
-        list(parent_sec.body_paras[:heading_end]) + new_skill_paras
+        list(parent_sec.body_paras[:heading_end])
+        + new_skill_paras
+        + list(parent_sec.body_paras[skill_block_end:])
     )
 
     # Remove the extra skills section so its heading doesn't appear twice.
@@ -978,6 +1212,23 @@ def compile_resume_from_pdf(
 
     with open(pdf_path, "rb") as f:
         template_ir = parse_pdf(f.read())
+    log.debug(
+        "TABLE_LAYOUT_MODE_DETECTED: mode=%r column_split_x=%s section_row_table=%s",
+        template_ir.layout.table_layout_mode,
+        template_ir.layout.column_split_x,
+        template_ir.layout.section_row_table,
+    )
+    # Infer container semantics: annotates each section with a container_type
+    # (rewriteable_region, preserve_region, independent_vertical_stack, etc.)
+    # and returns a ContainerTree for renderer + diagnostic consumption.
+    from tailor.compiler.container_semantics import infer_container_semantics
+    _container_tree = infer_container_semantics(template_ir)
+    log.debug(
+        "CONTAINER_SEMANTICS: mode=%r containers=%d sections_annotated=%d",
+        _container_tree.document_mode,
+        len(_container_tree.containers),
+        sum(1 for s in template_ir.sections if s.container_type),
+    )
     # Remove contact/footer items (phone, email) that landed in role bullets on
     # single-page PDFs — they would otherwise become LLM bullet archetypes and
     # produce wrong size, indent, and italic on generated bullets.

@@ -278,6 +278,11 @@ class ResumeSection:
     roles: list[RoleEntry] = field(default_factory=list)        # experience sections only
     # Stable synthetic ID assigned by assign_stable_ids(); "" until assigned.
     section_id: str = ""
+    # Container semantics assigned by infer_container_semantics().
+    # Values: "independent_vertical_stack" | "synchronized_row" |
+    #         "local_column_pair" | "paired_sidebar_region" |
+    #         "rewriteable_region" | "preserve_region" | None
+    container_type: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -287,6 +292,7 @@ class ResumeSection:
             "body_paras": [p.to_dict() for p in self.body_paras],
             "roles": [r.to_dict() for r in self.roles],
             "section_id": self.section_id,
+            "container_type": self.container_type,
         }
 
     @classmethod
@@ -298,6 +304,7 @@ class ResumeSection:
             body_paras=[ParaModel.from_dict(p) for p in d.get("body_paras", [])],
             roles=[RoleEntry.from_dict(r) for r in d.get("roles", [])],
             section_id=d.get("section_id", ""),
+            container_type=d.get("container_type"),
         )
 
 
@@ -322,6 +329,10 @@ class LayoutProfile:
     section_row_table: bool = False          # True when left column is section-label only (one row per section)
     header_bg_color: str | None = None       # hex RRGGBB for full-width dark header band (single-col PDFs)
     footer_bg_color: str | None = None       # hex RRGGBB for full-width dark footer band (single-col PDFs)
+    # Semantic table layout mode (B1): inferred from structural cues; None for non-two-column docs.
+    # Values: "synchronized_rows" | "sidebar_layout" | "header_body_split" |
+    #         "asymmetric_columns" | "independent_columns"
+    table_layout_mode: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -341,6 +352,7 @@ class LayoutProfile:
             "section_row_table": self.section_row_table,
             "header_bg_color": self.header_bg_color,
             "footer_bg_color": self.footer_bg_color,
+            "table_layout_mode": self.table_layout_mode,
         }
 
     @classmethod
@@ -362,6 +374,7 @@ class LayoutProfile:
             section_row_table=bool(d.get("section_row_table", False)),
             header_bg_color=d.get("header_bg_color"),
             footer_bg_color=d.get("footer_bg_color"),
+            table_layout_mode=d.get("table_layout_mode"),
         )
 
 
@@ -471,6 +484,11 @@ class ResumeDocument:
     # Raster images extracted from the source PDF (profile photos, decorative
     # headers/footers, etc.).  Runtime-only — not serialised to JSON.
     page_images: list["PageImageBlock"] = field(default_factory=list)
+    # Diagnostics populated by parse_pdf() — runtime-only, not serialised.
+    # Keys: raster_images_raw, vector_images_raw, page_images_final, image_categories,
+    #       column_split_x, table_layout_mode, header_bg_color, left_col_bg_color,
+    #       sidebar_detected, sidebar_inferred, page_bg_detected.
+    pdf_diagnostics: "dict | None" = field(default=None, repr=False)
     body_items: list[Any] | None = None  # list[ParaModel | TableBlock]; None for PDF/deserialised
     label_column_fixed: bool = False     # True when label-column layout reordering was applied
     table_column_layout_fixed: bool = False  # True when newspaper/table multi-column fix applied
