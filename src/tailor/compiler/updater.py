@@ -1449,10 +1449,24 @@ def _inject_fragmented_experience(
 
 # Strategy 1: LLMs sometimes format roles as "Title — Company" (em/en/figure dash).
 _ROLE_BODY_SEP_RE = re.compile(r'\s—\s|\s–\s|\s‒\s')
-# Exclude lines where the only dash is part of a trailing date-range paren, e.g.
-# "Senior Software Engineer (September 2023 – Present)".  These are job-title lines
-# written in "Company – Location\nTitle (Date – Date)" format, not role separators.
+# Matches a trailing date-range paren, e.g. "(September 2023 – Present)".
+# Used by _is_title_line_with_date_paren to exclude job-title lines from dash_bounds.
 _TITLE_DATE_PAREN_RE = re.compile(r'\([^)]*(?:–|—|‒)[^)]*\)\s*$')
+
+
+def _is_title_line_with_date_paren(ln: str) -> bool:
+    """True when *ln* is a job-title line whose only em/en-dash is in a trailing paren.
+
+    Excludes "Senior Software Engineer (September 2023 – Present)" (title-only,
+    dash is inside the date paren) while preserving "Wardiere Inc. – Software
+    Engineering (2014–Present)" (has a main-body separator dash before the paren).
+    """
+    m = _TITLE_DATE_PAREN_RE.search(ln)
+    if m is None:
+        return False
+    # If there is a main-body separator (space–dash–space) in the prefix, the
+    # line is a legitimate role boundary — keep it.
+    return not _ROLE_BODY_SEP_RE.search(ln[:m.start()])
 
 # Strategy 2: standalone date-line boundaries.
 #   A "date line" is a line whose entire content is a date range, e.g.
@@ -1503,7 +1517,7 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
         i for i, ln in enumerate(body_lines)
         if _ROLE_BODY_SEP_RE.search(ln)
         and not _STANDALONE_DATE_LINE_RE.match(ln.strip())
-        and not _TITLE_DATE_PAREN_RE.search(ln)
+        and not _is_title_line_with_date_paren(ln)
     ]
     date_bounds = [
         i for i, ln in enumerate(body_lines)
