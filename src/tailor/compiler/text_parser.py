@@ -400,15 +400,16 @@ def parse_llm_output(text: str) -> list[LlmSection]:
                 and cur_role is None
                 and bool(current.body_lines)
             )
-            # Inside an experience role that already has meta_lines, suppress the
-            # title-case fallback.  Sub-titles like "Software Engineer" (a role
-            # promotion within a company) have 2 title-case words but are NOT
-            # new section headings — they are meta content for the current role.
-            in_experience_role_with_meta = (
+            # Inside any active experience role, suppress the title-case fallback.
+            # Company names like "Lamna Healthcare" or "Wholeness Healthcare" are
+            # 2 title-case words that appear immediately after a role header line;
+            # they are company names (meta content), not new section headings.
+            # Known headings in _ALL_KNOWN are still recognised via the restricted
+            # check below, so real sections are not missed.
+            in_experience_role = (
                 cur_role is not None
-                and bool(cur_role.meta_lines)
             )
-            if in_roleless_experience or in_section_with_body or in_experience_role_with_meta:
+            if in_roleless_experience or in_section_with_body or in_experience_role:
                 is_heading = bool(stripped) and (
                     stripped.lower() in _ALL_KNOWN
                     or _normalize_letter_spaced(stripped) in _ALL_KNOWN

@@ -8,6 +8,7 @@ then grades layout preservation for each sample.
 Usage:
     python tests/grade_layout.py                          # all matched samples
     python tests/grade_layout.py 31                       # sample with prefix 31
+    python tests/grade_layout.py 5 6 7 10 15             # multiple prefixes
     python tests/grade_layout.py 1-Leonid                 # match by fragment
     python tests/grade_layout.py --baseline path/to/aggregate.json
     python tests/grade_layout.py --no-render 31           # skip rendering step
@@ -39,6 +40,19 @@ if str(_TESTS) not in sys.path:
 from tailor.eval.layout_grader.grader import SampleGrade, _detect_pdf_method, grade_sample
 from tailor.eval.layout_grader.report import build_aggregate, compare_baseline, write_summary_txt
 
+
+def _ev_severity(msg: str) -> int:
+    """Sort key for evidence messages: 0=HARD FAIL, 1=WARN, 2=INFO."""
+    if "HARD FAIL" in msg:
+        return 0
+    if "suppressed" in msg or "well-preserved" in msg or "No Summary" in msg:
+        return 2
+    return 1
+
+
+def _ev_tag(msg: str) -> str:
+    return ("[HARD FAIL]", "[WARN]", "[INFO]")[_ev_severity(msg)]
+
 _SAMPLES = _TESTS / "samples"
 _CLS_DOCX_DIR = _SAMPLES / "classification" / "docx"
 _GEN_DIR = _SAMPLES / "generation"
@@ -46,9 +60,12 @@ _RES_DOCX_DIR = _SAMPLES / "resume" / "docx"
 
 _IR_DIR = _REPO / "tmp" / "artefacts" / "ir" / "docx"
 _REND_DOCX_DIR = _REPO / "tmp" / "artefacts" / "rendering" / "docx"
-_REND_PDF_DIR = _REPO / "tmp" / "artefacts" / "rendering" / "pdf"
 _GRADE_DIR = _REPO / "tmp" / "artefacts" / "layout_grading"
 _TEMPLATE_PDF_DIR = _GRADE_DIR / "template_pdf"
+# Generated PDFs are kept in the grading dir (not the render dir) so they are
+# always derived from the DOCX-origin rendered DOCX and are never overwritten
+# by the PDF-origin render pipeline, which shares the same stem name.
+_GRADE_PDF_DIR = _GRADE_DIR / "generated_pdf"
 
 _NUM_RE = re.compile(r"^(\d+)-")
 
@@ -73,7 +90,7 @@ class _Triple:
         self.gen_path: Path = gen_path
 
 
-def discover(filter_arg: str | None = None) -> tuple[list[_Triple], list[str]]:
+def discover(filter_args: list[str] | None = None) -> tuple[list[_Triple], list[str]]:
     """Return (matched_triples, skip_messages).
 
     Requirements for a match: template DOCX, classification JSON, and
@@ -114,16 +131,18 @@ def discover(filter_arg: str | None = None) -> tuple[list[_Triple], list[str]]:
         triples.append(_Triple(n, resume_stem, template_docx, cls_path, gen_path))
 
     # Apply filter
-    if filter_arg:
-        if filter_arg.isdigit():
-            triples = [t for t in triples if t.prefix == filter_arg]
-            skips = [s for s in skips if f"[{filter_arg}]" in s]
-        else:
-            frag = filter_arg.lower()
+    if filter_args:
+        # Partition into numeric prefixes and fragment strings
+        numeric = {a for a in filter_args if a.isdigit()}
+        frags = [a.lower() for a in filter_args if not a.isdigit()]
+
+        if numeric:
+            triples = [t for t in triples if t.prefix in numeric]
+            skips = [s for s in skips if any(f"[{n}]" in s for n in numeric)]
+        if frags:
             triples = [
                 t for t in triples
-                if frag in t.stem.lower()
-                or frag in t.gen_path.name.lower()
+                if any(f in t.stem.lower() or f in t.gen_path.name.lower() for f in frags)
             ]
 
     return triples, skips
@@ -146,17 +165,11 @@ def _ensure_rendering(triple: _Triple) -> bool:
 
     print(f"  [render] Rendering [{triple.prefix}] {triple.stem} …")
     try:
-        from rendering.render_samples import SamplePair, render_sample
-
-        pair = SamplePair(
-            prefix=triple.prefix,
-            source_kind="docx",
-            resume_path=triple.template_docx,
-            gen_path=triple.gen_path,
-        )
-        ok = render_sample(pair, verbose=False)
+        from rendering.render_samples import main as render_main
+        rc = render_main(["--no-screenshots", triple.prefix])
+        ok = rc == 0
         if not ok:
-            print(f"  [render] FAILED")
+            print(f"  [render] FAILED (exit {rc})")
         return ok
     except Exception as exc:
         print(f"  [render] ERROR: {exc}")
@@ -173,8 +186,8 @@ def main(argv: list[str] | None = None) -> int:
         description="Grade DOCX layout preservation for matched samples"
     )
     parser.add_argument(
-        "filter", nargs="?",
-        help="Numeric prefix (e.g. 31) or filename fragment to narrow results"
+        "filter", nargs="*",
+        help="Numeric prefix(es) or filename fragment(s) to narrow results (e.g. 5 6 7 or Leonid)"
     )
     parser.add_argument(
         "--baseline",
@@ -197,7 +210,7 @@ def main(argv: list[str] | None = None) -> int:
     print("=" * 60)
     print(f"  PDF method: {pdf_method}")
 
-    triples, skips = discover(args.filter)
+    triples, skips = discover(args.filter or None)
 
     if skips:
         print(f"\nSkipped ({len(skips)}):")
@@ -212,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
 
     _GRADE_DIR.mkdir(parents=True, exist_ok=True)
     _TEMPLATE_PDF_DIR.mkdir(parents=True, exist_ok=True)
-    _REND_PDF_DIR.mkdir(parents=True, exist_ok=True)
+    _GRADE_PDF_DIR.mkdir(parents=True, exist_ok=True)
 
     grades: list[SampleGrade] = []
 
@@ -224,7 +237,7 @@ def main(argv: list[str] | None = None) -> int:
             _ensure_rendering(triple)
 
         rend_docx = _REND_DOCX_DIR / (stem + ".docx")
-        rend_pdf = _REND_PDF_DIR / (stem + ".pdf")
+        rend_pdf = _GRADE_PDF_DIR / (stem + ".pdf")
         template_pdf = _TEMPLATE_PDF_DIR / (stem + ".pdf")
         ir_json = _IR_DIR / (stem + "_IR.json")
 
@@ -260,9 +273,10 @@ def main(argv: list[str] | None = None) -> int:
 
         flag = " [HARD FAIL]" if grade.hard_fail else ""
         print(f"  score={grade.composite_score:.1f}  {grade.status}{flag}")
-        for ev in grade.evidence[:2]:
+        sorted_ev = sorted(grade.evidence, key=_ev_severity)[:4]
+        for ev in sorted_ev:
             safe_ev = ev.encode("ascii", "replace").decode("ascii")
-            print(f"         {safe_ev}")
+            print(f"         {_ev_tag(safe_ev)} {safe_ev}")
 
         grades.append(grade)
 

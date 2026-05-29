@@ -5270,6 +5270,44 @@ def _trim_trailing_cell_paras(body: Any) -> None:
                     cell.remove(p)
 
 
+def _minimize_trailing_body_para(body: Any) -> None:
+    """Remove the empty trailing body paragraph to prevent blank overflow pages.
+
+    When injected content fills the page so that the mandatory trailing
+    paragraph overflows onto page 2, LibreOffice renders a completely blank
+    second page.  When the sectPr is already a direct body child (the common
+    case for layout_blocks-rendered DOCX), the trailing empty paragraph carries
+    no section properties and can be removed entirely.
+    """
+    # Only act when sectPr is already a direct body child — the trailing
+    # paragraph is then truly redundant.
+    has_direct_sectPr = body.find(f"{{{_W}}}sectPr") is not None
+    if not has_direct_sectPr:
+        return
+
+    direct_children = [c for c in body if c.tag in (f"{{{_W}}}p", f"{{{_W}}}tbl")]
+    if not direct_children:
+        return
+    last = direct_children[-1]
+    if last.tag != f"{{{_W}}}p":
+        return
+
+    # Guard: paragraph must not carry an embedded sectPr (section boundary).
+    pPr = last.find(f"{{{_W}}}pPr")
+    if pPr is not None and pPr.find(f"{{{_W}}}sectPr") is not None:
+        return
+
+    # Guard: paragraph must be empty.
+    runs = last.findall(f".//{{{_W}}}r")
+    text = "".join(
+        (t.text or "") for r in runs for t in r.findall(f"{{{_W}}}t")
+    )
+    if text.strip():
+        return
+
+    body.remove(last)
+
+
 def _split_oversized_table_rows(body: Any, sectPr: Any) -> None:  # noqa: ARG001
     """Split table rows whose cells contain too many paragraphs.
 
@@ -5816,6 +5854,9 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
             # sub-row's cells (template spacing paragraphs that fell between
             # sections).  Strip them here so rows size to actual content.
             _trim_trailing_cell_paras(body)
+            # Minimize the mandatory trailing body paragraph so it does not
+            # push onto a blank second page when injected content fills page 1.
+            _minimize_trailing_body_para(body)
             # Inherit page background color for overflow pages.
             # (a) Solid-fill sidebar backgrounds (e.g. sample 11): clone the
             #     background paragraph from the body start to the body end so

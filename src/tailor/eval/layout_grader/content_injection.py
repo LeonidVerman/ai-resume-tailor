@@ -48,6 +48,33 @@ _LLM_SECTION_KEYWORDS: tuple[str, ...] = (
     "skill", "competenc", "technolog", "expertise",
 )
 
+# Maps heading keywords to canonical per-section comparison keys.
+# Order matters: earlier entries win on multi-keyword headings (e.g. "EMPLOYMENT SUMMARY"
+# → "employment" must beat "summary" so it maps to experience, not summary).
+_LLM_SECTION_TYPE_MAP: tuple[tuple[str, str], ...] = (
+    ("experience", "experience"), ("employment", "experience"), ("history", "experience"),
+    ("summary", "summary"), ("profile", "summary"), ("objective", "summary"), ("about", "summary"),
+    ("skill", "skills"), ("competenc", "skills"), ("technolog", "skills"), ("expertise", "skills"),
+)
+
+# Non-target section keywords that stop content collection (LLM section boundaries).
+# Stop keywords take priority over _LLM_SECTION_TYPE_MAP — checked first in _parse_llm_sections.
+_STOP_SECTION_KEYWORDS: frozenset[str] = frozenset((
+    "education", "certif", "reference", "award", "language", "volunteer",
+    "project", "publication", "additional", "interest", "achievement", "honor",
+    "affiliation", "contact",
+))
+
+# Per-section recall thresholds below which a HARD FAIL is raised.
+# Experience: 45% vocabulary gap tolerated — compaction may remove 2-3 bullets/role.
+# Skills: 65% vocabulary gap tolerated — table_sidebar templates keep only 3 of 7+ cells.
+# Summary: perfect recall required (short section, any gap is significant).
+_SECTION_HARD_FAIL_THRESHOLD: dict[str, float] = {
+    "summary": 1.0,
+    "experience": 0.55,
+    "skills": 0.35,
+}
+
 
 @dataclass
 class ContentInjectionResult:
@@ -133,7 +160,7 @@ def _parse_llm_target_text(llm_text: str) -> str:
         is_heading = (
             1 <= len(words) <= 5
             and len(_alpha_only) >= len(stripped) * 0.80  # ≥ 80% alphabetic
-            and not any(ch in stripped for ch in "@|0123456789+")
+            and not any(ch in stripped for ch in "@|0123456789+,:/")
         )
         if is_heading:
             current_is_target = _is_llm_section(stripped)
@@ -146,6 +173,103 @@ def _parse_llm_target_text(llm_text: str) -> str:
             parts.append(stripped)
 
     return " ".join(parts)
+
+
+def _parse_llm_sections(llm_text: str) -> dict[str, str]:
+    """Split LLM output into per-section text keyed by canonical type.
+
+    Returns a subset of {"summary", "experience", "skills"} — only keys for
+    which content was found.  Uses the same heading-detection heuristic as
+    _parse_llm_target_text.
+    """
+    lines = llm_text.splitlines()
+    current_key: str | None = None
+    parts: dict[str, list[str]] = {}
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        words = stripped.split()
+        _alpha_only = re.sub(r"[^a-zA-Z ]", "", stripped).strip()
+        is_heading = (
+            1 <= len(words) <= 5
+            and len(_alpha_only) >= len(stripped) * 0.80
+            and not any(ch in stripped for ch in "@|0123456789+,:/")
+        )
+        if is_heading:
+            heading_lower = stripped.lower()
+            # Stop keywords take priority — "EDUCATIONAL HISTORY" must stop on
+            # "education" before "history" maps it to experience.
+            if any(kw in heading_lower for kw in _STOP_SECTION_KEYWORDS):
+                current_key = None          # explicit stop at a non-target section
+            else:
+                matched_key = None
+                for kw, key in _LLM_SECTION_TYPE_MAP:
+                    if kw in heading_lower:
+                        matched_key = key
+                        break
+                if matched_key is not None:
+                    current_key = matched_key  # switch to a known target section
+                # else: unrecognised heading (role title, company name, short bullet
+                # fragment) — keep collecting into the current section
+        elif current_key is not None:
+            parts.setdefault(current_key, []).append(stripped)
+
+    return {k: " ".join(v) for k, v in parts.items()}
+
+
+def _ir_text_by_section_type(ir: dict) -> dict[str, str]:
+    """Return rendered IR body text keyed by canonical section type.
+
+    Only covers sections with unambiguous semantic types:
+      "summary"    → semantic_type in {"summary", "profile"} or
+                     section_id contains "summary_inserted"
+      "experience" → semantic_type == "experience"
+      "skills"     → semantic_type in {"skills", "competencies"} or
+                     heading matches a skill keyword
+    """
+    _SUMMARY_TYPES = frozenset({"summary", "profile"})
+    _SKILLS_TYPES = frozenset({"skills", "competencies", "competency"})
+    _SKILLS_KEYWORDS = ("skill", "competenc", "technolog", "expertise")
+
+    parts: dict[str, list[str]] = {}
+
+    for sec in ir.get("sections", []):
+        sec_type = (sec.get("semantic_type") or "").lower()
+        sec_id = sec.get("section_id") or ""
+        heading_obj = sec.get("heading") or {}
+        heading = heading_obj.get("text", "").strip().lower() if heading_obj else ""
+
+        if sec_type in _SUMMARY_TYPES or "summary_inserted" in sec_id:
+            key = "summary"
+        elif sec_type == "experience":
+            key = "experience"
+        elif sec_type in _SKILLS_TYPES or any(kw in heading for kw in _SKILLS_KEYWORDS):
+            key = "skills"
+        else:
+            continue
+
+        bucket = parts.setdefault(key, [])
+
+        for p in sec.get("body_paras", []):
+            t = (p.get("text", "") if isinstance(p, dict) else str(p)).strip()
+            if t:
+                bucket.append(t)
+
+        for role in sec.get("roles", []):
+            rh = role.get("header")
+            if rh:
+                t = rh.get("text", "").strip()
+                if t:
+                    bucket.append(t)
+            for list_key in ("meta_lines", "bullets"):
+                for p in role.get(list_key, []):
+                    t = (p.get("text", "") if isinstance(p, dict) else str(p)).strip()
+                    if t:
+                        bucket.append(t)
+
+    return {k: " ".join(v) for k, v in parts.items()}
 
 
 def _ir_split_text(ir: dict) -> tuple[str, str]:
@@ -271,6 +395,43 @@ def check_content_injection(
     else:
         sim_llm = 0.0
 
+    # ── Per-section breakdown ─────────────────────────────────────────────────
+    # Whole-doc recall can mask a completely unreplaced section when another
+    # section shares vocabulary (e.g. summary tokens covering experience tokens).
+    # Compare each LLM section against its corresponding rendered IR section
+    # independently and surface per-section gaps in evidence.
+    _section_ev: list[str] = []
+    _llm_sections = _parse_llm_sections(llm_text)
+    _ir_sections = _ir_text_by_section_type(ir_dict)
+    for _sec_key, _sec_name in (("summary", "Summary"), ("experience", "Experience"), ("skills", "Skills")):
+        _llm_sec = _llm_sections.get(_sec_key, "")
+        _ir_sec = _ir_sections.get(_sec_key, "")
+        if not _llm_sec:
+            continue
+        if not _ir_sec:
+            if _sec_key != "summary":
+                # Check if LLM section vocabulary appears anywhere in the full rendered IR.
+                # Templates without a dedicated section (e.g. experience-only templates)
+                # may carry the vocabulary in other sections — don't hard-fail in that case.
+                _llm_sec_tokens = _tokenize(_llm_sec)
+                _full_ir_tokens = _tokenize(ir_full_lower)
+                _fallback_recall = _recall(_full_ir_tokens, _llm_sec_tokens) if _llm_sec_tokens else 0.0
+                if _fallback_recall < _SECTION_HARD_FAIL_THRESHOLD[_sec_key]:
+                    hard_fail = True
+                    _section_ev.append(
+                        f"{_sec_name} section: no rendered {_sec_name.lower()} content found for comparison -- HARD FAIL"
+                    )
+            continue
+        _sec_recall = _recall(_tokenize(_ir_sec), _tokenize(_llm_sec))
+        _sec_threshold = _SECTION_HARD_FAIL_THRESHOLD[_sec_key]
+        if _sec_recall < _sec_threshold:
+            hard_fail = True
+            _section_ev.append(
+                f"{_sec_name} section: sim={_sec_recall:.2f} "
+                f"({round((1 - _sec_recall) * 100)}% of LLM {_sec_name.lower()} "
+                f"vocabulary not reflected in rendered output) -- HARD FAIL"
+            )
+
     # ── sim_template: non-target sections vs original template ────────────────
     # Measures whether Education / Languages / References were preserved verbatim.
     # 1.0 = perfect carry-over (desired). Low = unexpected modification.
@@ -297,11 +458,13 @@ def check_content_injection(
     elif sim_llm >= 1.0:
         pass  # Perfect — all target-section LLM content is reflected
     elif sim_llm >= 0.80:
-        # Minor gap — note it but no score penalty
-        evidence.append(
-            f"Minor content gap in target sections: sim_llm={sim_llm:.2f} "
-            f"(~{round((1.0 - sim_llm) * 100)}% of LLM target vocabulary not reflected)"
-        )
+        # Suppress aggregate note when per-section items already explain the gap —
+        # showing both would be redundant and confusing.
+        if not _section_ev:
+            evidence.append(
+                f"Minor content gap in target sections: sim_llm={sim_llm:.2f} "
+                f"(~{round((1.0 - sim_llm) * 100)}% of LLM target vocabulary not reflected)"
+            )
     elif sim_llm >= 0.50:
         score -= 15.0
         evidence.append(
@@ -337,5 +500,5 @@ def check_content_injection(
         hard_fail=hard_fail,
         sim_llm=round(sim_llm, 3),
         sim_template=round(sim_template, 3),
-        evidence=evidence,
+        evidence=_section_ev + evidence,
     )

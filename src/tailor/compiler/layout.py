@@ -326,6 +326,11 @@ def compact_experience_bullets(
     result: list[LlmRole] = []
     for i, llm_role in enumerate(llm_roles):
         orig_count = orig_counts[i] if i < len(orig_counts) else int(round(avg_orig))
+        if orig_count == 0:
+            # Template has no bullet slots for this role — updater will inject
+            # all LLM bullets as extras. Don't compact; let them all through.
+            result.append(llm_role)
+            continue
         # Compact templates: strict cap to preserve visual rhythm
         # Normal templates: allow 1 extra bullet beyond original
         headroom = 0 if compact_template else 1

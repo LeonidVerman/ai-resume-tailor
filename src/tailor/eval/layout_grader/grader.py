@@ -36,9 +36,10 @@ HARD FAIL triggers (semantic / IR fallback — work without PDF extraction):
 HARD FAIL triggers (continued):
   SPARSE_CONTINUATION_PAGE    non-first sparse page with area_ratio < 30%.
   BLANK_PAGE_CONTENT_LOSS     trailing blank page when page count matches template
-                              (generated_pages == original_pages) or when the only
-                              rendered page is blank — signals content loss, not
-                              tail overflow.
+                              (generated_pages == original_pages), grew by exactly 1
+                              (generated_pages == original_pages + 1), or when the
+                              only rendered page is blank — signals content loss or
+                              rendering artefact, not legitimate tail overflow.
   SPARSE_FIRST_PAGE           page 1 area_ratio < 8% while page 2+ has real
                               content — rendering artefact displaced content.
   COLUMN_CONTINUITY_BREAK     median x-centre of content on page 1 (lower half)
@@ -314,6 +315,16 @@ def _check_misplaced_llm_summary(
     if not llm_text or not ir:
         return False, []
 
+    # When the template has no dedicated summary section, the production code
+    # intentionally places the summary in the best available slot (merged header,
+    # top of a column, etc.).  We cannot distinguish that from a genuine
+    # misplacement, so skip the check entirely.
+    if not any(
+        sec.get("semantic_type", "") in {"summary", "profile"}
+        for sec in ir.get("sections", [])
+    ):
+        return False, []
+
     # ── Step 1: extract LLM summary text ─────────────────────────────────────
     summary_text = ""
     # Look for an explicit section heading
@@ -559,7 +570,7 @@ def grade_sample(
                     failure_classes.append("E_CONTENT_INJECTION")
                 elif ci_result.evidence and ci_score < 75:
                     failure_classes.append("E_INJECTION_PARTIAL")
-                evidence.extend(ci_result.evidence[:3])
+                evidence.extend(ci_result.evidence[:6])
 
                 # ── IR-based summary contamination check ─────────────────────
                 sc_hard_fail, sc_ev = _check_misplaced_llm_summary(ir, llm_text)

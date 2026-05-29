@@ -60,17 +60,15 @@ _OUT_IR_DOCX  = _REPO / "tmp" / "artefacts" / "ir"      / "docx"
 _OUT_IR_PDF   = _REPO / "tmp" / "artefacts" / "ir"      / "pdf"
 _OUT_REND_DOCX = _REPO / "tmp" / "artefacts" / "rendering" / "docx"
 _OUT_REND_PDF  = _REPO / "tmp" / "artefacts" / "rendering" / "pdf"
-# Staging dir: intermediate DOCX that LibreOffice converts.  Kept separate from
-# _OUT_REND_PDF so that LibreOffice's output PDF lands in a fresh location and
-# the subsequent shutil.copy2 to _OUT_REND_PDF is never a same-file copy
-# (which causes PermissionError [WinError 32] on Windows).
-_OUT_STAGE_PDF = _OUT_REND_PDF / "_stage"
-
-# Batch conversion: all DOCXs are converted in one LO invocation, PDFs land here.
-_OUT_BATCH_PDF = _OUT_REND_PDF / "_batch"
 
 _OUT_SS_DOCX = _OUT_REND_DOCX / "screenshots"
 _OUT_SS_PDF  = _OUT_REND_PDF  / "screenshots"
+
+# Transient batch dirs: LO writes PDFs here, then they are copied to the
+# rendering dir.  Kept separate per source-kind so that docx-source and
+# pdf-source samples (which share the same filename stem) never collide.
+_OUT_BATCH_DOCX = _OUT_REND_DOCX / "_batch"
+_OUT_BATCH_PDF_SRC = _OUT_REND_PDF / "_batch"
 
 _NUM_RE = re.compile(r"^(\d+)-")
 
@@ -277,17 +275,17 @@ def _compile_sample(pair: SamplePair, verbose: bool = True) -> _Compiled | None:
         out_rend_dir = _OUT_REND_DOCX
     else:
         out_ir_dir   = _OUT_IR_PDF
-        # Use a staging sub-dir so LibreOffice writes its PDF next to a fresh
-        # DOCX (no pre-existing same-named PDF), and the later shutil.copy2 to
-        # _OUT_REND_PDF is always a genuine different-file copy.
-        out_rend_dir = _OUT_STAGE_PDF
+        out_rend_dir = _OUT_REND_PDF
 
     out_ir_dir.mkdir(parents=True, exist_ok=True)
     out_rend_dir.mkdir(parents=True, exist_ok=True)
 
     out_ir   = out_ir_dir   / f"{stem}_IR.json"
     out_docx = out_rend_dir / f"{stem}.docx"
-    grader_pdf = _OUT_REND_PDF / f"{stem}.pdf"
+    # PDF lives alongside its compiled DOCX (docx-source → rendering/docx/,
+    # pdf-source → rendering/pdf/) so screenshots and grader each get the
+    # correct rendered file.
+    grader_pdf = out_rend_dir / f"{stem}.pdf"
 
     # ── Stage 3: load classification from structured_resume in debug data ────
     classification = None
@@ -354,68 +352,77 @@ def _compile_sample(pair: SamplePair, verbose: bool = True) -> _Compiled | None:
 
 
 def _batch_docx_to_pdf(compiled_list: list[_Compiled]) -> dict[Path, Path]:
-    """Convert all compiled DOCXs to PDF in a single LibreOffice invocation.
+    """Convert all compiled DOCXs to PDF using one LibreOffice call per source kind.
+
+    DOCX-source and PDF-source samples share the same filename stem, so they
+    must be converted in separate batches that write to separate output dirs
+    (_OUT_BATCH_DOCX and _OUT_BATCH_PDF_SRC respectively) to avoid collisions.
 
     Returns a mapping of {out_docx: pdf_path} for every successfully converted
-    file.  Any files missing from the batch output are retried individually so
-    the caller always gets a best-effort result.
+    file.  Missing files are retried individually.
     """
     if not compiled_list:
         return {}
-
-    _OUT_BATCH_PDF.mkdir(parents=True, exist_ok=True)
-    _OUT_REND_PDF.mkdir(parents=True, exist_ok=True)
 
     sys.path.insert(0, str(_REPO / "src"))
     from tailor.docx.pdf import _find_libreoffice_exe
     lo_exe = _find_libreoffice_exe()
 
-    docx_paths = [c.out_docx for c in compiled_list]
-
     gc.collect()  # release lingering python-docx / lxml handles before LO
 
-    profile_dir = os.path.join(tempfile.gettempdir(), f"lo_profile_{uuid.uuid4().hex}")
-    profile_uri = Path(profile_dir).as_uri()
-
-    cmd = [
-        lo_exe, "--headless",
-        f"-env:UserInstallation={profile_uri}",
-        "--convert-to", "pdf",
-        *[str(p) for p in docx_paths],
-        "--outdir", str(_OUT_BATCH_PDF),
-    ]
-
-    print(f"\n  Batch PDF: converting {len(docx_paths)} DOCX(s) in one LibreOffice call...")
-    try:
-        subprocess.run(cmd, capture_output=True, text=True, timeout=600, check=False)
-    except Exception as e:
-        print(f"  WARN [batch-pdf] LO subprocess error: {type(e).__name__}: {e} — falling back to per-file conversion")
-
-    # Collect successful outputs
     output_map: dict[Path, Path] = {}
-    for docx_path in docx_paths:
-        pdf = _OUT_BATCH_PDF / (docx_path.stem + ".pdf")
-        if pdf.exists():
-            output_map[docx_path] = pdf
 
-    # Per-file fallback for any DOCX whose PDF wasn't produced
-    missing = [p for p in docx_paths if p not in output_map]
-    if missing:
-        print(f"  WARN [batch-pdf] {len(missing)} PDF(s) missing from batch output — retrying per-file:")
-        from tailor.docx.pdf import _docx_to_pdf_subprocess
-        for docx_path in missing:
-            try:
-                _docx_to_pdf_subprocess(str(docx_path))
-                lo_pdf = docx_path.with_suffix(".pdf")
-                if lo_pdf.exists():
-                    target = _OUT_BATCH_PDF / lo_pdf.name
-                    shutil.copy2(str(lo_pdf), str(target))
-                    output_map[docx_path] = target
-                    print(f"    fallback OK: {docx_path.name}")
-            except Exception as e:
-                print(f"    fallback FAIL: {docx_path.name}: {type(e).__name__}: {e}")
+    for kind, batch_dir in [("docx", _OUT_BATCH_DOCX), ("pdf", _OUT_BATCH_PDF_SRC)]:
+        batch = [c for c in compiled_list if c.pair.source_kind == kind]
+        if not batch:
+            continue
 
-    print(f"  Batch PDF: {len(output_map)}/{len(docx_paths)} converted.")
+        batch_dir.mkdir(parents=True, exist_ok=True)
+        docx_paths = [c.out_docx for c in batch]
+
+        profile_dir = os.path.join(tempfile.gettempdir(), f"lo_profile_{uuid.uuid4().hex}")
+        profile_uri = Path(profile_dir).as_uri()
+
+        cmd = [
+            lo_exe, "--headless",
+            f"-env:UserInstallation={profile_uri}",
+            "--convert-to", "pdf",
+            *[str(p) for p in docx_paths],
+            "--outdir", str(batch_dir),
+        ]
+
+        print(f"\n  Batch PDF: converting {len(docx_paths)} DOCX(s) in one LibreOffice call...")
+        try:
+            subprocess.run(cmd, capture_output=True, text=True, timeout=600, check=False)
+        except Exception as e:
+            print(f"  WARN [batch-pdf-{kind}] LO subprocess error: {type(e).__name__}: {e} — falling back to per-file conversion")
+
+        # Collect successful outputs
+        for docx_path in docx_paths:
+            pdf = batch_dir / (docx_path.stem + ".pdf")
+            if pdf.exists():
+                output_map[docx_path] = pdf
+
+        # Per-file fallback for any DOCX whose PDF wasn't produced
+        missing = [p for p in docx_paths if p not in output_map]
+        if missing:
+            print(f"  WARN [batch-pdf-{kind}] {len(missing)} PDF(s) missing from batch output — retrying per-file:")
+            from tailor.docx.pdf import _docx_to_pdf_subprocess
+            for docx_path in missing:
+                try:
+                    _docx_to_pdf_subprocess(str(docx_path))
+                    lo_pdf = docx_path.with_suffix(".pdf")
+                    if lo_pdf.exists():
+                        target = batch_dir / lo_pdf.name
+                        shutil.copy2(str(lo_pdf), str(target))
+                        output_map[docx_path] = target
+                        print(f"    fallback OK: {docx_path.name}")
+                except Exception as e:
+                    print(f"    fallback FAIL: {docx_path.name}: {type(e).__name__}: {e}")
+
+        n_kind = sum(1 for p in docx_paths if p in output_map)
+        print(f"  Batch PDF: {n_kind}/{len(docx_paths)} converted.")
+
     return output_map
 
 
@@ -552,7 +559,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if n_fail:
         print("\nOutput artifacts (where generated):")
-        for d in (_OUT_IR_DOCX, _OUT_IR_PDF, _OUT_REND_DOCX, _OUT_REND_PDF, _OUT_STAGE_PDF):
+        for d in (_OUT_IR_DOCX, _OUT_IR_PDF, _OUT_REND_DOCX, _OUT_REND_PDF):
             if d.exists():
                 files = sorted(d.iterdir())
                 if files:

@@ -2640,6 +2640,53 @@ def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
     return result
 
 
+def _split_role_by_meta_dates(role: "RoleEntry") -> "list[RoleEntry]":
+    """Split a cls-rebuilt role when meta_lines contains a second role's date header.
+
+    Handles the pattern where the classifier collapsed 2 adjacent roles into one:
+      - meta_blocks contains paragraph-type paras (first role's bullets) followed
+        by a role_meta para (second role's date/company line).
+      - body_blocks are the second role's bullets.
+
+    When detected, produces two RoleEntry objects:
+      role_0: header=original header, bullets=meta_lines[:split_idx] (para-type only)
+      role_1: header=meta_lines[split_idx] (the role_meta), bullets=original bullets
+    """
+    split_idx: int | None = None
+    seen_paragraph = False
+    for i, p in enumerate(role.meta_lines):
+        if p.semantic in ("paragraph", "bullet", "role_header"):
+            seen_paragraph = True
+        elif p.semantic == "role_meta" and seen_paragraph:
+            split_idx = i
+            break
+
+    if split_idx is None:
+        return [role]
+
+    role0_bullets = [p for p in role.meta_lines[:split_idx] if p.text.strip()]
+    role1_header = role.meta_lines[split_idx]
+
+    return [
+        RoleEntry(
+            header=role.header,
+            header_extra=role.header_extra,
+            meta_lines=[],
+            bullets=role0_bullets,
+            role_id=role.header.text.strip(),
+            role_id_stable=role.header.para_id or role.header.text.strip(),
+        ),
+        RoleEntry(
+            header=role1_header,
+            header_extra=[],
+            meta_lines=[],
+            bullets=role.bullets,
+            role_id=role1_header.text.strip(),
+            role_id_stable=role1_header.para_id or role1_header.text.strip(),
+        ),
+    ]
+
+
 def _update_role_with_adjuncts(
     orig: "RoleEntry",
     llm_bullets: "list[str]",
@@ -4084,6 +4131,23 @@ def apply_tailored(
                 rebuilt: list[RoleEntry] = []
                 for _r in rebuilt_raw:
                     rebuilt.extend(_split_cls_mega_role(_r))
+                # Second split pass: detect roles where meta_lines contains a
+                # paragraph-type para followed by a role_meta para (second role's
+                # date header collapsed into the first role's meta_blocks).
+                split2: list[RoleEntry] = []
+                for _r in rebuilt:
+                    split2.extend(_split_role_by_meta_dates(_r))
+                rebuilt = split2
+                # Fallback: if classification produced roles with no bullet or
+                # header_extra slots (e.g. body_blocks=[] in all roles), the
+                # updater has nothing to write into.  Use the heuristic date-first
+                # rebuild which places placeholder body_paras into header_extra.
+                if not any(r.bullets or r.header_extra for r in rebuilt):
+                    rebuilt = _rebuild_date_first_roles(orig_section)
+                    _log.debug(
+                        "date-first cls-fallback: all cls roles have no bullet/header_extra "
+                        "slots — using heuristic rebuild for %r", orig_section.title,
+                    )
             else:
                 rebuilt = _rebuild_date_first_roles(orig_section)
             return _update_experience_date_first(orig_section, llm_section, rebuilt, cls_sec=cls_sec)
@@ -4099,6 +4163,19 @@ def apply_tailored(
             and cls_sec.rewrite_policy == "preserve"
             and orig_section.semantic_type == "summary"
             and cls_sec.semantic_type != "summary"
+        ):
+            cls_sec = None
+        # Pattern D guard: classifier sometimes labels a skills section as
+        # other/preserve (e.g. "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES,
+        # KEYWORDS") when the heading doesn't match known skills names.  Trust the
+        # IR parser's skills classification and allow content rewriting so LLM
+        # skills vocabulary is reflected in the rendered output.
+        if (
+            cls_sec is not None
+            and cls_sec.rewrite_policy == "preserve"
+            and orig_section.semantic_type == "skills"
+            and cls_sec.semantic_type not in ("skills",)
+            and any(s.semantic_type == "skills" for s in llm_sections)
         ):
             cls_sec = None
         if cls_sec is not None:
@@ -4904,11 +4981,11 @@ def apply_tailored(
             # Overflow to a second page is acceptable; truncated bullets lose meaning.
             # (Previous cap: max(orig_len, 60).  Removed per content-preservation policy.)
             #
-            # Skills sections in table cells: apply a moderate cap of max(orig_len*2, 60).
-            # This allows 2× the original content (meaningful improvement over the original
-            # severe cap at orig_len) while preventing the narrow left sidebar cell from
-            # growing so large that it causes column layout collapse or table ejection to
-            # page 2.  Full skills in unconstrained (non-table) templates are never capped.
+            # Skills sections in table cells: apply a moderate cap of max(orig_len*2, 200).
+            # The 200-char minimum prevents aggressive truncation when the template uses
+            # short placeholder text (e.g. "Data analysis" = 13 chars) but the LLM
+            # produces long categorised skill lines ("Category: item1, item2, …").
+            # Overflow to a second page is still preferable to silently clipping content.
             _is_skills_section = (
                 _ns.semantic_type == "skills"
                 or "skill" in _ns.title.lower()
@@ -4918,7 +4995,7 @@ def apply_tailored(
                 _bp_changed = False
                 for _nbp in _ns.body_paras:
                     _olen = _orig_bp_len.get(_nbp.para_id, 0)
-                    _skills_cap = max(_olen * 2, 60) if _olen > 0 else 0
+                    _skills_cap = max(_olen * 2, 200) if _olen > 0 else 0
                     if _skills_cap > 0 and len(_nbp.text.strip()) > _skills_cap:
                         _bpcut = _nbp.text.rfind(" ", 0, _skills_cap)
                         _capped_bps.append(_nbp.with_text(
