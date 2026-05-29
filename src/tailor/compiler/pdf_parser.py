@@ -36,6 +36,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 log = logging.getLogger(__name__)
+_geo_log = logging.getLogger("tailor.geometry")
 
 from tailor.compiler.models import (
     LayoutProfile,
@@ -1632,6 +1633,9 @@ def _detect_column_split(
     # Used when the gap-based method fails because wide body text blocks bridge
     # the gap (e.g. experience paragraphs that physically span into the right
     # sidebar x-zone even though they visually stay in the left column).
+    # NOTE: the tertiary (parallel-column) detection runs after this one and
+    # is only reached when both the primary gap detection and this secondary
+    # sidebar detection fail.
     #
     # Look for body spans with x0 in [45%, 85%] of page width that collectively
     # span a significant vertical extent AND are not simply right-aligned dates
@@ -1677,6 +1681,50 @@ def _detect_column_split(
                         _split = max(_min_x0 - 15.0, page_width * 0.20)
                         if _split <= page_width * 0.85:
                             return _split
+    # Tertiary detection: parallel two-column layout (diagnostic only).
+    # Detects templates where PyMuPDF merges same-y left+right spans into
+    # single wide blocks (e.g. EDUCATION left / EDUCATION right at identical
+    # y-coordinates).  The split is logged for inspection but NOT returned:
+    # enabling it as a real split requires section-grouping fixes first,
+    # since right-column content without section headings would end up in
+    # header_paras rather than sections when _group_sections is called.
+    if page_height > 0:
+        _wide_min = page_width * 0.40
+        _left_zone = page_width * 0.40
+        _right_zone = page_width * 0.50
+        _par_gaps: list[tuple[float, float]] = []  # (left_cluster_x1, right_cluster_x0)
+        for _blk in blocks:
+            if _blk.get("type") != 0 or _blk["bbox"][1] < top_cutoff:
+                continue
+            if (_blk["bbox"][2] - _blk["bbox"][0]) < _wide_min:
+                continue
+            _lx1s: list[float] = []
+            _rx0s: list[float] = []
+            for _line in _blk.get("lines", []):
+                for _span in _line.get("spans", []):
+                    if not _span.get("text", "").strip():
+                        continue
+                    _sx0, _sx1 = _span["bbox"][0], _span["bbox"][2]
+                    if _sx0 < _left_zone:
+                        _lx1s.append(_sx1)
+                    elif _sx0 > _right_zone:
+                        _rx0s.append(_sx0)
+            if _lx1s and _rx0s:
+                _par_gaps.append((max(_lx1s), min(_rx0s)))
+        if len(_par_gaps) >= 3:
+            _sorted_left = sorted(l for l, _ in _par_gaps)
+            _sorted_right = sorted(r for _, r in _par_gaps)
+            _med_left = _sorted_left[len(_sorted_left) // 2]
+            _med_right = _sorted_right[len(_sorted_right) // 2]
+            if _med_right - _med_left >= page_width * 0.05:
+                _split = (_med_left + _med_right) / 2.0
+                if page_width * 0.25 <= _split <= page_width * 0.75:
+                    logging.getLogger("tailor.geometry").debug(
+                        "PARALLEL_COLUMNS_DETECTED split_x=%.1f (%.0f%% of page) "
+                        "from %d wide-block gaps — diagnostic only, not activating",
+                        _split, _split / page_width * 100, len(_par_gaps),
+                    )
+
     return None
 
 
@@ -1844,7 +1892,7 @@ def _extract_paragraphs(
 
             # Collect all spans and per-line texts
             all_spans: list[dict] = []
-            line_entries: list[tuple[str, list[dict], float, float, float]] = []  # (text, spans, line_y0, line_x0, line_y1)
+            line_entries: list[tuple[str, list[dict], float, float, float, float]] = []  # (text, spans, line_y0, line_x0, line_y1, line_x1)
 
             for line in blk.get("lines", []):
                 spans = line.get("spans", [])
@@ -1856,6 +1904,7 @@ def _extract_paragraphs(
                     _line_y0 = float(_line_bbox[1]) if _line_bbox else 0.0
                     _line_y1 = float(_line_bbox[3]) if _line_bbox else _line_y0 + 12.0
                     _line_x0 = float(_line_bbox[0]) if _line_bbox else float(blk["bbox"][0])
+                    _line_x1 = float(_line_bbox[2]) if _line_bbox else float(blk["bbox"][2])
                     # Coalesce same-y-row fragments: PDFs with font-switch mid-line
                     # (e.g. hyperlinks, styled email addresses) produce multiple
                     # PyMuPDF "lines" at identical y bounds for one visual text row.
@@ -1878,17 +1927,18 @@ def _extract_paragraphs(
                         and _line_x0 - _prev_x1 < 20.0
                     ):
                         # Merge into the previous entry: sort by x0, concatenate.
-                        prev_text, prev_spans, prev_y0, prev_x0, prev_y1 = line_entries[-1]
+                        prev_text, prev_spans, prev_y0, prev_x0, prev_y1, prev_x1 = line_entries[-1]
                         if _line_x0 >= prev_x0:
                             merged_text = prev_text + " " + line_text
                             merged_x0 = prev_x0
                         else:
                             merged_text = line_text + " " + prev_text
                             merged_x0 = _line_x0
-                        line_entries[-1] = (merged_text.strip(), prev_spans + spans, prev_y0, merged_x0, prev_y1)
+                        merged_x1 = max(prev_x1, _line_x1)
+                        line_entries[-1] = (merged_text.strip(), prev_spans + spans, prev_y0, merged_x0, prev_y1, merged_x1)
                         all_spans.extend(spans)
                     else:
-                        line_entries.append((line_text, spans, _line_y0, _line_x0, _line_y1))
+                        line_entries.append((line_text, spans, _line_y0, _line_x0, _line_y1, _line_x1))
                         all_spans.extend(spans)
 
             if not line_entries:
@@ -1969,7 +2019,7 @@ def _extract_paragraphs(
             # inter-section spacing baked into the source PDF is preserved in
             # the output DOCX (critical for the evaluator's block-splitting).
             prev_line_y1_in_block: float | None = None
-            for line_idx, (line_text, line_spans, line_y0, line_x0, line_y1) in enumerate(line_entries):
+            for line_idx, (line_text, line_spans, line_y0, line_x0, line_y1, line_x1) in enumerate(line_entries):
                 # Skip per-line H/F matches (case-insensitive)
                 if (
                     line_text in hf_texts
@@ -2042,6 +2092,12 @@ def _extract_paragraphs(
                     inline_image_bytes=icon_png,
                     inline_image_size_pt=icon_size_pt,
                     y_top_pt=line_y0,
+                    x_pt=line_x0,
+                    y_pt=line_y0,
+                    width_pt=max(0.0, line_x1 - line_x0),
+                    height_pt=max(0.0, line_y1 - line_y0),
+                    page_num=page.number,
+                    block_id=f"p{page.number}_b{blk_idx}",
                 )
                 pm = ParaModel(
                     text=line_text,
@@ -2050,6 +2106,13 @@ def _extract_paragraphs(
                     paragraph_profile=profile,
                 )
                 pm.semantic = _infer_semantic(pm)
+                _geo_log.debug(
+                    "GEOMETRY_CAPTURED block=%s page=%d x=%.0f y=%.0f w=%.0f h=%.0f "
+                    "col=%s semantic=%s text=%.40r",
+                    profile.block_id, page.number,
+                    profile.x_pt, profile.y_pt, profile.width_pt, profile.height_pt,
+                    profile.column_id, pm.semantic, line_text,
+                )
                 # Content paragraphs (bullets, body text, date lines) should not carry
                 # text_color from the PDF template — those colors come from hyperlinks
                 # or author styling and must not bleed onto LLM-generated content.
