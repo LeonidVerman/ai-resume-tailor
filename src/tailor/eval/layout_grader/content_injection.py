@@ -48,26 +48,31 @@ _LLM_SECTION_KEYWORDS: tuple[str, ...] = (
     "skill", "competenc", "technolog", "expertise",
 )
 
-# Maps heading keywords to canonical per-section comparison keys
+# Maps heading keywords to canonical per-section comparison keys.
+# Order matters: earlier entries win on multi-keyword headings (e.g. "EMPLOYMENT SUMMARY"
+# → "employment" must beat "summary" so it maps to experience, not summary).
 _LLM_SECTION_TYPE_MAP: tuple[tuple[str, str], ...] = (
-    ("summary", "summary"), ("profile", "summary"), ("objective", "summary"), ("about", "summary"),
     ("experience", "experience"), ("employment", "experience"), ("history", "experience"),
+    ("summary", "summary"), ("profile", "summary"), ("objective", "summary"), ("about", "summary"),
     ("skill", "skills"), ("competenc", "skills"), ("technolog", "skills"), ("expertise", "skills"),
 )
 
-# Non-target section keywords that stop content collection (LLM section boundaries)
+# Non-target section keywords that stop content collection (LLM section boundaries).
+# Stop keywords take priority over _LLM_SECTION_TYPE_MAP — checked first in _parse_llm_sections.
 _STOP_SECTION_KEYWORDS: frozenset[str] = frozenset((
     "education", "certif", "reference", "award", "language", "volunteer",
     "project", "publication", "additional", "interest", "achievement", "honor",
+    "affiliation", "contact",
 ))
 
 # Per-section recall thresholds below which a HARD FAIL is raised.
-# Experience allows 20% gap for verbatim role headers from the template;
-# Summary and Skills require perfect recall (any missing vocabulary = HARD FAIL).
+# Experience: 45% vocabulary gap tolerated — compaction may remove 2-3 bullets/role.
+# Skills: 65% vocabulary gap tolerated — table_sidebar templates keep only 3 of 7+ cells.
+# Summary: perfect recall required (short section, any gap is significant).
 _SECTION_HARD_FAIL_THRESHOLD: dict[str, float] = {
     "summary": 1.0,
-    "experience": 0.80,
-    "skills": 1.0,
+    "experience": 0.55,
+    "skills": 0.35,
 }
 
 
@@ -155,7 +160,7 @@ def _parse_llm_target_text(llm_text: str) -> str:
         is_heading = (
             1 <= len(words) <= 5
             and len(_alpha_only) >= len(stripped) * 0.80  # ≥ 80% alphabetic
-            and not any(ch in stripped for ch in "@|0123456789+")
+            and not any(ch in stripped for ch in "@|0123456789+,:/")
         )
         if is_heading:
             current_is_target = _is_llm_section(stripped)
@@ -190,21 +195,24 @@ def _parse_llm_sections(llm_text: str) -> dict[str, str]:
         is_heading = (
             1 <= len(words) <= 5
             and len(_alpha_only) >= len(stripped) * 0.80
-            and not any(ch in stripped for ch in "@|0123456789+")
+            and not any(ch in stripped for ch in "@|0123456789+,:/")
         )
         if is_heading:
             heading_lower = stripped.lower()
-            matched_key = None
-            for kw, key in _LLM_SECTION_TYPE_MAP:
-                if kw in heading_lower:
-                    matched_key = key
-                    break
-            if matched_key is not None:
-                current_key = matched_key  # switch to a known target section
-            elif any(kw in heading_lower for kw in _STOP_SECTION_KEYWORDS):
+            # Stop keywords take priority — "EDUCATIONAL HISTORY" must stop on
+            # "education" before "history" maps it to experience.
+            if any(kw in heading_lower for kw in _STOP_SECTION_KEYWORDS):
                 current_key = None          # explicit stop at a non-target section
-            # else: unrecognised heading (role title, company name, short bullet
-            # fragment) — keep collecting into the current section
+            else:
+                matched_key = None
+                for kw, key in _LLM_SECTION_TYPE_MAP:
+                    if kw in heading_lower:
+                        matched_key = key
+                        break
+                if matched_key is not None:
+                    current_key = matched_key  # switch to a known target section
+                # else: unrecognised heading (role title, company name, short bullet
+                # fragment) — keep collecting into the current section
         elif current_key is not None:
             parts.setdefault(current_key, []).append(stripped)
 
@@ -401,13 +409,18 @@ def check_content_injection(
         if not _llm_sec:
             continue
         if not _ir_sec:
-            # Summary may have been injected into a non-standard section
-            # (merged header etc.) — absence here is not necessarily a gap.
             if _sec_key != "summary":
-                hard_fail = True
-                _section_ev.append(
-                    f"{_sec_name} section: no rendered {_sec_name.lower()} content found for comparison -- HARD FAIL"
-                )
+                # Check if LLM section vocabulary appears anywhere in the full rendered IR.
+                # Templates without a dedicated section (e.g. experience-only templates)
+                # may carry the vocabulary in other sections — don't hard-fail in that case.
+                _llm_sec_tokens = _tokenize(_llm_sec)
+                _full_ir_tokens = _tokenize(ir_full_lower)
+                _fallback_recall = _recall(_full_ir_tokens, _llm_sec_tokens) if _llm_sec_tokens else 0.0
+                if _fallback_recall < _SECTION_HARD_FAIL_THRESHOLD[_sec_key]:
+                    hard_fail = True
+                    _section_ev.append(
+                        f"{_sec_name} section: no rendered {_sec_name.lower()} content found for comparison -- HARD FAIL"
+                    )
             continue
         _sec_recall = _recall(_tokenize(_ir_sec), _tokenize(_llm_sec))
         _sec_threshold = _SECTION_HARD_FAIL_THRESHOLD[_sec_key]

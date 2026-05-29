@@ -244,7 +244,11 @@ def _compute_blank_page_score(  # noqa: C901  (complex but cohesive)
         )
         if gen_page is None:
             continue
-        if _page_total_chars(gen_page) < _BLANK_EFFECTIVELY_EMPTY_CHARS:
+        # Only treat as content loss when the page is truly blank (no non-empty
+        # text lines).  Thin-overflow pages with 1–3 short lines (e.g. a date or
+        # title that wrapped onto the next page) must not hard-fail as blank.
+        gen_nonempty_lines = sum(1 for ln in gen_page.lines if ln.text.strip())
+        if _page_total_chars(gen_page) < _BLANK_EFFECTIVELY_EMPTY_CHARS and gen_nonempty_lines == 0:
             content_loss_pages.append(pg_num)
 
     if content_loss_pages:
@@ -1075,6 +1079,9 @@ _SECTION_WORD_SET_GLOBAL = frozenset({
     "OBJECTIVE", "PROFILE", "ABOUT", "EMPLOYMENT", "CAREER",
     "AWARDS", "HONORS", "ACTIVITIES", "VOLUNTEER", "LEADERSHIP",
     "CORE", "COMPETENCIES", "EXPERTISE", "INTERESTS", "PUBLICATIONS",
+    # Skill-section heading components (e.g. "Problem Solving Skills" is not a name)
+    "SOLVING", "PROBLEM", "CRITICAL", "THINKING", "SOFT", "HARD",
+    "INTERPERSONAL", "ANALYTICAL", "MANAGEMENT",
 })
 
 _CANDIDATE_NAME_RE = _re.compile(
