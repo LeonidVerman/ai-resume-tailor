@@ -2524,6 +2524,53 @@ def _split_cls_mega_role(role: "RoleEntry") -> "list[RoleEntry]":
     return result
 
 
+def _split_role_by_meta_dates(role: "RoleEntry") -> "list[RoleEntry]":
+    """Split a cls-rebuilt role when meta_lines contains a second role's date header.
+
+    Handles the pattern where the classifier collapsed 2 adjacent roles into one:
+      - meta_blocks contains paragraph-type paras (first role's bullets) followed
+        by a role_meta para (second role's date/company line).
+      - body_blocks are the second role's bullets.
+
+    When detected, produces two RoleEntry objects:
+      role_0: header=original header, bullets=meta_lines[:split_idx] (para-type only)
+      role_1: header=meta_lines[split_idx] (the role_meta), bullets=original bullets
+    """
+    split_idx: int | None = None
+    seen_paragraph = False
+    for i, p in enumerate(role.meta_lines):
+        if p.semantic in ("paragraph", "bullet", "role_header"):
+            seen_paragraph = True
+        elif p.semantic == "role_meta" and seen_paragraph:
+            split_idx = i
+            break
+
+    if split_idx is None:
+        return [role]
+
+    role0_bullets = [p for p in role.meta_lines[:split_idx] if p.text.strip()]
+    role1_header = role.meta_lines[split_idx]
+
+    return [
+        RoleEntry(
+            header=role.header,
+            header_extra=role.header_extra,
+            meta_lines=[],
+            bullets=role0_bullets,
+            role_id=role.header.text.strip(),
+            role_id_stable=role.header.para_id or role.header.text.strip(),
+        ),
+        RoleEntry(
+            header=role1_header,
+            header_extra=[],
+            meta_lines=[],
+            bullets=role.bullets,
+            role_id=role1_header.text.strip(),
+            role_id_stable=role1_header.para_id or role1_header.text.strip(),
+        ),
+    ]
+
+
 def _update_experience_classified(
     orig: ResumeSection,
     llm: LlmSection,
@@ -3872,6 +3919,13 @@ def apply_tailored(
                 rebuilt: list[RoleEntry] = []
                 for _r in rebuilt_raw:
                     rebuilt.extend(_split_cls_mega_role(_r))
+                # Second split pass: detect roles where meta_lines contains a
+                # paragraph-type para followed by a role_meta para (second role's
+                # date header collapsed into the first role's meta_blocks).
+                split2: list[RoleEntry] = []
+                for _r in rebuilt:
+                    split2.extend(_split_role_by_meta_dates(_r))
+                rebuilt = split2
                 # Fallback: if classification produced roles with no bullet or
                 # header_extra slots (e.g. body_blocks=[] in all roles), the
                 # updater has nothing to write into.  Use the heuristic date-first
@@ -3897,6 +3951,19 @@ def apply_tailored(
             and cls_sec.rewrite_policy == "preserve"
             and orig_section.semantic_type == "summary"
             and cls_sec.semantic_type != "summary"
+        ):
+            cls_sec = None
+        # Pattern D guard: classifier sometimes labels a skills section as
+        # other/preserve (e.g. "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES,
+        # KEYWORDS") when the heading doesn't match known skills names.  Trust the
+        # IR parser's skills classification and allow content rewriting so LLM
+        # skills vocabulary is reflected in the rendered output.
+        if (
+            cls_sec is not None
+            and cls_sec.rewrite_policy == "preserve"
+            and orig_section.semantic_type == "skills"
+            and cls_sec.semantic_type not in ("skills",)
+            and any(s.semantic_type == "skills" for s in llm_sections)
         ):
             cls_sec = None
         if cls_sec is not None:
