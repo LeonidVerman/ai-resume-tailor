@@ -81,6 +81,14 @@ _SECTION_HARD_FAIL_THRESHOLD: dict[str, float] = {
 # cases where the template text was preserved verbatim despite similar LLM vocabulary.
 _TEMPLATE_UNCHANGED_THRESHOLD = 0.95
 
+# When the summary section is not detected as a dedicated IR section (e.g. the
+# template uses a job-title heading like "SENIOR SOFTWARE DEVELOPER" which parses
+# as semantic_type='other'), we fall back to checking LLM summary vocabulary
+# against the full rendered document.  Summary is injected verbatim, so nearly
+# all of its vocabulary must appear somewhere in the output; 0.95 is tight
+# enough to catch a missed injection while tolerating minor rendering differences.
+_SUMMARY_FALLBACK_RECALL_THRESHOLD = 0.95
+
 # When rendered section looks like the template (sim_to_orig >= threshold above),
 # also require that the rendered section fails to reflect the LLM's own vocabulary
 # before raising a HARD FAIL.  This avoids false positives for the case where the
@@ -438,18 +446,27 @@ def check_content_injection(
         if not _llm_sec:
             continue
         if not _ir_sec:
-            if _sec_key != "summary":
-                # Check if LLM section vocabulary appears anywhere in the full rendered IR.
-                # Templates without a dedicated section (e.g. experience-only templates)
-                # may carry the vocabulary in other sections — don't hard-fail in that case.
-                _llm_sec_tokens = _tokenize(_llm_sec)
-                _full_ir_tokens = _tokenize(ir_full_lower)
-                _fallback_recall = _recall(_full_ir_tokens, _llm_sec_tokens) if _llm_sec_tokens else 0.0
-                if _fallback_recall < _SECTION_HARD_FAIL_THRESHOLD[_sec_key]:
-                    hard_fail = True
-                    _section_ev.append(
-                        f"{_sec_name} section: no rendered {_sec_name.lower()} content found for comparison -- HARD FAIL"
-                    )
+            # No dedicated rendered section found — fall back to checking whether the
+            # LLM section vocabulary appears anywhere in the full rendered document.
+            # For experience/skills: a section-less template may carry the content in
+            # body_paras of another section; use the per-section threshold.
+            # For summary: the section is always injected verbatim, so nearly all its
+            # vocabulary must appear in the output; use the tighter fallback threshold.
+            _llm_sec_tokens = _tokenize(_llm_sec)
+            _full_ir_tokens = _tokenize(ir_full_lower)
+            _fallback_recall = _recall(_full_ir_tokens, _llm_sec_tokens) if _llm_sec_tokens else 0.0
+            if _sec_key == "summary":
+                _fallback_threshold = _SUMMARY_FALLBACK_RECALL_THRESHOLD
+            else:
+                _fallback_threshold = _SECTION_HARD_FAIL_THRESHOLD[_sec_key]
+            if _fallback_recall < _fallback_threshold:
+                hard_fail = True
+                _section_ev.append(
+                    f"{_sec_name} section: no rendered {_sec_name.lower()} section found; "
+                    f"fallback recall={_fallback_recall:.2f} "
+                    f"({round((1 - _fallback_recall) * 100)}% of LLM {_sec_name.lower()} "
+                    f"vocabulary absent from rendered output) -- HARD FAIL"
+                )
             continue
         _sec_recall = _recall(_tokenize(_ir_sec), _tokenize(_llm_sec))
         _sec_threshold = _SECTION_HARD_FAIL_THRESHOLD[_sec_key]
