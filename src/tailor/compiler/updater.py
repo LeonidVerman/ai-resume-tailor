@@ -2874,6 +2874,7 @@ def _update_experience_classified(
     # rendering decisions (font-cap exemption, bold-strip guard) in the renderer.
     _PROPAGATE_CLS_SEMANTICS = frozenset({
         "role_intro", "role_key_technologies", "role_tech_stack",
+        "role_project_label",
     })
     for _role in updated_roles:
         for _idx, _pm in enumerate(_role.bullets):

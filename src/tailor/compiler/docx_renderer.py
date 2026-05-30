@@ -3206,6 +3206,7 @@ def _render_block_into_elem(
             # formatting (font size, bold label) rather than treating them as
             # generic body content that should be capped or stripped.
             "role_intro", "role_key_technologies", "role_tech_stack",
+            "role_project_label",
         })
         _is_exempt_font = (
             exempt_font_cap_ids is not None
@@ -3296,6 +3297,20 @@ def _render_block_into_elem(
                         _bel_ab = _rPr_ab.find(_btag_ab)
                         if _bel_ab is not None:
                             _rPr_ab.remove(_bel_ab)
+        # Strip bullet/list formatting (w:numPr) for semantic types that represent
+        # prose or technology-block text, not list items.  Some template paragraphs
+        # inherit ListParagraph style with w:numPr when their document position
+        # happens to fall inside a numbered list; for role_intro, role_key_technologies,
+        # role_tech_stack, and role_project_label content this bullet marker is wrong.
+        _NO_BULLET_SEMANTICS = frozenset({
+            "role_intro", "role_key_technologies", "role_tech_stack", "role_project_label",
+        })
+        if pm.semantic in _NO_BULLET_SEMANTICS and pm.text.strip():
+            _pPr_nb = elem.find(f"{{{_W}}}pPr")
+            if _pPr_nb is not None:
+                _numPr_nb = _pPr_nb.find(f"{{{_W}}}numPr")
+                if _numPr_nb is not None:
+                    _pPr_nb.remove(_numPr_nb)
         # Strip display-only (Symbol/Wingdings/SymbolMT) fonts from run rPr so
         # that injected text renders with normal characters instead of garbled
         # symbol glyphs.  These fonts map codepoints to dingbats/symbols rather
@@ -4708,6 +4723,7 @@ def _render_from_layout_blocks(
                     _HEADING_SEMANTICS_LB = frozenset({
                         "section_heading", "role_header",
                         "role_intro", "role_key_technologies", "role_tech_stack",
+                        "role_project_label",
                     })
                     _is_header_para_lb = (
                         block.para_id is not None
@@ -4812,6 +4828,18 @@ def _render_from_layout_blocks(
                                     _bel_ab_lb = _rPr_ab_lb.find(_btag_ab_lb)
                                     if _bel_ab_lb is not None:
                                         _rPr_ab_lb.remove(_bel_ab_lb)
+                    # Strip bullet/list formatting (w:numPr) for semantic types
+                    # that represent prose or technology-block text, not list items.
+                    _NO_BULLET_SEMANTICS_LB = frozenset({
+                        "role_intro", "role_key_technologies",
+                        "role_tech_stack", "role_project_label",
+                    })
+                    if pm.semantic in _NO_BULLET_SEMANTICS_LB and pm.text.strip():
+                        _pPr_nb_lb = elem.find(f"{{{_W}}}pPr")
+                        if _pPr_nb_lb is not None:
+                            _numPr_nb_lb = _pPr_nb_lb.find(f"{{{_W}}}numPr")
+                            if _numPr_nb_lb is not None:
+                                _pPr_nb_lb.remove(_numPr_nb_lb)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
                 else:
                     if block.para_id:
