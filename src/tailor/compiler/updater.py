@@ -2886,14 +2886,20 @@ def _update_experience_classified(
         "classification: section %r preserve_heading=%s rewrite_policy=%s",
         orig.title, cls_sec.preserve_heading, cls_sec.rewrite_policy,
     )
-    # Filter body_paras to exclude para_ids already claimed by roles, preventing
-    # SPLIT_BRAIN_BODY_PARAS validator failures.  Spacer paragraphs (empty or no
-    # para_id) are kept so layout_blocks renderer can find them via body_paras.
-    # Also remove role-semantic body_paras (bullet/role_header/role_meta) with
-    # non-empty text that are NOT claimed by any updated role — these are original
-    # bullets dropped when the LLM provided fewer bullets than the template had
-    # slots (e.g. orig had 30 bullets, LLM provided 11; the remaining 19 stay
-    # in body_paras with original text and render as duplicate content).
+    # Sanitize body_paras: keep spacers intact (layout_blocks needs them), clear
+    # stale role content so the layout_blocks renderer writes empty paragraphs
+    # instead of falling back to the xml_proto original text.
+    #
+    # Two failure modes this addresses:
+    #   Case A — paragraph-semantic body_paras kept with original text: they are
+    #             in para_lookup via sec.body_paras and render stale template text.
+    #   Case B — bullet-semantic body_paras previously *removed* from body_paras:
+    #             absent from para_lookup, renderer falls back to xml_proto and
+    #             still shows the original text.  Clearing (not removing) them
+    #             puts them in para_lookup with text="" so they render invisible.
+    #
+    # Rule: a non-empty body_para not claimed by an updated role and not
+    # explicitly preserved in the classification is stale role content → clear it.
     _role_para_ids: set[str] = set()
     for r in updated_roles:
         if r.header.para_id:
@@ -2901,14 +2907,24 @@ def _update_experience_classified(
         for _p in r.header_extra + r.meta_lines + r.bullets:
             if _p.para_id:
                 _role_para_ids.add(_p.para_id)
-    _DROPPED_ROLE_SEMANTICS = frozenset({"role_header", "role_meta", "bullet"})
-    filtered_body = [
-        p for p in orig.body_paras
-        if not p.para_id or (
-            p.para_id not in _role_para_ids
-            and (not p.text.strip() or p.semantic not in _DROPPED_ROLE_SEMANTICS)
-        )
-    ]
+    _preserved_in_cls: set[str] = {
+        _pid for _pid, _blk in cls_body_block_map.items()
+        if _blk.rewrite_policy == "preserve"
+    }
+    _STALE_BODY_SEMANTICS = frozenset({"role_header", "role_meta", "bullet", "paragraph"})
+
+    def _sanitize_body(p: "ParaModel") -> "ParaModel":
+        if not p.para_id or not p.text.strip():
+            return p                        # spacer — keep as-is
+        if p.para_id in _role_para_ids:
+            return p                        # claimed by updated role — hands off
+        if p.para_id in _preserved_in_cls:
+            return p                        # explicitly preserved by classification
+        if p.semantic in _STALE_BODY_SEMANTICS:
+            return _dc_replace(p, text="")  # stale template content — clear
+        return p
+
+    filtered_body = [_sanitize_body(p) for p in orig.body_paras]
     return ResumeSection(
         title=orig.title,
         heading=orig.heading,
