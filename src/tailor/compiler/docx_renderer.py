@@ -3182,6 +3182,15 @@ def _render_block_into_elem(
         _render_text = pm.text
         if pm.semantic == "role_meta" and "\n" in pm.text:
             _render_text = pm.text.split("\n")[0]
+        # Capture proto text and bold state before modification; used below to
+        # detect rewritten bold-proto slots where original template text differs
+        # from LLM output.  style.bold is not serialised so we read the XML.
+        _proto_text_raw = "".join(_t.text or "" for _t in elem.iter(f"{{{_W}}}t"))
+        _pPr_proto = elem.find(f"{{{_W}}}pPr")
+        _proto_para_bold = (
+            _pPr_proto is not None
+            and _pPr_proto.find(f"{{{_W}}}rPr/{{{_W}}}b") is not None
+        )
         _strip_text_wrapping_breaks(elem, _render_text)
         _set_para_text(elem, _render_text)
         _clear_sdt_placeholder(elem)
@@ -3191,7 +3200,13 @@ def _render_block_into_elem(
         #       but whose semantic indicates body content — handles the case where a
         #       name-heading slot (sz=64) is reused for a body paragraph by the updater
         #       (e.g. sample 27 right-column: MATTHEW TURNER proto used for bullets).
-        _HEADING_SEMANTICS = frozenset({"section_heading", "role_header"})
+        _HEADING_SEMANTICS = frozenset({
+            "section_heading", "role_header",
+            # Classification-propagated adjunct types — preserve their template
+            # formatting (font size, bold label) rather than treating them as
+            # generic body content that should be capped or stripped.
+            "role_intro", "role_key_technologies", "role_tech_stack",
+        })
         _is_exempt_font = (
             exempt_font_cap_ids is not None
             and block.para_id is not None
@@ -3259,6 +3274,28 @@ def _render_block_into_elem(
                         _fel_ext2 = _rPr_ext2.find(_ftag_ext2)
                         if _fel_ext2 is not None:
                             _rPr_ext2.remove(_fel_ext2)
+        # Strip bold from rewritten non-heading paras whose XML proto is ALL BOLD.
+        # Template project headers (e.g. "OTA project") are styled all-bold; when
+        # the LLM assigns achievement text to such a slot the bold must not carry
+        # over.  Detected by comparing proto text (captured before _set_para_text)
+        # against the updated pm.text — a mismatch means the slot was rewritten.
+        # Bold may be set at paragraph-level (pPr/rPr/b) or run-level (r/rPr/b);
+        # both are stripped so the inherited formatting does not persist.
+        if (
+            pm.text.strip()
+            and pm.semantic not in _HEADING_SEMANTICS
+            and _proto_para_bold
+            and _proto_text_raw.strip() != pm.text.strip()
+        ):
+            for _rPr_ab in elem.iter(f"{{{_W}}}rPr"):
+                _par_ab = _rPr_ab.getparent()
+                if _par_ab is not None and _par_ab.tag in (
+                    f"{{{_W}}}r", f"{{{_W}}}pPr"
+                ):
+                    for _btag_ab in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                        _bel_ab = _rPr_ab.find(_btag_ab)
+                        if _bel_ab is not None:
+                            _rPr_ab.remove(_bel_ab)
         # Strip display-only (Symbol/Wingdings/SymbolMT) fonts from run rPr so
         # that injected text renders with normal characters instead of garbled
         # symbol glyphs.  These fonts map codepoints to dingbats/symbols rather
@@ -4651,6 +4688,15 @@ def _render_from_layout_blocks(
                     _render_text_lb = pm.text
                     if pm.semantic == "role_meta" and "\n" in pm.text:
                         _render_text_lb = pm.text.split("\n")[0]
+                    # Capture proto state before modification for bold-strip detection.
+                    _proto_text_raw_lb = "".join(
+                        _t.text or "" for _t in elem.iter(f"{{{_W}}}t")
+                    )
+                    _pPr_proto_lb = elem.find(f"{{{_W}}}pPr")
+                    _proto_para_bold_lb = (
+                        _pPr_proto_lb is not None
+                        and _pPr_proto_lb.find(f"{{{_W}}}rPr/{{{_W}}}b") is not None
+                    )
                     _strip_text_wrapping_breaks(elem, _render_text_lb)
                     _set_para_text(elem, _render_text_lb)
                     _clear_sdt_placeholder(elem)
@@ -4659,7 +4705,10 @@ def _render_from_layout_blocks(
                     # proto carries large run-level fonts but pm.semantic is body content.
                     # Header paragraphs (name/title) are exempt: they are allowed to keep
                     # their original large font to preserve the resume branding.
-                    _HEADING_SEMANTICS_LB = frozenset({"section_heading", "role_header"})
+                    _HEADING_SEMANTICS_LB = frozenset({
+                        "section_heading", "role_header",
+                        "role_intro", "role_key_technologies", "role_tech_stack",
+                    })
                     _is_header_para_lb = (
                         block.para_id is not None
                         and block.para_id in _header_para_ids
@@ -4744,6 +4793,25 @@ def _render_from_layout_blocks(
                                 }
                                 if _fn_lb and _fn_lb.issubset(_DISPLAY_FONTS_LB):
                                     _rPr_sym_lb.remove(_rFonts_sym_lb)
+                    # Strip bold from rewritten non-heading paras whose XML proto
+                    # is ALL BOLD (paragraph-level pPr/rPr/b set).  Template project
+                    # headers (e.g. "OTA project") are all-bold; when the LLM assigns
+                    # achievement text to such a slot the bold must not carry over.
+                    if (
+                        pm.text.strip()
+                        and pm.semantic not in _HEADING_SEMANTICS_LB
+                        and _proto_para_bold_lb
+                        and _proto_text_raw_lb.strip() != pm.text.strip()
+                    ):
+                        for _rPr_ab_lb in elem.iter(f"{{{_W}}}rPr"):
+                            _par_ab_lb = _rPr_ab_lb.getparent()
+                            if _par_ab_lb is not None and _par_ab_lb.tag in (
+                                f"{{{_W}}}r", f"{{{_W}}}pPr"
+                            ):
+                                for _btag_ab_lb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                                    _bel_ab_lb = _rPr_ab_lb.find(_btag_ab_lb)
+                                    if _bel_ab_lb is not None:
+                                        _rPr_ab_lb.remove(_bel_ab_lb)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
                 else:
                     if block.para_id:

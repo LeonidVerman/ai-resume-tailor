@@ -43,7 +43,7 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace as _dc_replace
 from typing import TYPE_CHECKING, Any
 
 from tailor.compiler.models import (
@@ -2868,6 +2868,19 @@ def _update_experience_classified(
             updated = o_role
             _log.debug("classification: role %r → verbatim (no LLM counterpart)", o_role.role_id)
         updated_roles.append(updated)
+
+    # Propagate classification semantic types to ParaModel.semantic for bullets.
+    # role_intro, role_key_technologies, and role_tech_stack enable semantic-aware
+    # rendering decisions (font-cap exemption, bold-strip guard) in the renderer.
+    _PROPAGATE_CLS_SEMANTICS = frozenset({
+        "role_intro", "role_key_technologies", "role_tech_stack",
+    })
+    for _role in updated_roles:
+        for _idx, _pm in enumerate(_role.bullets):
+            if _pm.para_id and _pm.para_id in cls_body_block_map:
+                _blk = cls_body_block_map[_pm.para_id]
+                if _blk.semantic_type in _PROPAGATE_CLS_SEMANTICS:
+                    _role.bullets[_idx] = _dc_replace(_pm, semantic=_blk.semantic_type)
 
     _log.debug(
         "classification: section %r preserve_heading=%s rewrite_policy=%s",
