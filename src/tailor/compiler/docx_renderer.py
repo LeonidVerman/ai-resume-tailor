@@ -2043,9 +2043,10 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     if has_dark_hdr:
         if sectPr is not None:
             _pgMar = sectPr.find(f"{{{_W}}}pgMar")
-            if _pgMar is not None:
-                _pgMar.set(f"{{{_W}}}top", "0")
-                _pgMar.set(f"{{{_W}}}header", "0")
+            if _pgMar is None:
+                _pgMar = etree.SubElement(sectPr, f"{{{_W}}}pgMar")
+            _pgMar.set(f"{{{_W}}}top", "0")
+            _pgMar.set(f"{{{_W}}}header", "0")
 
         hdr_tr = etree.SubElement(tbl, f"{{{_W}}}tr")
         hdr_tc = etree.SubElement(hdr_tr, f"{{{_W}}}tc")
@@ -2345,6 +2346,22 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     # section body_paras rather than captured as footer_paras directly).
     _ftr_tbl = None
     _raw_footer = list(doc.footer_paras) if doc.footer_paras else []
+
+    # Capture the original footer raster y-position before we filter page_images,
+    # so we can bottom-anchor our generated footer band at the same location.
+    _footer_raster_y: "float | None" = None
+    _ph = layout.page_height_pt or 841.9
+    _pw = layout.page_width_pt or 595.3
+    if _raw_footer and layout.footer_bg_color and getattr(doc, "page_images", None):
+        for _img in doc.page_images:
+            if (
+                _img.category in ("header_footer_decor", "footer_band")
+                and _img.width_pt >= _pw * 0.70
+                and (_img.y_pt + _img.height_pt) > _ph * 0.75
+            ):
+                _footer_raster_y = _img.y_pt
+                break
+
     if _raw_footer and layout.footer_bg_color:
         if len(_raw_footer) > 1:
             _merged_text = "     ".join(pm.text.strip() for pm in _raw_footer if pm.text.strip())
@@ -2356,20 +2373,52 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 _mpp.text_color = "ffffff"
                 _mpp.space_before_pt = 6.0
                 _mpp.space_after_pt = 6.0
+                _mpp.numbering = None
             else:
                 from tailor.compiler.models import ParagraphProfile as _PP
                 _merged_pm.paragraph_profile = _PP(
                     alignment="center", text_color="ffffff",
                     space_before_pt=6.0, space_after_pt=6.0,
                 )
+            _merged_pm.semantic = "paragraph"  # strip bullet prefix (Target 5)
             _footer_render = [_merged_pm]
         else:
-            _footer_render = _raw_footer
+            # Single item: clone to avoid mutating the original para.
+            _single = _raw_footer[0].with_text(_raw_footer[0].text)
+            _single.semantic = "paragraph"
+            if _single.paragraph_profile:
+                _single.paragraph_profile.numbering = None
+            _footer_render = [_single]
         _ftr_tbl = _make_full_width_dark_band(
             layout.footer_bg_color, page_w_twips, left_margin_twips,
             _footer_render, doc_part=doc_part, center_text=True,
         )
-        _glog.debug("FOOTER_RENDERED items=%d bg=%s", len(_raw_footer), layout.footer_bg_color)
+
+        # Target 4: bottom-anchor footer band at its original page position.
+        # tblpPr makes the table a floating element positioned absolutely from the
+        # page top, so it lands at the original PDF footer location regardless of
+        # how much body content the LLM produced.
+        if _footer_raster_y is None and _raw_footer:
+            _fpm = _raw_footer[0].paragraph_profile
+            if _fpm and _fpm.y_pt:
+                # Para y minus one row height (approximately space_before + line) gives band top.
+                _footer_raster_y = max(0.0, _fpm.y_pt - 10.0)
+        if _footer_raster_y is not None:
+            _ftr_tblPr = _ftr_tbl.find(f"{{{_W}}}tblPr")
+            if _ftr_tblPr is not None:
+                _tblpPr = etree.SubElement(_ftr_tblPr, f"{{{_W}}}tblpPr")
+                _tblpPr.set(f"{{{_W}}}leftFromText", "0")
+                _tblpPr.set(f"{{{_W}}}rightFromText", "0")
+                _tblpPr.set(f"{{{_W}}}vertAnchor", "page")
+                _tblpPr.set(f"{{{_W}}}horzAnchor", "page")
+                _tblpPr.set(f"{{{_W}}}tblpX", "0")
+                _tblpPr.set(f"{{{_W}}}tblpY", str(int(_footer_raster_y * 20)))
+            _glog.debug(
+                "FOOTER_RENDERED items=%d bg=%s anchor_y=%.1f",
+                len(_raw_footer), layout.footer_bg_color, _footer_raster_y,
+            )
+        else:
+            _glog.debug("FOOTER_RENDERED items=%d bg=%s", len(_raw_footer), layout.footer_bg_color)
 
     if sectPr is not None:
         for elem in above_elems:
@@ -2383,6 +2432,32 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         body.append(tbl)
         if _ftr_tbl is not None:
             body.append(_ftr_tbl)
+
+    # Targets 1 & 3: Suppress raster header/footer band images that are replaced by
+    # DOCX-generated equivalents (merged header row + footer band table).
+    # These wide raster images were captured from the original PDF as page_images with
+    # category="header_footer_decor". Leaving them in creates duplicate dark areas:
+    # the floating raster at the original position AND our DOCX table cell elsewhere.
+    if getattr(doc, "page_images", None):
+        _suppress_hdr = has_dark_hdr
+        _suppress_ftr = _ftr_tbl is not None
+
+        def _is_wide_band_raster(img, zone: str) -> bool:
+            if img.category not in ("header_footer_decor", "header_band", "footer_band"):
+                return False
+            if img.width_pt < _pw * 0.70:
+                return False
+            if zone == "header":
+                return img.y_pt < _ph * 0.30
+            return (img.y_pt + img.height_pt) > _ph * 0.75  # footer zone
+
+        doc.page_images = [
+            img for img in doc.page_images
+            if not (
+                (_suppress_hdr and _is_wide_band_raster(img, "header"))
+                or (_suppress_ftr and _is_wide_band_raster(img, "footer"))
+            )
+        ]
 
 
 def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> None:
@@ -3570,6 +3645,48 @@ def _render_block_into_elem(
                 _numPr_nb = _pPr_nb.find(f"{{{_W}}}numPr")
                 if _numPr_nb is not None:
                     _pPr_nb.remove(_numPr_nb)
+        # Semantic visual styling: apply italic for narrative intro types and bold
+        # for technology/label types so each semantic kind renders distinctly.
+        # Applied after bold-strip and bullet-strip so these take final precedence.
+        _SEM_ITALIC = frozenset({"role_intro", "project_intro"})
+        _SEM_BOLD = frozenset({
+            "role_key_technologies", "role_tech_stack",
+            "role_project_label", "highlight_header",
+        })
+        if pm.semantic in _SEM_ITALIC and pm.text.strip():
+            _pPr_si = elem.find(f"{{{_W}}}pPr")
+            if _pPr_si is not None:
+                _rPr_ppr_si = _pPr_si.find(f"{{{_W}}}rPr")
+                if _rPr_ppr_si is None:
+                    _rPr_ppr_si = etree.SubElement(_pPr_si, f"{{{_W}}}rPr")
+                for _t_si in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
+                    if _rPr_ppr_si.find(_t_si) is None:
+                        etree.SubElement(_rPr_ppr_si, _t_si)
+            for _r_si in elem.findall(f".//{{{_W}}}r"):
+                _rPr_si = _r_si.find(f"{{{_W}}}rPr")
+                if _rPr_si is None:
+                    _rPr_si = etree.SubElement(_r_si, f"{{{_W}}}rPr")
+                    _r_si.insert(0, _rPr_si)
+                for _t_si in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
+                    if _rPr_si.find(_t_si) is None:
+                        etree.SubElement(_rPr_si, _t_si)
+        elif pm.semantic in _SEM_BOLD and pm.text.strip():
+            _pPr_sb = elem.find(f"{{{_W}}}pPr")
+            if _pPr_sb is not None:
+                _rPr_ppr_sb = _pPr_sb.find(f"{{{_W}}}rPr")
+                if _rPr_ppr_sb is None:
+                    _rPr_ppr_sb = etree.SubElement(_pPr_sb, f"{{{_W}}}rPr")
+                for _t_sb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                    if _rPr_ppr_sb.find(_t_sb) is None:
+                        etree.SubElement(_rPr_ppr_sb, _t_sb)
+            for _r_sb in elem.findall(f".//{{{_W}}}r"):
+                _rPr_sb = _r_sb.find(f"{{{_W}}}rPr")
+                if _rPr_sb is None:
+                    _rPr_sb = etree.SubElement(_r_sb, f"{{{_W}}}rPr")
+                    _r_sb.insert(0, _rPr_sb)
+                for _t_sb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                    if _rPr_sb.find(_t_sb) is None:
+                        etree.SubElement(_rPr_sb, _t_sb)
         # Strip display-only (Symbol/Wingdings/SymbolMT) fonts from run rPr so
         # that injected text renders with normal characters instead of garbled
         # symbol glyphs.  These fonts map codepoints to dingbats/symbols rather
@@ -5124,6 +5241,47 @@ def _render_from_layout_blocks(
                             _numPr_nb_lb = _pPr_nb_lb.find(f"{{{_W}}}numPr")
                             if _numPr_nb_lb is not None:
                                 _pPr_nb_lb.remove(_numPr_nb_lb)
+                    # Semantic visual styling (layout-bound path): italic for
+                    # narrative intro types, bold for technology/label types.
+                    _SEM_ITALIC_LB = frozenset({"role_intro", "project_intro"})
+                    _SEM_BOLD_LB = frozenset({
+                        "role_key_technologies", "role_tech_stack",
+                        "role_project_label", "highlight_header",
+                    })
+                    if pm.semantic in _SEM_ITALIC_LB and pm.text.strip():
+                        _pPr_si_lb = elem.find(f"{{{_W}}}pPr")
+                        if _pPr_si_lb is not None:
+                            _rPr_ppr_si_lb = _pPr_si_lb.find(f"{{{_W}}}rPr")
+                            if _rPr_ppr_si_lb is None:
+                                _rPr_ppr_si_lb = etree.SubElement(_pPr_si_lb, f"{{{_W}}}rPr")
+                            for _t_si_lb in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
+                                if _rPr_ppr_si_lb.find(_t_si_lb) is None:
+                                    etree.SubElement(_rPr_ppr_si_lb, _t_si_lb)
+                        for _r_si_lb in elem.findall(f".//{{{_W}}}r"):
+                            _rPr_si_lb = _r_si_lb.find(f"{{{_W}}}rPr")
+                            if _rPr_si_lb is None:
+                                _rPr_si_lb = etree.SubElement(_r_si_lb, f"{{{_W}}}rPr")
+                                _r_si_lb.insert(0, _rPr_si_lb)
+                            for _t_si_lb in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
+                                if _rPr_si_lb.find(_t_si_lb) is None:
+                                    etree.SubElement(_rPr_si_lb, _t_si_lb)
+                    elif pm.semantic in _SEM_BOLD_LB and pm.text.strip():
+                        _pPr_sb_lb = elem.find(f"{{{_W}}}pPr")
+                        if _pPr_sb_lb is not None:
+                            _rPr_ppr_sb_lb = _pPr_sb_lb.find(f"{{{_W}}}rPr")
+                            if _rPr_ppr_sb_lb is None:
+                                _rPr_ppr_sb_lb = etree.SubElement(_pPr_sb_lb, f"{{{_W}}}rPr")
+                            for _t_sb_lb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                                if _rPr_ppr_sb_lb.find(_t_sb_lb) is None:
+                                    etree.SubElement(_rPr_ppr_sb_lb, _t_sb_lb)
+                        for _r_sb_lb in elem.findall(f".//{{{_W}}}r"):
+                            _rPr_sb_lb = _r_sb_lb.find(f"{{{_W}}}rPr")
+                            if _rPr_sb_lb is None:
+                                _rPr_sb_lb = etree.SubElement(_r_sb_lb, f"{{{_W}}}rPr")
+                                _r_sb_lb.insert(0, _rPr_sb_lb)
+                            for _t_sb_lb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                                if _rPr_sb_lb.find(_t_sb_lb) is None:
+                                    etree.SubElement(_rPr_sb_lb, _t_sb_lb)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
                 else:
                     if block.para_id:
