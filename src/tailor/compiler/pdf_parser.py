@@ -1351,12 +1351,24 @@ def _extract_layout(doc) -> LayoutProfile:
                     for s in l.get("spans", [])
                 ).strip())
 
-            _right_xs = [b["bbox"][0] for b in blocks
-                         if b.get("type") == 0 and b["bbox"][0] >= split_x and b["bbox"][1] >= _top_cut]
-            _right_chars = sum(_block_chars(b) for b in blocks
-                               if b.get("type") == 0 and b["bbox"][0] >= split_x and b["bbox"][1] >= _top_cut)
-            _left_chars  = sum(_block_chars(b) for b in blocks
-                               if b.get("type") == 0 and b["bbox"][0] < split_x  and b["bbox"][1] >= _top_cut)
+            # Count per span (not per block) so that wide merged blocks
+            # containing both left and right content (parallel-column layouts)
+            # are correctly classified.
+            _right_xs: list[float] = []
+            _right_chars = 0
+            _left_chars = 0
+            for _sb in blocks:
+                if _sb.get("type") != 0 or _sb["bbox"][1] < _top_cut:
+                    continue
+                for _sl in _sb.get("lines", []):
+                    for _ss in _sl.get("spans", []):
+                        _ssx0 = float(_ss["bbox"][0])
+                        _sst = _ss.get("text", "").strip()
+                        if _ssx0 >= split_x:
+                            _right_chars += len(_sst)
+                            _right_xs.append(_ssx0)
+                        else:
+                            _left_chars += len(_sst)
             _right_range = (max(_right_xs) - min(_right_xs)) if len(_right_xs) > 1 else 0
 
             # Suppress when right zone is thin: few chars, narrow x-span, and
@@ -1681,13 +1693,12 @@ def _detect_column_split(
                         _split = max(_min_x0 - 15.0, page_width * 0.20)
                         if _split <= page_width * 0.85:
                             return _split
-    # Tertiary detection: parallel two-column layout (diagnostic only).
+    # Tertiary detection: parallel two-column layout.
     # Detects templates where PyMuPDF merges same-y left+right spans into
     # single wide blocks (e.g. EDUCATION left / EDUCATION right at identical
-    # y-coordinates).  The split is logged for inspection but NOT returned:
-    # enabling it as a real split requires section-grouping fixes first,
-    # since right-column content without section headings would end up in
-    # header_paras rather than sections when _group_sections is called.
+    # y-coordinates).  Right-column paragraphs have no section headings, so
+    # _redistribute_parallel_body (called after _group_sections) re-assigns
+    # them to the left-column sections by y-range.
     if page_height > 0:
         _wide_min = page_width * 0.40
         _left_zone = page_width * 0.40
@@ -1719,11 +1730,12 @@ def _detect_column_split(
             if _med_right - _med_left >= page_width * 0.05:
                 _split = (_med_left + _med_right) / 2.0
                 if page_width * 0.25 <= _split <= page_width * 0.75:
-                    logging.getLogger("tailor.geometry").debug(
+                    log.debug(
                         "PARALLEL_COLUMNS_DETECTED split_x=%.1f (%.0f%% of page) "
-                        "from %d wide-block gaps — diagnostic only, not activating",
+                        "from %d wide-block gaps",
                         _split, _split / page_width * 100, len(_par_gaps),
                     )
+                    return _split
 
     return None
 
@@ -2967,6 +2979,46 @@ def _rescue_cross_col_paras(
         rs.body_paras = normal_body
 
 
+def _redistribute_parallel_body(
+    right_paras: list[ParaModel],
+    left_secs: list[ResumeSection],
+) -> None:
+    """Assign headingless right-column paragraphs to left-column sections by y-position.
+
+    For parallel two-column layouts where section headings only appear in the
+    left column, _group_sections returns all right-column content in right_hdrs
+    (no right sections found). This function assigns each right-column paragraph
+    to the left section whose heading y is closest and at or below the
+    paragraph's y. Paragraphs at y=0 (geometry not captured) go to the first
+    section. Operates in-place.
+    """
+    if not right_paras or not left_secs:
+        return
+
+    # Build (heading_y, section) pairs sorted ascending by heading y.
+    anchors: list[tuple[float, ResumeSection]] = []
+    for sec in left_secs:
+        hy = 0.0
+        if sec.heading.paragraph_profile:
+            hy = sec.heading.paragraph_profile.y_top_pt or 0.0
+        anchors.append((hy, sec))
+    anchors.sort(key=lambda t: t[0])
+
+    for pm in right_paras:
+        para_y = 0.0
+        if pm.paragraph_profile:
+            para_y = pm.paragraph_profile.y_top_pt or 0.0
+
+        # Walk anchors in ascending y order; take the last one whose heading
+        # y ≤ para_y + 20 pt (tolerance for slight y-misalignment between
+        # heading text and the first right-column line at the same band).
+        target_sec = anchors[0][1]
+        for hy, sec in anchors:
+            if hy <= para_y + 20.0:
+                target_sec = sec
+        target_sec.body_paras.append(pm)
+
+
 def _group_sections(
     paras: list[ParaModel],
 ) -> tuple[list[ParaModel], list[ResumeSection]]:
@@ -3491,6 +3543,13 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
             # significantly above their section heading's y and re-associate
             # them with the contextual left-column section.
             _rescue_cross_col_paras(left_secs, right_secs)
+            # Parallel-body redistribution: when the right column has no
+            # section headings (parallel-body layout where labels appear only
+            # on the left), redistribute right-column paragraphs into the left
+            # sections by y-range so they render as body content, not headers.
+            if not right_secs and right_hdrs and left_secs:
+                _redistribute_parallel_body(right_hdrs, left_secs)
+                right_hdrs = []
             header_paras = above_hdrs + left_hdrs + right_hdrs
             sections     = above_secs + left_secs + right_secs
     else:
