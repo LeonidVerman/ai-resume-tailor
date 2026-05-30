@@ -3155,17 +3155,33 @@ def _render_block_into_elem(
     _strip_column_break(elem)
     pm = para_lookup.get(block.para_id) if block.para_id else None
     if pm is not None:
-        # For ext slots (overflow paragraphs cloned from a multi-SDT template slot),
-        # the cloned proto carries ≥2 SDT children that represent a structured
-        # multi-column layout (e.g. 3-column tab-based skills).  _set_para_text
-        # has a guard that preserves such paragraphs unchanged.  For ext slots that
-        # carry newly-assigned text this would silently render the original template
-        # content.  Strip all SDT children and let _set_para_text place the new
-        # text in a simple run instead.
-        if block.para_id and "_ext_" in block.para_id:
-            _sdt_cnt = sum(1 for _c in elem if _c.tag == f"{{{_W}}}sdt")
-            if _sdt_cnt >= 2:
-                _pPr_sdt = elem.find(f"{{{_W}}}pPr")
+        # _set_para_text has a guard that early-exits for paragraphs with ≥2 direct
+        # w:sdt children (multi-column contact rows like "email TAB phone TAB LinkedIn").
+        # The guard is correct for preserved template rows but incorrectly also fires
+        # for skills/summary rows that share the same SDT structure when the LLM
+        # has replaced their content.  Strip all non-pPr children when:
+        #   (a) ext slots: always (cloned proto carries the multi-SDT structure but
+        #       needs new LLM text); or
+        #   (b) regular slots: the model text differs from what the SDT content
+        #       currently holds (LLM replaced this paragraph).
+        _sdt_cnt = sum(1 for _c in elem if _c.tag == f"{{{_W}}}sdt")
+        if _sdt_cnt >= 2:
+            _is_ext = "_ext_" in (block.para_id or "")
+            _should_strip = _is_ext
+            if not _is_ext and pm.text.strip():
+                _xml_parts: list[str] = []
+                for _child in elem:
+                    if _child.tag == f"{{{_W}}}sdt":
+                        _sc = _child.find(f"{{{_W}}}sdtContent")
+                        if _sc is not None:
+                            for _r in _sc.findall(f".//{{{_W}}}r"):
+                                for _t in _r.findall(f"{{{_W}}}t"):
+                                    if _t.text:
+                                        _xml_parts.append(_t.text)
+                _xml_text = " ".join(_xml_parts)
+                _norm = lambda s: " ".join(s.lower().split())
+                _should_strip = _norm(pm.text) != _norm(_xml_text)
+            if _should_strip:
                 for _sdt_c in list(elem):
                     if _sdt_c.tag != f"{{{_W}}}pPr":
                         elem.remove(_sdt_c)
@@ -4192,9 +4208,17 @@ def _build_para_lookup(doc: ResumeDocument) -> dict[str, ParaModel]:
         else:
             seen[pm.para_id] = pm
 
+    def _force(pm: ParaModel) -> None:
+        """Override any existing entry — used for sec_summary_inserted which
+        reuses an empty header_para slot and must take priority over it."""
+        if pm.para_id:
+            seen[pm.para_id] = pm
+
     for pm in doc.header_paras:
         _add(pm)
     for sec in doc.sections:
+        _is_summary_inserted = getattr(sec, "section_id", "") == "sec_summary_inserted"
+        _add_fn = _force if _is_summary_inserted else _add
         _add(sec.heading)
         for role in sec.roles:
             _add(role.header)
@@ -4205,7 +4229,7 @@ def _build_para_lookup(doc: ResumeDocument) -> dict[str, ParaModel]:
             for pm in role.bullets:
                 _add(pm)
         for pm in sec.body_paras:
-            _add(pm)
+            _add_fn(pm)
     # Fallback: all_paras may contain paragraphs not yet in semantic sections
     for pm in (doc.all_paras or []):
         if pm.para_id and pm.para_id not in seen:
@@ -4629,12 +4653,29 @@ def _render_from_layout_blocks(
                 )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
                 if pm is not None:
-                    # Ext slots that inherited a multi-SDT proto: strip SDT children
-                    # so the new text is placed in a simple run (same fix as in
-                    # _render_block_into_elem for the two-col-table path).
-                    if block.para_id and "_ext_" in block.para_id:
-                        _sdt_cnt_lb = sum(1 for _c in elem if _c.tag == f"{{{_W}}}sdt")
-                        if _sdt_cnt_lb >= 2:
+                    # Strip SDT children when the block's model text differs from
+                    # what the template SDTs hold (same logic as _render_block_into_elem).
+                    # _set_para_text early-exits on ≥2 SDTs to preserve multi-column
+                    # contact rows; that guard incorrectly also fires for skills rows
+                    # when the LLM replaced their content.
+                    _sdt_cnt_lb = sum(1 for _c in elem if _c.tag == f"{{{_W}}}sdt")
+                    if _sdt_cnt_lb >= 2:
+                        _is_ext_lb = "_ext_" in (block.para_id or "")
+                        _should_strip_lb = _is_ext_lb
+                        if not _is_ext_lb and pm.text.strip():
+                            _xml_parts_lb: list[str] = []
+                            for _child_lb in elem:
+                                if _child_lb.tag == f"{{{_W}}}sdt":
+                                    _sc_lb = _child_lb.find(f"{{{_W}}}sdtContent")
+                                    if _sc_lb is not None:
+                                        for _r_lb in _sc_lb.findall(f".//{{{_W}}}r"):
+                                            for _t_lb in _r_lb.findall(f"{{{_W}}}t"):
+                                                if _t_lb.text:
+                                                    _xml_parts_lb.append(_t_lb.text)
+                            _xml_text_lb = " ".join(_xml_parts_lb)
+                            _norm_lb = lambda s: " ".join(s.lower().split())
+                            _should_strip_lb = _norm_lb(pm.text) != _norm_lb(_xml_text_lb)
+                        if _should_strip_lb:
                             for _sdt_c_lb in list(elem):
                                 if _sdt_c_lb.tag != f"{{{_W}}}pPr":
                                     elem.remove(_sdt_c_lb)
