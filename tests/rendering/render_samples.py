@@ -497,6 +497,10 @@ def main(argv: list[str] | None = None) -> int:
                         help="Fail the run if any screenshot fails (default: warnings only).")
     parser.add_argument("--screenshot-zoom", type=float, default=2.0, metavar="ZOOM",
                         help="PyMuPDF rendering zoom factor (default 2.0).")
+    parser.add_argument("--docx-only", action="store_true", default=False,
+                        help="Render only DOCX-origin samples.")
+    parser.add_argument("--pdf-only", action="store_true", default=False,
+                        help="Render only PDF-origin samples.")
     parser.add_argument("-h", "--help", action="help",
                         help="Show this help message and exit.")
 
@@ -519,6 +523,11 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as e:
         print(f"\nDISCOVERY ERROR: {e}")
         return 1
+
+    if args.docx_only:
+        pairs = [p for p in pairs if p.source_kind == "docx"]
+    elif args.pdf_only:
+        pairs = [p for p in pairs if p.source_kind == "pdf"]
 
     if not pairs and not skips:
         print("\nNo samples matched the filter.")
