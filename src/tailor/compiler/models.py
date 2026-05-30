@@ -162,6 +162,7 @@ class ParaModel:
     text: str
     style: ParaStyle
     # Semantic values: section_heading | role_header | role_meta | bullet | paragraph | empty
+    # Classification-propagated adjunct types: role_intro | role_key_technologies | role_tech_stack
     semantic: str
     # Set for PDF-sourced paragraphs; None for DOCX-sourced paragraphs.
     paragraph_profile: ParagraphProfile | None = None
