@@ -974,10 +974,15 @@ def _update_body_section(
 
     # Append any remaining unbound extra paras (LLM content beyond template slots).
     # Register them under the last content para's ID so apply_tailored can inject
-    # matching LayoutParagraphBlock entries.  para_id is left "" here — the
-    # injector assigns IDs only when the anchor block has an xml_proto_xml.
+    # matching LayoutParagraphBlock entries.  When there are no content paras (empty
+    # template section), fall back to the section heading para_id as the anchor so
+    # the content is injected directly after the heading in layout-bound mode.
     _body_extra_injections: "dict[str, list[ParaModel]]" = {}
-    _anchor_pid = content_paras[-1].para_id if content_paras else ""
+    _anchor_pid = (
+        content_paras[-1].para_id
+        if content_paras
+        else (orig.heading.para_id or "") if orig.heading else ""
+    )
     for extra_pm in updated[content_cursor:]:
         if _anchor_pid:
             _body_extra_injections.setdefault(_anchor_pid, []).append(extra_pm)
@@ -1394,9 +1399,15 @@ def _inject_fragmented_experience(
     The section heading is updated with the LLM role header and the available
     body paragraph slots are filled with bullets.
     """
-    role_like = _find_role_like_other_sections(original_sections)
+    # Use updated sections to detect role-like targets so that sections
+    # promoted to a different semantic_type (e.g. 'summary' by classification)
+    # are not overwritten with experience bullets.
+    role_like = _find_role_like_other_sections(sections)
     if not role_like or not llm_exp.roles:
         return sections
+    # Build a lookup of original body structure keyed by section_id so the
+    # replacement can use the clean template slot layout (not updated content).
+    _orig_by_id = {s.section_id: s for s in original_sections}
 
     _log.debug(
         "FRAGMENTED_EXPERIENCE_DETECTED: %d role-like sections, %d LLM roles",
@@ -1411,8 +1422,11 @@ def _inject_fragmented_experience(
         llm_role = llm_exp.roles[i]
         # Update heading with LLM role header text
         new_heading = _strip_col_break_para(sec.heading.with_text(llm_role.header))
+        # Use original body_para slots for clean slot structure (the updated
+        # section may have LLM content already occupying the slots).
+        orig_sec = _orig_by_id.get(sec.section_id, sec)
         # Fill available body_para slots with bullets, pack overflow into last slot
-        body = list(sec.body_paras)
+        body = list(orig_sec.body_paras)
         bullet_slots = [j for j, bp in enumerate(body) if bp.para_id and not bp.text.startswith('\n')]
         # First slot can carry a newline/spacer — skip those, prefer content slots
         if not bullet_slots:
@@ -1483,7 +1497,7 @@ _MONTH_PAT = (
 )
 _YEAR_SLOT_PAT = r"(?:19\d{2}|20\d{2}|19[Xx]{2}|20[Xx]{2})"  # real or XX placeholder
 _DATE_WORD_PAT = r"(?:Present|Current|Now|Ongoing)"
-_SINGLE_DATE_PAT = rf"(?:{_MONTH_PAT}\.?\s+{_YEAR_SLOT_PAT}|{_YEAR_SLOT_PAT})"
+_SINGLE_DATE_PAT = rf"(?:{_MONTH_PAT}\.?\s*(?:/\s*)?{_YEAR_SLOT_PAT}|{_YEAR_SLOT_PAT})"
 _DATE_SEP_LOOSE_PAT = r"(?:\s*[-–—‒]\s*|\s+to\s+|\s+through\s+)"
 _DATE_RANGE_PAT = (
     rf"(?:{_SINGLE_DATE_PAT}"
@@ -1497,6 +1511,10 @@ _STANDALONE_DATE_LINE_RE = re.compile(
 _BULLET_MARKER_RE = re.compile(
     r"^\s*[-•‣◦⁃▸⦿●*–—‒]\s+"
 )
+# Strategy 3: "ALL-CAPS COMPANY - LOCATION" boundaries.
+# Matches lines like "TIMMERMAN INDUSTRIES - 123 Anywhere St., Any City"
+# where the company name is predominantly uppercase and uses ASCII " - " separator.
+_CAPS_COMPANY_SEP_RE = re.compile(r'^[A-Z][A-Z\s\d&,\.\']{2,}\s+-\s+\S')
 
 
 def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
@@ -1554,6 +1572,22 @@ def _reparse_body_lines_as_roles(body_lines: list[str]) -> list[LlmRole]:
             "EXPERIENCE_LLM_ROLES_REPARSED: body_lines=%d dash_boundaries=%d "
             "reparsed_roles=%d pattern=em_en_dash",
             len(body_lines), len(dash_bounds), len(roles),
+        )
+        return roles
+
+    # Strategy 3: "ALL-CAPS COMPANY - LOCATION\nJob Title (Year)" format.
+    # Detects company lines that are predominantly uppercase letters and use
+    # ASCII " - " as a separator before the location.
+    company_bounds = [
+        i for i, ln in enumerate(body_lines)
+        if _CAPS_COMPANY_SEP_RE.match(ln.strip())
+    ]
+    if company_bounds:
+        roles = _roles_from_company_location_boundaries(body_lines, company_bounds)
+        _log.debug(
+            "EXPERIENCE_LLM_ROLES_REPARSED: body_lines=%d company_boundaries=%d "
+            "reparsed_roles=%d pattern=caps_company",
+            len(body_lines), len(company_bounds), len(roles),
         )
         return roles
 
@@ -1636,6 +1670,40 @@ def _roles_from_dash_boundaries(
                 meta.append(s)
             else:
                 bullets.append(s)
+        roles.append(LlmRole(header=header, meta_lines=meta, bullets=bullets))
+    return roles
+
+
+def _roles_from_company_location_boundaries(
+    body_lines: list[str], boundaries: list[int]
+) -> list[LlmRole]:
+    """ALL-CAPS COMPANY - LOCATION boundary parser.
+
+    Handles "COMPANY NAME - Location\\nJob Title (Year)\\n- bullets" format where
+    the company line is predominantly uppercase and uses ASCII hyphen-space separator.
+    The company line becomes a meta line; the next non-empty line becomes the header.
+    """
+    roles: list[LlmRole] = []
+    for idx, boundary_i in enumerate(boundaries):
+        end_i = boundaries[idx + 1] if idx + 1 < len(boundaries) else len(body_lines)
+        company_line = body_lines[boundary_i].strip()
+
+        header = company_line  # fallback when no title line follows
+        meta: list[str] = [company_line]
+        bullets: list[str] = []
+        saw_title = False
+
+        for line in body_lines[boundary_i + 1: end_i]:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            clean = _BULLET_MARKER_RE.sub("", stripped).strip()
+            if not saw_title:
+                header = clean if clean else stripped
+                saw_title = True
+            else:
+                bullets.append(clean if clean else stripped)
+
         roles.append(LlmRole(header=header, meta_lines=meta, bullets=bullets))
     return roles
 
@@ -1979,7 +2047,10 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
     for _si, section in enumerate(_sections):
         if section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             continue
-        if section.semantic_type == "experience":
+        if section.semantic_type in ("experience", "skills"):
+            # Skills body_paras hold skill keywords, not prose — skip them.
+            # In-place modification of a skills para doesn't persist because the
+            # skills section is rebuilt by _apply_section before this runs.
             continue
         # Skip named semantic sections that should never receive summary injection.
         if section.title.strip().lower() in _PROTECTED_INTRO_PROSE_TITLES:
@@ -2926,7 +2997,33 @@ def _update_experience_classified(
         return p
 
     filtered_body = [_sanitize_body(p) for p in orig.body_paras]
-    return ResumeSection(
+
+    # Register extra unbound bullets (para_id="") as injections so apply_tailored
+    # creates layout blocks for them and the renderer can write their text.
+    # Without this, extra LLM bullets beyond the template's slot count are silently
+    # dropped because they have no layout block to anchor to.
+    # Roles with NO bullet slots produce ALL-unbound bullets; use the same fallback
+    # anchor logic (last meta line → header) as the auto-registration loop so that
+    # setting _extra_injections for one role doesn't suppress the others.
+    _extra_injections: "dict[str, list[ParaModel]]" = {}
+    for _r in updated_roles:
+        _bound = [b for b in _r.bullets if b.para_id]
+        _unbound = [b for b in _r.bullets if not b.para_id and b.text.strip()]
+        if _unbound:
+            _anchor_pm = (
+                _bound[-1] if _bound
+                else _r.meta_lines[-1] if (_r.meta_lines and _r.meta_lines[-1].para_id)
+                else _r.header
+            )
+            _anchor = _anchor_pm.para_id
+            if _anchor:
+                _extra_injections.setdefault(_anchor, []).extend(_unbound)
+                _log.debug(
+                    "CLASSIFIED_EXTRA_BULLETS: role=%r anchor=%r extra=%d",
+                    _r.role_id, _anchor, len(_unbound),
+                )
+
+    result = ResumeSection(
         title=orig.title,
         heading=orig.heading,
         semantic_type=orig.semantic_type,
@@ -2935,6 +3032,9 @@ def _update_experience_classified(
         section_id=orig.section_id,
         container_type=orig.container_type,
     )
+    if _extra_injections:
+        result._extra_injections = _extra_injections  # type: ignore[attr-defined]
+    return result
 
 
 def _update_body_classified(
@@ -2998,7 +3098,17 @@ def _update_body_classified(
             body_lines=_sanitize_skills_lines(llm.body_lines),
             roles=llm.roles,
         )
-    return _update_body_section(orig, llm, layout_bound=layout_bound)
+    result = _update_body_section(orig, llm, layout_bound=layout_bound)
+    # When the classifier identifies an 'other' template section as a summary
+    # (e.g. "Senior Software Engineer" intro-prose), promote the result's
+    # semantic_type so downstream logic treats it correctly:
+    # (a) _inject_fragmented_experience only targets 'other' sections — keeping
+    #     'other' would cause it to overwrite the injected summary with experience
+    #     bullets; (b) the grader's _ir_text_by_section_type identifies summary
+    #     sections by semantic_type in {'summary','profile'}.
+    if cls_sec.semantic_type == "summary" and orig.semantic_type != "summary":
+        result.semantic_type = "summary"
+    return result
 
 
 def _apply_section_classified(
@@ -3243,18 +3353,54 @@ def normalize_llm_sections(
 ) -> list["LlmSection"]:
     """Normalize LLM output sections to structural correctness before apply_tailored.
 
-    Runs two repair passes:
+    Runs three repair passes:
     1. Role-continuation repair: absorbs "Web Designer"-style top-level sections
        that immediately follow an Experience section as additional LlmRole entries.
     2. Role-in-bullets repair: extracts role headers accidentally embedded as
        bullet points back into proper LlmRole entries.
+    3. Duplicate-section deduplication: when the LLM echoes original template
+       sections verbatim at the end of its output, those duplicates shadow the
+       real LLM-generated sections during matching.  Keep the first occurrence of
+       each semantic type and drop later duplicates.
 
     These repairs are always applied when layout_blocks are present to prevent
     structural mismatch between the semantic model and the layout tree.
     """
     llm_sections = _repair_role_continuation_sections(llm_sections)
     llm_sections = _repair_roles_from_bullets(llm_sections)
+    llm_sections = _deduplicate_llm_sections(llm_sections)
     return llm_sections
+
+
+def _deduplicate_llm_sections(
+    llm_sections: list["LlmSection"],
+) -> list["LlmSection"]:
+    """Drop later duplicate semantic-type sections, keeping the first occurrence.
+
+    LLMs occasionally append original template content verbatim after their
+    generated output (e.g. template heading "SKILLS" after the real "Technical
+    Skills" section).  During section matching, the exact-heading pass picks
+    the verbatim echo over the real content, leaving the template section
+    unchanged.  Removing the duplicates lets the first (real) section win.
+
+    Only deduplicates for concrete semantic types (skills, experience, summary,
+    education).  "other"-type sections are never deduplicated.
+    """
+    _DEDUP_TYPES = frozenset({"skills", "experience", "summary", "education"})
+    seen_types: set[str] = set()
+    result: list["LlmSection"] = []
+    for sec in llm_sections:
+        st = sec.semantic_type
+        if st in _DEDUP_TYPES:
+            if st in seen_types:
+                _log.debug(
+                    "NORMALIZE_DEDUP: dropped duplicate %r section %r",
+                    st, sec.heading[:40],
+                )
+                continue
+            seen_types.add(st)
+        result.append(sec)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -4140,6 +4286,35 @@ def apply_tailored(
         _log.warning("Section mapping failed — returning template verbatim: %s", exc)
         return original
 
+    # Pattern F: classification labels a template 'other' section as 'summary'
+    # but exact-heading matching gave it a non-summary LLM section (LLM repeated
+    # the template heading verbatim).  The actual summary content landed in an
+    # extra 'Professional Summary' section.  Substitute it into the pair and
+    # remove it from extras so it is not injected a second time.
+    _extra_sum_idx = next(
+        (i for i, s in enumerate(match.extras) if s.semantic_type == "summary"),
+        None,
+    )
+    if _extra_sum_idx is not None:
+        for _pi, (_orig_s, _llm_s) in enumerate(match.pairs):
+            _cls_f = _resolve_cls_sec(_orig_s)
+            if (
+                _cls_f is not None
+                and _cls_f.semantic_type == "summary"
+                and _cls_f.rewrite_policy != "preserve"
+                and _orig_s.semantic_type not in ("summary",)
+                and (_llm_s is None or _llm_s.semantic_type not in ("summary",))
+            ):
+                _extra_sum = match.extras.pop(_extra_sum_idx)
+                match.pairs[_pi] = (_orig_s, _extra_sum)
+                _log.debug(
+                    "PATTERN_F: substituted extra summary %r into slot %r "
+                    "(template type=%s, orig llm type=%s)",
+                    _extra_sum.heading, _orig_s.title,
+                    _orig_s.semantic_type, _llm_s.semantic_type if _llm_s else "none",
+                )
+                break
+
     def _apply_section(orig_section: ResumeSection, llm_section: LlmSection) -> ResumeSection:
         """Update orig_section with llm_section content, respecting lock rules."""
         if orig_section.semantic_type in _LOCKED_SEMANTIC_TYPES:
@@ -4215,6 +4390,17 @@ def apply_tailored(
             and orig_section.semantic_type == "skills"
             and cls_sec.semantic_type not in ("skills",)
             and any(s.semantic_type == "skills" for s in llm_sections)
+        ):
+            cls_sec = None
+        # Pattern E guard: classifier sometimes labels an experience section as
+        # other/preserve (e.g. "Work History") when the heading uses non-standard
+        # vocabulary.  Trust the IR parser's experience classification so the LLM
+        # experience content gets injected rather than preserving the empty slot.
+        if (
+            cls_sec is not None
+            and cls_sec.rewrite_policy == "preserve"
+            and orig_section.semantic_type == "experience"
+            and cls_sec.semantic_type not in ("experience",)
         ):
             cls_sec = None
         if cls_sec is not None:
@@ -5710,6 +5896,12 @@ def apply_tailored(
                             _new_p = _deepcopy(_pm.style.xml_proto)
                         else:
                             _new_p = _deepcopy(_anchor_elem)
+                        # Strip bookmarks to prevent para_id collisions when re-parsing the DOCX
+                        for _bk_tag in ("bookmarkStart", "bookmarkEnd"):
+                            for _bk in list(_new_p.findall(f"{{{_W_NS}}}{_bk_tag}")):
+                                _new_p.remove(_bk)
+                            for _bk in list(_new_p.findall(f".//{{{_W_NS}}}{_bk_tag}")):
+                                _bk.getparent().remove(_bk)
                         # Clear all text runs and set new content
                         for _t in _new_p.findall(f".//{{{_W_NS}}}t"):
                             _t.text = ""

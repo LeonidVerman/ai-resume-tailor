@@ -331,9 +331,11 @@ def compact_experience_bullets(
             # all LLM bullets as extras. Don't compact; let them all through.
             result.append(llm_role)
             continue
-        # Compact templates: strict cap to preserve visual rhythm
-        # Normal templates: allow 1 extra bullet beyond original
-        headroom = 0 if compact_template else 1
+        # Allow 1 extra bullet beyond the original slot count for all templates.
+        # Compact templates were previously capped to 0 headroom, but this caused
+        # content-injection hard fails when the LLM generated more bullets than
+        # the template had slots. LibreOffice handles the extra line naturally.
+        headroom = 1
         max_bullets = max(1, orig_count + headroom)
 
         if len(llm_role.bullets) > max_bullets:
@@ -709,6 +711,10 @@ def _has_intro_prose_content(section: "ResumeSection") -> bool:
     # Exclude sections whose every non-empty line is a URL or has no whitespace
     # (e.g. a Websites section containing only "linkedin.com/in/…" links).
     if all("://" in p or " " not in p for p in non_empty_texts):
+        return False
+    # Reject keyword lists that use '•' as an inline separator
+    # (e.g. "Senior Architect • Principal Developer • Senior App Developer").
+    if any(t.count("•") > 1 for t in non_empty_texts):
         return False
     comma_density = total_text.count(",") / max(1, len(total_text))
     return comma_density < 0.15
