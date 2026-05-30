@@ -682,6 +682,16 @@ def _set_para_text(p_elem, text: str) -> None:
                 vml_text_str += "".join(t.text or "" for t in nested_t)
                 vml_indices.add(i)
                 chars = 0   # exclude from proportional distribution
+        elif r.find(f".//{{{_WP}}}anchor") is not None:
+            # Modern WPS text box in mc:AlternateContent/mc:Choice/w:drawing/wp:anchor.
+            # Both the Choice (modern drawing) and Fallback (VML) branches carry the
+            # same text; findall returns both copies, matching what the parser
+            # concatenated into the paragraph IR text.
+            nested_t = r.findall(f".//{{{_W}}}t")
+            if nested_t:
+                vml_text_str += "".join(t.text or "" for t in nested_t)
+                vml_indices.add(i)
+                chars = 0   # exclude from proportional distribution
         orig_lens.append(chars)
     total_orig = sum(orig_lens)
 
