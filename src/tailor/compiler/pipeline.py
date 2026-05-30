@@ -1305,6 +1305,34 @@ def compile_resume_from_pdf(
             if _rp:
                 _parallel_right_paras[_sec.title] = _rp
 
+    # Capture footer items from PARALLEL_BODY sections when footer_bg_color was not
+    # detected by pixel-sampling.  Body paras at the very bottom of the page (y > 90%
+    # of page height) that were redistributed into section body_paras by the parser
+    # belong to the footer band and should be rendered there, not in section content.
+    _parallel_footer_items: "list" = []
+    _footer_y_thresh = (
+        template_ir.layout.page_height_pt * 0.90
+        if template_ir.layout.page_height_pt else None
+    )
+    if (
+        _footer_y_thresh is not None
+        and template_ir.layout.column_split_x is not None
+        and not template_ir.layout.footer_bg_color
+        and template_ir.layout.header_bg_color
+    ):
+        for _sec in template_ir.sections:
+            for _pm in _sec.body_paras:
+                _pp = _pm.paragraph_profile
+                if _pp and _pp.y_pt > _footer_y_thresh:
+                    _parallel_footer_items.append(_pm)
+        if _parallel_footer_items:
+            log.debug(
+                "FOOTER_DETECTED items=%d y_thresh=%.1f bg_from_header=%s",
+                len(_parallel_footer_items),
+                _footer_y_thresh,
+                template_ir.layout.header_bg_color,
+            )
+
     llm_sections = parse_llm_output(llm_text)
     llm_sections = apply_layout_fitting(template_ir, llm_sections, skip_compaction=True)
     updated = apply_tailored(template_ir, llm_sections, classification=classification)
@@ -1338,6 +1366,8 @@ def compile_resume_from_pdf(
     # has cleared body_paras for experience sections.  The original right-column content
     # (redistributed by _redistribute_parallel_body in the parser) is re-attached so the
     # renderer can place it in the right cell of the two-column body row.
+    # Footer items (y > 90% of page) are excluded — they go into footer_paras instead.
+    _footer_ids: "frozenset[int]" = frozenset(id(pm) for pm in _parallel_footer_items)
     for _sec in updated.sections:
         if _sec.render_mode == "PARALLEL_BODY" and _sec.title in _parallel_right_paras:
             _has_right = any(
@@ -1345,7 +1375,18 @@ def compile_resume_from_pdf(
                 for pm in _sec.body_paras
             )
             if not _has_right:
-                _sec.body_paras.extend(_parallel_right_paras[_sec.title])
+                _non_footer = [
+                    pm for pm in _parallel_right_paras[_sec.title]
+                    if id(pm) not in _footer_ids
+                ]
+                _sec.body_paras.extend(_non_footer)
+
+    # Restore footer band: store captured footer items in footer_paras and set the
+    # footer background color using the header dark color as a fallback.
+    if _parallel_footer_items and not updated.footer_paras:
+        updated.footer_paras = _parallel_footer_items
+        if not updated.layout.footer_bg_color and updated.layout.header_bg_color:
+            updated.layout.footer_bg_color = updated.layout.header_bg_color
     # Move extra LLM sections (e.g. Professional Summary) out of the left sidebar
     # column for two-column PDF templates that have no matching left-column section.
     _fix_extra_left_sections(template_ir, updated)

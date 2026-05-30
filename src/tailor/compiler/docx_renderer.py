@@ -2093,6 +2093,24 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
             getattr(doc, "source_filename", "?"), _par_count, len(doc.sections),
         )
 
+        def _zero_cell_top_spacing(p_elem) -> None:
+            """Zero space_before on the first paragraph of a table cell.
+
+            Both cells in a parallel body row start at the same vertical position.
+            Space_before on the first para of each cell pushes that cell's content
+            down, breaking visual alignment between left and right columns.
+            Standard DOCX practice: cells own their top padding; paragraphs inside
+            cells should have space_before=0 for the first item.
+            """
+            pPr = p_elem.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                spB = pPr.find(f"{{{_W}}}spacing")
+                if spB is not None:
+                    spB.set(f"{{{_W}}}before", "0")
+                else:
+                    new_sp = etree.SubElement(pPr, f"{{{_W}}}spacing")
+                    new_sp.set(f"{{{_W}}}before", "0")
+
         def _make_two_col_row(l_paras, r_paras) -> None:
             """Append a left|right body row to the table."""
             _tr = etree.SubElement(tbl, f"{{{_W}}}tr")
@@ -2107,9 +2125,11 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 _shd.set(f"{{{_W}}}val", "clear")
                 _shd.set(f"{{{_W}}}color", "auto")
                 _shd.set(f"{{{_W}}}fill", _eff_left_bg)
-            for _pm in l_paras:
+            for _i, _pm in enumerate(l_paras):
                 _pe = build_para_element(_pm, doc_part=doc_part)
                 _append_left_indent(_pe, _pm)
+                if _i == 0:
+                    _zero_cell_top_spacing(_pe)
                 _ltc.append(_pe)
             if not l_paras:
                 etree.SubElement(_ltc, f"{{{_W}}}p")
@@ -2124,8 +2144,11 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 _shd.set(f"{{{_W}}}val", "clear")
                 _shd.set(f"{{{_W}}}color", "auto")
                 _shd.set(f"{{{_W}}}fill", _eff_right_bg)
-            for _pm in r_paras:
-                _rtc.append(build_para_element(_pm, doc_part=doc_part))
+            for _i, _pm in enumerate(r_paras):
+                _pe = build_para_element(_pm, doc_part=doc_part)
+                if _i == 0:
+                    _zero_cell_top_spacing(_pe)
+                _rtc.append(_pe)
             if not r_paras:
                 etree.SubElement(_rtc, f"{{{_W}}}p")
             if _use_pad:
@@ -2201,6 +2224,12 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 _sec.title, _sec_mode, len(_lbody), len(_rbody), _is_par,
             )
             if _is_par:
+                _left_y0 = _y_of(_lbody[0]) if _lbody else 0.0
+                _right_y0 = _y_of(_rbody[0]) if _rbody else 0.0
+                _glog.debug(
+                    "PARALLEL_ALIGNMENT section=%r left_y=%.1f right_y=%.1f delta=%.1f",
+                    _sec.title, _left_y0, _right_y0, abs(_left_y0 - _right_y0),
+                )
                 _glog.debug(
                     "PARALLEL_SECTION_RENDERED sec=%r left_items=%d right_items=%d",
                     _sec.title, len(_lbody), len(_rbody),
@@ -2300,14 +2329,50 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         else [build_para_element(pm, doc_part=doc_part) for pm in above_paras]
     )
 
+    # Footer band: render doc.footer_paras in a full-width dark band after the main
+    # table.  footer_bg_color may be inferred from the header color when pixel-sampling
+    # missed the footer (e.g. sample 25 where footer items were redistributed into
+    # section body_paras rather than captured as footer_paras directly).
+    _ftr_tbl = None
+    _raw_footer = list(doc.footer_paras) if doc.footer_paras else []
+    if _raw_footer and layout.footer_bg_color:
+        if len(_raw_footer) > 1:
+            _merged_text = "     ".join(pm.text.strip() for pm in _raw_footer if pm.text.strip())
+            _arch = _raw_footer[0]
+            _merged_pm = _arch.with_text(_merged_text)
+            _mpp = _merged_pm.paragraph_profile
+            if _mpp:
+                _mpp.alignment = "center"
+                _mpp.text_color = "ffffff"
+                _mpp.space_before_pt = 6.0
+                _mpp.space_after_pt = 6.0
+            else:
+                from tailor.compiler.models import ParagraphProfile as _PP
+                _merged_pm.paragraph_profile = _PP(
+                    alignment="center", text_color="ffffff",
+                    space_before_pt=6.0, space_after_pt=6.0,
+                )
+            _footer_render = [_merged_pm]
+        else:
+            _footer_render = _raw_footer
+        _ftr_tbl = _make_full_width_dark_band(
+            layout.footer_bg_color, page_w_twips, left_margin_twips,
+            _footer_render, doc_part=doc_part, center_text=True,
+        )
+        _glog.debug("FOOTER_RENDERED items=%d bg=%s", len(_raw_footer), layout.footer_bg_color)
+
     if sectPr is not None:
         for elem in above_elems:
             sectPr.addprevious(elem)
         sectPr.addprevious(tbl)
+        if _ftr_tbl is not None:
+            sectPr.addprevious(_ftr_tbl)
     else:
         for elem in above_elems:
             body.append(elem)
         body.append(tbl)
+        if _ftr_tbl is not None:
+            body.append(_ftr_tbl)
 
 
 def _render_table_block(tb: TableBlock, doc: "ResumeDocument", body, sectPr) -> None:
