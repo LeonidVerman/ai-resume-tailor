@@ -5116,6 +5116,33 @@ def apply_tailored(
                 _cleaned_hp.append(_hp)
         effective_header_paras = _cleaned_hp
 
+    # Icon-artifact header cleanup: detect "icon-char username" paras where an
+    # icon-font glyph (FontAwesome, etc.) degraded to a garbage ASCII character
+    # in a system font (Times New Roman) because the icon font was not embedded.
+    # Pattern: exactly 2 whitespace-separated tokens, first token ≤2 chars,
+    # second all-lowercase alphanumeric ≥4 chars, no '@' or '.' (not email/URL),
+    # total length <20.  Applied unconditionally — the heuristic is tight enough
+    # not to fire on legitimate contact lines (emails have '@', URLs have '.').
+    for _hi, _hp in enumerate(effective_header_paras):
+        if not _hp.para_id or not _hp.text.strip():
+            continue
+        _ia_words = _hp.text.strip().split()
+        if (
+            len(_ia_words) == 2
+            and len(_ia_words[0]) <= 2
+            and len(_hp.text.strip()) < 20
+            and _ia_words[1][0].islower()
+            and _ia_words[1].isalnum()
+            and len(_ia_words[1]) >= 4
+            and "@" not in _hp.text
+            and "." not in _hp.text
+        ):
+            effective_header_paras[_hi] = _dc_replace(_hp, text="")
+            _log.debug(
+                "ICON_ARTIFACT_CLEARED: para_id=%r text=%r",
+                _hp.para_id, _hp.text.strip(),
+            )
+
     # Blank out intro-prose header_paras that would duplicate an anchored summary.
     # When the template has a summary-like placeholder in header_paras (e.g. a
     # "Motivated software engineer..." line) AND the summary was already anchored
