@@ -1197,6 +1197,35 @@ def _inject_skills_into_section_body(doc: ResumeDocument) -> None:
     doc.sections = [s for i, s in enumerate(doc.sections) if i != extra_skills_idx]
 
 
+def _classify_section_render_mode(sec, layout) -> str:
+    """Classify a template_ir section's render mode from body_para geometry.
+
+    Must be called BEFORE apply_tailored() while paragraph_profile is still set.
+    Returns 'PARALLEL_BODY', 'FULL_WIDTH', or 'SINGLE_COLUMN'.
+    """
+    split_x = layout.column_split_x or 0.0
+    has_left = any(
+        pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
+        for pm in sec.body_paras
+    )
+    has_right = any(
+        pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
+        for pm in sec.body_paras
+    )
+    if has_left and has_right:
+        return "PARALLEL_BODY"
+    # Full-width: body paras classified as left but their right edge extends past split_x,
+    # meaning the content visually spans both columns even though x0 is in the left zone.
+    # Use split_x as the threshold (not 0.8*split_x) to avoid misclassifying narrow sidebar
+    # content whose right edge lands in the left zone but doesn't cross into the right column.
+    if split_x > 0 and has_left and not has_right:
+        for pm in sec.body_paras:
+            pp = pm.paragraph_profile
+            if pp and pp.column_id == "left" and pp.x_pt + pp.width_pt > split_x:
+                return "FULL_WIDTH"
+    return "SINGLE_COLUMN"
+
+
 def compile_resume_from_pdf(
     pdf_path: str,
     llm_text: str,
@@ -1249,6 +1278,33 @@ def compile_resume_from_pdf(
                     _footer_paras.append(_pm)
         template_ir.footer_paras = _footer_paras
 
+    # Classify section render modes from template_ir geometry BEFORE apply_tailored
+    # replaces body_paras (which carry the column_id and x/width info).
+    # Modes: FULL_WIDTH (body spans both columns), PARALLEL_BODY (left+right content),
+    # SINGLE_COLUMN (default).
+    if template_ir.layout.column_split_x is not None:
+        for _sec in template_ir.sections:
+            _sec.render_mode = _classify_section_render_mode(_sec, template_ir.layout)
+            log.debug(
+                "SECTION_RENDER_MODE sec=%r mode=%s body_paras=%d",
+                _sec.title, _sec.render_mode, len(_sec.body_paras),
+            )
+
+    # Preserve right-column body_paras for PARALLEL_BODY sections so they can be
+    # re-injected into updated after apply_tailored replaces section content.
+    # apply_tailored clears redistributed right-column body_paras for experience
+    # sections (replacing them with LLM content), so this is the only place to
+    # capture them before they are lost.
+    _parallel_right_paras: "dict[str, list]" = {}
+    for _sec in template_ir.sections:
+        if _sec.render_mode == "PARALLEL_BODY":
+            _rp = [
+                pm for pm in _sec.body_paras
+                if pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
+            ]
+            if _rp:
+                _parallel_right_paras[_sec.title] = _rp
+
     llm_sections = parse_llm_output(llm_text)
     llm_sections = apply_layout_fitting(template_ir, llm_sections, skip_compaction=True)
     updated = apply_tailored(template_ir, llm_sections, classification=classification)
@@ -1256,6 +1312,13 @@ def compile_resume_from_pdf(
     # Re-inject footer paras if they were lost during apply_tailored
     if template_ir.footer_paras and not updated.footer_paras:
         updated.footer_paras = list(template_ir.footer_paras)
+
+    # Copy render modes from template_ir to updated (lost during apply_tailored).
+    # Match by normalized title; unmatched sections (LLM-injected) stay None.
+    _template_modes = {s.title.strip().lower(): s.render_mode for s in template_ir.sections}
+    for _sec in updated.sections:
+        if _sec.render_mode is None:
+            _sec.render_mode = _template_modes.get(_sec.title.strip().lower())
 
     # Clear PDF-extracted text colors from all content paragraphs before rendering.
     _clear_pdf_content_colors(updated)
@@ -1267,7 +1330,22 @@ def compile_resume_from_pdf(
     # content appears in the correct place rather than as a separate banner.
     _inject_skills_into_section_body(updated)
     # Remove orphan sections and clear stale body_paras for sections with roles.
+    # NOTE: this clears body_paras for experience sections to avoid double-rendering.
+    # The PARALLEL_BODY right-para re-injection runs AFTER this call.
     _remove_orphan_subsections(updated)
+
+    # Re-inject right-column paras for PARALLEL_BODY sections after _remove_orphan_subsections
+    # has cleared body_paras for experience sections.  The original right-column content
+    # (redistributed by _redistribute_parallel_body in the parser) is re-attached so the
+    # renderer can place it in the right cell of the two-column body row.
+    for _sec in updated.sections:
+        if _sec.render_mode == "PARALLEL_BODY" and _sec.title in _parallel_right_paras:
+            _has_right = any(
+                pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
+                for pm in _sec.body_paras
+            )
+            if not _has_right:
+                _sec.body_paras.extend(_parallel_right_paras[_sec.title])
     # Move extra LLM sections (e.g. Professional Summary) out of the left sidebar
     # column for two-column PDF templates that have no matching left-column section.
     _fix_extra_left_sections(template_ir, updated)

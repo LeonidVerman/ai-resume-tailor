@@ -2054,12 +2054,20 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         if not above_paras:
             etree.SubElement(hdr_tc, f"{{{_W}}}p")
 
-    # Detect parallel-body layout: any section has both left and right body
-    # paragraphs (e.g. Sample 25 where EDUCATION entries run side-by-side).
-    # When detected, each section renders as a merged full-width heading row
-    # followed by a left|right body row, so headings are not crammed into the
-    # narrow left cell where their large indent causes character-level wrapping.
-    _parallel_mode = any(_sec_has_parallel_body(sec) for sec in doc.sections)
+    # Detect parallel-body layout: any section has PARALLEL_BODY render_mode (from
+    # template_ir geometry classification) or has both left and right body_paras detected
+    # at runtime.  FULL_WIDTH alone does NOT trigger parallel mode — that would incorrectly
+    # force per-section-row rendering on sidebar templates where only some sections happen
+    # to have body text crossing the column split.
+    # When active, each section renders as a merged full-width heading row followed by
+    # a body row whose format depends on the section's render_mode:
+    #   PARALLEL_BODY → left|right two-column body row
+    #   FULL_WIDTH    → single merged full-width body row (only when parallel mode active)
+    #   SINGLE_COLUMN (or None) → left|right row with right cell empty
+    _parallel_mode = (
+        any(sec.render_mode == "PARALLEL_BODY" for sec in doc.sections)
+        or any(_sec_has_parallel_body(sec) for sec in doc.sections)
+    )
 
     def _append_left_indent(p_elem, pm) -> None:
         """Add left_margin_twips to a paragraph element's left indent."""
@@ -2144,6 +2152,23 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
             _append_left_indent(_pe, pm)
             _htc.append(_pe)
 
+        def _make_full_width_body_row(paras) -> None:
+            """Append a full-width merged body row (for FULL_WIDTH sections)."""
+            _tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+            _tc = etree.SubElement(_tr, f"{{{_W}}}tc")
+            _tcPr = etree.SubElement(_tc, f"{{{_W}}}tcPr")
+            _tcW = etree.SubElement(_tcPr, f"{{{_W}}}tcW")
+            _tcW.set(f"{{{_W}}}w", str(actual_tbl_w))
+            _tcW.set(f"{{{_W}}}type", "dxa")
+            _fgs = etree.SubElement(_tcPr, f"{{{_W}}}gridSpan")
+            _fgs.set(f"{{{_W}}}val", str(n_grid_cols))
+            for _pm in paras:
+                _pe = build_para_element(_pm, doc_part=doc_part)
+                _append_left_indent(_pe, _pm)
+                _tc.append(_pe)
+            if not paras:
+                etree.SubElement(_tc, f"{{{_W}}}p")
+
         # Sort sections by heading y, then render each as: heading row + body row.
         _sorted_secs = sorted(
             doc.sections,
@@ -2153,6 +2178,7 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
             ),
         )
         for _sec in _sorted_secs:
+            _sec_mode = _sec.render_mode  # 'FULL_WIDTH' | 'PARALLEL_BODY' | 'SINGLE_COLUMN' | None
             _lbody: list = sorted(
                 [_pm for _pm in _sec.body_paras
                  if _pm.paragraph_profile
@@ -2171,8 +2197,8 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
             _lbody.sort(key=_y_of)
             _is_par = bool(_lbody and _rbody)
             _glog.debug(
-                "SHARED_HEADING_RENDERED sec=%r left=%d right=%d parallel=%s",
-                _sec.title, len(_lbody), len(_rbody), _is_par,
+                "SECTION_RENDER_MODE sec=%r mode=%s left=%d right=%d parallel=%s",
+                _sec.title, _sec_mode, len(_lbody), len(_rbody), _is_par,
             )
             if _is_par:
                 _glog.debug(
@@ -2180,7 +2206,15 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                     _sec.title, len(_lbody), len(_rbody),
                 )
             _make_merged_hdr_row(_sec.heading)
-            _make_two_col_row(_lbody, _rbody)
+            if _sec_mode == "FULL_WIDTH":
+                # Body spans full width — collect all body_paras regardless of column_id.
+                _fw_body: list = list(_sec.body_paras)
+                for _role in _sec.roles:
+                    _fw_body.extend([_role.header, *_role.meta_lines, *_role.bullets])
+                _fw_body.sort(key=_y_of)
+                _make_full_width_body_row(_fw_body)
+            else:
+                _make_two_col_row(_lbody, _rbody)
 
     else:
         # ------------------------------------------------------------------ #

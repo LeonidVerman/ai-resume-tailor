@@ -304,6 +304,11 @@ class ResumeSection:
     #         "local_column_pair" | "paired_sidebar_region" |
     #         "rewriteable_region" | "preserve_region" | None
     container_type: str | None = None
+    # Render mode for PDF two-column sections. Classified from template_ir geometry
+    # by _classify_section_render_mode() before apply_tailored() and copied to the
+    # updated document so the renderer can use it even after paragraph_profile is lost.
+    # Values: "FULL_WIDTH" | "PARALLEL_BODY" | "SINGLE_COLUMN" | None
+    render_mode: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -314,6 +319,7 @@ class ResumeSection:
             "roles": [r.to_dict() for r in self.roles],
             "section_id": self.section_id,
             "container_type": self.container_type,
+            "render_mode": self.render_mode,
         }
 
     @classmethod
@@ -326,6 +332,7 @@ class ResumeSection:
             roles=[RoleEntry.from_dict(r) for r in d.get("roles", [])],
             section_id=d.get("section_id", ""),
             container_type=d.get("container_type"),
+            render_mode=d.get("render_mode"),
         )
 
 
