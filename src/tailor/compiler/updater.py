@@ -2876,6 +2876,11 @@ def _update_experience_classified(
     # Filter body_paras to exclude para_ids already claimed by roles, preventing
     # SPLIT_BRAIN_BODY_PARAS validator failures.  Spacer paragraphs (empty or no
     # para_id) are kept so layout_blocks renderer can find them via body_paras.
+    # Also remove role-semantic body_paras (bullet/role_header/role_meta) with
+    # non-empty text that are NOT claimed by any updated role — these are original
+    # bullets dropped when the LLM provided fewer bullets than the template had
+    # slots (e.g. orig had 30 bullets, LLM provided 11; the remaining 19 stay
+    # in body_paras with original text and render as duplicate content).
     _role_para_ids: set[str] = set()
     for r in updated_roles:
         if r.header.para_id:
@@ -2883,9 +2888,13 @@ def _update_experience_classified(
         for _p in r.header_extra + r.meta_lines + r.bullets:
             if _p.para_id:
                 _role_para_ids.add(_p.para_id)
+    _DROPPED_ROLE_SEMANTICS = frozenset({"role_header", "role_meta", "bullet"})
     filtered_body = [
         p for p in orig.body_paras
-        if not p.para_id or p.para_id not in _role_para_ids
+        if not p.para_id or (
+            p.para_id not in _role_para_ids
+            and (not p.text.strip() or p.semantic not in _DROPPED_ROLE_SEMANTICS)
+        )
     ]
     return ResumeSection(
         title=orig.title,
