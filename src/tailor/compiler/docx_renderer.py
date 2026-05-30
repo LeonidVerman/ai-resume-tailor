@@ -4208,9 +4208,17 @@ def _build_para_lookup(doc: ResumeDocument) -> dict[str, ParaModel]:
         else:
             seen[pm.para_id] = pm
 
+    def _force(pm: ParaModel) -> None:
+        """Override any existing entry — used for sec_summary_inserted which
+        reuses an empty header_para slot and must take priority over it."""
+        if pm.para_id:
+            seen[pm.para_id] = pm
+
     for pm in doc.header_paras:
         _add(pm)
     for sec in doc.sections:
+        _is_summary_inserted = getattr(sec, "section_id", "") == "sec_summary_inserted"
+        _add_fn = _force if _is_summary_inserted else _add
         _add(sec.heading)
         for role in sec.roles:
             _add(role.header)
@@ -4221,7 +4229,7 @@ def _build_para_lookup(doc: ResumeDocument) -> dict[str, ParaModel]:
             for pm in role.bullets:
                 _add(pm)
         for pm in sec.body_paras:
-            _add(pm)
+            _add_fn(pm)
     # Fallback: all_paras may contain paragraphs not yet in semantic sections
     for pm in (doc.all_paras or []):
         if pm.para_id and pm.para_id not in seen:

@@ -152,7 +152,7 @@ def _normalize_letter_spaced(s: str) -> str:
 
 _EXPERIENCE_NAMES: frozenset[str] = frozenset({
     "experience", "experiences", "work experience", "professional experience",
-    "employment history", "employment", "career history",
+    "employment history", "employment", "employment summary", "career history",
     "work history", "professional background",
 })
 _SUMMARY_NAMES: frozenset[str] = frozenset({
@@ -171,7 +171,7 @@ _SKILLS_NAMES: frozenset[str] = frozenset({
 })
 _EDUCATION_NAMES: frozenset[str] = frozenset({
     "education", "academic background", "academic credentials",
-    "educational background", "degrees",
+    "educational background", "educational history", "degrees",
 })
 _CERTIFICATIONS_NAMES: frozenset[str] = frozenset({
     "certifications", "certification", "licenses", "license",

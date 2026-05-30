@@ -2887,7 +2887,33 @@ def _update_experience_classified(
         p for p in orig.body_paras
         if not p.para_id or p.para_id not in _role_para_ids
     ]
-    return ResumeSection(
+
+    # Register extra unbound bullets (para_id="") as injections so apply_tailored
+    # creates layout blocks for them and the renderer can write their text.
+    # Without this, extra LLM bullets beyond the template's slot count are silently
+    # dropped because they have no layout block to anchor to.
+    # Roles with NO bullet slots produce ALL-unbound bullets; use the same fallback
+    # anchor logic (last meta line → header) as the auto-registration loop so that
+    # setting _extra_injections for one role doesn't suppress the others.
+    _extra_injections: "dict[str, list[ParaModel]]" = {}
+    for _r in updated_roles:
+        _bound = [b for b in _r.bullets if b.para_id]
+        _unbound = [b for b in _r.bullets if not b.para_id and b.text.strip()]
+        if _unbound:
+            _anchor_pm = (
+                _bound[-1] if _bound
+                else _r.meta_lines[-1] if (_r.meta_lines and _r.meta_lines[-1].para_id)
+                else _r.header
+            )
+            _anchor = _anchor_pm.para_id
+            if _anchor:
+                _extra_injections.setdefault(_anchor, []).extend(_unbound)
+                _log.debug(
+                    "CLASSIFIED_EXTRA_BULLETS: role=%r anchor=%r extra=%d",
+                    _r.role_id, _anchor, len(_unbound),
+                )
+
+    result = ResumeSection(
         title=orig.title,
         heading=orig.heading,
         semantic_type=orig.semantic_type,
@@ -2896,6 +2922,9 @@ def _update_experience_classified(
         section_id=orig.section_id,
         container_type=orig.container_type,
     )
+    if _extra_injections:
+        result._extra_injections = _extra_injections  # type: ignore[attr-defined]
+    return result
 
 
 def _update_body_classified(
@@ -3204,18 +3233,54 @@ def normalize_llm_sections(
 ) -> list["LlmSection"]:
     """Normalize LLM output sections to structural correctness before apply_tailored.
 
-    Runs two repair passes:
+    Runs three repair passes:
     1. Role-continuation repair: absorbs "Web Designer"-style top-level sections
        that immediately follow an Experience section as additional LlmRole entries.
     2. Role-in-bullets repair: extracts role headers accidentally embedded as
        bullet points back into proper LlmRole entries.
+    3. Duplicate-section deduplication: when the LLM echoes original template
+       sections verbatim at the end of its output, those duplicates shadow the
+       real LLM-generated sections during matching.  Keep the first occurrence of
+       each semantic type and drop later duplicates.
 
     These repairs are always applied when layout_blocks are present to prevent
     structural mismatch between the semantic model and the layout tree.
     """
     llm_sections = _repair_role_continuation_sections(llm_sections)
     llm_sections = _repair_roles_from_bullets(llm_sections)
+    llm_sections = _deduplicate_llm_sections(llm_sections)
     return llm_sections
+
+
+def _deduplicate_llm_sections(
+    llm_sections: list["LlmSection"],
+) -> list["LlmSection"]:
+    """Drop later duplicate semantic-type sections, keeping the first occurrence.
+
+    LLMs occasionally append original template content verbatim after their
+    generated output (e.g. template heading "SKILLS" after the real "Technical
+    Skills" section).  During section matching, the exact-heading pass picks
+    the verbatim echo over the real content, leaving the template section
+    unchanged.  Removing the duplicates lets the first (real) section win.
+
+    Only deduplicates for concrete semantic types (skills, experience, summary,
+    education).  "other"-type sections are never deduplicated.
+    """
+    _DEDUP_TYPES = frozenset({"skills", "experience", "summary", "education"})
+    seen_types: set[str] = set()
+    result: list["LlmSection"] = []
+    for sec in llm_sections:
+        st = sec.semantic_type
+        if st in _DEDUP_TYPES:
+            if st in seen_types:
+                _log.debug(
+                    "NORMALIZE_DEDUP: dropped duplicate %r section %r",
+                    st, sec.heading[:40],
+                )
+                continue
+            seen_types.add(st)
+        result.append(sec)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -5671,6 +5736,12 @@ def apply_tailored(
                             _new_p = _deepcopy(_pm.style.xml_proto)
                         else:
                             _new_p = _deepcopy(_anchor_elem)
+                        # Strip bookmarks to prevent para_id collisions when re-parsing the DOCX
+                        for _bk_tag in ("bookmarkStart", "bookmarkEnd"):
+                            for _bk in list(_new_p.findall(f"{{{_W_NS}}}{_bk_tag}")):
+                                _new_p.remove(_bk)
+                            for _bk in list(_new_p.findall(f".//{{{_W_NS}}}{_bk_tag}")):
+                                _bk.getparent().remove(_bk)
                         # Clear all text runs and set new content
                         for _t in _new_p.findall(f".//{{{_W_NS}}}t"):
                             _t.text = ""
