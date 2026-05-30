@@ -54,28 +54,29 @@ def compare_pdf_structure(
     if orig_extracted.pages:
         orig_col_count = _estimate_page_column_count(orig_extracted.pages[0])
 
+    # Paragraph ratio scoring: native template PDF vs LibreOffice-generated PDF
+    # have inherently different block granularity, so ratios are not comparable
+    # to the DOCX-origin paragraph ratio.  Only flag severe expansion (ratio > 1.50)
+    # or collapse (ratio < 0.30) as evidence; intermediate ratios are informational.
     score = 100.0
-    if ratio < 0.70:
-        penalty = min(55.0, 20.0 + (0.70 - ratio) / 0.70 * 50.0)
-        score -= penalty
-        evidence.append(f"paragraph_ratio={ratio:.2f} (< 0.70) — possible truncation/fallback")
-    elif ratio < 0.85:
-        penalty = (0.85 - ratio) / 0.15 * 20.0
-        score -= penalty
-        evidence.append(f"paragraph_ratio={ratio:.2f} (below ideal 0.85)")
+    if ratio < 0.30:
+        evidence.append(f"paragraph_ratio={ratio:.2f} (PDF blocks — severe reduction, possible content loss)")
+    elif ratio < 0.70:
+        evidence.append(f"paragraph_ratio={ratio:.2f} (PDF blocks — informational; native vs LibreOffice block counts differ)")
     elif ratio > 1.50:
         penalty = min(20.0, (ratio - 1.50) * 25.0)
         score -= penalty
         evidence.append(f"paragraph_ratio={ratio:.2f} (> 1.50) — content over-expansion")
     elif ratio > 1.35:
-        penalty = (ratio - 1.35) / 0.15 * 10.0
-        score -= penalty
-        evidence.append(f"paragraph_ratio={ratio:.2f} (above ideal 1.35)")
-    elif ratio > 1.20:
-        evidence.append(f"paragraph_ratio={ratio:.2f} (above ideal 1.20)")
+        evidence.append(f"paragraph_ratio={ratio:.2f} (PDF blocks — above 1.35, informational)")
 
     score = max(0.0, min(100.0, score))
-    renderer_fallback = ratio < 0.70
+    # renderer_fallback is not set for PDF-origin: block count comparison between
+    # native template PDFs and LibreOffice-converted generated PDFs is unreliable
+    # as a truncation signal — page structure and block granularity differ
+    # fundamentally between PDF renderers.  Actual truncation is detected by
+    # the PDF visual scorer (sparse_page_score, page_count_score).
+    renderer_fallback = False
 
     return DocxStructureResult(
         score=score,
