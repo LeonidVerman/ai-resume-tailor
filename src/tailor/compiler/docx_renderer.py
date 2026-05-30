@@ -1787,6 +1787,23 @@ def _render_pdf_single_col_dark_header(doc: "ResumeDocument", body, sectPr, doc_
         _add(ftr_tbl)
 
 
+def _sec_has_parallel_body(sec) -> bool:
+    """True if a section has both left-column and right-column body paragraphs.
+
+    Used to detect the parallel-body layout (e.g. Sample 25) where section
+    headings are shared and the body content runs in two independent columns.
+    """
+    has_left = any(
+        pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
+        for pm in sec.body_paras
+    )
+    has_right = any(
+        pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
+        for pm in sec.body_paras
+    )
+    return has_left and has_right
+
+
 def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> None:
     """Render a two-column PDF-sourced document as a borderless DOCX table.
 
@@ -2037,84 +2054,210 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         if not above_paras:
             etree.SubElement(hdr_tc, f"{{{_W}}}p")
 
-    # Body row
-    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+    # Detect parallel-body layout: any section has both left and right body
+    # paragraphs (e.g. Sample 25 where EDUCATION entries run side-by-side).
+    # When detected, each section renders as a merged full-width heading row
+    # followed by a left|right body row, so headings are not crammed into the
+    # narrow left cell where their large indent causes character-level wrapping.
+    _parallel_mode = any(_sec_has_parallel_body(sec) for sec in doc.sections)
 
-    # Left cell
-    left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
-    left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
-    left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
-    left_tcW.set(f"{{{_W}}}w", str(left_w))
-    left_tcW.set(f"{{{_W}}}type", "dxa")
-    if _eff_left_bg:
-        shd = etree.SubElement(left_tcPr, f"{{{_W}}}shd")
-        shd.set(f"{{{_W}}}val", "clear")
-        shd.set(f"{{{_W}}}color", "auto")
-        shd.set(f"{{{_W}}}fill", _eff_left_bg)
-
-    # Right cell
-    right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
-    right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
-    right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
-    right_tcW.set(f"{{{_W}}}w", str(right_w))
-    right_tcW.set(f"{{{_W}}}type", "dxa")
-    if _eff_right_bg:
-        shd = etree.SubElement(right_tcPr, f"{{{_W}}}shd")
-        shd.set(f"{{{_W}}}val", "clear")
-        shd.set(f"{{{_W}}}color", "auto")
-        shd.set(f"{{{_W}}}fill", _eff_right_bg)
-
-    # Right-margin padding cell — empty spacer filling the third grid column so
-    # the body row accounts for all grid columns defined in tblGrid.
-    if _use_pad:
-        pad_tc = etree.SubElement(tr, f"{{{_W}}}tc")
-        pad_tcPr = etree.SubElement(pad_tc, f"{{{_W}}}tcPr")
-        pad_tcW = etree.SubElement(pad_tcPr, f"{{{_W}}}tcW")
-        pad_tcW.set(f"{{{_W}}}w", str(pad_w))
-        pad_tcW.set(f"{{{_W}}}type", "dxa")
-        etree.SubElement(pad_tc, f"{{{_W}}}p")
-
-    # Pre-compute each left para's "section heading indent" so body paras that
-    # are more indented than their section heading can be capped to the heading
-    # level.  This normalises over-indented body items (e.g. skills bullet text
-    # at x=51 in a section whose heading is at x=31) without affecting headings
-    # or items that are already flush with their section heading.
-    _sec_heading_ind_twips: list[int] = []
-    _cur_heading_ind = 0
-    for pm in left_paras:
-        pp = pm.paragraph_profile
-        if pm.semantic == "section_heading" and pp is not None:
-            _cur_heading_ind = int(pp.indent_left_pt * 20)
-        _sec_heading_ind_twips.append(_cur_heading_ind)
-
-    for i, pm in enumerate(left_paras):
-        p_elem = build_para_element(pm, doc_part=doc_part)
-        # Shift all left-cell content right by left_margin_twips so it sits at
-        # the same x position as in the source PDF.  paragraph indent_left_pt is
-        # measured from the column origin (= page_margin_left), but the left
-        # cell starts at the physical page left edge (x=0), so we add the margin.
-        # Body paras more indented than their section heading are capped to the
-        # heading indent to keep visual alignment consistent within each section.
+    def _append_left_indent(p_elem, pm) -> None:
+        """Add left_margin_twips to a paragraph element's left indent."""
         pPr = p_elem.find(f"{{{_W}}}pPr")
         if pPr is not None:
             ind = pPr.find(f"{{{_W}}}ind")
-            heading_ind = _sec_heading_ind_twips[i]
             if ind is not None:
                 cur = int(ind.get(f"{{{_W}}}left", "0"))
-                if pm.semantic != "section_heading":
-                    cur = min(cur, heading_ind)
                 ind.set(f"{{{_W}}}left", str(cur + left_margin_twips))
             else:
                 new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
                 new_ind.set(f"{{{_W}}}left", str(left_margin_twips))
-        left_tc.append(p_elem)
-    if not left_paras:
-        etree.SubElement(left_tc, f"{{{_W}}}p")
 
-    for pm in right_paras:
-        right_tc.append(build_para_element(pm, doc_part=doc_part))
-    if not right_paras:
-        etree.SubElement(right_tc, f"{{{_W}}}p")
+    if _parallel_mode:
+        # ------------------------------------------------------------------ #
+        # Parallel-body multi-row rendering                                   #
+        # Each section: merged heading row + left|right body row.            #
+        # Section headings span full width; body columns are independent.    #
+        # ------------------------------------------------------------------ #
+        _par_count = sum(1 for _s in doc.sections if _sec_has_parallel_body(_s))
+        _glog.debug(
+            "PARALLEL_SECTION_DETECTED doc=%s parallel_sections=%d total_sections=%d",
+            getattr(doc, "source_filename", "?"), _par_count, len(doc.sections),
+        )
+
+        def _make_two_col_row(l_paras, r_paras) -> None:
+            """Append a left|right body row to the table."""
+            _tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+            # Left cell
+            _ltc = etree.SubElement(_tr, f"{{{_W}}}tc")
+            _ltcPr = etree.SubElement(_ltc, f"{{{_W}}}tcPr")
+            _ltcW = etree.SubElement(_ltcPr, f"{{{_W}}}tcW")
+            _ltcW.set(f"{{{_W}}}w", str(left_w))
+            _ltcW.set(f"{{{_W}}}type", "dxa")
+            if _eff_left_bg:
+                _shd = etree.SubElement(_ltcPr, f"{{{_W}}}shd")
+                _shd.set(f"{{{_W}}}val", "clear")
+                _shd.set(f"{{{_W}}}color", "auto")
+                _shd.set(f"{{{_W}}}fill", _eff_left_bg)
+            for _pm in l_paras:
+                _pe = build_para_element(_pm, doc_part=doc_part)
+                _append_left_indent(_pe, _pm)
+                _ltc.append(_pe)
+            if not l_paras:
+                etree.SubElement(_ltc, f"{{{_W}}}p")
+            # Right cell
+            _rtc = etree.SubElement(_tr, f"{{{_W}}}tc")
+            _rtcPr = etree.SubElement(_rtc, f"{{{_W}}}tcPr")
+            _rtcW = etree.SubElement(_rtcPr, f"{{{_W}}}tcW")
+            _rtcW.set(f"{{{_W}}}w", str(right_w))
+            _rtcW.set(f"{{{_W}}}type", "dxa")
+            if _eff_right_bg:
+                _shd = etree.SubElement(_rtcPr, f"{{{_W}}}shd")
+                _shd.set(f"{{{_W}}}val", "clear")
+                _shd.set(f"{{{_W}}}color", "auto")
+                _shd.set(f"{{{_W}}}fill", _eff_right_bg)
+            for _pm in r_paras:
+                _rtc.append(build_para_element(_pm, doc_part=doc_part))
+            if not r_paras:
+                etree.SubElement(_rtc, f"{{{_W}}}p")
+            if _use_pad:
+                _ptc = etree.SubElement(_tr, f"{{{_W}}}tc")
+                _ptcPr = etree.SubElement(_ptc, f"{{{_W}}}tcPr")
+                _ptcW = etree.SubElement(_ptcPr, f"{{{_W}}}tcW")
+                _ptcW.set(f"{{{_W}}}w", str(pad_w))
+                _ptcW.set(f"{{{_W}}}type", "dxa")
+                etree.SubElement(_ptc, f"{{{_W}}}p")
+
+        def _make_merged_hdr_row(pm) -> None:
+            """Append a full-width merged row for a section heading."""
+            _tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+            _htc = etree.SubElement(_tr, f"{{{_W}}}tc")
+            _htcPr = etree.SubElement(_htc, f"{{{_W}}}tcPr")
+            _htcW = etree.SubElement(_htcPr, f"{{{_W}}}tcW")
+            _htcW.set(f"{{{_W}}}w", str(actual_tbl_w))
+            _htcW.set(f"{{{_W}}}type", "dxa")
+            _gs = etree.SubElement(_htcPr, f"{{{_W}}}gridSpan")
+            _gs.set(f"{{{_W}}}val", str(n_grid_cols))
+            _pe = build_para_element(pm, doc_part=doc_part)
+            # Apply the same left_margin_twips correction as left-cell paras so
+            # the heading sits at its original PDF x position inside the merged cell.
+            _append_left_indent(_pe, pm)
+            _htc.append(_pe)
+
+        # Sort sections by heading y, then render each as: heading row + body row.
+        _sorted_secs = sorted(
+            doc.sections,
+            key=lambda _s: (
+                (_s.heading.paragraph_profile.y_top_pt or 0.0)
+                if _s.heading.paragraph_profile else 0.0
+            ),
+        )
+        for _sec in _sorted_secs:
+            _lbody: list = sorted(
+                [_pm for _pm in _sec.body_paras
+                 if _pm.paragraph_profile
+                 and _pm.paragraph_profile.column_id == "left"],
+                key=_y_of,
+            )
+            _rbody: list = sorted(
+                [_pm for _pm in _sec.body_paras
+                 if _pm.paragraph_profile
+                 and _pm.paragraph_profile.column_id == "right"],
+                key=_y_of,
+            )
+            # Experience sections store body content in roles, not body_paras.
+            for _role in _sec.roles:
+                _lbody.extend([_role.header, *_role.meta_lines, *_role.bullets])
+            _lbody.sort(key=_y_of)
+            _is_par = bool(_lbody and _rbody)
+            _glog.debug(
+                "SHARED_HEADING_RENDERED sec=%r left=%d right=%d parallel=%s",
+                _sec.title, len(_lbody), len(_rbody), _is_par,
+            )
+            if _is_par:
+                _glog.debug(
+                    "PARALLEL_SECTION_RENDERED sec=%r left_items=%d right_items=%d",
+                    _sec.title, len(_lbody), len(_rbody),
+                )
+            _make_merged_hdr_row(_sec.heading)
+            _make_two_col_row(_lbody, _rbody)
+
+    else:
+        # ------------------------------------------------------------------ #
+        # Standard single-body-row rendering.                                 #
+        # ------------------------------------------------------------------ #
+        # Body row
+        tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+
+        # Left cell
+        left_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+        left_tcPr = etree.SubElement(left_tc, f"{{{_W}}}tcPr")
+        left_tcW = etree.SubElement(left_tcPr, f"{{{_W}}}tcW")
+        left_tcW.set(f"{{{_W}}}w", str(left_w))
+        left_tcW.set(f"{{{_W}}}type", "dxa")
+        if _eff_left_bg:
+            shd = etree.SubElement(left_tcPr, f"{{{_W}}}shd")
+            shd.set(f"{{{_W}}}val", "clear")
+            shd.set(f"{{{_W}}}color", "auto")
+            shd.set(f"{{{_W}}}fill", _eff_left_bg)
+
+        # Right cell
+        right_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+        right_tcPr = etree.SubElement(right_tc, f"{{{_W}}}tcPr")
+        right_tcW = etree.SubElement(right_tcPr, f"{{{_W}}}tcW")
+        right_tcW.set(f"{{{_W}}}w", str(right_w))
+        right_tcW.set(f"{{{_W}}}type", "dxa")
+        if _eff_right_bg:
+            shd = etree.SubElement(right_tcPr, f"{{{_W}}}shd")
+            shd.set(f"{{{_W}}}val", "clear")
+            shd.set(f"{{{_W}}}color", "auto")
+            shd.set(f"{{{_W}}}fill", _eff_right_bg)
+
+        # Right-margin padding cell — empty spacer filling the third grid column.
+        if _use_pad:
+            pad_tc = etree.SubElement(tr, f"{{{_W}}}tc")
+            pad_tcPr = etree.SubElement(pad_tc, f"{{{_W}}}tcPr")
+            pad_tcW = etree.SubElement(pad_tcPr, f"{{{_W}}}tcW")
+            pad_tcW.set(f"{{{_W}}}w", str(pad_w))
+            pad_tcW.set(f"{{{_W}}}type", "dxa")
+            etree.SubElement(pad_tc, f"{{{_W}}}p")
+
+        # Pre-compute each left para's "section heading indent" so body paras that
+        # are more indented than their section heading can be capped to the heading
+        # level.  This normalises over-indented body items without affecting headings
+        # or items flush with their section heading.
+        _sec_heading_ind_twips: list[int] = []
+        _cur_heading_ind = 0
+        for pm in left_paras:
+            pp = pm.paragraph_profile
+            if pm.semantic == "section_heading" and pp is not None:
+                _cur_heading_ind = int(pp.indent_left_pt * 20)
+            _sec_heading_ind_twips.append(_cur_heading_ind)
+
+        for i, pm in enumerate(left_paras):
+            p_elem = build_para_element(pm, doc_part=doc_part)
+            # Shift all left-cell content right by left_margin_twips so it sits at
+            # the same x position as in the source PDF.
+            pPr = p_elem.find(f"{{{_W}}}pPr")
+            if pPr is not None:
+                ind = pPr.find(f"{{{_W}}}ind")
+                heading_ind = _sec_heading_ind_twips[i]
+                if ind is not None:
+                    cur = int(ind.get(f"{{{_W}}}left", "0"))
+                    if pm.semantic != "section_heading":
+                        cur = min(cur, heading_ind)
+                    ind.set(f"{{{_W}}}left", str(cur + left_margin_twips))
+                else:
+                    new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
+                    new_ind.set(f"{{{_W}}}left", str(left_margin_twips))
+            left_tc.append(p_elem)
+        if not left_paras:
+            etree.SubElement(left_tc, f"{{{_W}}}p")
+
+        for pm in right_paras:
+            right_tc.append(build_para_element(pm, doc_part=doc_part))
+        if not right_paras:
+            etree.SubElement(right_tc, f"{{{_W}}}p")
 
     # When there is no dark header band, above_paras are plain full-width
     # paragraphs (e.g. contact info with no background) inserted before the table.
