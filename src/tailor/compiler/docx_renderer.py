@@ -3327,6 +3327,48 @@ def _render_block_into_elem(
                 _numPr_nb = _pPr_nb.find(f"{{{_W}}}numPr")
                 if _numPr_nb is not None:
                     _pPr_nb.remove(_numPr_nb)
+        # Semantic visual styling: apply italic for narrative intro types and bold
+        # for technology/label types so each semantic kind renders distinctly.
+        # Applied after bold-strip and bullet-strip so these take final precedence.
+        _SEM_ITALIC = frozenset({"role_intro", "project_intro"})
+        _SEM_BOLD = frozenset({
+            "role_key_technologies", "role_tech_stack",
+            "role_project_label", "highlight_header",
+        })
+        if pm.semantic in _SEM_ITALIC and pm.text.strip():
+            _pPr_si = elem.find(f"{{{_W}}}pPr")
+            if _pPr_si is not None:
+                _rPr_ppr_si = _pPr_si.find(f"{{{_W}}}rPr")
+                if _rPr_ppr_si is None:
+                    _rPr_ppr_si = etree.SubElement(_pPr_si, f"{{{_W}}}rPr")
+                for _t_si in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
+                    if _rPr_ppr_si.find(_t_si) is None:
+                        etree.SubElement(_rPr_ppr_si, _t_si)
+            for _r_si in elem.findall(f".//{{{_W}}}r"):
+                _rPr_si = _r_si.find(f"{{{_W}}}rPr")
+                if _rPr_si is None:
+                    _rPr_si = etree.SubElement(_r_si, f"{{{_W}}}rPr")
+                    _r_si.insert(0, _rPr_si)
+                for _t_si in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
+                    if _rPr_si.find(_t_si) is None:
+                        etree.SubElement(_rPr_si, _t_si)
+        elif pm.semantic in _SEM_BOLD and pm.text.strip():
+            _pPr_sb = elem.find(f"{{{_W}}}pPr")
+            if _pPr_sb is not None:
+                _rPr_ppr_sb = _pPr_sb.find(f"{{{_W}}}rPr")
+                if _rPr_ppr_sb is None:
+                    _rPr_ppr_sb = etree.SubElement(_pPr_sb, f"{{{_W}}}rPr")
+                for _t_sb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                    if _rPr_ppr_sb.find(_t_sb) is None:
+                        etree.SubElement(_rPr_ppr_sb, _t_sb)
+            for _r_sb in elem.findall(f".//{{{_W}}}r"):
+                _rPr_sb = _r_sb.find(f"{{{_W}}}rPr")
+                if _rPr_sb is None:
+                    _rPr_sb = etree.SubElement(_r_sb, f"{{{_W}}}rPr")
+                    _r_sb.insert(0, _rPr_sb)
+                for _t_sb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                    if _rPr_sb.find(_t_sb) is None:
+                        etree.SubElement(_rPr_sb, _t_sb)
         # Strip display-only (Symbol/Wingdings/SymbolMT) fonts from run rPr so
         # that injected text renders with normal characters instead of garbled
         # symbol glyphs.  These fonts map codepoints to dingbats/symbols rather
@@ -4881,6 +4923,47 @@ def _render_from_layout_blocks(
                             _numPr_nb_lb = _pPr_nb_lb.find(f"{{{_W}}}numPr")
                             if _numPr_nb_lb is not None:
                                 _pPr_nb_lb.remove(_numPr_nb_lb)
+                    # Semantic visual styling (layout-bound path): italic for
+                    # narrative intro types, bold for technology/label types.
+                    _SEM_ITALIC_LB = frozenset({"role_intro", "project_intro"})
+                    _SEM_BOLD_LB = frozenset({
+                        "role_key_technologies", "role_tech_stack",
+                        "role_project_label", "highlight_header",
+                    })
+                    if pm.semantic in _SEM_ITALIC_LB and pm.text.strip():
+                        _pPr_si_lb = elem.find(f"{{{_W}}}pPr")
+                        if _pPr_si_lb is not None:
+                            _rPr_ppr_si_lb = _pPr_si_lb.find(f"{{{_W}}}rPr")
+                            if _rPr_ppr_si_lb is None:
+                                _rPr_ppr_si_lb = etree.SubElement(_pPr_si_lb, f"{{{_W}}}rPr")
+                            for _t_si_lb in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
+                                if _rPr_ppr_si_lb.find(_t_si_lb) is None:
+                                    etree.SubElement(_rPr_ppr_si_lb, _t_si_lb)
+                        for _r_si_lb in elem.findall(f".//{{{_W}}}r"):
+                            _rPr_si_lb = _r_si_lb.find(f"{{{_W}}}rPr")
+                            if _rPr_si_lb is None:
+                                _rPr_si_lb = etree.SubElement(_r_si_lb, f"{{{_W}}}rPr")
+                                _r_si_lb.insert(0, _rPr_si_lb)
+                            for _t_si_lb in (f"{{{_W}}}i", f"{{{_W}}}iCs"):
+                                if _rPr_si_lb.find(_t_si_lb) is None:
+                                    etree.SubElement(_rPr_si_lb, _t_si_lb)
+                    elif pm.semantic in _SEM_BOLD_LB and pm.text.strip():
+                        _pPr_sb_lb = elem.find(f"{{{_W}}}pPr")
+                        if _pPr_sb_lb is not None:
+                            _rPr_ppr_sb_lb = _pPr_sb_lb.find(f"{{{_W}}}rPr")
+                            if _rPr_ppr_sb_lb is None:
+                                _rPr_ppr_sb_lb = etree.SubElement(_pPr_sb_lb, f"{{{_W}}}rPr")
+                            for _t_sb_lb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                                if _rPr_ppr_sb_lb.find(_t_sb_lb) is None:
+                                    etree.SubElement(_rPr_ppr_sb_lb, _t_sb_lb)
+                        for _r_sb_lb in elem.findall(f".//{{{_W}}}r"):
+                            _rPr_sb_lb = _r_sb_lb.find(f"{{{_W}}}rPr")
+                            if _rPr_sb_lb is None:
+                                _rPr_sb_lb = etree.SubElement(_r_sb_lb, f"{{{_W}}}rPr")
+                                _r_sb_lb.insert(0, _rPr_sb_lb)
+                            for _t_sb_lb in (f"{{{_W}}}b", f"{{{_W}}}bCs"):
+                                if _rPr_sb_lb.find(_t_sb_lb) is None:
+                                    etree.SubElement(_rPr_sb_lb, _t_sb_lb)
                     _log.debug("PARAGRAPH_BLOCK_XML_PATCHED: para_id=%r", block.para_id)
                 else:
                     if block.para_id:
