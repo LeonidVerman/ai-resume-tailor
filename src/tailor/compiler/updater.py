@@ -43,7 +43,7 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace as _dc_replace
 from typing import TYPE_CHECKING, Any
 
 from tailor.compiler.models import (
@@ -62,6 +62,25 @@ if TYPE_CHECKING:
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 _log = logging.getLogger(__name__)
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
+_MONTH_NAME_RE = re.compile(
+    r"\b(January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)\b",
+    re.IGNORECASE,
+)
+# Matches standalone date-column fragment paras (sample 35-style templates where
+# dates live in header_paras before the Experience heading in document order).
+_DATE_COL_PARA_RE = re.compile(
+    r"^\s*(?:"
+    r"(?:January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)"
+    r"(?:\s+\d{4})?(?:\s*[–\-]+\s*(?:(?:January|February|March|April|May|"
+    r"June|July|August|September|October|November|December)(?:\s+\d{4})?)?)?"
+    r"|\d{4}(?:\s*[–\-]+\s*\d{0,4})?"
+    r"|(?:current|present)"
+    r"|(?:Full[\s\-]?time|Part[\s\-]?time|Contract)"
+    r")\s*$",
+    re.IGNORECASE,
+)
 
 # Semantic types that are NEVER modified regardless of LLM output (spec §3).
 # Only "summary", "experience", and "skills" are editable (spec §1).
@@ -2940,13 +2959,83 @@ def _update_experience_classified(
             _log.debug("classification: role %r → verbatim (no LLM counterpart)", o_role.role_id)
         updated_roles.append(updated)
 
+    # Propagate classification semantic types to ParaModel.semantic for bullets.
+    # role_intro, role_key_technologies, and role_tech_stack enable semantic-aware
+    # rendering decisions (font-cap exemption, bold-strip guard) in the renderer.
+    _PROPAGATE_CLS_SEMANTICS = frozenset({
+        "role_intro", "role_key_technologies", "role_tech_stack",
+        "role_project_label",
+    })
+    for _role in updated_roles:
+        for _idx, _pm in enumerate(_role.bullets):
+            if _pm.para_id and _pm.para_id in cls_body_block_map:
+                _blk = cls_body_block_map[_pm.para_id]
+                if _blk.semantic_type in _PROPAGATE_CLS_SEMANTICS:
+                    _role.bullets[_idx] = _dc_replace(_pm, semantic=_blk.semantic_type)
+
+    # Date injection for date-column templates (e.g. sample 35): when the LLM
+    # role header contains a " | <date>" suffix and the template role header has
+    # no year/month, inject the date string into the template header text.  The
+    # orphaned date-column paras in header_paras are cleared by apply_tailored
+    # when _dates_injected is set on the returned section.
+    _dates_injected = False
+    if llm_roles:
+        for _di, _upd in enumerate(updated_roles):
+            if _di >= len(llm_roles):
+                break
+            _llm_hdr = llm_roles[_di].header
+            _pipe_idx = _llm_hdr.rfind(" | ")
+            if _pipe_idx == -1:
+                continue
+            _date_str = _llm_hdr[_pipe_idx + 3:].strip()
+            if not _date_str:
+                continue
+            # Skip if template header or any meta line already has a date.
+            _hdr_has_date = bool(
+                _YEAR_RE.search(_upd.header.text) or _MONTH_NAME_RE.search(_upd.header.text)
+            )
+            _meta_has_date = any(
+                bool(_YEAR_RE.search(m.text) or _MONTH_NAME_RE.search(m.text))
+                for m in _upd.meta_lines
+            )
+            if _hdr_has_date or _meta_has_date:
+                continue
+            # The pipe suffix must look like a date (year, month, "current", or "present").
+            if not (
+                _YEAR_RE.search(_date_str)
+                or _MONTH_NAME_RE.search(_date_str)
+                or "current" in _date_str.lower()
+                or "present" in _date_str.lower()
+            ):
+                continue
+            updated_roles[_di] = _dc_replace(
+                _upd,
+                header=_dc_replace(_upd.header, text=f"{_upd.header.text} | {_date_str}"),
+            )
+            _dates_injected = True
+            _log.debug(
+                "DATE_INJECTED_FROM_LLM: role=%r date=%r",
+                _upd.role_id, _date_str,
+            )
+
     _log.debug(
         "classification: section %r preserve_heading=%s rewrite_policy=%s",
         orig.title, cls_sec.preserve_heading, cls_sec.rewrite_policy,
     )
-    # Filter body_paras to exclude para_ids already claimed by roles, preventing
-    # SPLIT_BRAIN_BODY_PARAS validator failures.  Spacer paragraphs (empty or no
-    # para_id) are kept so layout_blocks renderer can find them via body_paras.
+    # Sanitize body_paras: keep spacers intact (layout_blocks needs them), clear
+    # stale role content so the layout_blocks renderer writes empty paragraphs
+    # instead of falling back to the xml_proto original text.
+    #
+    # Two failure modes this addresses:
+    #   Case A — paragraph-semantic body_paras kept with original text: they are
+    #             in para_lookup via sec.body_paras and render stale template text.
+    #   Case B — bullet-semantic body_paras previously *removed* from body_paras:
+    #             absent from para_lookup, renderer falls back to xml_proto and
+    #             still shows the original text.  Clearing (not removing) them
+    #             puts them in para_lookup with text="" so they render invisible.
+    #
+    # Rule: a non-empty body_para not claimed by an updated role and not
+    # explicitly preserved in the classification is stale role content → clear it.
     _role_para_ids: set[str] = set()
     for r in updated_roles:
         if r.header.para_id:
@@ -2954,10 +3043,24 @@ def _update_experience_classified(
         for _p in r.header_extra + r.meta_lines + r.bullets:
             if _p.para_id:
                 _role_para_ids.add(_p.para_id)
-    filtered_body = [
-        p for p in orig.body_paras
-        if not p.para_id or p.para_id not in _role_para_ids
-    ]
+    _preserved_in_cls: set[str] = {
+        _pid for _pid, _blk in cls_body_block_map.items()
+        if _blk.rewrite_policy == "preserve"
+    }
+    _STALE_BODY_SEMANTICS = frozenset({"role_header", "role_meta", "bullet", "paragraph"})
+
+    def _sanitize_body(p: "ParaModel") -> "ParaModel":
+        if not p.para_id or not p.text.strip():
+            return p                        # spacer — keep as-is
+        if p.para_id in _role_para_ids:
+            return p                        # claimed by updated role — hands off
+        if p.para_id in _preserved_in_cls:
+            return p                        # explicitly preserved by classification
+        if p.semantic in _STALE_BODY_SEMANTICS:
+            return _dc_replace(p, text="")  # stale template content — clear
+        return p
+
+    filtered_body = [_sanitize_body(p) for p in orig.body_paras]
 
     # Register extra unbound bullets (para_id="") as injections so apply_tailored
     # creates layout blocks for them and the renderer can write their text.
@@ -2995,6 +3098,8 @@ def _update_experience_classified(
     )
     if _extra_injections:
         result._extra_injections = _extra_injections  # type: ignore[attr-defined]
+    if _dates_injected:
+        result._dates_injected = True  # type: ignore[attr-defined]
     return result
 
 
@@ -4992,6 +5097,24 @@ def apply_tailored(
             p for p in effective_header_paras
             if p.para_id not in _used_anchor_ids
         ]
+
+    # Date-column header cleanup: when experience roles had dates injected from
+    # LLM role headers, clear orphaned date-fragment paras from header_paras.
+    # Handles templates (e.g. sample 35) where the date column appears before
+    # the Experience heading in document order, causing date fragments to render
+    # as a noise block above the Experience section.
+    if any(getattr(s, "_dates_injected", False) for s in new_sections):
+        _cleaned_hp: list[ParaModel] = []
+        for _hp in effective_header_paras:
+            if _hp.para_id and _hp.text.strip() and _DATE_COL_PARA_RE.match(_hp.text.strip()):
+                _cleaned_hp.append(_dc_replace(_hp, text=""))
+                _log.debug(
+                    "DATE_COL_HEADER_CLEARED: para_id=%r text=%r",
+                    _hp.para_id, _hp.text.strip(),
+                )
+            else:
+                _cleaned_hp.append(_hp)
+        effective_header_paras = _cleaned_hp
 
     # Blank out intro-prose header_paras that would duplicate an anchored summary.
     # When the template has a summary-like placeholder in header_paras (e.g. a

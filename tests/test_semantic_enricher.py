@@ -1,18 +1,21 @@
 """
 tests/test_semantic_enricher.py
 
-Unit tests for the deterministic semantic enrichment layer (Rounds 1 & 2).
+Unit tests for the deterministic semantic enrichment layer (Rounds 1, 2 & 3).
 
 Covers:
 - tech_stack and highlight_header promotion via normalizer hints
-- tech_stack_detail: extended tech-layer patterns (Application level:, etc.)
+- tech_stack_detail: extended tech-layer patterns (Application level:, devops, databases, etc.)
 - project_header detection (keyword, length, punctuation guards)
-- project_entry: hyperlinked entries in Projects sections
+- project_entry: hyperlinked entries and year-ending entries in Projects sections
+- project_entry: role_meta entries in Projects sections promoted to project_entry
 - project_intro (internal project): long project descriptions in role body
+- project_intro_continuation: paragraphs following project_intro in same role
 - role_intro detection (positional context + sentence structure)
+- role_intro chained from project_entry (project_entry in _ROLE_STRUCTURAL_SEMS)
 - specialization_header detection (domain keywords, length, punct guards)
 - priority ordering when multiple candidates match
-- guardrail: non-paragraph semantics are never modified
+- guardrail: non-paragraph semantics (except role_meta in Projects) are never modified
 - diagnostic records contain required fields including original/enriched semantic
 """
 from __future__ import annotations
@@ -30,6 +33,7 @@ from tailor.compiler.semantic_enricher import (
     ENRICH_INTERNAL_PROJECT,
     ENRICH_PROJECT_ENTRY,
     ENRICH_PROJECT_HEADER,
+    ENRICH_PROJECT_INTRO_CONTINUATION,
     ENRICH_ROLE_INTRO,
     ENRICH_SPECIALIZATION_HEADER,
     ENRICH_TECH_STACK,
@@ -126,10 +130,19 @@ class TestTechStack:
         ts = next(d for d in diags if d["event"] == ENRICH_TECH_STACK)
         assert ts["confidence"] >= 0.90
 
-    def test_bullet_not_touched(self):
+    def test_bullet_with_hint_promoted_to_tech_stack(self):
+        # Bullets with tech_stack_candidate hint from the normalizer are promoted.
+        # The normalizer already validated the pattern; bullet label is incidental.
         paras, _ = _enrich([
             _para("p1", "Tech Stack: Java", parser_semantic="bullet",
                   semantic_hint="tech_stack_candidate"),
+        ])
+        assert _sem(paras) == "tech_stack"
+
+    def test_bullet_without_hint_not_touched(self):
+        # Bullets without a normalizer hint are never modified.
+        paras, _ = _enrich([
+            _para("p1", "Implemented distributed caching layer.", parser_semantic="bullet"),
         ])
         assert _sem(paras) == "bullet"
 
@@ -285,9 +298,10 @@ class TestProjectEntry:
         # para is in meta_para_ids → not unowned → project_entry does NOT fire
         assert _sem(paras) == "paragraph"
 
-    def test_non_a_link_stays_paragraph(self):
+    def test_no_year_and_no_a_link_stays_paragraph(self):
+        # Text with no "a link" prefix and no trailing year → stays paragraph
         paras, _ = _enrich(
-            [_para("p1", "Rust build tool, 2024")],
+            [_para("p1", "Rust build tool for package management")],
             raw_title="Projects",
         )
         assert _sem(paras) == "paragraph"
@@ -595,7 +609,8 @@ class TestPriorityAndGuardrails:
         ])
         assert _sem(paras) == "bullet"
 
-    def test_role_meta_not_touched(self):
+    def test_role_meta_not_touched_in_experience(self):
+        # role_meta in non-Projects section is never modified
         paras, _ = _enrich([
             _para("p1", "January 2022 – Present", parser_semantic="role_meta"),
         ])
@@ -645,3 +660,307 @@ class TestPriorityAndGuardrails:
         d = next(d for d in diags if d["event"] == ENRICH_TECH_STACK_DETAIL)
         assert d["original_semantic"] == "paragraph"
         assert d["enriched_semantic"] == "tech_stack"
+
+
+# ---------------------------------------------------------------------------
+# tech_stack_detail Round 3 — devops and databases keywords
+# ---------------------------------------------------------------------------
+
+class TestTechStackDetailRound3:
+    def test_devops_tools_promoted(self):
+        # "DevOps tools:" — first word "devops" now in _TECH_LAYER_FIRST_WORDS
+        paras, _ = _enrich([
+            _para("p1", "DevOps tools: GitLab, Jenkins, Docker"),
+        ])
+        assert _sem(paras) == "tech_stack"
+
+    def test_devops_only_promoted(self):
+        paras, _ = _enrich([
+            _para("p1", "DevOps: GitLab, Jenkins"),
+        ])
+        assert _sem(paras) == "tech_stack"
+
+    def test_databases_promoted(self):
+        paras, _ = _enrich([
+            _para("p1", "Databases: MySQL, Oracle, PostgreSQL"),
+        ])
+        assert _sem(paras) == "tech_stack"
+
+    def test_database_singular_promoted(self):
+        paras, _ = _enrich([
+            _para("p1", "Database: PostgreSQL"),
+        ])
+        assert _sem(paras) == "tech_stack"
+
+    def test_devops_diagnostic_event_is_detail(self):
+        _, diags = _enrich([
+            _para("p1", "DevOps tools: GitLab, Jenkins, Docker"),
+        ])
+        assert any(d["event"] == ENRICH_TECH_STACK_DETAIL for d in diags)
+        d = next(d for d in diags if d["event"] == ENRICH_TECH_STACK_DETAIL)
+        assert d["enriched_semantic"] == "tech_stack"
+
+
+# ---------------------------------------------------------------------------
+# project_entry Round 3 — year-ending pattern and role_meta in Projects
+# ---------------------------------------------------------------------------
+
+class TestProjectEntryRound3:
+    def test_year_ending_unowned_in_projects_section(self):
+        # "Name, description, 2020" — unowned, Projects section, ends with year
+        paras, _ = _enrich(
+            [_para("p1", "Apache Incubator – NLPCraft, API to convert natural language into actions, 2020")],
+            raw_title="Projects",
+        )
+        assert _sem(paras) == "project_entry"
+
+    def test_year_range_ending_in_projects_section(self):
+        paras, _ = _enrich(
+            [_para("p1", "Scaffold Stellar, Stellar smart contract developer tool, 2025-2026")],
+            raw_title="Projects",
+        )
+        assert _sem(paras) == "project_entry"
+
+    def test_bachelor_thesis_year_ending(self):
+        paras, _ = _enrich(
+            [_para("p1", "Bachelor Thesis, Learning similarity of social network communities with embeddings application, 2019")],
+            raw_title="Projects",
+        )
+        assert _sem(paras) == "project_entry"
+
+    def test_year_ending_outside_projects_stays_paragraph(self):
+        # Same year-ending text but in EXPERIENCE section → no project_entry promotion
+        # Use text without "project" keyword to avoid project_header also firing
+        paras, _ = _enrich(
+            [_para("p1", "Apache Incubator – NLPCraft, API to convert natural language into actions, 2020")],
+            raw_title="EXPERIENCE",
+        )
+        assert _sem(paras) == "paragraph"
+
+    def test_year_ending_in_role_context_stays_paragraph(self):
+        # Para owned by a role (in bullet_para_ids) → is_unowned=False → no project_entry
+        # Use text without "project" keyword to avoid project_header also firing
+        role = _role("r1", bullet_ids=["p1"])
+        paras, _ = _enrich(
+            [_para("p1", "Apache Incubator – NLPCraft, API to convert natural language into actions, 2020")],
+            roles=[role],
+            raw_title="Projects",
+        )
+        assert _sem(paras) == "paragraph"
+
+    def test_role_meta_in_projects_section_promoted(self):
+        # role_meta in Projects section → project_entry
+        paras, _ = _enrich(
+            [_para("p1", "Cargo, Rust build tool, 2024", parser_semantic="role_meta")],
+            raw_title="Projects",
+        )
+        assert _sem(paras) == "project_entry"
+
+    def test_role_meta_scaffold_in_projects_promoted(self):
+        paras, _ = _enrich(
+            [_para("p1", "Scaffold Registry Indexer, Stellar smart contract indexer, 2026",
+                   parser_semantic="role_meta")],
+            raw_title="Projects",
+        )
+        assert _sem(paras) == "project_entry"
+
+    def test_role_meta_in_experience_not_touched(self):
+        # role_meta in non-Projects section is never modified
+        paras, _ = _enrich(
+            [_para("p1", "January 2022 – Present", parser_semantic="role_meta")],
+            raw_title="EXPERIENCE",
+        )
+        assert _sem(paras) == "role_meta"
+
+    def test_role_meta_project_entry_diagnostic(self):
+        _, diags = _enrich(
+            [_para("p1", "LastFm scrobbler, LastFm Scrobbler for VR game BeatSaber, 2021",
+                   parser_semantic="role_meta")],
+            raw_title="Projects",
+        )
+        assert any(d["event"] == ENRICH_PROJECT_ENTRY for d in diags)
+        d = next(d for d in diags if d["event"] == ENRICH_PROJECT_ENTRY)
+        assert d["original_semantic"] == "role_meta"
+        assert d["enriched_semantic"] == "project_entry"
+
+    def test_project_entry_enables_downstream_role_intro(self):
+        # project_entry is in _ROLE_STRUCTURAL_SEMS, so the next paragraph
+        # (a complete sentence) can be promoted to role_intro
+        paras, _ = _enrich(
+            [
+                _para("p1", "Cargo, Rust build tool, 2024", parser_semantic="role_meta"),
+                _para("p2", "Added new flag --lockfile-path supported by all manifest commands."),
+            ],
+            raw_title="Projects",
+        )
+        assert _sem(paras, 0) == "project_entry"
+        assert _sem(paras, 1) == "role_intro"
+
+
+# ---------------------------------------------------------------------------
+# project_intro_continuation (Round 3)
+# ---------------------------------------------------------------------------
+
+class TestProjectIntroContinuation:
+    def test_continuation_after_project_intro(self):
+        role = _role("r1", bullet_ids=["p1", "p2"])
+        paras, _ = _enrich(
+            [
+                _para("p1", "Contribution to the internal project - a self service portal "
+                      "which holds the information on employee technical development"),
+                _para("p2", "technical growth and helps manage it. Tech stack: Java 11, Spring Boot."),
+            ],
+            roles=[role],
+        )
+        assert _sem(paras, 0) == "project_intro"
+        assert _sem(paras, 1) == "project_intro"
+
+    def test_continuation_event_name(self):
+        role = _role("r1", bullet_ids=["p1", "p2"])
+        _, diags = _enrich(
+            [
+                _para("p1", "Contribution to the internal project - a self service portal "
+                      "which holds the information on employee technical development"),
+                _para("p2", "technical growth and helps manage it across the organization."),
+            ],
+            roles=[role],
+        )
+        events = [d["event"] for d in diags]
+        assert ENRICH_INTERNAL_PROJECT in events
+        assert ENRICH_PROJECT_INTRO_CONTINUATION in events
+
+    def test_continuation_maps_to_project_intro_semantic(self):
+        role = _role("r1", bullet_ids=["p1", "p2"])
+        _, diags = _enrich(
+            [
+                _para("p1", "Contribution to the internal project - a self service portal "
+                      "which holds the information on employee technical development"),
+                _para("p2", "technical growth and helps manage it across the organization."),
+            ],
+            roles=[role],
+        )
+        cont = next(d for d in diags if d["event"] == ENRICH_PROJECT_INTRO_CONTINUATION)
+        assert cont["enriched_semantic"] == "project_intro"
+
+    def test_continuation_not_triggered_outside_role(self):
+        # Continuation requires in_role=True
+        paras, _ = _enrich(
+            [
+                _para("p1", "Contribution to the internal project - a self service portal "
+                      "which holds the information on employee technical development"),
+                _para("p2", "technical growth and helps manage it across the organization."),
+            ],
+        )
+        # p1 stays paragraph (not in role), so p2 continuation does not fire
+        assert _sem(paras, 0) == "paragraph"
+        assert _sem(paras, 1) == "paragraph"
+
+    def test_bullet_glyph_blocks_continuation(self):
+        role = _role("r1", bullet_ids=["p1", "p2"])
+        paras, _ = _enrich(
+            [
+                _para("p1", "Contribution to the internal project - a self service portal "
+                      "which holds the information on employee technical development"),
+                _para("p2", "• Some bullet point that should not be a continuation."),
+            ],
+            roles=[role],
+        )
+        assert _sem(paras, 1) == "paragraph"
+
+    def test_continuation_only_one_level_deep(self):
+        # After the continuation itself (project_intro), the next para is NOT another continuation
+        # (prev_sem would be "project_intro" again, so it WOULD continue — this tests the chain)
+        role = _role("r1", bullet_ids=["p1", "p2", "p3"])
+        paras, _ = _enrich(
+            [
+                _para("p1", "Contribution to the internal project - a self service portal "
+                      "which holds the information on employee technical development"),
+                _para("p2", "technical growth and helps manage it across the organization."),
+                _para("p3", "further continuation paragraph also within the project block."),
+            ],
+            roles=[role],
+        )
+        # All three in project_intro chain
+        assert _sem(paras, 0) == "project_intro"
+        assert _sem(paras, 1) == "project_intro"
+        assert _sem(paras, 2) == "project_intro"
+
+    def test_uppercase_start_blocks_continuation(self):
+        # Standalone responsibilities start uppercase and must not be promoted.
+        # e.g. "Mentoring junior specialists." after a project_intro stays paragraph.
+        role = _role("r1", bullet_ids=["p1", "p2"])
+        paras, _ = _enrich(
+            [
+                _para("p1", "Contribution to the internal project - a self service portal "
+                      "which holds the information on employee technical development"),
+                _para("p2", "Mentoring junior specialists and reviewing their code regularly."),
+            ],
+            roles=[role],
+        )
+        assert _sem(paras, 0) == "project_intro"
+        assert _sem(paras, 1) == "paragraph"
+
+    def test_implemented_action_blocks_continuation(self):
+        # "Implemented REST API." starts uppercase → not a continuation.
+        role = _role("r1", bullet_ids=["p1", "p2"])
+        paras, _ = _enrich(
+            [
+                _para("p1", "Contribution to the internal project - a self service portal "
+                      "which holds the information on employee technical development"),
+                _para("p2", "Implemented REST API and Swagger documentation."),
+            ],
+            roles=[role],
+        )
+        assert _sem(paras, 1) == "paragraph"
+
+
+# ---------------------------------------------------------------------------
+# Bullet tech_stack promotion (Precision Sprint)
+# ---------------------------------------------------------------------------
+
+class TestBulletTechStackPromotion:
+    def test_bullet_with_hint_promoted(self):
+        # Bullets identified as tech_stack_candidate by normalizer are promoted.
+        paras, _ = _enrich([
+            _para("p1", "Technologies: React, Next.js, TypeScript",
+                  parser_semantic="bullet", semantic_hint="tech_stack_candidate"),
+        ])
+        assert _sem(paras) == "tech_stack"
+
+    def test_devops_bullet_with_hint_promoted(self):
+        paras, _ = _enrich([
+            _para("p1", "DevOps: GitLab, Jenkins",
+                  parser_semantic="bullet", semantic_hint="tech_stack_candidate"),
+        ])
+        assert _sem(paras) == "tech_stack"
+
+    def test_bullet_without_hint_stays_bullet(self):
+        paras, _ = _enrich([
+            _para("p1", "Technologies: React, TypeScript", parser_semantic="bullet"),
+        ])
+        assert _sem(paras) == "bullet"
+
+    def test_bullet_hint_diagnostic_emitted(self):
+        _, diags = _enrich([
+            _para("p1", "Technologies: React, TypeScript",
+                  parser_semantic="bullet", semantic_hint="tech_stack_candidate"),
+        ])
+        assert any(d["event"] == ENRICH_TECH_STACK for d in diags)
+        d = next(d for d in diags if d["event"] == ENRICH_TECH_STACK)
+        assert d["original_semantic"] == "bullet"
+        assert d["enriched_semantic"] == "tech_stack"
+
+    def test_project_intro_confidence_beats_role_intro(self):
+        # project_intro (0.84) must beat role_intro positional (0.82) when both fire.
+        # Setup: para has "project" keyword (61-250 chars), is in role, and follows role_header.
+        role = _role("r1", meta_ids=["p1"])
+        paras, _ = _enrich(
+            [
+                _para("p0", "Senior Software Engineer", parser_semantic="role_header"),
+                _para("p1", "Contribution to the internal project - a self service portal "
+                      "which holds the information on employee development activities."),
+            ],
+            roles=[role],
+        )
+        # project_intro should win (0.84 > role_intro 0.82)
+        assert _sem(paras, 1) == "project_intro"
