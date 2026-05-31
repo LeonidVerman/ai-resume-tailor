@@ -1337,6 +1337,31 @@ def compile_resume_from_pdf(
     llm_sections = apply_layout_fitting(template_ir, llm_sections, skip_compaction=True)
     updated = apply_tailored(template_ir, llm_sections, classification=classification)
 
+    # Catastrophic parse failure guard: when the parser found 0 sections but
+    # dumped 30+ paragraphs into header_paras (e.g. date-annotated single-column
+    # layouts where section boundaries were not detected), trim header_paras to
+    # the true header area (name + contact block near page top) and switch to
+    # single-column rendering so LLM-generated sections render cleanly.
+    _catastrophic_parse = (
+        len(template_ir.sections) == 0
+        and len(template_ir.header_paras) > 30
+    )
+    if _catastrophic_parse:
+        _TRUE_HDR_Y_MAX = 150.0  # pt — keeps name + contact, discards section headings
+        updated.header_paras = [
+            hp for hp in updated.header_paras
+            if not hp.paragraph_profile
+            or hp.paragraph_profile.y_pt is None
+            or hp.paragraph_profile.y_pt < _TRUE_HDR_Y_MAX
+        ]
+        # Force single-column rendering: two-col path would create a wrong-width
+        # left column and duplicate old template content from bloated header_paras.
+        updated.layout.column_split_x = None
+        log.debug(
+            "CATASTROPHIC_PARSE_FALLBACK: trimmed header_paras=%d forced single-col",
+            len(updated.header_paras),
+        )
+
     # Re-inject footer paras if they were lost during apply_tailored
     if template_ir.footer_paras and not updated.footer_paras:
         updated.footer_paras = list(template_ir.footer_paras)
