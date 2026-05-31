@@ -2807,6 +2807,45 @@ def _update_role_with_adjuncts(
     if not preserved_ids:
         return _update_role_bullets_only(orig, llm_bullets, layout_bound=layout_bound)
 
+    # Tech-stack de-duplication: when a preserved block has semantic_type in
+    # {role_key_technologies, role_tech_stack} AND the LLM also generates a
+    # "Key technologies:"-prefixed bullet, that LLM bullet has no rewriteable
+    # slot and would normally become an unbound extra → _ext_N clone → duplicate
+    # rendering.  Intercept it here: replace the preserved block's text with the
+    # LLM content and remove the LLM bullet from the working list so no clone
+    # is created.  Both preserved and LLM text describe the same tech-stack fact;
+    # the LLM version is more current and job-targeted.
+    _TECH_SEMANTICS = frozenset({"role_key_technologies", "role_tech_stack"})
+    _TECH_PREFIX_RE = re.compile(
+        r"(?i)^key\s+tech|^tech(?:nolog|stack)|^technologies\s*[:\-]"
+    )
+    preserved_text_overrides: dict[str, str] = {}
+    llm_bullets_working = list(llm_bullets)
+
+    for _p in orig.bullets:
+        if _p.para_id not in preserved_ids:
+            continue
+        _blk = cls_body_block_map.get(_p.para_id)
+        if _blk is None or _blk.semantic_type not in _TECH_SEMANTICS:
+            continue
+        for _li, _lb in enumerate(llm_bullets_working):
+            if _TECH_PREFIX_RE.match(_lb.strip()):
+                preserved_text_overrides[_p.para_id] = llm_bullets_working.pop(_li)
+                _log.debug(
+                    "DUP_TECH_STACK_CANDIDATE: role=%r para_id=%r semantic=%r "
+                    "action=replace_preserved_with_llm text=%r",
+                    orig.role_id, _p.para_id, _blk.semantic_type,
+                    preserved_text_overrides[_p.para_id][:80],
+                )
+                break
+        else:
+            _log.debug(
+                "DUP_TECH_STACK_CANDIDATE: role=%r para_id=%r semantic=%r "
+                "action=no_llm_match_keep_original text=%r",
+                orig.role_id, _p.para_id, _blk.semantic_type,
+                _p.text[:80],
+            )
+
     # Diagnostics
     _log.debug(
         "ROLE_ADJUNCT_SPLIT: role=%r  rewriteable=[%s]  preserved=[%s]  llm_bullets=%d",
@@ -2821,7 +2860,7 @@ def _update_role_with_adjuncts(
             for p in orig.bullets
             if p.para_id in preserved_ids and p.para_id in cls_body_block_map
         ),
-        len(llm_bullets),
+        len(llm_bullets_working),
     )
 
     rewriteable_paras = [p for p in orig.bullets if p.para_id not in preserved_ids]
@@ -2833,7 +2872,7 @@ def _update_role_with_adjuncts(
         role_id=orig.role_id,
         role_id_stable=orig.role_id_stable,
     )
-    updated_temp = _update_role_bullets_only(temp_role, llm_bullets, layout_bound=layout_bound)
+    updated_temp = _update_role_bullets_only(temp_role, llm_bullets_working, layout_bound=layout_bound)
 
     # Re-assemble in original bullets order: preserved paras stay, rewriteable
     # slots are replaced with updated text from updated_temp.bullets.
@@ -2841,7 +2880,8 @@ def _update_role_with_adjuncts(
     final_bullets: list[ParaModel] = []
     for p in orig.bullets:
         if p.para_id in preserved_ids:
-            final_bullets.append(p)
+            _override = preserved_text_overrides.get(p.para_id)
+            final_bullets.append(_dc_replace(p, text=_override) if _override is not None else p)
         else:
             nxt = next(updated_iter, None)
             if nxt is not None:
