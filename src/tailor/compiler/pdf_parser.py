@@ -47,6 +47,7 @@ from tailor.compiler.models import (
     ResumeSection,
     RoleEntry,
 )
+from tailor.compiler.pdf_text_normalizer import normalize_spans as _normalize_spans
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -1908,7 +1909,7 @@ def _extract_paragraphs(
 
             for line in blk.get("lines", []):
                 spans = line.get("spans", [])
-                line_text = "".join(s.get("text", "") for s in spans).strip()
+                line_text, _norm_artifact = _normalize_spans(spans)
                 if line_text:
                     # Collect per-line y0/y1 for accurate _has_bullet_dot matching
                     # and per-line space_before computation.
