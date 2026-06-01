@@ -9,6 +9,9 @@ JSON), the normalised text should be identical when injection is correct.
 Normalisation applied before comparison:
   - Line breaks replaced with a single space
   - Runs of whitespace collapsed to one space
+  - Hyphenation artifacts collapsed: "high- performance" → "high-performance"
+    (word char + hyphen + whitespace + word char → word char + hyphen + word char)
+  - Bullet character variants normalised to a single canonical form (•)
   - Leading / trailing whitespace stripped
 
 Missing rendered PDFs are reported as failures.
@@ -34,6 +37,10 @@ _REND_DOCX_DIR = _REPO / "tmp" / "artefacts" / "rendering" / "docx"
 _REND_PDF_DIR  = _REPO / "tmp" / "artefacts" / "rendering" / "pdf"
 
 _NUM_RE = re.compile(r"^(\d+)-")
+
+# Bullet/list-marker characters that are visually equivalent across pipelines.
+# PDF renderers and LibreOffice substitute these freely; collapse all to one form.
+_BULLET_RE = re.compile(r"[·•▪▸►◆◇○●◦‣]")
 
 
 def _num_prefix(name: str) -> str | None:
@@ -61,6 +68,10 @@ def _extract_pdf_text(pdf_path: Path) -> str:
 def _normalize(text: str) -> str:
     text = re.sub(r"[\r\n]+", " ", text)
     text = re.sub(r"\s+", " ", text)
+    # Collapse line-break hyphenation: "high- performance" → "high-performance"
+    text = re.sub(r"(\w)-\s+(\w)", r"\1-\2", text)
+    # Normalise bullet variants to a single canonical character
+    text = _BULLET_RE.sub("•", text)
     return text.strip()
 
 
