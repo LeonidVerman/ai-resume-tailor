@@ -2793,14 +2793,23 @@ def _update_role_with_adjuncts(
     When no preserved adjuncts are found for this role, delegates to
     _update_role_bullets_only (identical result, no overhead).
     """
+    # Semantic types that represent source material for the LLM rewrite rather
+    # than structural elements that must survive verbatim.  Preserving them
+    # produces stale fragments alongside the newly-written bullets.
+    _REWRITE_SOURCE_SEMANTICS = frozenset({
+        "role_freeform_note",    # multi-line free-text blocks
+        "role_project_context",  # project description notes
+    })
     preserved_ids: set[str] = set()
     for p in orig.bullets:
         blk = cls_body_block_map.get(p.para_id)
         if blk is not None and blk.rewrite_policy == "preserve":
-            # Freeform notes are content (multi-line descriptions), not structural
-            # elements.  They get rewritten into proper bullets by the LLM, so
-            # preserving them produces stale duplicates alongside the new bullets.
-            if blk.semantic_type == "role_freeform_note":
+            if blk.semantic_type in _REWRITE_SOURCE_SEMANTICS:
+                _log.debug(
+                    "PRESERVED_ADJUNCT_CLEANUP: role=%r para_id=%r semantic=%r "
+                    "action=excluded_from_preserved ownership=role_bullet",
+                    orig.role_id, p.para_id, blk.semantic_type,
+                )
                 continue
             preserved_ids.add(p.para_id)
 
@@ -2888,6 +2897,33 @@ def _update_role_with_adjuncts(
                 final_bullets.append(nxt)
     # Extra LLM bullets cloned beyond original rewriteable slots
     final_bullets.extend(updated_iter)
+
+    # Deduplicate identical preserved tech-semantic blocks.  Template sub-projects
+    # may each carry the same tech annotation (e.g. "DevOps: GitLab, Jenkins").
+    # After the LLM rewrites the role without that exact annotation, all occurrences
+    # survive as preserved orphans.  Keep the first, clear subsequent duplicates.
+    _seen_tech_text: set[str] = set()
+    _deduped: list[ParaModel] = []
+    for _fb in final_bullets:
+        _blk = cls_body_block_map.get(_fb.para_id)
+        if (
+            _fb.para_id in preserved_ids
+            and _blk is not None
+            and _blk.semantic_type in _TECH_SEMANTICS
+        ):
+            _norm = _fb.text.strip().lower()
+            if _norm and _norm in _seen_tech_text:
+                _log.debug(
+                    "PRESERVED_ADJUNCT_CLEANUP: role=%r para_id=%r semantic=%r "
+                    "action=clear_duplicate_tech text=%r",
+                    orig.role_id, _fb.para_id, _blk.semantic_type, _fb.text[:60],
+                )
+                _deduped.append(_dc_replace(_fb, text=""))
+                continue
+            if _norm:
+                _seen_tech_text.add(_norm)
+        _deduped.append(_fb)
+    final_bullets = _deduped
 
     return RoleEntry(
         header=updated_temp.header,
@@ -3083,9 +3119,13 @@ def _update_experience_classified(
         for _p in r.header_extra + r.meta_lines + r.bullets:
             if _p.para_id:
                 _role_para_ids.add(_p.para_id)
+    # Rewrite-source semantics are excluded: their body_paras must be cleared
+    # when the role is rewritten, just like non-preserved content.
+    _REWRITE_SOURCE_CLS = frozenset({"role_freeform_note", "role_project_context"})
     _preserved_in_cls: set[str] = {
         _pid for _pid, _blk in cls_body_block_map.items()
         if _blk.rewrite_policy == "preserve"
+        and _blk.semantic_type not in _REWRITE_SOURCE_CLS
     }
     _STALE_BODY_SEMANTICS = frozenset({"role_header", "role_meta", "bullet", "paragraph"})
 
