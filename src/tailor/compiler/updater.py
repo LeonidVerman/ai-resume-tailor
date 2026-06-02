@@ -2793,19 +2793,67 @@ def _update_role_with_adjuncts(
     When no preserved adjuncts are found for this role, delegates to
     _update_role_bullets_only (identical result, no overhead).
     """
+    # Semantic types that represent source material for the LLM rewrite rather
+    # than structural elements that must survive verbatim.  Preserving them
+    # produces stale fragments alongside the newly-written bullets.
+    _REWRITE_SOURCE_SEMANTICS = frozenset({
+        "role_freeform_note",    # multi-line free-text blocks
+        "role_project_context",  # project description notes
+    })
     preserved_ids: set[str] = set()
     for p in orig.bullets:
         blk = cls_body_block_map.get(p.para_id)
         if blk is not None and blk.rewrite_policy == "preserve":
-            # Freeform notes are content (multi-line descriptions), not structural
-            # elements.  They get rewritten into proper bullets by the LLM, so
-            # preserving them produces stale duplicates alongside the new bullets.
-            if blk.semantic_type == "role_freeform_note":
+            if blk.semantic_type in _REWRITE_SOURCE_SEMANTICS:
+                _log.debug(
+                    "PRESERVED_ADJUNCT_CLEANUP: role=%r para_id=%r semantic=%r "
+                    "action=excluded_from_preserved ownership=role_bullet",
+                    orig.role_id, p.para_id, blk.semantic_type,
+                )
                 continue
             preserved_ids.add(p.para_id)
 
     if not preserved_ids:
         return _update_role_bullets_only(orig, llm_bullets, layout_bound=layout_bound)
+
+    # Tech-stack de-duplication: when a preserved block has semantic_type in
+    # {role_key_technologies, role_tech_stack} AND the LLM also generates a
+    # "Key technologies:"-prefixed bullet, that LLM bullet has no rewriteable
+    # slot and would normally become an unbound extra → _ext_N clone → duplicate
+    # rendering.  Intercept it here: replace the preserved block's text with the
+    # LLM content and remove the LLM bullet from the working list so no clone
+    # is created.  Both preserved and LLM text describe the same tech-stack fact;
+    # the LLM version is more current and job-targeted.
+    _TECH_SEMANTICS = frozenset({"role_key_technologies", "role_tech_stack"})
+    _TECH_PREFIX_RE = re.compile(
+        r"(?i)^key\s+tech|^tech(?:nolog|stack)|^technologies\s*[:\-]"
+    )
+    preserved_text_overrides: dict[str, str] = {}
+    llm_bullets_working = list(llm_bullets)
+
+    for _p in orig.bullets:
+        if _p.para_id not in preserved_ids:
+            continue
+        _blk = cls_body_block_map.get(_p.para_id)
+        if _blk is None or _blk.semantic_type not in _TECH_SEMANTICS:
+            continue
+        for _li, _lb in enumerate(llm_bullets_working):
+            if _TECH_PREFIX_RE.match(_lb.strip()):
+                preserved_text_overrides[_p.para_id] = llm_bullets_working.pop(_li)
+                _log.debug(
+                    "DUP_TECH_STACK_CANDIDATE: role=%r para_id=%r semantic=%r "
+                    "action=replace_preserved_with_llm text=%r",
+                    orig.role_id, _p.para_id, _blk.semantic_type,
+                    preserved_text_overrides[_p.para_id][:80],
+                )
+                break
+        else:
+            _log.debug(
+                "DUP_TECH_STACK_CANDIDATE: role=%r para_id=%r semantic=%r "
+                "action=no_llm_match_keep_original text=%r",
+                orig.role_id, _p.para_id, _blk.semantic_type,
+                _p.text[:80],
+            )
 
     # Diagnostics
     _log.debug(
@@ -2821,7 +2869,7 @@ def _update_role_with_adjuncts(
             for p in orig.bullets
             if p.para_id in preserved_ids and p.para_id in cls_body_block_map
         ),
-        len(llm_bullets),
+        len(llm_bullets_working),
     )
 
     rewriteable_paras = [p for p in orig.bullets if p.para_id not in preserved_ids]
@@ -2833,7 +2881,7 @@ def _update_role_with_adjuncts(
         role_id=orig.role_id,
         role_id_stable=orig.role_id_stable,
     )
-    updated_temp = _update_role_bullets_only(temp_role, llm_bullets, layout_bound=layout_bound)
+    updated_temp = _update_role_bullets_only(temp_role, llm_bullets_working, layout_bound=layout_bound)
 
     # Re-assemble in original bullets order: preserved paras stay, rewriteable
     # slots are replaced with updated text from updated_temp.bullets.
@@ -2841,13 +2889,41 @@ def _update_role_with_adjuncts(
     final_bullets: list[ParaModel] = []
     for p in orig.bullets:
         if p.para_id in preserved_ids:
-            final_bullets.append(p)
+            _override = preserved_text_overrides.get(p.para_id)
+            final_bullets.append(_dc_replace(p, text=_override) if _override is not None else p)
         else:
             nxt = next(updated_iter, None)
             if nxt is not None:
                 final_bullets.append(nxt)
     # Extra LLM bullets cloned beyond original rewriteable slots
     final_bullets.extend(updated_iter)
+
+    # Deduplicate identical preserved tech-semantic blocks.  Template sub-projects
+    # may each carry the same tech annotation (e.g. "DevOps: GitLab, Jenkins").
+    # After the LLM rewrites the role without that exact annotation, all occurrences
+    # survive as preserved orphans.  Keep the first, clear subsequent duplicates.
+    _seen_tech_text: set[str] = set()
+    _deduped: list[ParaModel] = []
+    for _fb in final_bullets:
+        _blk = cls_body_block_map.get(_fb.para_id)
+        if (
+            _fb.para_id in preserved_ids
+            and _blk is not None
+            and _blk.semantic_type in _TECH_SEMANTICS
+        ):
+            _norm = _fb.text.strip().lower()
+            if _norm and _norm in _seen_tech_text:
+                _log.debug(
+                    "PRESERVED_ADJUNCT_CLEANUP: role=%r para_id=%r semantic=%r "
+                    "action=clear_duplicate_tech text=%r",
+                    orig.role_id, _fb.para_id, _blk.semantic_type, _fb.text[:60],
+                )
+                _deduped.append(_dc_replace(_fb, text=""))
+                continue
+            if _norm:
+                _seen_tech_text.add(_norm)
+        _deduped.append(_fb)
+    final_bullets = _deduped
 
     return RoleEntry(
         header=updated_temp.header,
@@ -3043,9 +3119,13 @@ def _update_experience_classified(
         for _p in r.header_extra + r.meta_lines + r.bullets:
             if _p.para_id:
                 _role_para_ids.add(_p.para_id)
+    # Rewrite-source semantics are excluded: their body_paras must be cleared
+    # when the role is rewritten, just like non-preserved content.
+    _REWRITE_SOURCE_CLS = frozenset({"role_freeform_note", "role_project_context"})
     _preserved_in_cls: set[str] = {
         _pid for _pid, _blk in cls_body_block_map.items()
         if _blk.rewrite_policy == "preserve"
+        and _blk.semantic_type not in _REWRITE_SOURCE_CLS
     }
     _STALE_BODY_SEMANTICS = frozenset({"role_header", "role_meta", "bullet", "paragraph"})
 
@@ -5115,6 +5195,33 @@ def apply_tailored(
             else:
                 _cleaned_hp.append(_hp)
         effective_header_paras = _cleaned_hp
+
+    # Icon-artifact header cleanup: detect "icon-char username" paras where an
+    # icon-font glyph (FontAwesome, etc.) degraded to a garbage ASCII character
+    # in a system font (Times New Roman) because the icon font was not embedded.
+    # Pattern: exactly 2 whitespace-separated tokens, first token ≤2 chars,
+    # second all-lowercase alphanumeric ≥4 chars, no '@' or '.' (not email/URL),
+    # total length <20.  Applied unconditionally — the heuristic is tight enough
+    # not to fire on legitimate contact lines (emails have '@', URLs have '.').
+    for _hi, _hp in enumerate(effective_header_paras):
+        if not _hp.para_id or not _hp.text.strip():
+            continue
+        _ia_words = _hp.text.strip().split()
+        if (
+            len(_ia_words) == 2
+            and len(_ia_words[0]) <= 2
+            and len(_hp.text.strip()) < 20
+            and _ia_words[1][0].islower()
+            and _ia_words[1].isalnum()
+            and len(_ia_words[1]) >= 4
+            and "@" not in _hp.text
+            and "." not in _hp.text
+        ):
+            effective_header_paras[_hi] = _dc_replace(_hp, text="")
+            _log.debug(
+                "ICON_ARTIFACT_CLEARED: para_id=%r text=%r",
+                _hp.para_id, _hp.text.strip(),
+            )
 
     # Blank out intro-prose header_paras that would duplicate an anchored summary.
     # When the template has a summary-like placeholder in header_paras (e.g. a
