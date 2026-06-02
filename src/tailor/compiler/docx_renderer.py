@@ -737,6 +737,67 @@ def _set_para_text(p_elem, text: str) -> None:
                     if _t_elems:
                         _post_tab_preserve[i] = "".join(t.text or "" for t in _t_elems)
 
+    # PDF-export micro-kerning strip and w:w propagation.
+    #
+    # PDF-to-DOCX converters produce two artefacts that break proportional text
+    # redistribution:
+    #
+    # 1. Inter-word spacer runs: 1–3 char whitespace-only runs with w:spacing
+    #    tuned for a space glyph.  After redistribution word characters land
+    #    there and the space-optimised spacing mis-aligns them ("Bakend").
+    #    Fix: strip w:spacing from these runs.
+    #
+    # 2. Character width scaling mismatch: spacer runs lack w:w (character width
+    #    scaling, e.g. w:val="90" = condensed 90%) that content runs carry.
+    #    After redistribution the word char in the spacer slot renders at 100%
+    #    width while surrounding chars are condensed → visible width mismatch.
+    #    Fix: copy w:w from the immediately preceding content run.
+    #
+    # Values ≥ 80 twips are intentional letter-spacing (decorative headings)
+    # and must be preserved.
+    _MICRO_KERN_LIMIT = 80  # twips; larger = intentional letter-spacing
+    _prev_content_rpr = None  # rPr of last non-spacer run, for w:w propagation
+    for _ki, _kr in enumerate(all_runs):
+        if _ki in ws_text or _ki in vml_indices:
+            continue
+        _kt_elems = _kr.findall(f"{{{_W}}}t")
+        _kr_text = "".join(e.text or "" for e in _kt_elems)
+        if not _kr_text:
+            continue
+        _krpr = _kr.find(f"{{{_W}}}rPr")
+        _is_spacer = _kr_text.isspace() and 1 <= len(_kr_text) <= 3
+
+        if not _is_spacer:
+            # Content run: record its rPr for neighbouring spacer propagation.
+            _prev_content_rpr = _krpr
+            # Also strip micro-tracking on short (1–3 char) content runs.
+            if len(_kr_text) <= 3 and _krpr is not None:
+                _ksp = _krpr.find(f"{{{_W}}}spacing")
+                if _ksp is not None:
+                    try:
+                        if abs(int(_ksp.get(f"{{{_W}}}val") or 0)) < _MICRO_KERN_LIMIT:
+                            _krpr.remove(_ksp)
+                    except (ValueError, TypeError):
+                        pass
+            continue
+
+        # Spacer run: strip w:spacing.
+        if _krpr is not None:
+            _ksp = _krpr.find(f"{{{_W}}}spacing")
+            if _ksp is not None:
+                try:
+                    if abs(int(_ksp.get(f"{{{_W}}}val") or 0)) < _MICRO_KERN_LIMIT:
+                        _krpr.remove(_ksp)
+                except (ValueError, TypeError):
+                    pass
+
+        # Propagate w:w (character width scaling) from the preceding content run
+        # so the redistributed word character renders at the same condensed width.
+        if _prev_content_rpr is not None and _krpr is not None:
+            _src_ww = _prev_content_rpr.find(f"{{{_W}}}w")
+            if _src_ww is not None and _krpr.find(f"{{{_W}}}w") is None:
+                _krpr.append(deepcopy(_src_ww))
+
     # Clear text from all runs (direct w:t children only; VML content is untouched).
     for r in all_runs:
         for t in r.findall(f"{{{_W}}}t"):
