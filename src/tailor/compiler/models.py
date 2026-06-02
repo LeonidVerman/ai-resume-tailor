@@ -67,6 +67,15 @@ class ParagraphProfile:
     # Absolute Y position of the block top in PDF points (runtime-only; not serialised).
     # Set by _extract_paragraphs for section-label-column pairing in parse_pdf.
     y_top_pt: float = 0.0
+    # Serialised geometry fields — page-absolute PDF coordinates for the line/span.
+    # Set by _extract_paragraphs; preserved in IR JSON so renderers and downstream
+    # stages can use original layout positions without re-parsing the PDF.
+    x_pt: float = 0.0        # left edge of line/span in PDF points
+    y_pt: float = 0.0        # top edge of line/span in PDF points
+    width_pt: float = 0.0    # width of line/span
+    height_pt: float = 0.0   # height of line
+    page_num: int = 0         # 0-based page index
+    block_id: str | None = None  # stable block identifier: "p{page}_b{blk_idx}"
 
     def to_dict(self) -> dict:
         return {
@@ -82,7 +91,13 @@ class ParagraphProfile:
             "text_color": self.text_color,
             "background_color": self.background_color,
             "column_id": self.column_id,
-            # inline_image_bytes and body_text_x0_pt are NOT serialised (runtime-only)
+            # inline_image_bytes, body_text_x0_pt, text_runs, y_top_pt: runtime-only, not serialised
+            "x_pt": self.x_pt,
+            "y_pt": self.y_pt,
+            "width_pt": self.width_pt,
+            "height_pt": self.height_pt,
+            "page_num": self.page_num,
+            "block_id": self.block_id,
         }
 
     @classmethod
@@ -100,6 +115,12 @@ class ParagraphProfile:
             text_color=d.get("text_color"),
             background_color=d.get("background_color"),
             column_id=d.get("column_id"),
+            x_pt=float(d.get("x_pt", 0.0)),
+            y_pt=float(d.get("y_pt", 0.0)),
+            width_pt=float(d.get("width_pt", 0.0)),
+            height_pt=float(d.get("height_pt", 0.0)),
+            page_num=int(d.get("page_num", 0)),
+            block_id=d.get("block_id"),
         )
 
 
@@ -284,6 +305,11 @@ class ResumeSection:
     #         "local_column_pair" | "paired_sidebar_region" |
     #         "rewriteable_region" | "preserve_region" | None
     container_type: str | None = None
+    # Render mode for PDF two-column sections. Classified from template_ir geometry
+    # by _classify_section_render_mode() before apply_tailored() and copied to the
+    # updated document so the renderer can use it even after paragraph_profile is lost.
+    # Values: "FULL_WIDTH" | "PARALLEL_BODY" | "SINGLE_COLUMN" | None
+    render_mode: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -294,6 +320,7 @@ class ResumeSection:
             "roles": [r.to_dict() for r in self.roles],
             "section_id": self.section_id,
             "container_type": self.container_type,
+            "render_mode": self.render_mode,
         }
 
     @classmethod
@@ -306,6 +333,7 @@ class ResumeSection:
             roles=[RoleEntry.from_dict(r) for r in d.get("roles", [])],
             section_id=d.get("section_id", ""),
             container_type=d.get("container_type"),
+            render_mode=d.get("render_mode"),
         )
 
 
