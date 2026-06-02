@@ -536,6 +536,13 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             return False
         if re.match(r"^[A-Z\s]+$", t) and len(t) < 40:      # short all-caps heading
             return False
+        # Placeholder address field: "Address - City - State - Zip Code"
+        if re.search(r"\baddress\b", t, re.IGNORECASE):
+            return False
+        # Decorative separator lines (mostly non-alphabetic characters)
+        alpha_ratio = sum(1 for c in t if c.isalpha()) / max(len(t), 1)
+        if alpha_ratio < 0.3:
+            return False
         return True
 
     # Build column-aware summary index sets.  For sidebar layouts the original
@@ -614,9 +621,20 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     summary_sec = doc.sections[summary_idx]
 
     if not summary_indices:
-        # No original summary lines to replace.  For single-column templates
-        # keep the LLM summary as a body section (no header injection needed).
+        # No original summary lines to replace.
         if doc.layout.column_split_x is None:
+            # Single-column: no original summary placeholder found.
+            # Inject LLM summary body into header_paras so it appears before
+            # body sections, suppressing the artificial 'Professional Summary'
+            # heading (which would otherwise render as a visible section banner).
+            if not doc.header_paras:
+                return
+            for bp in summary_sec.body_paras:
+                if bp.paragraph_profile:
+                    bp.paragraph_profile.column_id = None
+                    bp.paragraph_profile.bold = False
+            doc.header_paras = list(doc.header_paras) + list(summary_sec.body_paras)
+            doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
             return
         # Two-column: no pre-existing summary → append LLM summary BELOW the
         # name/title block so it renders above the two-column table.
@@ -726,17 +744,14 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
         else:
             # _target_col is None: full-width header above the two-column body
-            # (samples 18, 38) or single-column template (sample 33).
+            # (samples 18, 38) or single-column template.
             # Remove the original summary lines from header_paras; keep name/title.
             kept = [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
-            if doc.layout.column_split_x is not None:
-                # Two-column: inject LLM summary above the table (col=None = full-width)
-                doc.header_paras = kept + list(summary_sec.body_paras)
-                doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
-            else:
-                # Single-column: just remove original summary — keep the LLM
-                # summary section in doc.sections so it renders in the body.
-                doc.header_paras = kept
+            # Both two-column and single-column: inject LLM summary body into
+            # header_paras and remove the section so its artificial heading
+            # ('Professional Summary') does not render as a visible banner.
+            doc.header_paras = kept + list(summary_sec.body_paras)
+            doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
 
     # Rebuild all_paras so the renderer sees the updated structure.
     from tailor.compiler.models import ParaModel
@@ -800,7 +815,17 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
             _body_cleared = True
             for role in sec.roles:
                 if role.header.text and "|" in role.header.text:
-                    role.meta_lines.clear()
+                    # Clear only meta_lines whose text is already present in the
+                    # pipe-format header (stale/redundant duplicates like a date
+                    # segment that the PDF parser extracted both as part of the
+                    # header and as a separate paragraph).  Keep meta_lines that
+                    # carry new content absent from the header, e.g. a date line
+                    # injected from the LLM output when the template had none.
+                    h_lower = role.header.text.lower()
+                    role.meta_lines = [
+                        m for m in role.meta_lines
+                        if m.text.strip() and m.text.strip().lower() not in h_lower
+                    ]
 
     if doc.layout.column_split_x is None:
         if _body_cleared:
