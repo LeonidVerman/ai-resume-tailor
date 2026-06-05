@@ -3135,6 +3135,12 @@ def _update_experience_classified(
         if p.para_id in _role_para_ids:
             return p                        # claimed by updated role — hands off
         if p.para_id in _preserved_in_cls:
+            # role_intro blocks without \n are compound-split prose intros (source
+            # material extracted from "Title, Company Highlights: body..." orphans).
+            # Structured meta role_intro blocks always use \n as field separators.
+            _blk = cls_body_block_map.get(p.para_id)
+            if _blk and _blk.semantic_type == "role_intro" and "\n" not in p.text:
+                return _dc_replace(p, text="")
             return p                        # explicitly preserved by classification
         if p.semantic in _STALE_BODY_SEMANTICS:
             return _dc_replace(p, text="")  # stale template content — clear
