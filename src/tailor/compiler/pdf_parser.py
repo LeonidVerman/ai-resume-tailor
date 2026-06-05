@@ -1199,15 +1199,23 @@ def _extract_page_images(fitz_doc, page_index: int = 0) -> "list":
                 _pix_check = _fitz.Pixmap(fitz_doc, xref)
                 if _pix_check.n > 4 or _pix_check.colorspace != _fitz.csRGB:
                     _pix_check = _fitz.Pixmap(_fitz.csRGB, _pix_check)
-                _cx = _pix_check.width // 2
-                _cy = _pix_check.height // 2
-                _px = _pix_check.pixel(_cx, _cy)
-                # Skip when ALL channels are near-maximum (blank/white canvas).
-                # Using min-channel > 240 rather than average-luminance > 200
-                # avoids false-filtering of pastel backgrounds like (161,225,225)
-                # which have high average luminance but visible teal/green color.
-                if min(_px[0], _px[1], _px[2]) > 240:
-                    continue  # effectively white full-page image → skip
+                # Sample a 3×3 grid at 10 %/50 %/90 % of width and height.
+                # A single center-pixel check incorrectly drops templates whose
+                # center is white but whose edges/corners carry decorative color
+                # (e.g. watercolor brush strokes).  Using grid points at 10 %
+                # from the edges catches corner decorations while still skipping
+                # truly blank canvases (every sampled point near-white).
+                _pw2, _ph2 = _pix_check.width, _pix_check.height
+                _sample_pts = [
+                    (int(_pw2 * fx), int(_ph2 * fy))
+                    for fx in (0.10, 0.50, 0.90)
+                    for fy in (0.10, 0.50, 0.90)
+                ]
+                if all(
+                    min(_pix_check.pixel(_sx, _sy)[:3]) > 240
+                    for _sx, _sy in _sample_pts
+                ):
+                    continue  # all 9 sampled points near-white → blank canvas, skip
                 category = "full_page_bg"
             except Exception:
                 continue  # cannot sample → skip safely
