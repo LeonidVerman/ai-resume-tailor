@@ -3121,7 +3121,7 @@ def _update_experience_classified(
                 _role_para_ids.add(_p.para_id)
     # Rewrite-source semantics are excluded: their body_paras must be cleared
     # when the role is rewritten, just like non-preserved content.
-    _REWRITE_SOURCE_CLS = frozenset({"role_freeform_note", "role_project_context"})
+    _REWRITE_SOURCE_CLS = frozenset({"role_freeform_note", "role_project_context", "highlight_header"})
     _preserved_in_cls: set[str] = {
         _pid for _pid, _blk in cls_body_block_map.items()
         if _blk.rewrite_policy == "preserve"
