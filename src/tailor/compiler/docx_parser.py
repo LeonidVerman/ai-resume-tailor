@@ -866,11 +866,16 @@ def _try_split_compound_role(pm: ParaModel) -> list[ParaModel] | None:
     meta_pm = ParaModel(text=meta, style=pm.style, semantic="role_meta")
     body_pm = ParaModel(text=body_text, style=pm.style, semantic="paragraph")
 
+    parts = [title_pm, meta_pm, body_pm]
+    # Tag original compound para so parse_docx can expand it in body_items after
+    # stable IDs are assigned (virtual parts need IDs before they appear in layout_blocks).
+    pm._compound_parts = parts
+
     _logger.debug(
         "COMPOUND_ROLE_SPLIT: %r → title=%r meta=%r body=%r",
         text[:80], title, meta, body_text[:40],
     )
-    return [title_pm, meta_pm, body_pm]
+    return parts
 
 
 def _decompose_compound_role_paras(body_paras: list[ParaModel]) -> None:
@@ -1444,6 +1449,20 @@ def parse_docx(path: str) -> ResumeDocument:
     )
     from tailor.compiler.models import assign_stable_ids
     assign_stable_ids(doc)
+
+    # Expand compound-split orphans in body_items so their virtual parts (which
+    # now have stable para_ids after assign_stable_ids) each get their own
+    # LayoutParagraphBlock.  _try_split_compound_role tags the original compound
+    # para with ._compound_parts = [title_pm, meta_pm, body_pm].  Without this
+    # expansion the original compound para has no para_id and becomes lb_orphan_N
+    # in layout_blocks, while the virtual parts are never rendered.
+    _expanded_body: list = []
+    for _bi in body_items:
+        if not isinstance(_bi, TableBlock) and hasattr(_bi, "_compound_parts"):
+            _expanded_body.extend(_bi._compound_parts)
+        else:
+            _expanded_body.append(_bi)
+    body_items[:] = _expanded_body
 
     # Build serializable layout tree (Option B: XML prototypes as strings).
     # Iterates body_items (original physical document order, never reordered)
