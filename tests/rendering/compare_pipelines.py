@@ -40,7 +40,10 @@ _NUM_RE = re.compile(r"^(\d+)-")
 
 # Bullet/list-marker characters that are visually equivalent across pipelines.
 # PDF renderers and LibreOffice substitute these freely; collapse all to one form.
-_BULLET_RE = re.compile(r"[·•▪▸►◆◇○●◦‣]")
+# : Symbol/Wingdings private-use bullet used in DOCX numPr numbering defs;
+# LibreOffice renders it as a separate text block (distinct from the inline •
+# that the PDF-origin pipeline emits via build_para_element).
+_BULLET_RE = re.compile(r"[·•▪▸►◆◇○●◦‣]")
 
 
 def _num_prefix(name: str) -> str | None:

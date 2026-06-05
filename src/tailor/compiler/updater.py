@@ -1829,11 +1829,25 @@ def _update_role_bullets_only(
         if cleaned != orig.meta_lines:
             kept_meta = cleaned
 
+    _hdr = _strip_col_break_para(orig.header)
+    # PDF-origin headers may have the company name split to header_extra when
+    # the PDF line broke at "|" (e.g. "Title |" + "Company" as a separate line).
+    # In rewrite_bullets_only mode the header is preserved verbatim, but the
+    # "complete" header (as it appeared in the original DOCX) includes company.
+    # Merge header_extra back so the rendered output matches the DOCX pipeline.
+    if orig.header_extra:
+        extra_text = " | ".join(he.text.strip() for he in orig.header_extra if he.text.strip())
+        if extra_text:
+            h = _hdr.text.strip()
+            if h.endswith("|"):
+                _hdr = _hdr.with_text(h + " " + extra_text)
+            elif "|" not in h:
+                _hdr = _hdr.with_text(h + " | " + extra_text)
     return RoleEntry(
         # Strip any column break from the role header — the section heading
         # (or Summary heading) handles right-column placement; a second break
         # on the first role header would cause a spurious column jump.
-        header=_strip_col_break_para(orig.header),
+        header=_hdr,
         meta_lines=kept_meta,
         bullets=new_bullets,
         role_id=orig.role_id,
