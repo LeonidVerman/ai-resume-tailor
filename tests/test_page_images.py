@@ -21,6 +21,8 @@ from tailor.compiler.models import PageImageBlock, ResumeDocument, LayoutProfile
 _HERE = Path(__file__).parent
 _PDF_DIR = _HERE / "samples" / "resume" / "pfd"
 _SAMPLE_6  = _PDF_DIR / "6-Template1.pdf"
+_SAMPLE_8  = _PDF_DIR / "8-Template3.pdf"
+_SAMPLE_9  = _PDF_DIR / "9-Template4.pdf"
 _SAMPLE_12 = _PDF_DIR / "12-Nurse-template2.pdf"
 _SAMPLE_18 = _PDF_DIR / "18-Project-Engineer-Editable-Resume-Template-Download-in-docx.pdf"
 _SAMPLE_39 = _PDF_DIR / "39-backend-developer-1606703830.pdf"
@@ -326,3 +328,96 @@ class TestSample12CreameBackground:
         restored = ResumeDocument.from_dict(ir.to_dict())
         categories = [img.category for img in restored.page_images]
         assert "full_page_bg" in categories
+
+
+# ---------------------------------------------------------------------------
+# Header-zone rule suppression (renderer guard)
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _rendered_floating_image_ys(ir, resume_template: str) -> "list[float]":
+    """Render *ir* to a DOCX and return the y-offsets (pt) of all floating images."""
+    import tempfile, os
+    from tailor.compiler.docx_renderer import render_docx
+    from docx import Document
+
+    out = tempfile.mktemp(suffix=".docx")
+    try:
+        render_docx(ir, resume_template, out)
+        d = Document(out)
+        _WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+        _PT = 12700
+        ys = []
+        for drawing in d.element.body.iter(
+            "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}drawing"
+        ):
+            for anchor in drawing.iter(f"{{{_WP}}}anchor"):
+                posV = anchor.find(f"{{{_WP}}}positionV")
+                if posV is not None:
+                    off = posV.find(f"{{{_WP}}}posOffset")
+                    if off is not None:
+                        ys.append(int(off.text) / _PT)
+        return ys
+    finally:
+        if os.path.exists(out):
+            os.unlink(out)
+
+
+@pytest.mark.skipif(not _SAMPLE_8.exists(), reason="sample 8 PDF not in test fixtures")
+class TestSample8HeaderZoneRuleSuppressed:
+    """Sample 8's single h_rule is in the header zone (y=89 < first_sec_y=124) — must not render."""
+
+    def test_header_zone_rule_not_in_docx(self, tmp_path):
+        from tailor.compiler.pdf_parser import parse_pdf
+        from tailor.config import RESUME_TEMPLATE
+
+        with open(_SAMPLE_8, "rb") as f:
+            ir = parse_pdf(f.read())
+
+        h_rules_in_ir = [img for img in ir.page_images if img.category == "h_rule"]
+        assert len(h_rules_in_ir) >= 1, "Sample 8 should have at least one h_rule in IR"
+
+        rendered_ys = _rendered_floating_image_ys(ir, RESUME_TEMPLATE)
+        h_rule_y = h_rules_in_ir[0].y_pt
+        # Use 1pt tolerance to account for int(y * 12700) / 12700 rounding
+        assert not any(abs(ry - h_rule_y) < 1.0 for ry in rendered_ys), (
+            f"Header-zone h_rule at y={h_rule_y:.0f} should be suppressed in DOCX output "
+            f"(rendered floating image y-values: {[f'{y:.0f}' for y in rendered_ys]})"
+        )
+
+
+@pytest.mark.skipif(not _SAMPLE_9.exists(), reason="sample 9 PDF not in test fixtures")
+class TestSample9HeaderZoneRuleSuppressed:
+    """Sample 9's first h_rule (y=138) is before first section (y=160) — must not render."""
+
+    def test_first_rule_suppressed_body_rules_kept(self):
+        from tailor.compiler.pdf_parser import parse_pdf
+        from tailor.config import RESUME_TEMPLATE
+
+        with open(_SAMPLE_9, "rb") as f:
+            ir = parse_pdf(f.read())
+
+        h_rules_in_ir = sorted(
+            [img for img in ir.page_images if img.category == "h_rule"],
+            key=lambda img: img.y_pt,
+        )
+        assert len(h_rules_in_ir) >= 2, "Sample 9 should have multiple h_rules"
+
+        rendered_ys = _rendered_floating_image_ys(ir, RESUME_TEMPLATE)
+
+        # First rule (header-zone) must be absent
+        header_rule_y = h_rules_in_ir[0].y_pt
+        assert header_rule_y not in rendered_ys, (
+            f"Header-zone h_rule at y={header_rule_y:.0f} must not appear in DOCX "
+            f"(rendered ys: {[f'{y:.0f}' for y in rendered_ys]})"
+        )
+
+        # At least one body-section rule must be present (1pt float tolerance for EMU rounding)
+        body_rule_ys = [img.y_pt for img in h_rules_in_ir[1:]]
+        assert any(
+            any(abs(ry - by) < 1.0 for ry in rendered_ys)
+            for by in body_rule_ys
+        ), (
+            f"At least one body-section rule should appear in DOCX. "
+            f"Body rules: {body_rule_ys}, rendered: {rendered_ys}"
+        )
