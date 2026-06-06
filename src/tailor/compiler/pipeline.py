@@ -949,7 +949,7 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
 
 
 _CONTACT_FOOTER_RE = re.compile(
-    r"[@]|\d{3,}|https?://|www\.", re.IGNORECASE
+    r"[@]|\d{7,}|https?://|www\.", re.IGNORECASE
 )
 
 

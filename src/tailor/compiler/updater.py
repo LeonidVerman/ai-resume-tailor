@@ -2080,11 +2080,17 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
     for _si, section in enumerate(_sections):
         if section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             continue
-        if section.semantic_type in ("experience", "skills"):
-            # Skills body_paras hold skill keywords, not prose — skip them.
-            # In-place modification of a skills para doesn't persist because the
-            # skills section is rebuilt by _apply_section before this runs.
+        if section.semantic_type in ("experience",):
+            # Experience bullets are never a summary placeholder.
             continue
+        # NOTE: "skills" is intentionally NOT excluded.  _update_body_section
+        # preserves paragraph-semantic body_paras in skills sections verbatim
+        # by reference (layout_bound path, lines "if _is_skills and p.semantic
+        # == 'paragraph': new_body.append(p)").  In-place modification of
+        # such a para therefore propagates to the already-rebuilt section, and
+        # the renderer patches the original table-block XML via para_id so the
+        # summary renders at its original cell-3 position (not in cell-1 with
+        # the skill bullets).  Sample 2: para_46 is the profile/summary para.
         # Skip named semantic sections that should never receive summary injection.
         if section.title.strip().lower() in _PROTECTED_INTRO_PROSE_TITLES:
             continue
