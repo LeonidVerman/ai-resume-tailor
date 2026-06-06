@@ -21,6 +21,7 @@ from tailor.compiler.models import PageImageBlock, ResumeDocument, LayoutProfile
 _HERE = Path(__file__).parent
 _PDF_DIR = _HERE / "samples" / "resume" / "pfd"
 _SAMPLE_6  = _PDF_DIR / "6-Template1.pdf"
+_SAMPLE_12 = _PDF_DIR / "12-Nurse-template2.pdf"
 _SAMPLE_18 = _PDF_DIR / "18-Project-Engineer-Editable-Resume-Template-Download-in-docx.pdf"
 _SAMPLE_39 = _PDF_DIR / "39-backend-developer-1606703830.pdf"
 
@@ -258,3 +259,70 @@ class TestSample39FullPageBgRoundTrip:
             assert rimg.image_bytes == original[rimg.category], (
                 f"image_bytes mismatch for category={rimg.category}"
             )
+
+
+# ---------------------------------------------------------------------------
+# Fix 1: _extract_vector_lines called (sample 12 orange h_rules)
+# Fix 2: Full-page cream background not dropped by avg>=240 filter (sample 12)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.skipif(not _SAMPLE_12.exists(), reason="sample 12 PDF not in test fixtures")
+class TestSample12VectorLines:
+    """Fix 1: _extract_vector_lines() must be called so orange rules appear."""
+
+    def test_h_rule_images_extracted(self):
+        """Sample 12 has orange horizontal rules — at least one h_rule must be present."""
+        from tailor.compiler.pdf_parser import parse_pdf
+        with open(_SAMPLE_12, "rb") as f:
+            ir = parse_pdf(f.read())
+
+        categories = [img.category for img in ir.page_images]
+        assert "h_rule" in categories, (
+            f"Expected h_rule in page_images, got: {categories}"
+        )
+
+    def test_h_rule_count_ge_1(self):
+        """At least one orange h_rule block must be extracted."""
+        from tailor.compiler.pdf_parser import parse_pdf
+        with open(_SAMPLE_12, "rb") as f:
+            ir = parse_pdf(f.read())
+
+        h_rules = [img for img in ir.page_images if img.category == "h_rule"]
+        assert len(h_rules) >= 1, (
+            f"Expected >=1 h_rule images, got {len(h_rules)}"
+        )
+
+    def test_line_images_raw_diagnostic_present(self):
+        """line_images_raw key must exist in pdf_diagnostics."""
+        from tailor.compiler.pdf_parser import parse_pdf
+        with open(_SAMPLE_12, "rb") as f:
+            ir = parse_pdf(f.read())
+
+        assert ir.pdf_diagnostics is not None
+        assert "line_images_raw" in ir.pdf_diagnostics
+
+
+@pytest.mark.skipif(not _SAMPLE_12.exists(), reason="sample 12 PDF not in test fixtures")
+class TestSample12CreameBackground:
+    """Fix 2: Cream full-page background must not be dropped by avg>=240 filter."""
+
+    def test_full_page_bg_extracted(self):
+        """Sample 12 has a cream background (avg≈246, min<240) — must survive."""
+        from tailor.compiler.pdf_parser import parse_pdf
+        with open(_SAMPLE_12, "rb") as f:
+            ir = parse_pdf(f.read())
+
+        categories = [img.category for img in ir.page_images]
+        assert "full_page_bg" in categories, (
+            f"Expected full_page_bg in page_images (cream bg filtered), got: {categories}"
+        )
+
+    def test_full_page_bg_survives_round_trip(self):
+        """Cream full_page_bg must survive to_dict/from_dict."""
+        from tailor.compiler.pdf_parser import parse_pdf
+        with open(_SAMPLE_12, "rb") as f:
+            ir = parse_pdf(f.read())
+
+        restored = ResumeDocument.from_dict(ir.to_dict())
+        categories = [img.category for img in restored.page_images]
+        assert "full_page_bg" in categories
