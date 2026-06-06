@@ -1535,6 +1535,22 @@ def _detect_column_split(
         if cnt < 2:
             if any(abs(rx0 - k) <= 5 for k in _kept):
                 _kept.add(rx0)
+    # Cluster-based fallback: group x0 positions by 15-pt tolerance; if a
+    # cluster's total block count >= 2, keep all positions in the cluster.
+    # This catches centered columns where each block has a unique x0 but all
+    # left-column blocks cluster in the left portion of the page (e.g. a
+    # template with CONTACT / EDUCATION / SKILLS centered in a narrow sidebar).
+    _sorted_x0s = sorted(_x0_freq.keys())
+    _cl: list[int] = []
+    for _pos in _sorted_x0s:
+        if _cl and _pos - _cl[-1] <= 15:
+            _cl.append(_pos)
+        else:
+            if _cl and sum(_x0_freq[p] for p in _cl) >= 2:
+                _kept.update(_cl)
+            _cl = [_pos]
+    if _cl and sum(_x0_freq[p] for p in _cl) >= 2:
+        _kept.update(_cl)
     x0s = sorted(_kept)
     if len(x0s) < 2:
         return None

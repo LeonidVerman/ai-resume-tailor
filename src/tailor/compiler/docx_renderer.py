@@ -1956,14 +1956,14 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         and pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
     ]
     body_paras = [pm for pm in doc.all_paras if id(pm) not in _header_ids]
-    left_paras = _hdr_left + [
+    _body_left = [
         pm for pm in body_paras
         if pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
     ]
     # column_id=None body paras (cross-column or unassigned) fall back to the
     # right column so LLM-injected sections whose archetype was a full-width
     # header para are not silently dropped from the rendered output.
-    right_paras = _hdr_right + [
+    _body_right = [
         pm for pm in body_paras
         if not pm.paragraph_profile
         or pm.paragraph_profile.column_id in ("right", None)
@@ -1971,16 +1971,31 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
 
     def _y_of(pm):
         pp = pm.paragraph_profile
-        return (pp.y_top_pt or 0.0) if pp is not None else 0.0
+        if pp is None:
+            return float("inf")
+        # Use absolute Y so multi-page PDFs order correctly.  y_top_pt is
+        # page-relative (resets to 0 at each page top), so we add page_num *
+        # page_height to get a monotonically increasing coordinate.
+        # LLM-injected body paragraphs (para_id=None, y=0) sort last.
+        page_h = (layout.page_height_pt or 792.0)
+        abs_y = pp.page_num * page_h + (pp.y_top_pt or 0.0)
+        if abs_y == 0.0 and not pm.para_id:
+            return float("inf")
+        return abs_y
 
-    # Sort each column by original y_top_pt so paragraphs render in visual
-    # top-to-bottom order.  The IR can store paras out of y-order when a section
-    # boundary is detected (e.g. "Education" at y=263) before earlier content
-    # (e.g. contact icons at y=86) that was classified in the same column later
-    # during parsing.  Without sorting, those paras render in the wrong order.
+    # Sort each column's *body* portion by absolute Y so paragraphs render in
+    # visual top-to-bottom order.  The IR can store paras out of y-order when a
+    # section boundary is detected (e.g. "Education" at y=263) before earlier
+    # content (e.g. contact icons at y=86) classified in the same column later.
+    # _hdr_* lists are NOT sorted: the pipeline (e.g. _inject_llm_summary_into_header)
+    # already places header items in the correct visual sequence; re-sorting them
+    # would displace LLM-injected summary paragraphs (y=0, no para_id) that were
+    # appended after the name header.
     above_paras.sort(key=_y_of)
-    left_paras.sort(key=_y_of)
-    right_paras.sort(key=_y_of)
+    _body_left.sort(key=_y_of)
+    _body_right.sort(key=_y_of)
+    left_paras  = _hdr_left  + _body_left
+    right_paras = _hdr_right + _body_right
 
     # Geometry diagnostics: log column assignments and y-positions for
     # layout drift analysis.
