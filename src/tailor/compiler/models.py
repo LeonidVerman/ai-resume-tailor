@@ -34,9 +34,15 @@ class PageImageBlock:
     # 'profile_photo' | 'header_footer_decor' | 'body_decor' | 'full_page_bg' | 'sidebar_bg' | 'header_band' | 'footer_band'
     category: str = "body_decor"
     page_index: int = 0
+    # Section-anchored divider fields (h_rule only).  Set by parse_pdf() when the
+    # rule is clearly associated with a section heading below it (gap ≤ 80 pt).
+    # anchor_next_section_id matches ResumeSection.section_id; gap_to_anchor_pt is
+    # the PDF y distance from the rule top to the section heading top.
+    anchor_next_section_id: str | None = None
+    gap_to_anchor_pt: float | None = None
 
     def to_dict(self) -> dict:
-        return {
+        d: dict = {
             "image_bytes_b64": base64.b64encode(self.image_bytes).decode("ascii"),
             "x_pt": self.x_pt,
             "y_pt": self.y_pt,
@@ -45,9 +51,15 @@ class PageImageBlock:
             "category": self.category,
             "page_index": self.page_index,
         }
+        if self.anchor_next_section_id is not None:
+            d["anchor_next_section_id"] = self.anchor_next_section_id
+        if self.gap_to_anchor_pt is not None:
+            d["gap_to_anchor_pt"] = self.gap_to_anchor_pt
+        return d
 
     @classmethod
     def from_dict(cls, d: dict) -> "PageImageBlock":
+        _gap = d.get("gap_to_anchor_pt")
         return cls(
             image_bytes=base64.b64decode(d["image_bytes_b64"]),
             x_pt=float(d["x_pt"]),
@@ -56,6 +68,8 @@ class PageImageBlock:
             height_pt=float(d["height_pt"]),
             category=d.get("category", "body_decor"),
             page_index=int(d.get("page_index", 0)),
+            anchor_next_section_id=d.get("anchor_next_section_id"),
+            gap_to_anchor_pt=float(_gap) if _gap is not None else None,
         )
 
 

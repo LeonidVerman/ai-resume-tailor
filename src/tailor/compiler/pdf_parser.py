@@ -3952,6 +3952,40 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     from tailor.compiler.models import assign_stable_ids
     assign_stable_ids(resume_doc)
 
+    # --- Section-anchor h_rules to nearest section heading below them ---
+    # Every h_rule whose y is within 80 pt above a section heading is associated
+    # with that heading.  The renderer will later emit it as a w:pBdr/w:top on
+    # the heading paragraph instead of a floating image, so the rule travels with
+    # its section after DOCX reflow rather than staying at the original PDF y.
+    _sec_ys: list[tuple[float, str]] = []
+    for _sec in resume_doc.sections:
+        _hh = _sec.heading.paragraph_profile
+        if _hh and _hh.y_top_pt > 0:
+            _sec_ys.append((_hh.y_top_pt, _sec.section_id))
+    _sec_ys.sort(key=lambda t: t[0])
+
+    _anchored_count = 0
+    for _img in resume_doc.page_images:
+        if _img.category != "h_rule":
+            continue
+        for _sy, _sid in _sec_ys:
+            if _sy > _img.y_pt:
+                _gap = _sy - _img.y_pt
+                if _gap <= 80.0:
+                    _img.anchor_next_section_id = _sid
+                    _img.gap_to_anchor_pt = _gap
+                    _anchored_count += 1
+                    log.debug(
+                        "HRULE_ANCHORED: y=%.1f → %s gap=%.1f",
+                        _img.y_pt, _sid, _gap,
+                    )
+                break  # nearest section found (anchored or too far)
+
+    if _anchored_count:
+        log.debug("HRULE_ANCHOR_SUMMARY: %d/%d h_rules anchored",
+                  _anchored_count,
+                  sum(1 for _i in resume_doc.page_images if _i.category == "h_rule"))
+
     # --- PDF asset preservation diagnostics ---
     from collections import Counter as _Counter
     _img_cats = dict(_Counter(img.category for img in resume_doc.page_images))
