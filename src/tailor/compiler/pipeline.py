@@ -621,20 +621,9 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     summary_sec = doc.sections[summary_idx]
 
     if not summary_indices:
-        # No original summary lines to replace.
+        # No original summary lines to replace.  For single-column templates
+        # keep the LLM summary as a body section (no header injection needed).
         if doc.layout.column_split_x is None:
-            # Single-column: no original summary placeholder found.
-            # Inject LLM summary body into header_paras so it appears before
-            # body sections, suppressing the artificial 'Professional Summary'
-            # heading (which would otherwise render as a visible section banner).
-            if not doc.header_paras:
-                return
-            for bp in summary_sec.body_paras:
-                if bp.paragraph_profile:
-                    bp.paragraph_profile.column_id = None
-                    bp.paragraph_profile.bold = False
-            doc.header_paras = list(doc.header_paras) + list(summary_sec.body_paras)
-            doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
             return
         # Two-column: no pre-existing summary → append LLM summary BELOW the
         # name/title block so it renders above the two-column table.
