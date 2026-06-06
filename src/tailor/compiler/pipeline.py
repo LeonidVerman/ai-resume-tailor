@@ -738,13 +738,21 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
         else:
             # _target_col is None: full-width header above the two-column body
-            # (samples 18, 38) or single-column template.
-            # Remove the original summary lines from header_paras; keep name/title.
-            kept = [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
-            # Both two-column and single-column: inject LLM summary body into
-            # header_paras and remove the section so its artificial heading
-            # ('Professional Summary') does not render as a visible banner.
-            doc.header_paras = kept + list(summary_sec.body_paras)
+            # (samples 18, 38) or single-column template (sample 6).
+            # Splice the LLM summary IN PLACE at the position of the first removed
+            # original summary line so it appears before contact info / other header
+            # items that follow the original placeholder — not appended at the end.
+            _first_sum_pos = min(summary_indices)
+            _n_before = sum(
+                1 for j in range(_first_sum_pos)
+                if j not in summary_indices
+            )
+            _kept_hp = [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
+            doc.header_paras = (
+                _kept_hp[:_n_before]
+                + list(summary_sec.body_paras)
+                + _kept_hp[_n_before:]
+            )
             doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
 
     # Rebuild all_paras so the renderer sees the updated structure.
