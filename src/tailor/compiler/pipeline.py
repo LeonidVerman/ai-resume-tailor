@@ -636,21 +636,10 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
         # Exclude dark-background paras: those render in above_paras (the merged
         # header row) regardless of their column_id, so inheriting their column
         # would misplace the summary in a body cell instead of the header band.
-        def _hdr_para_is_dark(pm) -> bool:
-            pp = pm.paragraph_profile
-            if not pp or not pp.background_color:
-                return False
-            bg = pp.background_color.lstrip("#").lower()
-            if len(bg) != 6:
-                return False
-            r, g, b = int(bg[0:2], 16), int(bg[2:4], 16), int(bg[4:6], 16)
-            return (r + g + b) / 3 < 128
-
         _existing_cols = [
             hp.paragraph_profile.column_id
             for hp in doc.header_paras
             if hp.paragraph_profile and hp.paragraph_profile.column_id in ("left", "right")
-            and not _hdr_para_is_dark(hp)
         ]
         if "right" in _existing_cols:
             _target_col = "right"
@@ -670,6 +659,8 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             if bp.paragraph_profile:
                 bp.paragraph_profile.column_id = _target_col
                 bp.paragraph_profile.bold = False
+                if _target_col == "right":
+                    bp.paragraph_profile.indent_left_pt = 0.0
         doc.header_paras = list(doc.header_paras) + list(summary_sec.body_paras)
         doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
     else:
