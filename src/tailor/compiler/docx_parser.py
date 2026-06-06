@@ -1243,6 +1243,8 @@ def parse_docx(path: str) -> ResumeDocument:
     ValueError
         If the file cannot be opened or parsed.
     """
+    from tailor.docx.artifact_sanitizer import sanitize_docx_artifacts
+    sanitize_docx_artifacts(path)  # idempotent; no-op when no artifacts found
     doc = Document(path)
     style_map = _build_style_map(doc)
     layout = _extract_layout(doc)

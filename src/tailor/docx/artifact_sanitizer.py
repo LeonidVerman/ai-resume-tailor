@@ -3,22 +3,35 @@
 LibreOffice converts PDF files (especially LaTeX-generated PDFs using FontAwesome
 with Identity-H CID encoding) in a way that maps icon glyphs to Latin Extended-A/B
 characters (e.g. ć U+0107 for email icon, Ħ U+0126 for phone icon) using Times New
-Roman as the fallback font.  These runs appear alongside legitimate content runs that
-use the document's actual body font (e.g. Trebuchet MS).
+Roman as the fallback font.
 
-Detection strategy — structural, not glyph-specific:
-  1. Determine the dominant explicit body font for the paragraph by printable-character
-     count across all explicitly-fonted runs.
-  2. For each run whose font differs from the body font:
-     - If the run has ≤ 2 printable characters AND any character is in the
-       Latin Extended-A/B range (U+0100–U+024F) or Private Use Area (U+E000–U+F8FF)
-       → it is a converted icon artifact → clear the run text.
-     - Clear immediately-following whitespace-only runs with the same non-body font.
+Two detection rules — both structural, not glyph-specific:
+
+  Rule 1 — font-mismatch (primary):
+    Determine the dominant explicit body font for the paragraph by non-whitespace
+    character count.  For each run whose font differs from the body font:
+    - Run has ≤ 2 non-whitespace characters
+    - At least one is in Latin Extended-A/B (U+0100–U+024F) or PUA (U+E000–U+F8FF)
+    → strip the run.  Also strip immediately-following whitespace runs in the same
+    non-body font (LibreOffice inter-icon spacers).
+
+  Rule 2 — contact-line fallback (secondary):
+    Applied to paragraphs where ``_para_body_font`` returns None (all direct runs
+    inherit their font — no explicit font to compare against).  For each direct run:
+    - 1–2 non-whitespace characters, all in the artifact codepoint range
+    - The remaining paragraph text (subsequent runs + hyperlinks) matches a contact
+      pattern (email, phone, URL, social handle)
+    → strip the run.
+
+    This handles PDFs where the converter uses no explicit per-run fonts, leaving
+    body-font detection blind.  It does NOT fire on legitimate Czech/Slovak text
+    in properly authored DOCX files, which always carry explicit font information.
 
 Architecture contract:
-  - Applied ONCE, immediately after LibreOffice PDF→DOCX conversion.
-  - The parser receives the already-clean DOCX — no artifact handling inside the
-    classifier, tailoring logic, updater, or renderer.
+  - ``sanitize_docx_artifacts(path)`` is called from ``parse_docx()`` so any
+    template DOCX — whether freshly converted or pre-existing — is cleaned before
+    the parser reads it.  The renderer then sees already-clean XML.
+  - No artifact handling inside the classifier, tailoring logic, updater, or renderer.
 """
 
 from __future__ import annotations
@@ -47,6 +60,8 @@ _PUA_HIGH = 0xF8FF          # Private Use Area end
 
 _RECURSE_TAGS = frozenset({"tbl", "tr", "tc", "sdt", "sdtContent"})
 
+_W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
 
 def _is_converted_icon(cp: int) -> bool:
     """Return True if *cp* is a likely CID-mapped icon codepoint (Latin Ext or PUA)."""
@@ -54,10 +69,15 @@ def _is_converted_icon(cp: int) -> bool:
 
 
 def _para_body_font(para: Paragraph) -> str | None:
-    """Return the dominant explicit font name in *para* by printable-character count.
+    """Return the dominant explicit font name in *para* by non-whitespace character count.
 
     Only considers runs with an explicitly set ``run.font.name``.  Returns None when
     no run carries an explicit font (paragraph inherits everything from its style).
+
+    Note: ``para.runs`` returns only direct ``w:r`` children — runs inside
+    ``w:hyperlink`` elements are excluded.  This is intentional: hyperlink runs
+    (which always use the body font) must not inflate the body-font count and hide
+    a legitimate mismatch in the remaining runs.
     """
     from collections import Counter
 
@@ -73,15 +93,7 @@ def _para_body_font(para: Paragraph) -> str | None:
 
 
 def _sanitize_paragraph(para: Paragraph, body_font: str) -> int:
-    """Strip font-mismatch converted-icon runs from *para*.
-
-    A run is stripped when:
-    - Its font differs from *body_font*.
-    - It has ≤ 2 printable (non-whitespace) characters.
-    - At least one character is in the Latin Extended-A/B or PUA codepoint range.
-
-    Immediately-following whitespace-only runs with the same non-body font are also
-    cleared (they are the inter-icon spacer runs LibreOffice inserts).
+    """Strip font-mismatch converted-icon runs from *para* (Rule 1).
 
     Returns the number of runs cleared.
     """
@@ -98,19 +110,19 @@ def _sanitize_paragraph(para: Paragraph, body_font: str) -> int:
             continue
 
         text = run.text
-        printable = [c for c in text if not c.isspace()]
+        non_ws = [c for c in text if not c.isspace()]
 
-        if not printable:
+        if not non_ws:
             # Whitespace-only: clear if it immediately follows a stripped run
             # with the same non-body font (trailing icon spacer).
             if i > 0 and to_clear[i - 1] and runs[i - 1].font.name == rn:
                 to_clear[i] = True
             continue
 
-        if len(printable) > 2:
+        if len(non_ws) > 2:
             continue  # too long to be a single-glyph icon
 
-        if any(_is_converted_icon(ord(c)) for c in printable):
+        if any(_is_converted_icon(ord(c)) for c in non_ws):
             to_clear[i] = True
             # Eagerly clear immediately-following whitespace runs with same font.
             j = i + 1
@@ -138,6 +150,77 @@ def _sanitize_paragraph(para: Paragraph, body_font: str) -> int:
     return stripped
 
 
+def _para_following_text(para: Paragraph, after_run) -> str:
+    """Return all text content after *after_run* in *para* (runs + hyperlinks)."""
+    parts: list[str] = []
+    recording = False
+    for child in para._p:
+        tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+        if tag == "r":
+            if child is after_run._r:
+                recording = True
+                continue
+            if recording:
+                for t in child.findall(f"{{{_W}}}t"):
+                    parts.append(t.text or "")
+        elif tag == "hyperlink" and recording:
+            for r_el in child.findall(f"{{{_W}}}r"):
+                for t_el in r_el.findall(f"{{{_W}}}t"):
+                    parts.append(t_el.text or "")
+    return "".join(parts).strip()
+
+
+def _sanitize_contact_fallback(para: Paragraph) -> int:
+    """Strip contact-icon artifacts using following-text context (Rule 2).
+
+    Fires only when ``_para_body_font`` returns None — i.e., all direct runs
+    in the paragraph inherit their font from the paragraph or document style.
+    In that case, font-mismatch comparison is impossible, so this rule uses
+    the CONTACT CONTEXT of the surrounding text as the artifact signal.
+
+    A run is stripped when:
+    - 1–2 non-whitespace characters, all in the artifact codepoint range
+    - The remaining paragraph text (subsequent direct runs + hyperlink runs)
+      matches a contact pattern (email, phone, URL, social handle)
+
+    Does NOT fire when body_font is known — font-mismatch rule (Rule 1) handles
+    those paragraphs, avoiding false positives on legitimate Czech/Slovak text
+    where Latin Extended chars appear in the body font.
+
+    Returns the number of runs cleared.
+    """
+    from tailor.compiler.pdf_text_normalizer import _looks_like_contact
+
+    if _para_body_font(para) is not None:
+        return 0  # font-mismatch rule covers this paragraph
+
+    runs = para.runs
+    if not runs:
+        return 0
+
+    stripped = 0
+    for run in runs:
+        if not run.text:
+            continue
+        non_ws = [c for c in run.text if not c.isspace()]
+        if not non_ws or len(non_ws) > 2:
+            continue
+        if not all(_is_converted_icon(ord(c)) for c in non_ws):
+            continue
+
+        following = _para_following_text(para, run)
+        if _looks_like_contact(following):
+            log.debug(
+                "ARTIFACT_STRIP rule=contact_fallback run=%r paragraph=%r",
+                run.text,
+                para.text[:80],
+            )
+            run.text = ""
+            stripped += 1
+
+    return stripped
+
+
 def _iter_all_paragraphs(doc: Document):
     """Yield every paragraph in *doc* including those nested in table cells."""
     def _walk(elem):
@@ -156,10 +239,14 @@ def _iter_all_paragraphs(doc: Document):
 # ---------------------------------------------------------------------------
 
 def sanitize_docx_artifacts(docx_path: str, *, enabled: bool | None = None) -> str:
-    """Strip font-mismatch icon artifacts from a LibreOffice-converted DOCX file.
+    """Strip PDF-conversion icon artifacts from a DOCX file.
 
-    Reads *docx_path*, removes artifact runs in-place, and re-saves only when at
-    least one run was stripped.
+    Applies Rule 1 (font-mismatch) and Rule 2 (contact-line fallback) to every
+    paragraph in the document, including table cells.  The file is modified
+    in-place and re-saved only when at least one run was stripped.
+
+    Safe to call repeatedly — runs that were already cleared become empty strings
+    and are skipped on subsequent calls.
 
     Parameters
     ----------
@@ -183,9 +270,10 @@ def sanitize_docx_artifacts(docx_path: str, *, enabled: bool | None = None) -> s
 
     for para in _iter_all_paragraphs(doc):
         body_font = _para_body_font(para)
-        if body_font is None:
-            continue
-        total_stripped += _sanitize_paragraph(para, body_font)
+        if body_font is not None:
+            total_stripped += _sanitize_paragraph(para, body_font)
+        else:
+            total_stripped += _sanitize_contact_fallback(para)
 
     if total_stripped:
         log.info(
