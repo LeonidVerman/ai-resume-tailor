@@ -536,6 +536,13 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             return False
         if re.match(r"^[A-Z\s]+$", t) and len(t) < 40:      # short all-caps heading
             return False
+        # Placeholder address field: "Address - City - State - Zip Code"
+        if re.search(r"\baddress\b", t, re.IGNORECASE):
+            return False
+        # Decorative separator lines (mostly non-alphabetic characters)
+        alpha_ratio = sum(1 for c in t if c.isalpha()) / max(len(t), 1)
+        if alpha_ratio < 0.3:
+            return False
         return True
 
     # Build column-aware summary index sets.  For sidebar layouts the original
@@ -626,10 +633,24 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
         # in the right cell when the name/title are in the right column (e.g.
         # sidebar templates where name is right-aligned, like sample 2 & 3),
         # or above the table when the header is truly full-width (like sample 14).
+        # Exclude dark-background paras: those render in above_paras (the merged
+        # header row) regardless of their column_id, so inheriting their column
+        # would misplace the summary in a body cell instead of the header band.
+        def _hdr_para_is_dark(pm) -> bool:
+            pp = pm.paragraph_profile
+            if not pp or not pp.background_color:
+                return False
+            bg = pp.background_color.lstrip("#").lower()
+            if len(bg) != 6:
+                return False
+            r, g, b = int(bg[0:2], 16), int(bg[2:4], 16), int(bg[4:6], 16)
+            return (r + g + b) / 3 < 128
+
         _existing_cols = [
             hp.paragraph_profile.column_id
             for hp in doc.header_paras
             if hp.paragraph_profile and hp.paragraph_profile.column_id in ("left", "right")
+            and not _hdr_para_is_dark(hp)
         ]
         if "right" in _existing_cols:
             _target_col = "right"
@@ -726,17 +747,14 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
         else:
             # _target_col is None: full-width header above the two-column body
-            # (samples 18, 38) or single-column template (sample 33).
+            # (samples 18, 38) or single-column template.
             # Remove the original summary lines from header_paras; keep name/title.
             kept = [hp for j, hp in enumerate(doc.header_paras) if j not in summary_indices]
-            if doc.layout.column_split_x is not None:
-                # Two-column: inject LLM summary above the table (col=None = full-width)
-                doc.header_paras = kept + list(summary_sec.body_paras)
-                doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
-            else:
-                # Single-column: just remove original summary — keep the LLM
-                # summary section in doc.sections so it renders in the body.
-                doc.header_paras = kept
+            # Both two-column and single-column: inject LLM summary body into
+            # header_paras and remove the section so its artificial heading
+            # ('Professional Summary') does not render as a visible banner.
+            doc.header_paras = kept + list(summary_sec.body_paras)
+            doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
 
     # Rebuild all_paras so the renderer sees the updated structure.
     from tailor.compiler.models import ParaModel
@@ -800,7 +818,17 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
             _body_cleared = True
             for role in sec.roles:
                 if role.header.text and "|" in role.header.text:
-                    role.meta_lines.clear()
+                    # Clear only meta_lines whose text is already present in the
+                    # pipe-format header (stale/redundant duplicates like a date
+                    # segment that the PDF parser extracted both as part of the
+                    # header and as a separate paragraph).  Keep meta_lines that
+                    # carry new content absent from the header, e.g. a date line
+                    # injected from the LLM output when the template had none.
+                    h_lower = role.header.text.lower()
+                    role.meta_lines = [
+                        m for m in role.meta_lines
+                        if m.text.strip() and m.text.strip().lower() not in h_lower
+                    ]
 
     if doc.layout.column_split_x is None:
         if _body_cleared:
@@ -924,7 +952,7 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
 
 
 _CONTACT_FOOTER_RE = re.compile(
-    r"[@]|\d{3,}|https?://|www\.", re.IGNORECASE
+    r"[@]|\d{7,}|https?://|www\.", re.IGNORECASE
 )
 
 

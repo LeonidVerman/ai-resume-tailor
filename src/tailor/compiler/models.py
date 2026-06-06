@@ -199,11 +199,19 @@ class ParaModel:
         para_id is preserved so the layout_blocks renderer can match the updated
         paragraph back to its original XML prototype by stable ID.
         """
+        from copy import copy as _copy
+        pp = self.paragraph_profile
+        # text_runs encode the run structure of the *original* text. When text
+        # changes the old runs no longer apply — clear them so build_para_element
+        # uses pm.text instead of stale PDF-parsed run spans.
+        if pp is not None and pp.text_runs is not None:
+            pp = _copy(pp)
+            pp.text_runs = None
         p = ParaModel(
             text=new_text,
             style=self.style,
             semantic=self.semantic,
-            paragraph_profile=self.paragraph_profile,
+            paragraph_profile=pp,
         )
         p.para_id = self.para_id
         # Preserve runtime-only y_top_pt so the PDF two-column Y-sort can place

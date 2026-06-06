@@ -1829,11 +1829,25 @@ def _update_role_bullets_only(
         if cleaned != orig.meta_lines:
             kept_meta = cleaned
 
+    _hdr = _strip_col_break_para(orig.header)
+    # PDF-origin headers may have the company name split to header_extra when
+    # the PDF line broke at "|" (e.g. "Title |" + "Company" as a separate line).
+    # In rewrite_bullets_only mode the header is preserved verbatim, but the
+    # "complete" header (as it appeared in the original DOCX) includes company.
+    # Merge header_extra back so the rendered output matches the DOCX pipeline.
+    if orig.header_extra:
+        extra_text = " | ".join(he.text.strip() for he in orig.header_extra if he.text.strip())
+        if extra_text:
+            h = _hdr.text.strip()
+            if h.endswith("|"):
+                _hdr = _hdr.with_text(h + " " + extra_text)
+            elif "|" not in h:
+                _hdr = _hdr.with_text(h + " | " + extra_text)
     return RoleEntry(
         # Strip any column break from the role header — the section heading
         # (or Summary heading) handles right-column placement; a second break
         # on the first role header would cause a spurious column jump.
-        header=_strip_col_break_para(orig.header),
+        header=_hdr,
         meta_lines=kept_meta,
         bullets=new_bullets,
         role_id=orig.role_id,
@@ -2066,11 +2080,17 @@ def _find_intro_prose_para(original: ResumeDocument) -> ParaModel | None:
     for _si, section in enumerate(_sections):
         if section.semantic_type in _LOCKED_SEMANTIC_TYPES:
             continue
-        if section.semantic_type in ("experience", "skills"):
-            # Skills body_paras hold skill keywords, not prose — skip them.
-            # In-place modification of a skills para doesn't persist because the
-            # skills section is rebuilt by _apply_section before this runs.
+        if section.semantic_type in ("experience",):
+            # Experience bullets are never a summary placeholder.
             continue
+        # NOTE: "skills" is intentionally NOT excluded.  _update_body_section
+        # preserves paragraph-semantic body_paras in skills sections verbatim
+        # by reference (layout_bound path, lines "if _is_skills and p.semantic
+        # == 'paragraph': new_body.append(p)").  In-place modification of
+        # such a para therefore propagates to the already-rebuilt section, and
+        # the renderer patches the original table-block XML via para_id so the
+        # summary renders at its original cell-3 position (not in cell-1 with
+        # the skill bullets).  Sample 2: para_46 is the profile/summary para.
         # Skip named semantic sections that should never receive summary injection.
         if section.title.strip().lower() in _PROTECTED_INTRO_PROSE_TITLES:
             continue
