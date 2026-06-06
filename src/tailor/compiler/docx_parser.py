@@ -1452,6 +1452,20 @@ def parse_docx(path: str) -> ResumeDocument:
     from tailor.compiler.models import assign_stable_ids
     assign_stable_ids(doc)
 
+    # Build para_id → col_width_twips for newspaper-column docs.
+    # _apply_multicolumn_newspaper_fix tags each ParaModel with _col_width_twips
+    # (in twips) for paragraphs in multi-column sections.  After stable IDs are
+    # assigned we can key the mapping by para_id for use by the summary-anchor
+    # geometry guard in _find_summary_anchors().
+    if _table_col_fixed:
+        _anchor_col_widths: dict[str, int] = {}
+        for _apm in doc.all_paras:
+            _aw = getattr(_apm, "_col_width_twips", None)
+            if _aw is not None and _apm.para_id:
+                _anchor_col_widths[_apm.para_id] = _aw
+        if _anchor_col_widths:
+            doc._newspaper_col_widths = _anchor_col_widths  # type: ignore[attr-defined]
+
     # Expand compound-split orphans in body_items so their virtual parts (which
     # now have stable para_ids after assign_stable_ids) each get their own
     # LayoutParagraphBlock.  _try_split_compound_role tags the original compound
@@ -2304,6 +2318,17 @@ def _apply_multicolumn_newspaper_fix(
                 pm.semantic = _infer_semantic(pm)
 
         per_sec_col.setdefault((sec_idx, col), []).append(pm)
+
+    # Tag each paragraph with its effective column width so parse_docx() can
+    # build a para_id → col_width_twips map after stable IDs are assigned.
+    # Single-column sections have empty col_widths, so those paragraphs are
+    # intentionally left untagged (unrestricted for summary anchor purposes).
+    for (_sci, _ci), _col_paras in per_sec_col.items():
+        _si_widths = section_infos[_sci]["col_widths"]
+        if _ci < len(_si_widths):
+            _cw = _si_widths[_ci]
+            for _cpm in _col_paras:
+                _cpm._col_width_twips = _cw  # type: ignore[attr-defined]
 
     # Build left_stream and right_stream across all body Word sections
     left_stream: list[ParaModel] = []
