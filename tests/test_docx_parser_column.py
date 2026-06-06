@@ -825,3 +825,80 @@ def test_education_line_fp_company_name_with_school():
 def test_education_line_fp_institute_in_company():
     from scripts.parser_diagnostics import _is_education_line
     assert not _is_education_line("Chartered Institute of Marketing")
+
+
+# ---------------------------------------------------------------------------
+# Sample 35: trailing single-column section ordering fix
+#
+# Sample 35 is a PDF-converted DOCX with three Word sections:
+#   - Section 1 (header, single-col): name + contact
+#   - Section 2 (2-col 66pt+440pt): date sidebar + Experience content
+#   - Section 3 (2-col 66pt+440pt): date sidebar + additional jobs + Education + Skills
+#   - Section 4 (single-col):        Skills content overflow + Other skills + Projects
+#
+# Before the fix, Section 4 was assigned to col=0 (left stream), placing
+# "Projects" before "Experience" as the first detected section.
+# After the fix, Section 4 is routed to tail_stream, correctly appended after
+# left+right so Experience appears first.
+# ---------------------------------------------------------------------------
+
+_SAMPLE_35 = str(_DOCX_DIR / "35-Gleb_Zernov_Resume.docx")
+
+
+@pytest.fixture(scope="module")
+def doc35():
+    from tailor.compiler.docx_parser import parse_docx
+    return parse_docx(_SAMPLE_35)
+
+
+def test_sample35_newspaper_fix_applied(doc35):
+    assert doc35.table_column_layout_fixed is True
+
+
+def test_sample35_experience_is_first_section(doc35):
+    """Experience must be the first detected section — not Projects."""
+    assert len(doc35.sections) >= 1
+    first = doc35.sections[0].title.strip().lower()
+    assert first == "experience", f"Expected 'experience' first, got {first!r}"
+
+
+def test_sample35_projects_not_before_experience(doc35):
+    """Projects must not appear before Experience in section order."""
+    titles = [s.title.strip().lower() for s in doc35.sections]
+    if "projects" in titles and "experience" in titles:
+        assert titles.index("experience") < titles.index("projects"), (
+            f"Experience must precede Projects. Got: {titles}"
+        )
+
+
+def test_sample35_experience_section_has_roles(doc35):
+    """Experience section must contain at least 4 parsed roles."""
+    exp = next((s for s in doc35.sections if s.title.strip().lower() == "experience"), None)
+    assert exp is not None, "Experience section must exist"
+    assert len(exp.roles) >= 4, f"Expected >= 4 roles, got {len(exp.roles)}"
+
+
+def test_sample35_experience_has_ondo_perps(doc35):
+    exp = next((s for s in doc35.sections if s.title.strip().lower() == "experience"), None)
+    assert exp is not None
+    role_headers = [r.header.text for r in exp.roles if r.header]
+    assert any("Ondo" in h or "Enclave" in h or "Stellar" in h for h in role_headers), (
+        f"Expected known employer in roles. Got: {role_headers}"
+    )
+
+
+def test_sample35_education_section_exists(doc35):
+    assert any(s.title.strip().lower() == "education" for s in doc35.sections)
+
+
+def test_sample35_projects_section_exists(doc35):
+    assert any("projects" in s.title.strip().lower() for s in doc35.sections), (
+        "Projects section must exist (in tail_stream after Experience)"
+    )
+
+
+def test_sample35_header_paras_reduced(doc35):
+    """header_paras should be significantly less than 63 (the pre-fix value)."""
+    assert len(doc35.header_paras) < 63, (
+        f"header_paras={len(doc35.header_paras)} — should be < 63 after tail_stream fix"
+    )
