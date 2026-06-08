@@ -1565,18 +1565,49 @@ def _detect_column_split(
     # to produce a large secondary gap further to the right (e.g. x=[55,237,…]
     # with a gap at 55→237 and an unrelated indent gap at 271→389, which is
     # entirely within the right column and should not veto the sidebar split).
+    #
+    # Vertical-span exemption: a gap whose right side (x ≥ right_edge) only
+    # spans a small fraction of the body height is a localised multi-column
+    # footer row (e.g. EDUCATION | SKILLS | INTERESTS at the page bottom) rather
+    # than a true 3rd body column.  Only count gaps where the right-side content
+    # spans ≥ 30 % of the page height towards the adjacent-gap count.
     _first_right: int | None = None
     _adjacent_sig = 0
+    _body_top_3col = page_height * 0.15 if page_height > 0 else 0.0
+    _body_bot_3col = page_height * 0.90 if page_height > 0 else float("inf")
     for _j in range(len(x0s) - 1):
+        _gap_size = x0s[_j + 1] - x0s[_j]
+        _right_cand = x0s[_j + 1]
         if (
-            x0s[_j + 1] - x0s[_j] >= min_gap
-            and page_width * 0.20 <= x0s[_j + 1] <= page_width * 0.70
+            _gap_size >= min_gap
+            and page_width * 0.20 <= _right_cand <= page_width * 0.70
         ):
-            if _first_right is None:
-                _first_right = x0s[_j + 1]
-                _adjacent_sig = 1
-            elif x0s[_j] <= _first_right:
-                _adjacent_sig += 1
+            # Only count as a body-column boundary when content at this x
+            # spans a meaningful fraction of the page height.  Localised
+            # bottom-row sub-columns (< 30 % span) are excluded.
+            _gap_is_body_col = True
+            if page_height > 0:
+                _rc = [
+                    b for b in blocks
+                    if b.get("type") == 0
+                    and round(b["bbox"][0]) >= _right_cand
+                    and b["bbox"][1] >= _body_top_3col
+                    and b["bbox"][3] <= _body_bot_3col
+                ]
+                if _rc:
+                    _ry_span = (
+                        max(b["bbox"][3] for b in _rc)
+                        - min(b["bbox"][1] for b in _rc)
+                    ) / page_height
+                    _gap_is_body_col = _ry_span >= 0.30
+                else:
+                    _gap_is_body_col = False
+            if _gap_is_body_col:
+                if _first_right is None:
+                    _first_right = _right_cand
+                    _adjacent_sig = 1
+                elif x0s[_j] <= _first_right:
+                    _adjacent_sig += 1
     if _adjacent_sig >= 2:
         return None
     # Blocks spanning ≥ 45 % of the page width are treated as cross-column
@@ -1837,8 +1868,42 @@ def _extract_paragraphs(
                 [b for b in blocks if b.get("type") == 0 and b["bbox"][0] >= split_x],
                 key=lambda b: b["bbox"][1],
             )
-            blocks = left_blks + right_blks
-            right_col_start_idx = len(left_blks)
+            # Parallel-body detection: when right-column body content (section
+            # headings) starts significantly above the first left-column body
+            # block (parallel date rows), all-left-then-all-right ordering
+            # puts dates before their section heading, breaking section parsing.
+            # In that case, keep the header area left-then-right but interleave
+            # the body blocks by y so section headings precede their parallel
+            # left-column companions.
+            _hdr_y = page.rect.height * 0.25
+            _left_body = [b for b in left_blks if b["bbox"][1] >= _hdr_y]
+            _right_body = [b for b in right_blks if b["bbox"][1] >= _hdr_y]
+            _left_body_min_y = (
+                min(b["bbox"][1] for b in _left_body)
+                if _left_body else float("inf")
+            )
+            # Interleave when right-body content starts 20+ pt above first left-body block
+            _parallel_body = _left_body and any(
+                b["bbox"][1] < _left_body_min_y - 20 for b in _right_body
+            )
+            if _parallel_body:
+                _left_hdr = [b for b in left_blks if b["bbox"][1] < _hdr_y]
+                _right_hdr = [b for b in right_blks if b["bbox"][1] < _hdr_y]
+                # Merge header blocks by y so right-column header content
+                # (title at y=83) is processed before left-column items that
+                # appear lower (contact block at y=158 whose phone span has
+                # col_id=right).  Without this, phone lands in right_raw
+                # before the title, pushing it to the wrong column position.
+                _hdr_merged = sorted(_left_hdr + _right_hdr, key=lambda b: b["bbox"][1])
+                _body = sorted(
+                    _left_body + _right_body,
+                    key=lambda b: (round(b["bbox"][1]), 0 if b["bbox"][0] < split_x else 1),
+                )
+                blocks = _hdr_merged + _body
+                right_col_start_idx = 0  # reset spacing at first block (header already sorted)
+            else:
+                blocks = left_blks + right_blks
+                right_col_start_idx = len(left_blks)
 
         # Merged-header-band detection: when NO right-column text block exists
         # in the top 22 % of the page the template uses a full-width header
