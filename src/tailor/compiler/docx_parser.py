@@ -2330,9 +2330,24 @@ def _apply_multicolumn_newspaper_fix(
             for _cpm in _col_paras:
                 _cpm._col_width_twips = _cw  # type: ignore[attr-defined]
 
-    # Build left_stream and right_stream across all body Word sections
+    # Build left_stream, right_stream, and tail_stream across all body Word sections.
+    # tail_stream holds single-column sections that trail the last multi-column section
+    # (e.g. a full-width Projects section after a two-column sidebar layout).  Merging
+    # them into left_stream would place their section headings before right-column
+    # headings (Experience, Skills), producing wrong section order.
     left_stream: list[ParaModel] = []
     right_stream: list[ParaModel] = []
+    tail_stream: list[ParaModel] = []
+
+    # Last multi-column section index (excluding header).  Single-column sections
+    # beyond this point are collected in tail_stream, not merged into left_stream.
+    last_multicol_sec_idx = max(
+        (
+            i for i, si in enumerate(section_infos)
+            if si["end_idx"] > first_sec_end and si["col_count"] >= 2
+        ),
+        default=-1,
+    )
 
     for sec_idx, si in enumerate(section_infos):
         if si["end_idx"] <= first_sec_end:
@@ -2345,9 +2360,17 @@ def _apply_multicolumn_newspaper_fix(
             return per_sec_col.get((sec_idx, c), [])
 
         if col_count < 2:
-            # Single-column section: non-split goes left; tab-split right side goes right
-            left_stream.extend(_col(0))
-            right_stream.extend(_col(1))  # only populated by tab splits
+            # Single-column section trailing the last multi-column section: these
+            # paragraphs follow the column layout visually (full-width footer content).
+            # Append to tail_stream so they land after left+right in the output.
+            if sec_idx > last_multicol_sec_idx and last_multicol_sec_idx >= 0:
+                tail_stream.extend(_col(0))
+                tail_stream.extend(_col(1))  # only populated by tab splits
+            else:
+                # Single-column section before or between multi-column sections:
+                # non-split goes left; tab-split right side goes right.
+                left_stream.extend(_col(0))
+                right_stream.extend(_col(1))  # only populated by tab splits
         elif col_count == 2:
             left_stream.extend(_col(0))
             right_stream.extend(_col(1))
@@ -2363,11 +2386,13 @@ def _apply_multicolumn_newspaper_fix(
             for c in range(1, col_count):
                 right_stream.extend(_col(c))
 
-    # Build candidate: header (original order) + left + right
+    # Build candidate: header (original order) + left + right + tail.
+    # tail_stream is empty for most documents; non-empty only when a single-column
+    # section trails multi-column sections (e.g. sample 35 Projects section).
     header_list = all_paras[:header_end_para_idx]
-    candidate = header_list + left_stream + right_stream
+    candidate = header_list + left_stream + right_stream + tail_stream
 
-    if not left_stream and not right_stream:
+    if not left_stream and not right_stream and not tail_stream:
         return all_paras, False, {}
 
     # Quality validation: candidate must not lose section headings or experience roles
@@ -2389,7 +2414,11 @@ def _apply_multicolumn_newspaper_fix(
         0: [p.text.strip() for p in left_stream if p.semantic == "section_heading"],
         1: [p.text.strip() for p in right_stream if p.semantic == "section_heading"],
     }
+    if tail_stream:
+        headings_per_col[2] = [p.text.strip() for p in tail_stream if p.semantic == "section_heading"]
     paras_per_col = {0: len(left_stream), 1: len(right_stream)}
+    if tail_stream:
+        paras_per_col[2] = len(tail_stream)
 
     return candidate, True, {
         "aborted": False,
