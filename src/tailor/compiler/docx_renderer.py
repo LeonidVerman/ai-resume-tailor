@@ -1812,6 +1812,90 @@ def _render_pdf_single_col_with_groups(
         else:
             two_col_rows = _detect_body_two_col(sec.body_paras)
             if two_col_rows:
+                # --- Label-column detection ---
+                # Pattern: heading x forms its own cluster to the LEFT of all body
+                # x-clusters, separated by at least 50pt.  Render as a single N×3
+                # table  [heading(vMerged) | body-left | body-right]  so the heading
+                # acts as a row label rather than a standalone paragraph above the
+                # body table.  Guard: col1 must be ≥50pt wide (excludes indented
+                # lists where the heading is a full-width title, not a side label).
+                _h_pp = sec.heading.paragraph_profile
+                _h_x = _h_pp.indent_left_pt if _h_pp else None
+                _body_xs = {
+                    pm.paragraph_profile.indent_left_pt
+                    for l_pm, r_pm in two_col_rows
+                    for pm in (l_pm, r_pm)
+                    if pm and pm.paragraph_profile
+                    and pm.paragraph_profile.indent_left_pt is not None
+                }
+                _TOL = 5.0
+                _MIN_LABEL_COL_PT = 50.0
+                _is_label_col = (
+                    _h_x is not None
+                    and len(_body_xs) == 2
+                    and all(bx - _h_x > _TOL for bx in _body_xs)
+                    and min(_body_xs) - _h_x >= _MIN_LABEL_COL_PT
+                )
+                if _is_label_col:
+                    # Compute natural widths from PDF x-coordinates.
+                    _bx1, _bx2 = sorted(_body_xs)
+                    _c1 = max(100, int((_bx1 - _h_x) * 20))
+                    _c2 = max(100, int((_bx2 - _bx1) * 20))
+                    _c3 = max(100, text_area_w_twips - _c1 - _c2)
+                    _cws = (_c1, _c2, _c3)
+                    _n = len(two_col_rows)
+
+                    def _make_tbl_shell(col_widths):
+                        _tbl = etree.Element(f"{{{_W}}}tbl")
+                        _pr = etree.SubElement(_tbl, f"{{{_W}}}tblPr")
+                        _tw = etree.SubElement(_pr, f"{{{_W}}}tblW")
+                        _tw.set(f"{{{_W}}}w", str(sum(col_widths)))
+                        _tw.set(f"{{{_W}}}type", "dxa")
+                        _lay = etree.SubElement(_pr, f"{{{_W}}}tblLayout")
+                        _lay.set(f"{{{_W}}}type", "fixed")
+                        _brd = etree.SubElement(_pr, f"{{{_W}}}tblBorders")
+                        for _s in ("top", "left", "bottom", "right", "insideH", "insideV"):
+                            etree.SubElement(_brd, f"{{{_W}}}{_s}").set(f"{{{_W}}}val", "none")
+                        _mar = etree.SubElement(_pr, f"{{{_W}}}tblCellMar")
+                        for _s in ("top", "left", "bottom", "right"):
+                            _m = etree.SubElement(_mar, f"{{{_W}}}{_s}")
+                            _m.set(f"{{{_W}}}w", "0")
+                            _m.set(f"{{{_W}}}type", "dxa")
+                        return _tbl
+
+                    _ltbl = _make_tbl_shell(_cws)
+                    for _ri, (_lpm, _rpm) in enumerate(two_col_rows):
+                        _tr = etree.SubElement(_ltbl, f"{{{_W}}}tr")
+                        # Cell 0: heading (row 0) or empty merge continuation
+                        _tc0 = etree.SubElement(_tr, f"{{{_W}}}tc")
+                        _pr0 = etree.SubElement(_tc0, f"{{{_W}}}tcPr")
+                        _w0 = etree.SubElement(_pr0, f"{{{_W}}}tcW")
+                        _w0.set(f"{{{_W}}}w", str(_c1))
+                        _w0.set(f"{{{_W}}}type", "dxa")
+                        etree.SubElement(_pr0, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+                        if _n > 1:
+                            _vm = etree.SubElement(_pr0, f"{{{_W}}}vMerge")
+                            if _ri == 0:
+                                _vm.set(f"{{{_W}}}val", "restart")
+                        if _ri == 0:
+                            _tc0.append(heading_elem)
+                        else:
+                            etree.SubElement(_tc0, f"{{{_W}}}p")
+                        # Cells 1 & 2: body data
+                        for _ci, _pm in enumerate((_lpm, _rpm)):
+                            _tc = etree.SubElement(_tr, f"{{{_W}}}tc")
+                            _pr = etree.SubElement(_tc, f"{{{_W}}}tcPr")
+                            _ww = etree.SubElement(_pr, f"{{{_W}}}tcW")
+                            _ww.set(f"{{{_W}}}w", str(_cws[_ci + 1]))
+                            _ww.set(f"{{{_W}}}type", "dxa")
+                            etree.SubElement(_pr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+                            if _pm is not None:
+                                _tc.append(build_para_element(_pm, doc_part))
+                            else:
+                                etree.SubElement(_tc, f"{{{_W}}}p")
+                    return [_ltbl]
+
+                # --- Standard path: heading paragraph + 2-col body table ---
                 col_w = text_area_w_twips // 2
                 tbl = etree.Element(f"{{{_W}}}tbl")
                 tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
