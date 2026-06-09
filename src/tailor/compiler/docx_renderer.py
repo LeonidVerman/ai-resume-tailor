@@ -770,8 +770,9 @@ def _set_para_text(p_elem, text: str) -> None:
         if not _is_spacer:
             # Content run: record its rPr for neighbouring spacer propagation.
             _prev_content_rpr = _krpr
-            # Also strip micro-tracking on short (1–3 char) content runs.
-            if len(_kr_text) <= 3 and _krpr is not None:
+            # Strip micro-tracking from all content runs.  The _MICRO_KERN_LIMIT
+            # guard already protects intentional letter-spacing (≥80 twips).
+            if _krpr is not None:
                 _ksp = _krpr.find(f"{{{_W}}}spacing")
                 if _ksp is not None:
                     try:

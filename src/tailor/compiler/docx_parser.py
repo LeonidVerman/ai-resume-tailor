@@ -827,6 +827,45 @@ _COMPOUND_BODY_OPENER_RE = re.compile(
 )
 
 
+def _make_single_run_style(pm: ParaModel) -> ParaStyle:
+    """Return a copy of pm.style with the xml_proto reduced to one content run.
+
+    When a compound paragraph is split into virtual title/meta/body ParaModels,
+    all three previously shared the same multi-run xml_proto.  _set_para_text
+    then distributed short text proportionally across those runs, producing
+    character-level fragmentation ("CardinalCh ain", "K otlin").  A single-run
+    proto forces _set_para_text into its fast path (len(content_indices)==1)
+    so the full text lands in one run intact.
+    """
+    new_style = deepcopy(pm.style)
+    p_elem = new_style.xml_proto
+    if p_elem is None:
+        return new_style
+
+    # Capture the first content run's rPr for font/bold/size preservation.
+    first_rpr = None
+    for _r in p_elem.findall(f"{{{_W}}}r"):
+        if any((t.text or "").strip() for t in _r.findall(f"{{{_W}}}t")):
+            _rpr = _r.find(f"{{{_W}}}rPr")
+            if _rpr is not None:
+                first_rpr = deepcopy(_rpr)
+            break
+
+    # Remove all run-bearing children; keep structural elements (w:pPr, bookmarks…).
+    for _child in list(p_elem):
+        if _child.tag in (f"{{{_W}}}r", f"{{{_W}}}hyperlink"):
+            p_elem.remove(_child)
+
+    # Append a single w:r with the original rPr and a preserve-space empty w:t.
+    from lxml import etree as _et
+    new_r = _et.SubElement(p_elem, f"{{{_W}}}r")
+    if first_rpr is not None:
+        new_r.insert(0, first_rpr)
+    _t = _et.SubElement(new_r, f"{{{_W}}}t")
+    _t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+    return new_style
+
+
 def _try_split_compound_role(pm: ParaModel) -> list[ParaModel] | None:
     """Split a compound paragraph into [role_header, role_meta, paragraph].
 
@@ -862,9 +901,9 @@ def _try_split_compound_role(pm: ParaModel) -> list[ParaModel] | None:
     ):
         return None
 
-    title_pm = ParaModel(text=title, style=pm.style, semantic="role_header")
-    meta_pm = ParaModel(text=meta, style=pm.style, semantic="role_meta")
-    body_pm = ParaModel(text=body_text, style=pm.style, semantic="paragraph")
+    title_pm = ParaModel(text=title, style=_make_single_run_style(pm), semantic="role_header")
+    meta_pm = ParaModel(text=meta, style=_make_single_run_style(pm), semantic="role_meta")
+    body_pm = ParaModel(text=body_text, style=_make_single_run_style(pm), semantic="paragraph")
 
     parts = [title_pm, meta_pm, body_pm]
     # Tag original compound para so parse_docx can expand it in body_items after
