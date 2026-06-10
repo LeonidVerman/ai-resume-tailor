@@ -70,16 +70,15 @@ _TWO_COL_SIM_THRESHOLD = 0.99
 # cannot be resolved without separate classification artifacts per source kind.
 # These are reported as XFAIL (expected failures) and do not affect the exit code.
 #
-# Sample 6 (6-Template1): The generation JSON's experience classification has
-# role[1].header_blocks=[para_23] (same as role[0]) and role[2].header_blocks=
-# [para_28].  In the DOCX namespace, para_28="Office manager, Nod Publishing";
-# in the PDF namespace, para_28="Summarize your key responsibilities..." (filler).
-# Additionally, the DOCX pipeline detects a date-first layout and uses a
-# heuristic rebuild that drops LLM role[0] bullets (Managed x5) because role[0]
-# has no target paragraphs after _split_role_by_meta_dates, while the PDF
-# pipeline uses the classification-based path that assigns those bullets to
-# Phone Company in the right column.  The resulting column-text similarity is
-# ~0.61, well below the 0.99 threshold.
+# Sample 6 (6-Template1): The generation JSON uses DOCX-namespace para_ids;
+# the DOCX pipeline drops LLM role[0] bullets (Phone Company) because
+# _split_role_by_meta_dates finds no target paragraphs for that role, while the
+# PDF pipeline correctly assigns those bullets to Phone Company in the right
+# column.  Additionally, the PDF pipeline renders EXPERIENCE/SKILLS section
+# headers at left-column x-coordinates while the DOCX pipeline renders them in
+# the right column, causing left-column similarity ~0.95 (< 0.99 threshold).
+# Resolving this requires either separate classification artifacts per source
+# kind or aligning section-header column assignment across pipelines.
 _XFAIL_SAMPLES: frozenset[str] = frozenset({"6"})
 
 
