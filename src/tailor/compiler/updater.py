@@ -3156,7 +3156,7 @@ def _update_experience_classified(
                 _role_para_ids.add(_p.para_id)
     # Rewrite-source semantics are excluded: their body_paras must be cleared
     # when the role is rewritten, just like non-preserved content.
-    _REWRITE_SOURCE_CLS = frozenset({"role_freeform_note", "role_project_context"})
+    _REWRITE_SOURCE_CLS = frozenset({"role_freeform_note", "role_project_context", "highlight_header"})
     _preserved_in_cls: set[str] = {
         _pid for _pid, _blk in cls_body_block_map.items()
         if _blk.rewrite_policy == "preserve"
@@ -3170,6 +3170,12 @@ def _update_experience_classified(
         if p.para_id in _role_para_ids:
             return p                        # claimed by updated role — hands off
         if p.para_id in _preserved_in_cls:
+            # role_intro blocks without \n are compound-split prose intros (source
+            # material extracted from "Title, Company Highlights: body..." orphans).
+            # Structured meta role_intro blocks always use \n as field separators.
+            _blk = cls_body_block_map.get(p.para_id)
+            if _blk and _blk.semantic_type == "role_intro" and "\n" not in p.text:
+                return _dc_replace(p, text="")
             return p                        # explicitly preserved by classification
         if p.semantic in _STALE_BODY_SEMANTICS:
             return _dc_replace(p, text="")  # stale template content — clear
