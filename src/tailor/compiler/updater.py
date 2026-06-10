@@ -1807,19 +1807,34 @@ def _update_role_bullets_only(
     # strip meta_lines that look like description sentences (not dates/company/location).
     # These are plain-text descriptions that the PDF parser placed in meta_lines
     # because no explicit bullet markers were detected; keeping them alongside the
-    # new LLM bullets would duplicate the content.  A line is treated as a
-    # description (not a date/location) when it ends with a sentence-closing mark
-    # ('. ', '? ', '! ') or a plain period at end-of-string AND is not a date-like
-    # string.
+    # new LLM bullets would duplicate the content.  A line is a description when:
+    #   - it ends with a sentence-closing mark (period, comma, !, ?) AND
+    #   - it has >= 4 words (distinguishes sentences from short company names) AND
+    #   - it contains no year / date indicator
+    # Commas are included because placeholder sentences often end mid-clause
+    # (e.g. "Be concise," split across two lines).
     kept_meta = list(orig.meta_lines)
     if not orig.bullets and new_bullets and orig.meta_lines:
         import re as _re
-        _DATE_HINT = _re.compile(r"\b\d{4}\b|\bPresent\b|\bCurrent\b|\bNow\b", _re.IGNORECASE)
-        _SENTENCE_END = _re.compile(r"[.!?]\s*$")
+        _DATE_HINT = _re.compile(
+            r"\b\d{4}\b|\bPresent\b|\bCurrent\b|\bNow\b|20[Xx]{2}", _re.IGNORECASE
+        )
+        _SENTENCE_END = _re.compile(r"[.!?,]\s*$")
         cleaned = []
         for m in orig.meta_lines:
             t = m.text.strip()
-            if _SENTENCE_END.search(t) and not _DATE_HINT.search(t):
+            _n_words = len(t.split())
+            _has_date = bool(_DATE_HINT.search(t))
+            # A line is a description placeholder when it has no date hint AND
+            # (a) ends with sentence-closing punctuation (including comma) and
+            #     has >= 4 words, OR
+            # (b) is very long (>= 7 words) regardless of terminal punctuation
+            #     (catches lines that continue a sentence begun on a prior line).
+            _looks_like_sentence = not _has_date and (
+                (bool(_SENTENCE_END.search(t)) and _n_words >= 4)
+                or _n_words >= 7
+            )
+            if _looks_like_sentence:
                 _log.debug(
                     "ROLE_META_DESCRIPTION_STRIP: stripped description-like meta %r",
                     t[:60],
