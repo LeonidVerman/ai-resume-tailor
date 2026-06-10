@@ -3677,6 +3677,11 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
                         ))
                         _exp_sec_r.body_paras = combined
                         _finalise(_exp_sec_r)
+                        # All experience content is now in roles; clear body_paras so
+                        # the renderer does not double-render preamble filler alongside
+                        # role content (preamble paras that fall before the first date
+                        # are not consumed by _group_roles and would otherwise leak).
+                        _exp_sec_r.body_paras = []
                         _orphan_date_ids = {id(hp) for hp in _orphan_dates}
                         left_hdrs = [hp for hp in left_hdrs if id(hp) not in _orphan_date_ids]
             header_paras = above_hdrs + left_hdrs + right_hdrs

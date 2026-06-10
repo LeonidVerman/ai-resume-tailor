@@ -2090,9 +2090,25 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     #   PARALLEL_BODY → left|right two-column body row
     #   FULL_WIDTH    → single merged full-width body row (only when parallel mode active)
     #   SINGLE_COLUMN (or None) → left|right row with right cell empty
+    def _has_date_margin_roles(sec) -> bool:
+        """True when any role has a right-col header AND a left-col meta_line.
+
+        This identifies the 'date-margin' layout (dates left, role content right)
+        so the parallel renderer is used even after body_paras are cleared.
+        """
+        for _r in sec.roles:
+            if _r.header.paragraph_profile and _r.header.paragraph_profile.column_id == "right":
+                if any(
+                    _m.paragraph_profile and _m.paragraph_profile.column_id == "left"
+                    for _m in _r.meta_lines
+                ):
+                    return True
+        return False
+
     _parallel_mode = (
         any(sec.render_mode == "PARALLEL_BODY" for sec in doc.sections)
         or any(_sec_has_parallel_body(sec) for sec in doc.sections)
+        or any(_has_date_margin_roles(sec) for sec in doc.sections)
     )
 
     def _append_left_indent(p_elem, pm) -> None:
@@ -2218,6 +2234,12 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
             if not paras:
                 etree.SubElement(_tc, f"{{{_W}}}p")
 
+        # Render non-above header paras (contact area, title) as the first body row.
+        # In parallel mode, _hdr_left/_hdr_right are not included in any section and
+        # would otherwise be silently dropped.
+        if _hdr_left or _hdr_right:
+            _make_two_col_row(_hdr_left, _hdr_right)
+
         # Sort sections by heading y, then render each as: heading row + body row.
         _sorted_secs = sorted(
             doc.sections,
@@ -2241,9 +2263,26 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 key=_y_of,
             )
             # Experience sections store body content in roles, not body_paras.
+            # For date-margin layouts (right-col role headers) distribute by column:
+            # left-col meta_lines (dates) → _lbody; header + bullets → _rbody.
+            # Right-col meta_lines in this layout are template filler — drop them.
+            # For standard left-sidebar layouts everything goes to _lbody.
             for _role in _sec.roles:
-                _lbody.extend([_role.header, *_role.meta_lines, *_role.bullets])
+                _rh_col = (
+                    _role.header.paragraph_profile.column_id
+                    if _role.header.paragraph_profile else None
+                )
+                if _rh_col == "right":
+                    for _pm in _role.meta_lines:
+                        _mc = _pm.paragraph_profile.column_id if _pm.paragraph_profile else None
+                        if _mc == "left":
+                            _lbody.append(_pm)
+                        # drop right-col meta_lines (template filler like "Summarize...")
+                    _rbody.extend([_role.header, *_role.bullets])
+                else:
+                    _lbody.extend([_role.header, *_role.meta_lines, *_role.bullets])
             _lbody.sort(key=_y_of)
+            _rbody.sort(key=_y_of)
             _is_par = bool(_lbody and _rbody)
             _glog.debug(
                 "SECTION_RENDER_MODE sec=%r mode=%s left=%d right=%d parallel=%s",
