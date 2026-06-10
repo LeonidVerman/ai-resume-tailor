@@ -1470,6 +1470,11 @@ def parse_docx(path: str) -> ResumeDocument:
     # Engineer Intern") without a containing "Work Experience" / "Experience" header.
     sections = _consolidate_job_entry_sections(sections)
 
+    # Inject narrow date-column groups into experience role.meta_lines.
+    # Must run before assign_stable_ids so the injected paras receive correct para_ids.
+    if _table_col_meta.get("narrow_date_col_groups"):
+        _inject_narrow_date_groups(sections, _table_col_meta["narrow_date_col_groups"])
+
     # Multi-variant template deduplication: some templates ship N identical copies of
     # the same resume layout in different color schemes (e.g. sample 9 with 3 tables
     # using red/blue/green accent colors).  Detect when the section title sequence is
@@ -2203,6 +2208,139 @@ def _count_experience_roles(paras: list[ParaModel]) -> int:
     return sum(1 for p in paras if p.semantic == "role_header")
 
 
+# ---------------------------------------------------------------------------
+# Narrow date-column detection and injection helpers
+# ---------------------------------------------------------------------------
+
+_NARROW_DATE_EMPLOYMENT_TYPES: frozenset[str] = frozenset({
+    "full-time", "fulltime", "full time",
+    "part-time", "parttime", "part time",
+    "contract", "freelance", "intern", "internship",
+    "remote", "hybrid", "on-site", "onsite",
+    "permanent", "temporary", "temp", "volunteer",
+    "self-employed", "consulting",
+})
+
+_NARROW_DATE_MONTHS_LOWER: frozenset[str] = frozenset({
+    "january", "february", "march", "april", "may", "june",
+    "july", "august", "september", "october", "november", "december",
+    "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
+})
+
+_NARROW_DATE_YEAR_RE: re.Pattern[str] = re.compile(r"\b(19|20)\d{2}\b")
+
+
+def _is_date_like_narrow_col(text: str) -> bool:
+    """Return True if *text* is date-column content (date range or employment type)."""
+    t = text.strip().lower()
+    if not t:
+        return True
+    if len(t) > 55:
+        return False
+    if any(m in t for m in _NARROW_DATE_MONTHS_LOWER):
+        return True
+    if _NARROW_DATE_YEAR_RE.search(t):
+        return True
+    if t in {"current", "present", "now", "ongoing", "today"}:
+        return True
+    if any(et in t for et in _NARROW_DATE_EMPLOYMENT_TYPES):
+        return True
+    if re.match(r"^\d{4}$", t):
+        return True
+    if re.match(r"^[\?\-–—\s]+$", t):
+        return True
+    return False
+
+
+def _is_employment_type_narrow_col(text: str) -> bool:
+    t = text.strip().lower()
+    return any(et in t for et in _NARROW_DATE_EMPLOYMENT_TYPES)
+
+
+def _is_narrow_date_only_left_stream(left_stream: list[ParaModel]) -> bool:
+    """Return True when left_stream is a date-only sidebar column.
+
+    Criteria: at least one narrow-col para (< 2000 twips), no section headings,
+    at least one non-empty para, and every non-empty para is date-like.
+    """
+    narrow = [
+        pm for pm in left_stream
+        if getattr(pm, "_col_width_twips", None) is not None
+        and pm._col_width_twips < 2000  # type: ignore[attr-defined]
+    ]
+    if not narrow:
+        return False
+    if any(pm.semantic == "section_heading" for pm in left_stream):
+        return False
+    non_empty = [pm for pm in narrow if pm.text.strip()]
+    if not non_empty:
+        return False
+    return all(_is_date_like_narrow_col(pm.text) for pm in non_empty)
+
+
+def _build_narrow_date_groups(
+    left_stream: list[ParaModel],
+) -> list[list[ParaModel]]:
+    """Extract ordered date groups from a narrow date-only left_stream.
+
+    Paragraphs are first clustered by empty-para gaps, then each cluster is
+    split at employment-type lines (Full-time / Part-time / Contract / ...).
+    Each returned sub-list maps to one experience role's date range.
+    """
+    narrow = [
+        pm for pm in left_stream
+        if getattr(pm, "_col_width_twips", None) is not None
+        and pm._col_width_twips < 2000  # type: ignore[attr-defined]
+    ]
+    raw_groups: list[list[ParaModel]] = []
+    cur: list[ParaModel] = []
+    for pm in narrow:
+        if pm.text.strip():
+            cur.append(pm)
+        else:
+            if cur:
+                raw_groups.append(cur)
+                cur = []
+    if cur:
+        raw_groups.append(cur)
+
+    result: list[list[ParaModel]] = []
+    for grp in raw_groups:
+        sub: list[ParaModel] = []
+        for pm in grp:
+            sub.append(pm)
+            if _is_employment_type_narrow_col(pm.text):
+                result.append(sub)
+                sub = []
+        if sub:
+            result.append(sub)
+    return result
+
+
+def _inject_narrow_date_groups(
+    sections: list[ResumeSection],
+    date_groups: list[list[ParaModel]],
+) -> None:
+    """Prepend narrow date-column groups to experience role.meta_lines (N:N pairing).
+
+    Pairs date_groups[i] with the i-th experience role in document order.
+    Unmatched date groups (more groups than roles) are discarded with a debug log.
+    """
+    exp_roles: list[RoleEntry] = []
+    for sec in sections:
+        if sec.semantic_type == "experience":
+            exp_roles.extend(sec.roles)
+    n = min(len(date_groups), len(exp_roles))
+    for i in range(n):
+        exp_roles[i].meta_lines = date_groups[i] + exp_roles[i].meta_lines
+    if len(date_groups) > len(exp_roles):
+        _logger.debug(
+            "narrow_date_col: %d unmatched date group(s) discarded (roles=%d)",
+            len(date_groups) - len(exp_roles),
+            len(exp_roles),
+        )
+
+
 def _apply_multicolumn_newspaper_fix(
     all_paras: list[ParaModel],
     body,
@@ -2429,10 +2567,21 @@ def _apply_multicolumn_newspaper_fix(
     # tail_stream is empty for most documents; non-empty only when a single-column
     # section trails multi-column sections (e.g. sample 35 Projects section).
     header_list = all_paras[:header_end_para_idx]
-    candidate = header_list + left_stream + right_stream + tail_stream
 
     if not left_stream and not right_stream and not tail_stream:
         return all_paras, False, {}
+
+    # Detect narrow date-only left column (e.g. a date sidebar where every
+    # non-empty para is a date range or employment-type line with no section
+    # headings).  Exclude it from the candidate so section grouping operates on
+    # the content column only; the date groups are returned in metadata for
+    # injection into experience role.meta_lines by parse_docx().
+    _narrow_date_groups: list[list[ParaModel]] = []
+    if _is_narrow_date_only_left_stream(left_stream):
+        _narrow_date_groups = _build_narrow_date_groups(left_stream)
+        left_stream = []
+
+    candidate = header_list + left_stream + right_stream + tail_stream
 
     # Quality validation: candidate must not lose section headings or experience roles
     orig_sec = _simple_section_count(all_paras)
@@ -2464,6 +2613,7 @@ def _apply_multicolumn_newspaper_fix(
         "col_count": 2,
         "headings_per_col": headings_per_col,
         "paras_per_col": paras_per_col,
+        "narrow_date_col_groups": _narrow_date_groups,
     }
 
 
