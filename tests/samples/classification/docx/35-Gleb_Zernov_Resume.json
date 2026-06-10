@@ -1,0 +1,1684 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Projects",
+        "paragraphs": [
+          {
+            "para_id": "para_64",
+            "text": "Projects",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_65",
+            "text": "Scaffold Registry Indexer, Stellar smart contract indexer, 2026",
+            "parser_semantic": "project_entry"
+          },
+          {
+            "para_id": "para_66",
+            "text": "Goldsky pipeline using SQL/AWS, Serverless backend (and a bit of Front End) for indexing smart contract events.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_67",
+            "text": "Scaffold Stellar, Stellar smart contract developer tool, 2025-2026",
+            "parser_semantic": "project_entry"
+          },
+          {
+            "para_id": "para_68",
+            "text": "Support Soroban example contracts import into scaffold project + clear tech debt on the team request, added various smaller commands",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_69",
+            "text": "Cargo, Rust build tool, 2024",
+            "parser_semantic": "project_entry"
+          },
+          {
+            "para_id": "para_70",
+            "text": "Added new flag --lockfile-path supported by all manifest commands, fixing several bugs in upstream applications.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_71",
+            "text": "Working on stabilizing cargo-script features.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_72",
+            "text": "LastFm scrobbler, LastFm Scrobbler for VR game BeatSaber, 2021",
+            "parser_semantic": "project_entry"
+          },
+          {
+            "para_id": "para_73",
+            "text": "Mod for BeatSaber with a UI for configuration and authentication (in-game), as well as logic for scrobbling (submitting played track data to Last.fm servers) beatmaps user plays in the BeatSaber",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_74",
+            "text": "Apache Incubator – NLPCraft, API to convert natural language into actions, 2020",
+            "parser_semantic": "project_entry"
+          },
+          {
+            "para_id": "para_75",
+            "text": "Auto-enricher of the model using Bert masked word prediction and FastText synonyms filter and an example of using the NLPCraft server by adding a simple Minecraft mod, that allows to write console commands using natural (English) language.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_76",
+            "text": "Bachelor Thesis, Learning similarity of social network communities with embeddings application, 2019",
+            "parser_semantic": "project_entry"
+          },
+          {
+            "para_id": "para_77",
+            "text": "Source code of my bachelor thesis algorithm implementation passed with an Excellent grade (A).",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Experience",
+        "paragraphs": [
+          {
+            "para_id": "para_111",
+            "text": "Senior Backend Engineer, Ondo Perps, Remote",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_112",
+            "text": "Highlights: Continuing work on the perps exchange",
+            "parser_semantic": "highlight_header",
+            "semantic_hint": "highlight_candidate"
+          },
+          {
+            "para_id": "para_113",
+            "text": "Leading tech debt repayment initiative.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_114",
+            "text": "Direct ownership over critical features required for launch (design, development, team coordination)",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_115",
+            "text": "Mentoring junior team members",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_116",
+            "text": "Senior Backend Engineer, Enclave Markets, Remote",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_117",
+            "text": "Highlights: Member of a small engineering team, focused primarily on the new features and code main-tainability with a relatively big (roughly 1/2 Linux kernel) codebase.",
+            "parser_semantic": "highlight_header",
+            "semantic_hint": "highlight_candidate"
+          },
+          {
+            "para_id": "para_118",
+            "text": "Added core features to the exchange, such as websocket market data streaming, advanced order types (TWAP), off platform hedging for strategies traded on the exchange, improving liquidity and reducing slippage for big orders.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_119",
+            "text": "Built a telegram bot serving as an alternative client for the exchange: 70% of AVAX-USD volume was going through it after the first week of the launch.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_120",
+            "text": "Add websocket support to various endpoints, reducing unnecessary traﬀic by 30%",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_121",
+            "text": "Senior Engineer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_122",
+            "text": "Stellar Development Foundation, Vancouver, BC, Remote",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_123",
+            "text": "Leading migration project of one of the critical partners (MoneyGram). Architecture design and implementation of external facing tools. Ecosystem protocol design. Responsible for wallet and anchor partners integrations.",
+            "parser_semantic": "project_intro"
+          },
+          {
+            "para_id": "para_124",
+            "text": "One of core contributors to the stellar-cli. Designing and implementing new commands, participating in existing functionality improvements based on developers feedback and changes of underlying Stellar libraries.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_125",
+            "text": "Leading initiative of migrating one of the biggest SDF partners – MoneyGram. Integration success directly affects SDF, as one of MoneyGram’s stakeholder.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_126",
+            "text": "Tech lead/project lead and the sole developer on the new version of the existing product (implements SEP-24 protocol), migrating from legacy in-house implementation to the use of the Anchor Platform.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_127",
+            "text": "Working with management and multiple teams (including Engineering) within MoneyGram.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_128",
+            "text": "Covered new architecture design, planning, development of the product, cross-team collaboration",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_129",
+            "text": "(including time management and task management), internal documentation and migration tooling.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_130",
+            "text": "Designed architecture of the Wallet SDK tool. Wrote Kotlin implementation and oversaw development of Typescript and Flutter implementations.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_131",
+            "text": "Driven development of the Anchor Platform – SDF developed platform supporting various Stellar Ecosystem Protocols. Was one of 2 team members developing and delivering SEP-24 support, one of the most used standards in the ecosystem.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_132",
+            "text": "Worked with more than 30 wallet partners and more than 20 anchor partners. Worked directly with critical/high priority partners’ tech leads designing architecture that meets partners needs, using Stellar protocols and tools",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_133",
+            "text": "Software Engineer → Tech Lead",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_134",
+            "text": "CardinalChain Software, Vancouver, BC",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_135",
+            "text": "Tech lead on Japanese centralized crypto exchange backend. Responsible for architecture design, maintenance and technical leadership of a team growing in size from 3 to 10 of junior/middle level developers. Supported over 35 different crypto currencies.",
+            "parser_semantic": "role_intro"
+          },
+          {
+            "para_id": "para_136",
+            "text": "Designed fundamental architecture and was overseeing development of full-stack cold wallet transfer and browser extension projects.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_137",
+            "text": "Re-designed various legacy parts of the project, making it easily used by other developers. As a result, developer time spent on a new currency support was cut by more than 40%.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_138",
+            "text": "Improved test practices before production release, leading to more stable and secure software.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_140",
+            "text": "Software Engineer (Junior/Middle), FitechSource, St. Petersburg, Russia",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_141",
+            "text": "Highlights: Prior to internal transfer to CardinalChain I was working on the same project in the Car-dinalChain’s child company.Worked as a sole developer alongside the project manager. Responsible for maintaining 3 core currencies (+ forks), added support of 2 more currencies. Re-wrote parts of the code, reducing the number of supported versions from 6 to just 2.",
+            "parser_semantic": "highlight_header",
+            "semantic_hint": "highlight_candidate"
+          },
+          {
+            "para_id": "para_142",
+            "text": "Associate software engineer, ITIVITI, St. Petersburg",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_143",
+            "text": "Highlights: Was working on an internal testing tool (market simulator). Was contributing to the tool’s core logic, as well as connectivity layer, that was responsible for simulating protocols of various exchanges (e.g. Nasdaq, LSE, etc.), Simulator was used in the testing pipeline for integration and performance tests. Increased exchange coverage by adding 2 new protocols.",
+            "parser_semantic": "highlight_header",
+            "semantic_hint": "highlight_candidate"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_111"
+            ],
+            "meta_para_ids": [
+              "para_112"
+            ],
+            "bullet_para_ids": [
+              "para_113",
+              "para_114",
+              "para_115"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_116"
+            ],
+            "meta_para_ids": [
+              "para_117"
+            ],
+            "bullet_para_ids": [
+              "para_118",
+              "para_119",
+              "para_120"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_121"
+            ],
+            "meta_para_ids": [
+              "para_122"
+            ],
+            "bullet_para_ids": [
+              "para_123",
+              "para_124",
+              "para_125",
+              "para_126",
+              "para_127",
+              "para_128",
+              "para_129",
+              "para_130",
+              "para_131",
+              "para_132"
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_para_ids": [
+              "para_133"
+            ],
+            "meta_para_ids": [
+              "para_134"
+            ],
+            "bullet_para_ids": [
+              "para_135",
+              "para_136",
+              "para_137",
+              "para_138"
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_para_ids": [
+              "para_140"
+            ],
+            "meta_para_ids": [
+              "para_141"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_6",
+            "header_para_ids": [
+              "para_142"
+            ],
+            "meta_para_ids": [
+              "para_143"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Education",
+        "paragraphs": [
+          {
+            "para_id": "para_145",
+            "text": "Bachelor’s degree in applied mathematics and computer science, ITMO University, Saint Petersburg, Russia, Information Technologies and Programming Faculty, Computer Technology Department",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Skills (used in professional projects)",
+        "paragraphs": [
+          {
+            "para_id": "para_147",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Projects",
+        "paragraphs": [
+          {
+            "para_id": "para_64",
+            "text": "Projects",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_65",
+            "text": "Scaffold Registry Indexer, Stellar smart contract indexer, 2026",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_66",
+            "text": "Goldsky pipeline using SQL/AWS, Serverless backend (and a bit of Front End) for indexing smart contract events.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_67",
+            "text": "Scaffold Stellar, Stellar smart contract developer tool, 2025-2026",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_68",
+            "text": "Support Soroban example contracts import into scaffold project + clear tech debt on the team request, added various smaller commands",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_69",
+            "text": "Cargo, Rust build tool, 2024",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_70",
+            "text": "Added new flag --lockfile-path supported by all manifest commands, fixing several bugs in upstream applications.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_71",
+            "text": "Working on stabilizing cargo-script features.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_72",
+            "text": "LastFm scrobbler, LastFm Scrobbler for VR game BeatSaber, 2021",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_73",
+            "text": "Mod for BeatSaber with a UI for configuration and authentication (in-game), as well as logic for scrobbling (submitting played track data to Last.fm servers) beatmaps user plays in the BeatSaber",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_74",
+            "text": "Apache Incubator – NLPCraft, API to convert natural language into actions, 2020",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_75",
+            "text": "Auto-enricher of the model using Bert masked word prediction and FastText synonyms filter and an example of using the NLPCraft server by adding a simple Minecraft mod, that allows to write console commands using natural (English) language.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_76",
+            "text": "Bachelor Thesis, Learning similarity of social network communities with embeddings application, 2019",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_77",
+            "text": "Source code of my bachelor thesis algorithm implementation passed with an Excellent grade (A).",
+            "parser_semantic": "bullet"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "sec_1_role_1",
+            "header_para_ids": [
+              "para_64"
+            ],
+            "meta_para_ids": [
+              "para_65",
+              "para_67",
+              "para_69",
+              "para_72",
+              "para_74",
+              "para_76"
+            ],
+            "bullet_para_ids": [
+              "para_66",
+              "para_68",
+              "para_70",
+              "para_71",
+              "para_73",
+              "para_75",
+              "para_77"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Experience",
+        "paragraphs": [
+          {
+            "para_id": "para_78",
+            "text": "Experience",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_111",
+            "text": "Senior Backend Engineer, Ondo Perps, Remote",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_112",
+            "text": "Highlights: Continuing work on the perps exchange",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_113",
+            "text": "Leading tech debt repayment initiative.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_114",
+            "text": "Direct ownership over critical features required for launch (design, development, team coordination)",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_115",
+            "text": "Mentoring junior team members",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_116",
+            "text": "Senior Backend Engineer, Enclave Markets, Remote",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_117",
+            "text": "Highlights: Member of a small engineering team, focused primarily on the new features and code main-tainability with a relatively big (roughly 1/2 Linux kernel) codebase.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_118",
+            "text": "Added core features to the exchange, such as websocket market data streaming, advanced order types (TWAP), off platform hedging for strategies traded on the exchange, improving liquidity and reducing slippage for big orders.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_119",
+            "text": "Built a telegram bot serving as an alternative client for the exchange: 70% of AVAX-USD volume was going through it after the first week of the launch.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_120",
+            "text": "Add websocket support to various endpoints, reducing unnecessary traﬀic by 30%",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_121",
+            "text": "Senior Engineer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_122",
+            "text": "Stellar Development Foundation, Vancouver, BC, Remote",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_123",
+            "text": "Leading migration project of one of the critical partners (MoneyGram). Architecture design and implementation of external facing tools. Ecosystem protocol design. Responsible for wallet and anchor partners integrations.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_124",
+            "text": "One of core contributors to the stellar-cli. Designing and implementing new commands, participating in existing functionality improvements based on developers feedback and changes of underlying Stellar libraries.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_125",
+            "text": "Leading initiative of migrating one of the biggest SDF partners – MoneyGram. Integration success directly affects SDF, as one of MoneyGram’s stakeholder.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_126",
+            "text": "Tech lead/project lead and the sole developer on the new version of the existing product (implements SEP-24 protocol), migrating from legacy in-house implementation to the use of the Anchor Platform.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_127",
+            "text": "Working with management and multiple teams (including Engineering) within MoneyGram.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_128",
+            "text": "Covered new architecture design, planning, development of the product, cross-team collaboration",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_129",
+            "text": "(including time management and task management), internal documentation and migration tooling.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_130",
+            "text": "Designed architecture of the Wallet SDK tool. Wrote Kotlin implementation and oversaw development of Typescript and Flutter implementations.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_131",
+            "text": "Driven development of the Anchor Platform – SDF developed platform supporting various Stellar Ecosystem Protocols. Was one of 2 team members developing and delivering SEP-24 support, one of the most used standards in the ecosystem.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_132",
+            "text": "Worked with more than 30 wallet partners and more than 20 anchor partners. Worked directly with critical/high priority partners’ tech leads designing architecture that meets partners needs, using Stellar protocols and tools",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_133",
+            "text": "Software Engineer → Tech Lead",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_134",
+            "text": "CardinalChain Software, Vancouver, BC",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_135",
+            "text": "Tech lead on Japanese centralized crypto exchange backend. Responsible for architecture design, maintenance and technical leadership of a team growing in size from 3 to 10 of junior/middle level developers. Supported over 35 different crypto currencies.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_136",
+            "text": "Designed fundamental architecture and was overseeing development of full-stack cold wallet transfer and browser extension projects.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_137",
+            "text": "Re-designed various legacy parts of the project, making it easily used by other developers. As a result, developer time spent on a new currency support was cut by more than 40%.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_138",
+            "text": "Improved test practices before production release, leading to more stable and secure software.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_140",
+            "text": "Software Engineer (Junior/Middle), FitechSource, St. Petersburg, Russia",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_141",
+            "text": "Highlights: Prior to internal transfer to CardinalChain I was working on the same project in the Car-dinalChain’s child company.Worked as a sole developer alongside the project manager. Responsible for maintaining 3 core currencies (+ forks), added support of 2 more currencies. Re-wrote parts of the code, reducing the number of supported versions from 6 to just 2.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_142",
+            "text": "Associate software engineer, ITIVITI, St. Petersburg",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_143",
+            "text": "Highlights: Was working on an internal testing tool (market simulator). Was contributing to the tool’s core logic, as well as connectivity layer, that was responsible for simulating protocols of various exchanges (e.g. Nasdaq, LSE, etc.), Simulator was used in the testing pipeline for integration and performance tests. Increased exchange coverage by adding 2 new protocols.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_111"
+            ],
+            "meta_para_ids": [
+              "para_112"
+            ],
+            "bullet_para_ids": [
+              "para_113",
+              "para_114",
+              "para_115"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_116"
+            ],
+            "meta_para_ids": [
+              "para_117"
+            ],
+            "bullet_para_ids": [
+              "para_118",
+              "para_119",
+              "para_120"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_121"
+            ],
+            "meta_para_ids": [
+              "para_122"
+            ],
+            "bullet_para_ids": [
+              "para_123",
+              "para_124",
+              "para_125",
+              "para_126",
+              "para_127",
+              "para_128",
+              "para_129",
+              "para_130",
+              "para_131",
+              "para_132"
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_para_ids": [
+              "para_133"
+            ],
+            "meta_para_ids": [
+              "para_134"
+            ],
+            "bullet_para_ids": [
+              "para_135",
+              "para_136",
+              "para_137",
+              "para_138"
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_para_ids": [
+              "para_140"
+            ],
+            "meta_para_ids": [
+              "para_141"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_6",
+            "header_para_ids": [
+              "para_142"
+            ],
+            "meta_para_ids": [
+              "para_143"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Education",
+        "paragraphs": [
+          {
+            "para_id": "para_144",
+            "text": "Education",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_145",
+            "text": "Bachelor’s degree in applied mathematics and computer science, ITMO University, Saint Petersburg, Russia, Information Technologies and Programming Faculty, Computer Technology Department",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Skills (used in professional projects)",
+        "paragraphs": [
+          {
+            "para_id": "para_146",
+            "text": "Skills (used in professional projects)",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_147",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_2",
+        "para_id": "para_78",
+        "text_preview": "Experience"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_144",
+        "text_preview": "Education"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_146",
+        "text_preview": "Skills (used in professional projects)"
+      }
+    ],
+    "roles_cleared": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Projects",
+        "role_count": 1
+      }
+    ],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 29
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Projects",
+        "display_title": "Projects",
+        "semantic_type": "projects",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_64",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_65",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_66",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_67",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_68",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_6",
+            "para_id": "para_69",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_7",
+            "para_id": "para_70",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_8",
+            "para_id": "para_71",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_9",
+            "para_id": "para_72",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_10",
+            "para_id": "para_73",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_11",
+            "para_id": "para_74",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_12",
+            "para_id": "para_75",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_13",
+            "para_id": "para_76",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_14",
+            "para_id": "para_77",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Experience",
+        "display_title": "Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_15",
+                "para_id": "para_111",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_112",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_17",
+                "para_id": "para_113",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_18",
+                "para_id": "para_114",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_19",
+                "para_id": "para_115",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_20",
+                "para_id": "para_116",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_21",
+                "para_id": "para_117",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_22",
+                "para_id": "para_118",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_23",
+                "para_id": "para_119",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_24",
+                "para_id": "para_120",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_25",
+                "para_id": "para_121",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_26",
+                "para_id": "para_122",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_27",
+                "para_id": "para_123",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_28",
+                "para_id": "para_124",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_29",
+                "para_id": "para_125",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_30",
+                "para_id": "para_126",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_31",
+                "para_id": "para_127",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_32",
+                "para_id": "para_128",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_33",
+                "para_id": "para_129",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_34",
+                "para_id": "para_130",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_35",
+                "para_id": "para_131",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_36",
+                "para_id": "para_132",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_blocks": [
+              {
+                "block_id": "block_37",
+                "para_id": "para_133",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_38",
+                "para_id": "para_134",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_39",
+                "para_id": "para_135",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_40",
+                "para_id": "para_136",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_41",
+                "para_id": "para_137",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_42",
+                "para_id": "para_138",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_blocks": [
+              {
+                "block_id": "block_43",
+                "para_id": "para_140",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_44",
+                "para_id": "para_141",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_6",
+            "header_blocks": [
+              {
+                "block_id": "block_45",
+                "para_id": "para_142",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_46",
+                "para_id": "para_143",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": true,
+    "errors": [],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "repair_input": null,
+  "repair_response": null,
+  "validation_after_repair": null,
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Projects",
+        "display_title": "Projects",
+        "semantic_type": "projects",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_64",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_65",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_66",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_67",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_68",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_6",
+            "para_id": "para_69",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_7",
+            "para_id": "para_70",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_8",
+            "para_id": "para_71",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_9",
+            "para_id": "para_72",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_10",
+            "para_id": "para_73",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_11",
+            "para_id": "para_74",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_12",
+            "para_id": "para_75",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_13",
+            "para_id": "para_76",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_14",
+            "para_id": "para_77",
+            "semantic_type": "project_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Experience",
+        "display_title": "Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_15",
+                "para_id": "para_111",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_112",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_17",
+                "para_id": "para_113",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_18",
+                "para_id": "para_114",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_19",
+                "para_id": "para_115",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_20",
+                "para_id": "para_116",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_21",
+                "para_id": "para_117",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_22",
+                "para_id": "para_118",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_23",
+                "para_id": "para_119",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_24",
+                "para_id": "para_120",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_25",
+                "para_id": "para_121",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_26",
+                "para_id": "para_122",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_27",
+                "para_id": "para_123",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_28",
+                "para_id": "para_124",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_29",
+                "para_id": "para_125",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_30",
+                "para_id": "para_126",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_31",
+                "para_id": "para_127",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_32",
+                "para_id": "para_128",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_33",
+                "para_id": "para_129",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_34",
+                "para_id": "para_130",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_35",
+                "para_id": "para_131",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_36",
+                "para_id": "para_132",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_blocks": [
+              {
+                "block_id": "block_37",
+                "para_id": "para_133",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_38",
+                "para_id": "para_134",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_39",
+                "para_id": "para_135",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_40",
+                "para_id": "para_136",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_41",
+                "para_id": "para_137",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_42",
+                "para_id": "para_138",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_blocks": [
+              {
+                "block_id": "block_43",
+                "para_id": "para_140",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_44",
+                "para_id": "para_141",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_6",
+            "header_blocks": [
+              {
+                "block_id": "block_45",
+                "para_id": "para_142",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_46",
+                "para_id": "para_143",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": []
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "status": "valid",
+  "validation_error_count": 0,
+  "invalid_section_count_before_repair": 0,
+  "invalid_section_count_after_repair": 0,
+  "repaired_section_count": 0,
+  "downgraded_section_count": 0,
+  "invalid_section_ids": [],
+  "recovery_applied": false
+}

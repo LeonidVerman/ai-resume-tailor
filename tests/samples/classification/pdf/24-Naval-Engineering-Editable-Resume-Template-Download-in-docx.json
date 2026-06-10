@@ -1,0 +1,1458 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "WORK EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_25",
+            "text": "TIMMERMAN INDUSTRIES - 123 Anywhere St., Any City",
+            "parser_semantic": "paragraph",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_26",
+            "text": "Project Manager (2023 - Present)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_27",
+            "text": "Prepare project worksheets and manage work estimates from start to finish.",
+            "parser_semantic": "project_intro"
+          },
+          {
+            "para_id": "para_28",
+            "text": "Prepare administrative documents, including logistics and work proposals.",
+            "parser_semantic": "role_intro"
+          },
+          {
+            "para_id": "para_29",
+            "text": "Coordinate with other divisions to ensure that projects are completed successfully.",
+            "parser_semantic": "role_intro"
+          },
+          {
+            "para_id": "para_30",
+            "text": "TIMMERMAN INDUSTRIES - 123 Anywhere St., Any City",
+            "parser_semantic": "paragraph",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_31",
+            "text": "Project Engineer(2021 - 2023)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_32",
+            "text": "Control the project's progress according to the plan created by the project manager.",
+            "parser_semantic": "project_intro"
+          },
+          {
+            "para_id": "para_33",
+            "text": "Responsible for the engineering department and collaboration with other departments.",
+            "parser_semantic": "role_intro"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_25"
+            ],
+            "meta_para_ids": [
+              "para_26",
+              "para_27",
+              "para_28",
+              "para_29"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_30"
+            ],
+            "meta_para_ids": [
+              "para_31",
+              "para_32",
+              "para_33"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_35",
+            "text": "BORCELLE UNIVERSITY",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_36",
+            "text": "Master of Naval Architecture (2018-2020)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_37",
+            "text": "GPA : 3.89/4.00",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_38",
+            "text": "Thesis  : Title of The Thesis",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_39",
+            "text": "BORCELLE UNIVERSITY",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_40",
+            "text": "Bachelor of Naval Architecture (2014-2018)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_41",
+            "text": "GPA : 3.89/4.00",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_42",
+            "text": "Thesis  : Title of The Thesis",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "SKILL",
+        "paragraphs": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "LEADERSHIP",
+        "paragraphs": [
+          {
+            "para_id": "para_45",
+            "text": "DISCIPLINE",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_46",
+            "text": "SELF-CONFIDENT",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_47",
+            "text": "LANGUAGE",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_48",
+            "text": "English",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_49",
+            "text": "(Mother Tongue)",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_50",
+            "text": "Japanese",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_51",
+            "text": "(Proficient)",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "WORK EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_15",
+            "text": "WORK EXPERIENCE",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_25",
+            "text": "TIMMERMAN INDUSTRIES - 123 Anywhere St., Any City",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_26",
+            "text": "Project Manager (2023 - Present)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_27",
+            "text": "Prepare project worksheets and manage work estimates from start to finish.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_28",
+            "text": "Prepare administrative documents, including logistics and work proposals.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_29",
+            "text": "Coordinate with other divisions to ensure that projects are completed successfully.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_30",
+            "text": "TIMMERMAN INDUSTRIES - 123 Anywhere St., Any City",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_31",
+            "text": "Project Engineer(2021 - 2023)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_32",
+            "text": "Control the project's progress according to the plan created by the project manager.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_33",
+            "text": "Responsible for the engineering department and collaboration with other departments.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_25"
+            ],
+            "meta_para_ids": [
+              "para_26",
+              "para_27",
+              "para_28",
+              "para_29"
+            ],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_30"
+            ],
+            "meta_para_ids": [
+              "para_31",
+              "para_32",
+              "para_33"
+            ],
+            "bullet_para_ids": []
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_34",
+            "text": "EDUCATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_35",
+            "text": "BORCELLE UNIVERSITY",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_36",
+            "text": "Master of Naval Architecture (2018-2020)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_37",
+            "text": "GPA : 3.89/4.00",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_38",
+            "text": "Thesis  : Title of The Thesis",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_39",
+            "text": "BORCELLE UNIVERSITY",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_40",
+            "text": "Bachelor of Naval Architecture (2014-2018)",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_41",
+            "text": "GPA : 3.89/4.00",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_42",
+            "text": "Thesis  : Title of The Thesis",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "SKILL",
+        "paragraphs": [
+          {
+            "para_id": "para_43",
+            "text": "SKILL",
+            "parser_semantic": "section_heading"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "LEADERSHIP",
+        "paragraphs": [
+          {
+            "para_id": "para_44",
+            "text": "LEADERSHIP",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_45",
+            "text": "DISCIPLINE",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_46",
+            "text": "SELF-CONFIDENT",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_47",
+            "text": "LANGUAGE",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_48",
+            "text": "English",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_49",
+            "text": "(Mother Tongue)",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_50",
+            "text": "Japanese",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_51",
+            "text": "(Proficient)",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_15",
+        "text_preview": "WORK EXPERIENCE"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_34",
+        "text_preview": "EDUCATION"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_43",
+        "text_preview": "SKILL"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_44",
+        "text_preview": "LEADERSHIP"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 2
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "WORK EXPERIENCE",
+        "display_title": "Work Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_1",
+                "para_id": "para_25",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_2",
+                "para_id": "para_26",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_3",
+                "para_id": "para_27",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_4",
+                "para_id": "para_28",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_5",
+                "para_id": "para_29",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_6",
+                "para_id": "para_30",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_7",
+                "para_id": "para_31",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_8",
+                "para_id": "para_32",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_9",
+                "para_id": "para_33",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_10",
+            "para_id": "para_35",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_11",
+            "para_id": "para_36",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_12",
+            "para_id": "para_37",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_13",
+            "para_id": "para_38",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_14",
+            "para_id": "para_39",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_15",
+            "para_id": "para_40",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_16",
+            "para_id": "para_41",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_17",
+            "para_id": "para_42",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_10",
+                "para_id": "para_35",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_11",
+                "para_id": "para_36",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_12",
+                "para_id": "para_37",
+                "semantic_type": "other_paragraph",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_13",
+                "para_id": "para_38",
+                "semantic_type": "other_paragraph",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_blocks": [
+              {
+                "block_id": "block_14",
+                "para_id": "para_39",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_15",
+                "para_id": "para_40",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_41",
+                "semantic_type": "other_paragraph",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_17",
+                "para_id": "para_42",
+                "semantic_type": "other_paragraph",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "SKILL",
+        "display_title": "Skills",
+        "semantic_type": "skills",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "LEADERSHIP",
+        "display_title": "Leadership",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_18",
+            "para_id": "para_45",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_19",
+            "para_id": "para_46",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_20",
+            "para_id": "para_47",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_21",
+            "para_id": "para_48",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_22",
+            "para_id": "para_49",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_23",
+            "para_id": "para_50",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_24",
+            "para_id": "para_51",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_2",
+        "detail": "must be true"
+      },
+      {
+        "code": "EDUCATION_ROLES_PRESENT",
+        "section_id": "sec_2",
+        "detail": "roles[] must be empty for this section type"
+      },
+      {
+        "code": "SKILLS_REWRITE_POLICY",
+        "section_id": "sec_3",
+        "detail": "got 'preserve'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": false,
+        "error_codes": [
+          "EDUCATION_PRESERVE_BODY_STRUCTURE",
+          "EDUCATION_ROLES_PRESENT"
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": false,
+        "error_codes": [
+          "SKILLS_REWRITE_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_2",
+          "raw_title": "EDUCATION",
+          "paragraphs": [
+            {
+              "para_id": "para_35",
+              "text": "BORCELLE UNIVERSITY",
+              "parser_semantic": "role_header"
+            },
+            {
+              "para_id": "para_36",
+              "text": "Master of Naval Architecture (2018-2020)",
+              "parser_semantic": "role_meta"
+            },
+            {
+              "para_id": "para_37",
+              "text": "GPA : 3.89/4.00",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_38",
+              "text": "Thesis  : Title of The Thesis",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_39",
+              "text": "BORCELLE UNIVERSITY",
+              "parser_semantic": "role_header"
+            },
+            {
+              "para_id": "para_40",
+              "text": "Bachelor of Naval Architecture (2014-2018)",
+              "parser_semantic": "role_meta"
+            },
+            {
+              "para_id": "para_41",
+              "text": "GPA : 3.89/4.00",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_42",
+              "text": "Thesis  : Title of The Thesis",
+              "parser_semantic": "paragraph"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_2",
+          "raw_title": "EDUCATION",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "block_10",
+              "para_id": "para_35",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_11",
+              "para_id": "para_36",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_12",
+              "para_id": "para_37",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_13",
+              "para_id": "para_38",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_14",
+              "para_id": "para_39",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_15",
+              "para_id": "para_40",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_16",
+              "para_id": "para_41",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_17",
+              "para_id": "para_42",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": [
+            {
+              "role_id": "role_3",
+              "header_blocks": [
+                {
+                  "block_id": "block_10",
+                  "para_id": "para_35",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve",
+                  "new": false
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "block_id": "block_11",
+                  "para_id": "para_36",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve",
+                  "new": false
+                }
+              ],
+              "body_blocks": [
+                {
+                  "block_id": "block_12",
+                  "para_id": "para_37",
+                  "semantic_type": "other_paragraph",
+                  "rewrite_policy": "preserve",
+                  "new": false
+                },
+                {
+                  "block_id": "block_13",
+                  "para_id": "para_38",
+                  "semantic_type": "other_paragraph",
+                  "rewrite_policy": "preserve",
+                  "new": false
+                }
+              ]
+            },
+            {
+              "role_id": "role_4",
+              "header_blocks": [
+                {
+                  "block_id": "block_14",
+                  "para_id": "para_39",
+                  "semantic_type": "role_header",
+                  "rewrite_policy": "preserve",
+                  "new": false
+                }
+              ],
+              "meta_blocks": [
+                {
+                  "block_id": "block_15",
+                  "para_id": "para_40",
+                  "semantic_type": "role_meta",
+                  "rewrite_policy": "preserve",
+                  "new": false
+                }
+              ],
+              "body_blocks": [
+                {
+                  "block_id": "block_16",
+                  "para_id": "para_41",
+                  "semantic_type": "other_paragraph",
+                  "rewrite_policy": "preserve",
+                  "new": false
+                },
+                {
+                  "block_id": "block_17",
+                  "para_id": "para_42",
+                  "semantic_type": "other_paragraph",
+                  "rewrite_policy": "preserve",
+                  "new": false
+                }
+              ]
+            }
+          ]
+        },
+        "validation_errors": [
+          {
+            "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+            "section_id": "sec_2",
+            "detail": "must be true"
+          },
+          {
+            "code": "EDUCATION_ROLES_PRESENT",
+            "section_id": "sec_2",
+            "detail": "roles[] must be empty for this section type"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_3",
+          "raw_title": "SKILL",
+          "paragraphs": [],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_3",
+          "raw_title": "SKILL",
+          "display_title": "Skills",
+          "semantic_type": "skills",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SKILLS_REWRITE_POLICY",
+            "section_id": "sec_3",
+            "detail": "got 'preserve'"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_2",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_10",
+            "para_id": "para_35",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_11",
+            "para_id": "para_36",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_12",
+            "para_id": "para_37",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_13",
+            "para_id": "para_38",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_14",
+            "para_id": "para_39",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_15",
+            "para_id": "para_40",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_16",
+            "para_id": "para_41",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_17",
+            "para_id": "para_42",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_10",
+                "para_id": "para_35",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_11",
+                "para_id": "para_36",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_12",
+                "para_id": "para_37",
+                "semantic_type": "other_paragraph",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_13",
+                "para_id": "para_38",
+                "semantic_type": "other_paragraph",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_blocks": [
+              {
+                "block_id": "block_14",
+                "para_id": "para_39",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_15",
+                "para_id": "para_40",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_41",
+                "semantic_type": "other_paragraph",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_17",
+                "para_id": "para_42",
+                "semantic_type": "other_paragraph",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "SKILL",
+        "display_title": "Skills",
+        "semantic_type": "skills",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [],
+        "roles": []
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "EDUCATION_ROLES_PRESENT",
+        "section_id": "sec_2",
+        "detail": "roles[] must be empty for this section type"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": false,
+        "error_codes": [
+          "EDUCATION_ROLES_PRESENT"
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "WORK EXPERIENCE",
+        "display_title": "Work Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_1",
+                "para_id": "para_25",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_2",
+                "para_id": "para_26",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_3",
+                "para_id": "para_27",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_4",
+                "para_id": "para_28",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_5",
+                "para_id": "para_29",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_6",
+                "para_id": "para_30",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_7",
+                "para_id": "para_31",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_8",
+                "para_id": "para_32",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_9",
+                "para_id": "para_33",
+                "semantic_type": "role_intro",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_10",
+            "para_id": "para_35",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_11",
+            "para_id": "para_36",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_12",
+            "para_id": "para_37",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_13",
+            "para_id": "para_38",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_14",
+            "para_id": "para_39",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_15",
+            "para_id": "para_40",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_16",
+            "para_id": "para_41",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_17",
+            "para_id": "para_42",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "SKILL",
+        "display_title": "Skills",
+        "semantic_type": "skills",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "LEADERSHIP",
+        "display_title": "Leadership",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_18",
+            "para_id": "para_45",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_19",
+            "para_id": "para_46",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_20",
+            "para_id": "para_47",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_21",
+            "para_id": "para_48",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_22",
+            "para_id": "para_49",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_23",
+            "para_id": "para_50",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_24",
+            "para_id": "para_51",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "status": "repaired_and_downgraded",
+  "validation_error_count": 3,
+  "invalid_section_count_before_repair": 2,
+  "invalid_section_count_after_repair": 1,
+  "repaired_section_count": 1,
+  "downgraded_section_count": 1,
+  "invalid_section_ids": [
+    "sec_2"
+  ],
+  "recovery_applied": true
+}

@@ -1,0 +1,231 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Tools",
+        "paragraphs": [
+          {
+            "para_id": "para_55",
+            "text": "Borcelle",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_56",
+            "text": "Database",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_57",
+            "text": "Arrowai",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_58",
+            "text": "Liceria &",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Co",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Tools",
+        "paragraphs": [
+          {
+            "para_id": "para_54",
+            "text": "Tools",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Borcelle",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_56",
+            "text": "Database",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_57",
+            "text": "Arrowai",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_58",
+            "text": "Liceria &",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Co",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_54",
+        "text_preview": "Tools"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 0
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Tools",
+        "display_title": "Tools",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_55",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_56",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_57",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_58",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_59",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": true,
+    "errors": [],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "repair_input": null,
+  "repair_response": null,
+  "validation_after_repair": null,
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "Tools",
+        "display_title": "Tools",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_55",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_56",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_57",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_58",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_59",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "status": "valid",
+  "validation_error_count": 0,
+  "invalid_section_count_before_repair": 0,
+  "invalid_section_count_after_repair": 0,
+  "repaired_section_count": 0,
+  "downgraded_section_count": 0,
+  "invalid_section_ids": [],
+  "recovery_applied": false
+}

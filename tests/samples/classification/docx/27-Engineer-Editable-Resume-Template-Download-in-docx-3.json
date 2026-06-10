@@ -1,0 +1,926 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "GENERAL INFO",
+        "paragraphs": [
+          {
+            "para_id": "para_19",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_20",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_21",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_22",
+            "text": "Mechanical Engineer with 6+ years of experience in lightweight materials innovation, production, and maintenance. Possess a B.S. in Mechanical Engineering.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_23",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK HISTORY",
+        "paragraphs": [
+          {
+            "para_id": "para_37",
+            "text": "2016 - Present",
+            "parser_semantic": "role_meta",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_39",
+            "text": "Mechanical Engineer at Warner & Spencer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_41",
+            "text": "Worked with a team of 10+ to ideate, create, maintain, and update lightweight materials, working primarily with carbon fiber composite",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_44",
+            "text": "Increased production efficiency by 15% by strategically minimizing bottlenecks",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_47",
+            "text": "2014-2016",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_49",
+            "text": "Mechanical Engineering Apprentice at Thynk Unlimited",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_51",
+            "text": "Researched new materials-generation techniques, compiling and distributing an average of 3 reports/year to engineering team",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_56",
+            "text": "MATTHEW TURNER",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_58",
+            "text": "ENGINEERING",
+            "parser_semantic": "specialization_header"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_37"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_39"
+            ],
+            "meta_para_ids": [
+              "para_41",
+              "para_44",
+              "para_47"
+            ],
+            "bullet_para_ids": [
+              "para_49",
+              "para_51",
+              "para_56",
+              "para_58"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_64",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_65",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_66",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_67",
+            "text": "2008-2012",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_68",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_69",
+            "text": "Master Degree of Project Engineering",
+            "parser_semantic": "project_header"
+          },
+          {
+            "para_id": "para_70",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_71",
+            "text": "Followed my passion in Product Design and Manufacturing coursework",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_72",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_73",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_74",
+            "text": "Pursued an independent study program in Machine Layout Design.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_75",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_76",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_77",
+            "text": "2012-2014",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_78",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_79",
+            "text": "Mechanical Engineer at Warner & Spencer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_80",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_81",
+            "text": "Completed 2 years course in Really Great University. Graduated with distinction (GWA 3,8).",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_82",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_83",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_84",
+            "text": "Increased production efficiency by 15% by strategically minimizing bottlenecks",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_85",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_86",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_87",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "CONTACT",
+        "paragraphs": [
+          {
+            "para_id": "para_89",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_90",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_91",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_92",
+            "text": "+123-456-7890 hello@techguruplus.com 123 Anywhere St., Any City",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_93",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "GENERAL INFO",
+        "paragraphs": [
+          {
+            "para_id": "para_18",
+            "text": "GENERAL INFO",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_19",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_20",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_21",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_22",
+            "text": "Mechanical Engineer with 6+ years of experience in lightweight materials innovation, production, and maintenance. Possess a B.S. in Mechanical Engineering.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_23",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK HISTORY",
+        "paragraphs": [
+          {
+            "para_id": "para_24",
+            "text": "WORK HISTORY",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_37",
+            "text": "2016 - Present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_39",
+            "text": "Mechanical Engineer at Warner & Spencer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_41",
+            "text": "Worked with a team of 10+ to ideate, create, maintain, and update lightweight materials, working primarily with carbon fiber composite",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_44",
+            "text": "Increased production efficiency by 15% by strategically minimizing bottlenecks",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_47",
+            "text": "2014-2016",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_49",
+            "text": "Mechanical Engineering Apprentice at Thynk Unlimited",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_51",
+            "text": "Researched new materials-generation techniques, compiling and distributing an average of 3 reports/year to engineering team",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_56",
+            "text": "MATTHEW TURNER",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_58",
+            "text": "ENGINEERING",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_37"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_39"
+            ],
+            "meta_para_ids": [
+              "para_41",
+              "para_44",
+              "para_47"
+            ],
+            "bullet_para_ids": [
+              "para_49",
+              "para_51",
+              "para_56",
+              "para_58"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_63",
+            "text": "EDUCATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_64",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_65",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_66",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_67",
+            "text": "2008-2012",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_68",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_69",
+            "text": "Master Degree of Project Engineering",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_70",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_71",
+            "text": "Followed my passion in Product Design and Manufacturing coursework",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_72",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_73",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_74",
+            "text": "Pursued an independent study program in Machine Layout Design.",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_75",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_76",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_77",
+            "text": "2012-2014",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_78",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_79",
+            "text": "Mechanical Engineer at Warner & Spencer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_80",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_81",
+            "text": "Completed 2 years course in Really Great University. Graduated with distinction (GWA 3,8).",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_82",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_83",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_84",
+            "text": "Increased production efficiency by 15% by strategically minimizing bottlenecks",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_85",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_86",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_87",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "CONTACT",
+        "paragraphs": [
+          {
+            "para_id": "para_88",
+            "text": "CONTACT",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_89",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_90",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_91",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_92",
+            "text": "+123-456-7890 hello@techguruplus.com 123 Anywhere St., Any City",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_93",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_18",
+        "text_preview": "GENERAL INFO"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_24",
+        "text_preview": "WORK HISTORY"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_63",
+        "text_preview": "EDUCATION"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_88",
+        "text_preview": "CONTACT"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 1
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "GENERAL INFO",
+        "display_title": "General Info",
+        "semantic_type": "summary",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_22",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK HISTORY",
+        "display_title": "Work History",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_2",
+                "para_id": "para_37",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_3",
+                "para_id": "para_39",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_4",
+                "para_id": "para_41",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": true
+              },
+              {
+                "block_id": "block_5",
+                "para_id": "para_44",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_REWRITE_POLICY",
+        "section_id": "sec_1",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_HEADING",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_1 rewrite_policy='preserve'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_REWRITE_POLICY",
+          "SUMMARY_PRESERVE_HEADING",
+          "SUMMARY_PRESERVE_BODY_STRUCTURE",
+          "SUMMARY_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_1",
+          "raw_title": "GENERAL INFO",
+          "paragraphs": [
+            {
+              "para_id": "para_19",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_20",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_21",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_22",
+              "text": "Mechanical Engineer with 6+ years of experience in lightweight materials innovation, production, and maintenance. Possess a B.S. in Mechanical Engineering.",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_23",
+              "text": "",
+              "parser_semantic": "empty"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_1",
+          "raw_title": "GENERAL INFO",
+          "display_title": "General Info",
+          "semantic_type": "summary",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "block_1",
+              "para_id": "para_22",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SUMMARY_REWRITE_POLICY",
+            "section_id": "sec_1",
+            "detail": "got 'preserve'"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_HEADING",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_BODY_STRUCTURE",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_1 rewrite_policy='preserve'"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "GENERAL INFO",
+        "display_title": "General Info",
+        "semantic_type": "summary",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_22",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": true,
+    "errors": [],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "GENERAL INFO",
+        "display_title": "General Info",
+        "semantic_type": "summary",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_22",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK HISTORY",
+        "display_title": "Work History",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_2",
+                "para_id": "para_37",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_3",
+                "para_id": "para_39",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_4",
+                "para_id": "para_41",
+                "semantic_type": "role_responsibility_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": true
+              },
+              {
+                "block_id": "block_5",
+                "para_id": "para_44",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "status": "repaired",
+  "validation_error_count": 4,
+  "invalid_section_count_before_repair": 1,
+  "invalid_section_count_after_repair": 0,
+  "repaired_section_count": 1,
+  "downgraded_section_count": 0,
+  "invalid_section_ids": [],
+  "recovery_applied": false
+}
