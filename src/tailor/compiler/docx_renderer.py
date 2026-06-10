@@ -756,6 +756,18 @@ def _set_para_text(p_elem, text: str) -> None:
     # Values ≥ 80 twips are intentional letter-spacing (decorative headings)
     # and must be preserved.
     _MICRO_KERN_LIMIT = 80  # twips; larger = intentional letter-spacing
+    # w:w (character width scaling) cleanup thresholds.
+    # PDF-to-DOCX converters produce two classes of artifact w:w values:
+    #   > 150%: FontAwesome icon/bullet placeholder runs (e.g. w=270) that end
+    #           up carrying the first 1-2 chars of redistributed content, making
+    #           those chars render 2.7x wide ("De signed", "Mento red").
+    #   < 95%:  Single mega-runs covering the whole original line (e.g. w=90)
+    #           where only the first proportional slice inherits the value; the
+    #           remaining slices get w=None (100%), creating a mismatch at the
+    #           first run boundary ("Prot ocols").
+    # Values in [95, 150] are treated as intentional typography and preserved.
+    _W_SCALE_MIN = 95
+    _W_SCALE_MAX = 150
     _prev_content_rpr = None  # rPr of last non-spacer run, for w:w propagation
     for _ki, _kr in enumerate(all_runs):
         if _ki in ws_text or _ki in vml_indices:
@@ -780,6 +792,15 @@ def _set_para_text(p_elem, text: str) -> None:
                             _krpr.remove(_ksp)
                     except (ValueError, TypeError):
                         pass
+                # Strip out-of-range character width scaling from content runs.
+                _kww = _krpr.find(f"{{{_W}}}w")
+                if _kww is not None:
+                    try:
+                        _wval = int(_kww.get(f"{{{_W}}}val") or 100)
+                        if _wval < _W_SCALE_MIN or _wval > _W_SCALE_MAX:
+                            _krpr.remove(_kww)
+                    except (ValueError, TypeError):
+                        pass
             continue
 
         # Spacer run: strip w:spacing.
@@ -791,9 +812,21 @@ def _set_para_text(p_elem, text: str) -> None:
                         _krpr.remove(_ksp)
                 except (ValueError, TypeError):
                     pass
+            # Strip out-of-range w:w from spacer runs too.  Template spacer runs
+            # that immediately follow icon/placeholder runs may carry the same
+            # artifact w=270; stripping prevents it from surviving into output.
+            _kww_s = _krpr.find(f"{{{_W}}}w")
+            if _kww_s is not None:
+                try:
+                    _wval_s = int(_kww_s.get(f"{{{_W}}}val") or 100)
+                    if _wval_s < _W_SCALE_MIN or _wval_s > _W_SCALE_MAX:
+                        _krpr.remove(_kww_s)
+                except (ValueError, TypeError):
+                    pass
 
         # Propagate w:w (character width scaling) from the preceding content run
         # so the redistributed word character renders at the same condensed width.
+        # Only in-range values are propagated; artifact values were stripped above.
         if _prev_content_rpr is not None and _krpr is not None:
             _src_ww = _prev_content_rpr.find(f"{{{_W}}}w")
             if _src_ww is not None and _krpr.find(f"{{{_W}}}w") is None:
