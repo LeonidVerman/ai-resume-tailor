@@ -190,31 +190,16 @@ def test_sample35_parse_docx_builds_newspaper_col_widths():
     assert narrow_entries, "Expected at least one narrow (≤70pt) column entry"
 
 
-def test_sample35_summary_anchors_in_wide_header():
-    """_find_summary_anchors must find wide (non-narrow) anchors for sample 35.
-
-    After the narrow date-column fix, the 50 date-sidebar paras are injected into
-    role.meta_lines and no longer populate header_paras.  The trailing empty paras
-    in the full-width header section (no _col_width_twips set) are valid anchors.
-    """
+def test_sample35_summary_anchor_returns_none():
+    """_find_summary_anchors must return None for sample 35 (no safe anchors in header)."""
     from tailor.compiler.docx_parser import parse_docx
     from tailor.compiler.updater import _find_summary_anchors
-    _col_widths_threshold = 3600
     doc = parse_docx(_SAMPLE_35)
     result = _find_summary_anchors(doc)
-    # Result may be None if the header genuinely lacks empty slots, or a pair of
-    # wide empty paras — either is acceptable; what must NOT happen is a narrow-col
-    # para being returned as an anchor.
-    if result is not None:
-        col_widths = getattr(doc, "_newspaper_col_widths", {})
-        for anchor in result:
-            if anchor is None:
-                continue
-            w = col_widths.get(anchor.para_id)
-            assert w is None or w >= _col_widths_threshold, (
-                f"Anchor {anchor.para_id!r} is in a narrow column "
-                f"({w} twips < {_col_widths_threshold} twips threshold)"
-            )
+    assert result is None, (
+        f"Expected None for sample 35 (no wide empty header slots), got para_ids="
+        f"{tuple(a.para_id for a in result if a) if result else None}"
+    )
 
 
 def test_sample35_guard_rejects_narrow_empty_simulated():

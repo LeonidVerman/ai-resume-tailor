@@ -1470,11 +1470,6 @@ def parse_docx(path: str) -> ResumeDocument:
     # Engineer Intern") without a containing "Work Experience" / "Experience" header.
     sections = _consolidate_job_entry_sections(sections)
 
-    # Inject narrow date-column groups into experience role.meta_lines.
-    # Must run before assign_stable_ids so the injected paras receive correct para_ids.
-    if _table_col_meta.get("narrow_date_col_groups"):
-        _inject_narrow_date_groups(sections, _table_col_meta["narrow_date_col_groups"])
-
     # Multi-variant template deduplication: some templates ship N identical copies of
     # the same resume layout in different color schemes (e.g. sample 9 with 3 tables
     # using red/blue/green accent colors).  Detect when the section title sequence is
@@ -1507,14 +1502,6 @@ def parse_docx(path: str) -> ResumeDocument:
             _aw = getattr(_apm, "_col_width_twips", None)
             if _aw is not None and _apm.para_id:
                 _anchor_col_widths[_apm.para_id] = _aw
-        # Also include meta_lines paras: narrow date-col paras injected into
-        # role.meta_lines are no longer in all_paras but still carry _col_width_twips.
-        for _sec in doc.sections:
-            for _role in _sec.roles:
-                for _mpm in _role.meta_lines:
-                    _maw = getattr(_mpm, "_col_width_twips", None)
-                    if _maw is not None and _mpm.para_id:
-                        _anchor_col_widths[_mpm.para_id] = _maw
         if _anchor_col_widths:
             doc._newspaper_col_widths = _anchor_col_widths  # type: ignore[attr-defined]
 
@@ -2575,21 +2562,10 @@ def _apply_multicolumn_newspaper_fix(
     # tail_stream is empty for most documents; non-empty only when a single-column
     # section trails multi-column sections (e.g. sample 35 Projects section).
     header_list = all_paras[:header_end_para_idx]
+    candidate = header_list + left_stream + right_stream + tail_stream
 
     if not left_stream and not right_stream and not tail_stream:
         return all_paras, False, {}
-
-    # Detect narrow date-only left column (e.g. a date sidebar where every
-    # non-empty para is a date range or employment-type line with no section
-    # headings).  Exclude it from the candidate so section grouping operates on
-    # the content column only; the date groups are returned in metadata for
-    # injection into experience role.meta_lines by parse_docx().
-    _narrow_date_groups: list[list[ParaModel]] = []
-    if _is_narrow_date_only_left_stream(left_stream):
-        _narrow_date_groups = _build_narrow_date_groups(left_stream)
-        left_stream = []
-
-    candidate = header_list + left_stream + right_stream + tail_stream
 
     # Quality validation: candidate must not lose section headings or experience roles
     orig_sec = _simple_section_count(all_paras)
@@ -2621,7 +2597,6 @@ def _apply_multicolumn_newspaper_fix(
         "col_count": 2,
         "headings_per_col": headings_per_col,
         "paras_per_col": paras_per_col,
-        "narrow_date_col_groups": _narrow_date_groups,
     }
 
 
