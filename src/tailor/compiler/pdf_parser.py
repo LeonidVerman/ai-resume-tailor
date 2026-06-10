@@ -2749,6 +2749,16 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 # this section (mixed-format sections need date signal for the
                 # non-pipe roles that precede the pipe-format ones).
                 pre_header_meta.append(pm)
+            elif s == "bullet" and pre_header_meta and not has_pipe_role_headers:
+                # Pattern B continuation: date was buffered and the role title
+                # carries bullet styling (common when a PDF template uses the
+                # same bullet list style for the title line as for the bullets
+                # below it).  Promote this bullet as the role header.
+                header = pm
+                meta.extend(pre_header_meta)
+                pre_header_meta.clear()
+                used_pattern_b = True
+                state = "header"
         elif state == "header":
             if s == "role_meta":
                 if used_pattern_b:
@@ -3632,6 +3642,43 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
             if not right_secs and right_hdrs and left_secs:
                 _redistribute_parallel_body(right_hdrs, left_secs)
                 right_hdrs = []
+            # Reverse parallel-body: left_hdrs has orphan role_meta (date) lines
+            # that belong to the right-column experience section.  This occurs
+            # when the template places dates in the left column alongside role
+            # titles in the right column, and the EXPERIENCE heading is only in
+            # the right column — so _group_sections(left_raw) never sees it and
+            # the dates fall into left_hdrs instead of experience body_paras.
+            #
+            # Guard 1 (primary): the left column must have NO experience section
+            # of its own.  If it does, the columns are independent and moving
+            # dates across would corrupt both sections.
+            #
+            # Guard 2 (y-overlap): orphan dates must start at or after the right
+            # EXPERIENCE heading y — dates that precede the heading belong to
+            # another section (e.g. education dates at the top of the left column).
+            if not any(s.semantic_type == "experience" for s in left_secs):
+                _exp_sec_r = next(
+                    (s for s in right_secs if s.semantic_type == "experience"), None
+                )
+                if _exp_sec_r is not None:
+                    def _para_y(pm: "ParaModel") -> float:
+                        pp = pm.paragraph_profile
+                        return pp.y_top_pt if pp and pp.y_top_pt else 0.0
+                    _exp_hdr_y = _para_y(_exp_sec_r.heading)
+                    _orphan_dates = [
+                        hp for hp in left_hdrs
+                        if hp.semantic == "role_meta" and _para_y(hp) >= _exp_hdr_y - 20.0
+                    ]
+                    if _orphan_dates:
+                        combined = list(_exp_sec_r.body_paras) + _orphan_dates
+                        combined.sort(key=lambda pm: (
+                            _para_y(pm),
+                            0 if pm.paragraph_profile and pm.paragraph_profile.column_id == "left" else 1,
+                        ))
+                        _exp_sec_r.body_paras = combined
+                        _finalise(_exp_sec_r)
+                        _orphan_date_ids = {id(hp) for hp in _orphan_dates}
+                        left_hdrs = [hp for hp in left_hdrs if id(hp) not in _orphan_date_ids]
             header_paras = above_hdrs + left_hdrs + right_hdrs
             sections     = above_secs + left_secs + right_secs
     else:
