@@ -1507,6 +1507,14 @@ def parse_docx(path: str) -> ResumeDocument:
             _aw = getattr(_apm, "_col_width_twips", None)
             if _aw is not None and _apm.para_id:
                 _anchor_col_widths[_apm.para_id] = _aw
+        # Also include meta_lines paras: narrow date-col paras injected into
+        # role.meta_lines are no longer in all_paras but still carry _col_width_twips.
+        for _sec in doc.sections:
+            for _role in _sec.roles:
+                for _mpm in _role.meta_lines:
+                    _maw = getattr(_mpm, "_col_width_twips", None)
+                    if _maw is not None and _mpm.para_id:
+                        _anchor_col_widths[_mpm.para_id] = _maw
         if _anchor_col_widths:
             doc._newspaper_col_widths = _anchor_col_widths  # type: ignore[attr-defined]
 
