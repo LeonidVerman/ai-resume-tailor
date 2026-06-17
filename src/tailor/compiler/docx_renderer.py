@@ -1387,13 +1387,23 @@ def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=
                     if bp.text.strip():
                         _append(bp)
             for role in section.roles:
-                if role.header_extra and "|" not in role.header.text:
+                _non_italic_he = [
+                    he for he in role.header_extra
+                    if he.text.strip() and not (he.paragraph_profile and he.paragraph_profile.italic)
+                ]
+                _italic_he = [
+                    he for he in role.header_extra
+                    if he.text.strip() and (he.paragraph_profile and he.paragraph_profile.italic)
+                ]
+                if _non_italic_he and "|" not in role.header.text:
                     _combined = role.header.text.strip() + " | " + " | ".join(
-                        he.text.strip() for he in role.header_extra if he.text.strip()
+                        he.text.strip() for he in _non_italic_he
                     )
                     _append(role.header, _combined)
                 else:
                     _append(role.header)
+                for ie in _italic_he:
+                    _append(ie)
                 for pm in role.meta_lines:
                     _append(pm)
                 for pm in role.bullets:
@@ -1610,13 +1620,24 @@ def _render_pdf_single_col_with_groups(
         return m0_y < h_y
 
     def _role_header_pm(role):
-        """Return a ParaModel for the role header, combining header_extra when present."""
-        if role.header_extra and "|" not in role.header.text:
+        """Return a ParaModel for the role header, combining non-italic header_extra."""
+        non_italic = [
+            he for he in role.header_extra
+            if he.text.strip() and not (he.paragraph_profile and he.paragraph_profile.italic)
+        ]
+        if non_italic and "|" not in role.header.text:
             combined = role.header.text.strip() + " | " + " | ".join(
-                he.text.strip() for he in role.header_extra if he.text.strip()
+                he.text.strip() for he in non_italic
             )
             return role.header.with_text(combined)
         return role.header
+
+    def _role_italic_extra(role) -> "list":
+        """Return header_extra items that are italic (subtitles, rendered as own lines)."""
+        return [
+            he for he in role.header_extra
+            if he.text.strip() and (he.paragraph_profile and he.paragraph_profile.italic)
+        ]
 
     def _role_two_col_date(role) -> bool:
         """True when date meta is in the left column and role title is in the right column.
@@ -1710,25 +1731,41 @@ def _render_pdf_single_col_with_groups(
         """Build shifted paragraph elements for a role (used inside table cells)."""
         result = []
         hdr_pm = _role_header_pm(role)
+        italic_extra = _role_italic_extra(role)
         date_first = _role_date_first(role)
         two_col = _role_two_col_date(role)
         if two_col:
             result.append(_build_role_two_col_table(role, hdr_pm, min_indent))
         elif date_first:
-            elem = build_para_element(role.meta_lines[0], doc_part)
-            _shift_indent(elem, min_indent)
-            result.append(elem)
+            h_y_top = (role.header.paragraph_profile.y_top_pt
+                       if role.header.paragraph_profile else None)
+            for m in role.meta_lines:
+                m_y = m.paragraph_profile.y_top_pt if m.paragraph_profile else None
+                if h_y_top is None or m_y is None or m_y < h_y_top:
+                    elem = build_para_element(m, doc_part)
+                    _shift_indent(elem, min_indent)
+                    result.append(elem)
             elem = build_para_element(hdr_pm, doc_part)
             _shift_indent(elem, min_indent)
             result.append(elem)
-            for m in role.meta_lines[1:]:
-                elem = build_para_element(m, doc_part)
+            for ie in italic_extra:
+                elem = build_para_element(ie, doc_part)
                 _shift_indent(elem, min_indent)
                 result.append(elem)
+            for m in role.meta_lines:
+                m_y = m.paragraph_profile.y_top_pt if m.paragraph_profile else None
+                if h_y_top is not None and m_y is not None and m_y >= h_y_top:
+                    elem = build_para_element(m, doc_part)
+                    _shift_indent(elem, min_indent)
+                    result.append(elem)
         else:
             elem = build_para_element(hdr_pm, doc_part)
             _shift_indent(elem, min_indent)
             result.append(elem)
+            for ie in italic_extra:
+                elem = build_para_element(ie, doc_part)
+                _shift_indent(elem, min_indent)
+                result.append(elem)
             for m in role.meta_lines:
                 elem = build_para_element(m, doc_part)
                 _shift_indent(elem, min_indent)
@@ -1744,19 +1781,34 @@ def _render_pdf_single_col_with_groups(
         """Build paragraph elements for a role (used outside table cells)."""
         result = []
         hdr_pm = _role_header_pm(role)
+        italic_extra = _role_italic_extra(role)
         date_first = _role_date_first(role)
         two_col = _role_two_col_date(role)
         if two_col:
             result.append(_build_role_two_col_table(role, hdr_pm))
         elif date_first:
-            result.append(build_para_element(role.meta_lines[0], doc_part))
+            # Render meta lines that are physically above the role header before
+            # it; meta at or below the header renders after (e.g. right-aligned
+            # date on the same y as the role title stays after the title).
+            h_y_top = (role.header.paragraph_profile.y_top_pt
+                       if role.header.paragraph_profile else None)
+            for m in role.meta_lines:
+                m_y = m.paragraph_profile.y_top_pt if m.paragraph_profile else None
+                if h_y_top is None or m_y is None or m_y < h_y_top:
+                    result.append(build_para_element(m, doc_part))
             result.append(build_para_element(hdr_pm, doc_part))
-            for m in role.meta_lines[1:]:
-                result.append(build_para_element(m, doc_part))
+            for ie in italic_extra:
+                result.append(build_para_element(ie, doc_part))
+            for m in role.meta_lines:
+                m_y = m.paragraph_profile.y_top_pt if m.paragraph_profile else None
+                if h_y_top is not None and m_y is not None and m_y >= h_y_top:
+                    result.append(build_para_element(m, doc_part))
             for b in role.bullets:
                 result.append(build_para_element(b, doc_part))
         else:
             result.append(build_para_element(hdr_pm, doc_part))
+            for ie in italic_extra:
+                result.append(build_para_element(ie, doc_part))
             for m in role.meta_lines:
                 result.append(build_para_element(m, doc_part))
             for b in role.bullets:

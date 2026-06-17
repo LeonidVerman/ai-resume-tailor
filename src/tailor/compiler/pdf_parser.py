@@ -2748,6 +2748,12 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 else:
                     # Not promotable — buffer as pre-role meta so it is not lost.
                     pre_header_meta.append(pm)
+            elif s == "paragraph" and has_pipe_role_headers and _peek(idx + 1) == "role_meta":
+                # Company/employer name preceding a date line in a section that
+                # uses pipe-format role_headers.  Buffer so it becomes a meta line
+                # for the upcoming role (e.g. "Company Name, Inc., New York, NY"
+                # immediately before "Jan 2015 - present" in sample 5).
+                pre_header_meta.append(pm)
             elif s == "role_meta":
                 # Pattern B: date appears before the title — buffer it.
                 # Buffer even when pipe-format role headers exist elsewhere in
@@ -2941,6 +2947,13 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                     pm.semantic = "role_header"
                     header = pm
                     state = "header"
+                elif has_pipe_role_headers and _peek(idx + 1) == "role_meta":
+                    # Company/employer name appearing before the next role's date
+                    # line in a pipe-format section.  Flush the current role and
+                    # buffer the company name so it becomes meta for the next role.
+                    _flush()
+                    pre_header_meta.append(pm)
+                    state = "init"
                 elif len(bullets) >= 2:
                     # Established list (≥2 bullets): promote as continuation.
                     pm.semantic = "bullet"
