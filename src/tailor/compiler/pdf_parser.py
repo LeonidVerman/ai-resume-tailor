@@ -849,26 +849,23 @@ def _extract_decorative_vector_images(page) -> "list":
         if hex_color is None:
             continue
 
-        # Skip near-white fills (nothing to overlay)
         r_c = int(hex_color[0:2], 16)
         g_c = int(hex_color[2:4], 16)
         b_c = int(hex_color[4:6], 16)
-        if (r_c + g_c + b_c) / 3 >= 240:
-            continue
 
-        # Fix B: Near-full-page vector shapes (≥85% of page in both dimensions) are
-        # reclassified as "full_page_bg" rather than skipped outright.  Single-column
-        # templates need them as floating page backgrounds; two-column templates have
-        # Fix A filter them when cell shading already handles the column fill.
-        # Near-white full-page shapes are skipped (virtual canvas, nothing to add).
+        # Evaluate full-page first so cream/near-white full-page backgrounds (avg ≥ 240
+        # but min < 240) are not dropped by the partial-shape near-white filter below.
         _is_full_page = w >= pw * 0.85 and h >= ph * 0.85
 
         if _is_full_page:
-            # Near-white full-page shape → skip (no visual contribution)
+            # Near-white full-page shape → skip (virtual canvas, no visual contribution)
             if min(r_c, g_c, b_c) > 240:
                 continue
             category = "full_page_bg"
         else:
+            # Skip near-white partial fills (nothing to overlay on a white background)
+            if (r_c + g_c + b_c) / 3 >= 240:
+                continue
             # Normal classification for partial shapes
             is_full_w = w > pw * 0.75
             is_sidebar = (x0 < pw * 0.10 or x1 > pw * 0.90) and w < pw * 0.65 and h > ph * 0.12
@@ -1199,15 +1196,23 @@ def _extract_page_images(fitz_doc, page_index: int = 0) -> "list":
                 _pix_check = _fitz.Pixmap(fitz_doc, xref)
                 if _pix_check.n > 4 or _pix_check.colorspace != _fitz.csRGB:
                     _pix_check = _fitz.Pixmap(_fitz.csRGB, _pix_check)
-                _cx = _pix_check.width // 2
-                _cy = _pix_check.height // 2
-                _px = _pix_check.pixel(_cx, _cy)
-                # Skip when ALL channels are near-maximum (blank/white canvas).
-                # Using min-channel > 240 rather than average-luminance > 200
-                # avoids false-filtering of pastel backgrounds like (161,225,225)
-                # which have high average luminance but visible teal/green color.
-                if min(_px[0], _px[1], _px[2]) > 240:
-                    continue  # effectively white full-page image → skip
+                # Sample a 3×3 grid at 10 %/50 %/90 % of width and height.
+                # A single center-pixel check incorrectly drops templates whose
+                # center is white but whose edges/corners carry decorative color
+                # (e.g. watercolor brush strokes).  Using grid points at 10 %
+                # from the edges catches corner decorations while still skipping
+                # truly blank canvases (every sampled point near-white).
+                _pw2, _ph2 = _pix_check.width, _pix_check.height
+                _sample_pts = [
+                    (int(_pw2 * fx), int(_ph2 * fy))
+                    for fx in (0.10, 0.50, 0.90)
+                    for fy in (0.10, 0.50, 0.90)
+                ]
+                if all(
+                    min(_pix_check.pixel(_sx, _sy)[:3]) > 240
+                    for _sx, _sy in _sample_pts
+                ):
+                    continue  # all 9 sampled points near-white → blank canvas, skip
                 category = "full_page_bg"
             except Exception:
                 continue  # cannot sample → skip safely
@@ -3884,6 +3889,8 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     # Solid-color overlays from vector drawing regions (sidebars, header/footer bands).
     # Prepended so they render behind raster images and text.
     vector_images = _extract_decorative_vector_images(doc[0])
+    # Thin stroke-only rules (section dividers, decorative lines).
+    line_images = _extract_vector_lines(doc[0])
 
     # Fix A: When a two-column layout with left column background color is detected,
     # filter out vector images representing that column background.  The two-column
@@ -3932,7 +3939,7 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
                 _before - len(vector_images),
             )
 
-    resume_doc.page_images = vector_images + raster_images
+    resume_doc.page_images = vector_images + line_images + raster_images
 
     # Fix 15: Infer column_split_x from a tall narrow sidebar image when text-gap
     # detection failed.  Templates with sparse sidebar content (a few contact lines)
@@ -4062,6 +4069,40 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     from tailor.compiler.models import assign_stable_ids
     assign_stable_ids(resume_doc)
 
+    # --- Section-anchor h_rules to nearest section heading below them ---
+    # Every h_rule whose y is within 80 pt above a section heading is associated
+    # with that heading.  The renderer will later emit it as a w:pBdr/w:top on
+    # the heading paragraph instead of a floating image, so the rule travels with
+    # its section after DOCX reflow rather than staying at the original PDF y.
+    _sec_ys: list[tuple[float, str]] = []
+    for _sec in resume_doc.sections:
+        _hh = _sec.heading.paragraph_profile
+        if _hh and _hh.y_top_pt > 0:
+            _sec_ys.append((_hh.y_top_pt, _sec.section_id))
+    _sec_ys.sort(key=lambda t: t[0])
+
+    _anchored_count = 0
+    for _img in resume_doc.page_images:
+        if _img.category != "h_rule":
+            continue
+        for _sy, _sid in _sec_ys:
+            if _sy > _img.y_pt:
+                _gap = _sy - _img.y_pt
+                if _gap <= 80.0:
+                    _img.anchor_next_section_id = _sid
+                    _img.gap_to_anchor_pt = _gap
+                    _anchored_count += 1
+                    log.debug(
+                        "HRULE_ANCHORED: y=%.1f → %s gap=%.1f",
+                        _img.y_pt, _sid, _gap,
+                    )
+                break  # nearest section found (anchored or too far)
+
+    if _anchored_count:
+        log.debug("HRULE_ANCHOR_SUMMARY: %d/%d h_rules anchored",
+                  _anchored_count,
+                  sum(1 for _i in resume_doc.page_images if _i.category == "h_rule"))
+
     # --- PDF asset preservation diagnostics ---
     from collections import Counter as _Counter
     _img_cats = dict(_Counter(img.category for img in resume_doc.page_images))
@@ -4073,6 +4114,7 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     resume_doc.pdf_diagnostics = {
         "raster_images_raw": len(raster_images),
         "vector_images_raw": len(vector_images),
+        "line_images_raw": len(line_images),
         "page_images_final": len(resume_doc.page_images),
         "image_categories": _img_cats,
         "column_split_x": resume_doc.layout.column_split_x,
@@ -4086,10 +4128,11 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
         "page_bg_detected": "full_page_bg" in _img_cats,
     }
     log.info(
-        "PDF_ASSET_DIAGNOSTICS: raster=%d vector=%d final=%d cats=%s "
+        "PDF_ASSET_DIAGNOSTICS: raster=%d vector=%d lines=%d final=%d cats=%s "
         "col_split=%.1f mode=%r hdr_bg=%r left_bg=%r sidebar=%s bg=%s",
         resume_doc.pdf_diagnostics["raster_images_raw"],
         resume_doc.pdf_diagnostics["vector_images_raw"],
+        resume_doc.pdf_diagnostics["line_images_raw"],
         resume_doc.pdf_diagnostics["page_images_final"],
         resume_doc.pdf_diagnostics["image_categories"],
         resume_doc.layout.column_split_x or 0.0,
