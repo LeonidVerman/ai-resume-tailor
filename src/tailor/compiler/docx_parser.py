@@ -906,8 +906,9 @@ def _try_split_compound_role(pm: ParaModel) -> list[ParaModel] | None:
     body_pm = ParaModel(text=body_text, style=_make_single_run_style(pm), semantic="paragraph")
 
     parts = [title_pm, meta_pm, body_pm]
-    # Tag original compound para so parse_docx can expand it in body_items after
-    # stable IDs are assigned (virtual parts need IDs before they appear in layout_blocks).
+    # Tag original compound para so parse_docx can borrow title_pm's para_id
+    # after assign_stable_ids runs.  The para stays in its physical position in
+    # body_items; its ID maps to title_pm in _build_para_lookup.
     pm._compound_parts = parts
 
     _logger.debug(
@@ -1505,19 +1506,17 @@ def parse_docx(path: str) -> ResumeDocument:
         if _anchor_col_widths:
             doc._newspaper_col_widths = _anchor_col_widths  # type: ignore[attr-defined]
 
-    # Expand compound-split orphans in body_items so their virtual parts (which
-    # now have stable para_ids after assign_stable_ids) each get their own
-    # LayoutParagraphBlock.  _try_split_compound_role tags the original compound
-    # para with ._compound_parts = [title_pm, meta_pm, body_pm].  Without this
-    # expansion the original compound para has no para_id and becomes lb_orphan_N
-    # in layout_blocks, while the virtual parts are never rendered.
-    _expanded_body: list = []
+    # For compound-split paragraphs: assign the compound para the same para_id
+    # as title_pm (_compound_parts[0]) and simplify its style to one content run.
+    # The renderer looks up para_lookup[para_id] which returns title_pm (with
+    # LLM-updated header text) and writes it into the compound para's single
+    # physical position.  body_items count stays equal to the source paragraph
+    # count.  meta_pm and body_pm carry virtual IDs for semantic use only
+    # (unbound — no layout block).
     for _bi in body_items:
         if not isinstance(_bi, TableBlock) and hasattr(_bi, "_compound_parts"):
-            _expanded_body.extend(_bi._compound_parts)
-        else:
-            _expanded_body.append(_bi)
-    body_items[:] = _expanded_body
+            _bi.para_id = _bi._compound_parts[0].para_id
+            _bi.style = _make_single_run_style(_bi)
 
     # Build serializable layout tree (Option B: XML prototypes as strings).
     # Iterates body_items (original physical document order, never reordered)
