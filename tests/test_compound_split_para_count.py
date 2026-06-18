@@ -225,3 +225,81 @@ def test_s36_layout_blocks_matches_source():
     assert len(doc.layout_blocks) == src_count, (
         f"Sample 36: layout_blocks {len(doc.layout_blocks)} != source count {src_count}"
     )
+
+
+# ---------------------------------------------------------------------------
+# 7. Floating textbox text exclusion (Issue 7a)
+# ---------------------------------------------------------------------------
+
+def test_s35_no_doubled_name_in_header_paras(doc35):
+    """Floating textbox content must not duplicate paragraph text.
+
+    Sample 35 has a <w:drawing> anchor textbox containing 'Gleb Zernov'.
+    The same paragraph also has contact info runs.  _get_para_text must
+    exclude the textbox text so the name does not appear doubled.
+    """
+    contact_para = next(
+        (pm for pm in doc35.header_paras if pm.text.strip()),
+        None,
+    )
+    assert contact_para is not None, "Expected at least one non-empty header para"
+    text = contact_para.text
+    # The name 'Gleb Zernov' must appear at most once
+    assert text.count("Gleb Zernov") <= 1, (
+        f"Name duplicated in header para: {text!r}"
+    )
+    # The contact paragraph must not contain 'Gleb ZernovGleb Zernov' (doubled)
+    assert "Gleb ZernovGleb Zernov" not in text, (
+        f"Doubled name detected in header para: {text!r}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# 8. Narrow date-column metadata attachment (Issue 1)
+# ---------------------------------------------------------------------------
+
+def test_s35_experience_roles_have_date_col_text(doc35):
+    """All experience roles in Sample 35 must carry _date_col_text metadata."""
+    from tailor.compiler.docx_parser import parse_docx
+    exp_secs = [s for s in doc35.sections if s.semantic_type == "experience"]
+    assert exp_secs, "Sample 35 must have an experience section"
+    exp_roles = [r for s in exp_secs for r in (s.roles or [])]
+    assert exp_roles, "Experience section must have roles"
+
+    roles_with_dates = [r for r in exp_roles if getattr(r, "_date_col_text", None)]
+    assert roles_with_dates, (
+        "No experience roles have _date_col_text; metadata attachment did not run"
+    )
+    # Majority of roles should have date text (allow one unmatched at end)
+    assert len(roles_with_dates) >= len(exp_roles) - 1, (
+        f"Only {len(roles_with_dates)}/{len(exp_roles)} roles have _date_col_text"
+    )
+
+
+def test_s35_date_col_text_contains_year(doc35):
+    """_date_col_text for each matched role must contain a 4-digit year."""
+    import re
+    exp_secs = [s for s in doc35.sections if s.semantic_type == "experience"]
+    exp_roles = [r for s in exp_secs for r in (s.roles or [])]
+    for role in exp_roles:
+        dct = getattr(role, "_date_col_text", None)
+        if dct is not None:
+            assert re.search(r"(19|20)\d{2}", dct), (
+                f"_date_col_text for role {role.header.text[:30]!r} "
+                f"contains no year: {dct!r}"
+            )
+
+
+def test_s35_date_col_text_not_in_meta_lines(doc35):
+    """_date_col_text must be metadata-only: no date text injected into meta_lines."""
+    exp_secs = [s for s in doc35.sections if s.semantic_type == "experience"]
+    exp_roles = [r for s in exp_secs for r in (s.roles or [])]
+    for role in exp_roles:
+        dct = getattr(role, "_date_col_text", None)
+        if dct:
+            meta_texts = [m.text for m in (role.meta_lines or [])]
+            for mt in meta_texts:
+                assert mt not in dct, (
+                    f"Date text from _date_col_text found in meta_lines for "
+                    f"role {role.header.text[:30]!r}: {mt!r}"
+                )

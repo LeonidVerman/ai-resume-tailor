@@ -185,8 +185,24 @@ def _classify_section(heading_text: str) -> str:
 def _get_para_text(p_elem) -> str:
     # Collect (kind, value) tokens: "t" for text, "br" for newline, "tab" for tab.
     # Tab is a run-level <w:tab/> element (direct child of <w:r>).
+
+    # Exclude text inside floating-shape containers: <w:drawing> (modern DOCX shapes)
+    # and <w:pict> (legacy VML shapes via mc:AlternateContent).  Without this guard,
+    # a floating textbox whose text duplicates the paragraph's own runs would be
+    # concatenated, producing doubled names like "Gleb ZernovGleb Zernov".
+    # We hold strong references (not id()) because lxml reuses proxy addresses across
+    # separate iter() calls; strong refs keep the proxies alive and ensure identity checks
+    # in the main loop hit the same Python objects.
+    _FLOAT_TAGS = (f"{{{_W}}}drawing", f"{{{_W}}}pict")
+    _excluded: set = set()
+    for _float_tag in _FLOAT_TAGS:
+        for _drw in p_elem.iter(_float_tag):
+            _excluded.update(_drw.iter())
+
     tokens: list[tuple[str, str]] = []
     for elem in p_elem.iter():
+        if _excluded and elem in _excluded:
+            continue
         if elem.tag == f"{{{_W}}}t":
             tokens.append(("t", elem.text or ""))
         elif elem.tag == f"{{{_W}}}br":
@@ -1505,6 +1521,26 @@ def parse_docx(path: str) -> ResumeDocument:
                 _anchor_col_widths[_apm.para_id] = _aw
         if _anchor_col_widths:
             doc._newspaper_col_widths = _anchor_col_widths  # type: ignore[attr-defined]
+
+    # Attach narrow date-column groups to experience roles as metadata-only strings.
+    # Private _date_col_text attribute: not traversed by assign_stable_ids, updater,
+    # or renderer lookup — informational only, e.g. for future sidebar rendering.
+    if _table_col_fixed:
+        _narrow_pms = [pm for pm in doc.header_paras
+                       if getattr(pm, "_col_width_twips", None) is not None
+                       and pm._col_width_twips < 2000]  # type: ignore[attr-defined]
+        if _is_narrow_date_only_left_stream(_narrow_pms):
+            _date_groups = _build_narrow_date_groups(_narrow_pms)
+            _exp_roles = [
+                r for sec in doc.sections
+                if sec.semantic_type == "experience"
+                for r in (sec.roles or [])
+            ]
+            for _di, _role in enumerate(_exp_roles):
+                if _di < len(_date_groups):
+                    _role._date_col_text = " ".join(  # type: ignore[attr-defined]
+                        pm.text.strip() for pm in _date_groups[_di] if pm.text.strip()
+                    )
 
     # For compound-split paragraphs: assign the compound para the same para_id
     # as title_pm (_compound_parts[0]) and simplify its style to one content run.
