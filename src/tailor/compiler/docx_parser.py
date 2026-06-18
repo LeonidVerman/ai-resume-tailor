@@ -1522,9 +1522,10 @@ def parse_docx(path: str) -> ResumeDocument:
         if _anchor_col_widths:
             doc._newspaper_col_widths = _anchor_col_widths  # type: ignore[attr-defined]
 
-    # Attach narrow date-column groups to experience roles as metadata-only strings.
-    # Private _date_col_text attribute: not traversed by assign_stable_ids, updater,
-    # or renderer lookup — informational only, e.g. for future sidebar rendering.
+    # Attach narrow date-column metadata to experience roles.
+    # Both _date_col_text (string) and _layout_binding (dict) are private
+    # attributes — not traversed by assign_stable_ids, updater, or renderer.
+    # layout_blocks and body_items are not modified.
     if _table_col_fixed:
         _narrow_pms = [pm for pm in doc.header_paras
                        if getattr(pm, "_col_width_twips", None) is not None
@@ -1541,6 +1542,7 @@ def parse_docx(path: str) -> ResumeDocument:
                     _role._date_col_text = " ".join(  # type: ignore[attr-defined]
                         pm.text.strip() for pm in _date_groups[_di] if pm.text.strip()
                     )
+            _build_role_layout_bindings(doc.sections, _narrow_pms, _date_groups)
 
     # For compound-split paragraphs: assign the compound para the same para_id
     # as title_pm (_compound_parts[0]) and simplify its style to one content run.
@@ -2369,6 +2371,79 @@ def _inject_narrow_date_groups(
             len(date_groups) - len(exp_roles),
             len(exp_roles),
         )
+
+
+def _build_role_layout_bindings(
+    sections: list[ResumeSection],
+    narrow_pms: list[ParaModel],
+    date_groups: list[list[ParaModel]],
+) -> None:
+    """Attach _layout_binding metadata to each matched experience role (N:N).
+
+    Each binding describes the left-column (date sidebar) paragraphs that
+    visually correspond to a right-column experience role block.  Spacers
+    between consecutive date groups are assigned as trailing spacers of the
+    preceding row and leading spacers of the following row.
+
+    The dict is a private attribute — not traversed by assign_stable_ids,
+    updater, or renderer.  layout_blocks and body_items are not changed.
+    """
+    exp_roles: list[RoleEntry] = [
+        r for sec in sections
+        if sec.semantic_type == "experience"
+        for r in (sec.roles or [])
+    ]
+    n = min(len(date_groups), len(exp_roles))
+    if n == 0:
+        return
+
+    # Map each para_id in narrow_pms to its date-group index (None = spacer).
+    pid_to_group: dict[str, int] = {}
+    for gi, grp in enumerate(date_groups):
+        for pm in grp:
+            pid_to_group[pm.para_id] = gi
+
+    # Walk narrow_pms sequentially, collecting spacer blocks between groups.
+    # trailing_spacers[gi] = list of para_ids that follow group gi before the
+    #                         next group starts.
+    # leading_spacers (before group 0) captured at key None.
+    trailing_spacers: dict[int | None, list[str]] = {}
+    cur_spacers: list[str] = []
+    prev_group: int | None = None
+    for pm in narrow_pms:
+        gi = pid_to_group.get(pm.para_id)
+        if gi is None:
+            cur_spacers.append(pm.para_id)
+        else:
+            if cur_spacers:
+                trailing_spacers[prev_group] = list(cur_spacers)
+                cur_spacers = []
+            prev_group = gi
+    if cur_spacers:
+        trailing_spacers[prev_group] = list(cur_spacers)
+
+    # Attach binding to each matched role.
+    for i in range(n):
+        grp = date_groups[i]
+        role = exp_roles[i]
+
+        # Column width is uniform within a group (all paras share the same section).
+        cw = getattr(grp[0], "_col_width_twips", None) if grp else None
+
+        # Leading spacers: the trailing-spacer block of the previous group.
+        leading = trailing_spacers.get(i - 1 if i > 0 else None, [])
+        trailing = trailing_spacers.get(i, [])
+
+        role._layout_binding = {  # type: ignore[attr-defined]
+            "kind": "timeline_left_role_right",
+            "row_index": i,
+            "right_anchor_para_id": role.header.para_id,
+            "left_para_ids": [pm.para_id for pm in grp],
+            "left_leading_spacer_ids": leading,
+            "left_trailing_spacer_ids": trailing,
+            "date_text": " ".join(pm.text.strip() for pm in grp if pm.text.strip()),
+            "column_width_twips": cw,
+        }
 
 
 def _apply_multicolumn_newspaper_fix(
