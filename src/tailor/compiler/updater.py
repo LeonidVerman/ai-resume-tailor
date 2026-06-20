@@ -404,6 +404,7 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
         bullets=new_bullets,
         role_id=orig.role_id,
         role_id_stable=orig.role_id_stable if layout_bound else "",
+        layout_binding=orig.layout_binding,
     )
 
 
@@ -558,6 +559,7 @@ def _update_experience_section(
                             meta_lines=list(updated.meta_lines) + [_company_pm],
                             bullets=updated.bullets,
                             role_id=updated.role_id,
+                            layout_binding=updated.layout_binding,
                         )
                 updated_roles.append(updated)
             # Template roles with no LLM counterpart are kept verbatim
@@ -1851,6 +1853,7 @@ def _update_role_bullets_only(
         meta_lines=kept_meta,
         bullets=new_bullets,
         role_id=orig.role_id,
+        layout_binding=orig.layout_binding,
     )
 
 
@@ -4341,6 +4344,7 @@ def apply_anchor_budgets(
                 bullets=[_t(b) for b in role.bullets],
                 role_id=role.role_id,
                 role_id_stable=role.role_id_stable,
+                layout_binding=role.layout_binding,
             ))
         new_sections.append(ResumeSection(
             title=sec.title,
