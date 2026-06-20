@@ -336,16 +336,19 @@ def _compile_sample(pair: SamplePair, verbose: bool = True) -> _Compiled | None:
     if verbose:
         print(f"  DOCX  -> {out_docx.relative_to(_REPO)}")
 
-    # ── Stage 5a: save IR from the in-memory updated doc (source template) ──
-    # Serialize the ResumeDocument returned by compile_resume/compile_resume_from_pdf
-    # rather than re-parsing the rendered output DOCX.  Re-parsing the rendered
-    # output reflects rendering bugs (e.g. compound-split paragraph inflation) as
-    # structural corruption in the IR, making the layout grader's content-injection
-    # and role-structure checks unreliable.  The in-memory model is always the
-    # correct semantic view of the source template after LLM text is applied.
+    # ── Stage 5a: save fresh IR re-parsed from the output DOCX ───────────
+    # Re-parse the written DOCX rather than serialising the compiler's
+    # in-memory model.  The model always reflects the compiler's intent, but
+    # the DOCX serialisation can silently drop content in edge cases (e.g.
+    # multi-SDT skills paragraphs).  Re-parsing makes the IR an accurate
+    # ground-truth of what actually ended up on disk, so that grade_layout.py
+    # can detect any serialisation gaps or renderer defects (wrong role count,
+    # column collapse, etc.) rather than grading against the intended model.
     try:
+        from tailor.compiler.docx_parser import parse_docx as _parse_output_docx
+        _reparsed = _parse_output_docx(str(out_docx))
         with open(out_ir, "w", encoding="utf-8") as f:
-            json.dump(updated.to_dict(), f, indent=2, ensure_ascii=False)
+            json.dump(_reparsed.to_dict(), f, indent=2, ensure_ascii=False)
     except Exception as e:
         print(f"{tag} FAIL [stage=save-ir] {type(e).__name__}: {e}")
         return None
