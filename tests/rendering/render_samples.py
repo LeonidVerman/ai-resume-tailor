@@ -61,6 +61,10 @@ _OUT_IR_PDF   = _REPO / "tmp" / "artefacts" / "ir"      / "pdf"
 _OUT_REND_DOCX = _REPO / "tmp" / "artefacts" / "rendering" / "docx"
 _OUT_REND_PDF  = _REPO / "tmp" / "artefacts" / "rendering" / "pdf"
 
+# Rendered-document IR (re-parsed from the output DOCX/PDF, used by grade_layout.py)
+_OUT_REND_IR_DOCX = _OUT_REND_DOCX / "ir"
+_OUT_REND_IR_PDF  = _OUT_REND_PDF  / "ir"
+
 _OUT_SS_DOCX = _OUT_REND_DOCX / "screenshots"
 _OUT_SS_PDF  = _OUT_REND_PDF  / "screenshots"
 
@@ -271,17 +275,21 @@ def _compile_sample(pair: SamplePair, verbose: bool = True) -> _Compiled | None:
     stem = pair.resume_path.stem   # e.g. "1-Leonid_Verman_Resume_Template"
 
     if pair.source_kind == "docx":
-        out_ir_dir   = _OUT_IR_DOCX
-        out_rend_dir = _OUT_REND_DOCX
+        out_ir_dir      = _OUT_IR_DOCX
+        out_rend_ir_dir = _OUT_REND_IR_DOCX
+        out_rend_dir    = _OUT_REND_DOCX
     else:
-        out_ir_dir   = _OUT_IR_PDF
-        out_rend_dir = _OUT_REND_PDF
+        out_ir_dir      = _OUT_IR_PDF
+        out_rend_ir_dir = _OUT_REND_IR_PDF
+        out_rend_dir    = _OUT_REND_PDF
 
     out_ir_dir.mkdir(parents=True, exist_ok=True)
+    out_rend_ir_dir.mkdir(parents=True, exist_ok=True)
     out_rend_dir.mkdir(parents=True, exist_ok=True)
 
-    out_ir   = out_ir_dir   / f"{stem}_IR.json"
-    out_docx = out_rend_dir / f"{stem}.docx"
+    out_ir      = out_ir_dir      / f"{stem}_IR.json"
+    out_rend_ir = out_rend_ir_dir / f"{stem}_IR.json"
+    out_docx    = out_rend_dir    / f"{stem}.docx"
     # PDF lives alongside its compiled DOCX (docx-source → rendering/docx/,
     # pdf-source → rendering/pdf/) so screenshots and grader each get the
     # correct rendered file.
@@ -336,25 +344,33 @@ def _compile_sample(pair: SamplePair, verbose: bool = True) -> _Compiled | None:
     if verbose:
         print(f"  DOCX  -> {out_docx.relative_to(_REPO)}")
 
-    # ── Stage 5a: save fresh IR re-parsed from the output DOCX ───────────
-    # Re-parse the written DOCX rather than serialising the compiler's
-    # in-memory model.  The model always reflects the compiler's intent, but
-    # the DOCX serialisation can silently drop content in edge cases (e.g.
-    # multi-SDT skills paragraphs).  Re-parsing makes the IR an accurate
-    # ground-truth of what actually ended up on disk, so that grade_layout.py
-    # can detect any serialisation gaps or renderer defects (wrong role count,
-    # column collapse, etc.) rather than grading against the intended model.
+    # ── Stage 5a: save two IR files ───────────────────────────────────────
+    # (1) Template IR — parsed from the original source template.
+    #     Written to tmp/artefacts/ir/{docx,pdf}/.  Used for manual
+    #     investigation of the parser's view of the source document.
+    # (2) Rendered IR — re-parsed from the written output DOCX.
+    #     Written to tmp/artefacts/rendering/{docx,pdf}/ir/.  Used by
+    #     grade_layout.py to detect serialisation gaps or renderer defects
+    #     (wrong role count, column collapse, etc.).
     try:
-        from tailor.compiler.docx_parser import parse_docx as _parse_output_docx
-        _reparsed = _parse_output_docx(str(out_docx))
-        with open(out_ir, "w", encoding="utf-8") as f:
-            json.dump(_reparsed.to_dict(), f, indent=2, ensure_ascii=False)
+        from tailor.compiler.docx_parser import parse_docx as _parse_docx
+        # Template IR: only for DOCX-origin (can't call parse_docx on a PDF source)
+        if pair.source_kind == "docx":
+            _tmpl_parsed = _parse_docx(str(pair.resume_path))
+            with open(out_ir, "w", encoding="utf-8") as f:
+                json.dump(_tmpl_parsed.to_dict(), f, indent=2, ensure_ascii=False)
+        # Rendered IR: always possible (out_docx is always a .docx)
+        _rend_parsed = _parse_docx(str(out_docx))
+        with open(out_rend_ir, "w", encoding="utf-8") as f:
+            json.dump(_rend_parsed.to_dict(), f, indent=2, ensure_ascii=False)
     except Exception as e:
         print(f"{tag} FAIL [stage=save-ir] {type(e).__name__}: {e}")
         return None
 
     if verbose:
-        print(f"  IR    -> {out_ir.relative_to(_REPO)}")
+        if pair.source_kind == "docx":
+            print(f"  IR    -> {out_ir.relative_to(_REPO)}")
+        print(f"  rendIR-> {out_rend_ir.relative_to(_REPO)}")
 
     return _Compiled(pair=pair, out_docx=out_docx, out_ir=out_ir,
                      grader_pdf=grader_pdf, tag=tag)
