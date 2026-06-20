@@ -5023,6 +5023,28 @@ def _render_from_layout_blocks(
         pm.para_id for pm in (doc.header_paras or []) if pm.para_id
     )
 
+    # Timeline-binding verbatim set: left-column date sidebar paragraphs and
+    # spacers that must NEVER have _set_para_text called on them.  Built from
+    # role.layout_binding where kind == "timeline_left_role_right".  Empty
+    # frozenset for all templates that do not carry a layout_binding — zero cost.
+    _timeline_left_pids: frozenset[str] = frozenset()
+    for _tlb_sec in doc.sections:
+        for _tlb_role in (_tlb_sec.roles or []):
+            _tlb = _tlb_role.layout_binding
+            if _tlb and _tlb.get("kind") == "timeline_left_role_right":
+                _timeline_left_pids = _timeline_left_pids | frozenset(
+                    _tlb.get("left_para_ids") or []
+                ) | frozenset(
+                    _tlb.get("left_leading_spacer_ids") or []
+                ) | frozenset(
+                    _tlb.get("left_trailing_spacer_ids") or []
+                )
+    if _timeline_left_pids:
+        _log.debug(
+            "TIMELINE_LEFT_VERBATIM_SET: %d para_ids will be emitted verbatim",
+            len(_timeline_left_pids),
+        )
+
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
             tbl_elem = etree.fromstring(block.xml_proto_xml)
@@ -5184,7 +5206,15 @@ def _render_from_layout_blocks(
                     elem, _main_pgSz_w, _main_pgSz_h, _main_is_multicolumn
                 )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
-                if pm is not None:
+                # Timeline-binding guard: left-column date sidebar and spacer
+                # paragraphs are emitted verbatim — _set_para_text must not
+                # rewrite them even when para_lookup has an entry.
+                # preserve_left_verbatim=True in layout_binding is the contract.
+                if _timeline_left_pids and block.para_id in _timeline_left_pids:
+                    _log.debug(
+                        "TIMELINE_LEFT_VERBATIM: para_id=%r", block.para_id
+                    )
+                elif pm is not None:
                     # Strip SDT children when the block's model text differs from
                     # what the template SDTs hold (same logic as _render_block_into_elem).
                     # _set_para_text early-exits on ≥2 SDTs to preserve multi-column
