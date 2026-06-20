@@ -306,31 +306,31 @@ def test_s35_date_col_text_not_in_meta_lines(doc35):
 
 
 # ---------------------------------------------------------------------------
-# 9. _layout_binding — timeline row metadata
+# 9. layout_binding — timeline row metadata
 # ---------------------------------------------------------------------------
 
 def _exp_roles_with_binding(doc):
     exp_secs = [s for s in doc.sections if s.semantic_type == "experience"]
     return [r for s in exp_secs for r in (s.roles or [])
-            if getattr(r, "_layout_binding", None) is not None]
+            if r.layout_binding is not None]
 
 
 def test_s35_all_experience_roles_have_layout_binding(doc35):
-    """Every experience role in Sample 35 must carry _layout_binding."""
+    """Every experience role in Sample 35 must carry layout_binding."""
     exp_secs = [s for s in doc35.sections if s.semantic_type == "experience"]
     exp_roles = [r for s in exp_secs for r in (s.roles or [])]
     assert exp_roles, "No experience roles found"
-    roles_without = [r for r in exp_roles if getattr(r, "_layout_binding", None) is None]
+    roles_without = [r for r in exp_roles if r.layout_binding is None]
     assert not roles_without, (
-        f"{len(roles_without)} role(s) missing _layout_binding: "
+        f"{len(roles_without)} role(s) missing layout_binding: "
         + str([r.header.text[:40] for r in roles_without])
     )
 
 
 def test_s35_layout_binding_kind(doc35):
-    """All _layout_binding dicts must have kind='timeline_left_role_right'."""
+    """All layout_binding dicts must have kind='timeline_left_role_right'."""
     for role in _exp_roles_with_binding(doc35):
-        lb = role._layout_binding
+        lb = role.layout_binding
         assert lb["kind"] == "timeline_left_role_right", (
             f"Wrong kind {lb['kind']!r} for role {role.header.text[:30]!r}"
         )
@@ -340,15 +340,15 @@ def test_s35_layout_binding_row_index_sequential(doc35):
     """row_index values must be 0, 1, 2, ... in role order."""
     bound = _exp_roles_with_binding(doc35)
     for i, role in enumerate(bound):
-        assert role._layout_binding["row_index"] == i, (
-            f"Role[{i}] row_index={role._layout_binding['row_index']}, expected {i}"
+        assert role.layout_binding["row_index"] == i, (
+            f"Role[{i}] row_index={role.layout_binding['row_index']}, expected {i}"
         )
 
 
 def test_s35_layout_binding_right_anchor_matches_header(doc35):
     """right_anchor_para_id must equal role.header.para_id."""
     for role in _exp_roles_with_binding(doc35):
-        lb = role._layout_binding
+        lb = role.layout_binding
         assert lb["right_anchor_para_id"] == role.header.para_id, (
             f"right_anchor_para_id {lb['right_anchor_para_id']!r} != "
             f"header.para_id {role.header.para_id!r} for {role.header.text[:30]!r}"
@@ -358,7 +358,7 @@ def test_s35_layout_binding_right_anchor_matches_header(doc35):
 def test_s35_layout_binding_left_para_ids_non_empty(doc35):
     """left_para_ids must be non-empty for every binding."""
     for role in _exp_roles_with_binding(doc35):
-        lb = role._layout_binding
+        lb = role.layout_binding
         assert lb["left_para_ids"], (
             f"Empty left_para_ids for role {role.header.text[:30]!r}"
         )
@@ -367,7 +367,7 @@ def test_s35_layout_binding_left_para_ids_non_empty(doc35):
 def test_s35_layout_binding_left_para_ids_not_in_meta_lines(doc35):
     """left_para_ids must not overlap with meta_lines para_ids (metadata-only)."""
     for role in _exp_roles_with_binding(doc35):
-        lb = role._layout_binding
+        lb = role.layout_binding
         meta_pids = {m.para_id for m in (role.meta_lines or [])}
         overlap = set(lb["left_para_ids"]) & meta_pids
         assert not overlap, (
@@ -376,25 +376,25 @@ def test_s35_layout_binding_left_para_ids_not_in_meta_lines(doc35):
         )
 
 
-def test_s35_layout_binding_date_text_contains_year(doc35):
-    """date_text in every binding must contain a 4-digit year."""
+def test_s35_layout_binding_left_text_contains_year(doc35):
+    """left_text in every binding must contain a 4-digit year."""
     import re
     for role in _exp_roles_with_binding(doc35):
-        lb = role._layout_binding
-        assert re.search(r"(19|20)\d{2}", lb["date_text"]), (
-            f"binding.date_text has no year for {role.header.text[:30]!r}: "
-            f"{lb['date_text']!r}"
+        lb = role.layout_binding
+        assert re.search(r"(19|20)\d{2}", lb["left_text"]), (
+            f"binding.left_text has no year for {role.header.text[:30]!r}: "
+            f"{lb['left_text']!r}"
         )
 
 
-def test_s35_layout_binding_date_text_matches_date_col_text(doc35):
-    """_layout_binding.date_text must equal _date_col_text when both present."""
+def test_s35_layout_binding_left_text_matches_date_col_text(doc35):
+    """layout_binding.left_text must equal _date_col_text when both present."""
     for role in _exp_roles_with_binding(doc35):
-        lb = role._layout_binding
+        lb = role.layout_binding
         dct = getattr(role, "_date_col_text", None)
         if dct is not None:
-            assert lb["date_text"] == dct, (
-                f"binding.date_text {lb['date_text']!r} != _date_col_text {dct!r} "
+            assert lb["left_text"] == dct, (
+                f"binding.left_text {lb['left_text']!r} != _date_col_text {dct!r} "
                 f"for {role.header.text[:30]!r}"
             )
 
@@ -402,7 +402,7 @@ def test_s35_layout_binding_date_text_matches_date_col_text(doc35):
 def test_s35_layout_binding_column_width_valid(doc35):
     """column_width_twips must be a narrow value (< 2000 twips)."""
     for role in _exp_roles_with_binding(doc35):
-        lb = role._layout_binding
+        lb = role.layout_binding
         cw = lb["column_width_twips"]
         assert cw is not None and cw < 2000, (
             f"column_width_twips {cw!r} is not narrow (<2000) "
@@ -411,7 +411,7 @@ def test_s35_layout_binding_column_width_valid(doc35):
 
 
 def test_s35_layout_binding_does_not_alter_layout_blocks(doc35):
-    """Adding _layout_binding must not change layout_blocks count."""
+    """Adding layout_binding must not change layout_blocks count."""
     src_count = _source_body_para_count(_S35_DOCX)
     lb_count = len(doc35.layout_blocks)
     assert lb_count == src_count, (
@@ -420,7 +420,7 @@ def test_s35_layout_binding_does_not_alter_layout_blocks(doc35):
 
 
 def test_s34_s36_no_layout_binding():
-    """Samples 34 and 36 (no narrow date sidebar) must not get _layout_binding."""
+    """Samples 34 and 36 (no narrow date sidebar) must not get layout_binding."""
     from tailor.compiler.docx_parser import parse_docx
     for label, path in [("s34", _S34_DOCX), ("s36", _S36_DOCX)]:
         if not Path(path).exists():
@@ -428,7 +428,98 @@ def test_s34_s36_no_layout_binding():
         doc = parse_docx(path)
         exp_secs = [s for s in doc.sections if s.semantic_type == "experience"]
         exp_roles = [r for s in exp_secs for r in (s.roles or [])]
-        bound = [r for r in exp_roles if getattr(r, "_layout_binding", None) is not None]
+        bound = [r for r in exp_roles if r.layout_binding is not None]
         assert not bound, (
-            f"{label}: {len(bound)} role(s) unexpectedly have _layout_binding"
+            f"{label}: {len(bound)} role(s) unexpectedly have layout_binding"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 10. layout_binding — right_para_ids, policy fields, disjointness, serialization
+# ---------------------------------------------------------------------------
+
+def test_s35_layout_binding_right_para_ids_starts_with_anchor(doc35):
+    """right_para_ids[0] must equal right_anchor_para_id (role header is first)."""
+    for role in _exp_roles_with_binding(doc35):
+        lb = role.layout_binding
+        assert lb["right_para_ids"], (
+            f"Empty right_para_ids for role {role.header.text[:30]!r}"
+        )
+        assert lb["right_para_ids"][0] == lb["right_anchor_para_id"], (
+            f"right_para_ids[0]={lb['right_para_ids'][0]!r} != "
+            f"right_anchor_para_id={lb['right_anchor_para_id']!r} "
+            f"for {role.header.text[:30]!r}"
+        )
+
+
+def test_s35_layout_binding_right_para_ids_match_role_semantic(doc35):
+    """right_para_ids must exactly cover the role's semantic paragraph IDs."""
+    for role in _exp_roles_with_binding(doc35):
+        lb = role.layout_binding
+        expected = (
+            [role.header.para_id]
+            + [p.para_id for p in role.header_extra]
+            + [p.para_id for p in role.meta_lines]
+            + [p.para_id for p in role.bullets]
+        )
+        assert lb["right_para_ids"] == expected, (
+            f"right_para_ids mismatch for {role.header.text[:30]!r}:\n"
+            f"  binding: {lb['right_para_ids']}\n"
+            f"  expected: {expected}"
+        )
+
+
+def test_s35_layout_binding_left_right_disjoint(doc35):
+    """left_para_ids and right_para_ids must be disjoint for every role."""
+    for role in _exp_roles_with_binding(doc35):
+        lb = role.layout_binding
+        overlap = set(lb["left_para_ids"]) & set(lb["right_para_ids"])
+        assert not overlap, (
+            f"left/right para_ids overlap for {role.header.text[:30]!r}: {overlap}"
+        )
+
+
+def test_s35_layout_binding_policy_fields(doc35):
+    """preserve_left_verbatim must be True; right_rewrite_policy must be set."""
+    for role in _exp_roles_with_binding(doc35):
+        lb = role.layout_binding
+        assert lb.get("preserve_left_verbatim") is True, (
+            f"preserve_left_verbatim not True for {role.header.text[:30]!r}"
+        )
+        assert lb.get("right_rewrite_policy") == "rewrite_inner_content_only", (
+            f"right_rewrite_policy wrong for {role.header.text[:30]!r}: "
+            f"{lb.get('right_rewrite_policy')!r}"
+        )
+
+
+def test_s35_layout_binding_survives_roundtrip(doc35):
+    """layout_binding must survive RoleEntry.to_dict() / from_dict() roundtrip."""
+    from tailor.compiler.models import RoleEntry
+    for role in _exp_roles_with_binding(doc35):
+        d = role.to_dict()
+        assert "layout_binding" in d, "layout_binding missing from to_dict()"
+        assert d["layout_binding"] is not None
+        restored = RoleEntry.from_dict(d)
+        assert restored.layout_binding == role.layout_binding, (
+            f"layout_binding changed after roundtrip for {role.header.text[:30]!r}"
+        )
+
+
+def test_s35_layout_binding_6_roles(doc35):
+    """Sample 35 must produce exactly 6 layout bindings — one per experience role."""
+    bound = _exp_roles_with_binding(doc35)
+    assert len(bound) == 6, (
+        f"Expected 6 layout bindings, got {len(bound)}"
+    )
+
+
+def test_s35_layout_binding_left_para_ids_in_header_paras(doc35):
+    """All left_para_ids must be present in doc.header_paras."""
+    hp_ids = {pm.para_id for pm in doc35.header_paras if pm.para_id}
+    for role in _exp_roles_with_binding(doc35):
+        lb = role.layout_binding
+        missing = [pid for pid in lb["left_para_ids"] if pid not in hp_ids]
+        assert not missing, (
+            f"left_para_ids not in header_paras for {role.header.text[:30]!r}: "
+            f"{missing}"
         )

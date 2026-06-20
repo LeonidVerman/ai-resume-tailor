@@ -1523,8 +1523,8 @@ def parse_docx(path: str) -> ResumeDocument:
             doc._newspaper_col_widths = _anchor_col_widths  # type: ignore[attr-defined]
 
     # Attach narrow date-column metadata to experience roles.
-    # Both _date_col_text (string) and _layout_binding (dict) are private
-    # attributes — not traversed by assign_stable_ids, updater, or renderer.
+    # _date_col_text (string) is a private runtime attribute for debugging.
+    # layout_binding (dict) is a proper RoleEntry field serialised with the IR.
     # layout_blocks and body_items are not modified.
     if _table_col_fixed:
         _narrow_pms = [pm for pm in doc.header_paras
@@ -2434,15 +2434,28 @@ def _build_role_layout_bindings(
         leading = trailing_spacers.get(i - 1 if i > 0 else None, [])
         trailing = trailing_spacers.get(i, [])
 
-        role._layout_binding = {  # type: ignore[attr-defined]
+        # All right-column paragraph IDs belonging to this role (header first,
+        # then header_extra, meta_lines, bullets).  Used by the renderer to
+        # identify which paragraphs it is permitted to rewrite.
+        right_para_ids = (
+            [role.header.para_id]
+            + [pm.para_id for pm in role.header_extra]
+            + [pm.para_id for pm in role.meta_lines]
+            + [pm.para_id for pm in role.bullets]
+        )
+
+        role.layout_binding = {
             "kind": "timeline_left_role_right",
             "row_index": i,
-            "right_anchor_para_id": role.header.para_id,
             "left_para_ids": [pm.para_id for pm in grp],
+            "left_text": " ".join(pm.text.strip() for pm in grp if pm.text.strip()),
             "left_leading_spacer_ids": leading,
             "left_trailing_spacer_ids": trailing,
-            "date_text": " ".join(pm.text.strip() for pm in grp if pm.text.strip()),
+            "right_anchor_para_id": role.header.para_id,
+            "right_para_ids": right_para_ids,
             "column_width_twips": cw,
+            "preserve_left_verbatim": True,
+            "right_rewrite_policy": "rewrite_inner_content_only",
         }
 
 
