@@ -88,25 +88,7 @@ _TWO_COL_SIM_THRESHOLD = 0.99
 # the right column, causing left-column similarity ~0.95 (< 0.99 threshold).
 # Resolving this requires either separate classification artifacts per source
 # kind or aligning section-header column assignment across pipelines.
-# Sample 36 (36-Asia_Dalakova): The original PDF template has per-role
-# technology-stack paragraphs that appear before the role header in the PDF
-# (captured as pre-header meta_lines by the PDF parser).  The PDF pipeline
-# renders these before the role header, but the DOCX template does not have
-# equivalent paragraphs, so the DOCX pipeline omits them.  This produces an
-# extra "prometheus, gitlab, kafka, ..." block before the GlobalLogic role in
-# the PDF-origin output that has no counterpart in the DOCX-origin output.
-#
-# Sample 39 (39-backend-developer-1606703830): The template uses Wingdings icon
-# fonts (U+F003 envelope, U+F095 phone, U+F041 pin, U+F0AC globe) for contact
-# items, which LibreOffice re-encodes as their ASCII code-point equivalents when
-# producing the DOCX-pipeline PDF.  More critically, the left-column content
-# assignment differs between pipelines: the DOCX pipeline places the full
-# professional-summary paragraph in the left column, while the PDF pipeline
-# places skills ("Restful Services") there instead.  This structural divergence
-# (left-column similarity ~0.32) cannot be resolved by normalisation alone and
-# requires either separate classification artifacts or template-level analysis
-# of which sections belong in which column.
-_XFAIL_SAMPLES: frozenset[str] = frozenset({"6", "36", "39"})
+_XFAIL_SAMPLES: frozenset[str] = frozenset({"6"})
 
 
 def _num_prefix(name: str) -> str | None:
