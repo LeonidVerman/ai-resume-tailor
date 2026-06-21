@@ -4769,6 +4769,239 @@ def _build_para_lookup(doc: ResumeDocument) -> dict[str, ParaModel]:
     return seen
 
 
+def _build_timeline_row_table(
+    doc: "ResumeDocument",
+    para_lookup: dict,
+    layout_blocks: list,
+    main_pgSz_w: "str | None",
+    main_pgSz_h: "str | None",
+    main_is_multicolumn: bool,
+    sectPr,
+) -> "tuple[Any, frozenset[str]]":
+    """Build a borderless two-column w:tbl for the timeline experience section.
+
+    Each row corresponds to one experience role whose layout_binding has
+    kind == "timeline_left_role_right".  Left cell receives the original
+    date sidebar paragraph XML verbatim; right cell receives the updated
+    role content rendered via _render_block_into_elem.
+
+    Returns (tbl_element, consumed_pids) where consumed_pids is the frozenset
+    of para_ids that were placed inside the table.  The caller's flat loop
+    must skip any LayoutParagraphBlock whose para_id is in this set.
+    """
+    from copy import deepcopy
+    from lxml import etree
+
+    # ── Collect timeline roles in row_index order ─────────────────────────
+    timeline_roles = []
+    for sec in (doc.sections or []):
+        for role in (sec.roles or []):
+            lb = role.layout_binding
+            if lb and lb.get("kind") == "timeline_left_role_right":
+                timeline_roles.append(role)
+    if not timeline_roles:
+        return None, frozenset()
+    timeline_roles.sort(key=lambda r: r.layout_binding["row_index"])
+
+    # ── Build para_id → LayoutParagraphBlock lookup ───────────────────────
+    lb_by_pid: dict[str, Any] = {}
+    for blk in layout_blocks:
+        if isinstance(blk, LayoutParagraphBlock) and blk.para_id:
+            lb_by_pid[blk.para_id] = blk
+
+    # ── Build anchor → [_ext_ blocks] in layout_blocks order ─────────────
+    ext_by_anchor: dict[str, list] = {}
+    for blk in layout_blocks:
+        if not isinstance(blk, LayoutParagraphBlock) or not blk.para_id:
+            continue
+        if "_ext_" not in blk.para_id:
+            continue
+        # para_id format: "{anchor_pid}_ext_{n}"
+        anchor = blk.para_id.split("_ext_")[0]
+        ext_by_anchor.setdefault(anchor, []).append(blk)
+
+    # ── Page geometry ─────────────────────────────────────────────────────
+    _content_w = 8748  # A4 default (~16 cm)
+    if sectPr is not None:
+        _pgSz = sectPr.find(f"{{{_W}}}pgSz")
+        _pgMar = sectPr.find(f"{{{_W}}}pgMar")
+        if _pgSz is not None and _pgMar is not None:
+            try:
+                _pw = int(_pgSz.get(f"{{{_W}}}w") or 0)
+                _ml = int(_pgMar.get(f"{{{_W}}}left") or 0)
+                _mr = int(_pgMar.get(f"{{{_W}}}right") or 0)
+                if _pw > 0:
+                    _content_w = _pw - _ml - _mr
+            except (ValueError, TypeError):
+                pass
+
+    _left_w = timeline_roles[0].layout_binding.get("column_width_twips", 1321)
+    _right_w = max(_content_w - _left_w, 1000)
+
+    # ── Build w:tbl element ───────────────────────────────────────────────
+    tbl = etree.Element(f"{{{_W}}}tbl")
+
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    _tblW = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    _tblW.set(f"{{{_W}}}w", str(_content_w))
+    _tblW.set(f"{{{_W}}}type", "dxa")
+    _tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for _bn in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        _be = etree.SubElement(_tblBorders, f"{{{_W}}}{_bn}")
+        _be.set(f"{{{_W}}}val", "none")
+        _be.set(f"{{{_W}}}sz", "0")
+        _be.set(f"{{{_W}}}space", "0")
+        _be.set(f"{{{_W}}}color", "auto")
+    _tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    _tblLayout.set(f"{{{_W}}}type", "fixed")
+    _tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for _ms in ("top", "left", "bottom", "right"):
+        _me = etree.SubElement(_tblCellMar, f"{{{_W}}}{_ms}")
+        _me.set(f"{{{_W}}}w", "0")
+        _me.set(f"{{{_W}}}type", "dxa")
+
+    tblGrid = etree.SubElement(tbl, f"{{{_W}}}tblGrid")
+    _gcL = etree.SubElement(tblGrid, f"{{{_W}}}gridCol")
+    _gcL.set(f"{{{_W}}}w", str(_left_w))
+    _gcR = etree.SubElement(tblGrid, f"{{{_W}}}gridCol")
+    _gcR.set(f"{{{_W}}}w", str(_right_w))
+
+    # ── Build rows ────────────────────────────────────────────────────────
+    n_roles = len(timeline_roles)
+    for _ri, _role in enumerate(timeline_roles):
+        _lb = _role.layout_binding
+        _is_last = _ri == n_roles - 1
+
+        tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+        trPr = etree.SubElement(tr, f"{{{_W}}}trPr")
+        etree.SubElement(trPr, f"{{{_W}}}cantSplit")
+
+        # Left cell: leading_spacers + date_paras [+ trailing_spacers if last row]
+        tc_left = etree.SubElement(tr, f"{{{_W}}}tc")
+        tcPr_left = etree.SubElement(tc_left, f"{{{_W}}}tcPr")
+        _twL = etree.SubElement(tcPr_left, f"{{{_W}}}tcW")
+        _twL.set(f"{{{_W}}}w", str(_left_w))
+        _twL.set(f"{{{_W}}}type", "dxa")
+
+        _left_pids: list[str] = (
+            list(_lb.get("left_leading_spacer_ids") or [])
+            + list(_lb.get("left_para_ids") or [])
+        )
+        if _is_last:
+            _left_pids += list(_lb.get("left_trailing_spacer_ids") or [])
+
+        for _pid in _left_pids:
+            _blk = lb_by_pid.get(_pid)
+            if _blk and _blk.xml_proto_xml:
+                _el = etree.fromstring(_blk.xml_proto_xml)
+                _strip_last_rendered_page_breaks(_el)
+                _strip_non_column_section_break(_el, main_pgSz_w, main_pgSz_h, False)
+                if _pid and not _el.get(f"{{{_W14}}}paraId"):
+                    _el.set(f"{{{_W14}}}paraId", _pid)
+                tc_left.append(_el)
+
+        if not tc_left.findall(f"{{{_W}}}p"):
+            tc_left.append(etree.Element(f"{{{_W}}}p"))
+
+        # Right cell: role header/meta/bullets + _ext_ blocks
+        tc_right = etree.SubElement(tr, f"{{{_W}}}tc")
+        tcPr_right = etree.SubElement(tc_right, f"{{{_W}}}tcPr")
+        _twR = etree.SubElement(tcPr_right, f"{{{_W}}}tcW")
+        _twR.set(f"{{{_W}}}w", str(_right_w))
+        _twR.set(f"{{{_W}}}type", "dxa")
+
+        for _pid in (_lb.get("right_para_ids") or []):
+            _blk = lb_by_pid.get(_pid)
+            if _blk:
+                _el = _render_block_into_elem(
+                    _blk, para_lookup, main_pgSz_w, main_pgSz_h,
+                    main_is_multicolumn=False,
+                )
+                if _el is not None:
+                    tc_right.append(_el)
+            # Also render any _ext_ blocks anchored to this right_para_id
+            for _ext_blk in ext_by_anchor.get(_pid, []):
+                _el = _render_block_into_elem(
+                    _ext_blk, para_lookup, main_pgSz_w, main_pgSz_h,
+                    main_is_multicolumn=False,
+                )
+                if _el is not None:
+                    tc_right.append(_el)
+
+        if not tc_right.findall(f"{{{_W}}}p"):
+            tc_right.append(etree.Element(f"{{{_W}}}p"))
+
+    # ── Compute consumed_pids ─────────────────────────────────────────────
+    _consumed: set[str] = set()
+    for _role in timeline_roles:
+        _lb = _role.layout_binding
+        _consumed.update(_lb.get("left_leading_spacer_ids") or [])
+        _consumed.update(_lb.get("left_para_ids") or [])
+        _consumed.update(_lb.get("left_trailing_spacer_ids") or [])
+        for _rp in (_lb.get("right_para_ids") or []):
+            _consumed.add(_rp)
+            for _ext_blk in ext_by_anchor.get(_rp, []):
+                if _ext_blk.para_id:
+                    _consumed.add(_ext_blk.para_id)
+
+    # Also consume any timeline-left pids not claimed by any role (e.g. extra
+    # left-column date paras beyond the last experience role).
+    _all_left_pids: frozenset[str] = frozenset()
+    for _sec in (doc.sections or []):
+        for _r in (_sec.roles or []):
+            _lb2 = _r.layout_binding
+            if _lb2 and _lb2.get("kind") == "timeline_left_role_right":
+                _all_left_pids = _all_left_pids | frozenset(
+                    _lb2.get("left_para_ids") or []
+                ) | frozenset(
+                    _lb2.get("left_leading_spacer_ids") or []
+                ) | frozenset(
+                    _lb2.get("left_trailing_spacer_ids") or []
+                )
+    _consumed.update(_all_left_pids)
+
+    # Build a set of all header_para pids for range-based consumption below.
+    _header_pid_set: frozenset[str] = frozenset(
+        pm.para_id for pm in (doc.header_paras or []) if pm.para_id
+    )
+
+    # Include col-break paragraphs, intermediate sectPr paragraphs, and any
+    # header_para pids that fall between the first and last consumed block in
+    # layout_blocks order.  This catches date-column paras (e.g. para_55-58)
+    # that belong to non-experience sections but appear inside the two-column
+    # layout region.
+    for _blk in layout_blocks:
+        if not isinstance(_blk, LayoutParagraphBlock) or not _blk.para_id:
+            continue
+        if _blk.xml_proto_xml and 'type="column"' in _blk.xml_proto_xml:
+            _consumed.add(_blk.para_id)
+    _consumed_idx = [
+        i for i, _blk in enumerate(layout_blocks)
+        if isinstance(_blk, LayoutParagraphBlock) and _blk.para_id in _consumed
+    ]
+    if _consumed_idx:
+        _min_i, _max_i = min(_consumed_idx), max(_consumed_idx)
+        for i, _blk in enumerate(layout_blocks):
+            if _min_i <= i <= _max_i:
+                if not isinstance(_blk, LayoutParagraphBlock) or not _blk.para_id:
+                    continue
+                if not _blk.xml_proto_xml:
+                    continue
+                if "sectPr" in _blk.xml_proto_xml:
+                    _consumed.add(_blk.para_id)
+                elif _blk.para_id in _header_pid_set:
+                    # Left-column sidebar paras in the layout region: consume
+                    # even if not bound to an experience role (e.g. education
+                    # dates that appear in the same two-column section region).
+                    _consumed.add(_blk.para_id)
+
+    _log.debug(
+        "TIMELINE_ROW_TABLE: %d roles → %d rows, %d para_ids consumed",
+        n_roles, n_roles, len(_consumed),
+    )
+    return tbl, frozenset(_consumed)
+
+
 def _render_from_layout_blocks(
     doc: ResumeDocument,
     body,
@@ -5045,6 +5278,23 @@ def _render_from_layout_blocks(
             len(_timeline_left_pids),
         )
 
+    # Build the timeline row-table when layout_binding is present.
+    # The table is a borderless two-column w:tbl with one row per role;
+    # consumed_pids is the set of para_ids placed inside it (left + right).
+    _timeline_row_tbl: "Any | None" = None
+    _consumed_pids: frozenset[str] = frozenset()
+    _timeline_table_emitted: bool = False
+    if _timeline_left_pids:
+        _timeline_row_tbl, _consumed_pids = _build_timeline_row_table(
+            doc,
+            para_lookup,
+            list(doc.layout_blocks),  # type: ignore[arg-type]
+            _main_pgSz_w,
+            _main_pgSz_h,
+            _main_is_multicolumn,
+            sectPr,
+        )
+
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
             tbl_elem = etree.fromstring(block.xml_proto_xml)
@@ -5168,6 +5418,19 @@ def _render_from_layout_blocks(
 
         else:
             # LayoutParagraphBlock
+            # Timeline row-table: emit the pre-built table at the position of
+            # the first consumed para_id, then skip all consumed blocks.
+            if _consumed_pids and block.para_id and block.para_id in _consumed_pids:
+                if not _timeline_table_emitted and _timeline_row_tbl is not None:
+                    _timeline_table_emitted = True
+                    _RENDERER_CREATED_TABLES.add(_timeline_row_tbl)
+                    if sectPr is not None:
+                        sectPr.addprevious(_timeline_row_tbl)
+                    else:
+                        body.append(_timeline_row_tbl)
+                    _log.debug("TIMELINE_ROW_TABLE_EMITTED at para_id=%r", block.para_id)
+                continue
+
             if not block.xml_proto_xml:
                 # No XML prototype: fall back to para_builder or runtime xml_proto
                 pm = para_lookup.get(block.para_id) if block.para_id else None

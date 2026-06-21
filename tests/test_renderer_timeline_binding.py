@@ -274,3 +274,134 @@ def test_non_timeline_templates_have_no_left_pids(fname):
     assert not pids, (
         f"{fname}: unexpectedly has {len(pids)} timeline_left_pids"
     )
+
+
+# ---------------------------------------------------------------------------
+# 6. _build_timeline_row_table — structural tests
+# ---------------------------------------------------------------------------
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_timeline_table_row_count():
+    """_build_timeline_row_table must produce exactly 6 rows (one per role)."""
+    from lxml import etree
+    from tailor.compiler.docx_renderer import _build_timeline_row_table
+    from tailor.compiler.models import LayoutParagraphBlock
+
+    original, updated = _load_s35_updated()
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
+    tbl, consumed = _build_timeline_row_table(
+        updated,
+        {},  # para_lookup not needed for row count test
+        list(updated.layout_blocks or []),
+        None, None,
+        False,
+        None,
+    )
+    assert tbl is not None, "_build_timeline_row_table returned None"
+    rows = tbl.findall(f"{{{_W_NS}}}tr")
+    assert len(rows) == 6, (
+        f"Expected 6 table rows (one per role), got {len(rows)}"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_timeline_table_consumed_pids_cover_left():
+    """consumed_pids must include all 46 left-column para_ids."""
+    from tailor.compiler.docx_renderer import _build_timeline_row_table
+
+    original, updated = _load_s35_updated()
+    left = _timeline_left_pids(updated)
+
+    tbl, consumed = _build_timeline_row_table(
+        updated, {}, list(updated.layout_blocks or []),
+        None, None, False, None,
+    )
+    missing = left - consumed
+    assert not missing, (
+        f"{len(missing)} left-column para_ids NOT in consumed_pids: {missing}"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_timeline_table_no_duplicate_left_pids():
+    """Each left-column para_id must appear in at most one row's left cell."""
+    from lxml import etree
+    from tailor.compiler.docx_renderer import _build_timeline_row_table
+
+    original, updated = _load_s35_updated()
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _W14_NS = "http://schemas.microsoft.com/office/word/2010/wordml"
+
+    tbl, _ = _build_timeline_row_table(
+        updated, {}, list(updated.layout_blocks or []),
+        None, None, False, None,
+    )
+    seen: set[str] = set()
+    duplicates: set[str] = set()
+    for tr in tbl.findall(f"{{{_W_NS}}}tr"):
+        tcs = tr.findall(f"{{{_W_NS}}}tc")
+        if not tcs:
+            continue
+        left_tc = tcs[0]
+        for p in left_tc.findall(f".//{{{_W_NS}}}p"):
+            pid = p.get(f"{{{_W14_NS}}}paraId") or p.get(f"{{{_W_NS}}}paraId")
+            if pid:
+                if pid in seen:
+                    duplicates.add(pid)
+                seen.add(pid)
+    assert not duplicates, (
+        f"Duplicate left-column para_ids across rows: {duplicates}"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_timeline_table_borderless():
+    """The generated table must have borderless w:tblBorders (all val='none')."""
+    from lxml import etree
+    from tailor.compiler.docx_renderer import _build_timeline_row_table
+
+    original, updated = _load_s35_updated()
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
+    tbl, _ = _build_timeline_row_table(
+        updated, {}, list(updated.layout_blocks or []),
+        None, None, False, None,
+    )
+    borders = tbl.find(f"{{{_W_NS}}}tblPr/{{{_W_NS}}}tblBorders")
+    assert borders is not None, "w:tblBorders element not found"
+    for child in borders:
+        val = child.get(f"{{{_W_NS}}}val")
+        assert val == "none", (
+            f"Border {child.tag} has val={val!r}, expected 'none'"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 7. Non-timeline samples unaffected
+# ---------------------------------------------------------------------------
+
+_S34_DOCX = _DOCX_DIR / "34-Valerii_Konchin_Resume.docx"
+_S36_DOCX = _DOCX_DIR / "36-Asia_Dalakova_Resume.docx"
+
+
+@pytest.mark.parametrize("docx_path", [_S34_DOCX, _S36_DOCX],
+                         ids=["sample34", "sample36"])
+def test_non_s35_no_timeline_table(docx_path):
+    """Samples 34 and 36 must produce no timeline row-table (no layout_binding)."""
+    if not docx_path.exists():
+        pytest.skip(f"{docx_path.name} not found")
+    from tailor.compiler.docx_renderer import _build_timeline_row_table
+    from tailor.compiler.docx_parser import parse_docx
+
+    doc = parse_docx(str(docx_path))
+    tbl, consumed = _build_timeline_row_table(
+        doc, {}, list(doc.layout_blocks or []),
+        None, None, False, None,
+    )
+    assert tbl is None, (
+        f"{docx_path.name}: expected no timeline table, but got one"
+    )
+    assert len(consumed) == 0, (
+        f"{docx_path.name}: expected empty consumed_pids, got {len(consumed)}"
+    )
