@@ -1777,6 +1777,12 @@ def _extract_paragraphs(
     paras: list[ParaModel] = []
     prev_block_y1: float | None = None
     hf_texts_lower = {t.lower() for t in hf_texts}
+    # Track whether we have seen the first known section heading.  Paragraphs
+    # before it (candidate name, job title) are header_paras whose accent colors
+    # are part of the template design and must be preserved.  Body paragraphs
+    # after the first section heading have their text_color stripped so LLM-
+    # generated content doesn't accidentally inherit template accent colors.
+    _seen_section_heading = False
     # layout.column_split_x is the visual sidebar boundary (drawing right-edge);
     # used as the authoritative right-column indent origin.
     layout_split_x = layout.column_split_x  # may be None
@@ -2151,9 +2157,13 @@ def _extract_paragraphs(
                 # text_color from the PDF template — those colors come from hyperlinks
                 # or author styling and must not bleed onto LLM-generated content.
                 # Section headings and role_headers keep their accent color (design intent).
+                # Header paragraphs before the first section heading (candidate name,
+                # job title) also keep their color — it is template design, not content.
                 # Bullet/paragraph colors are stripped here; any color that bleeds via
                 # clone_as archetypes is caught by the post-render sweep in pipeline.py.
-                if pm.semantic in ("bullet", "paragraph", "role_meta") and pm.paragraph_profile:
+                if pm.semantic == "section_heading":
+                    _seen_section_heading = True
+                if pm.semantic in ("bullet", "paragraph", "role_meta") and pm.paragraph_profile and _seen_section_heading:
                     pm.paragraph_profile.text_color = None
                 # Role headers can have mixed-bold text (e.g. "Title | Company | Date"
                 # where only the title is bold).  Build per-run (text, bold) pairs
@@ -3685,8 +3695,10 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
     # Exception: paragraphs on a dark background (background_color set to a
     # non-white value) keep their text_color so white-on-dark text remains
     # visible after rendering.
-    def _clear_content_colors(paras: "list[ParaModel]") -> None:
+    def _clear_content_colors(paras: "list[ParaModel]", keep_template_colors: bool = False) -> None:
         for pm in paras:
+            if keep_template_colors:
+                continue  # header_paras are template design elements; preserve accent colors
             if pm.semantic in ("section_heading", "role_header") and pm.paragraph_profile:
                 continue  # keep accent colors on structural headings
             if pm.paragraph_profile:
@@ -3697,7 +3709,7 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
                     continue
                 pm.paragraph_profile.text_color = None
 
-    _clear_content_colors(header_paras)
+    _clear_content_colors(header_paras, keep_template_colors=True)
     for _sec in sections:
         _clear_content_colors(_sec.body_paras)
         for _role in _sec.roles:

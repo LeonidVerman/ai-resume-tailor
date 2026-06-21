@@ -1768,6 +1768,15 @@ def _render_pdf_single_col_with_groups(
         elems = []
         heading_elem = build_para_element(sec.heading, doc_part)
         _shift_indent(heading_elem, min_indent)
+        # Zero out w:spacing/w:before so all cell headings in the same row align at the
+        # top; PDF space_before_pt values (e.g. 10pt for EDUCATION) would otherwise push
+        # one cell's heading down relative to its neighbours.
+        _hpPr = heading_elem.find(f"{{{_W}}}pPr")
+        if _hpPr is not None:
+            _hsp = _hpPr.find(f"{{{_W}}}spacing")
+            if _hsp is not None:
+                _hsp.attrib.pop(f"{{{_W}}}before", None)
+                _hsp.attrib.pop(f"{{{_W}}}beforeLines", None)
         if sec.heading.para_id in _h_rule_borders and not (
             skip_h_rule_ids and sec.heading.para_id in skip_h_rule_ids
         ):
@@ -1846,18 +1855,7 @@ def _render_pdf_single_col_with_groups(
                     _lbl_tblLayout = etree.SubElement(_lbl_tblPr, f"{{{_W}}}tblLayout")
                     _lbl_tblLayout.set(f"{{{_W}}}type", "fixed")
                     _lbl_tblBorders = etree.SubElement(_lbl_tblPr, f"{{{_W}}}tblBorders")
-                    if _rule_img:
-                        _rc = _sample_png_color_hex(_rule_img.image_bytes) or "808080"
-                        _rsz = max(4, min(24, int(_rule_img.height_pt * 8)))
-                        _rtop = etree.SubElement(_lbl_tblBorders, f"{{{_W}}}top")
-                        _rtop.set(f"{{{_W}}}val", "single")
-                        _rtop.set(f"{{{_W}}}sz", str(_rsz))
-                        _rtop.set(f"{{{_W}}}space", "4")
-                        _rtop.set(f"{{{_W}}}color", _rc)
-                    else:
-                        _none_top = etree.SubElement(_lbl_tblBorders, f"{{{_W}}}top")
-                        _none_top.set(f"{{{_W}}}val", "none")
-                    for _s in ("left", "bottom", "right", "insideH", "insideV"):
+                    for _s in ("top", "left", "bottom", "right", "insideH", "insideV"):
                         _b = etree.SubElement(_lbl_tblBorders, f"{{{_W}}}{_s}")
                         _b.set(f"{{{_W}}}val", "none")
                     _lbl_tblCellMar = etree.SubElement(_lbl_tblPr, f"{{{_W}}}tblCellMar")
@@ -1906,7 +1904,14 @@ def _render_pdf_single_col_with_groups(
                             _tc2.append(_p2)
                         else:
                             etree.SubElement(_tc2, f"{{{_W}}}p")
-                    return [_lbl_tbl]  # heading_elem is inside the table; discard elems
+                    # Emit h_rule as a standalone paragraph before the table so the
+                # divider line spans the full text width and has the correct gap.
+                if _rule_img:
+                    _hr_para = etree.Element(f"{{{_W}}}p")
+                    etree.SubElement(_hr_para, f"{{{_W}}}pPr")
+                    _apply_h_rule_top_border(_hr_para, _rule_img)
+                    return [_hr_para, _lbl_tbl]  # heading_elem is inside the table
+                return [_lbl_tbl]  # heading_elem is inside the table; discard elems
                 # Standard 2-col body table: heading is standalone above the table
                 if _rule_img:
                     _apply_h_rule_top_border(heading_elem, _rule_img)
@@ -1985,7 +1990,15 @@ def _render_pdf_single_col_with_groups(
                         _grp_rule_img = _h_rule_borders[_spid]
                     _grp_skip_h_rule_ids.add(_spid)
 
-            # Build N-column table
+            # Emit h_rule as a standalone paragraph before the table so the divider
+            # spans the full text width with the correct gap_to_anchor_pt above it.
+            if _grp_rule_img is not None:
+                _grp_hr_para = etree.Element(f"{{{_W}}}p")
+                etree.SubElement(_grp_hr_para, f"{{{_W}}}pPr")
+                _apply_h_rule_top_border(_grp_hr_para, _grp_rule_img)
+                _add(_grp_hr_para)
+
+            # Build N-column borderless table
             tbl = etree.Element(f"{{{_W}}}tbl")
             tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
             tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
@@ -1994,18 +2007,7 @@ def _render_pdf_single_col_with_groups(
             tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
             tblLayout.set(f"{{{_W}}}type", "fixed")
             tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
-            if _grp_rule_img is not None:
-                _grc = _sample_png_color_hex(_grp_rule_img.image_bytes) or "808080"
-                _grsz = max(4, min(24, int(_grp_rule_img.height_pt * 8)))
-                _grtop = etree.SubElement(tblBorders, f"{{{_W}}}top")
-                _grtop.set(f"{{{_W}}}val", "single")
-                _grtop.set(f"{{{_W}}}sz", str(_grsz))
-                _grtop.set(f"{{{_W}}}space", "4")
-                _grtop.set(f"{{{_W}}}color", _grc)
-            else:
-                _none_top = etree.SubElement(tblBorders, f"{{{_W}}}top")
-                _none_top.set(f"{{{_W}}}val", "none")
-            for side in ("left", "bottom", "right", "insideH", "insideV"):
+            for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
                 brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
                 brd.set(f"{{{_W}}}val", "none")
             tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
