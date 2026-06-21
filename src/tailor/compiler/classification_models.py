@@ -375,6 +375,11 @@ class ClassificationSection:
     preserve_body_structure: bool = False
     blocks: list[ClassificationBlock] = field(default_factory=list)
     roles: list[ClassificationRole] = field(default_factory=list)
+    # Populated by augment_classification_with_layout_bindings() for experience
+    # sections that have a newspaper timeline layout.  Each entry maps one
+    # classified role to its left-column sidebar paragraphs (date/employment-type
+    # lines stored in doc.header_paras).  Never set by the LLM.
+    sidebar_bindings: list[dict] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, d: dict) -> "ClassificationSection":
@@ -388,6 +393,7 @@ class ClassificationSection:
             preserve_body_structure=bool(d.get("preserve_body_structure", False)),
             blocks=[ClassificationBlock.from_dict(b) for b in d.get("blocks", [])],
             roles=[ClassificationRole.from_dict(r) for r in d.get("roles", [])],
+            sidebar_bindings=list(d.get("sidebar_bindings") or []),
         )
 
 
@@ -411,3 +417,75 @@ class ClassificationOutput:
         """Return a plain JSON-serializable dict (for DB storage)."""
         import dataclasses
         return dataclasses.asdict(self)
+
+
+def augment_classification_with_layout_bindings(
+    classification: dict,
+    doc: "ResumeDocument",
+) -> dict:
+    """Inject sidebar_bindings into experience sections that have a timeline layout.
+
+    Uses role.layout_binding (set by the parser, never by the LLM) to record
+    which left-column date sidebar paragraphs correspond to each classified role.
+    Returns a new dict; does not mutate the input.
+
+    The augmentation is purely informational: the renderer uses role.layout_binding
+    on the IR directly.  sidebar_bindings in the classification artifact exists for
+    inspection and debugging.
+    """
+    if not any(
+        getattr(role, "layout_binding", None)
+        for sec in (doc.sections or [])
+        for role in (sec.roles or [])
+    ):
+        return classification  # fast path: no timeline layout
+
+    # Build anchor_para_id → role_id from the classified experience sections.
+    anchor_to_cls_role: dict[str, str] = {}
+    for sec in classification.get("sections", []):
+        if sec.get("semantic_type") != "experience":
+            continue
+        for role in sec.get("roles", []):
+            hdrs = role.get("header_blocks", [])
+            if hdrs:
+                anchor_pid = hdrs[0].get("para_id", "")
+                if anchor_pid:
+                    anchor_to_cls_role[anchor_pid] = role["role_id"]
+
+    # Gather bindings from the IR.
+    bindings_by_sec: dict[str, list[dict]] = {}
+    for ir_sec in (doc.sections or []):
+        if ir_sec.semantic_type != "experience":
+            continue
+        for role in (ir_sec.roles or []):
+            lb = role.layout_binding
+            if not lb or lb.get("kind") != "timeline_left_role_right":
+                continue
+            anchor = lb.get("right_anchor_para_id", "")
+            role_id = anchor_to_cls_role.get(anchor, "")
+            if not role_id:
+                continue
+            sec_id = ir_sec.section_id or "sec_1"
+            bindings_by_sec.setdefault(sec_id, []).append({
+                "row_index": lb["row_index"],
+                "role_id": role_id,
+                "right_anchor_para_id": anchor,
+                "left_para_ids": list(lb.get("left_para_ids") or []),
+                "left_text": lb.get("left_text", ""),
+                "column_width_twips": lb.get("column_width_twips", 0),
+            })
+
+    if not bindings_by_sec:
+        return classification
+
+    result = dict(classification)
+    new_sections = []
+    for sec in classification.get("sections", []):
+        sid = sec.get("section_id", "")
+        rows = bindings_by_sec.get(sid)
+        if rows:
+            sec = dict(sec)
+            sec["sidebar_bindings"] = rows
+        new_sections.append(sec)
+    result["sections"] = new_sections
+    return result
