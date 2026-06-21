@@ -711,3 +711,166 @@ class TestSample9AnchoredRules:
         finally:
             if os.path.exists(out):
                 os.unlink(out)
+
+
+# ---------------------------------------------------------------------------
+# Sample 12 renderer fixes
+# Fix A: CONTACT INFO label-column → 3-col vMerge table
+# Fix B: EDU/COMM/LEAD group table → w:tblBorders/w:top spans full width
+# ---------------------------------------------------------------------------
+
+_WM = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
+
+def _render_sample_12(tmp_path):
+    """Parse sample 12 PDF and render to DOCX, returning the python-docx Document."""
+    from tailor.compiler.pdf_parser import parse_pdf
+    from tailor.compiler.docx_renderer import render_docx
+    from tailor.config import RESUME_TEMPLATE
+    from docx import Document
+
+    with open(_SAMPLE_12, "rb") as f:
+        ir = parse_pdf(f.read())
+
+    out = str(tmp_path / "sample12_rendered.docx")
+    render_docx(ir, RESUME_TEMPLATE, out)
+    return Document(out)
+
+
+@pytest.mark.skipif(not _SAMPLE_12.exists(), reason="sample 12 PDF not in test fixtures")
+class TestSample12LabelColTable:
+    """CONTACT INFO section must render as a 3-col vMerge table, not standalone heading + 2-col table."""
+
+    def test_three_col_vmerge_table_exists(self, tmp_path):
+        """At least one table with 3 columns and w:vMerge restart in col 0 must exist."""
+        d = _render_sample_12(tmp_path)
+        found = False
+        for tbl in d.element.body.iter(f"{{{_WM}}}tbl"):
+            rows = tbl.findall(f"{{{_WM}}}tr")
+            if not rows:
+                continue
+            first_row_cells = rows[0].findall(f"{{{_WM}}}tc")
+            if len(first_row_cells) != 3:
+                continue
+            # Col 0 must have w:vMerge val="restart"
+            tc0Pr = first_row_cells[0].find(f"{{{_WM}}}tcPr")
+            if tc0Pr is None:
+                continue
+            vm = tc0Pr.find(f"{{{_WM}}}vMerge")
+            if vm is not None and vm.get(f"{{{_WM}}}val") == "restart":
+                found = True
+                break
+        assert found, (
+            "Expected a 3-col table with w:vMerge restart in col 0 for CONTACT INFO label-column layout"
+        )
+
+    def test_label_col_table_has_top_border_when_h_rule(self, tmp_path):
+        """The 3-col vMerge table must carry w:tblBorders/w:top (h_rule applied at table level)."""
+        d = _render_sample_12(tmp_path)
+        found = False
+        for tbl in d.element.body.iter(f"{{{_WM}}}tbl"):
+            rows = tbl.findall(f"{{{_WM}}}tr")
+            if not rows:
+                continue
+            first_row_cells = rows[0].findall(f"{{{_WM}}}tc")
+            if len(first_row_cells) != 3:
+                continue
+            tc0Pr = first_row_cells[0].find(f"{{{_WM}}}tcPr")
+            if tc0Pr is None:
+                continue
+            vm = tc0Pr.find(f"{{{_WM}}}vMerge")
+            if vm is None or vm.get(f"{{{_WM}}}val") != "restart":
+                continue
+            # This is the label-col table — check for tblBorders/top
+            tblPr = tbl.find(f"{{{_WM}}}tblPr")
+            if tblPr is None:
+                continue
+            tblBorders = tblPr.find(f"{{{_WM}}}tblBorders")
+            if tblBorders is None:
+                continue
+            top = tblBorders.find(f"{{{_WM}}}top")
+            if top is not None and top.get(f"{{{_WM}}}val") == "single":
+                found = True
+                break
+        assert found, (
+            "Expected w:tblBorders/w:top val='single' on the 3-col label-col table (h_rule must span full table width)"
+        )
+
+
+@pytest.mark.skipif(not _SAMPLE_12.exists(), reason="sample 12 PDF not in test fixtures")
+class TestSample12GroupTableTopBorder:
+    """EDU/COMM/LEAD group table must carry w:tblBorders/w:top spanning all columns."""
+
+    def test_group_table_has_single_top_border(self, tmp_path):
+        """At least one N-col (N>=2) table must have w:tblBorders/w:top val='single'."""
+        d = _render_sample_12(tmp_path)
+        found = False
+        for tbl in d.element.body.iter(f"{{{_WM}}}tbl"):
+            rows = tbl.findall(f"{{{_WM}}}tr")
+            if not rows:
+                continue
+            # The group table has a single row with N>=2 cells, but no vMerge restart
+            first_row_cells = rows[0].findall(f"{{{_WM}}}tc")
+            if len(first_row_cells) < 2:
+                continue
+            # Must NOT be the label-col table (which has vMerge restart in col 0)
+            tc0Pr = first_row_cells[0].find(f"{{{_WM}}}tcPr")
+            if tc0Pr is not None:
+                vm = tc0Pr.find(f"{{{_WM}}}vMerge")
+                if vm is not None and vm.get(f"{{{_WM}}}val") == "restart":
+                    continue
+            tblPr = tbl.find(f"{{{_WM}}}tblPr")
+            if tblPr is None:
+                continue
+            tblBorders = tblPr.find(f"{{{_WM}}}tblBorders")
+            if tblBorders is None:
+                continue
+            top = tblBorders.find(f"{{{_WM}}}top")
+            if top is not None and top.get(f"{{{_WM}}}val") == "single":
+                found = True
+                break
+        assert found, (
+            "Expected at least one multi-col group table with w:tblBorders/w:top val='single' "
+            "(EDU/COMM/LEAD h_rule must span all columns)"
+        )
+
+    def test_education_heading_has_no_para_border(self, tmp_path):
+        """EDUCATION section heading inside the group table cell must NOT have w:pBdr/top (it moved to the table)."""
+        d = _render_sample_12(tmp_path)
+        # Find the group table (N>=2 cols, no vMerge, has tblBorders/top single)
+        for tbl in d.element.body.iter(f"{{{_WM}}}tbl"):
+            rows = tbl.findall(f"{{{_WM}}}tr")
+            if not rows:
+                continue
+            first_row_cells = rows[0].findall(f"{{{_WM}}}tc")
+            if len(first_row_cells) < 2:
+                continue
+            tc0Pr = first_row_cells[0].find(f"{{{_WM}}}tcPr")
+            if tc0Pr is not None:
+                vm = tc0Pr.find(f"{{{_WM}}}vMerge")
+                if vm is not None and vm.get(f"{{{_WM}}}val") == "restart":
+                    continue
+            tblPr = tbl.find(f"{{{_WM}}}tblPr")
+            if tblPr is None:
+                continue
+            tblBorders = tblPr.find(f"{{{_WM}}}tblBorders")
+            if tblBorders is None:
+                continue
+            top = tblBorders.find(f"{{{_WM}}}top")
+            if top is None or top.get(f"{{{_WM}}}val") != "single":
+                continue
+            # Found the group table — check that no cell paragraph has w:pBdr/top
+            for p in tbl.iter(f"{{{_WM}}}p"):
+                pPr = p.find(f"{{{_WM}}}pPr")
+                if pPr is None:
+                    continue
+                pBdr = pPr.find(f"{{{_WM}}}pBdr")
+                if pBdr is None:
+                    continue
+                p_top = pBdr.find(f"{{{_WM}}}top")
+                if p_top is not None and p_top.get(f"{{{_WM}}}val") not in ("none", "nil", None):
+                    assert False, (
+                        "Group table cell heading must not have w:pBdr/top — h_rule moved to w:tblBorders/top"
+                    )
+            return  # Found and verified the group table
+        pytest.skip("Group table with top border not found — test is conditional on layout detection")

@@ -1763,12 +1763,14 @@ def _render_pdf_single_col_with_groups(
                 result.append(build_para_element(b, doc_part))
         return result
 
-    def _build_section_paras_for_cell(sec, min_indent: int) -> "list":
+    def _build_section_paras_for_cell(sec, min_indent: int, skip_h_rule_ids=None) -> "list":
         """Build paragraph elements for a table cell, normalizing indent to cell origin."""
         elems = []
         heading_elem = build_para_element(sec.heading, doc_part)
         _shift_indent(heading_elem, min_indent)
-        if sec.heading.para_id in _h_rule_borders:
+        if sec.heading.para_id in _h_rule_borders and not (
+            skip_h_rule_ids and sec.heading.para_id in skip_h_rule_ids
+        ):
             _apply_h_rule_top_border(heading_elem, _h_rule_borders[sec.heading.para_id])
         elems.append(heading_elem)
         if sec.semantic_type == "experience" and sec.roles:
@@ -1793,10 +1795,11 @@ def _render_pdf_single_col_with_groups(
 
     def _build_section_paras(sec) -> "list":
         heading_elem = build_para_element(sec.heading, doc_part)
-        if sec.heading.para_id in _h_rule_borders:
-            _apply_h_rule_top_border(heading_elem, _h_rule_borders[sec.heading.para_id])
+        _rule_img = _h_rule_borders.get(sec.heading.para_id)
         elems: list = [heading_elem]
         if sec.semantic_type == "experience" and sec.roles:
+            if _rule_img:
+                _apply_h_rule_top_border(heading_elem, _rule_img)
             _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
             if _has_orphan:
                 # Skip body_paras that are already claimed by role meta_lines
@@ -1812,6 +1815,101 @@ def _render_pdf_single_col_with_groups(
         else:
             two_col_rows = _detect_body_two_col(sec.body_paras)
             if two_col_rows:
+                # Label-column detection: when the heading's x-position is ≥50pt left
+                # of the leftmost body column, the heading is a side label for the 2-col
+                # body grid.  Build an N×3 vMerge table [label | col1 | col2], shifting
+                # body-para indents to cell origin and applying any h_rule as a full-width
+                # w:tblBorders/top rather than a partial w:pBdr/top on the label cell alone.
+                _h_pp = sec.heading.paragraph_profile
+                _h_x = _h_pp.indent_left_pt if _h_pp else None
+                _body_xs = sorted({
+                    pm.paragraph_profile.indent_left_pt
+                    for l_pm, r_pm in two_col_rows
+                    for pm in (l_pm, r_pm)
+                    if pm and pm.paragraph_profile
+                })
+                if (
+                    _h_x is not None
+                    and len(_body_xs) == 2
+                    and _h_x < _body_xs[0] - 5.0
+                    and _body_xs[0] - _h_x >= 50.0
+                ):
+                    _bx1, _bx2 = _body_xs
+                    _c1 = max(100, int((_bx1 - _h_x) * 20))
+                    _c2 = max(100, int((_bx2 - _bx1) * 20))
+                    _c3 = max(100, text_area_w_twips - _c1 - _c2)
+                    _lbl_tbl = etree.Element(f"{{{_W}}}tbl")
+                    _lbl_tblPr = etree.SubElement(_lbl_tbl, f"{{{_W}}}tblPr")
+                    _lbl_tblW = etree.SubElement(_lbl_tblPr, f"{{{_W}}}tblW")
+                    _lbl_tblW.set(f"{{{_W}}}w", str(_c1 + _c2 + _c3))
+                    _lbl_tblW.set(f"{{{_W}}}type", "dxa")
+                    _lbl_tblLayout = etree.SubElement(_lbl_tblPr, f"{{{_W}}}tblLayout")
+                    _lbl_tblLayout.set(f"{{{_W}}}type", "fixed")
+                    _lbl_tblBorders = etree.SubElement(_lbl_tblPr, f"{{{_W}}}tblBorders")
+                    if _rule_img:
+                        _rc = _sample_png_color_hex(_rule_img.image_bytes) or "808080"
+                        _rsz = max(4, min(24, int(_rule_img.height_pt * 8)))
+                        _rtop = etree.SubElement(_lbl_tblBorders, f"{{{_W}}}top")
+                        _rtop.set(f"{{{_W}}}val", "single")
+                        _rtop.set(f"{{{_W}}}sz", str(_rsz))
+                        _rtop.set(f"{{{_W}}}space", "4")
+                        _rtop.set(f"{{{_W}}}color", _rc)
+                    else:
+                        _none_top = etree.SubElement(_lbl_tblBorders, f"{{{_W}}}top")
+                        _none_top.set(f"{{{_W}}}val", "none")
+                    for _s in ("left", "bottom", "right", "insideH", "insideV"):
+                        _b = etree.SubElement(_lbl_tblBorders, f"{{{_W}}}{_s}")
+                        _b.set(f"{{{_W}}}val", "none")
+                    _lbl_tblCellMar = etree.SubElement(_lbl_tblPr, f"{{{_W}}}tblCellMar")
+                    for _s in ("top", "left", "bottom", "right"):
+                        _m = etree.SubElement(_lbl_tblCellMar, f"{{{_W}}}{_s}")
+                        _m.set(f"{{{_W}}}w", "0")
+                        _m.set(f"{{{_W}}}type", "dxa")
+                    for _ri, (_l_pm, _r_pm) in enumerate(two_col_rows):
+                        _tr = etree.SubElement(_lbl_tbl, f"{{{_W}}}tr")
+                        # Col 0: label (heading, vMerge across all rows)
+                        _tc0 = etree.SubElement(_tr, f"{{{_W}}}tc")
+                        _tc0Pr = etree.SubElement(_tc0, f"{{{_W}}}tcPr")
+                        _tc0W = etree.SubElement(_tc0Pr, f"{{{_W}}}tcW")
+                        _tc0W.set(f"{{{_W}}}w", str(_c1))
+                        _tc0W.set(f"{{{_W}}}type", "dxa")
+                        etree.SubElement(_tc0Pr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "center")
+                        _vm = etree.SubElement(_tc0Pr, f"{{{_W}}}vMerge")
+                        if _ri == 0:
+                            _vm.set(f"{{{_W}}}val", "restart")
+                            _tc0.append(heading_elem)
+                        else:
+                            etree.SubElement(_tc0, f"{{{_W}}}p")
+                        # Col 1: left body data (shift out PDF x-offset so text starts at cell left)
+                        _tc1 = etree.SubElement(_tr, f"{{{_W}}}tc")
+                        _tc1Pr = etree.SubElement(_tc1, f"{{{_W}}}tcPr")
+                        _tc1W = etree.SubElement(_tc1Pr, f"{{{_W}}}tcW")
+                        _tc1W.set(f"{{{_W}}}w", str(_c2))
+                        _tc1W.set(f"{{{_W}}}type", "dxa")
+                        etree.SubElement(_tc1Pr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+                        if _l_pm is not None:
+                            _p1 = build_para_element(_l_pm, doc_part)
+                            _shift_indent(_p1, int(_bx1 * 20))
+                            _tc1.append(_p1)
+                        else:
+                            etree.SubElement(_tc1, f"{{{_W}}}p")
+                        # Col 2: right body data (shift out PDF x-offset so text starts at cell left)
+                        _tc2 = etree.SubElement(_tr, f"{{{_W}}}tc")
+                        _tc2Pr = etree.SubElement(_tc2, f"{{{_W}}}tcPr")
+                        _tc2W = etree.SubElement(_tc2Pr, f"{{{_W}}}tcW")
+                        _tc2W.set(f"{{{_W}}}w", str(_c3))
+                        _tc2W.set(f"{{{_W}}}type", "dxa")
+                        etree.SubElement(_tc2Pr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+                        if _r_pm is not None:
+                            _p2 = build_para_element(_r_pm, doc_part)
+                            _shift_indent(_p2, int(_bx2 * 20))
+                            _tc2.append(_p2)
+                        else:
+                            etree.SubElement(_tc2, f"{{{_W}}}p")
+                    return [_lbl_tbl]  # heading_elem is inside the table; discard elems
+                # Standard 2-col body table: heading is standalone above the table
+                if _rule_img:
+                    _apply_h_rule_top_border(heading_elem, _rule_img)
                 col_w = text_area_w_twips // 2
                 tbl = etree.Element(f"{{{_W}}}tbl")
                 tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
@@ -1844,6 +1942,8 @@ def _render_pdf_single_col_with_groups(
                             etree.SubElement(tc, f"{{{_W}}}p")
                 elems.append(tbl)
             else:
+                if _rule_img:
+                    _apply_h_rule_top_border(heading_elem, _rule_img)
                 for pm in sec.body_paras:
                     elems.append(build_para_element(pm, doc_part))
         return elems
@@ -1872,7 +1972,20 @@ def _render_pdf_single_col_with_groups(
             n = len(grp)
             col_w = text_area_w_twips // n
 
-            # Build N-column borderless table
+            # If any section heading in this group has an anchored h_rule, apply it
+            # as a full-width w:tblBorders/top on the group table so the divider spans
+            # all columns.  Suppress the per-cell w:pBdr/top that would otherwise only
+            # cover the leftmost cell.
+            _grp_rule_img = None
+            _grp_skip_h_rule_ids: "set[str]" = set()
+            for _sidx in grp:
+                _spid = doc.sections[_sidx].heading.para_id
+                if _spid in _h_rule_borders:
+                    if _grp_rule_img is None:
+                        _grp_rule_img = _h_rule_borders[_spid]
+                    _grp_skip_h_rule_ids.add(_spid)
+
+            # Build N-column table
             tbl = etree.Element(f"{{{_W}}}tbl")
             tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
             tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
@@ -1881,7 +1994,18 @@ def _render_pdf_single_col_with_groups(
             tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
             tblLayout.set(f"{{{_W}}}type", "fixed")
             tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
-            for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+            if _grp_rule_img is not None:
+                _grc = _sample_png_color_hex(_grp_rule_img.image_bytes) or "808080"
+                _grsz = max(4, min(24, int(_grp_rule_img.height_pt * 8)))
+                _grtop = etree.SubElement(tblBorders, f"{{{_W}}}top")
+                _grtop.set(f"{{{_W}}}val", "single")
+                _grtop.set(f"{{{_W}}}sz", str(_grsz))
+                _grtop.set(f"{{{_W}}}space", "4")
+                _grtop.set(f"{{{_W}}}color", _grc)
+            else:
+                _none_top = etree.SubElement(tblBorders, f"{{{_W}}}top")
+                _none_top.set(f"{{{_W}}}val", "none")
+            for side in ("left", "bottom", "right", "insideH", "insideV"):
                 brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
                 brd.set(f"{{{_W}}}val", "none")
             tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
@@ -1900,7 +2024,9 @@ def _render_pdf_single_col_with_groups(
                 tcW.set(f"{{{_W}}}w", str(col_w))
                 tcW.set(f"{{{_W}}}type", "dxa")
                 etree.SubElement(tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
-                for elem in _build_section_paras_for_cell(grp_sec, min_ind):
+                for elem in _build_section_paras_for_cell(
+                    grp_sec, min_ind, skip_h_rule_ids=_grp_skip_h_rule_ids
+                ):
                     tc.append(elem)
                 if not tc.findall(f"{{{_W}}}p"):
                     etree.SubElement(tc, f"{{{_W}}}p")
