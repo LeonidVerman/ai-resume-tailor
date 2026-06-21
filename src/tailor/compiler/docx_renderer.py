@@ -213,35 +213,7 @@ def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
         "header_footer_decor": 5,
         "profile_photo": 10,     # foreground — on top of everything
     }
-
-    # h_rule/v_rule suppression: header-divider rules (rules positioned before the
-    # first body section heading) overlap with dynamically-reflowed header content in
-    # the DOCX.  The original PDF has tight gaps (e.g. 6 pt below the name) that
-    # disappear when the template reflows as single-column with standard line spacing.
-    # Only h/v rules whose y is >= the first section heading's y are safe to render.
-    _first_sec_y: "float | None" = None
-    if getattr(doc, "sections", None):
-        _sec_ys = [
-            sec.heading.paragraph_profile.y_top_pt
-            for sec in doc.sections
-            if sec.heading.paragraph_profile
-            and sec.heading.paragraph_profile.y_top_pt > 0
-        ]
-        if _sec_ys:
-            _first_sec_y = min(_sec_ys)
-
     for i, img in enumerate(doc.page_images):
-        if img.category in ("h_rule", "v_rule") and _first_sec_y is not None:
-            if img.y_pt < _first_sec_y:
-                _log.debug(
-                    "HRULE_HEADER_ZONE_SKIP: category=%s y=%.0f first_sec_y=%.0f",
-                    img.category, img.y_pt, _first_sec_y,
-                )
-                continue
-        # Anchored h_rules are rendered as w:pBdr/w:top on the section heading
-        # paragraph.  Skip them here so they don't also appear as floating images.
-        if img.category == "h_rule" and img.anchor_next_section_id is not None:
-            continue
         behind = img.category != "profile_photo"
         z = _CATEGORY_Z.get(img.category, 5 if behind else 10)
         para = _make_floating_image_para(
@@ -255,96 +227,6 @@ def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
         )
         if para is not None:
             _add(para)
-
-
-# ---------------------------------------------------------------------------
-# Section-anchored h_rule border helpers
-# ---------------------------------------------------------------------------
-
-def _sample_png_color_hex(image_bytes: bytes) -> "str | None":
-    """Return 'RRGGBB' hex for the center pixel of *image_bytes* (PNG), or None."""
-    try:
-        import fitz as _fitz
-        import io as _io
-        pix = _fitz.Pixmap(_io.BytesIO(image_bytes))
-        sample = pix.pixel(pix.width // 2, pix.height // 2)
-        return f"{sample[0]:02x}{sample[1]:02x}{sample[2]:02x}"
-    except Exception:
-        return None
-
-
-def _build_h_rule_border_map(doc: "ResumeDocument") -> "dict[str, Any]":
-    """Return {heading_para_id: PageImageBlock} for sections with anchored h_rules.
-
-    Used by render paths to apply w:pBdr/w:top borders to section headings that
-    have an associated h_rule extracted from the source PDF.
-    """
-    sec_id_to_para_id = {
-        sec.section_id: sec.heading.para_id
-        for sec in doc.sections
-        if sec.section_id and sec.heading.para_id
-    }
-    result: dict = {}
-    for img in getattr(doc, "page_images", None) or []:
-        if img.category != "h_rule":
-            continue
-        anc = img.anchor_next_section_id
-        if anc is None:
-            continue
-        para_id = sec_id_to_para_id.get(anc)
-        if para_id:
-            result[para_id] = img
-    return result
-
-
-def _apply_h_rule_top_border(p_elem, rule_img: "Any") -> None:
-    """Add w:pBdr/w:top to *p_elem* (a w:p lxml element) for *rule_img*.
-
-    Uses the rule's color (sampled from its PNG center pixel) and derives
-    border thickness from the rule height.  Updates w:spacing/w:before so
-    the visual gap above the heading matches the original PDF gap_to_anchor_pt.
-    """
-    from lxml import etree
-
-    hex_color = _sample_png_color_hex(rule_img.image_bytes)
-    if hex_color is None:
-        hex_color = "808080"
-
-    gap_pt = rule_img.gap_to_anchor_pt or 20.0
-    # Derive border thickness from rule height (8ths of a point, clamped 4–24).
-    thickness_eighths = max(4, min(24, int(rule_img.height_pt * 8)))
-    # Space between the border line and the paragraph text (in points, OOXML units).
-    space_pt = 4
-    # Total spacing before = gap_to_anchor_pt so the border lands at the right
-    # vertical position relative to the previous section's content.
-    before_twips = int(gap_pt * 20)
-
-    pPr = p_elem.find(f"{{{_W}}}pPr")
-    if pPr is None:
-        return
-
-    pBdr = etree.Element(f"{{{_W}}}pBdr")
-    top = etree.SubElement(pBdr, f"{{{_W}}}top")
-    top.set(f"{{{_W}}}val", "single")
-    top.set(f"{{{_W}}}sz", str(thickness_eighths))
-    top.set(f"{{{_W}}}space", str(space_pt))
-    top.set(f"{{{_W}}}color", hex_color)
-
-    # Insert pBdr before w:spacing to satisfy OOXML schema ordering.
-    spc_elem = pPr.find(f"{{{_W}}}spacing")
-    if spc_elem is not None:
-        spc_elem.addprevious(pBdr)
-        spc_elem.set(f"{{{_W}}}before", str(before_twips))
-    else:
-        pPr.append(pBdr)
-        spc_new = etree.SubElement(pPr, f"{{{_W}}}spacing")
-        spc_new.set(f"{{{_W}}}before", str(before_twips))
-        spc_new.set(f"{{{_W}}}after", "0")
-
-    _log.debug(
-        "HRULE_BORDER_APPLIED: para=%s color=#%s thickness=%d before=%d",
-        p_elem.get(f"{{{_W}}}rsidR", "?"), hex_color, thickness_eighths, before_twips,
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -874,6 +756,18 @@ def _set_para_text(p_elem, text: str) -> None:
     # Values ≥ 80 twips are intentional letter-spacing (decorative headings)
     # and must be preserved.
     _MICRO_KERN_LIMIT = 80  # twips; larger = intentional letter-spacing
+    # w:w (character width scaling) cleanup thresholds.
+    # PDF-to-DOCX converters produce two classes of artifact w:w values:
+    #   > 150%: FontAwesome icon/bullet placeholder runs (e.g. w=270) that end
+    #           up carrying the first 1-2 chars of redistributed content, making
+    #           those chars render 2.7x wide ("De signed", "Mento red").
+    #   < 95%:  Single mega-runs covering the whole original line (e.g. w=90)
+    #           where only the first proportional slice inherits the value; the
+    #           remaining slices get w=None (100%), creating a mismatch at the
+    #           first run boundary ("Prot ocols").
+    # Values in [95, 150] are treated as intentional typography and preserved.
+    _W_SCALE_MIN = 95
+    _W_SCALE_MAX = 150
     _prev_content_rpr = None  # rPr of last non-spacer run, for w:w propagation
     for _ki, _kr in enumerate(all_runs):
         if _ki in ws_text or _ki in vml_indices:
@@ -888,13 +782,23 @@ def _set_para_text(p_elem, text: str) -> None:
         if not _is_spacer:
             # Content run: record its rPr for neighbouring spacer propagation.
             _prev_content_rpr = _krpr
-            # Also strip micro-tracking on short (1–3 char) content runs.
-            if len(_kr_text) <= 3 and _krpr is not None:
+            # Strip micro-tracking from all content runs.  The _MICRO_KERN_LIMIT
+            # guard already protects intentional letter-spacing (≥80 twips).
+            if _krpr is not None:
                 _ksp = _krpr.find(f"{{{_W}}}spacing")
                 if _ksp is not None:
                     try:
                         if abs(int(_ksp.get(f"{{{_W}}}val") or 0)) < _MICRO_KERN_LIMIT:
                             _krpr.remove(_ksp)
+                    except (ValueError, TypeError):
+                        pass
+                # Strip out-of-range character width scaling from content runs.
+                _kww = _krpr.find(f"{{{_W}}}w")
+                if _kww is not None:
+                    try:
+                        _wval = int(_kww.get(f"{{{_W}}}val") or 100)
+                        if _wval < _W_SCALE_MIN or _wval > _W_SCALE_MAX:
+                            _krpr.remove(_kww)
                     except (ValueError, TypeError):
                         pass
             continue
@@ -908,9 +812,21 @@ def _set_para_text(p_elem, text: str) -> None:
                         _krpr.remove(_ksp)
                 except (ValueError, TypeError):
                     pass
+            # Strip out-of-range w:w from spacer runs too.  Template spacer runs
+            # that immediately follow icon/placeholder runs may carry the same
+            # artifact w=270; stripping prevents it from surviving into output.
+            _kww_s = _krpr.find(f"{{{_W}}}w")
+            if _kww_s is not None:
+                try:
+                    _wval_s = int(_kww_s.get(f"{{{_W}}}val") or 100)
+                    if _wval_s < _W_SCALE_MIN or _wval_s > _W_SCALE_MAX:
+                        _krpr.remove(_kww_s)
+                except (ValueError, TypeError):
+                    pass
 
         # Propagate w:w (character width scaling) from the preceding content run
         # so the redistributed word character renders at the same condensed width.
+        # Only in-range values are propagated; artifact values were stripped above.
         if _prev_content_rpr is not None and _krpr is not None:
             _src_ww = _prev_content_rpr.find(f"{{{_W}}}w")
             if _src_ww is not None and _krpr.find(f"{{{_W}}}w") is None:
@@ -1561,7 +1477,6 @@ def _render_pdf_single_col_with_groups(
 
     grouped_idxs: "set[int]" = {idx for grp in groups for idx in grp}
     rendered_group_keys: "set[tuple[int, ...]]" = set()
-    _h_rule_borders = _build_h_rule_border_map(doc)
 
     def _add(elem) -> None:
         if sectPr is not None:
@@ -1768,8 +1683,6 @@ def _render_pdf_single_col_with_groups(
         elems = []
         heading_elem = build_para_element(sec.heading, doc_part)
         _shift_indent(heading_elem, min_indent)
-        if sec.heading.para_id in _h_rule_borders:
-            _apply_h_rule_top_border(heading_elem, _h_rule_borders[sec.heading.para_id])
         elems.append(heading_elem)
         if sec.semantic_type == "experience" and sec.roles:
             _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
@@ -1792,10 +1705,7 @@ def _render_pdf_single_col_with_groups(
         return elems
 
     def _build_section_paras(sec) -> "list":
-        heading_elem = build_para_element(sec.heading, doc_part)
-        if sec.heading.para_id in _h_rule_borders:
-            _apply_h_rule_top_border(heading_elem, _h_rule_borders[sec.heading.para_id])
-        elems: list = [heading_elem]
+        elems: list = [build_para_element(sec.heading, doc_part)]
         if sec.semantic_type == "experience" and sec.roles:
             _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
             if _has_orphan:
@@ -1975,13 +1885,9 @@ def _render_pdf_single_col_dark_header(doc: "ResumeDocument", body, sectPr, doc_
         else:
             body.append(elem)
 
-    _h_rule_borders = _build_h_rule_border_map(doc)
     _add(hdr_tbl)
     for pm in main_paras:
-        elem = build_para_element(pm, doc_part=doc_part)
-        if _h_rule_borders and pm.para_id in _h_rule_borders:
-            _apply_h_rule_top_border(elem, _h_rule_borders[pm.para_id])
-        _add(elem)
+        _add(build_para_element(pm, doc_part=doc_part))
     if ftr_tbl is not None:
         _add(ftr_tbl)
 
@@ -6717,22 +6623,11 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
             d.save(output_path)
             return
 
-    _h_rule_borders_fallback = (
-        _build_h_rule_border_map(doc)
-        if doc.source_kind == "pdf" and not has_table_blocks
-        else {}
-    )
-
     for item in render_items:
         if isinstance(item, TableBlock):
             _render_table_block(item, doc, body, sectPr)
         else:
             _render_para(item, body, sectPr, preserve_section_break=id(item) in header_para_ids)
-            if _h_rule_borders_fallback and item.para_id in _h_rule_borders_fallback:
-                # _render_para inserts before sectPr; find the just-added element.
-                _last = sectPr.getprevious() if sectPr is not None else (body[-1] if len(body) else None)
-                if _last is not None:
-                    _apply_h_rule_top_border(_last, _h_rule_borders_fallback[item.para_id])
 
     if doc.source_kind == "pdf":
         _insert_page_images(doc, body, sectPr, d.part)
