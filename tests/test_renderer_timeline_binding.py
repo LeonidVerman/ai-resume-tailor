@@ -405,3 +405,283 @@ def test_non_s35_no_timeline_table(docx_path):
     assert len(consumed) == 0, (
         f"{docx_path.name}: expected empty consumed_pids, got {len(consumed)}"
     )
+
+
+# ---------------------------------------------------------------------------
+# 8. Pre-implementation design guards for corrected table renderer (v2)
+#
+# These tests lock in REQUIRED design properties that the v1 table builder
+# violated.  They must all pass before the table path is re-enabled.
+# ---------------------------------------------------------------------------
+
+def _explicit_binding_consumed_pids(doc) -> frozenset:
+    """Return the consumed_pids set built from explicit layout_binding IDs only.
+
+    This is the CORRECTED definition: no range-sweep, no col-break detection,
+    no header_para heuristics.  Only para_ids that role.layout_binding
+    explicitly lists as left/spacer/right are consumed.
+    """
+    consumed: set[str] = set()
+    for sec in (doc.sections or []):
+        for role in (sec.roles or []):
+            lb = role.layout_binding
+            if not lb or lb.get("kind") != "timeline_left_role_right":
+                continue
+            consumed.update(lb.get("left_para_ids") or [])
+            consumed.update(lb.get("left_leading_spacer_ids") or [])
+            consumed.update(lb.get("left_trailing_spacer_ids") or [])
+            consumed.update(lb.get("right_para_ids") or [])
+    return frozenset(consumed)
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_experience_heading_not_in_explicit_binding():
+    """para_59 (Experience heading + COL_BRK) must NOT be in any role's explicit binding.
+
+    The corrected renderer must emit it verbatim before the table, not consume it.
+    """
+    doc = _load_s35_original()
+    consumed = _explicit_binding_consumed_pids(doc)
+    assert "para_59" not in consumed, (
+        "para_59 (Experience heading) is in explicit binding — it would be consumed "
+        "and lost; must be emitted verbatim before the table instead"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_sectpr_boundary_not_in_explicit_binding():
+    """para_120 (sectPr boundary) must NOT be in any role's explicit binding.
+
+    The corrected renderer must emit it verbatim after the first table segment so
+    Education/Skills/Projects sections keep their original section geometry.
+    """
+    doc = _load_s35_original()
+    consumed = _explicit_binding_consumed_pids(doc)
+    assert "para_120" not in consumed, (
+        "para_120 (sectPr boundary) is in explicit binding — consuming it strips "
+        "the section geometry that Education/Skills/Projects sections depend on"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_education_blocks_not_in_explicit_binding():
+    """para_125 (Education heading) and later must NOT appear in any role binding.
+
+    The corrected consumed_pids must never include non-Experience blocks.
+    """
+    doc = _load_s35_original()
+    consumed = _explicit_binding_consumed_pids(doc)
+    from tailor.compiler.models import LayoutParagraphBlock
+    lbs = list(doc.layout_blocks or [])
+    edu_idx = next(
+        (i for i, b in enumerate(lbs)
+         if isinstance(b, LayoutParagraphBlock) and b.para_id == "para_125"),
+        None,
+    )
+    assert edu_idx is not None, "para_125 (Education) not found in layout_blocks"
+    edu_pids = {
+        b.para_id for b in lbs[edu_idx:]
+        if isinstance(b, LayoutParagraphBlock) and b.para_id
+    }
+    leaked = consumed & edu_pids
+    assert not leaked, (
+        f"{len(leaked)} Education/Skills/Projects para_ids leaked into "
+        f"explicit consumed: {sorted(leaked)[:5]}"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_roles_split_by_sectpr_boundary():
+    """Roles 0-3 right_para_ids all precede para_120 in layout_blocks;
+    roles 4-5 right_para_ids all follow para_120.
+
+    This proves the corrected renderer needs TWO table segments — one per
+    Word section — with para_120 emitted verbatim between them.
+    """
+    from tailor.compiler.models import LayoutParagraphBlock
+    doc = _load_s35_original()
+    lbs = list(doc.layout_blocks or [])
+    pid_to_idx = {
+        b.para_id: i for i, b in enumerate(lbs)
+        if isinstance(b, LayoutParagraphBlock) and b.para_id
+    }
+    sectpr_idx = pid_to_idx.get("para_120")
+    assert sectpr_idx is not None, "para_120 not found in layout_blocks"
+
+    roles = [
+        r for sec in doc.sections
+        for r in (sec.roles or [])
+        if r.layout_binding and r.layout_binding.get("kind") == "timeline_left_role_right"
+    ]
+    roles.sort(key=lambda r: r.layout_binding["row_index"])
+
+    before_boundary = []
+    after_boundary = []
+    for r in roles:
+        rpids = r.layout_binding.get("right_para_ids") or []
+        indices = [pid_to_idx[p] for p in rpids if p in pid_to_idx]
+        if not indices:
+            continue
+        if max(indices) < sectpr_idx:
+            before_boundary.append(r.layout_binding["row_index"])
+        elif min(indices) > sectpr_idx:
+            after_boundary.append(r.layout_binding["row_index"])
+
+    assert before_boundary == [0, 1, 2, 3], (
+        f"Expected roles 0-3 before para_120, got {before_boundary}"
+    )
+    assert after_boundary == [4, 5], (
+        f"Expected roles 4-5 after para_120, got {after_boundary}"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_missing_right_para_ids_identified():
+    """para_103, para_104, para_115, para_116 are in right_para_ids for roles 2/3
+    but absent from layout_blocks.  These are LLM-compatible paragraphs that must
+    be rendered from para_lookup via synthetic element building, not silently skipped.
+    """
+    from tailor.compiler.models import LayoutParagraphBlock
+    original, updated = _load_s35_updated()
+    lbs = list(updated.layout_blocks or [])
+    lb_pids = {b.para_id for b in lbs if isinstance(b, LayoutParagraphBlock) and b.para_id}
+
+    roles = [
+        r for sec in updated.sections
+        for r in (sec.roles or [])
+        if r.layout_binding and r.layout_binding.get("kind") == "timeline_left_role_right"
+    ]
+    roles.sort(key=lambda r: r.layout_binding["row_index"])
+
+    missing_by_role: dict[int, list[str]] = {}
+    for r in roles:
+        ri = r.layout_binding["row_index"]
+        missing = [
+            p for p in (r.layout_binding.get("right_para_ids") or [])
+            if p not in lb_pids
+        ]
+        if missing:
+            missing_by_role[ri] = missing
+
+    assert 2 in missing_by_role, "Role 2 should have missing right_para_ids"
+    assert 3 in missing_by_role, "Role 3 should have missing right_para_ids"
+    assert "para_103" in missing_by_role.get(2, []), "para_103 must be missing from layout_blocks for role 2"
+    assert "para_104" in missing_by_role.get(2, []), "para_104 must be missing from layout_blocks for role 2"
+    assert "para_115" in missing_by_role.get(3, []), "para_115 must be missing from layout_blocks for role 3"
+    assert "para_116" in missing_by_role.get(3, []), "para_116 must be missing from layout_blocks for role 3"
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_missing_right_para_ids_renderable_via_para_lookup():
+    """All right_para_ids missing from layout_blocks must be present in para_lookup
+    with a renderable style proto or paragraph_profile.
+
+    The corrected table renderer must fall back to a synthetic element for these
+    rather than silently dropping them.
+    """
+    from tailor.compiler.models import LayoutParagraphBlock
+    from tailor.compiler.docx_renderer import _build_para_lookup
+    original, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    lbs = list(updated.layout_blocks or [])
+    lb_pids = {b.para_id for b in lbs if isinstance(b, LayoutParagraphBlock) and b.para_id}
+
+    not_renderable: list[str] = []
+    for sec in updated.sections:
+        for role in (sec.roles or []):
+            lb = role.layout_binding
+            if not lb or lb.get("kind") != "timeline_left_role_right":
+                continue
+            for pid in (lb.get("right_para_ids") or []):
+                if pid in lb_pids:
+                    continue  # has LayoutParagraphBlock — normal path
+                pm = para_lookup.get(pid)
+                if pm is None or (
+                    pm.style.xml_proto is None and pm.paragraph_profile is None
+                ):
+                    not_renderable.append(pid)
+
+    assert not not_renderable, (
+        f"{len(not_renderable)} right_para_ids missing from layout_blocks AND "
+        f"not renderable via para_lookup: {not_renderable}"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_experience_heading_has_col_break():
+    """para_59 carries a w:br type='column' — it is the right-column anchor for
+    the Experience section.  The corrected renderer must strip the column break
+    before emitting para_59 as a plain body paragraph above the table.
+    """
+    from tailor.compiler.models import LayoutParagraphBlock
+    doc = _load_s35_original()
+    lbs = list(doc.layout_blocks or [])
+    blk = next(
+        (b for b in lbs if isinstance(b, LayoutParagraphBlock) and b.para_id == "para_59"),
+        None,
+    )
+    assert blk is not None, "para_59 not found in layout_blocks"
+    assert blk.xml_proto_xml and 'type="column"' in blk.xml_proto_xml, (
+        "para_59 expected to carry a column break (type='column')"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_sectpr_boundary_para_carries_secpr():
+    """para_120 carries an embedded w:sectPr in its pPr.  The corrected renderer
+    must emit this paragraph verbatim between table segment 1 and segment 2 so
+    subsequent sections (Education/Skills/Projects) inherit the correct geometry.
+    """
+    from tailor.compiler.models import LayoutParagraphBlock
+    doc = _load_s35_original()
+    lbs = list(doc.layout_blocks or [])
+    blk = next(
+        (b for b in lbs if isinstance(b, LayoutParagraphBlock) and b.para_id == "para_120"),
+        None,
+    )
+    assert blk is not None, "para_120 not found in layout_blocks"
+    assert blk.xml_proto_xml and "sectPr" in blk.xml_proto_xml, (
+        "para_120 expected to carry an embedded sectPr"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_explicit_binding_excludes_structural_paras():
+    """The corrected consumed_pids (explicit binding only) must exclude:
+    - para_59 (Experience heading / col-break anchor)
+    - para_120 (sectPr boundary)
+    - para_121 col-break (Role 4 header, but binding already includes it via right_para_ids)
+    - All Education/Skills/Projects blocks (para_125+)
+
+    This is the definitive gate: if this test passes, the corrected design is safe
+    to activate without accidentally consuming structural paragraphs.
+    """
+    from tailor.compiler.models import LayoutParagraphBlock
+    doc = _load_s35_original()
+    consumed = _explicit_binding_consumed_pids(doc)
+
+    structural_must_not_be_consumed = {
+        "para_59",   # Experience section heading (col-break anchor)
+        "para_120",  # sectPr two-column boundary
+    }
+    wrongly_consumed = consumed & structural_must_not_be_consumed
+    assert not wrongly_consumed, (
+        f"Structural paragraphs incorrectly in consumed_pids: {wrongly_consumed}"
+    )
+
+    # Verify Education/Skills/Projects blocks are clean
+    lbs = list(doc.layout_blocks or [])
+    edu_idx = next(
+        (i for i, b in enumerate(lbs)
+         if isinstance(b, LayoutParagraphBlock) and b.para_id == "para_125"),
+        None,
+    )
+    if edu_idx is not None:
+        edu_pids = {
+            b.para_id for b in lbs[edu_idx:]
+            if isinstance(b, LayoutParagraphBlock) and b.para_id
+        }
+        leaked = consumed & edu_pids
+        assert not leaked, (
+            f"Education/Skills/Projects pids in explicit consumed: {sorted(leaked)[:5]}"
+        )

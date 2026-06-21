@@ -5278,23 +5278,6 @@ def _render_from_layout_blocks(
             len(_timeline_left_pids),
         )
 
-    # Build the timeline row-table when layout_binding is present.
-    # The table is a borderless two-column w:tbl with one row per role;
-    # consumed_pids is the set of para_ids placed inside it (left + right).
-    _timeline_row_tbl: "Any | None" = None
-    _consumed_pids: frozenset[str] = frozenset()
-    _timeline_table_emitted: bool = False
-    if _timeline_left_pids:
-        _timeline_row_tbl, _consumed_pids = _build_timeline_row_table(
-            doc,
-            para_lookup,
-            list(doc.layout_blocks),  # type: ignore[arg-type]
-            _main_pgSz_w,
-            _main_pgSz_h,
-            _main_is_multicolumn,
-            sectPr,
-        )
-
     for block in doc.layout_blocks:  # type: ignore[union-attr]
         if isinstance(block, LayoutTableBlock):
             tbl_elem = etree.fromstring(block.xml_proto_xml)
@@ -5418,19 +5401,6 @@ def _render_from_layout_blocks(
 
         else:
             # LayoutParagraphBlock
-            # Timeline row-table: emit the pre-built table at the position of
-            # the first consumed para_id, then skip all consumed blocks.
-            if _consumed_pids and block.para_id and block.para_id in _consumed_pids:
-                if not _timeline_table_emitted and _timeline_row_tbl is not None:
-                    _timeline_table_emitted = True
-                    _RENDERER_CREATED_TABLES.add(_timeline_row_tbl)
-                    if sectPr is not None:
-                        sectPr.addprevious(_timeline_row_tbl)
-                    else:
-                        body.append(_timeline_row_tbl)
-                    _log.debug("TIMELINE_ROW_TABLE_EMITTED at para_id=%r", block.para_id)
-                continue
-
             if not block.xml_proto_xml:
                 # No XML prototype: fall back to para_builder or runtime xml_proto
                 pm = para_lookup.get(block.para_id) if block.para_id else None
