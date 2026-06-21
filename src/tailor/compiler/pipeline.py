@@ -1285,6 +1285,22 @@ def _classify_section_render_mode(sec, layout) -> str:
             pp = pm.paragraph_profile
             if pp and pp.column_id == "left" and pp.x_pt + pp.width_pt > split_x:
                 return "FULL_WIDTH"
+    # Sections whose body_paras are unassigned (col=None) but geometrically span
+    # the full width (right edge past split_x) are truly full-width — e.g. a
+    # PROFESSIONAL SUMMARY block that sits above the two-column body in the PDF.
+    # Without this check they fall to SINGLE_COLUMN and the renderer drops their
+    # col=None content entirely (parallel mode only collects col=left / col=right).
+    if split_x > 0 and not has_left and not has_right:
+        for pm in sec.body_paras:
+            pp = pm.paragraph_profile
+            if (
+                pp
+                and pp.column_id is None
+                and pp.x_pt is not None
+                and pp.width_pt is not None
+                and pp.x_pt + pp.width_pt > split_x
+            ):
+                return "FULL_WIDTH"
     return "SINGLE_COLUMN"
 
 
