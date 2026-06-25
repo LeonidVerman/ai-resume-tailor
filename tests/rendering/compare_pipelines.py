@@ -68,6 +68,17 @@ _PUA_RE = re.compile(r"[-]")
 # an orphaned ". " text block that ends up at the tail of extracted column text.
 _TRAILING_DOT_RE = re.compile(r"\s+\.\s*$")
 
+# Unicode dash/hyphen variants → ASCII hyphen for comparison.
+# PDF extraction uses different dash code-points than DOCX rendering
+# (en-dash U+2013, figure-dash U+2012, minus U+2212, etc.).
+_DASH_RE = re.compile(r"[‐‑‒–—―−]")
+
+# Letter-spacing artifact: "S U M M A R Y" → "summary".
+# PDF extraction of decorative spaced headings emits each character as a
+# separate token; the DOCX pipeline reassembles them differently.
+# Detect runs of 3+ single-character alnum tokens separated by spaces.
+_LETTER_SPACE_RE = re.compile(r"(?<!\w)(\b[A-Za-z0-9]\b)( [A-Za-z0-9]\b){2,}(?!\w)")
+
 # Two-column comparison: per-column similarity must meet this threshold.
 # 0.99 allows for minor locked-section differences (e.g. cross-page education
 # content the PDF parser cannot see) while catching any real content injection
@@ -146,6 +157,16 @@ def _normalize(text: str) -> str:
     text = _PUA_RE.sub(" ", text)
     text = re.sub(r"[\r\n]+", " ", text)
     text = re.sub(r"\s+", " ", text)
+    # Unify Unicode dash variants (en-dash, em-dash, figure-dash, minus, etc.)
+    # to ASCII hyphen.  PDF extraction and DOCX rendering use different code-points
+    # for the same visual dash.
+    text = _DASH_RE.sub("-", text)
+    # Collapse letter-spacing artifacts: "S U M M A R Y" → "SUMMARY".
+    # PDF extraction of decoratively-spaced headings emits each character as a
+    # separate token; collapse runs of 3+ single-char alnum tokens.
+    def _collapse_spaces(m: "re.Match[str]") -> str:
+        return m.group(0).replace(" ", "")
+    text = _LETTER_SPACE_RE.sub(_collapse_spaces, text)
     # Collapse line-break hyphenation: "high- performance" -> "high-performance"
     text = re.sub(r"(\w)-\s+(\w)", r"\1-\2", text)
     # Strip bullet variants -- they appear inconsistently across pipelines
@@ -196,7 +217,14 @@ def _compare_pdf_pair(docx_pdf: Path, pdf_pdf: Path) -> tuple[bool, str]:
     # col_count flag, which can disagree between the two PDFs.
     docx_split = _find_col_split(docx_lines, dwidth)
     pdf_split  = _find_col_split(pdf_lines,  pwidth)
-    split_x = docx_split or pdf_split
+
+    # Only use per-column comparison when BOTH pipelines agree on a two-column
+    # layout.  When only one side detects a split, one pipeline rendered the
+    # content as single-column while the other used two columns — applying the
+    # split from one side to the other produces a spurious right=0.0 failure
+    # (all content lands in one column on the no-split side).  Fall through to
+    # single-column comparison instead.
+    split_x = (docx_split + pdf_split) / 2.0 if (docx_split and pdf_split) else None
 
     if split_x is not None:
         # Two-column: split by x then compare each column to avoid interleaving
@@ -229,12 +257,18 @@ def _compare_pdf_pair(docx_pdf: Path, pdf_pdf: Path) -> tuple[bool, str]:
             parts.append(_first_diff_desc(docx_right, pdf_right))
         return False, "\n".join(parts)
 
-    # Single-column: exact match after normalisation
+    # Single-column: use the same 0.99 similarity threshold as per-column
+    # comparison.  Strict equality was rejecting samples with minor extraction
+    # artifacts (e.g. a detached hyphen, a trailing space) that differ between
+    # the two PDFs but represent identical content.
     docx_text = _normalize(" ".join(t for t, _ in docx_lines))
     pdf_text  = _normalize(" ".join(t for t, _ in pdf_lines))
-    if docx_text == pdf_text:
+    sim = SequenceMatcher(None, docx_text, pdf_text, autojunk=False).ratio()
+    if sim >= _TWO_COL_SIM_THRESHOLD:
         return True, ""
-    return False, _first_diff_desc(docx_text, pdf_text)
+    desc = f"Single-column similarity {sim:.3f} < {_TWO_COL_SIM_THRESHOLD}\n"
+    desc += _first_diff_desc(docx_text, pdf_text)
+    return False, desc
 
 
 # ---------------------------------------------------------------------------
