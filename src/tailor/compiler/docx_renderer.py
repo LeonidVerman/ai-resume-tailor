@@ -795,19 +795,33 @@ def _set_para_text(p_elem, text: str) -> None:
             ws_text[i] = run_text
             chars = 0   # exclude from proportional distribution
         elif r.find(f"{{{_W}}}pict") is not None:
-            nested_t = r.findall(f".//{{{_W}}}t")
-            if nested_t:
-                vml_text_str += "".join(t.text or "" for t in nested_t)
+            # Only capture text that lives inside a w:txbxContent (the actual
+            # VML text-box container).  Using .//{w}t recursively would also
+            # grab direct w:t siblings of w:pict in the same run and mistakenly
+            # treat them as "already handled" VML text.
+            _txb_t = [
+                t
+                for txb in r.findall(f".//{{{_W}}}txbxContent")
+                for t in txb.findall(f".//{{{_W}}}t")
+            ]
+            if _txb_t:
+                vml_text_str += "".join(t.text or "" for t in _txb_t)
                 vml_indices.add(i)
                 chars = 0   # exclude from proportional distribution
         elif r.find(f".//{{{_WP}}}anchor") is not None:
             # Modern WPS text box in mc:AlternateContent/mc:Choice/w:drawing/wp:anchor.
-            # Both the Choice (modern drawing) and Fallback (VML) branches carry the
-            # same text; findall returns both copies, matching what the parser
-            # concatenated into the paragraph IR text.
-            nested_t = r.findall(f".//{{{_W}}}t")
-            if nested_t:
-                vml_text_str += "".join(t.text or "" for t in nested_t)
+            # Only capture text inside w:txbxContent — the actual embedded text box.
+            # A run that contains BOTH a background drawing (wp:anchor with no text box)
+            # AND a direct w:t child (e.g. "AMELIA ADAMS") must not have its paragraph
+            # text mistaken for VML box content; .//{w}t recursive search would capture
+            # that direct sibling, causing the name to be stripped from the output.
+            _txb_t = [
+                t
+                for txb in r.findall(f".//{{{_W}}}txbxContent")
+                for t in txb.findall(f".//{{{_W}}}t")
+            ]
+            if _txb_t:
+                vml_text_str += "".join(t.text or "" for t in _txb_t)
                 vml_indices.add(i)
                 chars = 0   # exclude from proportional distribution
         orig_lens.append(chars)
