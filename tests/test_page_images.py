@@ -818,6 +818,42 @@ class TestSample12LabelColTable:
             f"Expected at least one header_para to have a non-None text_color, got: {header_colors}"
         )
 
+    def test_header_para_color_theme_override(self, tmp_path):
+        """Rendered DOCX runs with explicit text_color must set w:themeColor='none' so
+        LibreOffice uses the direct val instead of the paragraph style's theme color."""
+        from tailor.compiler.pdf_parser import parse_pdf
+        from tailor.compiler.docx_renderer import render_docx
+        from tailor.config import RESUME_TEMPLATE
+        from docx import Document
+
+        _WN = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
+        with open(_SAMPLE_12, "rb") as f:
+            ir = parse_pdf(f.read())
+
+        out = str(tmp_path / "s12_color_check.docx")
+        render_docx(ir, RESUME_TEMPLATE, out)
+        d = Document(out)
+
+        colored_runs = []
+        for p in d.element.body.iter(f"{{{_WN}}}p"):
+            for r in p.findall(f"{{{_WN}}}r"):
+                rPr = r.find(f"{{{_WN}}}rPr")
+                if rPr is None:
+                    continue
+                color = rPr.find(f"{{{_WN}}}color")
+                if color is None:
+                    continue
+                val = color.get(f"{{{_WN}}}val")
+                if val and val not in ("000000", "FFFFFF", "auto"):
+                    colored_runs.append((val, color.get(f"{{{_WN}}}themeColor")))
+
+        assert colored_runs, "Expected at least one colored run in the rendered DOCX"
+        for val, tc in colored_runs:
+            assert tc == "none", (
+                f"Run with explicit color val={val} must have themeColor='none', got {tc!r}"
+            )
+
 
 @pytest.mark.skipif(not _SAMPLE_12.exists(), reason="sample 12 PDF not in test fixtures")
 class TestSample12GroupTableTopBorder:
