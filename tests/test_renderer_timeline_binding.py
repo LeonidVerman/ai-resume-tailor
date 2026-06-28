@@ -685,3 +685,259 @@ def test_s35_explicit_binding_excludes_structural_paras():
         assert not leaked, (
             f"Education/Skills/Projects pids in explicit consumed: {sorted(leaked)[:5]}"
         )
+
+
+# ---------------------------------------------------------------------------
+# 9. v2 two-segment table reconstruction (feature-flagged)
+# ---------------------------------------------------------------------------
+
+
+def _render_s35_with_v2(updated_doc):
+    """Call _render_from_layout_blocks with the v2 flag enabled.
+
+    Returns the rendered body element (lxml) so tests can inspect the DOM.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import (
+        _render_from_layout_blocks,
+        _set_timeline_row_table_v2,
+    )
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _set_timeline_row_table_v2(True)
+    try:
+        out_doc = DocxDoc()
+        body = out_doc.element.body
+        sectPr = body.find(f"{{{_W_NS}}}sectPr")
+        _render_from_layout_blocks(updated_doc, body, sectPr)
+        return body
+    finally:
+        _set_timeline_row_table_v2(False)
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_build_segments_returns_two_tables():
+    """_build_timeline_segments must return two non-None table elements."""
+    from tailor.compiler.docx_renderer import (
+        _build_para_lookup,
+        _build_timeline_segments,
+    )
+    from tailor.compiler.models import LayoutParagraphBlock
+
+    original, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    lbs = list(updated.layout_blocks or [])
+
+    # Find main sectPr geometry (same pattern as _render_from_layout_blocks)
+    from docx import Document as DocxDoc
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    out_doc = DocxDoc()
+    body = out_doc.element.body
+    sectPr = body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, consumed, diag = _build_timeline_segments(
+        updated, para_lookup, lbs, None, None, sectPr
+    )
+    assert seg1 is not None, "seg1 table must not be None"
+    assert seg2 is not None, "seg2 table must not be None"
+    assert diag["seg1_roles"] == [0, 1, 2, 3], (
+        f"Segment 1 must contain roles 0-3, got {diag['seg1_roles']}"
+    )
+    assert diag["seg2_roles"] == [4, 5], (
+        f"Segment 2 must contain roles 4-5, got {diag['seg2_roles']}"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_consumed_excludes_structural_pids():
+    """v2 consumed_pids must exclude para_59 (Experience heading).
+    para_120 (sectPr) IS consumed: emitting it as a body paragraph causes an
+    unwanted LibreOffice page break between the two table segments."""
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+    from docx import Document as DocxDoc
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    original, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    _, _, consumed, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    assert "para_59" not in consumed, "para_59 must not be consumed (it is the seg1 heading)"
+    assert "para_120" in consumed, "para_120 must be consumed to prevent unwanted page break"
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_no_skipped_pids():
+    """All right_para_ids (including synthetic ones) must be rendered — skipped_pids empty."""
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+    from docx import Document as DocxDoc
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    original, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    _, _, _, diag = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    assert not diag.get("skipped_pids"), (
+        f"Skipped pids (not rendered): {diag['skipped_pids']}"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_synthetic_pids_reported():
+    """Synthetic pids (para_103/104/115/116) must appear in diag['synthetic_pids']."""
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+    from docx import Document as DocxDoc
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    original, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    _, _, _, diag = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    syn = set(diag.get("synthetic_pids", []))
+    for pid in ("para_103", "para_104", "para_115", "para_116"):
+        assert pid in syn, f"{pid} not in synthetic_pids; got {syn}"
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_rendered_body_has_two_tables():
+    """Full render with v2 flag must produce exactly 2 w:tbl elements in the body."""
+    from lxml import etree
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    body = _render_s35_with_v2(updated)
+    tbls = body.findall(f"{{{_W_NS}}}tbl")
+    assert len(tbls) == 2, (
+        f"Expected 2 tables in rendered body, got {len(tbls)}"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_seg1_has_four_rows():
+    """Segment 1 table (before sectPr boundary) must have 4 rows (roles 0-3)."""
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    body = _render_s35_with_v2(updated)
+    tbls = body.findall(f"{{{_W_NS}}}tbl")
+    assert len(tbls) >= 1
+    rows = tbls[0].findall(f"{{{_W_NS}}}tr")
+    assert len(rows) == 4, f"Segment 1 expected 4 rows, got {len(rows)}"
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_seg2_has_two_rows():
+    """Segment 2 table (after sectPr boundary) must have 2 rows (roles 4-5)."""
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    body = _render_s35_with_v2(updated)
+    tbls = body.findall(f"{{{_W_NS}}}tbl")
+    assert len(tbls) >= 2
+    rows = tbls[1].findall(f"{{{_W_NS}}}tr")
+    assert len(rows) == 2, f"Segment 2 expected 2 rows, got {len(rows)}"
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_para59_appears_before_first_table():
+    """para_59 (Experience heading) must appear as a body paragraph before the first table."""
+    from lxml import etree
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _W14_NS = "http://schemas.microsoft.com/office/word/2010/wordml"
+    _, updated = _load_s35_updated()
+    body = _render_s35_with_v2(updated)
+
+    children = list(body)
+    para59_idx = next(
+        (i for i, c in enumerate(children)
+         if c.tag == f"{{{_W_NS}}}p"
+         and c.get(f"{{{_W14_NS}}}paraId") == "para_59"),
+        None,
+    )
+    first_tbl_idx = next(
+        (i for i, c in enumerate(children) if c.tag == f"{{{_W_NS}}}tbl"),
+        None,
+    )
+    assert para59_idx is not None, "para_59 not found in rendered body"
+    assert first_tbl_idx is not None, "no table found in rendered body"
+    assert para59_idx < first_tbl_idx, (
+        f"para_59 (idx={para59_idx}) must come BEFORE first table (idx={first_tbl_idx})"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_para59_no_column_break():
+    """para_59 in rendered output must have its column break stripped."""
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _W14_NS = "http://schemas.microsoft.com/office/word/2010/wordml"
+    _, updated = _load_s35_updated()
+    body = _render_s35_with_v2(updated)
+
+    para59 = next(
+        (c for c in body
+         if c.tag == f"{{{_W_NS}}}p"
+         and c.get(f"{{{_W14_NS}}}paraId") == "para_59"),
+        None,
+    )
+    assert para59 is not None, "para_59 not found in rendered body"
+    col_breaks = para59.findall(f".//{{{_W_NS}}}br[@{{{_W_NS}}}type='column']")
+    assert not col_breaks, (
+        f"para_59 must not contain column break after rendering, found {len(col_breaks)}"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_para120_consumed_not_in_body():
+    """para_120 (sectPr boundary) must be consumed and absent from the rendered body.
+    When emitted as a body paragraph the continuous sectPr triggers an unwanted
+    page break in LibreOffice between the two table segments."""
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _W14_NS = "http://schemas.microsoft.com/office/word/2010/wordml"
+    _, updated = _load_s35_updated()
+    body = _render_s35_with_v2(updated)
+
+    children = list(body)
+    tbl_indices = [i for i, c in enumerate(children) if c.tag == f"{{{_W_NS}}}tbl"]
+    assert len(tbl_indices) >= 2, f"Need 2 tables, found {len(tbl_indices)}"
+
+    para120 = next(
+        (c for c in children
+         if c.tag == f"{{{_W_NS}}}p"
+         and c.get(f"{{{_W14_NS}}}paraId") == "para_120"),
+        None,
+    )
+    assert para120 is None, "para_120 must be consumed (absent from rendered body)"
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_education_after_both_tables():
+    """para_125 (Education heading) must appear after the second table."""
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _W14_NS = "http://schemas.microsoft.com/office/word/2010/wordml"
+    _, updated = _load_s35_updated()
+    body = _render_s35_with_v2(updated)
+
+    children = list(body)
+    tbl_indices = [i for i, c in enumerate(children) if c.tag == f"{{{_W_NS}}}tbl"]
+    assert len(tbl_indices) >= 2
+
+    para125_idx = next(
+        (i for i, c in enumerate(children)
+         if c.tag == f"{{{_W_NS}}}p"
+         and c.get(f"{{{_W14_NS}}}paraId") == "para_125"),
+        None,
+    )
+    assert para125_idx is not None, "para_125 (Education) not found in rendered body"
+    assert para125_idx > tbl_indices[1], (
+        f"para_125 (idx={para125_idx}) must come AFTER second table (idx={tbl_indices[1]})"
+    )
