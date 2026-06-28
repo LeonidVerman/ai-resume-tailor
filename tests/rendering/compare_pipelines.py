@@ -54,7 +54,7 @@ _NUM_RE = re.compile(r"^(\d+)-")
 # than normalising so a bullet present in one pipeline but not the other does
 # not cause a mismatch.
 # : Wingdings/Symbol private-use bullet used in DOCX numPr numbering defs.
-_BULLET_CHARS = "·•▪▸►◆◇○●◦‣"
+_BULLET_CHARS = "·•▪▸►◆◇○●◦‣→←↗↘▶▷"
 _BULLET_RE = re.compile("[" + re.escape(_BULLET_CHARS) + "]")
 
 # Unicode Private Use Area characters used by Wingdings/Webdings/Symbol icon fonts.
@@ -157,6 +157,13 @@ def _normalize(text: str) -> str:
     text = _PUA_RE.sub(" ", text)
     text = re.sub(r"[\r\n]+", " ", text)
     text = re.sub(r"\s+", " ", text)
+    # G8: strip Unicode chars used as separator icons in some DOCX templates
+    # (ć U+0107, ħ U+0127) appear as standalone bullet-like separators in contact
+    # sections; they are not content letters here.
+    text = re.sub(r"(?<!\w)[ĆćĦħ](?!\w)", "", text)
+    # G1: strip pipe chars used as visual separators (PDF extraction artifact).
+    # PDF renders | between company / date / location; DOCX omits it.
+    text = re.sub(r"\s*\|\s*", " ", text)
     # Unify Unicode dash variants (en-dash, em-dash, figure-dash, minus, etc.)
     # to ASCII hyphen.  PDF extraction and DOCX rendering use different code-points
     # for the same visual dash.
@@ -168,7 +175,11 @@ def _normalize(text: str) -> str:
         return m.group(0).replace(" ", "")
     text = _LETTER_SPACE_RE.sub(_collapse_spaces, text)
     # Collapse line-break hyphenation: "high- performance" -> "high-performance"
-    text = re.sub(r"(\w)-\s+(\w)", r"\1-\2", text)
+    text = re.sub(r"(\w)-\s+(\w)", r"-", text)
+    # G3: collapse whitespace inserted by line-breaking inside URLs/emails.
+    # "techguruplus.co m" -> "techguruplus.com", "linkedin.com/in/ name" -> "linkedin.com/in/name"
+    text = re.sub(r"(\.[a-z]{2,6})\s+([a-z]{1,4})\b", r"\1\2", text)
+    text = re.sub(r"/\s+([a-z])", r"/\1", text)
     # Strip bullet variants -- they appear inconsistently across pipelines
     # (LibreOffice numPr bullets vs PDF list markers) and are not content.
     text = _BULLET_RE.sub(" ", text)
