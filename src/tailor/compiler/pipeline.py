@@ -185,7 +185,12 @@ def _clear_pdf_content_colors(doc: ResumeDocument) -> None:
             # Strip color from LLM-replaced content (bullets, body paragraphs, meta).
             # PDF-extracted colors bleed onto new content via clone_as; clearing them
             # ensures body text renders in the default DOCX color.
-            pp.text_color = None
+            # Original template paragraphs carry a non-empty para_id (e.g. 'para_1');
+            # they are structural design elements whose accent colors must be preserved
+            # (e.g. KRISTI LARR name in dark-red #943613).  Only LLM-injected clones
+            # (para_id="" or None) get their color stripped.
+            if not pm.para_id:
+                pp.text_color = None
             if pm.semantic == "bullet":
                 # Bullets are never bold — clear unconditionally (fixes role-header
                 # bold bleed when the role header is the only archetype available).
