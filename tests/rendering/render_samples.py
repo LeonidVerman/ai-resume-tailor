@@ -20,9 +20,12 @@ Discovery:
   classification/pdf/{N}-*_input.json   ← PDF classified templates (skipped)
   generation/{N}-*.json                 ← LLM tailoring output
 
-Classification is loaded from the "structured_resume" field of the generation
-JSON file (populated by generate_run_data).  If the field is absent or empty,
-rendering proceeds without classification constraints.
+Classification is loaded from per-source-kind files:
+  classification/docx/{stem}.json  for DOCX-origin samples
+  classification/pdf/{stem}.json   for PDF-origin samples
+Each file is the raw classify-file API response; the nested ``classification``
+key is extracted.  Falls back to the ``structured_resume.classification`` field
+of the generation JSON when the per-source-kind file is absent.
 
 Matching is by numeric prefix N.  If multiple files share the same N within the
 same source kind, the script aborts with a disambiguation error.
@@ -55,6 +58,8 @@ _SAMPLES = _TESTS / "samples"
 _GEN_DIR      = _SAMPLES / "generation"
 _RES_DOCX_DIR = _SAMPLES / "resume" / "docx"
 _RES_PDF_DIR  = _SAMPLES / "resume" / "pfd"   # note: legacy typo preserved
+_CLS_DOCX_DIR = _SAMPLES / "classification" / "docx"
+_CLS_PDF_DIR  = _SAMPLES / "classification" / "pdf"
 
 _OUT_IR_DOCX  = _REPO / "tmp" / "artefacts" / "ir"      / "docx"
 _OUT_IR_PDF   = _REPO / "tmp" / "artefacts" / "ir"      / "pdf"
@@ -287,20 +292,35 @@ def _compile_sample(pair: SamplePair, verbose: bool = True) -> _Compiled | None:
     # correct rendered file.
     grader_pdf = out_rend_dir / f"{stem}.pdf"
 
-    # ── Stage 3: load classification from structured_resume in debug data ────
+    # ── Stage 3: load per-source-kind classification ─────────────────────────
+    # Prefer tests/samples/classification/{source_kind}/{stem}.json (API response
+    # envelope; extract nested "classification" key).  Fall back to the embedded
+    # structured_resume.classification in the generation JSON when the file is absent.
     classification = None
-    if structured_resume_data:
+    sys.path.insert(0, str(_REPO / "src"))
+    from tailor.compiler.classification_models import ClassificationOutput
+
+    cls_dir = _CLS_DOCX_DIR if pair.source_kind == "docx" else _CLS_PDF_DIR
+    cls_file = cls_dir / f"{stem}.json"
+    if cls_file.exists():
         try:
-            sys.path.insert(0, str(_REPO / "src"))
-            from tailor.compiler.classification_models import ClassificationOutput
+            with open(cls_file, encoding="utf-8") as _f:
+                _cls_data = json.load(_f)
+            cls_dict = _cls_data.get("classification") or _cls_data
+            classification = ClassificationOutput.from_dict(cls_dict)
+            if verbose:
+                print(f"  classification: {cls_file.relative_to(_REPO)}")
+        except Exception as e:
+            print(f"{tag} WARN [stage=load-classification] {type(e).__name__}: {e} — rendering without classification")
+    elif structured_resume_data:
+        try:
             cls_dict = structured_resume_data.get("classification")
             if cls_dict:
                 classification = ClassificationOutput.from_dict(cls_dict)
                 if verbose:
-                    print(f"  classification: loaded from structured_resume in debug data")
+                    print(f"  classification: fallback from generation JSON structured_resume")
         except Exception as e:
             print(f"{tag} WARN [stage=load-classification] {type(e).__name__}: {e} — rendering without classification")
-            classification = None
 
     # ── Stage 4: run the webapp rendering pipeline ─────────────────────────
     try:

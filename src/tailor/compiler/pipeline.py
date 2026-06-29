@@ -725,21 +725,37 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
             # any item that is col=None (above-table) or LLM-generated (para_id='').
             _first_right_kept = False
             kept: list = []
+            _kept_orig_idx: list[int] = []
             for j, hp in enumerate(doc.header_paras):
                 if j in summary_indices:
                     continue
                 pp = hp.paragraph_profile
                 col = pp.column_id if pp else None
                 if col == "right" and hp.para_id:
-                    if not _first_right_kept and hp.text.strip():
+                    _t = hp.text.strip()
+                    _is_contact_item = (
+                        "@" in _t
+                        or re.search(r"\d[\d\s.()\-]{5,}", _t)
+                        or any(k in _t.lower() for k in ("linkedin", "http", "www."))
+                    )
+                    if not _first_right_kept and _t:
                         _first_right_kept = True
                         kept.append(hp)
-                    elif len(hp.text.strip()) >= 25:
+                        _kept_orig_idx.append(j)
+                    elif len(_t) >= 25 or _is_contact_item:
                         kept.append(hp)
+                        _kept_orig_idx.append(j)
                     # else: short col=right original fragment — drop (leftover)
                 else:
                     kept.append(hp)
-            doc.header_paras = kept + list(summary_sec.body_paras)
+                    _kept_orig_idx.append(j)
+            _first_sum_pos = min(summary_indices)
+            _n_before = sum(1 for idx in _kept_orig_idx if idx < _first_sum_pos)
+            doc.header_paras = (
+                kept[:_n_before]
+                + list(summary_sec.body_paras)
+                + kept[_n_before:]
+            )
             doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
         else:
             # _target_col is None: full-width header above the two-column body
@@ -764,7 +780,8 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     from tailor.compiler.models import ParaModel
     new_all: list[ParaModel] = list(doc.header_paras)
     for sec in doc.sections:
-        new_all.append(sec.heading)
+        if sec.section_id:  # only emit heading for template-origin sections
+            new_all.append(sec.heading)
         new_all.extend(sec.body_paras)
         for role in sec.roles:
             new_all.append(role.header)
@@ -774,7 +791,9 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
 
     def _col_order(pm) -> int:
         col = pm.paragraph_profile.column_id if pm.paragraph_profile else None
-        return 1 if col == "left" else (2 if col == "right" else 0)
+        # left < right < None so LLM-injected None-column bullets don't
+        # displace right-column template paras (role headers) before them.
+        return 0 if col == "left" else (1 if col == "right" else 2)
 
     new_all.sort(key=_col_order)
     doc.all_paras = new_all
@@ -839,7 +858,8 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
             from tailor.compiler.models import ParaModel as _PM
             new_all: "list[_PM]" = list(doc.header_paras)
             for sec in doc.sections:
-                new_all.append(sec.heading)
+                if sec.section_id:  # only emit heading for template-origin sections
+                    new_all.append(sec.heading)
                 new_all.extend(sec.body_paras)
                 for role in sec.roles:
                     new_all.append(role.header)
@@ -893,19 +913,26 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
         if _body_cleared:
             # Rebuild all_paras to reflect the cleared body_paras.
             from tailor.compiler.models import ParaModel as _PM
-            new_all: "list[_PM]" = list(doc.header_paras)
+            _seen_ids: "set[int]" = set()
+            new_all: "list[_PM]" = []
+            for pm in doc.header_paras:
+                if id(pm) not in _seen_ids:
+                    _seen_ids.add(id(pm))
+                    new_all.append(pm)
             for sec in doc.sections:
-                new_all.append(sec.heading)
-                new_all.extend(sec.body_paras)
+                for pm in ([sec.heading] if sec.section_id else []) + sec.body_paras:
+                    if id(pm) not in _seen_ids:
+                        _seen_ids.add(id(pm))
+                        new_all.append(pm)
                 for role in sec.roles:
-                    new_all.append(role.header)
-                    new_all.extend(role.header_extra)
-                    new_all.extend(role.meta_lines)
-                    new_all.extend(role.bullets)
+                    for pm in [role.header, *role.header_extra, *role.meta_lines, *role.bullets]:
+                        if id(pm) not in _seen_ids:
+                            _seen_ids.add(id(pm))
+                            new_all.append(pm)
 
             def _col_ord(pm: "_PM") -> int:
                 col = pm.paragraph_profile.column_id if pm.paragraph_profile else None
-                return 1 if col == "left" else (2 if col == "right" else 0)
+                return 0 if col == "left" else (1 if col == "right" else 2)
 
             new_all.sort(key=_col_ord)
             doc.all_paras = new_all
@@ -936,20 +963,30 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
     doc.sections = [s for i, s in enumerate(doc.sections) if i not in orphan_idxs]
 
     # Rebuild all_paras to reflect removed sections and cleared content.
+    # Deduplicate by Python id to guard against role objects sharing the same
+    # PM instance as their header (can occur when _rebuild_roles_from_classification
+    # maps two cls_roles to the same para_id in body_paras).
     from tailor.compiler.models import ParaModel
-    new_all: list[ParaModel] = list(doc.header_paras)
+    _seen_pm_ids: set[int] = set()
+    new_all: list[ParaModel] = []
+    for pm in doc.header_paras:
+        if id(pm) not in _seen_pm_ids:
+            _seen_pm_ids.add(id(pm))
+            new_all.append(pm)
     for sec in doc.sections:
-        new_all.append(sec.heading)
-        new_all.extend(sec.body_paras)
+        for pm in ([sec.heading] if sec.section_id else []) + sec.body_paras:
+            if id(pm) not in _seen_pm_ids:
+                _seen_pm_ids.add(id(pm))
+                new_all.append(pm)
         for role in sec.roles:
-            new_all.append(role.header)
-            new_all.extend(role.header_extra)
-            new_all.extend(role.meta_lines)
-            new_all.extend(role.bullets)
+            for pm in [role.header, *role.header_extra, *role.meta_lines, *role.bullets]:
+                if id(pm) not in _seen_pm_ids:
+                    _seen_pm_ids.add(id(pm))
+                    new_all.append(pm)
 
     def _col_order(pm: ParaModel) -> int:
         col = pm.paragraph_profile.column_id if pm.paragraph_profile else None
-        return 1 if col == "left" else (2 if col == "right" else 0)
+        return 0 if col == "left" else (1 if col == "right" else 2)
 
     new_all.sort(key=_col_order)
     doc.all_paras = new_all
@@ -1255,6 +1292,22 @@ def _classify_section_render_mode(sec, layout) -> str:
             pp = pm.paragraph_profile
             if pp and pp.column_id == "left" and pp.x_pt + pp.width_pt > split_x:
                 return "FULL_WIDTH"
+    # Sections whose body_paras are unassigned (col=None) but geometrically span
+    # the full width (right edge past split_x) are truly full-width — e.g. a
+    # PROFESSIONAL SUMMARY block that sits above the two-column body in the PDF.
+    # Without this check they fall to SINGLE_COLUMN and the renderer drops their
+    # col=None content entirely (parallel mode only collects col=left / col=right).
+    if split_x > 0 and not has_left and not has_right:
+        for pm in sec.body_paras:
+            pp = pm.paragraph_profile
+            if (
+                pp
+                and pp.column_id is None
+                and pp.x_pt is not None
+                and pp.width_pt is not None
+                and pp.x_pt + pp.width_pt > split_x
+            ):
+                return "FULL_WIDTH"
     return "SINGLE_COLUMN"
 
 
@@ -1500,7 +1553,13 @@ def compile_resume_from_pdf(
                     for pm in [role.header, *role.header_extra, *role.meta_lines, *role.bullets]:
                         sec_order[id(pm)] = si
 
-            orig_pos = {id(pm): i for i, pm in enumerate(updated.all_paras)}
+            # Use first-occurrence position: if the same PM object appears twice
+            # (aliased role headers), the later occurrence must not overwrite the
+            # earlier position, which would place the header after its own bullets.
+            orig_pos: "dict[int, int]" = {}
+            for _i, _pm in enumerate(updated.all_paras):
+                if id(_pm) not in orig_pos:
+                    orig_pos[id(_pm)] = _i
 
             updated.all_paras.sort(
                 key=lambda pm: (sec_order.get(id(pm), -1), orig_pos.get(id(pm), 0))

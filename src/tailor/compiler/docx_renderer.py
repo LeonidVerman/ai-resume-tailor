@@ -766,19 +766,33 @@ def _set_para_text(p_elem, text: str) -> None:
             ws_text[i] = run_text
             chars = 0   # exclude from proportional distribution
         elif r.find(f"{{{_W}}}pict") is not None:
-            nested_t = r.findall(f".//{{{_W}}}t")
-            if nested_t:
-                vml_text_str += "".join(t.text or "" for t in nested_t)
+            # Only capture text that lives inside a w:txbxContent (the actual
+            # VML text-box container).  Using .//{w}t recursively would also
+            # grab direct w:t siblings of w:pict in the same run and mistakenly
+            # treat them as "already handled" VML text.
+            _txb_t = [
+                t
+                for txb in r.findall(f".//{{{_W}}}txbxContent")
+                for t in txb.findall(f".//{{{_W}}}t")
+            ]
+            if _txb_t:
+                vml_text_str += "".join(t.text or "" for t in _txb_t)
                 vml_indices.add(i)
                 chars = 0   # exclude from proportional distribution
         elif r.find(f".//{{{_WP}}}anchor") is not None:
             # Modern WPS text box in mc:AlternateContent/mc:Choice/w:drawing/wp:anchor.
-            # Both the Choice (modern drawing) and Fallback (VML) branches carry the
-            # same text; findall returns both copies, matching what the parser
-            # concatenated into the paragraph IR text.
-            nested_t = r.findall(f".//{{{_W}}}t")
-            if nested_t:
-                vml_text_str += "".join(t.text or "" for t in nested_t)
+            # Only capture text inside w:txbxContent — the actual embedded text box.
+            # A run that contains BOTH a background drawing (wp:anchor with no text box)
+            # AND a direct w:t child (e.g. "AMELIA ADAMS") must not have its paragraph
+            # text mistaken for VML box content; .//{w}t recursive search would capture
+            # that direct sibling, causing the name to be stripped from the output.
+            _txb_t = [
+                t
+                for txb in r.findall(f".//{{{_W}}}txbxContent")
+                for t in txb.findall(f".//{{{_W}}}t")
+            ]
+            if _txb_t:
+                vml_text_str += "".join(t.text or "" for t in _txb_t)
                 vml_indices.add(i)
                 chars = 0   # exclude from proportional distribution
         orig_lens.append(chars)
@@ -1318,6 +1332,8 @@ def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=
         return min(vals) if vals else 0
 
     for section in doc.sections:
+        if not section.section_id:  # skip LLM-extra sections (no template heading)
+            continue
         tr = etree.SubElement(tbl, f"{{{_W}}}tr")
 
         # Compute per-section indent baseline to normalise all body content
@@ -1392,13 +1408,23 @@ def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=
                     if bp.text.strip():
                         _append(bp)
             for role in section.roles:
-                if role.header_extra and "|" not in role.header.text:
+                _non_italic_he = [
+                    he for he in role.header_extra
+                    if he.text.strip() and not (he.paragraph_profile and he.paragraph_profile.italic)
+                ]
+                _italic_he = [
+                    he for he in role.header_extra
+                    if he.text.strip() and (he.paragraph_profile and he.paragraph_profile.italic)
+                ]
+                if _non_italic_he and "|" not in role.header.text:
                     _combined = role.header.text.strip() + " | " + " | ".join(
-                        he.text.strip() for he in role.header_extra if he.text.strip()
+                        he.text.strip() for he in _non_italic_he
                     )
                     _append(role.header, _combined)
                 else:
                     _append(role.header)
+                for ie in _italic_he:
+                    _append(ie)
                 for pm in role.meta_lines:
                     _append(pm)
                 for pm in role.bullets:
@@ -1615,13 +1641,24 @@ def _render_pdf_single_col_with_groups(
         return m0_y < h_y
 
     def _role_header_pm(role):
-        """Return a ParaModel for the role header, combining header_extra when present."""
-        if role.header_extra and "|" not in role.header.text:
+        """Return a ParaModel for the role header, combining non-italic header_extra."""
+        non_italic = [
+            he for he in role.header_extra
+            if he.text.strip() and not (he.paragraph_profile and he.paragraph_profile.italic)
+        ]
+        if non_italic and "|" not in role.header.text:
             combined = role.header.text.strip() + " | " + " | ".join(
-                he.text.strip() for he in role.header_extra if he.text.strip()
+                he.text.strip() for he in non_italic
             )
             return role.header.with_text(combined)
         return role.header
+
+    def _role_italic_extra(role) -> "list":
+        """Return header_extra items that are italic (subtitles, rendered as own lines)."""
+        return [
+            he for he in role.header_extra
+            if he.text.strip() and (he.paragraph_profile and he.paragraph_profile.italic)
+        ]
 
     def _role_two_col_date(role) -> bool:
         """True when date meta is in the left column and role title is in the right column.
@@ -1715,25 +1752,41 @@ def _render_pdf_single_col_with_groups(
         """Build shifted paragraph elements for a role (used inside table cells)."""
         result = []
         hdr_pm = _role_header_pm(role)
+        italic_extra = _role_italic_extra(role)
         date_first = _role_date_first(role)
         two_col = _role_two_col_date(role)
         if two_col:
             result.append(_build_role_two_col_table(role, hdr_pm, min_indent))
         elif date_first:
-            elem = build_para_element(role.meta_lines[0], doc_part)
-            _shift_indent(elem, min_indent)
-            result.append(elem)
+            h_y_top = (role.header.paragraph_profile.y_top_pt
+                       if role.header.paragraph_profile else None)
+            for m in role.meta_lines:
+                m_y = m.paragraph_profile.y_top_pt if m.paragraph_profile else None
+                if h_y_top is None or m_y is None or m_y < h_y_top:
+                    elem = build_para_element(m, doc_part)
+                    _shift_indent(elem, min_indent)
+                    result.append(elem)
             elem = build_para_element(hdr_pm, doc_part)
             _shift_indent(elem, min_indent)
             result.append(elem)
-            for m in role.meta_lines[1:]:
-                elem = build_para_element(m, doc_part)
+            for ie in italic_extra:
+                elem = build_para_element(ie, doc_part)
                 _shift_indent(elem, min_indent)
                 result.append(elem)
+            for m in role.meta_lines:
+                m_y = m.paragraph_profile.y_top_pt if m.paragraph_profile else None
+                if h_y_top is not None and m_y is not None and m_y >= h_y_top:
+                    elem = build_para_element(m, doc_part)
+                    _shift_indent(elem, min_indent)
+                    result.append(elem)
         else:
             elem = build_para_element(hdr_pm, doc_part)
             _shift_indent(elem, min_indent)
             result.append(elem)
+            for ie in italic_extra:
+                elem = build_para_element(ie, doc_part)
+                _shift_indent(elem, min_indent)
+                result.append(elem)
             for m in role.meta_lines:
                 elem = build_para_element(m, doc_part)
                 _shift_indent(elem, min_indent)
@@ -1749,19 +1802,34 @@ def _render_pdf_single_col_with_groups(
         """Build paragraph elements for a role (used outside table cells)."""
         result = []
         hdr_pm = _role_header_pm(role)
+        italic_extra = _role_italic_extra(role)
         date_first = _role_date_first(role)
         two_col = _role_two_col_date(role)
         if two_col:
             result.append(_build_role_two_col_table(role, hdr_pm))
         elif date_first:
-            result.append(build_para_element(role.meta_lines[0], doc_part))
+            # Render meta lines that are physically above the role header before
+            # it; meta at or below the header renders after (e.g. right-aligned
+            # date on the same y as the role title stays after the title).
+            h_y_top = (role.header.paragraph_profile.y_top_pt
+                       if role.header.paragraph_profile else None)
+            for m in role.meta_lines:
+                m_y = m.paragraph_profile.y_top_pt if m.paragraph_profile else None
+                if h_y_top is None or m_y is None or m_y < h_y_top:
+                    result.append(build_para_element(m, doc_part))
             result.append(build_para_element(hdr_pm, doc_part))
-            for m in role.meta_lines[1:]:
-                result.append(build_para_element(m, doc_part))
+            for ie in italic_extra:
+                result.append(build_para_element(ie, doc_part))
+            for m in role.meta_lines:
+                m_y = m.paragraph_profile.y_top_pt if m.paragraph_profile else None
+                if h_y_top is not None and m_y is not None and m_y >= h_y_top:
+                    result.append(build_para_element(m, doc_part))
             for b in role.bullets:
                 result.append(build_para_element(b, doc_part))
         else:
             result.append(build_para_element(hdr_pm, doc_part))
+            for ie in italic_extra:
+                result.append(build_para_element(ie, doc_part))
             for m in role.meta_lines:
                 result.append(build_para_element(m, doc_part))
             for b in role.bullets:
@@ -1771,22 +1839,23 @@ def _render_pdf_single_col_with_groups(
     def _build_section_paras_for_cell(sec, min_indent: int, skip_h_rule_ids=None) -> "list":
         """Build paragraph elements for a table cell, normalizing indent to cell origin."""
         elems = []
-        heading_elem = build_para_element(sec.heading, doc_part)
-        _shift_indent(heading_elem, min_indent)
-        # Zero out w:spacing/w:before so all cell headings in the same row align at the
-        # top; PDF space_before_pt values (e.g. 10pt for EDUCATION) would otherwise push
-        # one cell's heading down relative to its neighbours.
-        _hpPr = heading_elem.find(f"{{{_W}}}pPr")
-        if _hpPr is not None:
-            _hsp = _hpPr.find(f"{{{_W}}}spacing")
-            if _hsp is not None:
-                _hsp.attrib.pop(f"{{{_W}}}before", None)
-                _hsp.attrib.pop(f"{{{_W}}}beforeLines", None)
-        if sec.heading.para_id in _h_rule_borders and not (
-            skip_h_rule_ids and sec.heading.para_id in skip_h_rule_ids
-        ):
-            _apply_h_rule_top_border(heading_elem, _h_rule_borders[sec.heading.para_id])
-        elems.append(heading_elem)
+        if sec.section_id:  # only emit heading for template-origin sections
+            heading_elem = build_para_element(sec.heading, doc_part)
+            _shift_indent(heading_elem, min_indent)
+            # Zero out w:spacing/w:before so all cell headings in the same row align at
+            # the top; PDF space_before_pt values (e.g. 10pt for EDUCATION) would
+            # otherwise push one cell's heading down relative to its neighbours.
+            _hpPr = heading_elem.find(f"{{{_W}}}pPr")
+            if _hpPr is not None:
+                _hsp = _hpPr.find(f"{{{_W}}}spacing")
+                if _hsp is not None:
+                    _hsp.attrib.pop(f"{{{_W}}}before", None)
+                    _hsp.attrib.pop(f"{{{_W}}}beforeLines", None)
+            if sec.heading.para_id in _h_rule_borders and not (
+                skip_h_rule_ids and sec.heading.para_id in skip_h_rule_ids
+            ):
+                _apply_h_rule_top_border(heading_elem, _h_rule_borders[sec.heading.para_id])
+            elems.append(heading_elem)
         if sec.semantic_type == "experience" and sec.roles:
             _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
             if _has_orphan:
@@ -1810,7 +1879,9 @@ def _render_pdf_single_col_with_groups(
     def _build_section_paras(sec) -> "list":
         heading_elem = build_para_element(sec.heading, doc_part)
         _rule_img = _h_rule_borders.get(sec.heading.para_id)
-        elems: list = [heading_elem]
+        elems: list = []
+        if sec.section_id:  # only emit heading for template-origin sections
+            elems.append(heading_elem)
         if sec.semantic_type == "experience" and sec.roles:
             if _rule_img:
                 _apply_h_rule_top_border(heading_elem, _rule_img)
@@ -2408,9 +2479,25 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     #   PARALLEL_BODY → left|right two-column body row
     #   FULL_WIDTH    → single merged full-width body row (only when parallel mode active)
     #   SINGLE_COLUMN (or None) → left|right row with right cell empty
+    def _has_date_margin_roles(sec) -> bool:
+        """True when any role has a right-col header AND a left-col meta_line.
+
+        This identifies the 'date-margin' layout (dates left, role content right)
+        so the parallel renderer is used even after body_paras are cleared.
+        """
+        for _r in sec.roles:
+            if _r.header.paragraph_profile and _r.header.paragraph_profile.column_id == "right":
+                if any(
+                    _m.paragraph_profile and _m.paragraph_profile.column_id == "left"
+                    for _m in _r.meta_lines
+                ):
+                    return True
+        return False
+
     _parallel_mode = (
         any(sec.render_mode == "PARALLEL_BODY" for sec in doc.sections)
         or any(_sec_has_parallel_body(sec) for sec in doc.sections)
+        or any(_has_date_margin_roles(sec) for sec in doc.sections)
     )
 
     def _append_left_indent(p_elem, pm) -> None:
@@ -2536,6 +2623,12 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
             if not paras:
                 etree.SubElement(_tc, f"{{{_W}}}p")
 
+        # Render non-above header paras (contact area, title) as the first body row.
+        # In parallel mode, _hdr_left/_hdr_right are not included in any section and
+        # would otherwise be silently dropped.
+        if _hdr_left or _hdr_right:
+            _make_two_col_row(_hdr_left, _hdr_right)
+
         # Sort sections by heading y, then render each as: heading row + body row.
         _sorted_secs = sorted(
             doc.sections,
@@ -2559,9 +2652,26 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 key=_y_of,
             )
             # Experience sections store body content in roles, not body_paras.
+            # For date-margin layouts (right-col role headers) distribute by column:
+            # left-col meta_lines (dates) → _lbody; header + bullets → _rbody.
+            # Right-col meta_lines in this layout are template filler — drop them.
+            # For standard left-sidebar layouts everything goes to _lbody.
             for _role in _sec.roles:
-                _lbody.extend([_role.header, *_role.meta_lines, *_role.bullets])
+                _rh_col = (
+                    _role.header.paragraph_profile.column_id
+                    if _role.header.paragraph_profile else None
+                )
+                if _rh_col == "right":
+                    for _pm in _role.meta_lines:
+                        _mc = _pm.paragraph_profile.column_id if _pm.paragraph_profile else None
+                        if _mc == "left":
+                            _lbody.append(_pm)
+                        # drop right-col meta_lines (template filler like "Summarize...")
+                    _rbody.extend([_role.header, *_role.bullets])
+                else:
+                    _lbody.extend([_role.header, *_role.meta_lines, *_role.bullets])
             _lbody.sort(key=_y_of)
+            _rbody.sort(key=_y_of)
             _is_par = bool(_lbody and _rbody)
             _glog.debug(
                 "SECTION_RENDER_MODE sec=%r mode=%s left=%d right=%d parallel=%s",
