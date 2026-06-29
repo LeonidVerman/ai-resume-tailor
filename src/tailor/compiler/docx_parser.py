@@ -2459,6 +2459,7 @@ def _build_role_layout_bindings(
         }
 
 
+
 def _apply_multicolumn_newspaper_fix(
     all_paras: list[ParaModel],
     body,

@@ -1,0 +1,1697 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "About",
+        "paragraphs": [
+          {
+            "para_id": "para_13",
+            "text": "Agile Software Engineer with 4+ years of",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_14",
+            "text": "experience designing, developing, and deploying",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "scalable software solutions. Possesses strong",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_16",
+            "text": "expertise in Rimberio and Borcelle programming",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_17",
+            "text": "languages and a drive for building innovative and",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_18",
+            "text": "user-friendly applications.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Professional Experience",
+        "paragraphs": [
+          {
+            "para_id": "para_30",
+            "text": "Software Engineer | Cloud",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_32",
+            "text": "01 Jun 2052- present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_31",
+            "text": "Giggling Platypus Co.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_23",
+            "text": "Designed and implemented a new microservice architecture using Borcelle to improve application performance by 20%.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_24",
+            "text": "Developed and maintained critical features for the company's core product, resulting in a 15% increase in user engagement.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_25",
+            "text": "Led the development of a new automated testing framework using Rimberio that reduced manual testing time by 30%.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_43",
+            "text": "Software Engineer | Data",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_44",
+            "text": "Thynk Unlimited",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_45",
+            "text": "01 Aug 2050 - 30 Apr 2052",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_29",
+            "text": "Developed and deployed a real-time data processing pipeline using Rimberio to handle a 10x increase in data volume.",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_30"
+            ],
+            "meta_para_ids": [
+              "para_32"
+            ],
+            "bullet_para_ids": [
+              "para_31",
+              "para_23",
+              "para_24",
+              "para_25"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_43"
+            ],
+            "meta_para_ids": [
+              "para_44",
+              "para_45"
+            ],
+            "bullet_para_ids": [
+              "para_29"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Certifications",
+        "paragraphs": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Cloud Certified",
+        "paragraphs": [
+          {
+            "para_id": "para_51",
+            "text": "Rimberio | 2050",
+            "parser_semantic": "role_header"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "Software Lifecycle",
+        "paragraphs": [
+          {
+            "para_id": "para_53",
+            "text": "Professional Borcelle | 2050",
+            "parser_semantic": "role_header"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_6",
+        "raw_title": "Scrum Developer",
+        "paragraphs": [
+          {
+            "para_id": "para_55",
+            "text": "Borcelle | 2050",
+            "parser_semantic": "role_header"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_7",
+        "raw_title": "Education",
+        "paragraphs": [
+          {
+            "para_id": "para_57",
+            "text": "Bachelor of Science in",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_58",
+            "text": "Information Technology",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Fauget University",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_60",
+            "text": "Jun 2050",
+            "parser_semantic": "role_meta"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "About",
+        "paragraphs": [
+          {
+            "para_id": "para_12",
+            "text": "About",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_13",
+            "text": "Agile Software Engineer with 4+ years of",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_14",
+            "text": "experience designing, developing, and deploying",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_15",
+            "text": "scalable software solutions. Possesses strong",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_16",
+            "text": "expertise in Rimberio and Borcelle programming",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_17",
+            "text": "languages and a drive for building innovative and",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_18",
+            "text": "user-friendly applications.",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Professional Experience",
+        "paragraphs": [
+          {
+            "para_id": "para_19",
+            "text": "Professional Experience",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_30",
+            "text": "Software Engineer | Cloud",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_32",
+            "text": "01 Jun 2052- present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_31",
+            "text": "Giggling Platypus Co.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_23",
+            "text": "Designed and implemented a new microservice architecture using Borcelle to improve application performance by 20%.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_24",
+            "text": "Developed and maintained critical features for the company's core product, resulting in a 15% increase in user engagement.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_25",
+            "text": "Led the development of a new automated testing framework using Rimberio that reduced manual testing time by 30%.",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_43",
+            "text": "Software Engineer | Data",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_44",
+            "text": "Thynk Unlimited",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_45",
+            "text": "01 Aug 2050 - 30 Apr 2052",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_29",
+            "text": "Developed and deployed a real-time data processing pipeline using Rimberio to handle a 10x increase in data volume.",
+            "parser_semantic": "bullet"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_30"
+            ],
+            "meta_para_ids": [
+              "para_32"
+            ],
+            "bullet_para_ids": [
+              "para_31",
+              "para_23",
+              "para_24",
+              "para_25"
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_43"
+            ],
+            "meta_para_ids": [
+              "para_44",
+              "para_45"
+            ],
+            "bullet_para_ids": [
+              "para_29"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Certifications",
+        "paragraphs": [
+          {
+            "para_id": "para_49",
+            "text": "Certifications",
+            "parser_semantic": "section_heading"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Cloud Certified",
+        "paragraphs": [
+          {
+            "para_id": "para_50",
+            "text": "Cloud Certified",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_51",
+            "text": "Rimberio | 2050",
+            "parser_semantic": "role_header"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "Software Lifecycle",
+        "paragraphs": [
+          {
+            "para_id": "para_52",
+            "text": "Software Lifecycle",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_53",
+            "text": "Professional Borcelle | 2050",
+            "parser_semantic": "role_header"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_6",
+        "raw_title": "Scrum Developer",
+        "paragraphs": [
+          {
+            "para_id": "para_54",
+            "text": "Scrum Developer",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_55",
+            "text": "Borcelle | 2050",
+            "parser_semantic": "role_header"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_7",
+        "raw_title": "Education",
+        "paragraphs": [
+          {
+            "para_id": "para_56",
+            "text": "Education",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_57",
+            "text": "Bachelor of Science in",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_58",
+            "text": "Information Technology",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Fauget University",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_60",
+            "text": "Jun 2050",
+            "parser_semantic": "role_meta"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_12",
+        "text_preview": "About"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_19",
+        "text_preview": "Professional Experience"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_49",
+        "text_preview": "Certifications"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_50",
+        "text_preview": "Cloud Certified"
+      },
+      {
+        "section_id": "sec_5",
+        "para_id": "para_52",
+        "text_preview": "Software Lifecycle"
+      },
+      {
+        "section_id": "sec_6",
+        "para_id": "para_54",
+        "text_preview": "Scrum Developer"
+      },
+      {
+        "section_id": "sec_7",
+        "para_id": "para_56",
+        "text_preview": "Education"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 5
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "About",
+        "display_title": "About",
+        "semantic_type": "summary",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_13",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_14",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_15",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_16",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_17",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_6",
+            "para_id": "para_18",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Professional Experience",
+        "display_title": "Professional Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_7",
+                "para_id": "para_30",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_8",
+                "para_id": "para_32",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_9",
+                "para_id": "para_31",
+                "semantic_type": "bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_10",
+                "para_id": "para_23",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_11",
+                "para_id": "para_24",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_12",
+                "para_id": "para_25",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_13",
+                "para_id": "para_43",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_14",
+                "para_id": "para_44",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_15",
+                "para_id": "para_45",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_29",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Certifications",
+        "display_title": "Certifications",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Cloud Certified",
+        "display_title": "Cloud Certified",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_17",
+            "para_id": "para_51",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "Software Lifecycle",
+        "display_title": "Software Lifecycle",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_18",
+            "para_id": "para_53",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_6",
+        "raw_title": "Scrum Developer",
+        "display_title": "Scrum Developer",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_19",
+            "para_id": "para_55",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_7",
+        "raw_title": "Education",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_20",
+            "para_id": "para_57",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_21",
+            "para_id": "para_58",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_22",
+            "para_id": "para_59",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_23",
+            "para_id": "para_60",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_REWRITE_POLICY",
+        "section_id": "sec_1",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_HEADING",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_1 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_2 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_3 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_4 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_5 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_6 rewrite_policy='preserve'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCKS_EMPTY",
+        "section_id": "sec_3",
+        "detail": "blocks[] must be non-empty"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=block_17 semantic_type='role_header'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_5",
+        "detail": "block_id=block_18 semantic_type='role_header'"
+      },
+      {
+        "code": "ADDITIONAL_BLOCK_TYPE",
+        "section_id": "sec_6",
+        "detail": "block_id=block_19 semantic_type='role_header'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_REWRITE_POLICY",
+          "SUMMARY_PRESERVE_HEADING",
+          "SUMMARY_PRESERVE_BODY_STRUCTURE",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_BLOCKS_EMPTY"
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_BLOCK_TYPE"
+        ]
+      },
+      {
+        "section_id": "sec_5",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_BLOCK_TYPE"
+        ]
+      },
+      {
+        "section_id": "sec_6",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_BLOCK_TYPE"
+        ]
+      },
+      {
+        "section_id": "sec_7",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "pdf",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_3",
+          "raw_title": "Certifications",
+          "paragraphs": [],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_3",
+          "raw_title": "Certifications",
+          "display_title": "Certifications",
+          "semantic_type": "additional",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "ADDITIONAL_BLOCKS_EMPTY",
+            "section_id": "sec_3",
+            "detail": "blocks[] must be non-empty"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_4",
+          "raw_title": "Cloud Certified",
+          "paragraphs": [
+            {
+              "para_id": "para_51",
+              "text": "Rimberio | 2050",
+              "parser_semantic": "role_header"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_4",
+          "raw_title": "Cloud Certified",
+          "display_title": "Cloud Certified",
+          "semantic_type": "additional",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "block_17",
+              "para_id": "para_51",
+              "semantic_type": "role_header",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=block_17 semantic_type='role_header'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_5",
+          "raw_title": "Software Lifecycle",
+          "paragraphs": [
+            {
+              "para_id": "para_53",
+              "text": "Professional Borcelle | 2050",
+              "parser_semantic": "role_header"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_5",
+          "raw_title": "Software Lifecycle",
+          "display_title": "Software Lifecycle",
+          "semantic_type": "additional",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "block_18",
+              "para_id": "para_53",
+              "semantic_type": "role_header",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_5",
+            "detail": "block_id=block_18 semantic_type='role_header'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_1",
+          "raw_title": "About",
+          "paragraphs": [
+            {
+              "para_id": "para_13",
+              "text": "Agile Software Engineer with 4+ years of",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_14",
+              "text": "experience designing, developing, and deploying",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_15",
+              "text": "scalable software solutions. Possesses strong",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_16",
+              "text": "expertise in Rimberio and Borcelle programming",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_17",
+              "text": "languages and a drive for building innovative and",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_18",
+              "text": "user-friendly applications.",
+              "parser_semantic": "paragraph"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_1",
+          "raw_title": "About",
+          "display_title": "About",
+          "semantic_type": "summary",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "block_1",
+              "para_id": "para_13",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_2",
+              "para_id": "para_14",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_3",
+              "para_id": "para_15",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_4",
+              "para_id": "para_16",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_5",
+              "para_id": "para_17",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_6",
+              "para_id": "para_18",
+              "semantic_type": "summary_paragraph",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SUMMARY_REWRITE_POLICY",
+            "section_id": "sec_1",
+            "detail": "got 'preserve'"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_HEADING",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_BODY_STRUCTURE",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_1 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_2 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_3 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_4 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_5 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_6 rewrite_policy='preserve'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_6",
+          "raw_title": "Scrum Developer",
+          "paragraphs": [
+            {
+              "para_id": "para_55",
+              "text": "Borcelle | 2050",
+              "parser_semantic": "role_header"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_6",
+          "raw_title": "Scrum Developer",
+          "display_title": "Scrum Developer",
+          "semantic_type": "additional",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": true,
+          "blocks": [
+            {
+              "block_id": "block_19",
+              "para_id": "para_55",
+              "semantic_type": "role_header",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "ADDITIONAL_BLOCK_TYPE",
+            "section_id": "sec_6",
+            "detail": "block_id=block_19 semantic_type='role_header'"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_3",
+        "raw_title": "Certifications",
+        "display_title": "Certifications",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Cloud Certified",
+        "display_title": "Cloud Certified",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_17",
+                "para_id": "para_51",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "Software Lifecycle",
+        "display_title": "Software Lifecycle",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_2",
+            "header_blocks": [],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_18",
+                "para_id": "para_53",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_1",
+        "raw_title": "About",
+        "display_title": "About",
+        "semantic_type": "summary",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_13",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_14",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_15",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_16",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_17",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_6",
+            "para_id": "para_18",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_6",
+        "raw_title": "Scrum Developer",
+        "display_title": "Scrum Developer",
+        "semantic_type": "additional",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_3",
+            "header_blocks": [],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_19",
+                "para_id": "para_55",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "ADDITIONAL_BLOCKS_EMPTY",
+        "section_id": "sec_3",
+        "detail": "blocks[] must be non-empty"
+      },
+      {
+        "code": "ADDITIONAL_ROLES_PRESENT",
+        "section_id": "sec_4",
+        "detail": "roles[] must be empty for this section type"
+      },
+      {
+        "code": "ADDITIONAL_BLOCKS_EMPTY",
+        "section_id": "sec_4",
+        "detail": "blocks[] must be non-empty"
+      },
+      {
+        "code": "ADDITIONAL_ROLES_PRESENT",
+        "section_id": "sec_5",
+        "detail": "roles[] must be empty for this section type"
+      },
+      {
+        "code": "ADDITIONAL_BLOCKS_EMPTY",
+        "section_id": "sec_5",
+        "detail": "blocks[] must be non-empty"
+      },
+      {
+        "code": "ADDITIONAL_ROLES_PRESENT",
+        "section_id": "sec_6",
+        "detail": "roles[] must be empty for this section type"
+      },
+      {
+        "code": "ADDITIONAL_BLOCKS_EMPTY",
+        "section_id": "sec_6",
+        "detail": "blocks[] must be non-empty"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_BLOCKS_EMPTY"
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_ROLES_PRESENT",
+          "ADDITIONAL_BLOCKS_EMPTY"
+        ]
+      },
+      {
+        "section_id": "sec_5",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_ROLES_PRESENT",
+          "ADDITIONAL_BLOCKS_EMPTY"
+        ]
+      },
+      {
+        "section_id": "sec_6",
+        "is_valid": false,
+        "error_codes": [
+          "ADDITIONAL_ROLES_PRESENT",
+          "ADDITIONAL_BLOCKS_EMPTY"
+        ]
+      },
+      {
+        "section_id": "sec_7",
+        "is_valid": true,
+        "error_codes": []
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "About",
+        "display_title": "About",
+        "semantic_type": "summary",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_13",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_14",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_15",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_16",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_5",
+            "para_id": "para_17",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_6",
+            "para_id": "para_18",
+            "semantic_type": "summary_paragraph",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "Professional Experience",
+        "display_title": "Professional Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_7",
+                "para_id": "para_30",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_8",
+                "para_id": "para_32",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_9",
+                "para_id": "para_31",
+                "semantic_type": "bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_10",
+                "para_id": "para_23",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_11",
+                "para_id": "para_24",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_12",
+                "para_id": "para_25",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_13",
+                "para_id": "para_43",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_14",
+                "para_id": "para_44",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_15",
+                "para_id": "para_45",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_29",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "Certifications",
+        "display_title": "Certifications",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "Cloud Certified",
+        "display_title": "Cloud Certified",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_17",
+            "para_id": "para_51",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_5",
+        "raw_title": "Software Lifecycle",
+        "display_title": "Software Lifecycle",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_18",
+            "para_id": "para_53",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_6",
+        "raw_title": "Scrum Developer",
+        "display_title": "Scrum Developer",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_19",
+            "para_id": "para_55",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_7",
+        "raw_title": "Education",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_20",
+            "para_id": "para_57",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_21",
+            "para_id": "para_58",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_22",
+            "para_id": "para_59",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_23",
+            "para_id": "para_60",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "pdf"
+  },
+  "status": "repaired_and_downgraded",
+  "validation_error_count": 13,
+  "invalid_section_count_before_repair": 5,
+  "invalid_section_count_after_repair": 4,
+  "repaired_section_count": 1,
+  "downgraded_section_count": 4,
+  "invalid_section_ids": [
+    "sec_3",
+    "sec_4",
+    "sec_5",
+    "sec_6"
+  ],
+  "recovery_applied": true
+}

@@ -4374,7 +4374,8 @@ def apply_anchor_budgets(
     # Rebuild all_paras in canonical order
     all_paras: list[ParaModel] = list(new_header)
     for s in new_sections:
-        all_paras.append(s.heading)
+        if s.section_id:  # only emit heading for template-origin sections
+            all_paras.append(s.heading)
         if s.semantic_type == "experience" and s.roles:
             for r in s.roles:
                 all_paras.append(r.header)
@@ -5372,7 +5373,8 @@ def apply_tailored(
     # Rebuild flat para list in document order
     all_paras: list[ParaModel] = list(effective_header_paras)
     for section in new_sections:
-        all_paras.append(section.heading)
+        if section.section_id:  # only emit heading for template-origin sections
+            all_paras.append(section.heading)
         if section.semantic_type == "experience" and section.roles:
             # Emit pre-role orphan body_paras only when body_paras contains
             # an actual role_header paragraph (pipe-format resumes).  For
@@ -5411,7 +5413,8 @@ def apply_tailored(
         if len(new_sections) < _orig_sec_count:
             all_paras = list(effective_header_paras)
             for section in new_sections:
-                all_paras.append(section.heading)
+                if section.section_id:  # only emit heading for template-origin sections
+                    all_paras.append(section.heading)
                 if section.semantic_type == "experience" and section.roles:
                     if any(bp.semantic == "role_header" for bp in section.body_paras):
                         _claimed2 = {id(pm) for role in section.roles for pm in role.meta_lines}
