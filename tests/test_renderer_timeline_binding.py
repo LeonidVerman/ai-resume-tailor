@@ -762,11 +762,18 @@ def test_s35_v2_consumed_excludes_structural_pids():
     out_doc = DocxDoc()
     sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
 
-    _, _, consumed, _ = _build_timeline_segments(
+    _, _, consumed, diag = _build_timeline_segments(
         updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
     )
     assert "para_59" not in consumed, "para_59 must not be consumed (it is the seg1 heading)"
     assert "para_120" in consumed, "para_120 must be consumed to prevent unwanted page break"
+    assert "para_128" not in consumed, (
+        "para_128 must NOT be consumed — it governs post-table section geometry (top=860 margin)"
+    )
+    strip_pids = diag.get("multicol_sectpr_strip_pids") or []
+    assert "para_128" in strip_pids, (
+        "para_128 must appear in multicol_sectpr_strip_pids so the main loop strips w:cols"
+    )
 
 
 @pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
@@ -917,6 +924,40 @@ def test_s35_v2_para120_consumed_not_in_body():
         None,
     )
     assert para120 is None, "para_120 must be consumed (absent from rendered body)"
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_para128_emitted_cols_stripped():
+    """para_128 must appear exactly once in the rendered body, with w:cols stripped
+    and w:type=continuous so Education/Skills content flows without a page break."""
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _W14_NS = "http://schemas.microsoft.com/office/word/2010/wordml"
+    _, updated = _load_s35_updated()
+    body = _render_s35_with_v2(updated)
+
+    children = list(body)
+    tbl_indices = [i for i, c in enumerate(children) if c.tag == f"{{{_W_NS}}}tbl"]
+    assert len(tbl_indices) >= 2
+
+    para128_els = [
+        (i, c) for i, c in enumerate(children)
+        if c.tag == f"{{{_W_NS}}}p" and c.get(f"{{{_W14_NS}}}paraId") == "para_128"
+    ]
+    assert len(para128_els) == 1, (
+        f"para_128 must appear exactly once in body, got {len(para128_els)}"
+    )
+    pos, el = para128_els[0]
+    assert pos > max(tbl_indices), (
+        f"para_128 (pos={pos}) must appear after both tables (last={max(tbl_indices)})"
+    )
+    sp = el.find(f"{{{_W_NS}}}pPr/{{{_W_NS}}}sectPr")
+    assert sp is not None, "para_128 must retain sectPr"
+    cols = sp.find(f"{{{_W_NS}}}cols")
+    assert cols is None, "para_128 sectPr must have w:cols stripped"
+    type_el = sp.find(f"{{{_W_NS}}}type")
+    assert type_el is not None and type_el.get(f"{{{_W_NS}}}val") == "continuous", (
+        "para_128 sectPr must be type=continuous to avoid a page break"
+    )
 
 
 @pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")

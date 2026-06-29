@@ -5591,31 +5591,39 @@ def _build_timeline_segments(
     seg1_tbl = _build_seg(seg1_roles) if seg1_roles else None
     seg2_tbl = _build_seg(seg2_roles) if seg2_roles else None
 
-    # Consume ALL intermediate sectPr paragraphs that carry a w:cols definition.
-    # In v2 mode the two-column newspaper layout is replaced by explicit tables, so
-    # every intermediate multi-column sectPr must be suppressed.  Emitting them
-    # forces the section containing the tables into a two-column context in
-    # LibreOffice, which confines the table to one column's width.
-    # Note: the para_8-style single-column sectPr (no w:cols) is NOT consumed —
-    # only multi-column (w:cols) sectPrs are targeted here.
-    _multi_col_sectpr_pids: set[str] = set()
+    # Scope multi-col sectPr consumption to the inter-segment boundary (≤ sectpr_idx).
+    # Multi-col sectPrs after sectpr_idx (e.g. para_128) govern post-table section
+    # geometry (top margin, page size) and must NOT be consumed.  The main loop emits
+    # them with only w:cols stripped so Education/Skills/Projects render single-column
+    # with their original margins intact.
+    _multi_col_sectpr_consumed: set[str] = set()
+    _multi_col_sectpr_strip_pids: set[str] = set()
     for _blk in layout_blocks:
         _blk_pid = getattr(_blk, "para_id", None)
         _blk_xml = getattr(_blk, "xml_proto_xml", None)
         if not _blk_pid or not _blk_xml:
             continue
+        _blk_idx = pid_to_idx.get(_blk_pid, -1)
         try:
             _blk_el = etree.fromstring(_blk_xml)
         except Exception:
             continue
         _blk_sp = _blk_el.find(f".//{{{_W}}}sectPr")
         if _blk_sp is not None and _blk_sp.find(f"{{{_W}}}cols") is not None:
-            _multi_col_sectpr_pids.add(_blk_pid)
-    consumed.update(_multi_col_sectpr_pids)
-    if _multi_col_sectpr_pids:
+            if _blk_idx <= sectpr_idx:
+                _multi_col_sectpr_consumed.add(_blk_pid)
+            else:
+                _multi_col_sectpr_strip_pids.add(_blk_pid)
+    consumed.update(_multi_col_sectpr_consumed)
+    if _multi_col_sectpr_consumed:
         _log.debug(
-            "TIMELINE_V2_CONSUME_SECTPRS: %d multi-col sectPr paras consumed: %s",
-            len(_multi_col_sectpr_pids), sorted(_multi_col_sectpr_pids),
+            "TIMELINE_V2_CONSUME_SECTPRS: %d consumed (≤ sectpr_idx %d): %s",
+            len(_multi_col_sectpr_consumed), sectpr_idx, sorted(_multi_col_sectpr_consumed),
+        )
+    if _multi_col_sectpr_strip_pids:
+        _log.debug(
+            "TIMELINE_V2_STRIP_SECTPR_COLS: %d outside boundary (emit + strip w:cols): %s",
+            len(_multi_col_sectpr_strip_pids), sorted(_multi_col_sectpr_strip_pids),
         )
 
     # Also consume ALL left spacer pids from every role to prevent stray flat-loop emission
@@ -5675,6 +5683,7 @@ def _build_timeline_segments(
         "consumed_count": len(consumed),
         "synthetic_pids": synthetic_pids,
         "skipped_pids": skipped_pids,
+        "multicol_sectpr_strip_pids": sorted(_multi_col_sectpr_strip_pids),
     }
     _log.debug(
         "TIMELINE_SEGMENTS_V2: seg1=%d roles, seg2=%d roles, "
@@ -5965,6 +5974,15 @@ def _render_from_layout_blocks(
 
     # Timeline v2: two-segment table reconstruction (feature-flagged).
     _tl_v2_active = bool(_timeline_left_pids and _TIMELINE_ROW_TABLE_V2_ENABLED)
+    # v2 replaces the two-column layout with explicit tables, so the main sectPr
+    # must NOT carry w:cols.  The _main_is_multicolumn detection above may have
+    # injected w:cols into sectPr (to read column widths); strip it now so
+    # LibreOffice does not constrain the v2 tables to one column's width.
+    if _tl_v2_active and sectPr is not None:
+        _v2_cols_el = sectPr.find(f"{{{_W}}}cols")
+        if _v2_cols_el is not None:
+            sectPr.remove(_v2_cols_el)
+            _log.debug("TIMELINE_V2: stripped w:cols from main sectPr")
     _tl_seg1_tbl = None
     _tl_seg2_tbl = None
     _tl_consumed: frozenset = frozenset()
@@ -5973,6 +5991,7 @@ def _render_from_layout_blocks(
     _tl_sectpr_pid: "str | None" = None
     _tl_seg1_emitted = False
     _tl_seg2_emitted = False
+    _tl_multicol_strip_pids: frozenset = frozenset()
     if _tl_v2_active:
         _tl_seg1_tbl, _tl_seg2_tbl, _tl_consumed, _tl_diag = _build_timeline_segments(
             doc, para_lookup, list(doc.layout_blocks),  # type: ignore[arg-type]
@@ -5981,6 +6000,7 @@ def _render_from_layout_blocks(
         _tl_seg1_heading_pid = _tl_diag.get("seg1_heading_pid")
         _tl_seg2_trigger_pid = _tl_diag.get("seg2_trigger_pid")
         _tl_sectpr_pid = _tl_diag.get("sectpr_pid")
+        _tl_multicol_strip_pids = frozenset(_tl_diag.get("multicol_sectpr_strip_pids") or [])
         _log.debug(
             "TIMELINE_V2_READY: consumed=%d, seg1_heading=%r, seg2_trigger=%r, sectpr=%r",
             len(_tl_consumed), _tl_seg1_heading_pid, _tl_seg2_trigger_pid, _tl_sectpr_pid,
@@ -6163,6 +6183,24 @@ def _render_from_layout_blocks(
                 # flows as a plain paragraph above the table (not a column jump).
                 if _tl_v2_active and block.para_id == _tl_seg1_heading_pid:
                     _strip_column_break(elem)
+                # v2: strip only w:cols from non-consumed multi-col sectPr paras (e.g.
+                # para_128).  These are emitted normally to preserve their top-margin and
+                # section boundary for Education/Skills/Projects, but their w:cols must be
+                # removed so LibreOffice renders post-table content single-column.
+                if (_tl_v2_active and _tl_multicol_strip_pids
+                        and block.para_id in _tl_multicol_strip_pids):
+                    _sp_strip = elem.find(f"{{{_W}}}pPr/{{{_W}}}sectPr")
+                    if _sp_strip is not None:
+                        _cols_strip = _sp_strip.find(f"{{{_W}}}cols")
+                        if _cols_strip is not None:
+                            _sp_strip.remove(_cols_strip)
+                        # Ensure the stripped sectPr creates a continuous break so
+                        # the top=860 margin applies without forcing a new page.
+                        _ensure_continuous(_sp_strip)
+                    _log.debug(
+                        "TIMELINE_V2_COLS_STRIPPED: para_id=%r emitted without w:cols (continuous)",
+                        block.para_id,
+                    )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
                 # Timeline-binding guard: left-column date sidebar and spacer
                 # paragraphs are emitted verbatim — _set_para_text must not
