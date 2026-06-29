@@ -1,0 +1,2833 @@
+{
+  "llm_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SENIOR SOFTWARE DEVELOPER",
+        "paragraphs": [
+          {
+            "para_id": "para_8",
+            "text": "◇—————————————————————————◇",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_9",
+            "text": "Senior Software Architect • Principal Developer • Senior Application Developer • Full Stack Developer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_10",
+            "text": "Software Engineering • Backend Development • Distributed Systems • Object Oriented Design",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_11",
+            "text": "Led Cloud Transition • Increased Productivity • Reduced Costs • Effective Recruiter",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_12",
+            "text": "InfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents • Public Speaker",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_13",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_56",
+            "text": "Company Name, Inc., New York, NY Jan 2015 - present",
+            "parser_semantic": "role_meta",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_57",
+            "text": "Senior Software Developer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_58",
+            "text": "Software Solutions Provider",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Contributed to the securing of a $xxM software development…",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_60",
+            "text": "Achieved an estimated xx% rise in team productivity through...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_61",
+            "text": "Exceeded network optimization target of xx% efficiency increase by...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_62",
+            "text": "Added x# talented engineers to team, due to...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_63",
+            "text": "Decreased system bugs by xx% by generating dev models and...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_64",
+            "text": "Awarded 2 contracts due to design results excellence in...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_65",
+            "text": "Generated client profits of $xxM by introducing beta software in...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_66",
+            "text": "Optimized software design and development for profit growth of xx%...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_68",
+            "text": "Prior Company, Inc., New York, NY Jan 2011 - Jan 2015",
+            "parser_semantic": "role_meta",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_69",
+            "text": "Software Development Leader",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_70",
+            "text": "Custom Software Solutions Design and Development",
+            "parser_semantic": "specialization_header"
+          },
+          {
+            "para_id": "para_71",
+            "text": "Produced a 2019 award winning app for the visually impaired...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_72",
+            "text": "Delivered a xx% rise in efficiency for SharePoint-based workflow...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_73",
+            "text": "Saved an est. $XM for client by connecting mainframe financial...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_74",
+            "text": "Optimized program to produce xx% rise in efficiency by creating map...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_75",
+            "text": "Reduced bugs in Java and Web app component designs by xx% through...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_76",
+            "text": "Grew Data-Center team for major contract worth $xxM after...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_77",
+            "text": "Changed the development process of web pages for $xxM contract by...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_78",
+            "text": "Achieved xx% lower operating costs through insourcing and...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_81",
+            "text": "Prior Company, Inc., New York, NY 2004 - 2011",
+            "parser_semantic": "role_meta",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_82",
+            "text": "Enterprise Application Software Solutions",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_83",
+            "text": "Senior Software Development Specialist Jan 2010 - Jan 2011",
+            "parser_semantic": "role_meta",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_84",
+            "text": "Increased productivity by xx% by eliminating bugs in legacy...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_85",
+            "text": "Grew a global team as part of a $xxM contract, where implementation...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_86",
+            "text": "Produced feasibility studies that helped win a $xxM development...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_87",
+            "text": "Contributed to yearly client profits of $xM by designing/...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_89",
+            "text": "Software Development Specialist Jan 2004 - Jan 2010",
+            "parser_semantic": "role_meta",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_90",
+            "text": "Hired to new position due to qualifications and strong results in previous company",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_91",
+            "text": "Contributed to cart abandonment rate reduction of xx% from...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_92",
+            "text": "Increased platform usage by xx% in x months by designing and...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_93",
+            "text": "Developed n-tier code-generation architecture showing xx% rise in…",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_94",
+            "text": "Awarded $xxx bonus for delivering high priority projects on time...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_96",
+            "text": "Prior Company, Inc., New York, NY Jan 2001 - Jan 2004",
+            "parser_semantic": "role_meta",
+            "semantic_hint": "role_header_candidate"
+          },
+          {
+            "para_id": "para_97",
+            "text": "Programmer/Analyst",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_98",
+            "text": "Performed Analysis, Coding and Testing Across a Variety of Projects",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_99",
+            "text": "Eliminated issues in the WebSphere test environment, saving $xxx, by...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_100",
+            "text": "Optimized mid-level projects for efficiency rise of x% through analysis of...",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_56"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_57"
+            ],
+            "meta_para_ids": [
+              "para_58"
+            ],
+            "bullet_para_ids": [
+              "para_59",
+              "para_60",
+              "para_61",
+              "para_62",
+              "para_63",
+              "para_64",
+              "para_65",
+              "para_66"
+            ]
+          },
+          {
+            "role_id": "role_2__split_1",
+            "header_para_ids": [
+              "para_68"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": [
+              "para_69",
+              "para_70",
+              "para_71",
+              "para_72",
+              "para_73",
+              "para_74",
+              "para_75",
+              "para_76",
+              "para_77",
+              "para_78"
+            ]
+          },
+          {
+            "role_id": "role_2__split_2",
+            "header_para_ids": [
+              "para_81"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2__split_3",
+            "header_para_ids": [
+              "para_83"
+            ],
+            "meta_para_ids": [
+              "para_82"
+            ],
+            "bullet_para_ids": [
+              "para_84",
+              "para_85",
+              "para_86",
+              "para_87"
+            ]
+          },
+          {
+            "role_id": "role_2__split_4",
+            "header_para_ids": [
+              "para_89"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": [
+              "para_90",
+              "para_91",
+              "para_92",
+              "para_93",
+              "para_94"
+            ]
+          },
+          {
+            "role_id": "role_2__split_5",
+            "header_para_ids": [
+              "para_96"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_97"
+            ],
+            "meta_para_ids": [
+              "para_98"
+            ],
+            "bullet_para_ids": [
+              "para_99",
+              "para_100"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_103",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_104",
+            "text": "Grad School University Name, New York, NY 2004",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_105",
+            "text": "Master’s in Precisely Specific Degree",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_106",
+            "text": "Winner of award, distinction or honor",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_107",
+            "text": "Winner of award, distinction or honor",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_108",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_109",
+            "text": "Undergraduate College or University Name, New York, NY 2000",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_110",
+            "text": "BS/BA in Precisely Specific Degree",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_111",
+            "text": "Winner of award, distinction or honor",
+            "parser_semantic": "bullet",
+            "semantic_hint": "bullet_candidate",
+            "bullet_confidence": "strong"
+          },
+          {
+            "para_id": "para_112",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS",
+        "paragraphs": [
+          {
+            "para_id": "para_114",
+            "text": "◇—————————————————————————◇",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_115",
+            "text": "InfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents (Design) •",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_116",
+            "text": "JavaScript, Swift • Python • Java • C++ • Ruby • Rust • Elixir • Scala • R • PHP • C# • jQuery • HTML • CSS • SQL • Bash/Shell • C • Typescript • Assembly • Go • Objective-C • VB.NET • Matlab • VBA • Kotlin • Groovy • Perl • Agile Scrum • Node.js • React • .NETcore • Spring • Django • Cordova • Angular • Windows • Linux • Embedded Systems • MySQL • SQL Server • Oracle • TensorFlow • Spark • Helm • Ansible • Docker • Jenkins • Visual Studio • UX System",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "structure_confidence": "high"
+  },
+  "llm_input_raw": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SENIOR SOFTWARE DEVELOPER",
+        "paragraphs": [
+          {
+            "para_id": "para_7",
+            "text": "SENIOR SOFTWARE DEVELOPER",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_8",
+            "text": "◇—————————————————————————◇",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_9",
+            "text": "Senior Software Architect • Principal Developer • Senior Application Developer • Full Stack Developer",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_10",
+            "text": "Software Engineering • Backend Development • Distributed Systems • Object Oriented Design",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_11",
+            "text": "Led Cloud Transition • Increased Productivity • Reduced Costs • Effective Recruiter",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_12",
+            "text": "InfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents • Public Speaker",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_13",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK EXPERIENCE",
+        "paragraphs": [
+          {
+            "para_id": "para_14",
+            "text": "WORK EXPERIENCE",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_56",
+            "text": "Company Name, Inc., New York, NY Jan 2015 - present",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_57",
+            "text": "Senior Software Developer",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_58",
+            "text": "Software Solutions Provider",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_59",
+            "text": "Contributed to the securing of a $xxM software development…",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_60",
+            "text": "Achieved an estimated xx% rise in team productivity through...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_61",
+            "text": "Exceeded network optimization target of xx% efficiency increase by...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_62",
+            "text": "Added x# talented engineers to team, due to...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_63",
+            "text": "Decreased system bugs by xx% by generating dev models and...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_64",
+            "text": "Awarded 2 contracts due to design results excellence in...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_65",
+            "text": "Generated client profits of $xxM by introducing beta software in...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_66",
+            "text": "Optimized software design and development for profit growth of xx%...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_68",
+            "text": "Prior Company, Inc., New York, NY Jan 2011 - Jan 2015",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_69",
+            "text": "Software Development Leader",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_70",
+            "text": "Custom Software Solutions Design and Development",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_71",
+            "text": "Produced a 2019 award winning app for the visually impaired...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_72",
+            "text": "Delivered a xx% rise in efficiency for SharePoint-based workflow...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_73",
+            "text": "Saved an est. $XM for client by connecting mainframe financial...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_74",
+            "text": "Optimized program to produce xx% rise in efficiency by creating map...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_75",
+            "text": "Reduced bugs in Java and Web app component designs by xx% through...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_76",
+            "text": "Grew Data-Center team for major contract worth $xxM after...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_77",
+            "text": "Changed the development process of web pages for $xxM contract by...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_78",
+            "text": "Achieved xx% lower operating costs through insourcing and...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_81",
+            "text": "Prior Company, Inc., New York, NY 2004 - 2011",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_82",
+            "text": "Enterprise Application Software Solutions",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_83",
+            "text": "Senior Software Development Specialist Jan 2010 - Jan 2011",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_84",
+            "text": "Increased productivity by xx% by eliminating bugs in legacy...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_85",
+            "text": "Grew a global team as part of a $xxM contract, where implementation...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_86",
+            "text": "Produced feasibility studies that helped win a $xxM development...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_87",
+            "text": "Contributed to yearly client profits of $xM by designing/...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_89",
+            "text": "Software Development Specialist Jan 2004 - Jan 2010",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_90",
+            "text": "Hired to new position due to qualifications and strong results in previous company",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_91",
+            "text": "Contributed to cart abandonment rate reduction of xx% from...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_92",
+            "text": "Increased platform usage by xx% in x months by designing and...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_93",
+            "text": "Developed n-tier code-generation architecture showing xx% rise in…",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_94",
+            "text": "Awarded $xxx bonus for delivering high priority projects on time...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_96",
+            "text": "Prior Company, Inc., New York, NY Jan 2001 - Jan 2004",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_97",
+            "text": "Programmer/Analyst",
+            "parser_semantic": "role_header"
+          },
+          {
+            "para_id": "para_98",
+            "text": "Performed Analysis, Coding and Testing Across a Variety of Projects",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_99",
+            "text": "Eliminated issues in the WebSphere test environment, saving $xxx, by...",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_100",
+            "text": "Optimized mid-level projects for efficiency rise of x% through analysis of...",
+            "parser_semantic": "bullet"
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_para_ids": [
+              "para_56"
+            ],
+            "meta_para_ids": [],
+            "bullet_para_ids": []
+          },
+          {
+            "role_id": "role_2",
+            "header_para_ids": [
+              "para_57"
+            ],
+            "meta_para_ids": [
+              "para_58"
+            ],
+            "bullet_para_ids": [
+              "para_59",
+              "para_60",
+              "para_61",
+              "para_62",
+              "para_63",
+              "para_64",
+              "para_65",
+              "para_66",
+              "para_68",
+              "para_69",
+              "para_70",
+              "para_71",
+              "para_72",
+              "para_73",
+              "para_74",
+              "para_75",
+              "para_76",
+              "para_77",
+              "para_78",
+              "para_81",
+              "para_82",
+              "para_83",
+              "para_84",
+              "para_85",
+              "para_86",
+              "para_87",
+              "para_89",
+              "para_90",
+              "para_91",
+              "para_92",
+              "para_93",
+              "para_94",
+              "para_96"
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_para_ids": [
+              "para_97"
+            ],
+            "meta_para_ids": [
+              "para_98"
+            ],
+            "bullet_para_ids": [
+              "para_99",
+              "para_100"
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "paragraphs": [
+          {
+            "para_id": "para_102",
+            "text": "EDUCATION",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_103",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_104",
+            "text": "Grad School University Name, New York, NY 2004",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_105",
+            "text": "Master’s in Precisely Specific Degree",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_106",
+            "text": "Winner of award, distinction or honor",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_107",
+            "text": "Winner of award, distinction or honor",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_108",
+            "text": "",
+            "parser_semantic": "empty"
+          },
+          {
+            "para_id": "para_109",
+            "text": "Undergraduate College or University Name, New York, NY 2000",
+            "parser_semantic": "role_meta"
+          },
+          {
+            "para_id": "para_110",
+            "text": "BS/BA in Precisely Specific Degree",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_111",
+            "text": "Winner of award, distinction or honor",
+            "parser_semantic": "bullet"
+          },
+          {
+            "para_id": "para_112",
+            "text": "",
+            "parser_semantic": "empty"
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS",
+        "paragraphs": [
+          {
+            "para_id": "para_113",
+            "text": "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS",
+            "parser_semantic": "section_heading"
+          },
+          {
+            "para_id": "para_114",
+            "text": "◇—————————————————————————◇",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_115",
+            "text": "InfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents (Design) •",
+            "parser_semantic": "paragraph"
+          },
+          {
+            "para_id": "para_116",
+            "text": "JavaScript, Swift • Python • Java • C++ • Ruby • Rust • Elixir • Scala • R • PHP • C# • jQuery • HTML • CSS • SQL • Bash/Shell • C • Typescript • Assembly • Go • Objective-C • VB.NET • Matlab • VBA • Kotlin • Groovy • Perl • Agile Scrum • Node.js • React • .NETcore • Spring • Django • Cordova • Angular • Windows • Linux • Embedded Systems • MySQL • SQL Server • Oracle • TensorFlow • Spark • Helm • Ansible • Docker • Jenkins • Visual Studio • UX System",
+            "parser_semantic": "paragraph"
+          }
+        ],
+        "roles": []
+      }
+    ]
+  },
+  "classification_input_normalization_report": {
+    "structure_confidence": "high",
+    "artifact_cleanups": [],
+    "headings_removed": [
+      {
+        "section_id": "sec_1",
+        "para_id": "para_7",
+        "text_preview": "SENIOR SOFTWARE DEVELOPER"
+      },
+      {
+        "section_id": "sec_2",
+        "para_id": "para_14",
+        "text_preview": "WORK EXPERIENCE"
+      },
+      {
+        "section_id": "sec_3",
+        "para_id": "para_102",
+        "text_preview": "EDUCATION"
+      },
+      {
+        "section_id": "sec_4",
+        "para_id": "para_113",
+        "text_preview": "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS"
+      }
+    ],
+    "roles_cleared": [],
+    "compound_paras_split": [],
+    "overmerged_roles_split": [
+      {
+        "section_id": "sec_2",
+        "original_role_id": "role_2",
+        "split_into": [
+          "role_2",
+          "role_2__split_1",
+          "role_2__split_2",
+          "role_2__split_3",
+          "role_2__split_4",
+          "role_2__split_5"
+        ],
+        "split_count": 6
+      }
+    ],
+    "flat_experience_roles_rebuilt": [],
+    "semantic_hints_added": 35
+  },
+  "raw_classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SENIOR SOFTWARE DEVELOPER",
+        "display_title": "Senior Software Developer",
+        "semantic_type": "summary",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_9",
+            "semantic_type": "role_header",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_10",
+            "semantic_type": "role_meta",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_11",
+            "semantic_type": "role_highlight",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_12",
+            "semantic_type": "role_highlight",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK EXPERIENCE",
+        "display_title": "Work Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_5",
+                "para_id": "para_56",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_6",
+                "para_id": "para_57",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_7",
+                "para_id": "para_58",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_8",
+                "para_id": "para_59",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_9",
+                "para_id": "para_60",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_10",
+                "para_id": "para_61",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_11",
+                "para_id": "para_62",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_12",
+                "para_id": "para_63",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_13",
+                "para_id": "para_64",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_14",
+                "para_id": "para_65",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_15",
+                "para_id": "para_66",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_68",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_17",
+                "para_id": "para_69",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_18",
+                "para_id": "para_70",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_19",
+                "para_id": "para_71",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_20",
+                "para_id": "para_72",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_21",
+                "para_id": "para_73",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_22",
+                "para_id": "para_74",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_23",
+                "para_id": "para_75",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_24",
+                "para_id": "para_76",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_25",
+                "para_id": "para_77",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_26",
+                "para_id": "para_78",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_27",
+                "para_id": "para_81",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_28",
+                "para_id": "para_82",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_29",
+                "para_id": "para_83",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_30",
+                "para_id": "para_84",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_31",
+                "para_id": "para_85",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_32",
+                "para_id": "para_86",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_33",
+                "para_id": "para_87",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_blocks": [
+              {
+                "block_id": "block_34",
+                "para_id": "para_89",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_35",
+                "para_id": "para_90",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_36",
+                "para_id": "para_91",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_37",
+                "para_id": "para_92",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_38",
+                "para_id": "para_93",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_39",
+                "para_id": "para_94",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_blocks": [
+              {
+                "block_id": "block_40",
+                "para_id": "para_96",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_6",
+            "header_blocks": [
+              {
+                "block_id": "block_41",
+                "para_id": "para_97",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_42",
+                "para_id": "para_98",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_43",
+                "para_id": "para_99",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_44",
+                "para_id": "para_100",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_45",
+            "para_id": "para_104",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_46",
+            "para_id": "para_105",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_47",
+            "para_id": "para_106",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_48",
+            "para_id": "para_107",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_49",
+            "para_id": "para_109",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_50",
+            "para_id": "para_110",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_51",
+            "para_id": "para_111",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS",
+        "display_title": "Optional Personal, Patents, Awards, Technologies, Keywords",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_52",
+            "para_id": "para_115",
+            "semantic_type": "role_highlight",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_53",
+            "para_id": "para_116",
+            "semantic_type": "role_highlight",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "validation": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_REWRITE_POLICY",
+        "section_id": "sec_1",
+        "detail": "got 'preserve'"
+      },
+      {
+        "code": "SUMMARY_PRESERVE_HEADING",
+        "section_id": "sec_1",
+        "detail": "must be false"
+      },
+      {
+        "code": "SUMMARY_BLOCK_TYPE",
+        "section_id": "sec_1",
+        "detail": "block_id=block_1 semantic_type='role_header'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_1 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_TYPE",
+        "section_id": "sec_1",
+        "detail": "block_id=block_2 semantic_type='role_meta'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_2 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_TYPE",
+        "section_id": "sec_1",
+        "detail": "block_id=block_3 semantic_type='role_highlight'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_3 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_TYPE",
+        "section_id": "sec_1",
+        "detail": "block_id=block_4 semantic_type='role_highlight'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_4 rewrite_policy='preserve'"
+      },
+      {
+        "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+        "section_id": "sec_3",
+        "detail": "must be true"
+      },
+      {
+        "code": "EDUCATION_BLOCK_TYPE",
+        "section_id": "sec_3",
+        "detail": "block_id=block_47 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "EDUCATION_BLOCK_POLICY",
+        "section_id": "sec_3",
+        "detail": "block_id=block_47 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "EDUCATION_BLOCK_TYPE",
+        "section_id": "sec_3",
+        "detail": "block_id=block_48 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "EDUCATION_BLOCK_POLICY",
+        "section_id": "sec_3",
+        "detail": "block_id=block_48 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "EDUCATION_BLOCK_TYPE",
+        "section_id": "sec_3",
+        "detail": "block_id=block_51 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "EDUCATION_BLOCK_POLICY",
+        "section_id": "sec_3",
+        "detail": "block_id=block_51 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=block_52 semantic_type='role_highlight'"
+      },
+      {
+        "code": "OTHER_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=block_53 semantic_type='role_highlight'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_REWRITE_POLICY",
+          "SUMMARY_PRESERVE_HEADING",
+          "SUMMARY_BLOCK_TYPE",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_TYPE",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_TYPE",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_TYPE",
+          "SUMMARY_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": false,
+        "error_codes": [
+          "EDUCATION_PRESERVE_BODY_STRUCTURE",
+          "EDUCATION_BLOCK_TYPE",
+          "EDUCATION_BLOCK_POLICY",
+          "EDUCATION_BLOCK_TYPE",
+          "EDUCATION_BLOCK_POLICY",
+          "EDUCATION_BLOCK_TYPE",
+          "EDUCATION_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": false,
+        "error_codes": [
+          "OTHER_BLOCK_TYPE",
+          "OTHER_BLOCK_TYPE"
+        ]
+      }
+    ]
+  },
+  "repair_input": {
+    "document_id": "0",
+    "source_kind": "docx",
+    "invalid_sections": [
+      {
+        "parser_section": {
+          "section_id": "sec_1",
+          "raw_title": "SENIOR SOFTWARE DEVELOPER",
+          "paragraphs": [
+            {
+              "para_id": "para_8",
+              "text": "◇—————————————————————————◇",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_9",
+              "text": "Senior Software Architect • Principal Developer • Senior Application Developer • Full Stack Developer",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_10",
+              "text": "Software Engineering • Backend Development • Distributed Systems • Object Oriented Design",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_11",
+              "text": "Led Cloud Transition • Increased Productivity • Reduced Costs • Effective Recruiter",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_12",
+              "text": "InfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents • Public Speaker",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_13",
+              "text": "",
+              "parser_semantic": "empty"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_1",
+          "raw_title": "SENIOR SOFTWARE DEVELOPER",
+          "display_title": "Senior Software Developer",
+          "semantic_type": "summary",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "block_1",
+              "para_id": "para_9",
+              "semantic_type": "role_header",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_2",
+              "para_id": "para_10",
+              "semantic_type": "role_meta",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_3",
+              "para_id": "para_11",
+              "semantic_type": "role_highlight",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_4",
+              "para_id": "para_12",
+              "semantic_type": "role_highlight",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "SUMMARY_REWRITE_POLICY",
+            "section_id": "sec_1",
+            "detail": "got 'preserve'"
+          },
+          {
+            "code": "SUMMARY_PRESERVE_HEADING",
+            "section_id": "sec_1",
+            "detail": "must be false"
+          },
+          {
+            "code": "SUMMARY_BLOCK_TYPE",
+            "section_id": "sec_1",
+            "detail": "block_id=block_1 semantic_type='role_header'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_1 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_TYPE",
+            "section_id": "sec_1",
+            "detail": "block_id=block_2 semantic_type='role_meta'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_2 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_TYPE",
+            "section_id": "sec_1",
+            "detail": "block_id=block_3 semantic_type='role_highlight'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_3 rewrite_policy='preserve'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_TYPE",
+            "section_id": "sec_1",
+            "detail": "block_id=block_4 semantic_type='role_highlight'"
+          },
+          {
+            "code": "SUMMARY_BLOCK_POLICY",
+            "section_id": "sec_1",
+            "detail": "block_id=block_4 rewrite_policy='preserve'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_4",
+          "raw_title": "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS",
+          "paragraphs": [
+            {
+              "para_id": "para_114",
+              "text": "◇—————————————————————————◇",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_115",
+              "text": "InfoWorld Award 2018 • CTO’s “Excellence” Award 2017 • Awarded 3 Patents (Design) •",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_116",
+              "text": "JavaScript, Swift • Python • Java • C++ • Ruby • Rust • Elixir • Scala • R • PHP • C# • jQuery • HTML • CSS • SQL • Bash/Shell • C • Typescript • Assembly • Go • Objective-C • VB.NET • Matlab • VBA • Kotlin • Groovy • Perl • Agile Scrum • Node.js • React • .NETcore • Spring • Django • Cordova • Angular • Windows • Linux • Embedded Systems • MySQL • SQL Server • Oracle • TensorFlow • Spark • Helm • Ansible • Docker • Jenkins • Visual Studio • UX System",
+              "parser_semantic": "paragraph"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_4",
+          "raw_title": "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS",
+          "display_title": "Optional Personal, Patents, Awards, Technologies, Keywords",
+          "semantic_type": "other",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "block_52",
+              "para_id": "para_115",
+              "semantic_type": "role_highlight",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_53",
+              "para_id": "para_116",
+              "semantic_type": "role_highlight",
+              "rewrite_policy": "preserve",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "OTHER_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=block_52 semantic_type='role_highlight'"
+          },
+          {
+            "code": "OTHER_BLOCK_TYPE",
+            "section_id": "sec_4",
+            "detail": "block_id=block_53 semantic_type='role_highlight'"
+          }
+        ]
+      },
+      {
+        "parser_section": {
+          "section_id": "sec_3",
+          "raw_title": "EDUCATION",
+          "paragraphs": [
+            {
+              "para_id": "para_103",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_104",
+              "text": "Grad School University Name, New York, NY 2004",
+              "parser_semantic": "role_meta"
+            },
+            {
+              "para_id": "para_105",
+              "text": "Master’s in Precisely Specific Degree",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_106",
+              "text": "Winner of award, distinction or honor",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_107",
+              "text": "Winner of award, distinction or honor",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_108",
+              "text": "",
+              "parser_semantic": "empty"
+            },
+            {
+              "para_id": "para_109",
+              "text": "Undergraduate College or University Name, New York, NY 2000",
+              "parser_semantic": "role_meta"
+            },
+            {
+              "para_id": "para_110",
+              "text": "BS/BA in Precisely Specific Degree",
+              "parser_semantic": "paragraph"
+            },
+            {
+              "para_id": "para_111",
+              "text": "Winner of award, distinction or honor",
+              "parser_semantic": "bullet",
+              "semantic_hint": "bullet_candidate",
+              "bullet_confidence": "strong"
+            },
+            {
+              "para_id": "para_112",
+              "text": "",
+              "parser_semantic": "empty"
+            }
+          ],
+          "roles": []
+        },
+        "classified_section": {
+          "section_id": "sec_3",
+          "raw_title": "EDUCATION",
+          "display_title": "Education",
+          "semantic_type": "education",
+          "rewrite_policy": "preserve",
+          "preserve_heading": true,
+          "preserve_body_structure": false,
+          "blocks": [
+            {
+              "block_id": "block_45",
+              "para_id": "para_104",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_46",
+              "para_id": "para_105",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_47",
+              "para_id": "para_106",
+              "semantic_type": "role_achievement_bullet",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_48",
+              "para_id": "para_107",
+              "semantic_type": "role_achievement_bullet",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            },
+            {
+              "block_id": "block_49",
+              "para_id": "para_109",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_50",
+              "para_id": "para_110",
+              "semantic_type": "education_entry",
+              "rewrite_policy": "preserve",
+              "new": false
+            },
+            {
+              "block_id": "block_51",
+              "para_id": "para_111",
+              "semantic_type": "role_achievement_bullet",
+              "rewrite_policy": "rewrite_text",
+              "new": false
+            }
+          ],
+          "roles": []
+        },
+        "validation_errors": [
+          {
+            "code": "EDUCATION_PRESERVE_BODY_STRUCTURE",
+            "section_id": "sec_3",
+            "detail": "must be true"
+          },
+          {
+            "code": "EDUCATION_BLOCK_TYPE",
+            "section_id": "sec_3",
+            "detail": "block_id=block_47 semantic_type='role_achievement_bullet'"
+          },
+          {
+            "code": "EDUCATION_BLOCK_POLICY",
+            "section_id": "sec_3",
+            "detail": "block_id=block_47 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "EDUCATION_BLOCK_TYPE",
+            "section_id": "sec_3",
+            "detail": "block_id=block_48 semantic_type='role_achievement_bullet'"
+          },
+          {
+            "code": "EDUCATION_BLOCK_POLICY",
+            "section_id": "sec_3",
+            "detail": "block_id=block_48 rewrite_policy='rewrite_text'"
+          },
+          {
+            "code": "EDUCATION_BLOCK_TYPE",
+            "section_id": "sec_3",
+            "detail": "block_id=block_51 semantic_type='role_achievement_bullet'"
+          },
+          {
+            "code": "EDUCATION_BLOCK_POLICY",
+            "section_id": "sec_3",
+            "detail": "block_id=block_51 rewrite_policy='rewrite_text'"
+          }
+        ]
+      }
+    ]
+  },
+  "repair_response": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SENIOR SOFTWARE DEVELOPER",
+        "display_title": "Senior Software Developer",
+        "semantic_type": "summary",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_9",
+            "semantic_type": "role_header",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_10",
+            "semantic_type": "role_meta",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_11",
+            "semantic_type": "role_highlight",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_12",
+            "semantic_type": "role_highlight",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_1",
+                "para_id": "para_9",
+                "semantic_type": "role_header",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_2",
+                "para_id": "para_10",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_3",
+                "para_id": "para_11",
+                "semantic_type": "role_highlight",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_4",
+                "para_id": "para_12",
+                "semantic_type": "role_highlight",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS",
+        "display_title": "Optional Personal, Patents, Awards, Technologies, Keywords",
+        "semantic_type": "other",
+        "rewrite_policy": "rewrite_body",
+        "preserve_heading": false,
+        "preserve_body_structure": false,
+        "blocks": [
+          {
+            "block_id": "block_52",
+            "para_id": "para_115",
+            "semantic_type": "role_highlight",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_53",
+            "para_id": "para_116",
+            "semantic_type": "role_highlight",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_2",
+            "header_blocks": [],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_52",
+                "para_id": "para_115",
+                "semantic_type": "role_highlight",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_53",
+                "para_id": "para_116",
+                "semantic_type": "role_highlight",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "education",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_45",
+            "para_id": "para_104",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_46",
+            "para_id": "para_105",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_47",
+            "para_id": "para_106",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_48",
+            "para_id": "para_107",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          },
+          {
+            "block_id": "block_49",
+            "para_id": "para_109",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_50",
+            "para_id": "para_110",
+            "semantic_type": "education_entry",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_51",
+            "para_id": "para_111",
+            "semantic_type": "role_achievement_bullet",
+            "rewrite_policy": "rewrite_text",
+            "new": false
+          }
+        ],
+        "roles": [
+          {
+            "role_id": "role_3",
+            "header_blocks": [],
+            "meta_blocks": [
+              {
+                "block_id": "block_45",
+                "para_id": "para_104",
+                "semantic_type": "education_entry",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_49",
+                "para_id": "para_109",
+                "semantic_type": "education_entry",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_46",
+                "para_id": "para_105",
+                "semantic_type": "education_entry",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_47",
+                "para_id": "para_106",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_48",
+                "para_id": "para_107",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_50",
+                "para_id": "para_110",
+                "semantic_type": "education_entry",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_51",
+                "para_id": "para_111",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "validation_after_repair": {
+    "document_id": "0",
+    "is_valid": false,
+    "errors": [
+      {
+        "code": "SUMMARY_ROLES_PRESENT",
+        "section_id": "sec_1",
+        "detail": "roles[] must be empty for this section type"
+      },
+      {
+        "code": "SUMMARY_BLOCK_TYPE",
+        "section_id": "sec_1",
+        "detail": "block_id=block_1 semantic_type='role_header'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_TYPE",
+        "section_id": "sec_1",
+        "detail": "block_id=block_2 semantic_type='role_meta'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_TYPE",
+        "section_id": "sec_1",
+        "detail": "block_id=block_3 semantic_type='role_highlight'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_3 rewrite_policy='preserve'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_TYPE",
+        "section_id": "sec_1",
+        "detail": "block_id=block_4 semantic_type='role_highlight'"
+      },
+      {
+        "code": "SUMMARY_BLOCK_POLICY",
+        "section_id": "sec_1",
+        "detail": "block_id=block_4 rewrite_policy='preserve'"
+      },
+      {
+        "code": "EDUCATION_ROLES_PRESENT",
+        "section_id": "sec_3",
+        "detail": "roles[] must be empty for this section type"
+      },
+      {
+        "code": "EDUCATION_BLOCK_TYPE",
+        "section_id": "sec_3",
+        "detail": "block_id=block_47 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "EDUCATION_BLOCK_POLICY",
+        "section_id": "sec_3",
+        "detail": "block_id=block_47 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "EDUCATION_BLOCK_TYPE",
+        "section_id": "sec_3",
+        "detail": "block_id=block_48 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "EDUCATION_BLOCK_POLICY",
+        "section_id": "sec_3",
+        "detail": "block_id=block_48 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "EDUCATION_BLOCK_TYPE",
+        "section_id": "sec_3",
+        "detail": "block_id=block_51 semantic_type='role_achievement_bullet'"
+      },
+      {
+        "code": "EDUCATION_BLOCK_POLICY",
+        "section_id": "sec_3",
+        "detail": "block_id=block_51 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_REWRITE_POLICY",
+        "section_id": "sec_4",
+        "detail": "got 'rewrite_body'"
+      },
+      {
+        "code": "OTHER_ROLES_PRESENT",
+        "section_id": "sec_4",
+        "detail": "roles[] must be empty for this section type"
+      },
+      {
+        "code": "OTHER_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=block_52 semantic_type='role_highlight'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_52 rewrite_policy='rewrite_text'"
+      },
+      {
+        "code": "OTHER_BLOCK_TYPE",
+        "section_id": "sec_4",
+        "detail": "block_id=block_53 semantic_type='role_highlight'"
+      },
+      {
+        "code": "OTHER_BLOCK_POLICY",
+        "section_id": "sec_4",
+        "detail": "block_id=block_53 rewrite_policy='rewrite_text'"
+      }
+    ],
+    "section_results": [
+      {
+        "section_id": "sec_1",
+        "is_valid": false,
+        "error_codes": [
+          "SUMMARY_ROLES_PRESENT",
+          "SUMMARY_BLOCK_TYPE",
+          "SUMMARY_BLOCK_TYPE",
+          "SUMMARY_BLOCK_TYPE",
+          "SUMMARY_BLOCK_POLICY",
+          "SUMMARY_BLOCK_TYPE",
+          "SUMMARY_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_2",
+        "is_valid": true,
+        "error_codes": []
+      },
+      {
+        "section_id": "sec_3",
+        "is_valid": false,
+        "error_codes": [
+          "EDUCATION_ROLES_PRESENT",
+          "EDUCATION_BLOCK_TYPE",
+          "EDUCATION_BLOCK_POLICY",
+          "EDUCATION_BLOCK_TYPE",
+          "EDUCATION_BLOCK_POLICY",
+          "EDUCATION_BLOCK_TYPE",
+          "EDUCATION_BLOCK_POLICY"
+        ]
+      },
+      {
+        "section_id": "sec_4",
+        "is_valid": false,
+        "error_codes": [
+          "OTHER_REWRITE_POLICY",
+          "OTHER_ROLES_PRESENT",
+          "OTHER_BLOCK_TYPE",
+          "OTHER_BLOCK_POLICY",
+          "OTHER_BLOCK_TYPE",
+          "OTHER_BLOCK_POLICY"
+        ]
+      }
+    ]
+  },
+  "classification": {
+    "document_id": "0",
+    "sections": [
+      {
+        "section_id": "sec_1",
+        "raw_title": "SENIOR SOFTWARE DEVELOPER",
+        "display_title": "Senior Software Developer",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_1",
+            "para_id": "para_9",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_2",
+            "para_id": "para_10",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_3",
+            "para_id": "para_11",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_4",
+            "para_id": "para_12",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_2",
+        "raw_title": "WORK EXPERIENCE",
+        "display_title": "Work Experience",
+        "semantic_type": "experience",
+        "rewrite_policy": "rewrite_bullets_only",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [],
+        "roles": [
+          {
+            "role_id": "role_1",
+            "header_blocks": [
+              {
+                "block_id": "block_5",
+                "para_id": "para_56",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_6",
+                "para_id": "para_57",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_7",
+                "para_id": "para_58",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_8",
+                "para_id": "para_59",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_9",
+                "para_id": "para_60",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_10",
+                "para_id": "para_61",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_11",
+                "para_id": "para_62",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_12",
+                "para_id": "para_63",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_13",
+                "para_id": "para_64",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_14",
+                "para_id": "para_65",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_15",
+                "para_id": "para_66",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_2",
+            "header_blocks": [
+              {
+                "block_id": "block_16",
+                "para_id": "para_68",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_17",
+                "para_id": "para_69",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_18",
+                "para_id": "para_70",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_19",
+                "para_id": "para_71",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_20",
+                "para_id": "para_72",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_21",
+                "para_id": "para_73",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_22",
+                "para_id": "para_74",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_23",
+                "para_id": "para_75",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_24",
+                "para_id": "para_76",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_25",
+                "para_id": "para_77",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_26",
+                "para_id": "para_78",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_3",
+            "header_blocks": [
+              {
+                "block_id": "block_27",
+                "para_id": "para_81",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_28",
+                "para_id": "para_82",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              },
+              {
+                "block_id": "block_29",
+                "para_id": "para_83",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_30",
+                "para_id": "para_84",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_31",
+                "para_id": "para_85",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_32",
+                "para_id": "para_86",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_33",
+                "para_id": "para_87",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_4",
+            "header_blocks": [
+              {
+                "block_id": "block_34",
+                "para_id": "para_89",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": [
+              {
+                "block_id": "block_35",
+                "para_id": "para_90",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_36",
+                "para_id": "para_91",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_37",
+                "para_id": "para_92",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_38",
+                "para_id": "para_93",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_39",
+                "para_id": "para_94",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          },
+          {
+            "role_id": "role_5",
+            "header_blocks": [
+              {
+                "block_id": "block_40",
+                "para_id": "para_96",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [],
+            "body_blocks": []
+          },
+          {
+            "role_id": "role_6",
+            "header_blocks": [
+              {
+                "block_id": "block_41",
+                "para_id": "para_97",
+                "semantic_type": "role_header",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "meta_blocks": [
+              {
+                "block_id": "block_42",
+                "para_id": "para_98",
+                "semantic_type": "role_meta",
+                "rewrite_policy": "preserve",
+                "new": false
+              }
+            ],
+            "body_blocks": [
+              {
+                "block_id": "block_43",
+                "para_id": "para_99",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              },
+              {
+                "block_id": "block_44",
+                "para_id": "para_100",
+                "semantic_type": "role_achievement_bullet",
+                "rewrite_policy": "rewrite_text",
+                "new": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "section_id": "sec_3",
+        "raw_title": "EDUCATION",
+        "display_title": "Education",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_45",
+            "para_id": "para_104",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_46",
+            "para_id": "para_105",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_47",
+            "para_id": "para_106",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_48",
+            "para_id": "para_107",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_49",
+            "para_id": "para_109",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_50",
+            "para_id": "para_110",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_51",
+            "para_id": "para_111",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      },
+      {
+        "section_id": "sec_4",
+        "raw_title": "OPTIONAL PERSONAL, PATENTS, AWARDS, TECHNOLOGIES, KEYWORDS",
+        "display_title": "Optional Personal, Patents, Awards, Technologies, Keywords",
+        "semantic_type": "other",
+        "rewrite_policy": "preserve",
+        "preserve_heading": true,
+        "preserve_body_structure": true,
+        "blocks": [
+          {
+            "block_id": "block_52",
+            "para_id": "para_115",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          },
+          {
+            "block_id": "block_53",
+            "para_id": "para_116",
+            "semantic_type": "other_paragraph",
+            "rewrite_policy": "preserve",
+            "new": false
+          }
+        ],
+        "roles": []
+      }
+    ],
+    "classification_version": "v6.3-role-normalization",
+    "source_kind": "docx"
+  },
+  "status": "repaired_and_downgraded",
+  "validation_error_count": 19,
+  "invalid_section_count_before_repair": 3,
+  "invalid_section_count_after_repair": 3,
+  "repaired_section_count": 0,
+  "downgraded_section_count": 3,
+  "invalid_section_ids": [
+    "sec_1",
+    "sec_3",
+    "sec_4"
+  ],
+  "recovery_applied": true
+}

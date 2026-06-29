@@ -1570,18 +1570,49 @@ def _detect_column_split(
     # to produce a large secondary gap further to the right (e.g. x=[55,237,…]
     # with a gap at 55→237 and an unrelated indent gap at 271→389, which is
     # entirely within the right column and should not veto the sidebar split).
+    #
+    # Vertical-span exemption: a gap whose right side (x ≥ right_edge) only
+    # spans a small fraction of the body height is a localised multi-column
+    # footer row (e.g. EDUCATION | SKILLS | INTERESTS at the page bottom) rather
+    # than a true 3rd body column.  Only count gaps where the right-side content
+    # spans ≥ 30 % of the page height towards the adjacent-gap count.
     _first_right: int | None = None
     _adjacent_sig = 0
+    _body_top_3col = page_height * 0.15 if page_height > 0 else 0.0
+    _body_bot_3col = page_height * 0.90 if page_height > 0 else float("inf")
     for _j in range(len(x0s) - 1):
+        _gap_size = x0s[_j + 1] - x0s[_j]
+        _right_cand = x0s[_j + 1]
         if (
-            x0s[_j + 1] - x0s[_j] >= min_gap
-            and page_width * 0.20 <= x0s[_j + 1] <= page_width * 0.70
+            _gap_size >= min_gap
+            and page_width * 0.20 <= _right_cand <= page_width * 0.70
         ):
-            if _first_right is None:
-                _first_right = x0s[_j + 1]
-                _adjacent_sig = 1
-            elif x0s[_j] <= _first_right:
-                _adjacent_sig += 1
+            # Only count as a body-column boundary when content at this x
+            # spans a meaningful fraction of the page height.  Localised
+            # bottom-row sub-columns (< 30 % span) are excluded.
+            _gap_is_body_col = True
+            if page_height > 0:
+                _rc = [
+                    b for b in blocks
+                    if b.get("type") == 0
+                    and round(b["bbox"][0]) >= _right_cand
+                    and b["bbox"][1] >= _body_top_3col
+                    and b["bbox"][3] <= _body_bot_3col
+                ]
+                if _rc:
+                    _ry_span = (
+                        max(b["bbox"][3] for b in _rc)
+                        - min(b["bbox"][1] for b in _rc)
+                    ) / page_height
+                    _gap_is_body_col = _ry_span >= 0.30
+                else:
+                    _gap_is_body_col = False
+            if _gap_is_body_col:
+                if _first_right is None:
+                    _first_right = _right_cand
+                    _adjacent_sig = 1
+                elif x0s[_j] <= _first_right:
+                    _adjacent_sig += 1
     if _adjacent_sig >= 2:
         return None
     # Blocks spanning ≥ 45 % of the page width are treated as cross-column
@@ -1842,8 +1873,42 @@ def _extract_paragraphs(
                 [b for b in blocks if b.get("type") == 0 and b["bbox"][0] >= split_x],
                 key=lambda b: b["bbox"][1],
             )
-            blocks = left_blks + right_blks
-            right_col_start_idx = len(left_blks)
+            # Parallel-body detection: when right-column body content (section
+            # headings) starts significantly above the first left-column body
+            # block (parallel date rows), all-left-then-all-right ordering
+            # puts dates before their section heading, breaking section parsing.
+            # In that case, keep the header area left-then-right but interleave
+            # the body blocks by y so section headings precede their parallel
+            # left-column companions.
+            _hdr_y = page.rect.height * 0.25
+            _left_body = [b for b in left_blks if b["bbox"][1] >= _hdr_y]
+            _right_body = [b for b in right_blks if b["bbox"][1] >= _hdr_y]
+            _left_body_min_y = (
+                min(b["bbox"][1] for b in _left_body)
+                if _left_body else float("inf")
+            )
+            # Interleave when right-body content starts 20+ pt above first left-body block
+            _parallel_body = _left_body and any(
+                b["bbox"][1] < _left_body_min_y - 20 for b in _right_body
+            )
+            if _parallel_body:
+                _left_hdr = [b for b in left_blks if b["bbox"][1] < _hdr_y]
+                _right_hdr = [b for b in right_blks if b["bbox"][1] < _hdr_y]
+                # Merge header blocks by y so right-column header content
+                # (title at y=83) is processed before left-column items that
+                # appear lower (contact block at y=158 whose phone span has
+                # col_id=right).  Without this, phone lands in right_raw
+                # before the title, pushing it to the wrong column position.
+                _hdr_merged = sorted(_left_hdr + _right_hdr, key=lambda b: b["bbox"][1])
+                _body = sorted(
+                    _left_body + _right_body,
+                    key=lambda b: (round(b["bbox"][1]), 0 if b["bbox"][0] < split_x else 1),
+                )
+                blocks = _hdr_merged + _body
+                right_col_start_idx = 0  # reset spacing at first block (header already sorted)
+            else:
+                blocks = left_blks + right_blks
+                right_col_start_idx = len(left_blks)
 
         # Merged-header-band detection: when NO right-column text block exists
         # in the top 22 % of the page the template uses a full-width header
@@ -2683,12 +2748,28 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                 else:
                     # Not promotable — buffer as pre-role meta so it is not lost.
                     pre_header_meta.append(pm)
+            elif s == "paragraph" and has_pipe_role_headers and _peek(idx + 1) == "role_meta":
+                # Company/employer name preceding a date line in a section that
+                # uses pipe-format role_headers.  Buffer so it becomes a meta line
+                # for the upcoming role (e.g. "Company Name, Inc., New York, NY"
+                # immediately before "Jan 2015 - present" in sample 5).
+                pre_header_meta.append(pm)
             elif s == "role_meta":
                 # Pattern B: date appears before the title — buffer it.
                 # Buffer even when pipe-format role headers exist elsewhere in
                 # this section (mixed-format sections need date signal for the
                 # non-pipe roles that precede the pipe-format ones).
                 pre_header_meta.append(pm)
+            elif s == "bullet" and pre_header_meta and not has_pipe_role_headers:
+                # Pattern B continuation: date was buffered and the role title
+                # carries bullet styling (common when a PDF template uses the
+                # same bullet list style for the title line as for the bullets
+                # below it).  Promote this bullet as the role header.
+                header = pm
+                meta.extend(pre_header_meta)
+                pre_header_meta.clear()
+                used_pattern_b = True
+                state = "header"
         elif state == "header":
             if s == "role_meta":
                 if used_pattern_b:
@@ -2866,6 +2947,13 @@ def _group_roles(body_paras: list[ParaModel]) -> list[RoleEntry]:
                     pm.semantic = "role_header"
                     header = pm
                     state = "header"
+                elif has_pipe_role_headers and _peek(idx + 1) == "role_meta":
+                    # Company/employer name appearing before the next role's date
+                    # line in a pipe-format section.  Flush the current role and
+                    # buffer the company name so it becomes meta for the next role.
+                    _flush()
+                    pre_header_meta.append(pm)
+                    state = "init"
                 elif len(bullets) >= 2:
                     # Established list (≥2 bullets): promote as continuation.
                     pm.semantic = "bullet"
@@ -3572,6 +3660,48 @@ def parse_pdf(pdf_bytes: bytes) -> ResumeDocument:
             if not right_secs and right_hdrs and left_secs:
                 _redistribute_parallel_body(right_hdrs, left_secs)
                 right_hdrs = []
+            # Reverse parallel-body: left_hdrs has orphan role_meta (date) lines
+            # that belong to the right-column experience section.  This occurs
+            # when the template places dates in the left column alongside role
+            # titles in the right column, and the EXPERIENCE heading is only in
+            # the right column — so _group_sections(left_raw) never sees it and
+            # the dates fall into left_hdrs instead of experience body_paras.
+            #
+            # Guard 1 (primary): the left column must have NO experience section
+            # of its own.  If it does, the columns are independent and moving
+            # dates across would corrupt both sections.
+            #
+            # Guard 2 (y-overlap): orphan dates must start at or after the right
+            # EXPERIENCE heading y — dates that precede the heading belong to
+            # another section (e.g. education dates at the top of the left column).
+            if not any(s.semantic_type == "experience" for s in left_secs):
+                _exp_sec_r = next(
+                    (s for s in right_secs if s.semantic_type == "experience"), None
+                )
+                if _exp_sec_r is not None:
+                    def _para_y(pm: "ParaModel") -> float:
+                        pp = pm.paragraph_profile
+                        return pp.y_top_pt if pp and pp.y_top_pt else 0.0
+                    _exp_hdr_y = _para_y(_exp_sec_r.heading)
+                    _orphan_dates = [
+                        hp for hp in left_hdrs
+                        if hp.semantic == "role_meta" and _para_y(hp) >= _exp_hdr_y - 20.0
+                    ]
+                    if _orphan_dates:
+                        combined = list(_exp_sec_r.body_paras) + _orphan_dates
+                        combined.sort(key=lambda pm: (
+                            _para_y(pm),
+                            0 if pm.paragraph_profile and pm.paragraph_profile.column_id == "left" else 1,
+                        ))
+                        _exp_sec_r.body_paras = combined
+                        _finalise(_exp_sec_r)
+                        # All experience content is now in roles; clear body_paras so
+                        # the renderer does not double-render preamble filler alongside
+                        # role content (preamble paras that fall before the first date
+                        # are not consumed by _group_roles and would otherwise leak).
+                        _exp_sec_r.body_paras = []
+                        _orphan_date_ids = {id(hp) for hp in _orphan_dates}
+                        left_hdrs = [hp for hp in left_hdrs if id(hp) not in _orphan_date_ids]
             header_paras = above_hdrs + left_hdrs + right_hdrs
             sections     = above_secs + left_secs + right_secs
     else:
