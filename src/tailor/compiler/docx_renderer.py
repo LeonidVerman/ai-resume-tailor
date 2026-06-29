@@ -856,21 +856,24 @@ def _set_para_text(p_elem, text: str) -> None:
     #    width while surrounding chars are condensed → visible width mismatch.
     #    Fix: copy w:w from the immediately preceding content run.
     #
-    # Values ≥ 80 twips are intentional letter-spacing (decorative headings)
-    # and must be preserved.
-    _MICRO_KERN_LIMIT = 80  # twips; larger = intentional letter-spacing
+    # Values > 80 twips are intentional letter-spacing (decorative headings)
+    # and must be preserved.  80 itself is a PDF-export artifact boundary value
+    # (seen on spacer runs in S35 "Other skills" heading) and must be stripped.
+    _MICRO_KERN_LIMIT = 81  # twips; strip abs(spacing) < 81 (i.e. ≤ 80)
     # w:w (character width scaling) cleanup thresholds.
     # PDF-to-DOCX converters produce two classes of artifact w:w values:
-    #   > 150%: FontAwesome icon/bullet placeholder runs (e.g. w=270) that end
+    #   ≥ 150%: FontAwesome icon/bullet placeholder runs (e.g. w=270) that end
     #           up carrying the first 1-2 chars of redistributed content, making
     #           those chars render 2.7x wide ("De signed", "Mento red").
+    #           150 itself is a PDF-export artifact boundary value (S35 spacer runs)
+    #           that causes single chars to render 150% wide ("O ther skills").
     #   < 95%:  Single mega-runs covering the whole original line (e.g. w=90)
     #           where only the first proportional slice inherits the value; the
     #           remaining slices get w=None (100%), creating a mismatch at the
     #           first run boundary ("Prot ocols").
-    # Values in [95, 150] are treated as intentional typography and preserved.
+    # Values in [95, 149] are treated as intentional typography and preserved.
     _W_SCALE_MIN = 95
-    _W_SCALE_MAX = 150
+    _W_SCALE_MAX = 149
     _prev_content_rpr = None  # rPr of last non-spacer run, for w:w propagation
     for _ki, _kr in enumerate(all_runs):
         if _ki in ws_text or _ki in vml_indices:
