@@ -6,15 +6,15 @@
 :: then run cross-pipeline text equivalence comparison.
 ::
 :: Usage (from repo root):
-::   tests\test_rendering.cmd                          :: render + grade + compare all matched samples
-::   tests\test_rendering.cmd 1                        :: render + grade + compare sample with numeric prefix 1
-::   tests\test_rendering.cmd 2 3 4 14 25              :: render + grade + compare specific samples
-::   tests\test_rendering.cmd 1-Leonid                 :: render + grade + compare sample matching filename fragment
-::   tests\test_rendering.cmd 35 --timeline-row-table-v2  :: render sample 35 with experimental v2 timeline table
+::   tests\test_rendering.cmd                              :: render + grade + compare all matched samples
+::   tests\test_rendering.cmd 1                            :: render + grade + compare sample with numeric prefix 1
+::   tests\test_rendering.cmd 2 3 4 14 25                  :: render + grade + compare specific samples
+::   tests\test_rendering.cmd 1-Leonid                     :: render + grade + compare sample matching filename fragment
+::   tests\test_rendering.cmd 35 --timeline-row-table-v2   :: render sample 35 with experimental v2 timeline table
 ::
 :: Multiple numeric prefixes are accepted and passed to render_samples.py.
 :: --timeline-row-table-v2 is consumed by render_samples.py only and is not
-:: forwarded to grade_layout.py or compare_pipelines.py.
+:: forwarded to grade_layout.py or compare_pipelines.py (they don't accept it).
 :: To grade without re-rendering, use grade_layout.cmd directly.
 ::
 :: Flags --docx-only, --pdf-only, --no-render suppress the cross-pipeline comparison.
@@ -33,13 +33,14 @@ if not exist "%RENDER_SCRIPT%" (
 
 cd /d "%REPO_ROOT%"
 
-:: Split args: render_samples.py gets all args; grade/compare get everything
-:: except --timeline-row-table-v2 (which they don't recognise).
+rem Split args: render_samples.py gets all args; grade/compare get everything
+rem except --timeline-row-table-v2 (which grade_layout and compare_pipelines
+rem do not recognise — passing it would abort those scripts with argparse error).
 set "GRADER_ARGS="
 set "SKIP_COMPARE=0"
 for %%A in (%*) do (
     if /I "%%~A"=="--timeline-row-table-v2" (
-        :: consumed by render_samples.py only — do not forward
+        rem consumed by render_samples.py only — not forwarded
     ) else (
         set "GRADER_ARGS=!GRADER_ARGS! %%A"
     )
@@ -61,18 +62,18 @@ echo ============================================================
 echo   grade_layout -- grading rendered artefacts
 echo ============================================================
 set PYTHONPATH=%REPO_ROOT%\src
-if "%GRADER_ARGS%"=="" (
+if "!GRADER_ARGS!"=="" (
     python tests\grade_layout.py --no-render
 ) else (
-    python tests\grade_layout.py --no-render%GRADER_ARGS%
+    python tests\grade_layout.py --no-render!GRADER_ARGS!
 )
 
 if "%SKIP_COMPARE%"=="0" (
     echo.
-    if "%GRADER_ARGS%"=="" (
+    if "!GRADER_ARGS!"=="" (
         python "%COMPARE_SCRIPT%"
     ) else (
-        python "%COMPARE_SCRIPT%"%GRADER_ARGS%
+        python "%COMPARE_SCRIPT%"!GRADER_ARGS!
     )
 )
 
