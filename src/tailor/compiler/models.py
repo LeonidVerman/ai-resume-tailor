@@ -11,6 +11,7 @@ programmatically.
 """
 from __future__ import annotations
 
+import base64
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any
@@ -21,8 +22,8 @@ class PageImageBlock:
     """A raster image extracted from a PDF page, with page-relative position.
 
     All coordinates are in PDF points (72 pt per inch), measured from the
-    page top-left corner (y increases downward).  Not serialised to JSON —
-    runtime-only, like ``ParagraphProfile.inline_image_bytes``.
+    page top-left corner (y increases downward).  Serialised to JSON via
+    ``to_dict`` / ``from_dict`` (image_bytes stored as base64).
     """
 
     image_bytes: bytes   # raw PNG bytes
@@ -30,9 +31,46 @@ class PageImageBlock:
     y_pt: float          # top edge from page top
     width_pt: float      # display width on page (points)
     height_pt: float     # display height on page (points)
-    # 'profile_photo' | 'header_footer_decor' | 'body_decor'
+    # 'profile_photo' | 'header_footer_decor' | 'body_decor' | 'full_page_bg' | 'sidebar_bg' | 'header_band' | 'footer_band'
     category: str = "body_decor"
     page_index: int = 0
+    # Section-anchored divider fields (h_rule only).  Set by parse_pdf() when the
+    # rule is clearly associated with a section heading below it (gap ≤ 80 pt).
+    # anchor_next_section_id matches ResumeSection.section_id; gap_to_anchor_pt is
+    # the PDF y distance from the rule top to the section heading top.
+    anchor_next_section_id: str | None = None
+    gap_to_anchor_pt: float | None = None
+
+    def to_dict(self) -> dict:
+        d: dict = {
+            "image_bytes_b64": base64.b64encode(self.image_bytes).decode("ascii"),
+            "x_pt": self.x_pt,
+            "y_pt": self.y_pt,
+            "width_pt": self.width_pt,
+            "height_pt": self.height_pt,
+            "category": self.category,
+            "page_index": self.page_index,
+        }
+        if self.anchor_next_section_id is not None:
+            d["anchor_next_section_id"] = self.anchor_next_section_id
+        if self.gap_to_anchor_pt is not None:
+            d["gap_to_anchor_pt"] = self.gap_to_anchor_pt
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "PageImageBlock":
+        _gap = d.get("gap_to_anchor_pt")
+        return cls(
+            image_bytes=base64.b64decode(d["image_bytes_b64"]),
+            x_pt=float(d["x_pt"]),
+            y_pt=float(d["y_pt"]),
+            width_pt=float(d["width_pt"]),
+            height_pt=float(d["height_pt"]),
+            category=d.get("category", "body_decor"),
+            page_index=int(d.get("page_index", 0)),
+            anchor_next_section_id=d.get("anchor_next_section_id"),
+            gap_to_anchor_pt=float(_gap) if _gap is not None else None,
+        )
 
 
 @dataclass
@@ -528,7 +566,8 @@ class ResumeDocument:
     # template and rendered as a dark band at the bottom.  Empty for most templates.
     footer_paras: list[ParaModel] = field(default_factory=list)
     # Raster images extracted from the source PDF (profile photos, decorative
-    # headers/footers, etc.).  Runtime-only — not serialised to JSON.
+    # headers/footers, etc.).  Serialised via PageImageBlock.to_dict/from_dict
+    # (image_bytes stored as base64) so backgrounds survive DB round-trips.
     page_images: list["PageImageBlock"] = field(default_factory=list)
     # Diagnostics populated by parse_pdf() — runtime-only, not serialised.
     # Keys: raster_images_raw, vector_images_raw, page_images_final, image_categories,
@@ -559,6 +598,8 @@ class ResumeDocument:
             d["table_column_layout_fixed"] = True
         if self.layout_blocks is not None:
             d["layout_blocks"] = [b.to_dict() for b in self.layout_blocks]
+        if self.page_images:
+            d["page_images"] = [img.to_dict() for img in self.page_images]
         return d
 
     @classmethod
@@ -593,6 +634,10 @@ class ResumeDocument:
                 for b in lb_data
             ]
 
+        page_images = [
+            PageImageBlock.from_dict(p) for p in d.get("page_images", [])
+        ]
+
         return cls(
             header_paras=header_paras,
             sections=sections,
@@ -602,6 +647,7 @@ class ResumeDocument:
             label_column_fixed=bool(d.get("label_column_fixed", False)),
             table_column_layout_fixed=bool(d.get("table_column_layout_fixed", False)),
             layout_blocks=layout_blocks,
+            page_images=page_images,
         )
 
 
