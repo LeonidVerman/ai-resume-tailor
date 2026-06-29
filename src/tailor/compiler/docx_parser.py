@@ -827,6 +827,45 @@ _COMPOUND_BODY_OPENER_RE = re.compile(
 )
 
 
+def _make_single_run_style(pm: ParaModel) -> ParaStyle:
+    """Return a copy of pm.style with the xml_proto reduced to one content run.
+
+    When a compound paragraph is split into virtual title/meta/body ParaModels,
+    all three previously shared the same multi-run xml_proto.  _set_para_text
+    then distributed short text proportionally across those runs, producing
+    character-level fragmentation ("CardinalCh ain", "K otlin").  A single-run
+    proto forces _set_para_text into its fast path (len(content_indices)==1)
+    so the full text lands in one run intact.
+    """
+    new_style = deepcopy(pm.style)
+    p_elem = new_style.xml_proto
+    if p_elem is None:
+        return new_style
+
+    # Capture the first content run's rPr for font/bold/size preservation.
+    first_rpr = None
+    for _r in p_elem.findall(f"{{{_W}}}r"):
+        if any((t.text or "").strip() for t in _r.findall(f"{{{_W}}}t")):
+            _rpr = _r.find(f"{{{_W}}}rPr")
+            if _rpr is not None:
+                first_rpr = deepcopy(_rpr)
+            break
+
+    # Remove all run-bearing children; keep structural elements (w:pPr, bookmarks…).
+    for _child in list(p_elem):
+        if _child.tag in (f"{{{_W}}}r", f"{{{_W}}}hyperlink"):
+            p_elem.remove(_child)
+
+    # Append a single w:r with the original rPr and a preserve-space empty w:t.
+    from lxml import etree as _et
+    new_r = _et.SubElement(p_elem, f"{{{_W}}}r")
+    if first_rpr is not None:
+        new_r.insert(0, first_rpr)
+    _t = _et.SubElement(new_r, f"{{{_W}}}t")
+    _t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+    return new_style
+
+
 def _try_split_compound_role(pm: ParaModel) -> list[ParaModel] | None:
     """Split a compound paragraph into [role_header, role_meta, paragraph].
 
@@ -862,15 +901,20 @@ def _try_split_compound_role(pm: ParaModel) -> list[ParaModel] | None:
     ):
         return None
 
-    title_pm = ParaModel(text=title, style=pm.style, semantic="role_header")
-    meta_pm = ParaModel(text=meta, style=pm.style, semantic="role_meta")
-    body_pm = ParaModel(text=body_text, style=pm.style, semantic="paragraph")
+    title_pm = ParaModel(text=title, style=_make_single_run_style(pm), semantic="role_header")
+    meta_pm = ParaModel(text=meta, style=_make_single_run_style(pm), semantic="role_meta")
+    body_pm = ParaModel(text=body_text, style=_make_single_run_style(pm), semantic="paragraph")
+
+    parts = [title_pm, meta_pm, body_pm]
+    # Tag original compound para so parse_docx can expand it in body_items after
+    # stable IDs are assigned (virtual parts need IDs before they appear in layout_blocks).
+    pm._compound_parts = parts
 
     _logger.debug(
         "COMPOUND_ROLE_SPLIT: %r → title=%r meta=%r body=%r",
         text[:80], title, meta, body_text[:40],
     )
-    return [title_pm, meta_pm, body_pm]
+    return parts
 
 
 def _decompose_compound_role_paras(body_paras: list[ParaModel]) -> None:
@@ -1238,6 +1282,8 @@ def parse_docx(path: str) -> ResumeDocument:
     ValueError
         If the file cannot be opened or parsed.
     """
+    from tailor.docx.artifact_sanitizer import sanitize_docx_artifacts
+    sanitize_docx_artifacts(path)  # idempotent; no-op when no artifacts found
     doc = Document(path)
     style_map = _build_style_map(doc)
     layout = _extract_layout(doc)
@@ -1444,6 +1490,34 @@ def parse_docx(path: str) -> ResumeDocument:
     )
     from tailor.compiler.models import assign_stable_ids
     assign_stable_ids(doc)
+
+    # Build para_id → col_width_twips for newspaper-column docs.
+    # _apply_multicolumn_newspaper_fix tags each ParaModel with _col_width_twips
+    # (in twips) for paragraphs in multi-column sections.  After stable IDs are
+    # assigned we can key the mapping by para_id for use by the summary-anchor
+    # geometry guard in _find_summary_anchors().
+    if _table_col_fixed:
+        _anchor_col_widths: dict[str, int] = {}
+        for _apm in doc.all_paras:
+            _aw = getattr(_apm, "_col_width_twips", None)
+            if _aw is not None and _apm.para_id:
+                _anchor_col_widths[_apm.para_id] = _aw
+        if _anchor_col_widths:
+            doc._newspaper_col_widths = _anchor_col_widths  # type: ignore[attr-defined]
+
+    # Expand compound-split orphans in body_items so their virtual parts (which
+    # now have stable para_ids after assign_stable_ids) each get their own
+    # LayoutParagraphBlock.  _try_split_compound_role tags the original compound
+    # para with ._compound_parts = [title_pm, meta_pm, body_pm].  Without this
+    # expansion the original compound para has no para_id and becomes lb_orphan_N
+    # in layout_blocks, while the virtual parts are never rendered.
+    _expanded_body: list = []
+    for _bi in body_items:
+        if not isinstance(_bi, TableBlock) and hasattr(_bi, "_compound_parts"):
+            _expanded_body.extend(_bi._compound_parts)
+        else:
+            _expanded_body.append(_bi)
+    body_items[:] = _expanded_body
 
     # Build serializable layout tree (Option B: XML prototypes as strings).
     # Iterates body_items (original physical document order, never reordered)
@@ -2129,6 +2203,139 @@ def _count_experience_roles(paras: list[ParaModel]) -> int:
     return sum(1 for p in paras if p.semantic == "role_header")
 
 
+# ---------------------------------------------------------------------------
+# Narrow date-column detection and injection helpers
+# ---------------------------------------------------------------------------
+
+_NARROW_DATE_EMPLOYMENT_TYPES: frozenset[str] = frozenset({
+    "full-time", "fulltime", "full time",
+    "part-time", "parttime", "part time",
+    "contract", "freelance", "intern", "internship",
+    "remote", "hybrid", "on-site", "onsite",
+    "permanent", "temporary", "temp", "volunteer",
+    "self-employed", "consulting",
+})
+
+_NARROW_DATE_MONTHS_LOWER: frozenset[str] = frozenset({
+    "january", "february", "march", "april", "may", "june",
+    "july", "august", "september", "october", "november", "december",
+    "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
+})
+
+_NARROW_DATE_YEAR_RE: re.Pattern[str] = re.compile(r"\b(19|20)\d{2}\b")
+
+
+def _is_date_like_narrow_col(text: str) -> bool:
+    """Return True if *text* is date-column content (date range or employment type)."""
+    t = text.strip().lower()
+    if not t:
+        return True
+    if len(t) > 55:
+        return False
+    if any(m in t for m in _NARROW_DATE_MONTHS_LOWER):
+        return True
+    if _NARROW_DATE_YEAR_RE.search(t):
+        return True
+    if t in {"current", "present", "now", "ongoing", "today"}:
+        return True
+    if any(et in t for et in _NARROW_DATE_EMPLOYMENT_TYPES):
+        return True
+    if re.match(r"^\d{4}$", t):
+        return True
+    if re.match(r"^[\?\-–—\s]+$", t):
+        return True
+    return False
+
+
+def _is_employment_type_narrow_col(text: str) -> bool:
+    t = text.strip().lower()
+    return any(et in t for et in _NARROW_DATE_EMPLOYMENT_TYPES)
+
+
+def _is_narrow_date_only_left_stream(left_stream: list[ParaModel]) -> bool:
+    """Return True when left_stream is a date-only sidebar column.
+
+    Criteria: at least one narrow-col para (< 2000 twips), no section headings,
+    at least one non-empty para, and every non-empty para is date-like.
+    """
+    narrow = [
+        pm for pm in left_stream
+        if getattr(pm, "_col_width_twips", None) is not None
+        and pm._col_width_twips < 2000  # type: ignore[attr-defined]
+    ]
+    if not narrow:
+        return False
+    if any(pm.semantic == "section_heading" for pm in left_stream):
+        return False
+    non_empty = [pm for pm in narrow if pm.text.strip()]
+    if not non_empty:
+        return False
+    return all(_is_date_like_narrow_col(pm.text) for pm in non_empty)
+
+
+def _build_narrow_date_groups(
+    left_stream: list[ParaModel],
+) -> list[list[ParaModel]]:
+    """Extract ordered date groups from a narrow date-only left_stream.
+
+    Paragraphs are first clustered by empty-para gaps, then each cluster is
+    split at employment-type lines (Full-time / Part-time / Contract / ...).
+    Each returned sub-list maps to one experience role's date range.
+    """
+    narrow = [
+        pm for pm in left_stream
+        if getattr(pm, "_col_width_twips", None) is not None
+        and pm._col_width_twips < 2000  # type: ignore[attr-defined]
+    ]
+    raw_groups: list[list[ParaModel]] = []
+    cur: list[ParaModel] = []
+    for pm in narrow:
+        if pm.text.strip():
+            cur.append(pm)
+        else:
+            if cur:
+                raw_groups.append(cur)
+                cur = []
+    if cur:
+        raw_groups.append(cur)
+
+    result: list[list[ParaModel]] = []
+    for grp in raw_groups:
+        sub: list[ParaModel] = []
+        for pm in grp:
+            sub.append(pm)
+            if _is_employment_type_narrow_col(pm.text):
+                result.append(sub)
+                sub = []
+        if sub:
+            result.append(sub)
+    return result
+
+
+def _inject_narrow_date_groups(
+    sections: list[ResumeSection],
+    date_groups: list[list[ParaModel]],
+) -> None:
+    """Prepend narrow date-column groups to experience role.meta_lines (N:N pairing).
+
+    Pairs date_groups[i] with the i-th experience role in document order.
+    Unmatched date groups (more groups than roles) are discarded with a debug log.
+    """
+    exp_roles: list[RoleEntry] = []
+    for sec in sections:
+        if sec.semantic_type == "experience":
+            exp_roles.extend(sec.roles)
+    n = min(len(date_groups), len(exp_roles))
+    for i in range(n):
+        exp_roles[i].meta_lines = date_groups[i] + exp_roles[i].meta_lines
+    if len(date_groups) > len(exp_roles):
+        _logger.debug(
+            "narrow_date_col: %d unmatched date group(s) discarded (roles=%d)",
+            len(date_groups) - len(exp_roles),
+            len(exp_roles),
+        )
+
+
 def _apply_multicolumn_newspaper_fix(
     all_paras: list[ParaModel],
     body,
@@ -2284,9 +2491,35 @@ def _apply_multicolumn_newspaper_fix(
 
         per_sec_col.setdefault((sec_idx, col), []).append(pm)
 
-    # Build left_stream and right_stream across all body Word sections
+    # Tag each paragraph with its effective column width so parse_docx() can
+    # build a para_id → col_width_twips map after stable IDs are assigned.
+    # Single-column sections have empty col_widths, so those paragraphs are
+    # intentionally left untagged (unrestricted for summary anchor purposes).
+    for (_sci, _ci), _col_paras in per_sec_col.items():
+        _si_widths = section_infos[_sci]["col_widths"]
+        if _ci < len(_si_widths):
+            _cw = _si_widths[_ci]
+            for _cpm in _col_paras:
+                _cpm._col_width_twips = _cw  # type: ignore[attr-defined]
+
+    # Build left_stream, right_stream, and tail_stream across all body Word sections.
+    # tail_stream holds single-column sections that trail the last multi-column section
+    # (e.g. a full-width Projects section after a two-column sidebar layout).  Merging
+    # them into left_stream would place their section headings before right-column
+    # headings (Experience, Skills), producing wrong section order.
     left_stream: list[ParaModel] = []
     right_stream: list[ParaModel] = []
+    tail_stream: list[ParaModel] = []
+
+    # Last multi-column section index (excluding header).  Single-column sections
+    # beyond this point are collected in tail_stream, not merged into left_stream.
+    last_multicol_sec_idx = max(
+        (
+            i for i, si in enumerate(section_infos)
+            if si["end_idx"] > first_sec_end and si["col_count"] >= 2
+        ),
+        default=-1,
+    )
 
     for sec_idx, si in enumerate(section_infos):
         if si["end_idx"] <= first_sec_end:
@@ -2299,9 +2532,17 @@ def _apply_multicolumn_newspaper_fix(
             return per_sec_col.get((sec_idx, c), [])
 
         if col_count < 2:
-            # Single-column section: non-split goes left; tab-split right side goes right
-            left_stream.extend(_col(0))
-            right_stream.extend(_col(1))  # only populated by tab splits
+            # Single-column section trailing the last multi-column section: these
+            # paragraphs follow the column layout visually (full-width footer content).
+            # Append to tail_stream so they land after left+right in the output.
+            if sec_idx > last_multicol_sec_idx and last_multicol_sec_idx >= 0:
+                tail_stream.extend(_col(0))
+                tail_stream.extend(_col(1))  # only populated by tab splits
+            else:
+                # Single-column section before or between multi-column sections:
+                # non-split goes left; tab-split right side goes right.
+                left_stream.extend(_col(0))
+                right_stream.extend(_col(1))  # only populated by tab splits
         elif col_count == 2:
             left_stream.extend(_col(0))
             right_stream.extend(_col(1))
@@ -2317,11 +2558,13 @@ def _apply_multicolumn_newspaper_fix(
             for c in range(1, col_count):
                 right_stream.extend(_col(c))
 
-    # Build candidate: header (original order) + left + right
+    # Build candidate: header (original order) + left + right + tail.
+    # tail_stream is empty for most documents; non-empty only when a single-column
+    # section trails multi-column sections (e.g. sample 35 Projects section).
     header_list = all_paras[:header_end_para_idx]
-    candidate = header_list + left_stream + right_stream
+    candidate = header_list + left_stream + right_stream + tail_stream
 
-    if not left_stream and not right_stream:
+    if not left_stream and not right_stream and not tail_stream:
         return all_paras, False, {}
 
     # Quality validation: candidate must not lose section headings or experience roles
@@ -2343,7 +2586,11 @@ def _apply_multicolumn_newspaper_fix(
         0: [p.text.strip() for p in left_stream if p.semantic == "section_heading"],
         1: [p.text.strip() for p in right_stream if p.semantic == "section_heading"],
     }
+    if tail_stream:
+        headings_per_col[2] = [p.text.strip() for p in tail_stream if p.semantic == "section_heading"]
     paras_per_col = {0: len(left_stream), 1: len(right_stream)}
+    if tail_stream:
+        paras_per_col[2] = len(tail_stream)
 
     return candidate, True, {
         "aborted": False,
