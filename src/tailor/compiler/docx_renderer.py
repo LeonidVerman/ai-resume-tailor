@@ -1550,6 +1550,120 @@ def _detect_body_two_col(body_paras) -> "list[tuple] | None":
     return rows if rows else None
 
 
+def _detect_body_n_col(body_paras, n: int) -> "list[tuple] | None":
+    """Generalisation of _detect_body_two_col for exactly N distinct x-positions.
+
+    Returns a list of N-tuples (one per y-bucket) or None if the layout
+    does not form a clean N-column grid.
+    """
+    if len(body_paras) < 2:
+        return None
+    indents = []
+    for pm in body_paras:
+        pp = pm.paragraph_profile
+        if pp is None or pp.indent_left_pt is None:
+            return None
+        indents.append(pp.indent_left_pt)
+    unique_indents = sorted({round(x) for x in indents})
+    if len(unique_indents) != n:
+        return None
+    by_y: "dict" = {}
+    for pm in body_paras:
+        pp = pm.paragraph_profile
+        if pp.y_top_pt is None:
+            return None
+        y = round(pp.y_top_pt, 1)
+        ind = round(pp.indent_left_pt)
+        slot = by_y.setdefault(y, {})
+        if ind in slot:
+            return None  # duplicate: not a clean grid
+        slot[ind] = pm
+    rows = []
+    for y in sorted(by_y):
+        row = by_y[y]
+        rows.append(tuple(row.get(ind) for ind in unique_indents))
+    return rows if rows else None
+
+
+def _build_contact_row_table(group_paras, text_w_twips: int, doc_part=None):
+    """Render same-y paragraphs as a borderless N-col table row.
+
+    Used to restore horizontal contact bars (email | phone | LinkedIn) and
+    N-column grids that the PDF parser represented as N separate ParaModel
+    objects with distinct indent_left_pt values but the same y_top_pt.
+
+    Returns an lxml element or None when the group does not form a clean
+    N-col grid (fewer than 2 distinct x-positions or multiple paras at the
+    same x-position).
+    """
+    from lxml import etree
+    from tailor.compiler.para_builder import build_para_element
+
+    if len(group_paras) < 2:
+        return None
+    xs = []
+    for pm in group_paras:
+        pp = pm.paragraph_profile
+        if pp is None or pp.indent_left_pt is None:
+            return None
+        xs.append(round(pp.indent_left_pt, 1))
+    unique_xs = sorted(set(xs))
+    if len(unique_xs) < 2:
+        return None
+    by_x: "dict" = {}
+    for pm, x in zip(group_paras, xs):
+        if x in by_x:
+            return None  # two paras at the same x — not a single-row grid
+        by_x[x] = pm
+
+    # Column widths derived from x-position gaps; last column fills remaining width.
+    col_ws = []
+    for i, bx in enumerate(unique_xs[:-1]):
+        col_ws.append(max(200, int((unique_xs[i + 1] - bx) * 20)))
+    col_ws.append(max(200, text_w_twips - int(unique_xs[0] * 20) - sum(col_ws)))
+
+    tbl = etree.Element(f"{{{_W}}}tbl")
+    tblPr = etree.SubElement(tbl, f"{{{_W}}}tblPr")
+    tblW_el = etree.SubElement(tblPr, f"{{{_W}}}tblW")
+    tblW_el.set(f"{{{_W}}}w", str(int(unique_xs[0] * 20) + sum(col_ws)))
+    tblW_el.set(f"{{{_W}}}type", "dxa")
+    if unique_xs[0] > 0:
+        tblInd = etree.SubElement(tblPr, f"{{{_W}}}tblInd")
+        tblInd.set(f"{{{_W}}}w", str(int(unique_xs[0] * 20)))
+        tblInd.set(f"{{{_W}}}type", "dxa")
+    tblLayout = etree.SubElement(tblPr, f"{{{_W}}}tblLayout")
+    tblLayout.set(f"{{{_W}}}type", "fixed")
+    tblBorders = etree.SubElement(tblPr, f"{{{_W}}}tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        brd = etree.SubElement(tblBorders, f"{{{_W}}}{side}")
+        brd.set(f"{{{_W}}}val", "none")
+    tblCellMar = etree.SubElement(tblPr, f"{{{_W}}}tblCellMar")
+    for side in ("top", "left", "bottom", "right"):
+        m_el = etree.SubElement(tblCellMar, f"{{{_W}}}{side}")
+        m_el.set(f"{{{_W}}}w", "0")
+        m_el.set(f"{{{_W}}}type", "dxa")
+
+    tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+    for i, bx in enumerate(unique_xs):
+        pm = by_x[bx]
+        tc = etree.SubElement(tr, f"{{{_W}}}tc")
+        tcPr = etree.SubElement(tc, f"{{{_W}}}tcPr")
+        tcW = etree.SubElement(tcPr, f"{{{_W}}}tcW")
+        tcW.set(f"{{{_W}}}w", str(col_ws[i]))
+        tcW.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+        p_e = build_para_element(pm, doc_part)
+        # Shift para indent to cell origin (subtract column x-offset)
+        _pPr = p_e.find(f"{{{_W}}}pPr")
+        if _pPr is not None:
+            _ind = _pPr.find(f"{{{_W}}}ind")
+            if _ind is not None:
+                _cur = int(_ind.get(f"{{{_W}}}left", "0"))
+                _ind.set(f"{{{_W}}}left", str(max(0, _cur - int(bx * 20))))
+        tc.append(p_e)
+    return tbl
+
+
 def _detect_same_level_section_groups(sections) -> "list[list[int]]":
     """Return groups (lists of section indices) where headings share the same y_top (±5 pt).
 
@@ -2023,15 +2137,79 @@ def _render_pdf_single_col_with_groups(
                             etree.SubElement(tc, f"{{{_W}}}p")
                 elems.append(tbl)
             else:
-                if _rule_img:
-                    _apply_h_rule_top_border(heading_elem, _rule_img)
-                for pm in sec.body_paras:
-                    elems.append(build_para_element(pm, doc_part))
+                # Check for 3-column grid (e.g. 3-col skills/contact sub-section)
+                three_col_rows = _detect_body_n_col(sec.body_paras, 3)
+                if three_col_rows:
+                    if _rule_img:
+                        _apply_h_rule_top_border(heading_elem, _rule_img)
+                    _3bxs = sorted({round(pm.paragraph_profile.indent_left_pt)
+                                    for row in three_col_rows
+                                    for pm in row if pm is not None})
+                    _3cw0 = max(100, int((_3bxs[1] - _3bxs[0]) * 20))
+                    _3cw1 = max(100, int((_3bxs[2] - _3bxs[1]) * 20))
+                    _3cw2 = max(100, text_area_w_twips - _3cw0 - _3cw1)
+                    _3tbl = etree.Element(f"{{{_W}}}tbl")
+                    _3tblPr = etree.SubElement(_3tbl, f"{{{_W}}}tblPr")
+                    _3tblW = etree.SubElement(_3tblPr, f"{{{_W}}}tblW")
+                    _3tblW.set(f"{{{_W}}}w", str(_3cw0 + _3cw1 + _3cw2))
+                    _3tblW.set(f"{{{_W}}}type", "dxa")
+                    _3tblLayout = etree.SubElement(_3tblPr, f"{{{_W}}}tblLayout")
+                    _3tblLayout.set(f"{{{_W}}}type", "fixed")
+                    _3tblBorders = etree.SubElement(_3tblPr, f"{{{_W}}}tblBorders")
+                    for _s3 in ("top", "left", "bottom", "right", "insideH", "insideV"):
+                        _b3 = etree.SubElement(_3tblBorders, f"{{{_W}}}{_s3}")
+                        _b3.set(f"{{{_W}}}val", "none")
+                    _3tblCellMar = etree.SubElement(_3tblPr, f"{{{_W}}}tblCellMar")
+                    for _s3 in ("top", "left", "bottom", "right"):
+                        _m3 = etree.SubElement(_3tblCellMar, f"{{{_W}}}{_s3}")
+                        _m3.set(f"{{{_W}}}w", "0")
+                        _m3.set(f"{{{_W}}}type", "dxa")
+                    _3col_ws = [_3cw0, _3cw1, _3cw2]
+                    for _3row in three_col_rows:
+                        _3tr = etree.SubElement(_3tbl, f"{{{_W}}}tr")
+                        for _3ci, _3pm in enumerate(_3row):
+                            _3tc = etree.SubElement(_3tr, f"{{{_W}}}tc")
+                            _3tcPr = etree.SubElement(_3tc, f"{{{_W}}}tcPr")
+                            _3tcW = etree.SubElement(_3tcPr, f"{{{_W}}}tcW")
+                            _3tcW.set(f"{{{_W}}}w", str(_3col_ws[_3ci]))
+                            _3tcW.set(f"{{{_W}}}type", "dxa")
+                            etree.SubElement(_3tcPr, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
+                            if _3pm is not None:
+                                _3pe = build_para_element(_3pm, doc_part)
+                                _shift_indent(_3pe, int(_3bxs[_3ci] * 20))
+                                _3tc.append(_3pe)
+                            else:
+                                etree.SubElement(_3tc, f"{{{_W}}}p")
+                    elems.append(_3tbl)
+                else:
+                    if _rule_img:
+                        _apply_h_rule_top_border(heading_elem, _rule_img)
+                    for pm in sec.body_paras:
+                        elems.append(build_para_element(pm, doc_part))
         return elems
 
-    # Header paragraphs first
-    for pm in doc.header_paras:
-        _add(build_para_element(pm, doc_part))
+    # Header paragraphs: group same-y items into multi-col table rows to restore
+    # horizontal contact bars (email | phone | LinkedIn) from the source PDF.
+    _hdr_y_buckets: "list" = []  # each entry: [y_val_or_None, [para_list]]
+    for _pm in doc.header_paras:
+        _pm_y = _pm.paragraph_profile.y_top_pt if _pm.paragraph_profile else None
+        if (
+            _pm_y is not None
+            and _hdr_y_buckets
+            and _hdr_y_buckets[-1][0] is not None
+            and abs(_pm_y - _hdr_y_buckets[-1][0]) <= 3.0
+        ):
+            _hdr_y_buckets[-1][1].append(_pm)
+        else:
+            _hdr_y_buckets.append([_pm_y, [_pm]])
+    for _hdr_y_val, _hdr_group in _hdr_y_buckets:
+        if len(_hdr_group) >= 2:
+            _hdr_tbl = _build_contact_row_table(_hdr_group, text_area_w_twips, doc_part)
+            if _hdr_tbl is not None:
+                _add(_hdr_tbl)
+                continue
+        for _pm in _hdr_group:
+            _add(build_para_element(_pm, doc_part))
 
     for i, sec in enumerate(doc.sections):
         if i not in grouped_idxs:
@@ -2575,11 +2753,33 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 _shd.set(f"{{{_W}}}val", "clear")
                 _shd.set(f"{{{_W}}}color", "auto")
                 _shd.set(f"{{{_W}}}fill", _eff_right_bg)
-            for _i, _pm in enumerate(r_paras):
-                _pe = build_para_element(_pm, doc_part=doc_part)
-                if _i == 0:
-                    _zero_cell_top_spacing(_pe)
-                _rtc.append(_pe)
+            # Group same-y right paras into multi-col sub-tables (e.g. phone | LinkedIn).
+            _rc_buckets: "list" = []
+            for _ii, _pm in enumerate(r_paras):
+                _pm_y = _pm.paragraph_profile.y_top_pt if _pm.paragraph_profile else None
+                if (
+                    _pm_y is not None
+                    and _rc_buckets
+                    and _rc_buckets[-1][0] is not None
+                    and abs(_pm_y - _rc_buckets[-1][0]) <= 3.0
+                ):
+                    _rc_buckets[-1][1].append(_pm)
+                else:
+                    _rc_buckets.append([_pm_y, [_pm]])
+            _rc_first_emitted = False
+            for _bk_y, _bk_group in _rc_buckets:
+                if len(_bk_group) >= 2:
+                    _bk_tbl = _build_contact_row_table(_bk_group, right_w, doc_part)
+                    if _bk_tbl is not None:
+                        _rtc.append(_bk_tbl)
+                        _rc_first_emitted = True
+                        continue
+                for _ii, _pm in enumerate(_bk_group):
+                    _pe = build_para_element(_pm, doc_part=doc_part)
+                    if not _rc_first_emitted:
+                        _zero_cell_top_spacing(_pe)
+                        _rc_first_emitted = True
+                    _rtc.append(_pe)
             if not r_paras:
                 etree.SubElement(_rtc, f"{{{_W}}}p")
             if _use_pad:
@@ -2771,17 +2971,60 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         if not left_paras:
             etree.SubElement(left_tc, f"{{{_W}}}p")
 
-        for pm in right_paras:
-            right_tc.append(build_para_element(pm, doc_part=doc_part))
+        # Group same-y right_paras into multi-col sub-tables (e.g. phone | LinkedIn
+        # both at the same y within the right cell) so they render side-by-side.
+        _rp_buckets: "list" = []  # each entry: [y_val_or_None, [para_list]]
+        for _rp in right_paras:
+            _rp_y = _rp.paragraph_profile.y_top_pt if _rp.paragraph_profile else None
+            if (
+                _rp_y is not None
+                and _rp_buckets
+                and _rp_buckets[-1][0] is not None
+                and abs(_rp_y - _rp_buckets[-1][0]) <= 3.0
+            ):
+                _rp_buckets[-1][1].append(_rp)
+            else:
+                _rp_buckets.append([_rp_y, [_rp]])
+        for _rp_y_val, _rp_group in _rp_buckets:
+            if len(_rp_group) >= 2:
+                _rp_tbl = _build_contact_row_table(_rp_group, right_w, doc_part)
+                if _rp_tbl is not None:
+                    right_tc.append(_rp_tbl)
+                    continue
+            for _rp in _rp_group:
+                right_tc.append(build_para_element(_rp, doc_part=doc_part))
         if not right_paras:
             etree.SubElement(right_tc, f"{{{_W}}}p")
 
     # When there is no dark header band, above_paras are plain full-width
     # paragraphs (e.g. contact info with no background) inserted before the table.
-    above_elems = (
-        [] if has_dark_hdr
-        else [build_para_element(pm, doc_part=doc_part) for pm in above_paras]
-    )
+    # Group same-y items into multi-col table rows to restore horizontal contact
+    # bars (email | phone | LinkedIn) that share the same y_top_pt.
+    if has_dark_hdr:
+        above_elems: "list" = []
+    else:
+        above_elems = []
+        _above_text_w = _get_text_area_width_twips(sectPr)
+        _abv_buckets: "list" = []  # each entry: [y_val_or_None, [para_list]]
+        for _apm in above_paras:
+            _apm_y = _apm.paragraph_profile.y_top_pt if _apm.paragraph_profile else None
+            if (
+                _apm_y is not None
+                and _abv_buckets
+                and _abv_buckets[-1][0] is not None
+                and abs(_apm_y - _abv_buckets[-1][0]) <= 3.0
+            ):
+                _abv_buckets[-1][1].append(_apm)
+            else:
+                _abv_buckets.append([_apm_y, [_apm]])
+        for _abv_y, _abv_group in _abv_buckets:
+            if len(_abv_group) >= 2:
+                _abv_tbl = _build_contact_row_table(_abv_group, _above_text_w, doc_part)
+                if _abv_tbl is not None:
+                    above_elems.append(_abv_tbl)
+                    continue
+            for _apm in _abv_group:
+                above_elems.append(build_para_element(_apm, doc_part=doc_part))
 
     # Footer band: render doc.footer_paras in a full-width dark band after the main
     # table.  footer_bg_color may be inferred from the header color when pixel-sampling
@@ -7641,7 +7884,41 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
         else {}
     )
 
+    # For PDF single-col plain rendering: emit header_paras with y-grouping so
+    # 3-col contact bars (email | phone | LinkedIn) appear side-by-side rather
+    # than stacked.  header_paras are the first len(doc.header_paras) items of
+    # all_paras; emit them now and skip them in the main loop below.
+    _plain_pdf_hdr_done: "frozenset[int]" = frozenset()
+    if doc.source_kind == "pdf" and not has_table_blocks and doc.header_paras:
+        _pdf_text_w = _get_text_area_width_twips(sectPr)
+        _hdr_buckets: "list" = []  # each entry: [y_val_or_None, [para_list]]
+        for _hp in doc.header_paras:
+            _hp_y = _hp.paragraph_profile.y_top_pt if _hp.paragraph_profile else None
+            if (
+                _hp_y is not None
+                and _hdr_buckets
+                and _hdr_buckets[-1][0] is not None
+                and abs(_hp_y - _hdr_buckets[-1][0]) <= 3.0
+            ):
+                _hdr_buckets[-1][1].append(_hp)
+            else:
+                _hdr_buckets.append([_hp_y, [_hp]])
+        for _hb_y, _hb_group in _hdr_buckets:
+            if len(_hb_group) >= 2:
+                _hb_tbl = _build_contact_row_table(_hb_group, _pdf_text_w, d.part)
+                if _hb_tbl is not None:
+                    if sectPr is not None:
+                        sectPr.addprevious(_hb_tbl)
+                    else:
+                        body.append(_hb_tbl)
+                    continue
+            for _hp in _hb_group:
+                _render_para(_hp, body, sectPr, preserve_section_break=id(_hp) in header_para_ids)
+        _plain_pdf_hdr_done = frozenset(id(pm) for pm in doc.header_paras)
+
     for item in render_items:
+        if id(item) in _plain_pdf_hdr_done:
+            continue  # already emitted in header y-grouping phase above
         if isinstance(item, TableBlock):
             _render_table_block(item, doc, body, sectPr)
         else:
