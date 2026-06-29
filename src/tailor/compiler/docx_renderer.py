@@ -213,31 +213,7 @@ def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
         "header_footer_decor": 5,
         "profile_photo": 10,     # foreground — on top of everything
     }
-
-    # h_rule/v_rule suppression: header-divider rules (rules positioned before the
-    # first body section heading) overlap with dynamically-reflowed header content in
-    # the DOCX.  The original PDF has tight gaps (e.g. 6 pt below the name) that
-    # disappear when the template reflows as single-column with standard line spacing.
-    # Only h/v rules whose y is >= the first section heading's y are safe to render.
-    _first_sec_y: "float | None" = None
-    if getattr(doc, "sections", None):
-        _sec_ys = [
-            sec.heading.paragraph_profile.y_top_pt
-            for sec in doc.sections
-            if sec.heading.paragraph_profile
-            and sec.heading.paragraph_profile.y_top_pt > 0
-        ]
-        if _sec_ys:
-            _first_sec_y = min(_sec_ys)
-
     for i, img in enumerate(doc.page_images):
-        if img.category in ("h_rule", "v_rule") and _first_sec_y is not None:
-            if img.y_pt < _first_sec_y:
-                _log.debug(
-                    "HRULE_HEADER_ZONE_SKIP: category=%s y=%.0f first_sec_y=%.0f",
-                    img.category, img.y_pt, _first_sec_y,
-                )
-                continue
         # Anchored h_rules are rendered as w:pBdr/w:top on the section heading
         # paragraph.  Skip them here so they don't also appear as floating images.
         if img.category == "h_rule" and img.anchor_next_section_id is not None:
@@ -311,12 +287,8 @@ def _apply_h_rule_top_border(p_elem, rule_img: "Any") -> None:
         hex_color = "808080"
 
     gap_pt = rule_img.gap_to_anchor_pt or 20.0
-    # Derive border thickness from rule height (8ths of a point, clamped 4–24).
     thickness_eighths = max(4, min(24, int(rule_img.height_pt * 8)))
-    # Space between the border line and the paragraph text (in points, OOXML units).
     space_pt = 4
-    # Total spacing before = gap_to_anchor_pt so the border lands at the right
-    # vertical position relative to the previous section's content.
     before_twips = int(gap_pt * 20)
 
     pPr = p_elem.find(f"{{{_W}}}pPr")
@@ -330,7 +302,6 @@ def _apply_h_rule_top_border(p_elem, rule_img: "Any") -> None:
     top.set(f"{{{_W}}}space", str(space_pt))
     top.set(f"{{{_W}}}color", hex_color)
 
-    # Insert pBdr before w:spacing to satisfy OOXML schema ordering.
     spc_elem = pPr.find(f"{{{_W}}}spacing")
     if spc_elem is not None:
         spc_elem.addprevious(pBdr)
@@ -874,6 +845,18 @@ def _set_para_text(p_elem, text: str) -> None:
     # Values ≥ 80 twips are intentional letter-spacing (decorative headings)
     # and must be preserved.
     _MICRO_KERN_LIMIT = 80  # twips; larger = intentional letter-spacing
+    # w:w (character width scaling) cleanup thresholds.
+    # PDF-to-DOCX converters produce two classes of artifact w:w values:
+    #   > 150%: FontAwesome icon/bullet placeholder runs (e.g. w=270) that end
+    #           up carrying the first 1-2 chars of redistributed content, making
+    #           those chars render 2.7x wide ("De signed", "Mento red").
+    #   < 95%:  Single mega-runs covering the whole original line (e.g. w=90)
+    #           where only the first proportional slice inherits the value; the
+    #           remaining slices get w=None (100%), creating a mismatch at the
+    #           first run boundary ("Prot ocols").
+    # Values in [95, 150] are treated as intentional typography and preserved.
+    _W_SCALE_MIN = 95
+    _W_SCALE_MAX = 150
     _prev_content_rpr = None  # rPr of last non-spacer run, for w:w propagation
     for _ki, _kr in enumerate(all_runs):
         if _ki in ws_text or _ki in vml_indices:
@@ -888,13 +871,23 @@ def _set_para_text(p_elem, text: str) -> None:
         if not _is_spacer:
             # Content run: record its rPr for neighbouring spacer propagation.
             _prev_content_rpr = _krpr
-            # Also strip micro-tracking on short (1–3 char) content runs.
-            if len(_kr_text) <= 3 and _krpr is not None:
+            # Strip micro-tracking from all content runs.  The _MICRO_KERN_LIMIT
+            # guard already protects intentional letter-spacing (≥80 twips).
+            if _krpr is not None:
                 _ksp = _krpr.find(f"{{{_W}}}spacing")
                 if _ksp is not None:
                     try:
                         if abs(int(_ksp.get(f"{{{_W}}}val") or 0)) < _MICRO_KERN_LIMIT:
                             _krpr.remove(_ksp)
+                    except (ValueError, TypeError):
+                        pass
+                # Strip out-of-range character width scaling from content runs.
+                _kww = _krpr.find(f"{{{_W}}}w")
+                if _kww is not None:
+                    try:
+                        _wval = int(_kww.get(f"{{{_W}}}val") or 100)
+                        if _wval < _W_SCALE_MIN or _wval > _W_SCALE_MAX:
+                            _krpr.remove(_kww)
                     except (ValueError, TypeError):
                         pass
             continue
@@ -908,9 +901,21 @@ def _set_para_text(p_elem, text: str) -> None:
                         _krpr.remove(_ksp)
                 except (ValueError, TypeError):
                     pass
+            # Strip out-of-range w:w from spacer runs too.  Template spacer runs
+            # that immediately follow icon/placeholder runs may carry the same
+            # artifact w=270; stripping prevents it from surviving into output.
+            _kww_s = _krpr.find(f"{{{_W}}}w")
+            if _kww_s is not None:
+                try:
+                    _wval_s = int(_kww_s.get(f"{{{_W}}}val") or 100)
+                    if _wval_s < _W_SCALE_MIN or _wval_s > _W_SCALE_MAX:
+                        _krpr.remove(_kww_s)
+                except (ValueError, TypeError):
+                    pass
 
         # Propagate w:w (character width scaling) from the preceding content run
         # so the redistributed word character renders at the same condensed width.
+        # Only in-range values are propagated; artifact values were stripped above.
         if _prev_content_rpr is not None and _krpr is not None:
             _src_ww = _prev_content_rpr.find(f"{{{_W}}}w")
             if _src_ww is not None and _krpr.find(f"{{{_W}}}w") is None:
@@ -1793,8 +1798,9 @@ def _render_pdf_single_col_with_groups(
 
     def _build_section_paras(sec) -> "list":
         heading_elem = build_para_element(sec.heading, doc_part)
-        if sec.heading.para_id in _h_rule_borders:
-            _apply_h_rule_top_border(heading_elem, _h_rule_borders[sec.heading.para_id])
+        _rule_img = _h_rule_borders.get(sec.heading.para_id)
+        if _rule_img:
+            _apply_h_rule_top_border(heading_elem, _rule_img)
         elems: list = [heading_elem]
         if sec.semantic_type == "experience" and sec.roles:
             _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
@@ -1975,13 +1981,9 @@ def _render_pdf_single_col_dark_header(doc: "ResumeDocument", body, sectPr, doc_
         else:
             body.append(elem)
 
-    _h_rule_borders = _build_h_rule_border_map(doc)
     _add(hdr_tbl)
     for pm in main_paras:
-        elem = build_para_element(pm, doc_part=doc_part)
-        if _h_rule_borders and pm.para_id in _h_rule_borders:
-            _apply_h_rule_top_border(elem, _h_rule_borders[pm.para_id])
-        _add(elem)
+        _add(build_para_element(pm, doc_part=doc_part))
     if ftr_tbl is not None:
         _add(ftr_tbl)
 
