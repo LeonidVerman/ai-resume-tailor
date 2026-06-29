@@ -626,48 +626,72 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     summary_sec = doc.sections[summary_idx]
 
     if not summary_indices:
-        # No original summary lines to replace.  For single-column templates
-        # keep the LLM summary as a body section (no header injection needed).
         if doc.layout.column_split_x is None:
-            return
-        # Two-column: no pre-existing summary → append LLM summary BELOW the
-        # name/title block so it renders above the two-column table.
-        if not doc.header_paras:
-            return
-        # Inherit the column from existing header content so the summary lands
-        # in the right cell when the name/title are in the right column (e.g.
-        # sidebar templates where name is right-aligned, like sample 2 & 3),
-        # or above the table when the header is truly full-width (like sample 14).
-        # Exclude dark-background paras: those render in above_paras (the merged
-        # header row) regardless of their column_id, so inheriting their column
-        # would misplace the summary in a body cell instead of the header band.
-        _existing_cols = [
-            hp.paragraph_profile.column_id
-            for hp in doc.header_paras
-            if hp.paragraph_profile and hp.paragraph_profile.column_id in ("left", "right")
-        ]
-        if "right" in _existing_cols:
-            _target_col = "right"
-        elif "left" in _existing_cols:
-            _target_col = "left"
+            # Single-col PDF with no original summary placeholder.
+            # Inject the LLM summary into header_paras BEFORE the first
+            # contact-like para (email/phone/LinkedIn) so it renders above
+            # the contact row rather than as a body section below it.
+            _contact_start: "int | None" = None
+            for _ci, _hp in enumerate(doc.header_paras):
+                _t = _hp.text.strip()
+                if (
+                    "@" in _t
+                    or re.search(r"\d[\d\s.()\-]{3,}", _t)
+                    or any(k in _t.lower() for k in ("linkedin", "http", "www."))
+                ):
+                    _contact_start = _ci
+                    break
+            if _contact_start is None:
+                return  # no contacts; keep summary as body section
+            for bp in summary_sec.body_paras:
+                if bp.paragraph_profile:
+                    bp.paragraph_profile.column_id = None
+                    bp.paragraph_profile.bold = False
+            doc.header_paras = (
+                list(doc.header_paras[:_contact_start])
+                + list(summary_sec.body_paras)
+                + list(doc.header_paras[_contact_start:])
+            )
+            doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
         else:
-            _target_col = None  # place above the two-column table
+            # Two-column: no pre-existing summary → append LLM summary BELOW the
+            # name/title block so it renders above the two-column table.
+            if not doc.header_paras:
+                return
+            # Inherit the column from existing header content so the summary lands
+            # in the right cell when the name/title are in the right column (e.g.
+            # sidebar templates where name is right-aligned, like sample 2 & 3),
+            # or above the table when the header is truly full-width (like sample 14).
+            # Exclude dark-background paras: those render in above_paras (the merged
+            # header row) regardless of their column_id, so inheriting their column
+            # would misplace the summary in a body cell instead of the header band.
+            _existing_cols = [
+                hp.paragraph_profile.column_id
+                for hp in doc.header_paras
+                if hp.paragraph_profile and hp.paragraph_profile.column_id in ("left", "right")
+            ]
+            if "right" in _existing_cols:
+                _target_col = "right"
+            elif "left" in _existing_cols:
+                _target_col = "left"
+            else:
+                _target_col = None  # place above the two-column table
 
-        log.debug(
-            "SUMMARY_ANCHOR_SELECTED: no-match append col=%r "
-            "existing_col_counts=left:%d right:%d",
-            _target_col,
-            _existing_cols.count("left"),
-            _existing_cols.count("right"),
-        )
-        for bp in summary_sec.body_paras:
-            if bp.paragraph_profile:
-                bp.paragraph_profile.column_id = _target_col
-                bp.paragraph_profile.bold = False
-                if _target_col == "right":
-                    bp.paragraph_profile.indent_left_pt = 0.0
-        doc.header_paras = list(doc.header_paras) + list(summary_sec.body_paras)
-        doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
+            log.debug(
+                "SUMMARY_ANCHOR_SELECTED: no-match append col=%r "
+                "existing_col_counts=left:%d right:%d",
+                _target_col,
+                _existing_cols.count("left"),
+                _existing_cols.count("right"),
+            )
+            for bp in summary_sec.body_paras:
+                if bp.paragraph_profile:
+                    bp.paragraph_profile.column_id = _target_col
+                    bp.paragraph_profile.bold = False
+                    if _target_col == "right":
+                        bp.paragraph_profile.indent_left_pt = 0.0
+            doc.header_paras = list(doc.header_paras) + list(summary_sec.body_paras)
+            doc.sections = [s for i, s in enumerate(doc.sections) if i != summary_idx]
     else:
 
         # Lift LLM summary body paragraphs into the header area.

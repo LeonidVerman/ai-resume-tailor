@@ -2790,6 +2790,8 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 _ptcW.set(f"{{{_W}}}type", "dxa")
                 etree.SubElement(_ptc, f"{{{_W}}}p")
 
+        _h_rule_borders_par = _build_h_rule_border_map(doc)
+
         def _make_merged_hdr_row(pm) -> None:
             """Append a full-width merged row for a section heading."""
             _tr = etree.SubElement(tbl, f"{{{_W}}}tr")
@@ -2804,6 +2806,11 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
             # Apply the same left_margin_twips correction as left-cell paras so
             # the heading sits at its original PDF x position inside the merged cell.
             _append_left_indent(_pe, pm)
+            # Apply h_rule as a paragraph top border on the heading element so
+            # it renders as a visible horizontal divider above the section.
+            _hr = _h_rule_borders_par.get(pm.para_id)
+            if _hr:
+                _apply_h_rule_top_border(_pe, _hr)
             _htc.append(_pe)
 
         def _make_full_width_body_row(paras) -> None:
