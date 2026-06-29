@@ -2757,6 +2757,42 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
                 new_ind.set(f"{{{_W}}}left", str(left_margin_twips))
 
+    # LibreOffice ignores the outer table's negative tblInd for non-full-page
+    # tables and applies w:ind w:left relative to the document text margin
+    # (not the cell left edge).  Left-col paragraph indents are already measured
+    # from the column start which equals the text margin, so they need no
+    # correction.  Right-col indents are measured from the right-column start
+    # (column_split_x), which is left_w twips into the table.  To compensate,
+    # add (left_w - left_margin_twips) so the absolute position lands correctly.
+    _lo_rco = max(0, left_w - left_margin_twips) if not has_dark_hdr else 0
+
+    def _apply_lo_ind(p_elem, pm) -> None:
+        """Cell-aware left-indent for parallel-mode table cells.
+
+        Dark-header: delegates to _append_left_indent (LibreOffice honors tblInd
+        for full-page-spanning tables, so the existing offset is correct).
+        Light-header: left-col paragraphs need no change; right-col paragraphs
+        need _lo_rco added so content lands at its original absolute x position.
+        """
+        if has_dark_hdr:
+            _append_left_indent(p_elem, pm)
+            return
+        if _lo_rco <= 0:
+            return
+        pp = pm.paragraph_profile
+        if pp is None or pp.column_id != "right":
+            return
+        pPr = p_elem.find(f"{{{_W}}}pPr")
+        if pPr is None:
+            return
+        ind = pPr.find(f"{{{_W}}}ind")
+        if ind is not None:
+            cur = int(ind.get(f"{{{_W}}}left", "0"))
+            ind.set(f"{{{_W}}}left", str(cur + _lo_rco))
+        else:
+            new_ind = etree.SubElement(pPr, f"{{{_W}}}ind")
+            new_ind.set(f"{{{_W}}}left", str(_lo_rco))
+
     if _parallel_mode:
         # ------------------------------------------------------------------ #
         # Parallel-body multi-row rendering                                   #
@@ -2803,7 +2839,7 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 _shd.set(f"{{{_W}}}fill", _eff_left_bg)
             for _i, _pm in enumerate(l_paras):
                 _pe = build_para_element(_pm, doc_part=doc_part)
-                _append_left_indent(_pe, _pm)
+                _apply_lo_ind(_pe, _pm)
                 if _i == 0:
                     _zero_cell_top_spacing(_pe)
                 _ltc.append(_pe)
@@ -2838,6 +2874,17 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 if len(_bk_group) >= 2:
                     _bk_tbl = _build_contact_row_table(_bk_group, right_w, doc_part)
                     if _bk_tbl is not None:
+                        if not has_dark_hdr and _lo_rco > 0:
+                            # Light-header: LibreOffice applies sub-table tblInd from the
+                            # right cell's left edge (text_margin + left_w/20).  Subtract
+                            # left_margin_twips so the sub-table starts at the correct
+                            # absolute position within the right column.
+                            _bk_tPr = _bk_tbl.find(f"{{{_W}}}tblPr")
+                            if _bk_tPr is not None:
+                                _bk_tInd = _bk_tPr.find(f"{{{_W}}}tblInd")
+                                if _bk_tInd is not None:
+                                    _bk_cur = int(_bk_tInd.get(f"{{{_W}}}w", "0"))
+                                    _bk_tInd.set(f"{{{_W}}}w", str(max(0, _bk_cur - left_margin_twips)))
                         _rtc.append(_bk_tbl)
                         _rc_first_emitted = True
                         continue
@@ -2846,6 +2893,7 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                     if not _rc_first_emitted:
                         _zero_cell_top_spacing(_pe)
                         _rc_first_emitted = True
+                    _apply_lo_ind(_pe, _pm)
                     _rtc.append(_pe)
             if not r_paras:
                 etree.SubElement(_rtc, f"{{{_W}}}p")
@@ -2870,9 +2918,9 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
             _gs = etree.SubElement(_htcPr, f"{{{_W}}}gridSpan")
             _gs.set(f"{{{_W}}}val", str(n_grid_cols))
             _pe = build_para_element(pm, doc_part=doc_part)
-            # Apply the same left_margin_twips correction as left-cell paras so
-            # the heading sits at its original PDF x position inside the merged cell.
-            _append_left_indent(_pe, pm)
+            # Apply the same indent correction as left-cell paras so the heading
+            # sits at its original PDF x position inside the merged cell.
+            _apply_lo_ind(_pe, pm)
             # Apply h_rule as a paragraph top border on the heading element so
             # it renders as a visible horizontal divider above the section.
             _hr = _h_rule_borders_par.get(pm.para_id)
@@ -2892,7 +2940,7 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
             _fgs.set(f"{{{_W}}}val", str(n_grid_cols))
             for _pm in paras:
                 _pe = build_para_element(_pm, doc_part=doc_part)
-                _append_left_indent(_pe, _pm)
+                _apply_lo_ind(_pe, _pm)
                 _tc.append(_pe)
             if not paras:
                 etree.SubElement(_tc, f"{{{_W}}}p")
