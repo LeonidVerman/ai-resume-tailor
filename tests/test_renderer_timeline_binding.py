@@ -982,3 +982,86 @@ def test_s35_v2_education_after_both_tables():
     assert para125_idx > tbl_indices[1], (
         f"para_125 (idx={para125_idx}) must come AFTER second table (idx={tbl_indices[1]})"
     )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_left_cell_no_before_spacing():
+    """Date paragraphs in left cells must have w:spacing w:before stripped.
+
+    The template XML protos carry w:spacing w:before values tuned for the
+    newspaper-column layout.  Inside a table cell those values offset the date
+    text downward from the cell top, breaking role-header alignment.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg in (seg1, seg2):
+        if seg is None:
+            continue
+        for tr in seg.findall(f"{{{_W_NS}}}tr"):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if not cells:
+                continue
+            tc_left = cells[0]  # first cell = left/date column
+            for para in tc_left.findall(f"{{{_W_NS}}}p"):
+                pPr = para.find(f"{{{_W_NS}}}pPr")
+                if pPr is None:
+                    continue
+                sp = pPr.find(f"{{{_W_NS}}}spacing")
+                if sp is None:
+                    continue
+                before_val = sp.get(f"{{{_W_NS}}}before")
+                after_val = sp.get(f"{{{_W_NS}}}after")
+                assert before_val is None or int(before_val) == 0, (
+                    f"Left cell para has w:spacing w:before={before_val} — "
+                    "must be stripped so date text starts at cell top"
+                )
+                assert after_val is None or int(after_val) == 0, (
+                    f"Left cell para has w:spacing w:after={after_val} — "
+                    "must be stripped so rows don't add spurious vertical gaps"
+                )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_cells_valign_top():
+    """Both left and right cells must carry w:vAlign w:val='top'.
+
+    Explicit top-alignment prevents style-sheet inheritance from overriding
+    the default and ensures date text and role-header text both anchor to the
+    top of their shared auto-height row.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg in (seg1, seg2):
+        if seg is None:
+            continue
+        for tr in seg.findall(f"{{{_W_NS}}}tr"):
+            for tc in tr.findall(f"{{{_W_NS}}}tc"):
+                tcPr = tc.find(f"{{{_W_NS}}}tcPr")
+                assert tcPr is not None, "Every tc must have a tcPr"
+                vAlign = tcPr.find(f"{{{_W_NS}}}vAlign")
+                assert vAlign is not None, (
+                    "tcPr must have w:vAlign for explicit top-alignment"
+                )
+                assert vAlign.get(f"{{{_W_NS}}}val") == "top", (
+                    f"w:vAlign must be 'top', got {vAlign.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')!r}"
+                )

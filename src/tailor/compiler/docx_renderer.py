@@ -5246,6 +5246,7 @@ def _build_timeline_row_table(
         _twL = etree.SubElement(tcPr_left, f"{{{_W}}}tcW")
         _twL.set(f"{{{_W}}}w", str(_left_w))
         _twL.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr_left, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
 
         _left_pids: list[str] = (
             list(_lb.get("left_leading_spacer_ids") or [])
@@ -5262,6 +5263,14 @@ def _build_timeline_row_table(
                 _strip_non_column_section_break(_el, main_pgSz_w, main_pgSz_h, False)
                 if _pid and not _el.get(f"{{{_W14}}}paraId"):
                     _el.set(f"{{{_W14}}}paraId", _pid)
+                _pPr = _el.find(f"{{{_W}}}pPr")
+                if _pPr is not None:
+                    _sp = _pPr.find(f"{{{_W}}}spacing")
+                    if _sp is not None:
+                        _sp.attrib.pop(f"{{{_W}}}before", None)
+                        _sp.attrib.pop(f"{{{_W}}}after", None)
+                        if not _sp.attrib:
+                            _pPr.remove(_sp)
                 tc_left.append(_el)
 
         if not tc_left.findall(f"{{{_W}}}p"):
@@ -5273,6 +5282,7 @@ def _build_timeline_row_table(
         _twR = etree.SubElement(tcPr_right, f"{{{_W}}}tcW")
         _twR.set(f"{{{_W}}}w", str(_right_w))
         _twR.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr_right, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
 
         for _pid in (_lb.get("right_para_ids") or []):
             _blk = lb_by_pid.get(_pid)
@@ -5522,6 +5532,7 @@ def _build_timeline_segments(
             _twL = etree.SubElement(tcPr_left, f"{{{_W}}}tcW")
             _twL.set(f"{{{_W}}}w", str(_left_w))
             _twL.set(f"{{{_W}}}type", "dxa")
+            etree.SubElement(tcPr_left, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
 
             _left_pids = list(_lb.get("left_para_ids") or [])
 
@@ -5533,6 +5544,17 @@ def _build_timeline_segments(
                     _strip_non_column_section_break(_el, main_pgSz_w, main_pgSz_h, False)
                     if not _el.get(f"{{{_W14}}}paraId"):
                         _el.set(f"{{{_W14}}}paraId", _pid)
+                    # Strip paragraph spacing tuned for newspaper-column positioning:
+                    # inside a table cell, w:before/w:after offsets the date text
+                    # downward from the cell top, misaligning it with the role header.
+                    _pPr = _el.find(f"{{{_W}}}pPr")
+                    if _pPr is not None:
+                        _sp = _pPr.find(f"{{{_W}}}spacing")
+                        if _sp is not None:
+                            _sp.attrib.pop(f"{{{_W}}}before", None)
+                            _sp.attrib.pop(f"{{{_W}}}after", None)
+                            if not _sp.attrib:
+                                _pPr.remove(_sp)
                     tc_left.append(_el)
                     consumed.add(_pid)
 
@@ -5545,6 +5567,7 @@ def _build_timeline_segments(
             _twR = etree.SubElement(tcPr_right, f"{{{_W}}}tcW")
             _twR.set(f"{{{_W}}}w", str(_right_w))
             _twR.set(f"{{{_W}}}type", "dxa")
+            etree.SubElement(tcPr_right, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
 
             for _pid in (_lb.get("right_para_ids") or []):
                 _blk = lb_by_pid.get(_pid)
