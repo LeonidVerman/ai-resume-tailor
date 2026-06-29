@@ -182,7 +182,9 @@ def _apply_docx_page_background(d, hex_color: str) -> None:
         pass
 
 
-def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
+def _insert_page_images(
+    doc: "ResumeDocument", body, sectPr, doc_part, *, skip_floating_hrules: bool = False
+) -> None:
     """Append floating image paragraphs for every extracted ``PageImageBlock``.
 
     Called once after each render path writes its content paragraphs.
@@ -191,6 +193,13 @@ def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
 
     Profile photos float above text (behindDoc=0); decorative elements sit
     behind text (behindDoc=1).
+
+    Parameters
+    ----------
+    skip_floating_hrules:
+        When True, also skip anchor=None h_rule images.  Set in the plain-path
+        render where floating h_rules are converted to inline separator paragraphs
+        in the header bucket loop instead.
     """
     if not getattr(doc, "page_images", None) or doc_part is None:
         return
@@ -217,6 +226,10 @@ def _insert_page_images(doc: "ResumeDocument", body, sectPr, doc_part) -> None:
         # Anchored h_rules are rendered as w:pBdr/w:top on the section heading
         # paragraph.  Skip them here so they don't also appear as floating images.
         if img.category == "h_rule" and img.anchor_next_section_id is not None:
+            continue
+        # Floating h_rules (anchor=None) are converted to inline separator paragraphs
+        # in the plain-path header bucket loop when skip_floating_hrules is set.
+        if skip_floating_hrules and img.category == "h_rule":
             continue
         behind = img.category != "profile_photo"
         z = _CATEGORY_Z.get(img.category, 5 if behind else 10)
@@ -316,6 +329,23 @@ def _apply_h_rule_top_border(p_elem, rule_img: "Any") -> None:
         "HRULE_BORDER_APPLIED: para=%s color=#%s thickness=%d before=%d",
         p_elem.get(f"{{{_W}}}rsidR", "?"), hex_color, thickness_eighths, before_twips,
     )
+
+
+def _make_h_rule_separator_para(rule_img: "Any") -> "Any":
+    """Return an empty w:p with an h_rule applied as a top border.
+
+    Used in the plain-path header bucket loop to insert an inline horizontal
+    divider between header content groups (e.g., before the 3-col contacts row
+    when a floating h_rule falls between the preceding bucket and the contacts).
+    """
+    from lxml import etree
+
+    p = etree.Element(f"{{{_W}}}p")
+    pPr = etree.SubElement(p, f"{{{_W}}}pPr")
+    pStyle = etree.SubElement(pPr, f"{{{_W}}}pStyle")
+    pStyle.set(f"{{{_W}}}val", "Normal")
+    _apply_h_rule_top_border(p, rule_img)
+    return p
 
 
 # ---------------------------------------------------------------------------
@@ -2445,20 +2475,57 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         except (ValueError, IndexError):
             return False
 
+    # Y-positions of col=right header paras, used to detect side-by-side layouts.
+    _right_hdr_ys = [
+        pm.paragraph_profile.y_top_pt
+        for pm in doc.header_paras
+        if pm.paragraph_profile
+        and pm.paragraph_profile.column_id == "right"
+        and pm.paragraph_profile.y_top_pt is not None
+    ]
+
+    def _is_pseudo_left(pm) -> bool:
+        """True when a col=None header para should be placed in the left column cell.
+
+        The PDF parser assigns col=None to name/title paras whose rendered text
+        width extends past the column split boundary.  They belong in the left cell
+        when their x-origin is in the left zone AND a col=right para exists at a
+        nearby y-position (confirming a two-column header where name and title sit
+        side-by-side).
+        """
+        pp = pm.paragraph_profile
+        if not pp or pp.column_id is not None or _is_dark_bg(pm):
+            return False
+        if (pp.indent_left_pt or 0.0) >= layout.column_split_x * 0.5:
+            return False  # x-origin is in the right zone
+        if (pp.font_size_pt or 0.0) < 18.0:
+            return False  # small text — not a name/title spanning the boundary
+        pm_y = pp.y_top_pt or 0.0
+        return any(abs(ry - pm_y) <= 80.0 for ry in _right_hdr_ys)
+
+    _pseudo_left_ids = frozenset(id(pm) for pm in doc.header_paras if _is_pseudo_left(pm))
+
     above_paras = [
         pm for pm in doc.header_paras
-        if _is_dark_bg(pm)
-        or not (pm.paragraph_profile and pm.paragraph_profile.column_id in ("left", "right"))
+        if id(pm) not in _pseudo_left_ids
+        and (
+            _is_dark_bg(pm)
+            or not (pm.paragraph_profile and pm.paragraph_profile.column_id in ("left", "right"))
+        )
     ]
     _above_ids = frozenset(id(pm) for pm in above_paras)
     _hdr_left = [
         pm for pm in doc.header_paras
         if id(pm) not in _above_ids
-        and pm.paragraph_profile and pm.paragraph_profile.column_id == "left"
+        and (
+            id(pm) in _pseudo_left_ids
+            or (pm.paragraph_profile and pm.paragraph_profile.column_id == "left")
+        )
     ]
     _hdr_right = [
         pm for pm in doc.header_paras
         if id(pm) not in _above_ids
+        and id(pm) not in _pseudo_left_ids
         and pm.paragraph_profile and pm.paragraph_profile.column_id == "right"
     ]
     body_paras = [pm for pm in doc.all_paras if id(pm) not in _header_ids]
@@ -7910,7 +7977,42 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
                 _hdr_buckets[-1][1].append(_hp)
             else:
                 _hdr_buckets.append([_hp_y, [_hp]])
+
+        # Collect floating h_rules (anchor=None) within the header y-range so they
+        # can be emitted as inline separator paragraphs before the correct bucket.
+        # Floating images at absolute PDF coordinates land in wrong positions after
+        # LLM reflow; inline separators track document flow instead.
+        _max_hdr_y = max(
+            (pm.paragraph_profile.y_top_pt or 0.0)
+            for pm in doc.header_paras
+            if pm.paragraph_profile and pm.paragraph_profile.y_top_pt
+        ) if doc.header_paras else 0.0
+        _floating_hrules_hdr = sorted(
+            [
+                img for img in (getattr(doc, "page_images", None) or [])
+                if img.category == "h_rule"
+                and img.anchor_next_section_id is None
+                and (img.y_pt or 0.0) <= _max_hdr_y + 20.0
+            ],
+            key=lambda _img: _img.y_pt or 0.0,
+        )
+
+        _prev_bkt_y = -1.0
         for _hb_y, _hb_group in _hdr_buckets:
+            # Before each bucket with a known y, emit inline separators for any
+            # floating h_rule whose y falls between the previous bucket and this one.
+            if _hb_y is not None and _floating_hrules_hdr:
+                for _fhr in _floating_hrules_hdr:
+                    _fhr_y = _fhr.y_pt or 0.0
+                    if _prev_bkt_y < _fhr_y < _hb_y:
+                        _sep = _make_h_rule_separator_para(_fhr)
+                        if sectPr is not None:
+                            sectPr.addprevious(_sep)
+                        else:
+                            body.append(_sep)
+            if _hb_y is not None:
+                _prev_bkt_y = _hb_y
+
             if len(_hb_group) >= 2:
                 _hb_tbl = _build_contact_row_table(_hb_group, _pdf_text_w, d.part)
                 if _hb_tbl is not None:
@@ -7937,5 +8039,10 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
                     _apply_h_rule_top_border(_last, _h_rule_borders_fallback[item.para_id])
 
     if doc.source_kind == "pdf":
-        _insert_page_images(doc, body, sectPr, d.part)
+        # skip_floating_hrules=True: floating h_rules were converted to inline
+        # separator paragraphs in the header bucket loop above; inserting them
+        # again as floating images at their original PDF y-coordinates would place
+        # them at wrong positions after LLM reflow.
+        _skip_fhr = not has_table_blocks and bool(doc.header_paras)
+        _insert_page_images(doc, body, sectPr, d.part, skip_floating_hrules=_skip_fhr)
     d.save(output_path)
