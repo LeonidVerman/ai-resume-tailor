@@ -775,7 +775,8 @@ def _inject_llm_summary_into_header(doc: ResumeDocument) -> None:
     from tailor.compiler.models import ParaModel
     new_all: list[ParaModel] = list(doc.header_paras)
     for sec in doc.sections:
-        new_all.append(sec.heading)
+        if sec.section_id:  # only emit heading for template-origin sections
+            new_all.append(sec.heading)
         new_all.extend(sec.body_paras)
         for role in sec.roles:
             new_all.append(role.header)
@@ -852,7 +853,8 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
             from tailor.compiler.models import ParaModel as _PM
             new_all: "list[_PM]" = list(doc.header_paras)
             for sec in doc.sections:
-                new_all.append(sec.heading)
+                if sec.section_id:  # only emit heading for template-origin sections
+                    new_all.append(sec.heading)
                 new_all.extend(sec.body_paras)
                 for role in sec.roles:
                     new_all.append(role.header)
@@ -913,7 +915,7 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
                     _seen_ids.add(id(pm))
                     new_all.append(pm)
             for sec in doc.sections:
-                for pm in [sec.heading, *sec.body_paras]:
+                for pm in ([sec.heading] if sec.section_id else []) + sec.body_paras:
                     if id(pm) not in _seen_ids:
                         _seen_ids.add(id(pm))
                         new_all.append(pm)
@@ -967,7 +969,7 @@ def _remove_orphan_subsections(doc: ResumeDocument) -> None:
             _seen_pm_ids.add(id(pm))
             new_all.append(pm)
     for sec in doc.sections:
-        for pm in [sec.heading, *sec.body_paras]:
+        for pm in ([sec.heading] if sec.section_id else []) + sec.body_paras:
             if id(pm) not in _seen_pm_ids:
                 _seen_pm_ids.add(id(pm))
                 new_all.append(pm)

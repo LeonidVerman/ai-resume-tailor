@@ -1327,6 +1327,8 @@ def _render_pdf_section_row_table(doc: "ResumeDocument", body, sectPr, doc_part=
         return min(vals) if vals else 0
 
     for section in doc.sections:
+        if not section.section_id:  # skip LLM-extra sections (no template heading)
+            continue
         tr = etree.SubElement(tbl, f"{{{_W}}}tr")
 
         # Compute per-section indent baseline to normalise all body content
@@ -1832,11 +1834,12 @@ def _render_pdf_single_col_with_groups(
     def _build_section_paras_for_cell(sec, min_indent: int) -> "list":
         """Build paragraph elements for a table cell, normalizing indent to cell origin."""
         elems = []
-        heading_elem = build_para_element(sec.heading, doc_part)
-        _shift_indent(heading_elem, min_indent)
-        if sec.heading.para_id in _h_rule_borders:
-            _apply_h_rule_top_border(heading_elem, _h_rule_borders[sec.heading.para_id])
-        elems.append(heading_elem)
+        if sec.section_id:  # only emit heading for template-origin sections
+            heading_elem = build_para_element(sec.heading, doc_part)
+            _shift_indent(heading_elem, min_indent)
+            if sec.heading.para_id in _h_rule_borders:
+                _apply_h_rule_top_border(heading_elem, _h_rule_borders[sec.heading.para_id])
+            elems.append(heading_elem)
         if sec.semantic_type == "experience" and sec.roles:
             _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
             if _has_orphan:
@@ -1858,10 +1861,12 @@ def _render_pdf_single_col_with_groups(
         return elems
 
     def _build_section_paras(sec) -> "list":
-        heading_elem = build_para_element(sec.heading, doc_part)
-        if sec.heading.para_id in _h_rule_borders:
-            _apply_h_rule_top_border(heading_elem, _h_rule_borders[sec.heading.para_id])
-        elems: list = [heading_elem]
+        elems: list = []
+        if sec.section_id:  # only emit heading for template-origin sections
+            heading_elem = build_para_element(sec.heading, doc_part)
+            if sec.heading.para_id in _h_rule_borders:
+                _apply_h_rule_top_border(heading_elem, _h_rule_borders[sec.heading.para_id])
+            elems.append(heading_elem)
         if sec.semantic_type == "experience" and sec.roles:
             _has_orphan = any(bp.semantic == "role_header" for bp in sec.body_paras)
             if _has_orphan:
