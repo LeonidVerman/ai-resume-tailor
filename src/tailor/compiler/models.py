@@ -312,6 +312,13 @@ class RoleEntry:
     bullets: list[ParaModel] = field(default_factory=list)
     role_id: str = ""         # normalised header text; used as anchor for updater matching
     role_id_stable: str = ""  # synthetic positional ID assigned by assign_stable_ids()
+    # Timeline left-right binding for newspaper two-column layouts.
+    # Set by _build_role_layout_bindings() in docx_parser when a narrow date
+    # sidebar is detected.  None for all other layouts.
+    # Keys: kind, row_index, left_para_ids, left_text, left_leading_spacer_ids,
+    #       left_trailing_spacer_ids, right_anchor_para_id, right_para_ids,
+    #       column_width_twips, preserve_left_verbatim, right_rewrite_policy.
+    layout_binding: "dict | None" = None
 
     def to_dict(self) -> dict:
         return {
@@ -321,6 +328,7 @@ class RoleEntry:
             "bullets": [p.to_dict() for p in self.bullets],
             "role_id": self.role_id,
             "role_id_stable": self.role_id_stable,
+            "layout_binding": self.layout_binding,
         }
 
     @classmethod
@@ -332,6 +340,7 @@ class RoleEntry:
             bullets=[ParaModel.from_dict(p) for p in d.get("bullets", [])],
             role_id=d.get("role_id", ""),
             role_id_stable=d.get("role_id_stable", ""),
+            layout_binding=d.get("layout_binding"),
         )
 
 

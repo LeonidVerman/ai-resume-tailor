@@ -635,6 +635,8 @@ class ResumeClassificationService:
 
         final = downgrade_invalid_sections(merged, invalid_set_after)
         final = resolve_synthetic_para_ids(final, sidecar)
+        from tailor.compiler.classification_models import augment_classification_with_layout_bindings
+        final = augment_classification_with_layout_bindings(final, doc)
 
         # ── Step 6: compute status and counts ────────────────────────────
         repaired_count = invalid_count_before - invalid_count_after

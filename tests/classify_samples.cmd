@@ -47,6 +47,32 @@ rem -----------------------------------------------------------------------
 if not "%~1"=="" (
   set SINGLE_FILE=%TESTS_DIR%%~1
   set EXT=%~x1
+
+  rem If argument has no extension (e.g. bare number "35"), search for a
+  rem matching file by numeric prefix in docx then pdf directories.
+  if "!EXT!"=="" (
+    set SINGLE_FILE=
+    for /F "delims=" %%f in ('dir /b "%DOCX_INPUT%\%~1-*.docx" 2^>nul') do (
+      if "!SINGLE_FILE!"=="" set SINGLE_FILE=%DOCX_INPUT%\%%f
+    )
+    if "!SINGLE_FILE!"=="" (
+      for /F "delims=" %%f in ('dir /b "%PDF_INPUT%\%~1-*.pdf" 2^>nul') do (
+        if "!SINGLE_FILE!"=="" set SINGLE_FILE=%PDF_INPUT%\%%f
+      )
+    )
+    if "!SINGLE_FILE!"=="" (
+      echo ERROR: No .docx or .pdf file starting with "%~1-" found in samples directories.
+      goto :eof
+    )
+    rem Derive EXT and BASENAME from the resolved file
+    for %%f in ("!SINGLE_FILE!") do (
+      set EXT=%%~xf
+      set BASENAME=%%~nf
+    )
+  ) else (
+    set BASENAME=%~n1
+  )
+
   if /i "!EXT!"==".docx" (
     set OUT_DIR=%DOCX_OUTPUT%
     set IN_DIR=%DOCX_INPUT_OUTPUT%
@@ -54,7 +80,6 @@ if not "%~1"=="" (
     set OUT_DIR=%PDF_OUTPUT%
     set IN_DIR=%PDF_INPUT_OUTPUT%
   )
-  set BASENAME=%~n1
   echo Classifying: !SINGLE_FILE!
   call :classify_one "!SINGLE_FILE!" "!OUT_DIR!\!BASENAME!.json" "!IN_DIR!\!BASENAME!_input.json"
   echo.

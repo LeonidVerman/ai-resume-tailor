@@ -404,6 +404,7 @@ def _update_role(orig: RoleEntry, llm: LlmRole, layout_bound: bool = False) -> R
         bullets=new_bullets,
         role_id=orig.role_id,
         role_id_stable=orig.role_id_stable if layout_bound else "",
+        layout_binding=orig.layout_binding,
     )
 
 
@@ -558,6 +559,7 @@ def _update_experience_section(
                             meta_lines=list(updated.meta_lines) + [_company_pm],
                             bullets=updated.bullets,
                             role_id=updated.role_id,
+                            layout_binding=updated.layout_binding,
                         )
                 updated_roles.append(updated)
             # Template roles with no LLM counterpart are kept verbatim
@@ -1866,6 +1868,7 @@ def _update_role_bullets_only(
         meta_lines=kept_meta,
         bullets=new_bullets,
         role_id=orig.role_id,
+        layout_binding=orig.layout_binding,
     )
 
 
@@ -4356,6 +4359,7 @@ def apply_anchor_budgets(
                 bullets=[_t(b) for b in role.bullets],
                 role_id=role.role_id,
                 role_id_stable=role.role_id_stable,
+                layout_binding=role.layout_binding,
             ))
         new_sections.append(ResumeSection(
             title=sec.title,
@@ -5239,10 +5243,23 @@ def apply_tailored(
     # Handles templates (e.g. sample 35) where the date column appears before
     # the Experience heading in document order, causing date fragments to render
     # as a noise block above the Experience section.
+    # Guard: paragraphs in a narrow newspaper column (< 3600 twips) ARE the
+    # visible date sidebar — they must not be cleared.
     if any(getattr(s, "_dates_injected", False) for s in new_sections):
+        _date_col_widths: "dict[str, int] | None" = getattr(original, "_newspaper_col_widths", None)
+        _MIN_SIDEBAR_TWIPS = 3600  # 180 pt — same threshold as summary-anchor narrow guard
         _cleaned_hp: list[ParaModel] = []
         for _hp in effective_header_paras:
             if _hp.para_id and _hp.text.strip() and _DATE_COL_PARA_RE.match(_hp.text.strip()):
+                if _date_col_widths is not None:
+                    _w = _date_col_widths.get(_hp.para_id)
+                    if _w is not None and _w < _MIN_SIDEBAR_TWIPS:
+                        _cleaned_hp.append(_hp)
+                        _log.debug(
+                            "DATE_COL_HEADER_PRESERVED: para_id=%r text=%r col_width_twips=%d",
+                            _hp.para_id, _hp.text.strip(), _w,
+                        )
+                        continue
                 _cleaned_hp.append(_dc_replace(_hp, text=""))
                 _log.debug(
                     "DATE_COL_HEADER_CLEARED: para_id=%r text=%r",
@@ -6083,8 +6100,25 @@ def apply_tailored(
                 for _j, _pm in enumerate(_extras):
                     _pm.para_id = f"{_blk.para_id}_ext_{_j + 1}"
                 _insert_at = _i + 1 + _offset
+                # Strip column-break from the XML proto so _ext_ bullets do not
+                # inherit <w:br type="column"/> from an anchor paragraph that
+                # starts a newspaper right column.
+                _ext_proto = _blk.xml_proto_xml
+                if "type=\"column\"" in _ext_proto:
+                    try:
+                        _proto_elem = _etree.fromstring(_ext_proto.encode("utf-8"))
+                        for _cbr in _proto_elem.findall(f".//{{{_W_NS}}}br"):
+                            if _cbr.get(f"{{{_W_NS}}}type") == "column":
+                                _cbr.getparent().remove(_cbr)
+                        _ext_proto = _etree.tostring(_proto_elem, encoding="unicode")
+                        _log.debug(
+                            "EXT_PROTO_COL_BREAK_STRIPPED: anchor=%r",
+                            _blk.para_id,
+                        )
+                    except Exception:
+                        pass
                 _new_blocks = [
-                    _LPB(para_id=_pm.para_id, xml_proto_xml=_blk.xml_proto_xml)
+                    _LPB(para_id=_pm.para_id, xml_proto_xml=_ext_proto)
                     for _pm in _extras
                 ]
                 _new_lb[_insert_at:_insert_at] = _new_blocks

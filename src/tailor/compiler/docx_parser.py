@@ -185,8 +185,24 @@ def _classify_section(heading_text: str) -> str:
 def _get_para_text(p_elem) -> str:
     # Collect (kind, value) tokens: "t" for text, "br" for newline, "tab" for tab.
     # Tab is a run-level <w:tab/> element (direct child of <w:r>).
+
+    # Exclude text inside floating-shape containers: <w:drawing> (modern DOCX shapes)
+    # and <w:pict> (legacy VML shapes via mc:AlternateContent).  Without this guard,
+    # a floating textbox whose text duplicates the paragraph's own runs would be
+    # concatenated, producing doubled names like "Gleb ZernovGleb Zernov".
+    # We hold strong references (not id()) because lxml reuses proxy addresses across
+    # separate iter() calls; strong refs keep the proxies alive and ensure identity checks
+    # in the main loop hit the same Python objects.
+    _FLOAT_TAGS = (f"{{{_W}}}drawing", f"{{{_W}}}pict")
+    _excluded: set = set()
+    for _float_tag in _FLOAT_TAGS:
+        for _drw in p_elem.iter(_float_tag):
+            _excluded.update(_drw.iter())
+
     tokens: list[tuple[str, str]] = []
     for elem in p_elem.iter():
+        if _excluded and elem in _excluded:
+            continue
         if elem.tag == f"{{{_W}}}t":
             tokens.append(("t", elem.text or ""))
         elif elem.tag == f"{{{_W}}}br":
@@ -906,8 +922,9 @@ def _try_split_compound_role(pm: ParaModel) -> list[ParaModel] | None:
     body_pm = ParaModel(text=body_text, style=_make_single_run_style(pm), semantic="paragraph")
 
     parts = [title_pm, meta_pm, body_pm]
-    # Tag original compound para so parse_docx can expand it in body_items after
-    # stable IDs are assigned (virtual parts need IDs before they appear in layout_blocks).
+    # Tag original compound para so parse_docx can borrow title_pm's para_id
+    # after assign_stable_ids runs.  The para stays in its physical position in
+    # body_items; its ID maps to title_pm in _build_para_lookup.
     pm._compound_parts = parts
 
     _logger.debug(
@@ -1505,19 +1522,39 @@ def parse_docx(path: str) -> ResumeDocument:
         if _anchor_col_widths:
             doc._newspaper_col_widths = _anchor_col_widths  # type: ignore[attr-defined]
 
-    # Expand compound-split orphans in body_items so their virtual parts (which
-    # now have stable para_ids after assign_stable_ids) each get their own
-    # LayoutParagraphBlock.  _try_split_compound_role tags the original compound
-    # para with ._compound_parts = [title_pm, meta_pm, body_pm].  Without this
-    # expansion the original compound para has no para_id and becomes lb_orphan_N
-    # in layout_blocks, while the virtual parts are never rendered.
-    _expanded_body: list = []
+    # Attach narrow date-column metadata to experience roles.
+    # _date_col_text (string) is a private runtime attribute for debugging.
+    # layout_binding (dict) is a proper RoleEntry field serialised with the IR.
+    # layout_blocks and body_items are not modified.
+    if _table_col_fixed:
+        _narrow_pms = [pm for pm in doc.header_paras
+                       if getattr(pm, "_col_width_twips", None) is not None
+                       and pm._col_width_twips < 2000]  # type: ignore[attr-defined]
+        if _is_narrow_date_only_left_stream(_narrow_pms):
+            _date_groups = _build_narrow_date_groups(_narrow_pms)
+            _exp_roles = [
+                r for sec in doc.sections
+                if sec.semantic_type == "experience"
+                for r in (sec.roles or [])
+            ]
+            for _di, _role in enumerate(_exp_roles):
+                if _di < len(_date_groups):
+                    _role._date_col_text = " ".join(  # type: ignore[attr-defined]
+                        pm.text.strip() for pm in _date_groups[_di] if pm.text.strip()
+                    )
+            _build_role_layout_bindings(doc.sections, _narrow_pms, _date_groups)
+
+    # For compound-split paragraphs: assign the compound para the same para_id
+    # as title_pm (_compound_parts[0]) and simplify its style to one content run.
+    # The renderer looks up para_lookup[para_id] which returns title_pm (with
+    # LLM-updated header text) and writes it into the compound para's single
+    # physical position.  body_items count stays equal to the source paragraph
+    # count.  meta_pm and body_pm carry virtual IDs for semantic use only
+    # (unbound — no layout block).
     for _bi in body_items:
         if not isinstance(_bi, TableBlock) and hasattr(_bi, "_compound_parts"):
-            _expanded_body.extend(_bi._compound_parts)
-        else:
-            _expanded_body.append(_bi)
-    body_items[:] = _expanded_body
+            _bi.para_id = _bi._compound_parts[0].para_id
+            _bi.style = _make_single_run_style(_bi)
 
     # Build serializable layout tree (Option B: XML prototypes as strings).
     # Iterates body_items (original physical document order, never reordered)
@@ -2334,6 +2371,93 @@ def _inject_narrow_date_groups(
             len(date_groups) - len(exp_roles),
             len(exp_roles),
         )
+
+
+def _build_role_layout_bindings(
+    sections: list[ResumeSection],
+    narrow_pms: list[ParaModel],
+    date_groups: list[list[ParaModel]],
+) -> None:
+    """Attach _layout_binding metadata to each matched experience role (N:N).
+
+    Each binding describes the left-column (date sidebar) paragraphs that
+    visually correspond to a right-column experience role block.  Spacers
+    between consecutive date groups are assigned as trailing spacers of the
+    preceding row and leading spacers of the following row.
+
+    The dict is a private attribute — not traversed by assign_stable_ids,
+    updater, or renderer.  layout_blocks and body_items are not changed.
+    """
+    exp_roles: list[RoleEntry] = [
+        r for sec in sections
+        if sec.semantic_type == "experience"
+        for r in (sec.roles or [])
+    ]
+    n = min(len(date_groups), len(exp_roles))
+    if n == 0:
+        return
+
+    # Map each para_id in narrow_pms to its date-group index (None = spacer).
+    pid_to_group: dict[str, int] = {}
+    for gi, grp in enumerate(date_groups):
+        for pm in grp:
+            pid_to_group[pm.para_id] = gi
+
+    # Walk narrow_pms sequentially, collecting spacer blocks between groups.
+    # trailing_spacers[gi] = list of para_ids that follow group gi before the
+    #                         next group starts.
+    # leading_spacers (before group 0) captured at key None.
+    trailing_spacers: dict[int | None, list[str]] = {}
+    cur_spacers: list[str] = []
+    prev_group: int | None = None
+    for pm in narrow_pms:
+        gi = pid_to_group.get(pm.para_id)
+        if gi is None:
+            cur_spacers.append(pm.para_id)
+        else:
+            if cur_spacers:
+                trailing_spacers[prev_group] = list(cur_spacers)
+                cur_spacers = []
+            prev_group = gi
+    if cur_spacers:
+        trailing_spacers[prev_group] = list(cur_spacers)
+
+    # Attach binding to each matched role.
+    for i in range(n):
+        grp = date_groups[i]
+        role = exp_roles[i]
+
+        # Column width is uniform within a group (all paras share the same section).
+        cw = getattr(grp[0], "_col_width_twips", None) if grp else None
+
+        # Leading spacers: the trailing-spacer block of the previous group.
+        leading = trailing_spacers.get(i - 1 if i > 0 else None, [])
+        trailing = trailing_spacers.get(i, [])
+
+        # All right-column paragraph IDs belonging to this role (header first,
+        # then header_extra, meta_lines, bullets).  Used by the renderer to
+        # identify which paragraphs it is permitted to rewrite.
+        right_para_ids = (
+            [role.header.para_id]
+            + [pm.para_id for pm in role.header_extra]
+            + [pm.para_id for pm in role.meta_lines]
+            + [pm.para_id for pm in role.bullets]
+        )
+
+        role.layout_binding = {
+            "kind": "timeline_left_role_right",
+            "row_index": i,
+            "left_para_ids": [pm.para_id for pm in grp],
+            "left_text": " ".join(pm.text.strip() for pm in grp if pm.text.strip()),
+            "left_leading_spacer_ids": leading,
+            "left_trailing_spacer_ids": trailing,
+            "right_anchor_para_id": role.header.para_id,
+            "right_para_ids": right_para_ids,
+            "column_width_twips": cw,
+            "preserve_left_verbatim": True,
+            "right_rewrite_policy": "rewrite_inner_content_only",
+        }
+
 
 
 def _apply_multicolumn_newspaper_fix(

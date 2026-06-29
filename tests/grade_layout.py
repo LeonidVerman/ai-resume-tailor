@@ -66,14 +66,14 @@ _SAMPLES = _TESTS / "samples"
 _CLS_DOCX_DIR = _SAMPLES / "classification" / "docx"
 _GEN_DIR = _SAMPLES / "generation"
 _RES_DOCX_DIR = _SAMPLES / "resume" / "docx"
-_IR_DOCX_DIR = _REPO / "tmp" / "artefacts" / "ir" / "docx"
 _REND_DOCX_DIR = _REPO / "tmp" / "artefacts" / "rendering" / "docx"
+_IR_DOCX_DIR = _REND_DOCX_DIR / "ir"
 
 # PDF-origin paths
 _CLS_PDF_DIR = _SAMPLES / "classification" / "pdf"
 _RES_PDF_DIR = _SAMPLES / "resume" / "pfd"   # note: legacy typo preserved
-_IR_PDF_DIR = _REPO / "tmp" / "artefacts" / "ir" / "pdf"
 _REND_PDF_DIR = _REPO / "tmp" / "artefacts" / "rendering" / "pdf"
+_IR_PDF_DIR = _REND_PDF_DIR / "ir"
 
 # Grading output paths
 _GRADE_DIR = _REPO / "tmp" / "artefacts" / "layout_grading"
