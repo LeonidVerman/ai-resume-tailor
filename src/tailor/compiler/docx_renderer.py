@@ -5305,6 +5305,17 @@ def _build_timeline_row_table(
         if not tc_right.findall(f"{{{_W}}}p"):
             tc_right.append(etree.Element(f"{{{_W}}}p"))
 
+        for _rc_p in tc_right.findall(f"{{{_W}}}p"):
+            _rc_pPr = _rc_p.find(f"{{{_W}}}pPr")
+            if _rc_pPr is None:
+                continue
+            _rc_sp = _rc_pPr.find(f"{{{_W}}}spacing")
+            if _rc_sp is None:
+                continue
+            _rc_sp.attrib.pop(f"{{{_W}}}before", None)
+            if not _rc_sp.attrib:
+                _rc_pPr.remove(_rc_sp)
+
     # ── Compute consumed_pids ─────────────────────────────────────────────
     _consumed: set[str] = set()
     for _role in timeline_roles:
@@ -5611,6 +5622,25 @@ def _build_timeline_segments(
 
             if not tc_right.findall(f"{{{_W}}}p"):
                 tc_right.append(etree.Element(f"{{{_W}}}p"))
+
+            # Strip w:spacing w:before from ALL right-cell paragraphs.
+            # In the newspaper-column template, w:before values on paragraphs after
+            # a column break had no visual effect (column break resets position).
+            # Inside a table cell every w:before renders as real whitespace above
+            # that paragraph, inflating row heights.  Multi-line role headers carry
+            # identical w:before on all header paragraphs (not just the first),
+            # so stripping only para[0] is insufficient.
+            # w:after (always absent), w:line, and w:lineRule are left untouched.
+            for _rc_p in tc_right.findall(f"{{{_W}}}p"):
+                _rc_pPr = _rc_p.find(f"{{{_W}}}pPr")
+                if _rc_pPr is None:
+                    continue
+                _rc_sp = _rc_pPr.find(f"{{{_W}}}spacing")
+                if _rc_sp is None:
+                    continue
+                _rc_sp.attrib.pop(f"{{{_W}}}before", None)
+                if not _rc_sp.attrib:
+                    _rc_pPr.remove(_rc_sp)
 
         return tbl
 

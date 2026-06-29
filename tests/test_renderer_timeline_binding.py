@@ -1065,3 +1065,91 @@ def test_s35_v2_cells_valign_top():
                 assert vAlign.get(f"{{{_W_NS}}}val") == "top", (
                     f"w:vAlign must be 'top', got {vAlign.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')!r}"
                 )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_right_cell_first_para_no_before():
+    """First paragraph in each right cell must have w:spacing w:before stripped.
+
+    In the newspaper-column template, w:before on the first paragraph after a
+    column break has no visual effect (column break resets vertical position).
+    Inside a table cell it renders as literal whitespace above the role title,
+    inflating row heights and spreading content across extra pages.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg in (seg1, seg2):
+        if seg is None:
+            continue
+        for tr in seg.findall(f"{{{_W_NS}}}tr"):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if len(cells) < 2:
+                continue
+            tc_right = cells[1]  # second cell = right/role-content column
+            paras = tc_right.findall(f"{{{_W_NS}}}p")
+            if not paras:
+                continue
+            first_para = paras[0]
+            pPr = first_para.find(f"{{{_W_NS}}}pPr")
+            if pPr is None:
+                continue
+            sp = pPr.find(f"{{{_W_NS}}}spacing")
+            if sp is None:
+                continue
+            before_val = sp.get(f"{{{_W_NS}}}before")
+            assert before_val is None or int(before_val) == 0, (
+                f"First right-cell para has w:spacing w:before={before_val} — "
+                "must be stripped: in a table cell this adds whitespace above the "
+                "role title, inflating row height and page count"
+            )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_right_cell_all_paras_no_before():
+    """All paragraphs in each right cell must have w:spacing w:before stripped.
+
+    Multi-line role headers carry w:before on ALL header paragraphs, not just
+    para[0], so all right-cell paras must be stripped.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg_idx, seg in enumerate((seg1, seg2)):
+        if seg is None:
+            continue
+        for row_idx, tr in enumerate(seg.findall(f"{{{_W_NS}}}tr")):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if len(cells) < 2:
+                continue
+            tc_right = cells[1]
+            for para_idx, para in enumerate(tc_right.findall(f"{{{_W_NS}}}p")):
+                pPr = para.find(f"{{{_W_NS}}}pPr")
+                if pPr is None:
+                    continue
+                sp = pPr.find(f"{{{_W_NS}}}spacing")
+                if sp is None:
+                    continue
+                before_val = sp.get(f"{{{_W_NS}}}before")
+                assert before_val is None or int(before_val) == 0, (
+                    f"seg{seg_idx} row{row_idx} para{para_idx}: "
+                    f"w:spacing w:before={before_val} must be stripped"
+                )
