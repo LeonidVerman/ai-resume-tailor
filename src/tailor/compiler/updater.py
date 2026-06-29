@@ -3895,10 +3895,24 @@ def _find_summary_anchors(
         return None
 
     # Walk backwards to find the trailing cluster of empty paragraphs.
+    # Geometry guard: reject candidates in narrow newspaper columns (date/sidebar
+    # areas).  Injecting a multi-sentence summary into a ≤180pt column produces a
+    # broken narrow vertical layout.  When the trailing empty slots belong to a
+    # narrow column, stop scanning rather than reaching further back.
+    _col_widths: "dict[str, int] | None" = getattr(doc, "_newspaper_col_widths", None)
+    _MIN_ANCHOR_WIDTH_TWIPS = 3600  # 180 pt in twips
     cluster_start = len(header_paras)
     for i in range(len(header_paras) - 1, -1, -1):
         pm = header_paras[i]
         if pm.para_id and not pm.text.strip():
+            if _col_widths is not None:
+                _w = _col_widths.get(pm.para_id)
+                if _w is not None and _w < _MIN_ANCHOR_WIDTH_TWIPS:
+                    _log.debug(
+                        "SUMMARY_ANCHOR_REJECTED_NARROW: pid=%r width_twips=%d threshold=%d",
+                        pm.para_id, _w, _MIN_ANCHOR_WIDTH_TWIPS,
+                    )
+                    break  # narrow column — stop; do not use slots from this region
             cluster_start = i
         else:
             break
