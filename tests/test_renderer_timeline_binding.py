@@ -1153,3 +1153,127 @@ def test_s35_v2_right_cell_all_paras_no_before():
                     f"seg{seg_idx} row{row_idx} para{para_idx}: "
                     f"w:spacing w:before={before_val} must be stripped"
                 )
+
+
+# ---------------------------------------------------------------------------
+# Role header date-stripping: timeline_left_role_right roles must not have
+# date ranges duplicated in the right-cell header (dates live in left cell)
+# ---------------------------------------------------------------------------
+
+import re as _re
+_DATE_PATTERN = _re.compile(
+    r"\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|"
+    r"Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|"
+    r"Dec(?:ember)?)\b|\b(20[12]\d|19\d\d)\b",
+    _re.IGNORECASE,
+)
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_right_cell_headers_no_date_range():
+    """For timeline_left_role_right roles, the right-cell first paragraph
+    (role header) must not contain a date range.
+
+    Dates are displayed only in the left table cell.  Before the fix the
+    updater's date-injection block appended ' | November 2022 – March 2025'
+    directly to the role title, duplicating the date from the left column.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg_idx, seg in enumerate((seg1, seg2)):
+        if seg is None:
+            continue
+        for row_idx, tr in enumerate(seg.findall(f"{{{_W_NS}}}tr")):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if len(cells) < 2:
+                continue
+            right_paras = cells[1].findall(f"{{{_W_NS}}}p")
+            if not right_paras:
+                continue
+            header_text = "".join(
+                t.text or "" for t in right_paras[0].iter(f"{{{_W_NS}}}t")
+            )
+            assert not _DATE_PATTERN.search(header_text), (
+                f"seg{seg_idx} row{row_idx}: right-cell role header contains a date "
+                f"range — dates must only appear in the left cell.\n"
+                f"  header text: {header_text!r}"
+            )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_left_cells_still_have_dates():
+    """Left-cell paragraphs must still contain date text after the header fix.
+
+    Stripping dates from the right-cell header must not also clear them from
+    the left cell.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    rows_with_dates = 0
+    for seg in (seg1, seg2):
+        if seg is None:
+            continue
+        for tr in seg.findall(f"{{{_W_NS}}}tr"):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if not cells:
+                continue
+            left_text = "".join(
+                t.text or "" for t in cells[0].iter(f"{{{_W_NS}}}t")
+            )
+            if _DATE_PATTERN.search(left_text):
+                rows_with_dates += 1
+
+    assert rows_with_dates >= 4, (
+        f"Expected at least 4 table rows with dates in the left cell, "
+        f"got {rows_with_dates} — dates may have been incorrectly cleared"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_role_count_unchanged():
+    """Role count in the timeline table must match the original experience roles.
+
+    The date-header fix must not add or remove table rows.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    original, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    total_rows = sum(
+        len(seg.findall(f"{{{_W_NS}}}tr"))
+        for seg in (seg1, seg2)
+        if seg is not None
+    )
+    orig_role_count = sum(len(sec.roles or []) for sec in original.sections)
+    assert total_rows == orig_role_count, (
+        f"Table row count {total_rows} != original role count {orig_role_count} "
+        "— the date-header fix must not change table structure"
+    )

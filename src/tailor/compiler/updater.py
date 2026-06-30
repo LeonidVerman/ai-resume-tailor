@@ -3092,11 +3092,25 @@ def _update_experience_classified(
     # no year/month, inject the date string into the template header text.  The
     # orphaned date-column paras in header_paras are cleared by apply_tailored
     # when _dates_injected is set on the returned section.
+    #
+    # Exception: timeline_left_role_right roles already have dates in the left
+    # table cell (v2 renderer).  Injecting the date into the right-cell header
+    # would duplicate it.  Skip injection for those roles; their left_para_ids
+    # carry the date display and need no right-cell supplement.
     _dates_injected = False
     if llm_roles:
         for _di, _upd in enumerate(updated_roles):
             if _di >= len(llm_roles):
                 break
+            # timeline_left_role_right: left cell already carries the date.
+            _di_orig_lb = orig.roles[_di].layout_binding if _di < len(orig.roles) else None
+            if (_di_orig_lb or {}).get("kind") == "timeline_left_role_right":
+                _log.debug(
+                    "DATE_INJECTION_SKIPPED: role=%r timeline_left_role_right "
+                    "(date already in left cell)",
+                    _upd.role_id,
+                )
+                continue
             _llm_hdr = llm_roles[_di].header
             _pipe_idx = _llm_hdr.rfind(" | ")
             if _pipe_idx == -1:
