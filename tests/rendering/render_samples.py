@@ -102,7 +102,7 @@ class _Compiled:
     out_ir: Path         # saved IR JSON
     grader_pdf: Path     # final PDF destination for grade_layout.py
     tag: str             # log prefix
-    timeline_v2: bool = False  # whether v2 timeline table was enabled for this render
+    timeline_v2_disabled: bool = False  # whether v2 kill switch was engaged for this render
 
 
 # ---------------------------------------------------------------------------
@@ -252,7 +252,7 @@ def _generate_screenshot(
 # ---------------------------------------------------------------------------
 
 def _compile_sample(pair: SamplePair, verbose: bool = True,
-                    timeline_v2: bool = False) -> _Compiled | None:
+                    timeline_v2_disabled: bool = False) -> _Compiled | None:
     """Stages 1–5a: load JSON, compile DOCX, save IR.  Returns None on failure."""
     tag = f"[{pair.prefix}/{pair.source_kind.upper()}]"
 
@@ -260,7 +260,7 @@ def _compile_sample(pair: SamplePair, verbose: bool = True,
         print(f"\n{tag} -- compiling ------------------------------------------")
         print(f"  resume: {pair.resume_path.relative_to(_REPO)}")
         print(f"  gen:    {pair.gen_path.relative_to(_REPO)}")
-        print(f"  TIMELINE_ROW_TABLE_V2_ENABLED={timeline_v2}")
+        print(f"  TIMELINE_V2: {'DISABLED' if timeline_v2_disabled else 'auto'}")
 
     # ── Stage 1: load LLM text and structured_resume ──────────────────────
     structured_resume_data = None
@@ -337,9 +337,9 @@ def _compile_sample(pair: SamplePair, verbose: bool = True,
     try:
         sys.path.insert(0, str(_REPO / "src"))
 
-        if timeline_v2:
+        if timeline_v2_disabled:
             from tailor.compiler.docx_renderer import _set_timeline_row_table_v2
-            _set_timeline_row_table_v2(True)
+            _set_timeline_row_table_v2(False)
 
         try:
             if pair.source_kind == "docx":
@@ -364,9 +364,9 @@ def _compile_sample(pair: SamplePair, verbose: bool = True,
                     classification=classification,
                 )
         finally:
-            if timeline_v2:
+            if timeline_v2_disabled:
                 from tailor.compiler.docx_renderer import _set_timeline_row_table_v2
-                _set_timeline_row_table_v2(False)
+                _set_timeline_row_table_v2(True)  # restore default
     except Exception as e:
         print(f"{tag} FAIL [stage=compile-resume] {type(e).__name__}: {e}")
         if verbose:
@@ -405,7 +405,8 @@ def _compile_sample(pair: SamplePair, verbose: bool = True,
         print(f"  rendIR-> {out_rend_ir.relative_to(_REPO)}")
 
     return _Compiled(pair=pair, out_docx=out_docx, out_ir=out_ir,
-                     grader_pdf=grader_pdf, tag=tag, timeline_v2=timeline_v2)
+                     grader_pdf=grader_pdf, tag=tag,
+                     timeline_v2_disabled=timeline_v2_disabled)
 
 
 def _batch_docx_to_pdf(compiled_list: list[_Compiled]) -> dict[Path, Path]:
@@ -521,7 +522,7 @@ def _finish_sample(compiled: _Compiled, batch_pdf_map: dict[Path, Path],
         )
 
     if verbose:
-        v2_label = " [timeline-v2=ON]" if compiled.timeline_v2 else ""
+        v2_label = " [timeline-v2=DISABLED]" if compiled.timeline_v2_disabled else " [timeline-v2=auto]"
         print(f"{tag} OK{v2_label}")
         print(f"  DOCX  -> {compiled.out_docx}")
         print(f"  PDF   -> {compiled.grader_pdf}")
@@ -553,10 +554,14 @@ def main(argv: list[str] | None = None) -> int:
                         help="Render only DOCX-origin samples.")
     parser.add_argument("--pdf-only", action="store_true", default=False,
                         help="Render only PDF-origin samples.")
-    parser.add_argument("--timeline-row-table-v2", dest="timeline_v2",
+    parser.add_argument("--no-timeline-v2", dest="disable_timeline_v2",
                         action="store_true", default=False,
-                        help="Enable experimental v2 timeline table renderer "
-                             "(default: off — production uses flat-loop path).")
+                        help="Disable the v2 timeline table renderer (kill switch). "
+                             "By default v2 is auto-enabled for eligible templates.")
+    parser.add_argument("--timeline-row-table-v2", dest="timeline_v2_legacy",
+                        action="store_true", default=False,
+                        help="Deprecated: v2 is now on by default. "
+                             "Use --no-timeline-v2 to disable.")
     parser.add_argument("-h", "--help", action="help",
                         help="Show this help message and exit.")
 
@@ -565,6 +570,8 @@ def main(argv: list[str] | None = None) -> int:
     filter_arg = " ".join(args.filter) if args.filter else None
     screenshots = args.screenshots
     zoom = args.screenshot_zoom
+    # v2 is on by default; --no-timeline-v2 disables it.
+    timeline_v2_disabled = args.disable_timeline_v2
 
     print("=" * 60)
     print("  render_samples.py - deterministic rendering test")
@@ -573,7 +580,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  Screenshots: ON (zoom={zoom}x)")
     else:
         print("  Screenshots: OFF")
-    print(f"  TIMELINE_ROW_TABLE_V2_ENABLED={args.timeline_v2}")
+    print(f"  TIMELINE_V2: {'DISABLED (--no-timeline-v2)' if timeline_v2_disabled else 'auto (on for eligible templates)'}")
 
     try:
         pairs, skips = discover(filter_arg)
@@ -608,7 +615,8 @@ def main(argv: list[str] | None = None) -> int:
     # ── Phase 1: compile all samples (pure Python, no LO calls) ───────────
     compiled_list: list[_Compiled] = []
     for pair in pairs:
-        c = _compile_sample(pair, verbose=True, timeline_v2=args.timeline_v2)
+        c = _compile_sample(pair, verbose=True,
+                            timeline_v2_disabled=timeline_v2_disabled)
         if c:
             compiled_list.append(c)
         else:

@@ -6028,8 +6028,28 @@ def _render_from_layout_blocks(
             len(_timeline_left_pids),
         )
 
-    # Timeline v2: two-segment table reconstruction (feature-flagged).
-    _tl_v2_active = bool(_timeline_left_pids and _TIMELINE_ROW_TABLE_V2_ENABLED)
+    # Timeline v2: two-segment table reconstruction.
+    # Auto-enabled when _TIMELINE_ROW_TABLE_V2_ENABLED is True (the default) and
+    # this document has timeline layout bindings with valid left/right para_ids.
+    # Set _TIMELINE_ROW_TABLE_V2_ENABLED=False via _set_timeline_row_table_v2(False)
+    # to disable globally (kill switch).
+    _tl_v2_eligible = (
+        bool(_timeline_left_pids)
+        and any(
+            (r.layout_binding or {}).get("left_para_ids")
+            for sec in (doc.sections or [])
+            for r in (sec.roles or [])
+            if (r.layout_binding or {}).get("kind") == "timeline_left_role_right"
+        )
+    )
+    _tl_v2_active = bool(_tl_v2_eligible and _TIMELINE_ROW_TABLE_V2_ENABLED)
+    _log.debug(
+        "TIMELINE_V2_STATUS: enabled=%s eligible=%s active=%s timeline_pids=%d",
+        _TIMELINE_ROW_TABLE_V2_ENABLED,
+        _tl_v2_eligible,
+        _tl_v2_active,
+        len(_timeline_left_pids),
+    )
     # v2 replaces the two-column layout with explicit tables, so the main sectPr
     # must NOT carry w:cols.  The _main_is_multicolumn detection above may have
     # injected w:cols into sectPr (to read column widths); strip it now so
@@ -6057,8 +6077,12 @@ def _render_from_layout_blocks(
         _tl_seg2_trigger_pid = _tl_diag.get("seg2_trigger_pid")
         _tl_sectpr_pid = _tl_diag.get("sectpr_pid")
         _tl_multicol_strip_pids = frozenset(_tl_diag.get("multicol_sectpr_strip_pids") or [])
-        _log.debug(
-            "TIMELINE_V2_READY: consumed=%d, seg1_heading=%r, seg2_trigger=%r, sectpr=%r",
+        _tl_seg1_rows = len(_tl_seg1_tbl.findall(f"{{{_W}}}tr")) if _tl_seg1_tbl is not None else 0
+        _tl_seg2_rows = len(_tl_seg2_tbl.findall(f"{{{_W}}}tr")) if _tl_seg2_tbl is not None else 0
+        _log.info(
+            "TIMELINE_V2_READY: seg1_rows=%d seg2_rows=%d consumed=%d "
+            "seg1_heading=%r seg2_trigger=%r sectpr=%r",
+            _tl_seg1_rows, _tl_seg2_rows,
             len(_tl_consumed), _tl_seg1_heading_pid, _tl_seg2_trigger_pid, _tl_sectpr_pid,
         )
 
@@ -6985,13 +7009,20 @@ _OVERSIZED_ROW_PARA_THRESHOLD = 14  # trigger row split when any cell exceeds th
 _RENDERER_CREATED_TABLES: set[Any] = set()
 
 
-# Opt-in flag for the v2 two-segment timeline table renderer.
-# Off by default; enabled via _set_timeline_row_table_v2(True) in tests
-# or by setting the TIMELINE_ROW_TABLE_V2=1 environment variable.
-_TIMELINE_ROW_TABLE_V2_ENABLED: bool = False
+# Kill switch for the v2 two-segment timeline table renderer.
+# True by default: v2 auto-activates for any document whose roles carry
+# layout_binding.kind == "timeline_left_role_right" with valid left_para_ids.
+# Set to False via _set_timeline_row_table_v2(False) to disable globally
+# (e.g. in tests that validate the flat newspaper-column path).
+_TIMELINE_ROW_TABLE_V2_ENABLED: bool = True
 
 
 def _set_timeline_row_table_v2(enabled: bool = True) -> None:
+    """Enable or disable the v2 timeline table renderer globally.
+
+    Pass False to engage the kill switch and force the flat newspaper-column
+    path regardless of layout_binding eligibility.
+    """
     global _TIMELINE_ROW_TABLE_V2_ENABLED
     _TIMELINE_ROW_TABLE_V2_ENABLED = enabled
 
@@ -7498,6 +7529,12 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     ValueError
         If any paragraph in doc.all_paras has no xml_proto (cannot render).
     """
+    _log.info(
+        "RENDER_DOCX_START: template=%s output=%s source_kind=%s "
+        "TIMELINE_V2_ENABLED=%s",
+        template_path, output_path, doc.source_kind,
+        _TIMELINE_ROW_TABLE_V2_ENABLED,
+    )
     # Start from a copy of the template so styles and document settings are preserved
     # PDF two-column documents: use a fresh minimal DOCX rather than copying
     # the style template.  Style templates carry DOCX compat settings (e.g.
