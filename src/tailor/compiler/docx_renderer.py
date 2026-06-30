@@ -2874,17 +2874,6 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 if len(_bk_group) >= 2:
                     _bk_tbl = _build_contact_row_table(_bk_group, right_w, doc_part)
                     if _bk_tbl is not None:
-                        if not has_dark_hdr and _lo_rco > 0:
-                            # Light-header: LibreOffice applies sub-table tblInd from the
-                            # right cell's left edge (text_margin + left_w/20).  Subtract
-                            # left_margin_twips so the sub-table starts at the correct
-                            # absolute position within the right column.
-                            _bk_tPr = _bk_tbl.find(f"{{{_W}}}tblPr")
-                            if _bk_tPr is not None:
-                                _bk_tInd = _bk_tPr.find(f"{{{_W}}}tblInd")
-                                if _bk_tInd is not None:
-                                    _bk_cur = int(_bk_tInd.get(f"{{{_W}}}w", "0"))
-                                    _bk_tInd.set(f"{{{_W}}}w", str(max(0, _bk_cur - left_margin_twips)))
                         _rtc.append(_bk_tbl)
                         _rc_first_emitted = True
                         continue
@@ -2948,8 +2937,108 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         # Render non-above header paras (contact area, title) as the first body row.
         # In parallel mode, _hdr_left/_hdr_right are not included in any section and
         # would otherwise be silently dropped.
+        #
+        # Cross-column contact bar detection: when paras from both the left and
+        # right header lists share the same y-position (±3 pt), they form a
+        # horizontal contact bar (e.g. email | phone | LinkedIn) that spans both
+        # columns.  Rendering them in separate table cells produces y-misalignment
+        # because the cells have different heights.  Instead, separate them into:
+        #   Row A — name + title content (non-contact paras)
+        #   Row B — merged full-width contact bar
         if _hdr_left or _hdr_right:
-            _make_two_col_row(_hdr_left, _hdr_right)
+            _hl_ys = {id(_pm): (_pm.paragraph_profile.y_top_pt or 0.0)
+                      for _pm in _hdr_left if _pm.paragraph_profile}
+            _hr_ys = {id(_pm): (_pm.paragraph_profile.y_top_pt or 0.0)
+                      for _pm in _hdr_right if _pm.paragraph_profile}
+            _cross_ids: "set" = set()
+            for _lid, _ly in _hl_ys.items():
+                for _rid, _ry in _hr_ys.items():
+                    if abs(_ly - _ry) <= 3.0:
+                        _cross_ids.add(_lid)
+                        _cross_ids.add(_rid)
+
+            if _cross_ids:
+                # Split header into content paras and contact-bar paras
+                _hl_c = [_pm for _pm in _hdr_left  if id(_pm) not in _cross_ids]
+                _hr_c = [_pm for _pm in _hdr_right if id(_pm) not in _cross_ids]
+                _contact = [_pm for _pm in _hdr_left + _hdr_right if id(_pm) in _cross_ids]
+
+                if _hl_c or _hr_c:
+                    _make_two_col_row(_hl_c, _hr_c)
+
+                # Build merged full-width contact bar row
+                # Compute absolute x from text margin for each contact para
+                _rco_pt = (layout.column_split_x or 0.0) - (layout.margin_left_pt or 0.0)
+                _c_abs: "list" = []
+                for _pm in _contact:
+                    _pp = _pm.paragraph_profile
+                    _ind_pt = (_pp.indent_left_pt or 0.0) if _pp else 0.0
+                    _col = _pp.column_id if _pp else None
+                    _c_abs.append(round(_rco_pt + _ind_pt if _col == "right" else _ind_pt, 1))
+                _c_pairs = sorted(zip(_c_abs, _contact), key=lambda _t: _t[0])
+                _c_uxs = [_t[0] for _t in _c_pairs]  # abs x from text margin (pt)
+                _c_sorted = [_t[1] for _t in _c_pairs]
+
+                # Column widths (pt gaps → twips)
+                _c_cwx: "list" = []
+                for _ci in range(len(_c_uxs) - 1):
+                    _c_cwx.append(max(200, int((_c_uxs[_ci + 1] - _c_uxs[_ci]) * 20)))
+                # Last col fills to right edge of outer table from text margin
+                _c_last = max(200, actual_tbl_w - left_margin_twips - int(_c_uxs[0] * 20) - sum(_c_cwx))
+                _c_cwx.append(_c_last)
+
+                # Sub-table indent: leftmost contact para's absolute x from page left
+                _c_tblInd = left_margin_twips + int(_c_uxs[0] * 20)
+                _c_tblW   = _c_tblInd + sum(_c_cwx)
+
+                _c_tbl = etree.Element(f"{{{_W}}}tbl")
+                _c_tblPr = etree.SubElement(_c_tbl, f"{{{_W}}}tblPr")
+                _c_tblW_el = etree.SubElement(_c_tblPr, f"{{{_W}}}tblW")
+                _c_tblW_el.set(f"{{{_W}}}w", str(_c_tblW))
+                _c_tblW_el.set(f"{{{_W}}}type", "dxa")
+                _c_tblInd_el = etree.SubElement(_c_tblPr, f"{{{_W}}}tblInd")
+                _c_tblInd_el.set(f"{{{_W}}}w", str(_c_tblInd))
+                _c_tblInd_el.set(f"{{{_W}}}type", "dxa")
+                _c_tblLay = etree.SubElement(_c_tblPr, f"{{{_W}}}tblLayout")
+                _c_tblLay.set(f"{{{_W}}}type", "fixed")
+                _c_tblBrd = etree.SubElement(_c_tblPr, f"{{{_W}}}tblBorders")
+                for _s in ("top", "left", "bottom", "right", "insideH", "insideV"):
+                    _b = etree.SubElement(_c_tblBrd, f"{{{_W}}}{_s}")
+                    _b.set(f"{{{_W}}}val", "none")
+                _c_tblMar = etree.SubElement(_c_tblPr, f"{{{_W}}}tblCellMar")
+                for _s in ("top", "left", "bottom", "right"):
+                    _m = etree.SubElement(_c_tblMar, f"{{{_W}}}{_s}")
+                    _m.set(f"{{{_W}}}w", "0")
+                    _m.set(f"{{{_W}}}type", "dxa")
+                _c_tr = etree.SubElement(_c_tbl, f"{{{_W}}}tr")
+                for _ci, (_ax, _pm) in enumerate(_c_pairs):
+                    _c_tc = etree.SubElement(_c_tr, f"{{{_W}}}tc")
+                    _c_tcPr = etree.SubElement(_c_tc, f"{{{_W}}}tcPr")
+                    _c_tcW = etree.SubElement(_c_tcPr, f"{{{_W}}}tcW")
+                    _c_tcW.set(f"{{{_W}}}w", str(_c_cwx[_ci]))
+                    _c_tcW.set(f"{{{_W}}}type", "dxa")
+                    _c_pe = build_para_element(_pm, doc_part=doc_part)
+                    # Zero out para indent — position comes from tblInd + column layout
+                    _c_pPr = _c_pe.find(f"{{{_W}}}pPr")
+                    if _c_pPr is not None:
+                        _c_ind = _c_pPr.find(f"{{{_W}}}ind")
+                        if _c_ind is not None:
+                            _c_ind.set(f"{{{_W}}}left", "0")
+                    _c_tc.append(_c_pe)
+
+                # Merged row wrapping the contact sub-table
+                _m_tr = etree.SubElement(tbl, f"{{{_W}}}tr")
+                _m_tc = etree.SubElement(_m_tr, f"{{{_W}}}tc")
+                _m_tcPr = etree.SubElement(_m_tc, f"{{{_W}}}tcPr")
+                _m_tcW = etree.SubElement(_m_tcPr, f"{{{_W}}}tcW")
+                _m_tcW.set(f"{{{_W}}}w", str(actual_tbl_w))
+                _m_tcW.set(f"{{{_W}}}type", "dxa")
+                if n_grid_cols > 1:
+                    _m_gs = etree.SubElement(_m_tcPr, f"{{{_W}}}gridSpan")
+                    _m_gs.set(f"{{{_W}}}val", str(n_grid_cols))
+                _m_tc.append(_c_tbl)
+            else:
+                _make_two_col_row(_hdr_left, _hdr_right)
 
         # Sort sections by heading y, then render each as: heading row + body row.
         _sorted_secs = sorted(
