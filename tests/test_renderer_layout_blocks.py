@@ -775,14 +775,23 @@ def _make_para_xml(runs: list[dict]) -> str:
         text: str
         w (optional): int   — w:w val
         spacing (optional): int  — w:spacing val
+        sz (optional): int  — w:sz val (half-points, e.g. 12 = 6pt)
+        rfonts (optional): str  — w:rFonts w:ascii value
+        bold (optional): bool  — w:b element present when True
     """
     run_fragments = []
     for r in runs:
         rpr_parts = []
+        if "rfonts" in r:
+            rpr_parts.append(f'<w:rFonts w:ascii="{r["rfonts"]}"/>')
+        if "sz" in r:
+            rpr_parts.append(f'<w:sz w:val="{r["sz"]}"/>')
         if "w" in r:
             rpr_parts.append(f'<w:w w:val="{r["w"]}"/>')
         if "spacing" in r:
             rpr_parts.append(f'<w:spacing w:val="{r["spacing"]}"/>')
+        if r.get("bold"):
+            rpr_parts.append("<w:b/>")
         rpr = f"<w:rPr>{''.join(rpr_parts)}</w:rPr>" if rpr_parts else ""
         run_fragments.append(
             f'<w:r>{rpr}<w:t xml:space="preserve">{r["text"]}</w:t></w:r>'
@@ -938,4 +947,100 @@ class TestSetParaTextMicroKerning:
         elem = self._call(runs, "SPACED OUT")
         assert self._run_spacing(elem, 0) is not None, (
             "w:spacing=81 is intentional decorative letter-spacing and must be kept"
+        )
+
+    # --- w:sz outlier-artifact stripping tests ---
+
+    def _run_sz(self, elem, run_index: int):
+        """Return int w:sz val for run at run_index, or None if absent."""
+        runs = elem.findall(f"{{{_W}}}r")
+        if run_index >= len(runs):
+            return None
+        rpr = runs[run_index].find(f"{{{_W}}}rPr")
+        if rpr is None:
+            return None
+        sz = rpr.find(f"{{{_W}}}sz")
+        return int(sz.get(f"{{{_W}}}val")) if sz is not None else None
+
+    def _run_rfonts(self, elem, run_index: int):
+        """Return w:rFonts w:ascii value for run at run_index, or None if absent."""
+        runs = elem.findall(f"{{{_W}}}r")
+        if run_index >= len(runs):
+            return None
+        rpr = runs[run_index].find(f"{{{_W}}}rPr")
+        if rpr is None:
+            return None
+        rf = rpr.find(f"{{{_W}}}rFonts")
+        return rf.get(f"{{{_W}}}ascii") if rf is not None else None
+
+    def test_sz_12_stripped_from_leading_runs(self):
+        """sz=12 (6pt) on the first runs is a PDF→DOCX icon-glyph artifact.
+
+        After _set_para_text the first runs must lose their explicit w:sz so the
+        redistributed body-text chars render at the paragraph style's normal size
+        instead of 6pt ('Led a' rendering tiny).
+        """
+        # Mirrors the actual S35 pattern: 2 tiny-sz runs followed by normal runs.
+        runs = [
+            {"text": "Le", "sz": 12, "rfonts": "Times New Roman"},
+            {"text": "d a", "sz": 12, "rfonts": "Times New Roman"},
+            {"text": " tech-debt repayment initiative"},
+            {"text": " to improve maintainability"},
+        ]
+        elem = self._call(runs, "Led a tech-debt repayment initiative to improve maintainability")
+        assert self._run_sz(elem, 0) is None, (
+            "w:sz=12 (6pt) on the first run must be stripped — PDF icon artifact "
+            "causes 'Led a' to render at 6pt after proportional redistribution"
+        )
+        assert self._run_sz(elem, 1) is None, (
+            "w:sz=12 on the second run must also be stripped"
+        )
+
+    def test_sz_12_also_strips_rfonts(self):
+        """When sz=12 is stripped, w:rFonts on the same run is also stripped.
+
+        The artifact run carries both sz=12 and rFonts='Times New Roman'; both must
+        be removed so redistributed chars inherit the correct paragraph font.
+        """
+        runs = [
+            {"text": "Le", "sz": 12, "rfonts": "Times New Roman"},
+            {"text": "d a tech-debt repayment initiative to improve maintainability"},
+        ]
+        elem = self._call(runs, "Led a tech-debt repayment initiative to improve maintainability")
+        assert self._run_rfonts(elem, 0) is None, (
+            "w:rFonts must be stripped alongside sz=12 — Times New Roman at 6pt is "
+            "always an artifact; leaving it causes a font mismatch for the first chars"
+        )
+
+    def test_sz_20_preserved(self):
+        """sz=20 (10pt) is a legitimate resume text size and must not be stripped."""
+        runs = [
+            {"text": "P", "sz": 20, "rfonts": "Times New Roman"},
+            {"text": "rojects"},
+        ]
+        elem = self._call(runs, "Projects")
+        assert self._run_sz(elem, 0) == 20, (
+            "w:sz=20 (10pt) is intentional and must be preserved by the outlier-sz pass"
+        )
+
+    def test_sz_threshold_boundary_15_stripped(self):
+        """sz=15 (7.5pt) is at the strip ceiling and must be removed."""
+        runs = [
+            {"text": "Xx", "sz": 15},
+            {"text": " normal text here goes on"},
+        ]
+        elem = self._call(runs, "Xx normal text here goes on")
+        assert self._run_sz(elem, 0) is None, (
+            "w:sz=15 is at the artifact ceiling (≤15) and must be stripped"
+        )
+
+    def test_sz_threshold_boundary_16_preserved(self):
+        """sz=16 (8pt) is just above the strip ceiling and must be kept."""
+        runs = [
+            {"text": "Xx", "sz": 16},
+            {"text": " normal text here goes on"},
+        ]
+        elem = self._call(runs, "Xx normal text here goes on")
+        assert self._run_sz(elem, 0) == 16, (
+            "w:sz=16 (8pt) is above the artifact ceiling and must not be stripped"
         )

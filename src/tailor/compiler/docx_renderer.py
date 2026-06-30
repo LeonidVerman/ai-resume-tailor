@@ -938,6 +938,38 @@ def _set_para_text(p_elem, text: str) -> None:
             if _src_ww is not None and _krpr.find(f"{{{_W}}}w") is None:
                 _krpr.append(deepcopy(_src_ww))
 
+    # Outlier-sz normalization: strip w:sz/w:szCs/w:rFonts from content runs
+    # carrying an artifact font size inherited from PDF→DOCX icon/bullet glyphs.
+    # PDF converters assign w:sz=12 (6pt) to FontAwesome bullet character runs.
+    # After proportional redistribution the first chars of rewritten body text
+    # land in these runs and render at 6pt — visually broken ("Led a" tiny).
+    # Strip threshold ≤ 15 (7.5pt): no legitimate resume body text is that small.
+    # rFonts is also stripped from the same runs; the artifact font (e.g. Times
+    # New Roman at 6pt) is never intentional and causes an additional mismatch.
+    _SZ_ARTIFACT_CEIL = 15
+    for _si, _sr in enumerate(all_runs):
+        if _si in ws_text or _si in vml_indices:
+            continue
+        _srpr = _sr.find(f"{{{_W}}}rPr")
+        if _srpr is None:
+            continue
+        _ssz = _srpr.find(f"{{{_W}}}sz")
+        if _ssz is None:
+            continue
+        try:
+            _sz_val = int(_ssz.get(f"{{{_W}}}val") or 0)
+        except (ValueError, TypeError):
+            continue
+        if _sz_val > _SZ_ARTIFACT_CEIL:
+            continue
+        _srpr.remove(_ssz)
+        _sszcs = _srpr.find(f"{{{_W}}}szCs")
+        if _sszcs is not None:
+            _srpr.remove(_sszcs)
+        _srfonts = _srpr.find(f"{{{_W}}}rFonts")
+        if _srfonts is not None:
+            _srpr.remove(_srfonts)
+
     # Clear text from all runs (direct w:t children only; VML content is untouched).
     for r in all_runs:
         for t in r.findall(f"{{{_W}}}t"):
