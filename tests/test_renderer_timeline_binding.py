@@ -1277,3 +1277,109 @@ def test_s35_v2_role_count_unchanged():
         f"Table row count {total_rows} != original role count {orig_role_count} "
         "— the date-header fix must not change table structure"
     )
+
+
+# ---------------------------------------------------------------------------
+# header_extra / "Highlights:" merge suppression for timeline_left_role_right
+# ---------------------------------------------------------------------------
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_right_cell_headers_no_highlights():
+    """Right-cell role headers must not contain 'Highlights:' text.
+
+    For timeline_left_role_right roles the DOCX parser stores semantic intro
+    sentences ('Highlights: ...') in header_extra.  _update_role_bullets_only
+    used to merge header_extra back into the header text for all roles, producing
+    'Senior Backend Engineer ... | Highlights: Continuing work on ...'.
+    The merge must be suppressed for these roles.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg_idx, seg in enumerate((seg1, seg2)):
+        if seg is None:
+            continue
+        for row_idx, tr in enumerate(seg.findall(f"{{{_W_NS}}}tr")):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if len(cells) < 2:
+                continue
+            right_paras = cells[1].findall(f"{{{_W_NS}}}p")
+            if not right_paras:
+                continue
+            header_text = "".join(
+                t.text or "" for t in right_paras[0].iter(f"{{{_W_NS}}}t")
+            )
+            assert "Highlights:" not in header_text, (
+                f"seg{seg_idx} row{row_idx}: right-cell header contains 'Highlights:' — "
+                "header_extra merge must be suppressed for timeline_left_role_right roles.\n"
+                f"  header text: {header_text!r}"
+            )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_right_cell_headers_no_pipe_suffix():
+    """Right-cell role headers must not contain any '|'-delimited suffix.
+
+    After the header_extra and date-injection fixes, the header should contain
+    only the role title, company name, and location — no pipe-separated extras.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg_idx, seg in enumerate((seg1, seg2)):
+        if seg is None:
+            continue
+        for row_idx, tr in enumerate(seg.findall(f"{{{_W_NS}}}tr")):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if len(cells) < 2:
+                continue
+            right_paras = cells[1].findall(f"{{{_W_NS}}}p")
+            if not right_paras:
+                continue
+            header_text = "".join(
+                t.text or "" for t in right_paras[0].iter(f"{{{_W_NS}}}t")
+            )
+            assert " | " not in header_text, (
+                f"seg{seg_idx} row{row_idx}: right-cell header contains ' | ' — "
+                "no pipe-separated suffix should appear after both fixes.\n"
+                f"  header text: {header_text!r}"
+            )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_updated_role_bullets_not_cleared():
+    """Roles that had bullets in the original must still have bullets after update.
+
+    The header_extra merge suppression only touches header text.  Body bullet
+    paragraphs must not be cleared or removed as a side effect.  The LLM may
+    produce a different bullet count (extension bullets are normal), so this
+    test checks presence, not exact count.
+    """
+    original, updated = _load_s35_updated()
+    for sec_orig, sec_upd in zip(original.sections, updated.sections):
+        for ri, (ro, ru) in enumerate(zip(sec_orig.roles or [], sec_upd.roles or [])):
+            if not ro.bullets:
+                continue  # original had no bullets — nothing to check
+            non_empty = [b for b in ru.bullets if b.text.strip()]
+            assert non_empty, (
+                f"section {sec_orig.title!r} role {ri}: all bullets were cleared "
+                "after header_extra fix — body bullets must be unaffected"
+            )

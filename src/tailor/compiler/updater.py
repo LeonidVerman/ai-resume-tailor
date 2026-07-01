@@ -1852,7 +1852,15 @@ def _update_role_bullets_only(
     # In rewrite_bullets_only mode the header is preserved verbatim, but the
     # "complete" header (as it appeared in the original DOCX) includes company.
     # Merge header_extra back so the rendered output matches the DOCX pipeline.
-    if orig.header_extra:
+    #
+    # Exception: timeline_left_role_right roles (DOCX newspaper-column layout)
+    # store semantic intro content (e.g. "Highlights: ...") in header_extra, not
+    # PDF layout fragments.  Merging them produces corrupt right-cell headers
+    # like "Senior Backend Engineer ... | Highlights: Continuing work on ...".
+    _skip_header_extra_merge = (
+        (orig.layout_binding or {}).get("kind") == "timeline_left_role_right"
+    )
+    if orig.header_extra and not _skip_header_extra_merge:
         extra_text = " | ".join(he.text.strip() for he in orig.header_extra if he.text.strip())
         if extra_text:
             h = _hdr.text.strip()
@@ -2918,6 +2926,7 @@ def _update_role_with_adjuncts(
         bullets=rewriteable_paras,
         role_id=orig.role_id,
         role_id_stable=orig.role_id_stable,
+        layout_binding=orig.layout_binding,
     )
     updated_temp = _update_role_bullets_only(temp_role, llm_bullets_working, layout_bound=layout_bound)
 
@@ -2970,6 +2979,7 @@ def _update_role_with_adjuncts(
         bullets=final_bullets,
         role_id=orig.role_id,
         role_id_stable=orig.role_id_stable,
+        layout_binding=orig.layout_binding,
     )
 
 
