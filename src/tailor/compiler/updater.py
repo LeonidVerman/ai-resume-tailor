@@ -1852,7 +1852,15 @@ def _update_role_bullets_only(
     # In rewrite_bullets_only mode the header is preserved verbatim, but the
     # "complete" header (as it appeared in the original DOCX) includes company.
     # Merge header_extra back so the rendered output matches the DOCX pipeline.
-    if orig.header_extra:
+    #
+    # Exception: timeline_left_role_right roles (DOCX newspaper-column layout)
+    # store semantic intro content (e.g. "Highlights: ...") in header_extra, not
+    # PDF layout fragments.  Merging them produces corrupt right-cell headers
+    # like "Senior Backend Engineer ... | Highlights: Continuing work on ...".
+    _skip_header_extra_merge = (
+        (orig.layout_binding or {}).get("kind") == "timeline_left_role_right"
+    )
+    if orig.header_extra and not _skip_header_extra_merge:
         extra_text = " | ".join(he.text.strip() for he in orig.header_extra if he.text.strip())
         if extra_text:
             h = _hdr.text.strip()
@@ -2918,6 +2926,7 @@ def _update_role_with_adjuncts(
         bullets=rewriteable_paras,
         role_id=orig.role_id,
         role_id_stable=orig.role_id_stable,
+        layout_binding=orig.layout_binding,
     )
     updated_temp = _update_role_bullets_only(temp_role, llm_bullets_working, layout_bound=layout_bound)
 
@@ -2970,6 +2979,7 @@ def _update_role_with_adjuncts(
         bullets=final_bullets,
         role_id=orig.role_id,
         role_id_stable=orig.role_id_stable,
+        layout_binding=orig.layout_binding,
     )
 
 
@@ -3092,11 +3102,25 @@ def _update_experience_classified(
     # no year/month, inject the date string into the template header text.  The
     # orphaned date-column paras in header_paras are cleared by apply_tailored
     # when _dates_injected is set on the returned section.
+    #
+    # Exception: timeline_left_role_right roles already have dates in the left
+    # table cell (v2 renderer).  Injecting the date into the right-cell header
+    # would duplicate it.  Skip injection for those roles; their left_para_ids
+    # carry the date display and need no right-cell supplement.
     _dates_injected = False
     if llm_roles:
         for _di, _upd in enumerate(updated_roles):
             if _di >= len(llm_roles):
                 break
+            # timeline_left_role_right: left cell already carries the date.
+            _di_orig_lb = orig.roles[_di].layout_binding if _di < len(orig.roles) else None
+            if (_di_orig_lb or {}).get("kind") == "timeline_left_role_right":
+                _log.debug(
+                    "DATE_INJECTION_SKIPPED: role=%r timeline_left_role_right "
+                    "(date already in left cell)",
+                    _upd.role_id,
+                )
+                continue
             _llm_hdr = llm_roles[_di].header
             _pipe_idx = _llm_hdr.rfind(" | ")
             if _pipe_idx == -1:
