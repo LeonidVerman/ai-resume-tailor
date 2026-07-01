@@ -3192,11 +3192,10 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
             else:
                 # ---------------------------------------------------------- #
                 # Sibling group: N sections at the same heading y.            #
-                # Render as one combined row:                                  #
-                #   Left cell  → all col=left sections (heading + body)        #
-                #   Right cell → sub-table: one column per col=right section   #
-                # This produces the 3-column layout (e.g. Education | Skills | #
-                # Interests) that PDF section row tables use at the bottom.    #
+                # Each section gets its own OUTER cell in one row — no nested  #
+                # sub-table.  All cells share the same row top (correct        #
+                # vertical alignment).  _apply_lo_ind handles doc-margin-      #
+                # relative para indents for LibreOffice outer table cells.     #
                 # ---------------------------------------------------------- #
                 _sg_left = [
                     _s for _s in _group
@@ -3219,127 +3218,84 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
 
                 _sg_tr = etree.SubElement(tbl, f"{{{_W}}}tr")
 
-                # Left cell: all col=left sections' headings + bodies
-                _sg_ltc = etree.SubElement(_sg_tr, f"{{{_W}}}tc")
-                _sg_ltcPr = etree.SubElement(_sg_ltc, f"{{{_W}}}tcPr")
-                _sg_ltcW = etree.SubElement(_sg_ltcPr, f"{{{_W}}}tcW")
-                _sg_ltcW.set(f"{{{_W}}}w", str(left_w))
-                _sg_ltcW.set(f"{{{_W}}}type", "dxa")
-                if _eff_left_bg:
-                    _sg_lshd = etree.SubElement(_sg_ltcPr, f"{{{_W}}}shd")
-                    _sg_lshd.set(f"{{{_W}}}val", "clear")
-                    _sg_lshd.set(f"{{{_W}}}color", "auto")
-                    _sg_lshd.set(f"{{{_W}}}fill", _eff_left_bg)
-                _sg_l_first = True
+                # Right-col heading x positions (from right-col start = 0).
+                _sg_rxs = [
+                    (_s.heading.paragraph_profile.indent_left_pt or 0.0)
+                    if _s.heading.paragraph_profile else 0.0
+                    for _s in _sg_right
+                ]
+                # Cell widths: cell[i] spans from xs[i] (or 0 for i=0) to xs[i+1].
+                # The first right-col cell always starts at the right-col left edge (0).
+                _sg_rcell_ws: "list" = []
+                for _ri in range(len(_sg_rxs)):
+                    _sg_cs = int(_sg_rxs[_ri] * 20) if _ri > 0 else 0
+                    if _ri < len(_sg_rxs) - 1:
+                        _sg_rcell_ws.append(max(200, int(_sg_rxs[_ri + 1] * 20) - _sg_cs))
+                    else:
+                        _sg_rcell_ws.append(max(200, right_w - sum(_sg_rcell_ws)))
+
+                # Left-col sections (e.g. EDUCATION): one outer cell each
                 for _sg_sec in _sg_left:
+                    _sg_tc = etree.SubElement(_sg_tr, f"{{{_W}}}tc")
+                    _sg_tcPr = etree.SubElement(_sg_tc, f"{{{_W}}}tcPr")
+                    _sg_tcW = etree.SubElement(_sg_tcPr, f"{{{_W}}}tcW")
+                    _sg_tcW.set(f"{{{_W}}}w", str(left_w))
+                    _sg_tcW.set(f"{{{_W}}}type", "dxa")
+                    if _eff_left_bg:
+                        _sg_shd = etree.SubElement(_sg_tcPr, f"{{{_W}}}shd")
+                        _sg_shd.set(f"{{{_W}}}val", "clear")
+                        _sg_shd.set(f"{{{_W}}}color", "auto")
+                        _sg_shd.set(f"{{{_W}}}fill", _eff_left_bg)
+                    _sg_first = True
                     _sg_hpe = build_para_element(_sg_sec.heading, doc_part=doc_part)
                     _apply_lo_ind(_sg_hpe, _sg_sec.heading)
                     _hr = _h_rule_borders_par.get(_sg_sec.heading.para_id)
                     if _hr:
                         _apply_h_rule_top_border(_sg_hpe, _hr)
-                    if _sg_l_first:
+                    if _sg_first:
                         _zero_cell_top_spacing(_sg_hpe)
-                        _sg_l_first = False
-                    _sg_ltc.append(_sg_hpe)
+                        _sg_first = False
+                    _sg_tc.append(_sg_hpe)
                     for _sg_pm in _sg_all_content(_sg_sec):
                         _sg_pe = build_para_element(_sg_pm, doc_part=doc_part)
                         _apply_lo_ind(_sg_pe, _sg_pm)
-                        _sg_ltc.append(_sg_pe)
+                        _sg_tc.append(_sg_pe)
                 if not _sg_left:
-                    etree.SubElement(_sg_ltc, f"{{{_W}}}p")
+                    _sg_tc = etree.SubElement(_sg_tr, f"{{{_W}}}tc")
+                    _sg_tcPr = etree.SubElement(_sg_tc, f"{{{_W}}}tcPr")
+                    _sg_tcW = etree.SubElement(_sg_tcPr, f"{{{_W}}}tcW")
+                    _sg_tcW.set(f"{{{_W}}}w", str(left_w))
+                    _sg_tcW.set(f"{{{_W}}}type", "dxa")
+                    etree.SubElement(_sg_tc, f"{{{_W}}}p")
 
-                # Right cell: sub-table with one column per col=right section
-                _sg_rtc = etree.SubElement(_sg_tr, f"{{{_W}}}tc")
-                _sg_rtcPr = etree.SubElement(_sg_rtc, f"{{{_W}}}tcPr")
-                _sg_rtcW = etree.SubElement(_sg_rtcPr, f"{{{_W}}}tcW")
-                _sg_rtcW.set(f"{{{_W}}}w", str(right_w))
-                _sg_rtcW.set(f"{{{_W}}}type", "dxa")
-                if _eff_right_bg:
-                    _sg_rshd = etree.SubElement(_sg_rtcPr, f"{{{_W}}}shd")
-                    _sg_rshd.set(f"{{{_W}}}val", "clear")
-                    _sg_rshd.set(f"{{{_W}}}color", "auto")
-                    _sg_rshd.set(f"{{{_W}}}fill", _eff_right_bg)
-
-                if _sg_right:
-                    # Sub-column geometry from section heading x positions.
-                    # tblInd=0: sub-table starts flush with the right outer cell.
-                    # Cell boundaries are at each subsequent heading's x position
-                    # (from right-col start = sub-table left).  Para indents inside
-                    # nested table cells are cell-relative in LibreOffice, so each
-                    # paragraph's original right-col-relative indent is adjusted by
-                    # subtracting the cell-start x (not the heading x).
-                    _rsc_xs = [
-                        (_s.heading.paragraph_profile.indent_left_pt or 0.0)
-                        if _s.heading.paragraph_profile else 0.0
-                        for _s in _sg_right
-                    ]
-                    # Cell-start positions from sub-table left:
-                    # cell 0 starts at 0; cell i>0 starts at xs[i] (the i-th heading x).
-                    _rsc_cell_starts = [0.0] + list(_rsc_xs[1:])
-                    # Column widths: each cell spans from its start to the next cell start.
-                    _rsc_cwx: "list" = []
-                    for _ci in range(len(_rsc_xs)):
-                        _cs = _rsc_cell_starts[_ci]
-                        if _ci < len(_rsc_xs) - 1:
-                            _cw = max(200, int((_rsc_xs[_ci + 1] - _cs) * 20))
-                        else:
-                            _cw = max(200, right_w - sum(_rsc_cwx))
-                        _rsc_cwx.append(_cw)
-
-                    _rsc_tbl = etree.Element(f"{{{_W}}}tbl")
-                    _rsc_tblPr = etree.SubElement(_rsc_tbl, f"{{{_W}}}tblPr")
-                    _rsc_tblW_el = etree.SubElement(_rsc_tblPr, f"{{{_W}}}tblW")
-                    _rsc_tblW_el.set(f"{{{_W}}}w", str(sum(_rsc_cwx)))
-                    _rsc_tblW_el.set(f"{{{_W}}}type", "dxa")
-                    _rsc_tblLay = etree.SubElement(_rsc_tblPr, f"{{{_W}}}tblLayout")
-                    _rsc_tblLay.set(f"{{{_W}}}type", "fixed")
-                    _rsc_tblBrd = etree.SubElement(_rsc_tblPr, f"{{{_W}}}tblBorders")
-                    for _s in ("top", "left", "bottom", "right", "insideH", "insideV"):
-                        _b = etree.SubElement(_rsc_tblBrd, f"{{{_W}}}{_s}")
-                        _b.set(f"{{{_W}}}val", "none")
-                    _rsc_tblMar = etree.SubElement(_rsc_tblPr, f"{{{_W}}}tblCellMar")
-                    for _s in ("top", "left", "bottom", "right"):
-                        _m = etree.SubElement(_rsc_tblMar, f"{{{_W}}}{_s}")
-                        _m.set(f"{{{_W}}}w", "0")
-                        _m.set(f"{{{_W}}}type", "dxa")
-                    _rsc_tblGrid = etree.SubElement(_rsc_tbl, f"{{{_W}}}tblGrid")
-                    for _cw in _rsc_cwx:
-                        _gc = etree.SubElement(_rsc_tblGrid, f"{{{_W}}}gridCol")
-                        _gc.set(f"{{{_W}}}w", str(_cw))
-                    _rsc_tr = etree.SubElement(_rsc_tbl, f"{{{_W}}}tr")
-                    for _sci, _sg_sec in enumerate(_sg_right):
-                        _rsc_tc = etree.SubElement(_rsc_tr, f"{{{_W}}}tc")
-                        _rsc_tcPr = etree.SubElement(_rsc_tc, f"{{{_W}}}tcPr")
-                        _rsc_tcW = etree.SubElement(_rsc_tcPr, f"{{{_W}}}tcW")
-                        _rsc_tcW.set(f"{{{_W}}}w", str(_rsc_cwx[_sci]))
-                        _rsc_tcW.set(f"{{{_W}}}type", "dxa")
-                        _rsc_first = True
-                        # Heading — adjust indent relative to cell start (not heading x).
-                        _rsc_hpe = build_para_element(_sg_sec.heading, doc_part=doc_part)
-                        _sg_adj_ind(_rsc_hpe, _rsc_cell_starts[_sci])
-                        _hr = _h_rule_borders_par.get(_sg_sec.heading.para_id)
-                        if _hr:
-                            _apply_h_rule_top_border(_rsc_hpe, _hr)
-                        if _rsc_first:
-                            _zero_cell_top_spacing(_rsc_hpe)
-                            _rsc_first = False
-                        _rsc_tc.append(_rsc_hpe)
-                        # Body
-                        for _sg_pm in _sg_all_content(_sg_sec):
-                            _rsc_pe = build_para_element(_sg_pm, doc_part=doc_part)
-                            _sg_adj_ind(_rsc_pe, _rsc_cell_starts[_sci])
-                            _rsc_tc.append(_rsc_pe)
-                        if _rsc_first:  # heading was skipped (shouldn't happen)
-                            etree.SubElement(_rsc_tc, f"{{{_W}}}p")
-                    _sg_rtc.append(_rsc_tbl)
-                    # OOXML requires a trailing <w:p> as the last element in every cell.
-                    _sg_rtc_tp = etree.SubElement(_sg_rtc, f"{{{_W}}}p")
-                    _sg_rtc_tpPr = etree.SubElement(_sg_rtc_tp, f"{{{_W}}}pPr")
-                    _sg_rtc_tpSp = etree.SubElement(_sg_rtc_tpPr, f"{{{_W}}}spacing")
-                    _sg_rtc_tpSp.set(f"{{{_W}}}before", "0")
-                    _sg_rtc_tpSp.set(f"{{{_W}}}after", "0")
-                else:
-                    etree.SubElement(_sg_rtc, f"{{{_W}}}p")
+                # Right-col sections: each in its own outer cell
+                for _ri, _sg_sec in enumerate(_sg_right):
+                    _sg_tc = etree.SubElement(_sg_tr, f"{{{_W}}}tc")
+                    _sg_tcPr = etree.SubElement(_sg_tc, f"{{{_W}}}tcPr")
+                    _sg_tcW = etree.SubElement(_sg_tcPr, f"{{{_W}}}tcW")
+                    _sg_tcW.set(f"{{{_W}}}w", str(_sg_rcell_ws[_ri]))
+                    _sg_tcW.set(f"{{{_W}}}type", "dxa")
+                    if _eff_right_bg:
+                        _sg_shd = etree.SubElement(_sg_tcPr, f"{{{_W}}}shd")
+                        _sg_shd.set(f"{{{_W}}}val", "clear")
+                        _sg_shd.set(f"{{{_W}}}color", "auto")
+                        _sg_shd.set(f"{{{_W}}}fill", _eff_right_bg)
+                    _sg_first = True
+                    _sg_hpe = build_para_element(_sg_sec.heading, doc_part=doc_part)
+                    _apply_lo_ind(_sg_hpe, _sg_sec.heading)
+                    _hr = _h_rule_borders_par.get(_sg_sec.heading.para_id)
+                    if _hr:
+                        _apply_h_rule_top_border(_sg_hpe, _hr)
+                    if _sg_first:
+                        _zero_cell_top_spacing(_sg_hpe)
+                        _sg_first = False
+                    _sg_tc.append(_sg_hpe)
+                    for _sg_pm in _sg_all_content(_sg_sec):
+                        _sg_pe = build_para_element(_sg_pm, doc_part=doc_part)
+                        _apply_lo_ind(_sg_pe, _sg_pm)
+                        _sg_tc.append(_sg_pe)
+                    if not _sg_tc.findall(f"{{{_W}}}p"):
+                        etree.SubElement(_sg_tc, f"{{{_W}}}p")
 
                 if _use_pad:
                     _sg_ptc = etree.SubElement(_sg_tr, f"{{{_W}}}tc")
