@@ -3227,29 +3227,35 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
 
                 if _sg_right:
                     # Sub-column geometry from section heading x positions.
-                    # Heading indent_left_pt is from the right-column's left edge.
-                    # tblInd positions the sub-table from the right-cell's left edge
-                    # (nested tables use cell-relative tblInd in LibreOffice).
+                    # tblInd=0: sub-table starts flush with the right outer cell.
+                    # Cell boundaries are at each subsequent heading's x position
+                    # (from right-col start = sub-table left).  Para indents inside
+                    # nested table cells are cell-relative in LibreOffice, so each
+                    # paragraph's original right-col-relative indent is adjusted by
+                    # subtracting the cell-start x (not the heading x).
                     _rsc_xs = [
                         (_s.heading.paragraph_profile.indent_left_pt or 0.0)
                         if _s.heading.paragraph_profile else 0.0
                         for _s in _sg_right
                     ]
-                    _rsc_tblInd = max(0, int(_rsc_xs[0] * 20))
+                    # Cell-start positions from sub-table left:
+                    # cell 0 starts at 0; cell i>0 starts at xs[i] (the i-th heading x).
+                    _rsc_cell_starts = [0.0] + list(_rsc_xs[1:])
+                    # Column widths: each cell spans from its start to the next cell start.
                     _rsc_cwx: "list" = []
-                    for _ri in range(len(_rsc_xs) - 1):
-                        _rsc_cwx.append(max(200, int((_rsc_xs[_ri + 1] - _rsc_xs[_ri]) * 20)))
-                    _rsc_last = max(200, right_w - _rsc_tblInd - sum(_rsc_cwx))
-                    _rsc_cwx.append(_rsc_last)
+                    for _ci in range(len(_rsc_xs)):
+                        _cs = _rsc_cell_starts[_ci]
+                        if _ci < len(_rsc_xs) - 1:
+                            _cw = max(200, int((_rsc_xs[_ci + 1] - _cs) * 20))
+                        else:
+                            _cw = max(200, right_w - sum(_rsc_cwx))
+                        _rsc_cwx.append(_cw)
 
                     _rsc_tbl = etree.Element(f"{{{_W}}}tbl")
                     _rsc_tblPr = etree.SubElement(_rsc_tbl, f"{{{_W}}}tblPr")
                     _rsc_tblW_el = etree.SubElement(_rsc_tblPr, f"{{{_W}}}tblW")
-                    _rsc_tblW_el.set(f"{{{_W}}}w", str(_rsc_tblInd + sum(_rsc_cwx)))
+                    _rsc_tblW_el.set(f"{{{_W}}}w", str(sum(_rsc_cwx)))
                     _rsc_tblW_el.set(f"{{{_W}}}type", "dxa")
-                    _rsc_tblInd_el = etree.SubElement(_rsc_tblPr, f"{{{_W}}}tblInd")
-                    _rsc_tblInd_el.set(f"{{{_W}}}w", str(_rsc_tblInd))
-                    _rsc_tblInd_el.set(f"{{{_W}}}type", "dxa")
                     _rsc_tblLay = etree.SubElement(_rsc_tblPr, f"{{{_W}}}tblLayout")
                     _rsc_tblLay.set(f"{{{_W}}}type", "fixed")
                     _rsc_tblBrd = etree.SubElement(_rsc_tblPr, f"{{{_W}}}tblBorders")
@@ -3273,9 +3279,9 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                         _rsc_tcW.set(f"{{{_W}}}w", str(_rsc_cwx[_sci]))
                         _rsc_tcW.set(f"{{{_W}}}type", "dxa")
                         _rsc_first = True
-                        # Heading
+                        # Heading — adjust indent relative to cell start (not heading x).
                         _rsc_hpe = build_para_element(_sg_sec.heading, doc_part=doc_part)
-                        _sg_adj_ind(_rsc_hpe, _rsc_xs[_sci])
+                        _sg_adj_ind(_rsc_hpe, _rsc_cell_starts[_sci])
                         _hr = _h_rule_borders_par.get(_sg_sec.heading.para_id)
                         if _hr:
                             _apply_h_rule_top_border(_rsc_hpe, _hr)
@@ -3286,11 +3292,17 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                         # Body
                         for _sg_pm in _sg_all_content(_sg_sec):
                             _rsc_pe = build_para_element(_sg_pm, doc_part=doc_part)
-                            _sg_adj_ind(_rsc_pe, _rsc_xs[_sci])
+                            _sg_adj_ind(_rsc_pe, _rsc_cell_starts[_sci])
                             _rsc_tc.append(_rsc_pe)
                         if _rsc_first:  # heading was skipped (shouldn't happen)
                             etree.SubElement(_rsc_tc, f"{{{_W}}}p")
                     _sg_rtc.append(_rsc_tbl)
+                    # OOXML requires a trailing <w:p> as the last element in every cell.
+                    _sg_rtc_tp = etree.SubElement(_sg_rtc, f"{{{_W}}}p")
+                    _sg_rtc_tpPr = etree.SubElement(_sg_rtc_tp, f"{{{_W}}}pPr")
+                    _sg_rtc_tpSp = etree.SubElement(_sg_rtc_tpPr, f"{{{_W}}}spacing")
+                    _sg_rtc_tpSp.set(f"{{{_W}}}before", "0")
+                    _sg_rtc_tpSp.set(f"{{{_W}}}after", "0")
                 else:
                     etree.SubElement(_sg_rtc, f"{{{_W}}}p")
 
