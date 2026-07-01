@@ -762,11 +762,18 @@ def test_s35_v2_consumed_excludes_structural_pids():
     out_doc = DocxDoc()
     sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
 
-    _, _, consumed, _ = _build_timeline_segments(
+    _, _, consumed, diag = _build_timeline_segments(
         updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
     )
     assert "para_59" not in consumed, "para_59 must not be consumed (it is the seg1 heading)"
     assert "para_120" in consumed, "para_120 must be consumed to prevent unwanted page break"
+    assert "para_128" not in consumed, (
+        "para_128 must NOT be consumed — it governs post-table section geometry (top=860 margin)"
+    )
+    strip_pids = diag.get("multicol_sectpr_strip_pids") or []
+    assert "para_128" in strip_pids, (
+        "para_128 must appear in multicol_sectpr_strip_pids so the main loop strips w:cols"
+    )
 
 
 @pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
@@ -920,6 +927,40 @@ def test_s35_v2_para120_consumed_not_in_body():
 
 
 @pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_para128_emitted_cols_stripped():
+    """para_128 must appear exactly once in the rendered body, with w:cols stripped
+    and w:type=continuous so Education/Skills content flows without a page break."""
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _W14_NS = "http://schemas.microsoft.com/office/word/2010/wordml"
+    _, updated = _load_s35_updated()
+    body = _render_s35_with_v2(updated)
+
+    children = list(body)
+    tbl_indices = [i for i, c in enumerate(children) if c.tag == f"{{{_W_NS}}}tbl"]
+    assert len(tbl_indices) >= 2
+
+    para128_els = [
+        (i, c) for i, c in enumerate(children)
+        if c.tag == f"{{{_W_NS}}}p" and c.get(f"{{{_W14_NS}}}paraId") == "para_128"
+    ]
+    assert len(para128_els) == 1, (
+        f"para_128 must appear exactly once in body, got {len(para128_els)}"
+    )
+    pos, el = para128_els[0]
+    assert pos > max(tbl_indices), (
+        f"para_128 (pos={pos}) must appear after both tables (last={max(tbl_indices)})"
+    )
+    sp = el.find(f"{{{_W_NS}}}pPr/{{{_W_NS}}}sectPr")
+    assert sp is not None, "para_128 must retain sectPr"
+    cols = sp.find(f"{{{_W_NS}}}cols")
+    assert cols is None, "para_128 sectPr must have w:cols stripped"
+    type_el = sp.find(f"{{{_W_NS}}}type")
+    assert type_el is not None and type_el.get(f"{{{_W_NS}}}val") == "continuous", (
+        "para_128 sectPr must be type=continuous to avoid a page break"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
 def test_s35_v2_education_after_both_tables():
     """para_125 (Education heading) must appear after the second table."""
     _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
@@ -941,3 +982,404 @@ def test_s35_v2_education_after_both_tables():
     assert para125_idx > tbl_indices[1], (
         f"para_125 (idx={para125_idx}) must come AFTER second table (idx={tbl_indices[1]})"
     )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_left_cell_no_before_spacing():
+    """Date paragraphs in left cells must have w:spacing w:before stripped.
+
+    The template XML protos carry w:spacing w:before values tuned for the
+    newspaper-column layout.  Inside a table cell those values offset the date
+    text downward from the cell top, breaking role-header alignment.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg in (seg1, seg2):
+        if seg is None:
+            continue
+        for tr in seg.findall(f"{{{_W_NS}}}tr"):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if not cells:
+                continue
+            tc_left = cells[0]  # first cell = left/date column
+            for para in tc_left.findall(f"{{{_W_NS}}}p"):
+                pPr = para.find(f"{{{_W_NS}}}pPr")
+                if pPr is None:
+                    continue
+                sp = pPr.find(f"{{{_W_NS}}}spacing")
+                if sp is None:
+                    continue
+                before_val = sp.get(f"{{{_W_NS}}}before")
+                after_val = sp.get(f"{{{_W_NS}}}after")
+                assert before_val is None or int(before_val) == 0, (
+                    f"Left cell para has w:spacing w:before={before_val} — "
+                    "must be stripped so date text starts at cell top"
+                )
+                assert after_val is None or int(after_val) == 0, (
+                    f"Left cell para has w:spacing w:after={after_val} — "
+                    "must be stripped so rows don't add spurious vertical gaps"
+                )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_cells_valign_top():
+    """Both left and right cells must carry w:vAlign w:val='top'.
+
+    Explicit top-alignment prevents style-sheet inheritance from overriding
+    the default and ensures date text and role-header text both anchor to the
+    top of their shared auto-height row.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg in (seg1, seg2):
+        if seg is None:
+            continue
+        for tr in seg.findall(f"{{{_W_NS}}}tr"):
+            for tc in tr.findall(f"{{{_W_NS}}}tc"):
+                tcPr = tc.find(f"{{{_W_NS}}}tcPr")
+                assert tcPr is not None, "Every tc must have a tcPr"
+                vAlign = tcPr.find(f"{{{_W_NS}}}vAlign")
+                assert vAlign is not None, (
+                    "tcPr must have w:vAlign for explicit top-alignment"
+                )
+                assert vAlign.get(f"{{{_W_NS}}}val") == "top", (
+                    f"w:vAlign must be 'top', got {vAlign.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')!r}"
+                )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_right_cell_first_para_no_before():
+    """First paragraph in each right cell must have w:spacing w:before stripped.
+
+    In the newspaper-column template, w:before on the first paragraph after a
+    column break has no visual effect (column break resets vertical position).
+    Inside a table cell it renders as literal whitespace above the role title,
+    inflating row heights and spreading content across extra pages.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg in (seg1, seg2):
+        if seg is None:
+            continue
+        for tr in seg.findall(f"{{{_W_NS}}}tr"):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if len(cells) < 2:
+                continue
+            tc_right = cells[1]  # second cell = right/role-content column
+            paras = tc_right.findall(f"{{{_W_NS}}}p")
+            if not paras:
+                continue
+            first_para = paras[0]
+            pPr = first_para.find(f"{{{_W_NS}}}pPr")
+            if pPr is None:
+                continue
+            sp = pPr.find(f"{{{_W_NS}}}spacing")
+            if sp is None:
+                continue
+            before_val = sp.get(f"{{{_W_NS}}}before")
+            assert before_val is None or int(before_val) == 0, (
+                f"First right-cell para has w:spacing w:before={before_val} — "
+                "must be stripped: in a table cell this adds whitespace above the "
+                "role title, inflating row height and page count"
+            )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_right_cell_all_paras_no_before():
+    """All paragraphs in each right cell must have w:spacing w:before stripped.
+
+    Multi-line role headers carry w:before on ALL header paragraphs, not just
+    para[0], so all right-cell paras must be stripped.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg_idx, seg in enumerate((seg1, seg2)):
+        if seg is None:
+            continue
+        for row_idx, tr in enumerate(seg.findall(f"{{{_W_NS}}}tr")):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if len(cells) < 2:
+                continue
+            tc_right = cells[1]
+            for para_idx, para in enumerate(tc_right.findall(f"{{{_W_NS}}}p")):
+                pPr = para.find(f"{{{_W_NS}}}pPr")
+                if pPr is None:
+                    continue
+                sp = pPr.find(f"{{{_W_NS}}}spacing")
+                if sp is None:
+                    continue
+                before_val = sp.get(f"{{{_W_NS}}}before")
+                assert before_val is None or int(before_val) == 0, (
+                    f"seg{seg_idx} row{row_idx} para{para_idx}: "
+                    f"w:spacing w:before={before_val} must be stripped"
+                )
+
+
+# ---------------------------------------------------------------------------
+# Role header date-stripping: timeline_left_role_right roles must not have
+# date ranges duplicated in the right-cell header (dates live in left cell)
+# ---------------------------------------------------------------------------
+
+import re as _re
+_DATE_PATTERN = _re.compile(
+    r"\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|"
+    r"Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|"
+    r"Dec(?:ember)?)\b|\b(20[12]\d|19\d\d)\b",
+    _re.IGNORECASE,
+)
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_right_cell_headers_no_date_range():
+    """For timeline_left_role_right roles, the right-cell first paragraph
+    (role header) must not contain a date range.
+
+    Dates are displayed only in the left table cell.  Before the fix the
+    updater's date-injection block appended ' | November 2022 – March 2025'
+    directly to the role title, duplicating the date from the left column.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg_idx, seg in enumerate((seg1, seg2)):
+        if seg is None:
+            continue
+        for row_idx, tr in enumerate(seg.findall(f"{{{_W_NS}}}tr")):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if len(cells) < 2:
+                continue
+            right_paras = cells[1].findall(f"{{{_W_NS}}}p")
+            if not right_paras:
+                continue
+            header_text = "".join(
+                t.text or "" for t in right_paras[0].iter(f"{{{_W_NS}}}t")
+            )
+            assert not _DATE_PATTERN.search(header_text), (
+                f"seg{seg_idx} row{row_idx}: right-cell role header contains a date "
+                f"range — dates must only appear in the left cell.\n"
+                f"  header text: {header_text!r}"
+            )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_left_cells_still_have_dates():
+    """Left-cell paragraphs must still contain date text after the header fix.
+
+    Stripping dates from the right-cell header must not also clear them from
+    the left cell.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    rows_with_dates = 0
+    for seg in (seg1, seg2):
+        if seg is None:
+            continue
+        for tr in seg.findall(f"{{{_W_NS}}}tr"):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if not cells:
+                continue
+            left_text = "".join(
+                t.text or "" for t in cells[0].iter(f"{{{_W_NS}}}t")
+            )
+            if _DATE_PATTERN.search(left_text):
+                rows_with_dates += 1
+
+    assert rows_with_dates >= 4, (
+        f"Expected at least 4 table rows with dates in the left cell, "
+        f"got {rows_with_dates} — dates may have been incorrectly cleared"
+    )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_role_count_unchanged():
+    """Role count in the timeline table must match the original experience roles.
+
+    The date-header fix must not add or remove table rows.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    original, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    total_rows = sum(
+        len(seg.findall(f"{{{_W_NS}}}tr"))
+        for seg in (seg1, seg2)
+        if seg is not None
+    )
+    orig_role_count = sum(len(sec.roles or []) for sec in original.sections)
+    assert total_rows == orig_role_count, (
+        f"Table row count {total_rows} != original role count {orig_role_count} "
+        "— the date-header fix must not change table structure"
+    )
+
+
+# ---------------------------------------------------------------------------
+# header_extra / "Highlights:" merge suppression for timeline_left_role_right
+# ---------------------------------------------------------------------------
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_right_cell_headers_no_highlights():
+    """Right-cell role headers must not contain 'Highlights:' text.
+
+    For timeline_left_role_right roles the DOCX parser stores semantic intro
+    sentences ('Highlights: ...') in header_extra.  _update_role_bullets_only
+    used to merge header_extra back into the header text for all roles, producing
+    'Senior Backend Engineer ... | Highlights: Continuing work on ...'.
+    The merge must be suppressed for these roles.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg_idx, seg in enumerate((seg1, seg2)):
+        if seg is None:
+            continue
+        for row_idx, tr in enumerate(seg.findall(f"{{{_W_NS}}}tr")):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if len(cells) < 2:
+                continue
+            right_paras = cells[1].findall(f"{{{_W_NS}}}p")
+            if not right_paras:
+                continue
+            header_text = "".join(
+                t.text or "" for t in right_paras[0].iter(f"{{{_W_NS}}}t")
+            )
+            assert "Highlights:" not in header_text, (
+                f"seg{seg_idx} row{row_idx}: right-cell header contains 'Highlights:' — "
+                "header_extra merge must be suppressed for timeline_left_role_right roles.\n"
+                f"  header text: {header_text!r}"
+            )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_v2_right_cell_headers_no_pipe_suffix():
+    """Right-cell role headers must not contain any '|'-delimited suffix.
+
+    After the header_extra and date-injection fixes, the header should contain
+    only the role title, company name, and location — no pipe-separated extras.
+    """
+    from docx import Document as DocxDoc
+    from tailor.compiler.docx_renderer import _build_para_lookup, _build_timeline_segments
+
+    _W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    _, updated = _load_s35_updated()
+    para_lookup = _build_para_lookup(updated)
+    out_doc = DocxDoc()
+    sectPr = out_doc.element.body.find(f"{{{_W_NS}}}sectPr")
+
+    seg1, seg2, _, _ = _build_timeline_segments(
+        updated, para_lookup, list(updated.layout_blocks or []), None, None, sectPr
+    )
+    for seg_idx, seg in enumerate((seg1, seg2)):
+        if seg is None:
+            continue
+        for row_idx, tr in enumerate(seg.findall(f"{{{_W_NS}}}tr")):
+            cells = tr.findall(f"{{{_W_NS}}}tc")
+            if len(cells) < 2:
+                continue
+            right_paras = cells[1].findall(f"{{{_W_NS}}}p")
+            if not right_paras:
+                continue
+            header_text = "".join(
+                t.text or "" for t in right_paras[0].iter(f"{{{_W_NS}}}t")
+            )
+            assert " | " not in header_text, (
+                f"seg{seg_idx} row{row_idx}: right-cell header contains ' | ' — "
+                "no pipe-separated suffix should appear after both fixes.\n"
+                f"  header text: {header_text!r}"
+            )
+
+
+@pytest.mark.skipif(not _S35_AVAIL, reason="sample 35 not found")
+def test_s35_updated_role_bullets_not_cleared():
+    """Roles that had bullets in the original must still have bullets after update.
+
+    The header_extra merge suppression only touches header text.  Body bullet
+    paragraphs must not be cleared or removed as a side effect.  The LLM may
+    produce a different bullet count (extension bullets are normal), so this
+    test checks presence, not exact count.
+    """
+    original, updated = _load_s35_updated()
+    for sec_orig, sec_upd in zip(original.sections, updated.sections):
+        for ri, (ro, ru) in enumerate(zip(sec_orig.roles or [], sec_upd.roles or [])):
+            if not ro.bullets:
+                continue  # original had no bullets — nothing to check
+            non_empty = [b for b in ru.bullets if b.text.strip()]
+            assert non_empty, (
+                f"section {sec_orig.title!r} role {ri}: all bullets were cleared "
+                "after header_extra fix — body bullets must be unaffected"
+            )

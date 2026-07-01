@@ -886,21 +886,24 @@ def _set_para_text(p_elem, text: str) -> None:
     #    width while surrounding chars are condensed → visible width mismatch.
     #    Fix: copy w:w from the immediately preceding content run.
     #
-    # Values ≥ 80 twips are intentional letter-spacing (decorative headings)
-    # and must be preserved.
-    _MICRO_KERN_LIMIT = 80  # twips; larger = intentional letter-spacing
+    # Values > 80 twips are intentional letter-spacing (decorative headings)
+    # and must be preserved.  80 itself is a PDF-export artifact boundary value
+    # (seen on spacer runs in S35 "Other skills" heading) and must be stripped.
+    _MICRO_KERN_LIMIT = 81  # twips; strip abs(spacing) < 81 (i.e. ≤ 80)
     # w:w (character width scaling) cleanup thresholds.
     # PDF-to-DOCX converters produce two classes of artifact w:w values:
-    #   > 150%: FontAwesome icon/bullet placeholder runs (e.g. w=270) that end
+    #   ≥ 150%: FontAwesome icon/bullet placeholder runs (e.g. w=270) that end
     #           up carrying the first 1-2 chars of redistributed content, making
     #           those chars render 2.7x wide ("De signed", "Mento red").
+    #           150 itself is a PDF-export artifact boundary value (S35 spacer runs)
+    #           that causes single chars to render 150% wide ("O ther skills").
     #   < 95%:  Single mega-runs covering the whole original line (e.g. w=90)
     #           where only the first proportional slice inherits the value; the
     #           remaining slices get w=None (100%), creating a mismatch at the
     #           first run boundary ("Prot ocols").
-    # Values in [95, 150] are treated as intentional typography and preserved.
+    # Values in [95, 149] are treated as intentional typography and preserved.
     _W_SCALE_MIN = 95
-    _W_SCALE_MAX = 150
+    _W_SCALE_MAX = 149
     _prev_content_rpr = None  # rPr of last non-spacer run, for w:w propagation
     for _ki, _kr in enumerate(all_runs):
         if _ki in ws_text or _ki in vml_indices:
@@ -964,6 +967,38 @@ def _set_para_text(p_elem, text: str) -> None:
             _src_ww = _prev_content_rpr.find(f"{{{_W}}}w")
             if _src_ww is not None and _krpr.find(f"{{{_W}}}w") is None:
                 _krpr.append(deepcopy(_src_ww))
+
+    # Outlier-sz normalization: strip w:sz/w:szCs/w:rFonts from content runs
+    # carrying an artifact font size inherited from PDF→DOCX icon/bullet glyphs.
+    # PDF converters assign w:sz=12 (6pt) to FontAwesome bullet character runs.
+    # After proportional redistribution the first chars of rewritten body text
+    # land in these runs and render at 6pt — visually broken ("Led a" tiny).
+    # Strip threshold ≤ 15 (7.5pt): no legitimate resume body text is that small.
+    # rFonts is also stripped from the same runs; the artifact font (e.g. Times
+    # New Roman at 6pt) is never intentional and causes an additional mismatch.
+    _SZ_ARTIFACT_CEIL = 15
+    for _si, _sr in enumerate(all_runs):
+        if _si in ws_text or _si in vml_indices:
+            continue
+        _srpr = _sr.find(f"{{{_W}}}rPr")
+        if _srpr is None:
+            continue
+        _ssz = _srpr.find(f"{{{_W}}}sz")
+        if _ssz is None:
+            continue
+        try:
+            _sz_val = int(_ssz.get(f"{{{_W}}}val") or 0)
+        except (ValueError, TypeError):
+            continue
+        if _sz_val > _SZ_ARTIFACT_CEIL:
+            continue
+        _srpr.remove(_ssz)
+        _sszcs = _srpr.find(f"{{{_W}}}szCs")
+        if _sszcs is not None:
+            _srpr.remove(_sszcs)
+        _srfonts = _srpr.find(f"{{{_W}}}rFonts")
+        if _srfonts is not None:
+            _srpr.remove(_srfonts)
 
     # Clear text from all runs (direct w:t children only; VML content is untouched).
     for r in all_runs:
@@ -5901,6 +5936,7 @@ def _build_timeline_row_table(
         _twL = etree.SubElement(tcPr_left, f"{{{_W}}}tcW")
         _twL.set(f"{{{_W}}}w", str(_left_w))
         _twL.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr_left, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
 
         _left_pids: list[str] = (
             list(_lb.get("left_leading_spacer_ids") or [])
@@ -5917,6 +5953,14 @@ def _build_timeline_row_table(
                 _strip_non_column_section_break(_el, main_pgSz_w, main_pgSz_h, False)
                 if _pid and not _el.get(f"{{{_W14}}}paraId"):
                     _el.set(f"{{{_W14}}}paraId", _pid)
+                _pPr = _el.find(f"{{{_W}}}pPr")
+                if _pPr is not None:
+                    _sp = _pPr.find(f"{{{_W}}}spacing")
+                    if _sp is not None:
+                        _sp.attrib.pop(f"{{{_W}}}before", None)
+                        _sp.attrib.pop(f"{{{_W}}}after", None)
+                        if not _sp.attrib:
+                            _pPr.remove(_sp)
                 tc_left.append(_el)
 
         if not tc_left.findall(f"{{{_W}}}p"):
@@ -5928,6 +5972,7 @@ def _build_timeline_row_table(
         _twR = etree.SubElement(tcPr_right, f"{{{_W}}}tcW")
         _twR.set(f"{{{_W}}}w", str(_right_w))
         _twR.set(f"{{{_W}}}type", "dxa")
+        etree.SubElement(tcPr_right, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
 
         for _pid in (_lb.get("right_para_ids") or []):
             _blk = lb_by_pid.get(_pid)
@@ -5949,6 +5994,17 @@ def _build_timeline_row_table(
 
         if not tc_right.findall(f"{{{_W}}}p"):
             tc_right.append(etree.Element(f"{{{_W}}}p"))
+
+        for _rc_p in tc_right.findall(f"{{{_W}}}p"):
+            _rc_pPr = _rc_p.find(f"{{{_W}}}pPr")
+            if _rc_pPr is None:
+                continue
+            _rc_sp = _rc_pPr.find(f"{{{_W}}}spacing")
+            if _rc_sp is None:
+                continue
+            _rc_sp.attrib.pop(f"{{{_W}}}before", None)
+            if not _rc_sp.attrib:
+                _rc_pPr.remove(_rc_sp)
 
     # ── Compute consumed_pids ─────────────────────────────────────────────
     _consumed: set[str] = set()
@@ -6177,6 +6233,7 @@ def _build_timeline_segments(
             _twL = etree.SubElement(tcPr_left, f"{{{_W}}}tcW")
             _twL.set(f"{{{_W}}}w", str(_left_w))
             _twL.set(f"{{{_W}}}type", "dxa")
+            etree.SubElement(tcPr_left, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
 
             _left_pids = list(_lb.get("left_para_ids") or [])
 
@@ -6188,6 +6245,17 @@ def _build_timeline_segments(
                     _strip_non_column_section_break(_el, main_pgSz_w, main_pgSz_h, False)
                     if not _el.get(f"{{{_W14}}}paraId"):
                         _el.set(f"{{{_W14}}}paraId", _pid)
+                    # Strip paragraph spacing tuned for newspaper-column positioning:
+                    # inside a table cell, w:before/w:after offsets the date text
+                    # downward from the cell top, misaligning it with the role header.
+                    _pPr = _el.find(f"{{{_W}}}pPr")
+                    if _pPr is not None:
+                        _sp = _pPr.find(f"{{{_W}}}spacing")
+                        if _sp is not None:
+                            _sp.attrib.pop(f"{{{_W}}}before", None)
+                            _sp.attrib.pop(f"{{{_W}}}after", None)
+                            if not _sp.attrib:
+                                _pPr.remove(_sp)
                     tc_left.append(_el)
                     consumed.add(_pid)
 
@@ -6200,6 +6268,7 @@ def _build_timeline_segments(
             _twR = etree.SubElement(tcPr_right, f"{{{_W}}}tcW")
             _twR.set(f"{{{_W}}}w", str(_right_w))
             _twR.set(f"{{{_W}}}type", "dxa")
+            etree.SubElement(tcPr_right, f"{{{_W}}}vAlign").set(f"{{{_W}}}val", "top")
 
             for _pid in (_lb.get("right_para_ids") or []):
                 _blk = lb_by_pid.get(_pid)
@@ -6244,36 +6313,63 @@ def _build_timeline_segments(
             if not tc_right.findall(f"{{{_W}}}p"):
                 tc_right.append(etree.Element(f"{{{_W}}}p"))
 
+            # Strip w:spacing w:before from ALL right-cell paragraphs.
+            # In the newspaper-column template, w:before values on paragraphs after
+            # a column break had no visual effect (column break resets position).
+            # Inside a table cell every w:before renders as real whitespace above
+            # that paragraph, inflating row heights.  Multi-line role headers carry
+            # identical w:before on all header paragraphs (not just the first),
+            # so stripping only para[0] is insufficient.
+            # w:after (always absent), w:line, and w:lineRule are left untouched.
+            for _rc_p in tc_right.findall(f"{{{_W}}}p"):
+                _rc_pPr = _rc_p.find(f"{{{_W}}}pPr")
+                if _rc_pPr is None:
+                    continue
+                _rc_sp = _rc_pPr.find(f"{{{_W}}}spacing")
+                if _rc_sp is None:
+                    continue
+                _rc_sp.attrib.pop(f"{{{_W}}}before", None)
+                if not _rc_sp.attrib:
+                    _rc_pPr.remove(_rc_sp)
+
         return tbl
 
     seg1_tbl = _build_seg(seg1_roles) if seg1_roles else None
     seg2_tbl = _build_seg(seg2_roles) if seg2_roles else None
 
-    # Consume ALL intermediate sectPr paragraphs that carry a w:cols definition.
-    # In v2 mode the two-column newspaper layout is replaced by explicit tables, so
-    # every intermediate multi-column sectPr must be suppressed.  Emitting them
-    # forces the section containing the tables into a two-column context in
-    # LibreOffice, which confines the table to one column's width.
-    # Note: the para_8-style single-column sectPr (no w:cols) is NOT consumed —
-    # only multi-column (w:cols) sectPrs are targeted here.
-    _multi_col_sectpr_pids: set[str] = set()
+    # Scope multi-col sectPr consumption to the inter-segment boundary (≤ sectpr_idx).
+    # Multi-col sectPrs after sectpr_idx (e.g. para_128) govern post-table section
+    # geometry (top margin, page size) and must NOT be consumed.  The main loop emits
+    # them with only w:cols stripped so Education/Skills/Projects render single-column
+    # with their original margins intact.
+    _multi_col_sectpr_consumed: set[str] = set()
+    _multi_col_sectpr_strip_pids: set[str] = set()
     for _blk in layout_blocks:
         _blk_pid = getattr(_blk, "para_id", None)
         _blk_xml = getattr(_blk, "xml_proto_xml", None)
         if not _blk_pid or not _blk_xml:
             continue
+        _blk_idx = pid_to_idx.get(_blk_pid, -1)
         try:
             _blk_el = etree.fromstring(_blk_xml)
         except Exception:
             continue
         _blk_sp = _blk_el.find(f".//{{{_W}}}sectPr")
         if _blk_sp is not None and _blk_sp.find(f"{{{_W}}}cols") is not None:
-            _multi_col_sectpr_pids.add(_blk_pid)
-    consumed.update(_multi_col_sectpr_pids)
-    if _multi_col_sectpr_pids:
+            if _blk_idx <= sectpr_idx:
+                _multi_col_sectpr_consumed.add(_blk_pid)
+            else:
+                _multi_col_sectpr_strip_pids.add(_blk_pid)
+    consumed.update(_multi_col_sectpr_consumed)
+    if _multi_col_sectpr_consumed:
         _log.debug(
-            "TIMELINE_V2_CONSUME_SECTPRS: %d multi-col sectPr paras consumed: %s",
-            len(_multi_col_sectpr_pids), sorted(_multi_col_sectpr_pids),
+            "TIMELINE_V2_CONSUME_SECTPRS: %d consumed (≤ sectpr_idx %d): %s",
+            len(_multi_col_sectpr_consumed), sectpr_idx, sorted(_multi_col_sectpr_consumed),
+        )
+    if _multi_col_sectpr_strip_pids:
+        _log.debug(
+            "TIMELINE_V2_STRIP_SECTPR_COLS: %d outside boundary (emit + strip w:cols): %s",
+            len(_multi_col_sectpr_strip_pids), sorted(_multi_col_sectpr_strip_pids),
         )
 
     # Also consume ALL left spacer pids from every role to prevent stray flat-loop emission
@@ -6333,6 +6429,7 @@ def _build_timeline_segments(
         "consumed_count": len(consumed),
         "synthetic_pids": synthetic_pids,
         "skipped_pids": skipped_pids,
+        "multicol_sectpr_strip_pids": sorted(_multi_col_sectpr_strip_pids),
     }
     _log.debug(
         "TIMELINE_SEGMENTS_V2: seg1=%d roles, seg2=%d roles, "
@@ -6621,8 +6718,37 @@ def _render_from_layout_blocks(
             len(_timeline_left_pids),
         )
 
-    # Timeline v2: two-segment table reconstruction (feature-flagged).
-    _tl_v2_active = bool(_timeline_left_pids and _TIMELINE_ROW_TABLE_V2_ENABLED)
+    # Timeline v2: two-segment table reconstruction.
+    # Auto-enabled when _TIMELINE_ROW_TABLE_V2_ENABLED is True (the default) and
+    # this document has timeline layout bindings with valid left/right para_ids.
+    # Set _TIMELINE_ROW_TABLE_V2_ENABLED=False via _set_timeline_row_table_v2(False)
+    # to disable globally (kill switch).
+    _tl_v2_eligible = (
+        bool(_timeline_left_pids)
+        and any(
+            (r.layout_binding or {}).get("left_para_ids")
+            for sec in (doc.sections or [])
+            for r in (sec.roles or [])
+            if (r.layout_binding or {}).get("kind") == "timeline_left_role_right"
+        )
+    )
+    _tl_v2_active = bool(_tl_v2_eligible and _TIMELINE_ROW_TABLE_V2_ENABLED)
+    _log.debug(
+        "TIMELINE_V2_STATUS: enabled=%s eligible=%s active=%s timeline_pids=%d",
+        _TIMELINE_ROW_TABLE_V2_ENABLED,
+        _tl_v2_eligible,
+        _tl_v2_active,
+        len(_timeline_left_pids),
+    )
+    # v2 replaces the two-column layout with explicit tables, so the main sectPr
+    # must NOT carry w:cols.  The _main_is_multicolumn detection above may have
+    # injected w:cols into sectPr (to read column widths); strip it now so
+    # LibreOffice does not constrain the v2 tables to one column's width.
+    if _tl_v2_active and sectPr is not None:
+        _v2_cols_el = sectPr.find(f"{{{_W}}}cols")
+        if _v2_cols_el is not None:
+            sectPr.remove(_v2_cols_el)
+            _log.debug("TIMELINE_V2: stripped w:cols from main sectPr")
     _tl_seg1_tbl = None
     _tl_seg2_tbl = None
     _tl_consumed: frozenset = frozenset()
@@ -6631,6 +6757,7 @@ def _render_from_layout_blocks(
     _tl_sectpr_pid: "str | None" = None
     _tl_seg1_emitted = False
     _tl_seg2_emitted = False
+    _tl_multicol_strip_pids: frozenset = frozenset()
     if _tl_v2_active:
         _tl_seg1_tbl, _tl_seg2_tbl, _tl_consumed, _tl_diag = _build_timeline_segments(
             doc, para_lookup, list(doc.layout_blocks),  # type: ignore[arg-type]
@@ -6639,8 +6766,13 @@ def _render_from_layout_blocks(
         _tl_seg1_heading_pid = _tl_diag.get("seg1_heading_pid")
         _tl_seg2_trigger_pid = _tl_diag.get("seg2_trigger_pid")
         _tl_sectpr_pid = _tl_diag.get("sectpr_pid")
-        _log.debug(
-            "TIMELINE_V2_READY: consumed=%d, seg1_heading=%r, seg2_trigger=%r, sectpr=%r",
+        _tl_multicol_strip_pids = frozenset(_tl_diag.get("multicol_sectpr_strip_pids") or [])
+        _tl_seg1_rows = len(_tl_seg1_tbl.findall(f"{{{_W}}}tr")) if _tl_seg1_tbl is not None else 0
+        _tl_seg2_rows = len(_tl_seg2_tbl.findall(f"{{{_W}}}tr")) if _tl_seg2_tbl is not None else 0
+        _log.info(
+            "TIMELINE_V2_READY: seg1_rows=%d seg2_rows=%d consumed=%d "
+            "seg1_heading=%r seg2_trigger=%r sectpr=%r",
+            _tl_seg1_rows, _tl_seg2_rows,
             len(_tl_consumed), _tl_seg1_heading_pid, _tl_seg2_trigger_pid, _tl_sectpr_pid,
         )
 
@@ -6821,6 +6953,24 @@ def _render_from_layout_blocks(
                 # flows as a plain paragraph above the table (not a column jump).
                 if _tl_v2_active and block.para_id == _tl_seg1_heading_pid:
                     _strip_column_break(elem)
+                # v2: strip only w:cols from non-consumed multi-col sectPr paras (e.g.
+                # para_128).  These are emitted normally to preserve their top-margin and
+                # section boundary for Education/Skills/Projects, but their w:cols must be
+                # removed so LibreOffice renders post-table content single-column.
+                if (_tl_v2_active and _tl_multicol_strip_pids
+                        and block.para_id in _tl_multicol_strip_pids):
+                    _sp_strip = elem.find(f"{{{_W}}}pPr/{{{_W}}}sectPr")
+                    if _sp_strip is not None:
+                        _cols_strip = _sp_strip.find(f"{{{_W}}}cols")
+                        if _cols_strip is not None:
+                            _sp_strip.remove(_cols_strip)
+                        # Ensure the stripped sectPr creates a continuous break so
+                        # the top=860 margin applies without forcing a new page.
+                        _ensure_continuous(_sp_strip)
+                    _log.debug(
+                        "TIMELINE_V2_COLS_STRIPPED: para_id=%r emitted without w:cols (continuous)",
+                        block.para_id,
+                    )
                 pm = para_lookup.get(block.para_id) if block.para_id else None
                 # Timeline-binding guard: left-column date sidebar and spacer
                 # paragraphs are emitted verbatim — _set_para_text must not
@@ -7549,13 +7699,20 @@ _OVERSIZED_ROW_PARA_THRESHOLD = 14  # trigger row split when any cell exceeds th
 _RENDERER_CREATED_TABLES: set[Any] = set()
 
 
-# Opt-in flag for the v2 two-segment timeline table renderer.
-# Off by default; enabled via _set_timeline_row_table_v2(True) in tests
-# or by setting the TIMELINE_ROW_TABLE_V2=1 environment variable.
-_TIMELINE_ROW_TABLE_V2_ENABLED: bool = False
+# Kill switch for the v2 two-segment timeline table renderer.
+# True by default: v2 auto-activates for any document whose roles carry
+# layout_binding.kind == "timeline_left_role_right" with valid left_para_ids.
+# Set to False via _set_timeline_row_table_v2(False) to disable globally
+# (e.g. in tests that validate the flat newspaper-column path).
+_TIMELINE_ROW_TABLE_V2_ENABLED: bool = True
 
 
 def _set_timeline_row_table_v2(enabled: bool = True) -> None:
+    """Enable or disable the v2 timeline table renderer globally.
+
+    Pass False to engage the kill switch and force the flat newspaper-column
+    path regardless of layout_binding eligibility.
+    """
     global _TIMELINE_ROW_TABLE_V2_ENABLED
     _TIMELINE_ROW_TABLE_V2_ENABLED = enabled
 
@@ -8062,6 +8219,12 @@ def render_docx(doc: ResumeDocument, template_path: str, output_path: str) -> No
     ValueError
         If any paragraph in doc.all_paras has no xml_proto (cannot render).
     """
+    _log.info(
+        "RENDER_DOCX_START: template=%s output=%s source_kind=%s "
+        "TIMELINE_V2_ENABLED=%s",
+        template_path, output_path, doc.source_kind,
+        _TIMELINE_ROW_TABLE_V2_ENABLED,
+    )
     # Start from a copy of the template so styles and document settings are preserved
     # PDF two-column documents: use a fresh minimal DOCX rather than copying
     # the style template.  Style templates carry DOCX compat settings (e.g.

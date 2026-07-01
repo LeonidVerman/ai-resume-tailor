@@ -8,6 +8,7 @@ D. Fallback — missing para_id does not crash; original text kept.
 E. Sample 31 smoke — rendering preserves structure (not flat semantic-section order).
 F. Diagnostics — LAYOUT_BLOCK_RENDERER_USED logged; LAYOUT_BLOCK_MISSING_PARA_ID logged.
 G. Unbound content — new paragraphs not in layout_blocks logged, not crashed.
+H. _set_para_text micro-kerning / w:w boundary stripping.
 """
 from __future__ import annotations
 
@@ -761,3 +762,285 @@ class TestUnboundContent:
         from docx import Document as DocxDoc
         rdoc = DocxDoc(out)
         assert any(p.text.strip() for p in rdoc.paragraphs)
+
+
+# ---------------------------------------------------------------------------
+# H. _set_para_text micro-kerning / w:w boundary stripping
+# ---------------------------------------------------------------------------
+
+def _make_para_xml(runs: list[dict]) -> str:
+    """Build a w:p XML string from a list of run dicts.
+
+    Each dict has:
+        text: str
+        w (optional): int   — w:w val
+        spacing (optional): int  — w:spacing val
+        sz (optional): int  — w:sz val (half-points, e.g. 12 = 6pt)
+        rfonts (optional): str  — w:rFonts w:ascii value
+        bold (optional): bool  — w:b element present when True
+    """
+    run_fragments = []
+    for r in runs:
+        rpr_parts = []
+        if "rfonts" in r:
+            rpr_parts.append(f'<w:rFonts w:ascii="{r["rfonts"]}"/>')
+        if "sz" in r:
+            rpr_parts.append(f'<w:sz w:val="{r["sz"]}"/>')
+        if "w" in r:
+            rpr_parts.append(f'<w:w w:val="{r["w"]}"/>')
+        if "spacing" in r:
+            rpr_parts.append(f'<w:spacing w:val="{r["spacing"]}"/>')
+        if r.get("bold"):
+            rpr_parts.append("<w:b/>")
+        rpr = f"<w:rPr>{''.join(rpr_parts)}</w:rPr>" if rpr_parts else ""
+        run_fragments.append(
+            f'<w:r>{rpr}<w:t xml:space="preserve">{r["text"]}</w:t></w:r>'
+        )
+    return (
+        f'<w:p xmlns:w="{_W}" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">'
+        + "".join(run_fragments)
+        + "</w:p>"
+    )
+
+
+class TestSetParaTextMicroKerning:
+    """Unit tests for the w:w / w:spacing stripping boundaries in _set_para_text."""
+
+    def _call(self, runs: list[dict], new_text: str):
+        from lxml import etree
+        from tailor.compiler.docx_renderer import _set_para_text
+
+        xml = _make_para_xml(runs)
+        elem = etree.fromstring(xml.encode())
+        _set_para_text(elem, new_text)
+        return elem
+
+    def _run_ww(self, elem, run_index: int):
+        """Return int w:w val for run at run_index, or None if absent."""
+        runs = elem.findall(f"{{{_W}}}r")
+        if run_index >= len(runs):
+            return None
+        rpr = runs[run_index].find(f"{{{_W}}}rPr")
+        if rpr is None:
+            return None
+        ww = rpr.find(f"{{{_W}}}w")
+        return int(ww.get(f"{{{_W}}}val")) if ww is not None else None
+
+    def _run_spacing(self, elem, run_index: int):
+        """Return int w:spacing val for run at run_index, or None if absent."""
+        runs = elem.findall(f"{{{_W}}}r")
+        if run_index >= len(runs):
+            return None
+        rpr = runs[run_index].find(f"{{{_W}}}rPr")
+        if rpr is None:
+            return None
+        sp = rpr.find(f"{{{_W}}}spacing")
+        return int(sp.get(f"{{{_W}}}val")) if sp is not None else None
+
+    # --- w:w boundary tests ---
+
+    def test_ww_150_stripped_from_spacer_run(self):
+        """w:w=150 on a spacer run must be stripped (boundary artifact, not typography).
+
+        After stripping, the propagation step copies the adjacent content run's w:w (110)
+        into the spacer slot so character scaling stays consistent.  The key invariant is
+        that the artifact value 150 is gone, not that w:w is absent.
+        """
+        # Template has: [content "Other" w:w=110] [spacer " " w:w=150] [content "skills" w:w=110]
+        runs = [
+            {"text": "Other", "w": 110},
+            {"text": " ", "w": 150},
+            {"text": "skills", "w": 110},
+        ]
+        elem = self._call(runs, "Other skills")
+        ww = self._run_ww(elem, 1)
+        assert ww != 150, (
+            "w:w=150 on a spacer run must be stripped — it is a PDF-export artifact "
+            "that causes single redistributed chars to render 150% wide ('O ther skills')"
+        )
+        # Propagation fills in the adjacent content run's value (110) for consistent scaling.
+        assert ww == 110, (
+            "After stripping w:w=150 from the spacer, propagation must copy w:w=110 "
+            "from the preceding content run so all chars in the word scale uniformly"
+        )
+
+    def test_ww_149_preserved_from_spacer_run(self):
+        """w:w=149 on a spacer run is within intentional typography range and must be kept."""
+        runs = [
+            {"text": "Hello", "w": 110},
+            {"text": " ", "w": 149},
+            {"text": "World", "w": 110},
+        ]
+        elem = self._call(runs, "Hello World")
+        assert self._run_ww(elem, 1) is not None, (
+            "w:w=149 is within [95,149] intentional range and must not be stripped"
+        )
+
+    def test_ww_150_stripped_from_content_run(self):
+        """w:w=150 on a content run must also be stripped (boundary value is an artifact)."""
+        runs = [
+            {"text": "Bachelor", "w": 150},
+            {"text": " ", "w": 150},
+            {"text": "Thesis", "w": 110},
+        ]
+        elem = self._call(runs, "Bachelor Thesis project")
+        assert self._run_ww(elem, 0) is None, (
+            "w:w=150 on a content run must be stripped — same boundary artifact "
+            "('Bachelo r Thesis' split is caused by w:w=150 on the first char slot)"
+        )
+
+    def test_ww_100_preserved(self):
+        """w:w=100 (normal width, mid-range) must never be stripped."""
+        runs = [
+            {"text": "Normal", "w": 100},
+            {"text": " "},
+            {"text": "text", "w": 100},
+        ]
+        elem = self._call(runs, "Normal text here")
+        assert self._run_ww(elem, 0) is not None, "w:w=100 is intentional and must be kept"
+
+    # --- w:spacing boundary tests ---
+
+    def test_spacing_80_stripped_from_spacer_run(self):
+        """w:spacing=80 on a spacer run must be stripped (boundary artifact)."""
+        # The 'O ther skills' para has w:spacing=80 on the spacer run that receives 'O'.
+        runs = [
+            {"text": "O"},
+            {"text": " ", "spacing": 80},
+            {"text": "ther skills"},
+        ]
+        elem = self._call(runs, "Other skills")
+        assert self._run_spacing(elem, 1) is None, (
+            "w:spacing=80 on a spacer run must be stripped — it is the exact boundary "
+            "value from a PDF-export artifact and misaligns the redistributed character"
+        )
+
+    def test_spacing_81_preserved_from_spacer_run(self):
+        """w:spacing=81 on a spacer run is intentional letter-spacing and must be kept."""
+        runs = [
+            {"text": "Heading"},
+            {"text": " ", "spacing": 81},
+            {"text": "Title"},
+        ]
+        elem = self._call(runs, "Heading Title")
+        assert self._run_spacing(elem, 1) is not None, (
+            "w:spacing=81 exceeds the artifact threshold and must be preserved"
+        )
+
+    def test_spacing_80_stripped_from_content_run(self):
+        """w:spacing=80 on a content run must be stripped too."""
+        runs = [
+            {"text": "Other", "spacing": 80},
+            {"text": " "},
+            {"text": "skills"},
+        ]
+        elem = self._call(runs, "Other skills")
+        assert self._run_spacing(elem, 0) is None, (
+            "w:spacing=80 on a content run must be stripped (micro-kerning boundary)"
+        )
+
+    def test_spacing_81_preserved_from_content_run(self):
+        """w:spacing=81 on a content run is intentional and must be preserved."""
+        runs = [
+            {"text": "SPACED", "spacing": 81},
+        ]
+        elem = self._call(runs, "SPACED OUT")
+        assert self._run_spacing(elem, 0) is not None, (
+            "w:spacing=81 is intentional decorative letter-spacing and must be kept"
+        )
+
+    # --- w:sz outlier-artifact stripping tests ---
+
+    def _run_sz(self, elem, run_index: int):
+        """Return int w:sz val for run at run_index, or None if absent."""
+        runs = elem.findall(f"{{{_W}}}r")
+        if run_index >= len(runs):
+            return None
+        rpr = runs[run_index].find(f"{{{_W}}}rPr")
+        if rpr is None:
+            return None
+        sz = rpr.find(f"{{{_W}}}sz")
+        return int(sz.get(f"{{{_W}}}val")) if sz is not None else None
+
+    def _run_rfonts(self, elem, run_index: int):
+        """Return w:rFonts w:ascii value for run at run_index, or None if absent."""
+        runs = elem.findall(f"{{{_W}}}r")
+        if run_index >= len(runs):
+            return None
+        rpr = runs[run_index].find(f"{{{_W}}}rPr")
+        if rpr is None:
+            return None
+        rf = rpr.find(f"{{{_W}}}rFonts")
+        return rf.get(f"{{{_W}}}ascii") if rf is not None else None
+
+    def test_sz_12_stripped_from_leading_runs(self):
+        """sz=12 (6pt) on the first runs is a PDF→DOCX icon-glyph artifact.
+
+        After _set_para_text the first runs must lose their explicit w:sz so the
+        redistributed body-text chars render at the paragraph style's normal size
+        instead of 6pt ('Led a' rendering tiny).
+        """
+        # Mirrors the actual S35 pattern: 2 tiny-sz runs followed by normal runs.
+        runs = [
+            {"text": "Le", "sz": 12, "rfonts": "Times New Roman"},
+            {"text": "d a", "sz": 12, "rfonts": "Times New Roman"},
+            {"text": " tech-debt repayment initiative"},
+            {"text": " to improve maintainability"},
+        ]
+        elem = self._call(runs, "Led a tech-debt repayment initiative to improve maintainability")
+        assert self._run_sz(elem, 0) is None, (
+            "w:sz=12 (6pt) on the first run must be stripped — PDF icon artifact "
+            "causes 'Led a' to render at 6pt after proportional redistribution"
+        )
+        assert self._run_sz(elem, 1) is None, (
+            "w:sz=12 on the second run must also be stripped"
+        )
+
+    def test_sz_12_also_strips_rfonts(self):
+        """When sz=12 is stripped, w:rFonts on the same run is also stripped.
+
+        The artifact run carries both sz=12 and rFonts='Times New Roman'; both must
+        be removed so redistributed chars inherit the correct paragraph font.
+        """
+        runs = [
+            {"text": "Le", "sz": 12, "rfonts": "Times New Roman"},
+            {"text": "d a tech-debt repayment initiative to improve maintainability"},
+        ]
+        elem = self._call(runs, "Led a tech-debt repayment initiative to improve maintainability")
+        assert self._run_rfonts(elem, 0) is None, (
+            "w:rFonts must be stripped alongside sz=12 — Times New Roman at 6pt is "
+            "always an artifact; leaving it causes a font mismatch for the first chars"
+        )
+
+    def test_sz_20_preserved(self):
+        """sz=20 (10pt) is a legitimate resume text size and must not be stripped."""
+        runs = [
+            {"text": "P", "sz": 20, "rfonts": "Times New Roman"},
+            {"text": "rojects"},
+        ]
+        elem = self._call(runs, "Projects")
+        assert self._run_sz(elem, 0) == 20, (
+            "w:sz=20 (10pt) is intentional and must be preserved by the outlier-sz pass"
+        )
+
+    def test_sz_threshold_boundary_15_stripped(self):
+        """sz=15 (7.5pt) is at the strip ceiling and must be removed."""
+        runs = [
+            {"text": "Xx", "sz": 15},
+            {"text": " normal text here goes on"},
+        ]
+        elem = self._call(runs, "Xx normal text here goes on")
+        assert self._run_sz(elem, 0) is None, (
+            "w:sz=15 is at the artifact ceiling (≤15) and must be stripped"
+        )
+
+    def test_sz_threshold_boundary_16_preserved(self):
+        """sz=16 (8pt) is just above the strip ceiling and must be kept."""
+        runs = [
+            {"text": "Xx", "sz": 16},
+            {"text": " normal text here goes on"},
+        ]
+        elem = self._call(runs, "Xx normal text here goes on")
+        assert self._run_sz(elem, 0) == 16, (
+            "w:sz=16 (8pt) is above the artifact ceiling and must not be stripped"
+        )
