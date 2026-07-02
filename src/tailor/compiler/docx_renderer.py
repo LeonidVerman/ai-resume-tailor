@@ -2684,7 +2684,54 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
     # slot in the body row without widening the content cells.
     pad_w = max(0, page_w_twips - total_w) if has_dark_hdr else 0
     _use_pad = has_dark_hdr and pad_w > 0
-    n_grid_cols = 3 if _use_pad else 2
+
+    # Pre-scan: detect sibling section groups that need a wider outer tblGrid.
+    # A sibling group has ≥2 right-col sections at the same heading y (±3pt).
+    # Compute right-col cell widths early so tblGrid and gridSpan are consistent.
+    _sg_rcell_ws_global: "list" = []
+    _pre_sorted = sorted(
+        doc.sections,
+        key=lambda _s: (_s.heading.paragraph_profile.y_top_pt or 0.0)
+        if _s.heading.paragraph_profile else 0.0,
+    )
+    _pre_groups: "list" = []
+    for _ps in _pre_sorted:
+        _phy = (_ps.heading.paragraph_profile.y_top_pt or 0.0) if _ps.heading.paragraph_profile else 0.0
+        if _pre_groups and abs(_pre_groups[-1][0] - _phy) <= 3.0:
+            _pre_groups[-1][1].append(_ps)
+        else:
+            _pre_groups.append((_phy, [_ps]))
+    for _phy, _pg in _pre_groups:
+        if len(_pg) < 2:
+            continue
+        _prg = [
+            _s for _s in _pg
+            if _s.heading.paragraph_profile
+            and _s.heading.paragraph_profile.column_id in ("right", None)
+        ]
+        _prg.sort(
+            key=lambda _s: (_s.heading.paragraph_profile.indent_left_pt or 0.0)
+            if _s.heading.paragraph_profile else 0.0
+        )
+        if len(_prg) < 2:
+            continue
+        _prxs = [
+            (_s.heading.paragraph_profile.indent_left_pt or 0.0)
+            if _s.heading.paragraph_profile else 0.0
+            for _s in _prg
+        ]
+        _prws: "list" = []
+        for _pri in range(len(_prxs)):
+            _prcs = int(_prxs[_pri] * 20) if _pri > 0 else 0
+            if _pri < len(_prxs) - 1:
+                _prws.append(max(200, int(_prxs[_pri + 1] * 20) - _prcs))
+            else:
+                _prws.append(max(200, right_w - sum(_prws)))
+        if len(_prws) > len(_sg_rcell_ws_global):
+            _sg_rcell_ws_global = _prws
+    _n_right_grid_cols = len(_sg_rcell_ws_global) if _sg_rcell_ws_global else 1
+    _grid_right_ws = _sg_rcell_ws_global if _sg_rcell_ws_global else [right_w]
+    n_grid_cols = 1 + _n_right_grid_cols + (1 if _use_pad else 0)
     actual_tbl_w = page_w_twips if has_dark_hdr else total_w
 
     # Table element
@@ -2716,8 +2763,9 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
         m.set(f"{{{_W}}}type", "dxa")
 
     # Grid column definitions — required for gridSpan in the merged header row.
+    # When sibling groups exist the right column is split into N sub-columns.
     tblGrid = etree.SubElement(tbl, f"{{{_W}}}tblGrid")
-    for cw in ([left_w, right_w, pad_w] if _use_pad else [left_w, right_w]):
+    for cw in ([left_w] + _grid_right_ws + ([pad_w] if _use_pad else [])):
         gc = etree.SubElement(tblGrid, f"{{{_W}}}gridCol")
         gc.set(f"{{{_W}}}w", str(cw))
 
@@ -2880,12 +2928,15 @@ def _render_pdf_two_col(doc: "ResumeDocument", body, sectPr, doc_part=None) -> N
                 _ltc.append(_pe)
             if not l_paras:
                 etree.SubElement(_ltc, f"{{{_W}}}p")
-            # Right cell
+            # Right cell (spans all right grid columns in sibling-group layouts)
             _rtc = etree.SubElement(_tr, f"{{{_W}}}tc")
             _rtcPr = etree.SubElement(_rtc, f"{{{_W}}}tcPr")
             _rtcW = etree.SubElement(_rtcPr, f"{{{_W}}}tcW")
             _rtcW.set(f"{{{_W}}}w", str(right_w))
             _rtcW.set(f"{{{_W}}}type", "dxa")
+            if _n_right_grid_cols > 1:
+                _rtcGS = etree.SubElement(_rtcPr, f"{{{_W}}}gridSpan")
+                _rtcGS.set(f"{{{_W}}}val", str(_n_right_grid_cols))
             if _eff_right_bg:
                 _shd = etree.SubElement(_rtcPr, f"{{{_W}}}shd")
                 _shd.set(f"{{{_W}}}val", "clear")
